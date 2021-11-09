@@ -334,13 +334,17 @@ class _PytisSchemaGenerator(sqlalchemy.engine.ddl.SchemaGenerator, _PytisSchemaH
                             )
                         else:
                             referencing = ''
+                    if trigger.when is not None:
+                        when_clause = ' WHEN {} '.format(trigger.when)
+                    else:
+                        when_clause = ''
                     trigger_call = trigger(*trigger.arguments)
                     command = (('CREATE TRIGGER "%s" %s %s\n'
                                 'ON "%s"%s\n'
-                                'FOR EACH %s EXECUTE PROCEDURE %s') %
+                                'FOR EACH %s%s EXECUTE PROCEDURE %s') %
                                (trigger.pytis_name(real=True), trigger.position, events,
                                 table.pytis_name(real=True), referencing,
-                                row_or_statement, trigger_call,))
+                                row_or_statement, when_clause, trigger_call,))
                     self.connection.execute(command)
                 trigger.dispatch.after_create(trigger, self.connection, checkfirst=self.checkfirst,
                                               _ddl_runner=self)
@@ -3823,6 +3827,7 @@ class SQLTrigger(with_metaclass(_PytisTriggerMetaclass, SQLEventHandler)):
         table row otherwise it should be invoked once per statement
       referencing -- tuple of (OLD|NEW, transitional_name) pairs for
         statement triggers
+      when -- WHEN condition as basestring or sqlalchemy condition
       call_arguments -- if the trigger function has any arguments then this
         property must define their values and in the right order; tuple of
         values of types accepted by SQLAlchemy for given argument types.
@@ -3834,6 +3839,7 @@ class SQLTrigger(with_metaclass(_PytisTriggerMetaclass, SQLEventHandler)):
     position = 'after'
     each_row = True
     referencing = ()
+    when = None
     call_arguments = ()
 
     __visit_name__ = 'trigger'
