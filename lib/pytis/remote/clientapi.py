@@ -666,7 +666,10 @@ class ZenityUIBackend(ClipboardUIBackend):
     def _run_zenity(self, *args):
         import subprocess
         try:
-            output = subprocess.check_output(('zenity',) + args)
+            kwargs = {} if sys.version_info[0] == 2 else dict(encoding='utf-8')
+            output = subprocess.check_output(('zenity',) + args, **kwargs)
+            if sys.version_info[0] == 2:
+                output = unicode(output, 'utf-8')
         except (subprocess.CalledProcessError, OSError):
             return None
         return output.rstrip('\r\n')
