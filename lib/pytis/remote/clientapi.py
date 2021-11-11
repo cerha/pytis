@@ -160,6 +160,20 @@ class ClientUIBackend(object):
         else:
             return "%s (%s)" % (label, ', '.join(patterns))
 
+    def init(self):
+        """Perform backend UI initializations if needed.
+
+        Some backends may need to initialize the UI, but this should not be
+        done in the constructor, so the right place for such initializations is
+        here.
+
+        The real reason for having this in a separate method is the need to
+        redirect UI actions into the main thread on Mac OS as described in
+        'ClientUIBackendWrapper' docestring in service.py of Pytis2Go.
+
+        """
+        pass
+
     def enter_text(self, title=u"Zadejte text", label=None, password=False):
         """Prompt the user to enter text and return the text.
 
@@ -322,11 +336,10 @@ class WxUIBackend(ClientUIBackend):
 
     _DEPENDS = ('wx',)
 
-    def __init__(self):
-        super(WxUIBackend, self).__init__()
-        if os.path.basename(sys.argv[0]) == 'pytest' or os.getenv('P2GO_RPYC_PROCESS') == 'true':
-            # TODO: This is only run in tests and when Pytis2go RPyC service is run
-            # in a separate process.  This is because older Pytis2go versions run the
+    def init(self):
+        if os.getenv('P2GO_RPYC_PROCESS') == 'true':
+            # TODO: This is only run when Pytis2go RPyC service is run in a
+            # separate process.  This is because older Pytis2go versions run the
             # service within its main process, where 'wx.App' already exists.
             # Starting another instance would cause conflicts and might crash
             # the whole Python process.
@@ -860,7 +873,8 @@ class PytisClientAPIService(rpyc.Service):
 
     def __getattr__(self, name):
         if name == '_client':
-            self._client = client = ClientUIBackend()
+            self._client = client = self._create_client_instance()
+            client.init()
             return client
         if name == '_gpg':
             # TODO: Either rely on gnupg from pip or include it here in clientapi.py.
@@ -868,6 +882,10 @@ class PytisClientAPIService(rpyc.Service):
             self._gpg = gpg = pytis.remote.gnupg.GPG(options=['--trust-model', 'always'])
             return gpg
         raise AttributeError(name)
+
+    def _create_client_instance(self):
+        # Beware: This method is overriden in service.py.
+        return ClientUIBackend()
 
     def _select_encryption_keys(self, keys):
         if keys:
