@@ -228,7 +228,7 @@ class ClientUIBackend(object):
             basestring, such as '*.pdf', or a sequence of such patterns, such
             as ('*.jpg', '*.jpeg', '*.png', '*.gif') if multiple file types are
             to match a single filter.  An additional entry "All files" with
-            pattern '*.*' is always added automatically to the end.  The first
+            pattern '*' is always added automatically to the end.  The first
             item is the initially selected filter in the dialog.
           pattern -- the required file name pattern as a basestring, sequence
             of basestrings or 'None'.  If 'patterns' don't already contain an
@@ -264,7 +264,7 @@ class ClientUIBackend(object):
                 pattern = "*." + extension
         else:
             extension = None
-        patterns = list(patterns) + [(u"Všechny soubory", "*.*")]
+        patterns = list(patterns) + [(u"Všechny soubory", "*")]
         if pattern and xtuple(pattern) not in [xtuple(pat) for label, pat in patterns]:
             patterns.insert(0, (u"Soubory požadovaného typu", pattern))
         return self._unicode(self._select_file(title, directory, filename,
