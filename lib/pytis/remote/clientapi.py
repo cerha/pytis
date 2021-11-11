@@ -119,7 +119,7 @@ class ClientUIBackend(object):
                 backends = (
                     WxUIBackend,
                     TkUIBackend,
-                    # ZenityUIBackend,  # TODO: Currently unusable.
+                    ZenityUIBackend,
                 )
             else:
                 backends = (
