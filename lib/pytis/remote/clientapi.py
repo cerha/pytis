@@ -921,13 +921,6 @@ class PytisClientAPIService(rpyc.Service):
                                   encrypt=self._encrypt(encrypt),
                                   decrypt=self._decrypt(decrypt))
 
-    def exposed_restart(self):
-        """Restart the user service."""
-        file_name = sys.argv[0]
-        if file_name[:-4] == '.pyc':
-            file_name = file_name[:-1]
-        execfile(file_name)
-
     def exposed_get_clipboard_text(self):
         """Return current clipboard text, as unicode.
 
