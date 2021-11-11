@@ -20,7 +20,7 @@
 """This module defines the Client RPyC service API.
 
 The service providing this API runs on the client which runs pytis application
-remotely through X2Go using Pytis2Go client.  The service allows the Pytis
+remotely through X2Go using the Pytis2Go client.  The service allows the Pytis
 application running on the server to perform certain tasks on the client
 machine, such as open local file through a GUI file dialog and pass that file
 to the server.  It simply attempts to transparently provide the functionality
