@@ -155,7 +155,10 @@ class ClientUIBackend(object):
         # This method is called from the backend only if needed because some
         # backends (actually Tk) don't need it (they add the list of patterns
         # to the label automatically).
-        return "%s (%s)" % (label, ', '.join(patterns))
+        if patterns == ('*',):
+            return label
+        else:
+            return "%s (%s)" % (label, ', '.join(patterns))
 
     def enter_text(self, title=u"Zadejte text", label=None, password=False):
         """Prompt the user to enter text and return the text.
