@@ -675,7 +675,7 @@ class ZenityUIBackend(ClipboardUIBackend):
         return output.rstrip('\r\n')
 
     def _enter_text(self, title, label, password):
-        args = ('--password',) if password else ()
+        args = ('--hide-text',) if password else ()
         return self._run_zenity('--entry', '--title', title, '--text', label, *args)
 
     def _select_option(self, title, label, columns, data, return_column):
