@@ -126,7 +126,6 @@ class ClientUIBackend(object):
                     WxUIBackend,
                     ZenityUIBackend,
                     TkUIBackend,
-                    Win32UIBackend,
                 )
             for subclass in backends:
                 try:
