@@ -858,28 +858,24 @@ class ExposedFileWrapper(object):
 
 class PytisClientAPIService(rpyc.Service):
 
-    _client_instance = None
-    _gpg_instance = None
-
-    def _client(self):
-        if self._client_instance is None:
-            self._client_instance = ClientUIBackend()
-        return self._client_instance
-
-    def _gpg(self):
-        if self._gpg_instance is None:
+    def __getattr__(self, name):
+        if name == '_client':
+            self._client = client = ClientUIBackend()
+            return client
+        if name == '_gpg':
             # TODO: Either rely on gnupg from pip or include it here in clientapi.py.
             import pytis.remote.gnupg
-            self._gpg_instance = pytis.remote.gnupg.GPG(options=['--trust-model', 'always'])
-        return self._gpg_instance
+            self._gpg = gpg = pytis.remote.gnupg.GPG(options=['--trust-model', 'always'])
+            return gpg
+        raise AttributeError(name)
 
-    def _select_encryption_keys(self, gpg, keys):
+    def _select_encryption_keys(self, keys):
         if keys:
             fingerprints = []
             for k in keys:
-                fingerprints.extend(gpg.import_keys(k).fingerprints)
+                fingerprints.extend(self._gpg.import_keys(k).fingerprints)
             return fingerprints
-        keys = gpg.list_keys(True)
+        keys = self._gpg.list_keys(True)
         n_keys = len(keys)
         if n_keys == 0:
             raise Exception("No encryption key found")
@@ -887,19 +883,18 @@ class PytisClientAPIService(rpyc.Service):
             selected_key = keys[0]['keyid']
         else:
             data = [(k['keyid'], ', '.join(k['uids'])) for k in keys]
-            selected_key = self._client().select_option(title="Výběr šifrovacího klíče",
-                                                        label="Vyberte šifrovací klíč",
-                                                        columns=(u"Id", u"Uživatel",),
-                                                        data=data)
+            selected_key = self._client.select_option(title="Výběr šifrovacího klíče",
+                                                      label="Vyberte šifrovací klíč",
+                                                      columns=(u"Id", u"Uživatel",),
+                                                      data=data)
             if not selected_key:
                 raise Exception("Canceled")
         return [selected_key]
 
     def _encrypt(self, keys):
         def encrypt(f):
-            gpg = self._gpg()
-            selected_keys = self._select_encryption_keys(gpg, keys)
-            return str(gpg.encrypt_file(f, selected_keys))
+            selected_keys = self._select_encryption_keys(keys)
+            return str(self._gpg.encrypt_file(f, selected_keys))
         if keys is not None:
             return encrypt
         else:
@@ -907,14 +902,13 @@ class PytisClientAPIService(rpyc.Service):
 
     def _decrypt(self, decrypt):
         def decrypt_(encrypted):
-            gpg = self._gpg()
             while True:
-                passphrase = self._client().enter_text(u"Zadejte heslo",
-                                                       label=u"Heslo k dešifrovacímu klíči",
-                                                       password=True)
+                passphrase = self._client.enter_text(u"Zadejte heslo",
+                                                     label=u"Heslo k dešifrovacímu klíči",
+                                                     password=True)
                 if passphrase is None:
                     return ''
-                decrypted = gpg.decrypt(encrypted, passphrase=passphrase).data
+                decrypted = self._gpg.decrypt(encrypted, passphrase=passphrase).data
                 if decrypted:
                     return decrypted
         if decrypt:
@@ -933,7 +927,7 @@ class PytisClientAPIService(rpyc.Service):
         If the text can't be retrieved, return 'None'.
 
         """
-        return self._client().get_clipboard_text()
+        return self._client.get_clipboard_text()
 
     def exposed_set_clipboard_text(self, text):
         """Set clipboard content to text.
@@ -944,7 +938,7 @@ class PytisClientAPIService(rpyc.Service):
 
         """
         assert isinstance(text, str), text
-        return self._client().set_clipboard_text(text)
+        return self._client.set_clipboard_text(text)
 
     def exposed_launch_file(self, path):
         """Start associated application on path.
@@ -997,8 +991,8 @@ class PytisClientAPIService(rpyc.Service):
         """
         assert isinstance(patterns, (tuple, list)), patterns
         assert pattern is None or isinstance(pattern, basestring), pattern
-        filename = self._client().select_file(directory=directory,
-                                              patterns=patterns, pattern=pattern)
+        filename = self._client.select_file(directory=directory,
+                                            patterns=patterns, pattern=pattern)
         if filename is None:
             return None
         return ExposedFileWrapper(filename, mode='rb', encrypt=self._encrypt(encrypt))
@@ -1024,8 +1018,8 @@ class PytisClientAPIService(rpyc.Service):
         """
         assert isinstance(patterns, (tuple, list)), patterns
         assert pattern is None or isinstance(pattern, basestring), pattern
-        filename = self._client().select_file(filename=filename, directory=directory,
-                                              patterns=patterns, pattern=pattern, save=True)
+        filename = self._client.select_file(filename=filename, directory=directory,
+                                            patterns=patterns, pattern=pattern, save=True)
         if filename is None:
             return None
         else:
@@ -1050,7 +1044,7 @@ class PytisClientAPIService(rpyc.Service):
                                   decrypt=self._decrypt(decrypt))
 
     def exposed_select_directory(self, directory=None, title=u"Výběr adresáře"):
-        return self._client().select_directory(directory=directory, title=title)
+        return self._client.select_directory(directory=directory, title=title)
 
     def exposed_select_file(self, filename=None, directory=None, title=None,
                             patterns=(), pattern=None, save=False, multi=False):
@@ -1080,9 +1074,9 @@ class PytisClientAPIService(rpyc.Service):
         assert pattern is None or isinstance(pattern, basestring), pattern
         assert isinstance(multi, bool), multi
         assert isinstance(save, bool), save
-        return self._client().select_file(filename=filename, directory=directory, title=title,
-                                          patterns=patterns, pattern=pattern,
-                                          save=save, multi=multi)
+        return self._client.select_file(filename=filename, directory=directory, title=title,
+                                        patterns=patterns, pattern=pattern,
+                                        save=save, multi=multi)
 
 
 class PasswordAuthenticator(object):
