@@ -575,12 +575,15 @@ class TkUIBackend(ClipboardUIBackend):
 
     @_in_tk_app
     def _enter_text(self, root, title, label, password):
-        import tkinter.simpledialog
+        if sys.version_info[0] == 2:
+            import tkSimpleDialog as simpledialog
+        else:
+            from tkinter import simpledialog
         if password:
             kwargs = dict(show='*')
         else:
             kwargs = {}
-        return tkinter.simpledialog.askstring(title, label, parent=root, **kwargs)
+        return simpledialog.askstring(title, label, parent=root, **kwargs)
 
     @_in_tk_app
     def _select_option(self, root, title, label, columns, data, return_column):
