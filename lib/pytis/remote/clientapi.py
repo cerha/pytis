@@ -37,6 +37,7 @@ module don't need to be installed on the application server, but on the client
 machine running Pytis2Go.
 
 """
+from __future__ import print_function
 
 from future import standard_library
 from builtins import str
@@ -113,6 +114,12 @@ class ClientUIBackend(object):
                     WxUIBackend,
                     ZenityUIBackend,
                     Win32UIBackend,
+                )
+            elif sys.platform == 'darwin':
+                backends = (
+                    WxUIBackend,
+                    TkUIBackend,
+                    # ZenityUIBackend,  # TODO: Currently unusable.
                 )
             else:
                 backends = (
