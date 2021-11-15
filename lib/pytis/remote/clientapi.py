@@ -570,27 +570,20 @@ class TkUIBackend(ClipboardUIBackend):
     _DEPENDS = ClipboardUIBackend._DEPENDS + ('tkinter', 'tkinter.ttk',
                                               'tkinter.simpledialog', 'tkinter.filedialog')
 
-    def _in_tk_app(method):
-        def run(self, *args, **kwargs):
-            import tkinter
-            root = tkinter.Tk()
-            root.withdraw()
-            # Make it almost invisible - no decorations, 0 size, top left corner.
-            root.overrideredirect(True)
-            root.geometry('0x0+0+0')
-            # Show window again and lift it to top so it can get focus,
-            # otherwise dialogs will end up behind the terminal.
-            root.deiconify()
-            root.lift()
-            root.focus_force()
-            try:
-                return method(self, root, *args, **kwargs)
-            finally:
-                root.destroy()
-        return run
+    def init(self):
+        import tkinter
+        self._root = root = tkinter.Tk()
+        root.withdraw()
+        # Make it almost invisible - no decorations, 0 size, top left corner.
+        root.overrideredirect(True)
+        root.geometry('0x0+0+0')
+        # Show window again and lift it to top so it can get focus,
+        # otherwise dialogs will end up behind the terminal.
+        root.deiconify()
+        root.lift()
+        root.focus_force()
 
-    @_in_tk_app
-    def _enter_text(self, root, title, label, password):
+    def _enter_text(self, title, label, password):
         if sys.version_info[0] == 2:
             import tkSimpleDialog as simpledialog
         else:
@@ -599,10 +592,9 @@ class TkUIBackend(ClipboardUIBackend):
             kwargs = dict(show='*')
         else:
             kwargs = {}
-        return simpledialog.askstring(title, label, parent=root, **kwargs)
+        return simpledialog.askstring(title, label, parent=self._root, **kwargs)
 
-    @_in_tk_app
-    def _select_option(self, root, title, label, columns, data, return_column):
+    def _select_option(self, title, label, columns, data, return_column):
         import tkinter
         import tkinter.ttk
         rows = ['   '.join(row) for row in data]
@@ -636,8 +628,7 @@ class TkUIBackend(ClipboardUIBackend):
         else:
             return None
 
-    @_in_tk_app
-    def _select_file(self, root, title, directory, filename, patterns, extension, save, multi):
+    def _select_file(self, title, directory, filename, patterns, extension, save, multi):
         import tkinter.filedialog
         if save:
             dialog = tkinter.filedialog.asksaveasfilename
@@ -654,21 +645,20 @@ class TkUIBackend(ClipboardUIBackend):
             if sys.platform == 'win32':
                 filetypes.reverse()
             kwargs['filetypes'] = filetypes
-        result = dialog(parent=root, title=title, initialdir=directory, initialfile=filename,
+        result = dialog(parent=self._root, title=title, initialdir=directory, initialfile=filename,
                         defaultextension=extension, **kwargs)
         if not result:
             return None
         elif multi:
             # Work around a strange problem which appears on Linux - a file named '*.*' prefixed
             # with the selected dirtectory name is added as the first item to the returned list.
-            return [fname for fname in root.tk.splitlist(result) if not fname.endswith('*.*')]
+            return [fname for fname in self._root.tk.splitlist(result) if not fname.endswith('*.*')]
         else:
             return result
 
-    @_in_tk_app
-    def _select_directory(self, root, title, directory):
+    def _select_directory(self, title, directory):
         import tkinter.filedialog
-        return tkinter.filedialog.askdirectory(title=title, parent=root, initialdir=directory)
+        return tkinter.filedialog.askdirectory(title=title, parent=self._root, initialdir=directory)
 
 
 class ZenityUIBackend(ClipboardUIBackend):
