@@ -599,7 +599,7 @@ class TkUIBackend(ClipboardUIBackend):
         import tkinter.ttk
         rows = ['   '.join(row) for row in data]
         result = self._Object(selection=None)
-        dialog = tkinter.Toplevel(root)
+        dialog = tkinter.Toplevel(None)
         dialog.title(title)
         tklabel = tkinter.ttk.Label(dialog, text=label)
         tklabel.pack(padx=5, pady=2, anchor=tkinter.W)
@@ -622,7 +622,8 @@ class TkUIBackend(ClipboardUIBackend):
         dialog.update()
         dialog.minsize(dialog.winfo_width() + 50, dialog.winfo_height())
         dialog.after(1, lambda: listbox.focus_force())
-        root.mainloop()
+        dialog.mainloop()
+        dialog.destroy()
         if result.selection is not None:
             return data[result.selection][return_column - 1]
         else:
