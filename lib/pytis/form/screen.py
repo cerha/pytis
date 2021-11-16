@@ -3580,7 +3580,9 @@ def open_selected_file(patterns=(), pattern=None, encrypt=None, context='default
         f = pytis.remote.open_selected_file(directory=directory, encrypt=encrypt,
                                             patterns=patterns, pattern=pattern)
         if f:
-            filename = f.name
+            # Quict hack: unistr makes a local string from rpyc netref.
+            # Othervise fails with RPyC AttributeError on p.rfind('/') in posixpath.py
+            filename = unistr(f.name)
             if '\\' in filename:
                 import ntpath as pathmod
             else:
