@@ -117,8 +117,8 @@ class ClientUIBackend(object):
                 )
             elif sys.platform == 'darwin':
                 backends = (
-                    WxUIBackend,
                     TkUIBackend,
+                    WxUIBackend,
                     ZenityUIBackend,
                 )
             else:
