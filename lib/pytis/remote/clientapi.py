@@ -637,16 +637,8 @@ class TkUIBackend(ClipboardUIBackend):
         else:
             dialog = tkinter.filedialog.askopenfilename
             kwargs = dict(multiple=multi)
-        if sys.platform != 'darwin':
-            # The patterns don't work on Mac OS X.  If present, all files are grayed out...
-            filetypes = []
-            for label, pat in patterns:
-                for pattern in pat:
-                    filetypes.append((label, pattern[1:] if pattern.startswith('*.') else pattern))
-            if sys.platform == 'win32':
-                filetypes.reverse()
-            kwargs['filetypes'] = filetypes
         result = dialog(parent=self._root, title=title, initialdir=directory, initialfile=filename,
+                        filetypes=[(label, pat) for label, pattern in patterns for pat in pattern],
                         defaultextension=extension, **kwargs)
         if not result:
             return None
