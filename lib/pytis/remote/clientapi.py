@@ -953,6 +953,8 @@ class PytisClientAPIService(rpyc.Service):
         assert isinstance(path, basestring), path
         if sys.platform == 'win32':
             os.startfile(path)
+        elif sys.platform == 'darwin':
+            subprocess.Popen(['open', path])
         else:
             subprocess.Popen(['xdg-open', path])
 
