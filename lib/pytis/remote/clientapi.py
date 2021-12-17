@@ -40,7 +40,6 @@ machine running Pytis2Go.
 from __future__ import print_function
 
 from future import standard_library
-from builtins import str
 from builtins import zip
 from builtins import range
 from builtins import object
@@ -64,6 +63,7 @@ import threading
 
 
 standard_library.install_aliases()
+str = type(u'')  # builtins.str does not work over RPyC...
 
 
 class BackendNotAvailable(Exception):
