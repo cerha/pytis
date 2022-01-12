@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2021 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2022 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2018 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -55,6 +55,7 @@ import lcg
 import wx.lib.pdfviewer
 import wx.lib.agw.supertooltip as supertooltip
 
+import pytis
 import pytis.form
 import pytis.output
 import pytis.presentation
