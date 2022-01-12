@@ -3715,7 +3715,8 @@ def open_data_as_file(data, suffix, decrypt=False):
 
     Arguments:
 
-      data -- the data bytes.  This is the contents of the file to be viewed.
+      data -- the file data as 'bytes' or a file like object.  This is the
+        contents of the file to be viewed.
       suffix -- the filename suffix including the leading dot.
       decrypt -- if true then decrypt the file contents before saving.
 
@@ -3729,10 +3730,21 @@ def open_data_as_file(data, suffix, decrypt=False):
 
     """
     if pytis.remote.client_available():
-        _launch_file_remotely(io.BytesIO(data), suffix=suffix, decrypt=decrypt)
+        if hasattr(data, 'read'):
+            srcfile = data
+        else:
+            srcfile = io.BytesIO(data)
+        _launch_file_remotely(srcfile, suffix=suffix, decrypt=decrypt)
     else:
         with tempfile.NamedTemporaryFile(suffix=suffix) as f:
-            f.write(data)
+            if hasattr(data, 'read'):
+                while True:
+                    chunk = data.read(10 * 1024 * 1024)
+                    if not chunk:
+                        break
+                    f.write(chunk)
+            else:
+                f.write(data)
             f.flush()
             _launch_file_locally(f.name)
             # Give the viewer some time to read the file as it will be
