@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2020 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2020, 2022 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2007-2017 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -414,12 +414,9 @@ class Products(Specification):
                 language=lang, output_file=output,
             )
             merger.append(PdfFileReader(io.BytesIO(output.getvalue())))
-        with tempfile.NamedTemporaryFile(suffix='.pdf') as f:
-            merger.write(f)
-            f.flush()
-            os.fsync(f)
-            pytis.form.launch_file(f.name)
-            time.sleep(1)
+        result = io.BytesIO()
+        merger.write(result)
+        pytis.form.open_data_as_file(result.getvalue(), '.pdf')
 
     def _content(self, record):
         par = os.path.pardir
