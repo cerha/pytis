@@ -3641,7 +3641,7 @@ def write_file(data, filename, mode='w'):
         f.close()
 
 
-def _open_remote_file_viewer(f, suffix, decrypt=False):
+def _launch_file_remotely(f, suffix, decrypt=False):
     try:
         remote_file = pytis.remote.make_temporary_file(suffix=suffix, decrypt=decrypt)
     except Exception as e:
@@ -3649,7 +3649,7 @@ def _open_remote_file_viewer(f, suffix, decrypt=False):
         pytis.form.run_dialog(pytis.form.Error, _("Unable to create temporary file: %s", e))
     try:
         while True:
-            data = f.read(10000000)
+            data = f.read(10 * 1024 * 1024)
             if not data:
                 break
             remote_file.write(data)
@@ -3660,7 +3660,7 @@ def _open_remote_file_viewer(f, suffix, decrypt=False):
         remote_file.close()
 
 
-def _open_local_file_viewer(filename):
+def _launch_file_locally(filename):
     import mimetypes
     import subprocess
     mime_type = mimetypes.guess_type(filename)[0]
@@ -3685,10 +3685,9 @@ def _open_local_file_viewer(filename):
 
 
 def launch_file(filename):
-    """Launch a viewer for given file.
+    """Launch a viewer for given local file.
 
-    filename -- name of the file in the local (server side when running
-      remotely) filesystem.
+    filename -- name of the file in the local (server side) filesystem.
 
     The viewer will be launched on the client machine (remotely) if remote
     client connection exists.  The file will be temporarily copied to the
@@ -3705,10 +3704,10 @@ def launch_file(filename):
 
     """
     if pytis.remote.client_available():
-        with open(filename) as f:
-            _open_remote_file_viewer(f, suffix=os.path.splitext(filename)[1])
+        with open(filename, 'rb') as f:
+            _launch_file_remotely(f, suffix=os.path.splitext(filename)[1])
     else:
-        _open_local_file_viewer(filename)
+        _launch_file_locally(filename)
 
 
 def open_data_as_file(data, suffix, decrypt=False):
@@ -3730,12 +3729,12 @@ def open_data_as_file(data, suffix, decrypt=False):
 
     """
     if pytis.remote.client_available():
-        _open_remote_file_viewer(io.BytesIO(data), suffix=suffix, decrypt=decrypt)
+        _launch_file_remotely(io.BytesIO(data), suffix=suffix, decrypt=decrypt)
     else:
         with tempfile.NamedTemporaryFile(suffix=suffix) as f:
             f.write(data)
             f.flush()
-            _open_local_file_viewer(f.name)
+            _launch_file_locally(f.name)
             # Give the viewer some time to read the file as it will be
             # removed when the "with" statement is left.
             time.sleep(1)
