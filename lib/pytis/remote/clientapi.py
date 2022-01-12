@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2021 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2022 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2011-2018 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -954,7 +954,26 @@ class PytisClientAPIService(rpyc.Service):
         if sys.platform == 'win32':
             os.startfile(path)
         elif sys.platform == 'darwin':
-            subprocess.Popen(['open', path])
+            # The Mac OS 'open' utility reuses the viewer application
+            # instances (such as Preview for PDF files).  This normally
+            # works fine but in our case it causes a strange problem.
+            # The viewer is launched ok for the first time.  Second and
+            # further attempts end up by an error dialog window stating:
+            # The file "pytistmpzEj2f9.pdf" could not be opened. It may
+            # be damaged or use a file format that Preview doesn’t
+            # recognize.
+            # Waiting about one minute helps to be able to open next
+            # file ok, but the problem repeats with further attempts.
+            # It also helps to leave the previous Preview window opended.
+            # The problem only occures after closing the previously
+            # opened windows.
+            # Passing -n to 'open' (Open a new instance of the
+            # application even if one is already running.) seems to be
+            # the only work around for this problem.  It has some
+            # drawbacks (the Preview instances don't know about each
+            # other, it probably wastes resources), but it is better
+            # than seeing the error dialog.
+            subprocess.Popen(['open', '-n', path])
         else:
             subprocess.Popen(['xdg-open', path])
 
