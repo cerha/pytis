@@ -34,6 +34,7 @@ from future.utils import python_2_unicode_compatible
 
 import sys
 import copy
+import contextlib
 import os
 import string
 import types
@@ -3710,6 +3711,32 @@ def launch_file(filename):
         _launch_file_locally(filename)
 
 
+@contextlib.contextmanager
+def temp_file_launcher(suffix):
+    """Create a temporary file and launch a file viewer on it before closing.
+
+    Works as a context manager returning the file object to which the caller
+    writes the data as needed.  File viewer is launched on the resulting file
+    when the context is left.  The temporary file is copied to the client if
+    remote client connection exists.
+
+    Example usage:
+
+    with pf.temp_file_launcher('.pdf') as f:
+        f.write(data)
+
+    """
+    with tempfile.NamedTemporaryFile(suffix='.pdf') as f:
+        yield f
+        f.flush()
+        launch_file(f.name)
+        if not pytis.remote.client_available():
+            # Give the viewer some time to read the file as it will be
+            # removed when the "with" statement is left.  This is only needed
+            # when opening locally.  In remote mode, the file is copied first.
+            time.sleep(1)
+
+
 def open_data_as_file(data, suffix, decrypt=False):
     """Save given data to a temporary file and launch a viewer.
 
@@ -3736,7 +3763,7 @@ def open_data_as_file(data, suffix, decrypt=False):
             srcfile = io.BytesIO(data)
         _launch_file_remotely(srcfile, suffix=suffix, decrypt=decrypt)
     else:
-        with tempfile.NamedTemporaryFile(suffix=suffix) as f:
+        with temp_file_launcher(suffix=suffix) as f:
             if hasattr(data, 'read'):
                 while True:
                     chunk = data.read(10 * 1024 * 1024)
@@ -3745,11 +3772,6 @@ def open_data_as_file(data, suffix, decrypt=False):
                     f.write(chunk)
             else:
                 f.write(data)
-            f.flush()
-            _launch_file_locally(f.name)
-            # Give the viewer some time to read the file as it will be
-            # removed when the "with" statement is left.
-            time.sleep(1)
 
 
 def launch_url(url):
@@ -3866,6 +3888,7 @@ def printout(spec_name, template_id, parameters=None, output_file=None,
         if output_file:
             do_printout(output_file)
         else:
+            # TODO: Use temp_file_launcher() here?
             with tempfile.NamedTemporaryFile(suffix='.pdf', prefix='tmppytis', delete=False) as f:
                 do_printout(f)
             threading.Thread(target=run_viewer, args=(f.name,)).start()
