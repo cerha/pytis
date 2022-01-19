@@ -1256,7 +1256,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             (schema, table_name,)),
             outside_transaction=True)
         d1 = self._pg_query(_Query(
-            ("select pg_attribute.attname, pg_attrdef.adsrc "
+            ("select pg_attribute.attname,  pg_get_expr(pg_attrdef.adbin, pg_attribute.attrelid) "
              "from pg_class, pg_attribute, pg_attrdef, pg_namespace "
              "where pg_class.oid = pg_attrdef.adrelid and "
              "pg_class.relnamespace = pg_namespace.oid and "
