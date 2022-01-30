@@ -3771,6 +3771,16 @@ class SQLPyFunction(SQLFunctional):
         return [reindent(line) for line in lines if line.strip()]
 
 
+class SQLPy3Function(SQLPyFunction):
+    """PL/Python3 function definition.
+
+    This class doesn't define anything new, see its superclass for information
+    about function definition.
+
+    """
+    _LANGUAGE = 'plpython3u'
+
+
 class SQLAggregate(SQLFunctional):
     """Aggregate function definition.
 

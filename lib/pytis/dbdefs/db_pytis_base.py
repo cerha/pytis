@@ -84,6 +84,10 @@ class Base_PyFunction(sql.SQLPyFunction):
             return plpy.execute(query)
 
 
+class Base_Py3Function(Base_PyFunction):
+    _LANGUAGE = 'plpython3u'
+
+
 class Base_PyTriggerFunction(Base_PyFunction):
 
     class Util(Base_PyFunction.Util):
@@ -146,6 +150,10 @@ class Base_PyTriggerFunction(Base_PyFunction):
                     elif self._event == 'delete':
                         self._do_after_delete()
                 return self._return_code
+
+
+class Base_Py3TriggerFunction(Base_PyTriggerFunction):
+    _LANGUAGE = 'plpython3u'
 
 
 class XInserts(sql.SQLTable):
