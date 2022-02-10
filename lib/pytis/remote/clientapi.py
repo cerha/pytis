@@ -117,6 +117,7 @@ class ClientUIBackend(object):
                 )
             elif sys.platform == 'darwin':
                 backends = (
+                    MacUIBackend,
                     TkUIBackend,
                     WxUIBackend,
                     ZenityUIBackend,
@@ -652,6 +653,81 @@ class TkUIBackend(ClipboardUIBackend):
     def _select_directory(self, title, directory):
         import tkinter.filedialog
         return tkinter.filedialog.askdirectory(title=title, parent=self._root, initialdir=directory)
+
+class MacUIBackend(ClientUIBackend):
+    """Implements UI backend operations using Mac Automation JXA (JavaScript) scripting."""
+
+    _DEPENDS = ClipboardUIBackend._DEPENDS + ('applescript',)
+
+    class App(object):
+        def __getattr__(self, name):
+            def method(*args, **kwargs):
+                import applescript
+                import json
+                script = '\n'.join((
+                    'var app = Application.currentApplication()',
+                    'app.includeStandardAdditions = true',
+                    'var result = app.{}({}{})'.format(
+                        name,
+                        json.dumps(args)[1:-1] + ', ' if args else '',
+                        json.dumps(kwargs),
+                    ),
+                    'if (!result) result = null',
+                    'else if (result.map) result = result.map(x => x.toString())',
+                    'else if (Object.keys(result).length === 0) result = result.toString()',
+                    'JSON.stringify(result)',
+                ))
+                r = applescript.run(script, javascript=True)
+                if r.err:
+                    return None
+                else:
+                    return json.loads(r.out)
+            return method
+
+    def init(self):
+        self._app = self.App()
+
+    def _enter_text(self, title, label, password):
+        result = self._app.displayDialog(label or title,
+                                         defaultAnswer="",
+                                         withIcon="note",
+                                         hiddenAnswer=password)
+        return result and result['textReturned']
+
+    def _select_option(self, title, label, columns, data, return_column):
+        choices = ['   '.join(row) for row in data]
+        result = self._app.chooseFromList(
+            choices,
+            withTitle=title,
+            withPrompt=label,
+        )
+        if result:
+            i = choices.index(result[0])
+            return data[i][return_column - 1]
+        else:
+            return None
+
+    def _select_file(self, title, directory, filename, patterns, extension, save, multi):
+        kwargs = {}
+        if save:
+            dialog = self._app.chooseFileName
+            if filename:
+                kwargs['defaultName'] = filename
+        else:
+            dialog = self._app.chooseFile
+            kwargs['multipleSelectionsAllowed'] = multi
+        if directory:
+            kwargs['defaultLocation'] = directory
+        return self._unicode(dialog(withPrompt=title, **kwargs))
+
+    def _select_directory(self, title, directory):
+        return self._unicode(self._app.chooseFolder(withPrompt=title))
+
+    def _get_clipboard_text(self):
+        return self._unicode(self._app.theClipboard())
+
+    def _set_clipboard_text(self, text):
+        self._app.setTheClipboardTo(text)
 
 
 class ZenityUIBackend(ClipboardUIBackend):
