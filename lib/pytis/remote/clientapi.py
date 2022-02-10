@@ -313,7 +313,7 @@ class ClientUIBackend(object):
         """Return the text stored in system clipboard on user's machine."""
         return self._unicode(self._get_clipboard_text())
 
-    def _get_clipboard_text(self, directory):
+    def _get_clipboard_text(self):
         raise NotImplementedError('%s._get_clipboard_text()' % self.__class__.__name__)
 
     def set_clipboard_text(self, text):
