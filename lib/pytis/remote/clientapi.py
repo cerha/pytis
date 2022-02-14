@@ -656,7 +656,20 @@ class TkUIBackend(ClipboardUIBackend):
         return tkinter.filedialog.askdirectory(title=title, parent=self._root, initialdir=directory)
 
 class MacUIBackend(ClientUIBackend):
-    """Implements UI backend operations using Mac Automation JXA (JavaScript) scripting."""
+    """Implements UI backend operations using Mac Automation JXA (JavaScript) scripting.
+
+    Mac Automation Scripting Guide:
+
+    https://developer.apple.com/library/archive/documentation/LanguagesUtilities/Conceptual/MacAutomationScriptingGuide/PromptforaChoicefromaList.html
+
+    AppleScript Command Reference:
+
+    https://developer.apple.com/library/archive/documentation/AppleScript/Conceptual/AppleScriptLangGuide/reference/ASLR_cmds.html
+
+    JavaScript method and argument names are CamelCased ActionScript commands
+    and arguments.
+
+    """
 
     class App(object):
         def __getattr__(self, name):
