@@ -658,8 +658,6 @@ class TkUIBackend(ClipboardUIBackend):
 class MacUIBackend(ClientUIBackend):
     """Implements UI backend operations using Mac Automation JXA (JavaScript) scripting."""
 
-    _DEPENDS = ClipboardUIBackend._DEPENDS + ('applescript',)
-
     class App(object):
         def __getattr__(self, name):
             def method(*args, **kwargs):
