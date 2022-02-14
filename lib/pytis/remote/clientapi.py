@@ -52,6 +52,7 @@ from past.builtins import execfile
 
 import hashlib
 import io
+import json
 import os
 import random
 import rpyc
@@ -662,8 +663,6 @@ class MacUIBackend(ClientUIBackend):
     class App(object):
         def __getattr__(self, name):
             def method(*args, **kwargs):
-                import applescript
-                import json
                 script = '\n'.join((
                     'var app = Application.currentApplication()',
                     'app.includeStandardAdditions = true',
@@ -677,11 +676,12 @@ class MacUIBackend(ClientUIBackend):
                     'else if (Object.keys(result).length === 0) result = result.toString()',
                     'JSON.stringify(result)',
                 ))
-                r = applescript.run(script, javascript=True)
-                if r.err:
-                    return None
+                r = subprocess.run(('osascript', '-l', 'JavaScript', '-e', script),
+                                   capture_output=True)
+                if r.returncode == 0:
+                    return json.loads(r.stdout)
                 else:
-                    return json.loads(r.out)
+                    return None
             return method
 
     def init(self):
