@@ -3397,7 +3397,7 @@ def select_file(filename=None, patterns=(), pattern=None, context='default'):
         for given pattern(s), such item is added as the first (and thus the
         initially selected) entry with label "Files of the required type".
       context -- selector of the memory for keeping track of the most recently
-        used directory.  In not None, the initial dialog directory will be
+        used directory.  If not None, the initial dialog directory will be
         loaded from given memory and the memory will be updated by the path of
         the selected file when the dialog is closed.  The selector is an
         arbitrary string - for each unique string the most recently used
