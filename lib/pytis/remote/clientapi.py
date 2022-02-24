@@ -687,12 +687,18 @@ class MacUIBackend(ClientUIBackend):
                     'else if (Object.keys(result).length === 0) result = result.toString()',
                     'JSON.stringify(result)',
                 ))
-                r = subprocess.run(('osascript', '-l', 'JavaScript', '-e', script),
-                                   capture_output=True)
-                if r.returncode == 0:
-                    return json.loads(r.stdout)
+                cmd = ('osascript', '-l', 'JavaScript', '-e', script)
+                if sys.version_info[0] == 2:
+                    try:
+                        return json.loads(subprocess.check_output(cmd))
+                    except subprocess.CalledProcessError:
+                        return None
                 else:
-                    return None
+                    r = subprocess.run(cmd, capture_output=True)
+                    if r.returncode == 0:
+                        return json.loads(r.stdout)
+                    else:
+                        return None
             return method
 
     def init(self):
