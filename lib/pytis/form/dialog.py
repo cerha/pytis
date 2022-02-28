@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2019-2021 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2019-2022 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2018 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -1144,7 +1144,7 @@ class FileDialog(Dialog):
     _last_directory = {}
 
     def __init__(self, parent, title=None, dir=None, file=None, mode=OPEN,
-                 wildcards=(_("All files") + " (*.*)|*.*",),
+                 wildcards=(_("All files"), "*"),
                  multi=False, overwrite_prompt=True):
         """Inicializuj dialog.
 
