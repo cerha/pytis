@@ -1205,6 +1205,8 @@ class FileDialog(Dialog):
                                          message=self._title,
                                          defaultDir=directory,
                                          defaultFile=self._file or '',
+                                         # TODO: We may need to construct the wildcards
+                                         # to be case insensitive, such as '*.[jJ][pP][gG]':
                                          wildcard='|'.join(self._wildcards),
                                          style=style)
         result = d.ShowModal()

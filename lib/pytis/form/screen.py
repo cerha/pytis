@@ -3299,19 +3299,25 @@ def wx_text_view(parent, content, format=TextFormat.PLAIN, width=None, height=No
 # Only those combinations which were practically in use at the time of this
 # writing were implemented.  Others may be added later as necessary.
 
-def _wildcards(patterns, pattern):
-    # TODO: We may need to construct the filename matchers to be case insensitive,
-    # such as '*.[jJ][pP][gG]' on GTK:
-    # ''.join(['[%s%s]' % (c.lower(), c.upper()) if c.isalpha() else c for c in template])
-    patterns = list(patterns) + [(_("All files"), "*.*")]
-    if pattern and xtuple(pattern) not in [xtuple(pat) for label, pat in patterns]:
-        patterns.insert(0, (_("Files of the required type"), pattern))
-    return functools.reduce(
-        lambda a, b: a + ("%s (%s)" % (b[0], ', '.join(xtuple(b[1]))),
-                          ';'.join(xtuple(b[1]))),
-        patterns,
-        (),
-    )
+def _wildcards(filetypes, patterns, pattern):
+    if filetypes:
+        wildcards = (_("Files of the required type") + ' (' + ', '.join(filetypes) + ')',
+                     ';'.join(['*.{}'.format(ext) for ext in filetypes]),
+                     _("All files"), "*")
+    elif patterns or pattern:
+        # Temporary backwards compatibility treatment.
+        patterns = list(patterns) + [(_("All files"), "*")]
+        if pattern and xtuple(pattern) not in [xtuple(pat) for label, pat in patterns]:
+            patterns.insert(0, (_("Files of the required type"), pattern))
+        wildcards = functools.reduce(
+            lambda a, b: a + ("%s (%s)" % (b[0], ', '.join(xtuple(b[1]))),
+                              ';'.join(xtuple(b[1]))),
+            patterns,
+            (),
+        )
+    else:
+        wildcards = ()
+    return wildcards
 
 
 def _client_mode():
@@ -3374,7 +3380,7 @@ def _get_recent_directory(client_mode, context):
     return directory
 
 
-def select_file(filename=None, patterns=(), pattern=None, context='default'):
+def select_file(filename=None, patterns=(), pattern=None, filetypes=None, context='default'):
     """Return a filename selected by the user in a GUI dialog.
 
     Returns None if the user cancels the dialog.  If remote client connection
@@ -3383,19 +3389,12 @@ def select_file(filename=None, patterns=(), pattern=None, context='default'):
     Arguments:
 
       filename -- initial (default) filename or None
-      patterns -- a sequence of pairs (LABEL, PATTERN) determining the
-        filename filters available within the dialog (for backends which
-        support it).  Label is a user visible description of the filter,
-        such as "PDF document".  PATTERN is a filename pattern as a
-        basestring, such as '*.pdf', or a sequence of such patterns, such
-        as ('*.jpg', '*.jpeg', '*.png', '*.gif') if multiple file types are
-        to match a single filter.  An additional entry "All files" with
-        pattern '*.*' is always added automatically to the end.  The first
-        item is the initially selected filter in the dialog.
-      pattern -- the required file name pattern as a basestring, sequence of
-        basestrings or 'None'.  If 'patterns' don't already contain an entry
-        for given pattern(s), such item is added as the first (and thus the
-        initially selected) entry with label "Files of the required type".
+      filetypes -- sequence of allowed filename extensions as case insensitive
+        strings.  If present (not None), only files of given types will be
+        available for selection.  The exact behavior depends on the Client OS.
+        Non-matching files are grayed out on Mac OS and completely hidden on
+        Linux and Windows.
+      patterns, pattern -- Depracated, use filetypes.
       context -- selector of the memory for keeping track of the most recently
         used directory.  If not None, the initial dialog directory will be
         loaded from given memory and the memory will be updated by the path of
@@ -3408,11 +3407,12 @@ def select_file(filename=None, patterns=(), pattern=None, context='default'):
     directory = _get_recent_directory(cmode, context)
     if cmode == 'remote':
         result = pytis.remote.select_file(filename=filename, directory=directory,
-                                          patterns=patterns, pattern=pattern, multi=False)
+                                          patterns=patterns, pattern=pattern,
+                                          filetypes=filetypes, multi=False)
     elif cmode == 'local':
         result = pytis.form.run_dialog(pytis.form.FileDialog, file=filename, dir=directory,
                                        mode=pytis.form.FileDialog.OPEN, multi=False,
-                                       wildcards=_wildcards(patterns, pattern))
+                                       wildcards=_wildcards(filetypes, patterns, pattern))
     else:
         result = None
     if context and result:
@@ -3420,7 +3420,7 @@ def select_file(filename=None, patterns=(), pattern=None, context='default'):
     return result
 
 
-def select_files(directory=None, patterns=(), pattern=None, context='default'):
+def select_files(directory=None, patterns=(), pattern=None, filetypes=None, context='default'):
     """Return a tuple of filenames selected by the user in a GUI dialog.
 
     Returns empty tuple if the user cancels the dialog.  If remote client
@@ -3430,7 +3430,7 @@ def select_files(directory=None, patterns=(), pattern=None, context='default'):
     Arguments:
 
       directory -- the initial directory or None
-      patterns, pattern -- see 'pyts.form.select_file()'
+      patterns, pattern, filetypes -- see 'pyts.form.select_file()'
       context -- see 'pyts.form.select_file()' - unused if 'directory' not None.
 
     """
@@ -3441,12 +3441,12 @@ def select_files(directory=None, patterns=(), pattern=None, context='default'):
     else:
         context = None  # Prevent storing the passed directory when dialog closed.
     if cmode == 'remote':
-        result = pytis.remote.select_file(directory=directory,
-                                          patterns=patterns, pattern=pattern, multi=True)
+        result = pytis.remote.select_file(directory=directory, patterns=patterns, pattern=pattern,
+                                          filetypes=filetypes, multi=True)
     elif cmode == 'local':
         result = pytis.form.run_dialog(pytis.form.FileDialog, dir=directory,
                                        mode=pytis.form.FileDialog.OPEN, multi=True,
-                                       wildcards=_wildcards(patterns, pattern))
+                                       wildcards=_wildcards(filetypes, patterns, pattern))
     else:
         result = None
     if context and result:
@@ -3479,7 +3479,7 @@ def select_directory(context='default'):
 
 
 def make_selected_file(filename, mode='w', encoding=None, patterns=(), pattern=None,
-                       context='default'):
+                       filetypes=None, context='default'):
     """Return a write-only 'file' like object of a user selected file.
 
     The file is selected by the user using a GUI dialog.  Returns 'None' if the
@@ -3492,7 +3492,7 @@ def make_selected_file(filename, mode='w', encoding=None, patterns=(), pattern=N
       filename -- default filename or None
       mode -- default mode for opening the file
       encoding -- output encoding, string or None
-      patterns, pattern -- see 'pyts.form.select_file()'
+      patterns, pattern, filetypes -- see 'pyts.form.select_file()'
       context -- see 'pyts.form.select_file()'
 
     """
@@ -3504,11 +3504,12 @@ def make_selected_file(filename, mode='w', encoding=None, patterns=(), pattern=N
     if cmode == 'remote':
         result = pytis.remote.make_selected_file(filename=filename, directory=directory,
                                                  mode=mode, encoding=encoding,
-                                                 patterns=patterns, pattern=pattern)
+                                                 patterns=patterns, pattern=pattern,
+                                                 filetypes=filetypes)
     elif cmode == 'local':
         path = pytis.form.run_dialog(pytis.form.FileDialog, file=filename, dir=directory,
                                      mode=pytis.form.FileDialog.SAVE,
-                                     wildcards=_wildcards(patterns, pattern))
+                                     wildcards=_wildcards(filetypes, patterns, pattern))
         if path:
             result = open(path, mode)
         else:
@@ -3521,7 +3522,7 @@ def make_selected_file(filename, mode='w', encoding=None, patterns=(), pattern=N
 
 
 def write_selected_file(data, filename, mode='w', encoding=None, patterns=(), pattern=None,
-                        context='default'):
+                        filetypes=None, context='default'):
     """Write 'data' to a file selected by the user using a GUI dialog.
 
     The file is selected by the user using a GUI dialog.  Returns 'True' if the
@@ -3535,12 +3536,13 @@ def write_selected_file(data, filename, mode='w', encoding=None, patterns=(), pa
       filename -- default filename or None
       mode -- default mode for opening the file
       encoding -- output encoding, string or None
-      patterns, pattern -- see 'pyts.form.select_file()'
+      patterns, pattern, filetypes -- see 'pyts.form.select_file()'
       context -- see 'pyts.form.select_file()'
 
     """
     f = make_selected_file(filename=filename, mode=mode, encoding=encoding,
-                           patterns=patterns, pattern=pattern, context=context)
+                           patterns=patterns, pattern=pattern, filetypes=filetypes,
+                           context=context)
     if f:
         if sys.version_info[0] == 2 and isinstance(data, bytes):
             # TODO: The older version of P2Go's pytisproc.py currently distributed
@@ -3559,7 +3561,7 @@ def write_selected_file(data, filename, mode='w', encoding=None, patterns=(), pa
         return False
 
 
-def open_selected_file(patterns=(), pattern=None, encrypt=None, context='default'):
+def open_selected_file(patterns=(), pattern=None, filetypes=None, encrypt=None, context='default'):
     """Return a read-only 'file' like object of a user selected file and its filename.
 
     The file is selected by the user using a GUI dialog.  Returns a pair (fh,
@@ -3568,7 +3570,7 @@ def open_selected_file(patterns=(), pattern=None, encrypt=None, context='default
 
     Arguments:
 
-      patterns, pattern -- see 'pyts.form.select_file()'
+      patterns, pattern, filetypes -- see 'pyts.form.select_file()'
       encrypt -- list of encryption keys to use to encrypt the file; if the
         list is empty then let the user select the keys; if 'None' then
         don't encrypt the file
@@ -3580,7 +3582,8 @@ def open_selected_file(patterns=(), pattern=None, encrypt=None, context='default
     directory = _get_recent_directory(cmode, context)
     if cmode == 'remote':
         f = pytis.remote.open_selected_file(directory=directory, encrypt=encrypt,
-                                            patterns=patterns, pattern=pattern)
+                                            patterns=patterns, pattern=pattern,
+                                            filetypes=filetypes)
         if f:
             # Quict hack: unistr makes a local string from rpyc netref.
             # Othervise fails with RPyC AttributeError on p.rfind('/') in posixpath.py
@@ -3595,7 +3598,7 @@ def open_selected_file(patterns=(), pattern=None, encrypt=None, context='default
     elif cmode == 'local':
         filename = pytis.form.run_dialog(pytis.form.FileDialog, dir=directory,
                                          mode=pytis.form.FileDialog.OPEN,
-                                         wildcards=_wildcards(patterns, pattern))
+                                         wildcards=_wildcards(filetypes, patterns, pattern))
         if filename:
             if context:
                 pytis.form.set_recent_directory((cmode, context), os.path.dirname(filename))

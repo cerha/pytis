@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2022 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2021 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2011-2018 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -363,11 +363,19 @@ def open_file(filename, mode, encoding=None, encrypt=None, decrypt=False):
                                                   filename=filename, error=e))
 
 
-def open_selected_file(directory=None, patterns=(), pattern=None, encrypt=None):
+def open_selected_file(directory=None, patterns=(), pattern=None, filetypes=None, encrypt=None):
     assert directory is None or isinstance(directory, basestring), directory
     assert isinstance(patterns, (tuple, list)), patterns
     assert pattern is None or isinstance(pattern, (basestring, tuple, list)), pattern
     assert encrypt is None or isinstance(encrypt, list), encrypt
+    if filetypes:
+        # TODO: patterns and pattern will be removed and only filetypes will be supported
+        # in future Client API versions, but for now we need to implement filetypes using
+        # patterns because there are still clients with hardcoded pytisproc.py instead of
+        # server pushed Client API (which only support patterns/pattern).
+        assert isinstance(filetypes, (tuple, list)), filetypes
+        assert not patterns and not pattern, (filetypes, patterns, pattern)
+        patterns = ((_("Files of the required type"), ['*.' + ext for ext in filetypes]),)
     try:
         return _request('open_selected_file', directory=directory,
                         patterns=patterns, pattern=pattern, encrypt=encrypt)
@@ -376,7 +384,7 @@ def open_selected_file(directory=None, patterns=(), pattern=None, encrypt=None):
         pytis.form.run_dialog(pytis.form.Error, _("Unable to select a file for download: %s", e))
 
 
-def make_selected_file(directory=None, filename=None, patterns=(), pattern=None,
+def make_selected_file(directory=None, filename=None, patterns=(), pattern=None, filetypes=None,
                        encoding=None, mode='wb', decrypt=False):
     assert directory is None or isinstance(directory, basestring), directory
     assert filename is None or isinstance(filename, basestring), filename
@@ -384,6 +392,14 @@ def make_selected_file(directory=None, filename=None, patterns=(), pattern=None,
     assert pattern is None or isinstance(pattern, (basestring, tuple, list)), pattern
     assert encoding is None or isinstance(encoding, basestring), encoding
     assert mode is None or isinstance(mode, basestring), mode
+    if filetypes:
+        # TODO: patterns and pattern will be removed and only filetypes will be supported
+        # in future Client API versions, but for now we need to implement filetypes using
+        # patterns because there are still clients with hardcoded pytisproc.py instead of
+        # server pushed Client API (which only support patterns/pattern).
+        assert isinstance(filetypes, (tuple, list)), filetypes
+        assert not patterns and not pattern, (filetypes, patterns, pattern)
+        patterns = ((_("Files of the required type"), ['*.' + ext for ext in filetypes]),)
     try:
         return _request('make_selected_file', directory=directory, filename=filename,
                         patterns=patterns, pattern=pattern, encoding=encoding,
@@ -414,7 +430,7 @@ def select_directory(directory=None, title=_("Directory selection")):
 
 
 def select_file(filename=None, directory=None, title=None,
-                patterns=(), pattern=None, save=False, multi=False):
+                patterns=(), pattern=None, filetypes=None, save=False, multi=False):
     assert filename is None or isinstance(filename, basestring), filename
     assert directory is None or isinstance(directory, basestring), directory
     assert title is None or isinstance(title, basestring), title
@@ -423,6 +439,14 @@ def select_file(filename=None, directory=None, title=None,
     assert isinstance(save, bool), save
     assert not save, "Save can not be relied upon as long as there are old clients."
     assert isinstance(multi, bool), multi
+    if filetypes:
+        # TODO: patterns and pattern will be removed and only filetypes will be supported
+        # in future Client API versions, but for now we need to implement filetypes using
+        # patterns because there are still clients with hardcoded pytisproc.py instead of
+        # server pushed Client API (which only support patterns/pattern).
+        assert isinstance(filetypes, (tuple, list)), filetypes
+        assert not patterns and not pattern, (filetypes, patterns, pattern)
+        patterns = ((_("Files of the required type"), ['*.' + ext for ext in filetypes]),)
     if title is None:
         if save:
             title = _("Save file")
