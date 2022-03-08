@@ -39,13 +39,6 @@ machine running Pytis2Go.
 """
 from __future__ import print_function
 
-from future import standard_library
-from builtins import zip
-from builtins import range
-from builtins import object
-from past.builtins import basestring
-from past.builtins import execfile
-
 # Beware: These dependencies (and the others imported in this file later in runtime)
 # do not need to be installed on the application server, but on the client machine
 # running Pytis2go where this code is (only) executed (see module docstring).
@@ -62,9 +55,9 @@ import sys
 import tempfile
 import threading
 
-
-standard_library.install_aliases()
 str = type(u'')  # builtins.str does not work over RPyC...
+if sys.version_info[0] > 2:
+    basestring = str
 
 
 class BackendNotAvailable(Exception):
@@ -654,6 +647,7 @@ class TkUIBackend(ClipboardUIBackend):
     def _select_directory(self, title, directory):
         import tkinter.filedialog
         return tkinter.filedialog.askdirectory(title=title, parent=self._root, initialdir=directory)
+
 
 class MacUIBackend(ClientUIBackend):
     """Implements UI backend operations using Mac Automation JXA (JavaScript) scripting.
