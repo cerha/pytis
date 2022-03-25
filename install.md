@@ -23,12 +23,15 @@ package.
 For web applications use the Wiking framework which defines its own
 requirements.txt.
 
-Because wxPython binary packages are not available through PyPI, you need to run
-pip install as follows:
+Because wxPython binary packages are not available through PyPI, you need to
+pass the wxPython binary archive URL to `pip install`:
 
 ```
-pip install -r requirements.txt -f https://extras.wxpython.org/wxPython4/extras/linux/gtk3/debian-9
+pip install -r requirements.txt -f URL
 ```
+The URL for Debian is:
+  https://extras.wxpython.org/wxPython4/extras/linux/gtk3/debian-9
+For Ubuntu:
+  https://extras.wxpython.org/wxPython4/extras/linux/gtk3/ubuntu-18.04
 
-Change the URL above to match your system.  See https://wxpython.org/ for more
-details.
+See https://wxpython.org/ for more details.
