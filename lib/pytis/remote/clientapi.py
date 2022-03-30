@@ -127,7 +127,7 @@ class ClientUIBackend(object):
                     backend = subclass.__new__(subclass, *args, **kwargs)
                 except BackendNotAvailable:
                     continue
-                # print("Using %s" % backend)
+                # sys.stderr.write("Using %s\n" % backend)
                 return backend
             raise Exception(u'No suitable UI backend found.')
         else:
@@ -572,6 +572,7 @@ class TkUIBackend(ClipboardUIBackend):
         # Make it almost invisible - no decorations, 0 size, top left corner.
         root.overrideredirect(True)
         root.geometry('0x0+0+0')
+        root.call('wm', 'attributes', '.', '-topmost', '1')
         # Show window again and lift it to top so it can get focus,
         # otherwise dialogs will end up behind the terminal.
         root.deiconify()
