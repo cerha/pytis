@@ -377,6 +377,10 @@ class WxUIBackend(ClientUIBackend):
 
     def _select_file(self, title, directory, filename, patterns, extension, save, multi):
         import wx
+        # TODO: STAY_ON_TOP doesn't seem to have the desired effect on Windows.
+        # The window is probably only on top of other Windows of the same app,
+        # but we need to get it on top of the x2go session window which runs
+        # in a different process.
         style = wx.STAY_ON_TOP
         if save:
             # TODO: Overwrite prompt doesn't seem to appear on Mac OS X.
@@ -491,6 +495,8 @@ class Win32UIBackend(ClientUIBackend):
         # we get some parent window for CreateFileDialog.
         # Without this parent windows the method DoModal doesn't show
         # the dialog window on top...
+        # TODO: This hack doesn't seem to work on Windows 10.  The window
+        # stays behind even if we try to add win32con.MB_SYSTEMMODAL to flags.
         parent = win32ui.FindWindow(None, None)
         dialog = win32ui.CreateFileDialog(mode, extension, "%s" % filename or '*.*', flags,
                                           '|'.join(["%s|%s" % (self._pattern_label(label, pat),
