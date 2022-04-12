@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pytis 0.1\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2020-10-02 17:43+0200\n"
+"POT-Creation-Date: 2022-04-12 20:24+0200\n"
 "PO-Revision-Date: 2011-12-29 12:15+0100\n"
 "Last-Translator: Pavel Vohnout <vohnout@officehouse.cz>\n"
 "Language-Team: German <wiking@lists.freebsoft.org>\n"
@@ -28,49 +28,49 @@ msgstr ""
 msgid "Can't connect to database"
 msgstr ""
 
-#: ../lib/pytis/data/dbapi.py:226
+#: ../lib/pytis/data/dbapi.py:227
 msgid "Database interface error"
 msgstr ""
 
-#: ../lib/pytis/data/dbapi.py:245
+#: ../lib/pytis/data/dbapi.py:246
 msgid "Database connection timeout"
 msgstr ""
 
-#: ../lib/pytis/data/dbapi.py:247 ../lib/pytis/data/dbapi.py:381
+#: ../lib/pytis/data/dbapi.py:248 ../lib/pytis/data/dbapi.py:383
 msgid "Database connection error"
 msgstr ""
 
-#: ../lib/pytis/data/dbapi.py:261
+#: ../lib/pytis/data/dbapi.py:262
 msgid "Database operational error"
 msgstr ""
 
-#: ../lib/pytis/data/dbapi.py:268
+#: ../lib/pytis/data/dbapi.py:270
 msgid "Database internal error"
 msgstr ""
 
-#: ../lib/pytis/data/dbapi.py:272
+#: ../lib/pytis/data/dbapi.py:274
 msgid "Database integrity violation"
 msgstr ""
 
-#: ../lib/pytis/data/dbdata.py:291
+#: ../lib/pytis/data/dbdata.py:292
 msgid "Too many database connections"
 msgstr ""
 
-#: ../lib/pytis/data/dbdata.py:719
+#: ../lib/pytis/data/dbdata.py:722
 msgid "Database error"
 msgstr ""
 
-#: ../lib/pytis/data/dbdata.py:788
+#: ../lib/pytis/data/dbdata.py:791
 #, fuzzy
 msgid "Invalid user name or password"
 msgstr "Falsches Format für Datum oder Zeit "
 
-#: ../lib/pytis/data/postgresql.py:426 ../lib/pytis/data/postgresql.py:530
-#: ../lib/pytis/data/postgresql.py:542
+#: ../lib/pytis/data/postgresql.py:426 ../lib/pytis/data/postgresql.py:536
+#: ../lib/pytis/data/postgresql.py:548
 msgid "Method not implemented"
 msgstr ""
 
-#: ../lib/pytis/data/postgresql.py:3524
+#: ../lib/pytis/data/postgresql.py:3547
 #, fuzzy
 msgid "Invalid database counter value"
 msgstr "Falsches Datum oder Zeit "

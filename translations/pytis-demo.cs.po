@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pytis 0.1\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2020-10-30 18:19+0100\n"
+"POT-Creation-Date: 2022-04-12 20:24+0200\n"
 "PO-Revision-Date: 2020-10-09 11:51+0200\n"
 "Last-Translator: Tomáš Cerha <t.cerha@gmail.com>\n"
 "Language-Team: Czech <cs@li.org>\n"
@@ -132,23 +132,23 @@ msgstr "Zboží"
 msgid "Tree Order"
 msgstr "Stromové řazení"
 
-#: ../lib/pytis/demo/application.py:94 ../lib/pytis/demo/misc.py:611
+#: ../lib/pytis/demo/application.py:94 ../lib/pytis/demo/misc.py:614
 msgid "Foldable Tree"
 msgstr "Sbalovací strom"
 
-#: ../lib/pytis/demo/application.py:95 ../lib/pytis/demo/misc.py:629
+#: ../lib/pytis/demo/application.py:95 ../lib/pytis/demo/misc.py:632
 msgid "Long Table"
 msgstr "Dlouhá tabulka"
 
-#: ../lib/pytis/demo/application.py:96 ../lib/pytis/demo/misc.py:645
+#: ../lib/pytis/demo/application.py:96 ../lib/pytis/demo/misc.py:648
 msgid "Slow Long Table"
 msgstr ""
 
-#: ../lib/pytis/demo/application.py:97 ../lib/pytis/demo/misc.py:661
+#: ../lib/pytis/demo/application.py:97 ../lib/pytis/demo/misc.py:664
 msgid "Fast Long Table"
 msgstr ""
 
-#: ../lib/pytis/demo/application.py:98 ../lib/pytis/demo/misc.py:669
+#: ../lib/pytis/demo/application.py:98 ../lib/pytis/demo/misc.py:672
 msgid "Files and URLs"
 msgstr ""
 
@@ -322,58 +322,49 @@ msgstr ""
 msgid "Continent details"
 msgstr ""
 
-#: ../lib/pytis/demo/cb.py:123 ../lib/pytis/demo/cb.py:126
-#: ../lib/pytis/demo/cb.py:134 ../lib/pytis/demo/cb.py:139
+#: ../lib/pytis/demo/cb.py:123
 msgid "Shows the details of the currently selected main table record."
 msgstr ""
 
 #: ../lib/pytis/demo/cb.py:124
-msgid "New Tab"
-msgstr ""
-
-#: ../lib/pytis/demo/cb.py:127
 msgid "Other countries of the same continent"
 msgstr ""
 
-#: ../lib/pytis/demo/cb.py:130
+#: ../lib/pytis/demo/cb.py:127
 msgid ""
 "Displays a table of all countries from the same continent as the currently "
 "selected main form country."
 msgstr ""
 
-#: ../lib/pytis/demo/cb.py:132 ../lib/pytis/demo/cb.py:137
-msgid "New Tab 2"
-msgstr ""
-
-#: ../lib/pytis/demo/cb.py:135
+#: ../lib/pytis/demo/cb.py:129
 msgid "Wikipedia"
 msgstr ""
 
-#: ../lib/pytis/demo/cb.py:136
+#: ../lib/pytis/demo/cb.py:130
 msgid "Shows Wikipedia information about the currently selected country."
 msgstr ""
 
-#: ../lib/pytis/demo/cb.py:172
+#: ../lib/pytis/demo/cb.py:163
 msgid "Function Table"
 msgstr ""
 
-#: ../lib/pytis/demo/cb.py:187
+#: ../lib/pytis/demo/cb.py:178
 msgid "Fees"
 msgstr ""
 
-#: ../lib/pytis/demo/cb.py:198
+#: ../lib/pytis/demo/cb.py:189
 msgid "Really print?"
 msgstr ""
 
-#: ../lib/pytis/demo/cb.py:200
+#: ../lib/pytis/demo/cb.py:191
 msgid "Document title"
 msgstr ""
 
-#: ../lib/pytis/demo/cb.py:201
+#: ../lib/pytis/demo/cb.py:192
 msgid "Title"
 msgstr ""
 
-#: ../lib/pytis/demo/cb.py:211 ../lib/pytis/demo/cb.py:295
+#: ../lib/pytis/demo/cb.py:202 ../lib/pytis/demo/cb.py:286
 msgid "Printed!"
 msgstr ""
 
@@ -431,7 +422,7 @@ msgstr ""
 msgid "Select the product to set the price for."
 msgstr ""
 
-#: ../lib/pytis/demo/demoweb.py:121 ../lib/pytis/demo/misc.py:429
+#: ../lib/pytis/demo/demoweb.py:121 ../lib/pytis/demo/misc.py:426
 #: ../lib/pytis/demo/output/Products.py:49
 msgid "Price"
 msgstr ""
@@ -663,7 +654,7 @@ msgstr ""
 msgid "Lists users of the above selected group."
 msgstr ""
 
-#: ../lib/pytis/demo/misc.py:366 ../lib/pytis/demo/misc.py:432
+#: ../lib/pytis/demo/misc.py:366 ../lib/pytis/demo/misc.py:429
 msgid "Notes"
 msgstr ""
 
@@ -683,11 +674,11 @@ msgstr ""
 msgid "Unmarked"
 msgstr ""
 
-#: ../lib/pytis/demo/misc.py:387 ../lib/pytis/demo/misc.py:548
+#: ../lib/pytis/demo/misc.py:387 ../lib/pytis/demo/misc.py:551
 msgid "Date when the product was first included."
 msgstr ""
 
-#: ../lib/pytis/demo/misc.py:389 ../lib/pytis/demo/misc.py:549
+#: ../lib/pytis/demo/misc.py:389 ../lib/pytis/demo/misc.py:552
 msgid "Arbitrary internal notes about given product."
 msgstr ""
 
@@ -695,32 +686,36 @@ msgstr ""
 msgid "Product Page"
 msgstr ""
 
-#: ../lib/pytis/demo/misc.py:396 ../lib/pytis/demo/misc.py:442
+#: ../lib/pytis/demo/misc.py:396 ../lib/pytis/demo/misc.py:439
 msgid "Product Info"
 msgstr ""
 
-#: ../lib/pytis/demo/misc.py:430
+#: ../lib/pytis/demo/misc.py:427
 msgid "Available since"
 msgstr ""
 
-#: ../lib/pytis/demo/misc.py:443
+#: ../lib/pytis/demo/misc.py:440
 msgid "Shows web page generated from LCG structured text."
 msgstr ""
 
-#: ../lib/pytis/demo/misc.py:447
+#: ../lib/pytis/demo/misc.py:445
 msgid "Mark/unmark"
 msgstr ""
 
-#: ../lib/pytis/demo/misc.py:448
+#: ../lib/pytis/demo/misc.py:446
 msgid "Mark all"
 msgstr ""
 
-#: ../lib/pytis/demo/misc.py:449
+#: ../lib/pytis/demo/misc.py:447
 msgid "Unmark all"
 msgstr ""
 
-#: ../lib/pytis/demo/misc.py:451
+#: ../lib/pytis/demo/misc.py:449
 msgid "Mark selected"
+msgstr ""
+
+#: ../lib/pytis/demo/misc.py:451
+msgid "Unmark selected"
 msgstr ""
 
 #: ../lib/pytis/demo/misc.py:453
@@ -740,72 +735,77 @@ msgstr ""
 msgid "Marked %d rows"
 msgstr ""
 
-#: ../lib/pytis/demo/misc.py:525
+#: ../lib/pytis/demo/misc.py:484
+#, python-format
+msgid "Unmarked %d rows"
+msgstr ""
+
+#: ../lib/pytis/demo/misc.py:528
 msgid "-"
 msgstr ""
 
-#: ../lib/pytis/demo/misc.py:531
+#: ../lib/pytis/demo/misc.py:534
 msgid "XProducts"
 msgstr ""
 
-#: ../lib/pytis/demo/misc.py:535
+#: ../lib/pytis/demo/misc.py:538
 msgid "Price with VAT"
 msgstr ""
 
-#: ../lib/pytis/demo/misc.py:589
+#: ../lib/pytis/demo/misc.py:592
 msgid "Tree"
 msgstr ""
 
-#: ../lib/pytis/demo/misc.py:592 ../lib/pytis/demo/misc.py:619
+#: ../lib/pytis/demo/misc.py:595 ../lib/pytis/demo/misc.py:622
 msgid "ID"
 msgstr ""
 
-#: ../lib/pytis/demo/misc.py:593
+#: ../lib/pytis/demo/misc.py:596
 msgid "Tree ID"
 msgstr ""
 
-#: ../lib/pytis/demo/misc.py:594 ../lib/pytis/demo/misc.py:619
+#: ../lib/pytis/demo/misc.py:597 ../lib/pytis/demo/misc.py:622
 #: ../lib/pytis/demo/output/Products.py:48
 msgid "Name"
 msgstr ""
 
-#: ../lib/pytis/demo/misc.py:595 ../lib/pytis/demo/misc.py:619
+#: ../lib/pytis/demo/misc.py:598 ../lib/pytis/demo/misc.py:622
 msgid "Amount"
 msgstr ""
 
-#: ../lib/pytis/demo/misc.py:596 ../lib/pytis/demo/misc.py:620
+#: ../lib/pytis/demo/misc.py:599 ../lib/pytis/demo/misc.py:623
 msgid "Description"
 msgstr ""
 
-#: ../lib/pytis/demo/misc.py:676
+#: ../lib/pytis/demo/misc.py:679
 msgid "Open file"
 msgstr ""
 
-#: ../lib/pytis/demo/misc.py:677
+#: ../lib/pytis/demo/misc.py:680
 msgid "Open URL"
 msgstr ""
 
-#: ../lib/pytis/demo/misc.py:719
+#: ../lib/pytis/demo/misc.py:722
 msgid "Random numbers controlled by query fields"
 msgstr ""
 
-#: ../lib/pytis/demo/misc.py:722
+#: ../lib/pytis/demo/misc.py:725
 msgid "Row Count"
 msgstr ""
 
-#: ../lib/pytis/demo/misc.py:723
+#: ../lib/pytis/demo/misc.py:726
 msgid "Min"
 msgstr ""
 
-#: ../lib/pytis/demo/misc.py:724
+#: ../lib/pytis/demo/misc.py:727
 msgid "Max"
 msgstr ""
 
-#: ../lib/pytis/demo/misc.py:725
+#: ../lib/pytis/demo/misc.py:728
 msgid "Max must be greater than Min!"
 msgstr ""
 
-#: ../lib/pytis/demo/misc.py:737
+#: ../lib/pytis/demo/misc.py:740
 msgid "RangeTypes"
 msgstr ""
 
