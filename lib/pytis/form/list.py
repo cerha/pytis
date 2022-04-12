@@ -2899,11 +2899,14 @@ class BrowseForm(FoldableForm):
             menu = (
                 MItem(_("Cancel selection"),
                       command=ListForm.COMMAND_CLEAR_SELECTION(),
+                      icon='selection-cancel',
                       help=_("Cancel the selection of rows for bulk operations.")),
                 MItem(_("Add row to selection"),
                       command=ListForm.COMMAND_ADD_ROW_TO_SELECTION(),
+                      icon='selection-add',
                       help=_("Add this row to the current selection of rows for bulk operations.")),
                 MItem(_("Remove row from selection"),
+                      icon='selection-remove',
                       command=ListForm.COMMAND_REMOVE_ROW_FROM_SELECTION(),
                       help=_("Remove this row from the current selection of rows for bulk operations.")),
             )
