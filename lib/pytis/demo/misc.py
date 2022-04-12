@@ -441,15 +441,18 @@ class Products(Specification):
         )
 
     def actions(self):
-        return (Action('toggle', _("Mark/unmark"), self._mark, hotkey='m'),
-                Action('mark_all', _("Mark all"), self._mark, hotkey='Ctrl-a', mark_all=True),
-                Action('unmark_all', _("Unmark all"), self._mark, hotkey='Ctrl-u', mark_all=True,
-                       mark=False),
-                Action('mark_selected', _("Mark selected"), self._mark_selected,
-                       context=pp.ActionContext.SELECTION),
-                Action('prices', _("Update prices"), self._update_prices),
-                Action('print', _("Print price"), self._print),
-                )
+        return (
+            Action('toggle', _("Mark/unmark"), self._mark, hotkey='m'),
+            Action('mark_all', _("Mark all"), self._mark, hotkey='Ctrl-a', mark_all=True),
+            Action('unmark_all', _("Unmark all"), self._mark, hotkey='Ctrl-u', mark_all=True,
+                   mark=False),
+            Action('mark_selected', _("Mark selected"), self._mark_selected,
+                   context=pp.ActionContext.SELECTION),
+            Action('unmark_selected', _("Unmark selected"), self._unmark_selected,
+                   context=pp.ActionContext.SELECTION),
+            Action('prices', _("Update prices"), self._update_prices),
+            Action('print', _("Print price"), self._print),
+        )
 
     def row_style(self, row):
         if row['count'].value() <= row.form.query_fields.row['min_count'].value():
@@ -474,11 +477,14 @@ class Products(Specification):
         count = pytis.form.run_procedure('misc', 'mark_products', product_id=product_id, mark=mark)
         app.echo(_("Marked %d rows") % count)
 
-    def _mark_selected(self, rows):
+    def _mark_selected(self, rows, mark=True):
         count = pytis.form.run_procedure('misc', 'mark_products',
                                          product_id=[r['product_id'].value() for r in rows],
-                                         mark=True)
-        app.echo(_("Marked %d rows") % count)
+                                         mark=mark)
+        app.echo(_("Marked %d rows") % count if mark else _("Unmarked %d rows") % count)
+
+    def _unmark_selected(self, rows):
+        self._mark_selected(rows, mark=False)
 
     def _update_prices(self, row):
         # This serves for testing user transactions.
