@@ -2663,9 +2663,6 @@ class BrowseForm(FoldableForm):
                   command=ListForm.COMMAND_ACTIVATE(alternate=True),
                   help=_("Open a dual form with a table up and preview at the bottom."),
                   icon='show-record'),
-            MItem(_("Cancel selection"),
-                  command=ListForm.COMMAND_CLEAR_SELECTION(),
-                  help=_("Cancel the selection of rows for bulk operations.")),
         )
         structured_text_fields = [f for f in self._fields if f.text_format() == TextFormat.LCG]
         if structured_text_fields:
@@ -2761,18 +2758,23 @@ class BrowseForm(FoldableForm):
                 (prefix + pytis.output.P_KEY): self._current_key(),
                 (prefix + pytis.output.P_DATA): copy.copy(self._data)}
 
-    def _action_mitems(self, spec):
+    def _action_mitems(self, spec, context=None):
         items = []
         for x in spec:
             if isinstance(x, Action):
+                if context and x.context() != context:
+                    continue
                 cmd = self.COMMAND_CONTEXT_ACTION(action=x)
                 items.append(MItem(x.title(raw=True), command=cmd, help=x.descr()))
             elif isinstance(x, ActionGroup):
-                items.append(Menu(x.title(), self._action_mitems(x.items())))
+                group_actions = self._action_mitems(x.items(), context=context)
+                if group_actions:
+                    items.append(Menu(x.title(), group_actions))
             elif isinstance(x, (tuple, list)):
-                if items:
+                separated_items = self._action_mitems(x, context=context)
+                if items and separated_items:
                     items.append(MSeparator())
-                items.extend(self._action_mitems(x))
+                items.extend(separated_items)
             else:
                 raise ProgramError("Invalid action specification: %s" % x)
         return items
@@ -2881,45 +2883,55 @@ class BrowseForm(FoldableForm):
         return [mitem(*args) for args in linkspec]
 
     def _context_menu(self):
-        menu = self._context_menu_static_part
-        row = self.current_row()
-        select_arguments = self._current_arguments()
-        file_open_mitems = file_menu_items(self._fields, row, select_arguments)
-        if file_open_mitems:
-            menu += (MSeparator(),) + tuple(file_open_mitems)
-        if self._explicit_links or self._automatic_links or self._explicit_in_operator_links \
-                or self._automatic_in_operator_links:
-            menu += (MSeparator(),)
-        if self._explicit_links:
-            menu += tuple(self._link_mitems(row, self._explicit_links))
-        if self._automatic_links:
-            menu += (Menu(_("Links"), self._link_mitems(row, self._automatic_links)),)
-        if self._explicit_in_operator_links or self._automatic_in_operator_links:
-            if self._explicit_in_operator_links and self._automatic_in_operator_links:
-                separator = [MSeparator()]
-            else:
-                separator = []
-            menu += (Menu(_("Filter existing values (operator IN)"),
-                          (self._in_operator_mitems(row, self._explicit_in_operator_links) +
-                           separator +
-                           self._in_operator_mitems(row, self._automatic_in_operator_links))),
-                     Menu(_("Filter missing values (operator NOT IN)"),
-                          (self._in_operator_mitems(row, self._explicit_in_operator_links, True) +
-                           separator +
-                           self._in_operator_mitems(row, self._automatic_in_operator_links, True))),
-                     )
-        dual = self._dualform()
-        if self._view.bindings() and not (isinstance(dual, pytis.form.MultiBrowseDualForm) and
-                                          dual.main_form() == self):
-            menu += (MSeparator(),
-                     MItem(_("Open with side forms"),
-                           command=Application.COMMAND_RUN_FORM(
-                               name=self._name,
-                               form_class=pytis.form.MultiBrowseDualForm,
-                               select_row=self._current_key(),),
-                           help=_("Open the current record in a main form with "
-                                  "related data in side forms."),
-                           icon='link'))
+        if self._grid.IsSelection():
+            menu = (
+                MItem(_("Cancel selection"),
+                      command=ListForm.COMMAND_CLEAR_SELECTION(),
+                      help=_("Cancel the selection of rows for bulk operations.")),
+            )
+            actions = self._action_mitems(self._view.actions(), context=ActionContext.SELECTION)
+            if actions:
+                menu += (MSeparator(),) + tuple(actions)
+        else:
+            menu = self._context_menu_static_part
+            row = self.current_row()
+            select_arguments = self._current_arguments()
+            file_open_mitems = file_menu_items(self._fields, row, select_arguments)
+            if file_open_mitems:
+                menu += (MSeparator(),) + tuple(file_open_mitems)
+            if self._explicit_links or self._automatic_links or self._explicit_in_operator_links \
+               or self._automatic_in_operator_links:
+                menu += (MSeparator(),)
+            if self._explicit_links:
+                menu += tuple(self._link_mitems(row, self._explicit_links))
+            if self._automatic_links:
+                menu += (Menu(_("Links"), self._link_mitems(row, self._automatic_links)),)
+            if self._explicit_in_operator_links or self._automatic_in_operator_links:
+                if self._explicit_in_operator_links and self._automatic_in_operator_links:
+                    separator = [MSeparator()]
+                else:
+                    separator = []
+                menu += (Menu(_("Filter existing values (operator IN)"),
+                              (self._in_operator_mitems(row, self._explicit_in_operator_links) +
+                               separator +
+                               self._in_operator_mitems(row, self._automatic_in_operator_links))),
+                         Menu(_("Filter missing values (operator NOT IN)"),
+                              (self._in_operator_mitems(row, self._explicit_in_operator_links, True) +
+                               separator +
+                               self._in_operator_mitems(row, self._automatic_in_operator_links, True))),
+                         )
+            dual = self._dualform()
+            if self._view.bindings() and not (isinstance(dual, pytis.form.MultiBrowseDualForm) and
+                                              dual.main_form() == self):
+                menu += (MSeparator(),
+                         MItem(_("Open with side forms"),
+                               command=Application.COMMAND_RUN_FORM(
+                                   name=self._name,
+                                   form_class=pytis.form.MultiBrowseDualForm,
+                                   select_row=self._current_key(),),
+                               help=_("Open the current record in a main form with "
+                                      "related data in side forms."),
+                               icon='link'))
         return menu
 
     def _cmd_print(self, spec=None):
