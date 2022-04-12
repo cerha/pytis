@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2021 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2022 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2002-2016 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -202,6 +202,10 @@ Command(ListForm, 'CONTEXT_MENU',
         "Zobrazení kontextového menu aktivní buňky")
 Command(ListForm, 'CLEAR_SELECTION',
         "Clear the current selection of rows in the form.")
+Command(ListForm, 'ADD_ROW_TO_SELECTION',
+        "Add the current row to the current selection.")
+Command(ListForm, 'REMOVE_ROW_FROM_SELECTION',
+        "Remove the current row from the current selection.")
 Command(FoldableForm, 'EXPAND_OR_COLLAPSE',
         "Sbalování a rozbalování řádků")
 Command(FoldableForm, 'EXPAND_OR_COLLAPSE_SUBTREE',

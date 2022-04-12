@@ -2036,6 +2036,18 @@ class ListForm(RecordForm, TitledForm, Refreshable):
     def _cmd_clear_selection(self):
         self.unselect_selected_rows()
 
+    def _can_add_row_to_selection(self):
+        return not self._grid.IsInSelection(self._grid.GetGridCursorRow(), 0)
+
+    def _cmd_add_row_to_selection(self):
+        self._grid.SelectRow(self._grid.GetGridCursorRow(), True)
+
+    def _can_remove_row_from_selection(self):
+        return self._grid.IsInSelection(self._grid.GetGridCursorRow(), 0)
+
+    def _cmd_remove_row_from_selection(self):
+        self._grid.DeselectRow(self._grid.GetGridCursorRow())
+
     # Public methods
 
     def on_key_down(self, event, dont_skip=True):
@@ -2888,6 +2900,12 @@ class BrowseForm(FoldableForm):
                 MItem(_("Cancel selection"),
                       command=ListForm.COMMAND_CLEAR_SELECTION(),
                       help=_("Cancel the selection of rows for bulk operations.")),
+                MItem(_("Add row to selection"),
+                      command=ListForm.COMMAND_ADD_ROW_TO_SELECTION(),
+                      help=_("Add this row to the current selection of rows for bulk operations.")),
+                MItem(_("Remove row from selection"),
+                      command=ListForm.COMMAND_REMOVE_ROW_FROM_SELECTION(),
+                      help=_("Remove this row from the current selection of rows for bulk operations.")),
             )
             actions = self._action_mitems(self._view.actions(), context=ActionContext.SELECTION)
             if actions:
