@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2020 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2020, 2022 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2002-2013 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -470,4 +470,10 @@ def command_icon(command, args):
                     break
             else:
                 return icon
+    if command.name() == 'CONTEXT_ACTION' and args['action'].context() == 'SELECTION':
+        # Use 'selection' icon as the default for actions which operate on selection
+        # in order to distingush these actions for the user.  This is not perfect, as
+        # the distinction will disapear for actions which define their icons, but
+        # icons are actually asigned quite rarely so it mostly works in practice.
+        return 'selection'
     return None
