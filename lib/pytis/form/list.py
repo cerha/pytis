@@ -1844,7 +1844,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             return
         import pkgutil
         xls_available = pkgutil.find_loader('xlsxwriter') is not None
-        selection_active = len(self.selected_rows()) > 0
+        selection_active = self._grid.IsSelection()
         answers = run_form(
             InputForm, title=_("Export options"), fields=(
                 Field('scope', _("Scope"), enumerator=('all', 'selection'),
@@ -2031,7 +2031,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         return output.getvalue()
 
     def _can_clear_selection(self):
-        return len(self.selected_rows()) > 0
+        return self._grid.IsSelection()
 
     def _cmd_clear_selection(self):
         self.unselect_selected_rows()
