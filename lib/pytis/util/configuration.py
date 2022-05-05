@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2020 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2020, 2022 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2002-2016 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -947,14 +947,6 @@ class Configuration(object):
     class _Option_sender_address(StringOption):
         u"""E-mailová adresa odesílatele použitá např. jako odchozí adresa bug-reportů apod."""
         _DEFAULT = None
-
-    class _Option_clipboard_primary_selection(BooleanOption):
-        u"""Flag určující, zda se má při exportu použít primary selection."""
-        _DEFAULT = False
-
-    class _Option_use_wx_clipboard(BooleanOption):
-        u"""Flag určující, zda se má pro kopírování obsahu buňky použít wxClipboard"""
-        _DEFAULT = True
 
     class _Option_form_statistics(BooleanOption):
         u"""Flag povolující ukládání statistických informací o otevírání formulářů.
