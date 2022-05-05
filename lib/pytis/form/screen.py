@@ -188,13 +188,7 @@ def modal(window):
 
 
 def copy_to_clipboard(text):
-    """Copy given text into system clipboard.
-
-    Even though this function itself doesn't handle windows clipboard, the text
-    will be automatically propagated if pytis.remote is available thanks to
-    the 'Application._on_clipboard_copy' callback.
-
-    """
+    """Copy given text into system clipboard."""
     assert isinstance(text, basestring)
     log(EVENT, 'Copy text to system clipboard.')
     # Using the wx clipboard doesn't work depending on how the application is
