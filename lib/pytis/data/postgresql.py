@@ -1882,7 +1882,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
              "pg_class.relname = '%s'") %
             (schema, main_table_name,))
         self._pdbb_command_delete = _Query('delete from %s where %%(condition)s' % (main_table,))
-        self._pdbb_command_refresh = _Query('refresh materialized view %s' % (main_table,))
+        self._pdbb_command_refresh = _Query('refresh materialized view%%(concurrently)s %s' % (main_table,))
         self._pdbb_command_isolation = _Query('set transaction isolation level %(isolation)s'
                                               '%(read_only)s')
         self._pdbb_command_notify = _Query('notify "__modif_%s"' % (main_table.lower(),))
@@ -3473,14 +3473,20 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         log(ACTION, 'Rows deleted:', result)
         return result
 
-    def refresh(self):
+    def refresh(self, concurrently=True):
         """Refresh materialized view.
+
+        Arguments:
+
+          concurrently -- True if refresh should be done concurrently
 
         This method may be invoked only on materialized views.
 
         """
         self.close()
-        self._pg_query(self._pdbb_command_refresh)
+        concurrently_string = (" CONCURRENTLY" if concurrently else "")
+        args = dict(concurrently=_Query(concurrently_string))
+        self._pg_query(self._pdbb_command_refresh.update(args))
 
     # Locking
 
