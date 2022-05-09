@@ -335,7 +335,7 @@ class _PytisSchemaGenerator(sqlalchemy.engine.ddl.SchemaGenerator, _PytisSchemaH
                         else:
                             referencing = ''
                     if trigger.when is not None:
-                        when_clause = ' WHEN {} '.format(trigger.when)
+                        when_clause = ' WHEN ({}) '.format(trigger.when)
                     else:
                         when_clause = ''
                     trigger_call = trigger(*trigger.arguments)
