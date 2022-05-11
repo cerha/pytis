@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2021 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2022 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2018 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -2588,9 +2588,10 @@ class EditForm(RecordForm, TitledForm, Refreshable):
                 field = find(field_id, self._fields, key=lambda f: f.id())
                 if field is None:
                     log(OPERATIONAL, "Unknown field returned by focus_field:", field_id)
-        if field is None:
+        if not field and self._fields:
             field = find(True, self._fields, key=lambda f: f.enabled()) or self._fields[0]
-        field.set_focus(initial=True)
+        if field:
+            field.set_focus(initial=True)
 
     def _create_form_parts(self):
         # Create all parts and add them to top-level sizer.
@@ -2661,8 +2662,8 @@ class EditForm(RecordForm, TitledForm, Refreshable):
                          cmd.enabled(**args),
                          width=button.width() and dlg2px(parent, 4 * button.width()))
 
-    def _create_text(self, parent, text):
-        return wx.StaticText(parent, -1, text.text(), style=wx.ALIGN_LEFT)
+    def _create_text(self, parent, text, style=wx.ALIGN_LEFT, **kwargs):
+        return wx.StaticText(parent, -1, text.text(), style=style, **kwargs)
 
     def _create_lcg_content(self, parent, content):
         browser = Browser(parent)
@@ -3405,14 +3406,17 @@ class QueryFieldsForm(_VirtualEditForm):
     """Virtual form to be used internally for query fields (see list.py)."""
 
     def _full_init(self, resolver, name, query_fields, callback, **kwargs):
-        self._query_fields_apply_callback = callback
+        self._refresh_form_data = callback
         self._autoapply = autoapply = query_fields.autoapply()
         self._autoinit = autoinit = query_fields.autoinit()
+        self._last_refresh = query_fields.last_refresh()
         self._unapplied_query_field_changes = not autoinit
         self._unapplied_query_field_changes_after_restore = False
         self._initialized = autoinit
         self._save = query_fields.save()
         self._on_apply = query_fields.on_apply()
+        self._on_refresh = query_fields.on_refresh()
+        materialized_view = self._materialized_view = kwargs.pop('materialized_view', None)
         load = query_fields.load()
         kwargs.update(query_fields.view_spec_kwargs())
         fields = kwargs.pop('fields')
@@ -3423,7 +3427,18 @@ class QueryFieldsForm(_VirtualEditForm):
                   editable=Editable.NEVER,
                   computer=Computer(lambda r: True, depends=[f.id() for f in fields])),
         )
-        if not autoapply:
+        if materialized_view:
+            self._last_refresh_label_text = Text(_("Last refreshed: %s",
+                                                   self._last_refresh_value(initial=True)))
+            layout = GroupSpec((layout, (
+                Button(
+                    _("Refresh view"),
+                    handler=self._refresh_materialized_view,
+                    tooltip=_("Refresh the underlying database object."),
+                ),
+                self._last_refresh_label_text,
+            )))
+        elif not autoapply:
             layout = GroupSpec((layout, GroupSpec((Button(
                 _("Apply"),
                 handler=self._apply_query_fields,
@@ -3432,7 +3447,7 @@ class QueryFieldsForm(_VirtualEditForm):
         _VirtualEditForm._full_init(self, resolver, name, layout=layout, fields=fields, **kwargs)
         self._row.register_callback(self._row.CALL_CHANGE, '__changed',
                                     self._on_query_fields_changed)
-        if not autoapply and autoinit:
+        if not materialized_view and not autoapply and autoinit:
             self._query_fields_apply_button.Enable(False)
         # Set the popup window size according to the ideal form size limited to
         # the screen size.  If the form size exceeds the screen, scrollbars
@@ -3450,6 +3465,17 @@ class QueryFieldsForm(_VirtualEditForm):
         result = super(QueryFieldsForm, self)._create_button(parent, button)
         if button.handler() == self._apply_query_fields:
             self._query_fields_apply_button = result
+        if button.handler() == self._refresh_materialized_view:
+            self._query_fields_refresh_button = result
+        return result
+
+    def _create_text(self, parent, text, **kwargs):
+        if text is self._last_refresh_label_text:
+            kwargs['size'] = (250, 20)
+            kwargs['style'] = wx.ALIGN_LEFT | wx.ST_NO_AUTORESIZE
+        result = super(QueryFieldsForm, self)._create_text(parent, text, **kwargs)
+        if text is self._last_refresh_label_text:
+            self._last_refresh_label = result
         return result
 
     def _set_focus_field(self, event=None):
@@ -3463,7 +3489,7 @@ class QueryFieldsForm(_VirtualEditForm):
 
     def _on_idle(self, event):
         super(QueryFieldsForm, self)._on_idle(event)
-        if not self._autoapply:
+        if not self._autoapply and not self._materialized_view:
             enabled = self._unapplied_query_field_changes and all(f.valid() for f in self._fields)
             self._query_fields_apply_button.Enable(enabled)
         if self._unapplied_query_field_changes_after_restore:
@@ -3485,7 +3511,7 @@ class QueryFieldsForm(_VirtualEditForm):
             self._unapplied_query_field_changes = True
             self._initialized = True
 
-    def _apply_query_fields(self, row, interactive=True):
+    def _apply_query_fields(self, row, interactive=True, refresh_form=True):
         if ((all(f.validate(interactive=interactive) for f in self._fields) and
              self._do_check_record(row))):
             self._initialized = True
@@ -3493,8 +3519,35 @@ class QueryFieldsForm(_VirtualEditForm):
                 self._save(row)
             if self._on_apply:
                 self._on_apply(row)
-            self._query_fields_apply_callback(row)
+            if refresh_form:
+                self._refresh_form_data(row)
             self._unapplied_query_field_changes = False
+
+    def _last_refresh_value(self, initial=False):
+        if self._last_refresh:
+            timestamp = self._last_refresh()
+        elif not initial:
+            timestamp = pytis.data.LocalDateTime.datetime()
+        else:
+            timestamp = None
+        value = pytis.data.Value(pytis.data.LocalDateTime(), timestamp)
+        return value.export() or _("unknown")
+
+    def _refresh_materialized_view(self, row):
+        busy_cursor(True)
+        self._query_fields_refresh_button.Enable(False)
+        pytis.form.wx_yield_(full=True)
+        try:
+            self._materialized_view.refresh()
+            if self._on_refresh:
+                self._on_refresh(row)
+            self._refresh_form_data(row)
+            if not self._autoapply:
+                self._apply_query_fields(row, interactive=True, refresh_form=False)
+            self._last_refresh_label.SetLabel(_("Last refreshed: %s", self._last_refresh_value()))
+        finally:
+            busy_cursor(False)
+            self._query_fields_refresh_button.Enable(True)
 
     def restore(self):
         if not self._autoapply and self._unapplied_query_field_changes:

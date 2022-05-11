@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2021 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2022 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2017 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -1263,8 +1263,9 @@ class QueryFields(object):
 
     """
 
-    def __init__(self, fields, autoapply=False, autoinit=False, layout=None, load=None,
-                 save=None, on_main_form_selection=None, on_apply=None, **kwargs):
+    def __init__(self, fields=(), autoapply=False, autoinit=False, layout=None, load=None,
+                 save=None, on_main_form_selection=None, on_apply=None,
+                 materialized_view=False, last_refresh=None, on_refresh=None, **kwargs):
         """Arguments:
 
         fields -- field specifications as in ViewSpec
@@ -1289,20 +1290,41 @@ class QueryFields(object):
           callback, both are PresentedRow instances.  The first argument
           represents the selected main form row and the second represents the
           query fields.
-        on_apply -- callback called when the 'Apply' button is pressed (when
+        on_apply -- callback called when the "Apply" button is pressed (when
           autoapply is False) or when the form is automatically reloaded after
-          a query fields change (when after autoapply is True).  The callback
-          is called before calling 'argument_provider' or 'condition_provider'.
+          a query fields change (when autoapply is True).  The callback is
+          called before calling 'argument_provider' or 'condition_provider' and
+          receives a single argument — a 'PresentedRow' instance.
+        materialized_view -- if True, the underlying DB object is supposed to
+          be an SQL materialized view.  This slightly changes query fields
+          behavior.  The "Apply" button is replaced by a "Refresh view" button,
+          which does three things: 1) refreshes the underlying materialized view,
+          2) applies the query fields (if defined and if 'autoapply' is not
+          set) as the "Apply" button would, 3) updates the last refresh time
+          displayed under the "Refresh view" button.
+        last_refresh -- a function to obtain the last refresh time.  Only
+          applicable if materialized_view is True.  Called without arguments.
+          Returns a Python 'datatime.datatime' instance.
+        on_refresh -- callback function called when "Refresh view" button is
+          pressed after refreshing the form's underlying materialized view in
+          the database.
         kwargs -- other ViewSpec constructor arguments
 
         """
-        assert fields and isinstance(fields, (tuple, list)), fields
+        assert isinstance(fields, (tuple, list)), fields
         assert (on_main_form_selection is None or callable(on_main_form_selection)), \
             on_main_form_selection
         assert (on_apply is None or callable(on_apply)), on_apply
+        assert isinstance(materialized_view, bool)
+        assert (last_refresh is None or callable(last_refresh)), last_refresh
+        assert (on_refresh is None or callable(on_refresh)), on_refresh
+        assert materialized_view or (not last_refresh and not on_refresh), \
+            (materialized_view, last_refresh, on_refresh)
         if __debug__:
             for f in fields:
                 assert isinstance(f, Field), f
+        if not fields:
+            fields = (pytis.presentation.Field('_key', visible=False),)
         if layout is None:
             layout = [f.id() for f in fields if f.visible()]
         if isinstance(layout, (tuple, list)):
@@ -1313,6 +1335,9 @@ class QueryFields(object):
         self._save = save
         self._on_main_form_selection = on_main_form_selection
         self._on_apply = on_apply
+        self._materialized_view = materialized_view
+        self._last_refresh = last_refresh
+        self._on_refresh = on_refresh
         self._fields = tuple(fields)
         self._layout = layout
         self._kwargs = kwargs
@@ -1344,6 +1369,18 @@ class QueryFields(object):
     def on_apply(self):
         """Return value of the argument 'on_apply' passed to the constructor."""
         return self._on_apply
+
+    def materialized_view(self):
+        """Return value of the argument 'materialized_view' passed to the constructor."""
+        return self._materialized_view
+
+    def last_refresh(self):
+        """Return value of the argument 'last_refresh' passed to the constructor."""
+        return self._last_refresh
+
+    def on_refresh(self):
+        """Return value of the argument 'on_refresh' passed to the constructor."""
+        return self._on_refresh
 
     def view_spec_kwargs(self):
         """Return constructor arguments for ViewSpec instance creation."""

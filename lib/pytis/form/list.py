@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2020 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2022 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2017 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -456,8 +456,9 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             self._query_fields_form = form = QueryFieldsForm(
                 panel, pytis.config.resolver, None,
                 query_fields=query_fields,
-                callback=self._apply_query_fields,
+                callback=self._on_query_fields_refresh,
                 prefill=self._query_field_values,
+                materialized_view=self._data if query_fields.materialized_view() else None,
             )
             self._query_fields_panel_buttons = buttons = (
                 wx_button(panel, label=_("Minimize"),
@@ -488,7 +489,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         else:
             self._query_fields_form = None
 
-    def _apply_query_fields(self, row):
+    def _on_query_fields_refresh(self, row):
         self.refresh(interactive=True, reload_query_fields=False)
         self._grid.SetFocus()
 
