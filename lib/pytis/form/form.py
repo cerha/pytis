@@ -2626,7 +2626,7 @@ class EditForm(RecordForm, TitledForm, Refreshable):
         # Create the layout groups.
         group_sizer = self._create_group(panel, group)
         # Add outer sizer with margins and alignment.
-        sizer = wx.BoxSizer(wx.VERTICAL)
+        sizer = wx.BoxSizer(wx.HORIZONTAL)
         sizer.Add(group_sizer, 0, wx.ALIGN_CENTER | wx.LEFT | wx.RIGHT, 8)
         panel.SetSizer(sizer)
         # SetMinSize is necessary here in order to get correct results from
@@ -2662,8 +2662,8 @@ class EditForm(RecordForm, TitledForm, Refreshable):
                          cmd.enabled(**args),
                          width=button.width() and dlg2px(parent, 4 * button.width()))
 
-    def _create_text(self, parent, text, style=wx.ALIGN_LEFT, **kwargs):
-        return wx.StaticText(parent, -1, text.text(), style=style, **kwargs)
+    def _create_text(self, parent, text):
+        return wx.StaticText(parent, -1, text.text(), style=wx.ALIGN_LEFT)
 
     def _create_lcg_content(self, parent, content):
         browser = Browser(parent)
@@ -3420,31 +3420,13 @@ class QueryFieldsForm(_VirtualEditForm):
         load = query_fields.load()
         kwargs.update(query_fields.view_spec_kwargs())
         fields = kwargs.pop('fields')
-        layout = kwargs.pop('layout')
         fields += (
             # Add hidden virtual field just for tracking changes of other fields.
             Field('__changed', type=pytis.data.Boolean(), default=False, virtual=True,
                   editable=Editable.NEVER,
                   computer=Computer(lambda r: True, depends=[f.id() for f in fields])),
         )
-        if materialized_view:
-            self._last_refresh_label_text = Text(_("Last refreshed: %s",
-                                                   self._last_refresh_value(initial=True)))
-            layout = GroupSpec((layout, (
-                Button(
-                    _("Refresh view"),
-                    handler=self._refresh_materialized_view,
-                    tooltip=_("Refresh the underlying database object."),
-                ),
-                self._last_refresh_label_text,
-            )))
-        elif not autoapply:
-            layout = GroupSpec((layout, GroupSpec((Button(
-                _("Apply"),
-                handler=self._apply_query_fields,
-                tooltip=_("Reload form data with current query field values."),
-            ),))))
-        _VirtualEditForm._full_init(self, resolver, name, layout=layout, fields=fields, **kwargs)
+        _VirtualEditForm._full_init(self, resolver, name, fields=fields, **kwargs)
         self._row.register_callback(self._row.CALL_CHANGE, '__changed',
                                     self._on_query_fields_changed)
         if not materialized_view and not autoapply and autoinit:
@@ -3461,22 +3443,29 @@ class QueryFieldsForm(_VirtualEditForm):
     def _create_form_parts(self):
         self.Sizer.Add(self._create_form_controls(), 1, wx.EXPAND)
 
-    def _create_button(self, parent, button):
-        result = super(QueryFieldsForm, self)._create_button(parent, button)
-        if button.handler() == self._apply_query_fields:
-            self._query_fields_apply_button = result
-        if button.handler() == self._refresh_materialized_view:
-            self._query_fields_refresh_button = result
-        return result
-
-    def _create_text(self, parent, text, **kwargs):
-        if text is self._last_refresh_label_text:
-            kwargs['size'] = (250, 20)
-            kwargs['style'] = wx.ALIGN_LEFT | wx.ST_NO_AUTORESIZE
-        result = super(QueryFieldsForm, self)._create_text(parent, text, **kwargs)
-        if text is self._last_refresh_label_text:
-            self._last_refresh_label = result
-        return result
+    def _create_group_panel(self, parent, group):
+        panel = super(QueryFieldsForm, self)._create_group_panel(parent, group)
+        if self._materialized_view:
+            self._query_fields_refresh_button = button = wx_button(
+                panel, _("Refresh view"),
+                callback=self._refresh_materialized_view,
+                tooltip=_("Refresh the underlying database view."),
+            )
+            panel.Sizer.Add(button, 0, wx.ALIGN_BOTTOM | wx.LEFT | wx.TOP | wx.BOTTOM | wx.RIGHT, 6)
+            self._last_refresh_label = label = wx.StaticText(
+                panel, -1, _("Last refreshed: %s", self._last_refresh_value(initial=True)),
+                size=(250, 18), style=wx.ALIGN_LEFT | wx.ST_NO_AUTORESIZE,
+            )
+            panel.Sizer.Add(label, 0, wx.ALIGN_BOTTOM | wx.BOTTOM, 9)
+        elif not self._autoapply:
+            self._query_fields_apply_button = button = wx_button(
+                panel, _("Apply"),
+                callback=self._apply_query_fields,
+                tooltip=_("Reload form data with current query field values."),
+            )
+            panel.Sizer.Add(button, 0, wx.ALIGN_BOTTOM | wx.BOTTOM, 6)
+        panel.SetMinSize(panel.Sizer.CalcMin())
+        return panel
 
     def _set_focus_field(self, event=None):
         # Avoid moving focus to the fields when autoinit is true
