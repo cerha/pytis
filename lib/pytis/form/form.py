@@ -3409,13 +3409,15 @@ class QueryFieldsForm(_VirtualEditForm):
         self._refresh_form_data = callback
         self._autoapply = autoapply = query_fields.autoapply()
         self._autoinit = autoinit = query_fields.autoinit()
-        self._last_refresh = query_fields.last_refresh()
+        self._get_last_refresh = query_fields.last_refresh()
         self._unapplied_query_field_changes = not autoinit
         self._unapplied_query_field_changes_after_restore = False
         self._initialized = autoinit
         self._save = query_fields.save()
         self._on_apply = query_fields.on_apply()
         self._on_refresh = query_fields.on_refresh()
+        self._last_refresh = None
+        self._last_refresh_last_updated = None
         materialized_view = self._materialized_view = kwargs.pop('materialized_view', None)
         load = query_fields.load()
         kwargs.update(query_fields.view_spec_kwargs())
@@ -3453,9 +3455,11 @@ class QueryFieldsForm(_VirtualEditForm):
             )
             panel.Sizer.Add(button, 0, wx.ALIGN_BOTTOM | wx.LEFT | wx.TOP | wx.BOTTOM | wx.RIGHT, 6)
             self._last_refresh_label = label = wx.StaticText(
-                panel, -1, _("Last refreshed: %s", self._last_refresh_value(initial=True)),
+                panel, -1, '',
                 size=(250, 18), style=wx.ALIGN_LEFT | wx.ST_NO_AUTORESIZE,
             )
+            self._update_last_refresh(initial=True)
+            panel.Sizer.Add((6, 0), 0)
             panel.Sizer.Add(label, 0, wx.ALIGN_BOTTOM | wx.BOTTOM, 9)
         elif not self._autoapply:
             self._query_fields_apply_button = button = wx_button(
@@ -3478,6 +3482,12 @@ class QueryFieldsForm(_VirtualEditForm):
 
     def _on_idle(self, event):
         super(QueryFieldsForm, self)._on_idle(event)
+        if self._materialized_view and self._last_refresh:
+            # Update the last refresh displayed time each 10 seconds.
+            now, last_updated = int(time.time()), self._last_refresh_last_updated
+            if not last_updated or now - last_updated > 10:
+                self._last_refresh_last_updated = now
+                self._update_last_refresh_delta()
         if not self._autoapply and not self._materialized_view:
             enabled = self._unapplied_query_field_changes and all(f.valid() for f in self._fields)
             self._query_fields_apply_button.Enable(enabled)
@@ -3512,15 +3522,26 @@ class QueryFieldsForm(_VirtualEditForm):
                 self._refresh_form_data(row)
             self._unapplied_query_field_changes = False
 
-    def _last_refresh_value(self, initial=False):
-        if self._last_refresh:
-            timestamp = self._last_refresh()
+    def _update_last_refresh(self, initial=False):
+        if self._get_last_refresh:
+            last_refresh = self._get_last_refresh()
         elif not initial:
-            timestamp = pytis.data.LocalDateTime.datetime()
+            last_refresh = pytis.data.LocalDateTime.datetime()
         else:
-            timestamp = None
-        value = pytis.data.Value(pytis.data.LocalDateTime(), timestamp)
-        return value.export() or _("unknown")
+            last_refresh = None
+        self._last_refresh = last_refresh
+        value = pytis.data.Value(pytis.data.LocalDateTime(), last_refresh)
+        self._last_refresh_label.SetToolTip(value.export())
+        self._update_last_refresh_delta()
+
+    def _update_last_refresh_delta(self):
+        if self._last_refresh is None:
+            value = _('unknown')
+        else:
+            now = pytis.data.LocalDateTime.datetime()
+            interval = pytis.data.Value(pytis.data.TimeInterval(), now - self._last_refresh)
+            value = _("%s ago", interval.export(format=pytis.data.TimeInterval.NATURAL_FORMAT))
+        self._last_refresh_label.SetLabel(_("Last refreshed:") + ' ' + value)
 
     def _refresh_materialized_view(self, row):
         busy_cursor(True)
@@ -3533,7 +3554,7 @@ class QueryFieldsForm(_VirtualEditForm):
             self._refresh_form_data(row)
             if not self._autoapply:
                 self._apply_query_fields(row, interactive=True, refresh_form=False)
-            self._last_refresh_label.SetLabel(_("Last refreshed: %s", self._last_refresh_value()))
+            self._update_last_refresh()
         finally:
             busy_cursor(False)
             self._query_fields_refresh_button.Enable(True)

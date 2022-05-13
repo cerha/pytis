@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2020 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2022 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2017 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -2075,6 +2075,7 @@ class TimeInterval(Type):
     DEFAULT_FORMAT = '%H:%M:%S'
     SHORT_FORMAT = '%H:%M'
     SQL_FORMAT = True
+    NATURAL_FORMAT = 'NATURAL_FORMAT'
 
     _SPECIAL_VALUES = Type._SPECIAL_VALUES + ((None, ''),)
 
@@ -2120,21 +2121,40 @@ class TimeInterval(Type):
 
     def _export(self, value, format=None, **kwargs):
         assert isinstance(value, datetime.timedelta), value
-        seconds = value.days * 86400 + value.seconds
-        if seconds < 0:
-            seconds = -seconds
-            sign = '-'
+        seconds = value.total_seconds()
+        if format == self.NATURAL_FORMAT:
+            def minutes(value):
+                return _.ngettext("%d min", "%d min", int(value.seconds) // 60)
+            def hours(value):
+                return _.ngettext("%d h", "%d h", int(value.seconds) // 3600)
+            def days(value):
+                return _.ngettext("%d day", "%d days", value.days)
+            if seconds < 60:
+                result = _("less than 1 min")
+            elif seconds < 3600:
+                result = minutes(value)
+            elif value.days == 0:
+                result = hours(value) + ', ' + minutes(value)
+            elif value.days < 7:
+                result = days(value) + ', ' + hours(value)
+            else:
+                result = days(value)
         else:
-            sign = ''
-        if format is None:
-            format = self._format
+            if seconds < 0:
+                seconds = -seconds
+                sign = '-'
+            else:
+                sign = ''
             if format is None:
-                format = self.DEFAULT_FORMAT
-        format_string = sign + (format.replace('%H', '%(hours)d').
-                                replace('%M', '%(minutes)02d').replace('%S', '%(seconds)02d'))
-        return format_string % dict(hours=(seconds // 3600),
-                                    minutes=((seconds % 3600) // 60),
-                                    seconds=(seconds % 60))
+                format = self._format
+                if format is None:
+                    format = self.DEFAULT_FORMAT
+            format_string = sign + (format.replace('%H', '%(hours)d').
+                                    replace('%M', '%(minutes)02d').replace('%S', '%(seconds)02d'))
+            result = format_string % dict(hours=(seconds // 3600),
+                                          minutes=((seconds % 3600) // 60),
+                                          seconds=(seconds % 60))
+        return result
 
     def adjust_value(self, value):
         if value is not None and not isinstance(value, datetime.timedelta):
