@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 0.1\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2022-04-12 20:24+0200\n"
+"POT-Creation-Date: 2022-05-13 14:03+0200\n"
 "PO-Revision-Date: 2011-12-29 14:56+0100\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Hungarian <wiking@lists.freebsoft.org>\n"
@@ -69,7 +69,7 @@ msgstr ""
 msgid "Method not implemented"
 msgstr ""
 
-#: ../lib/pytis/data/postgresql.py:3547
+#: ../lib/pytis/data/postgresql.py:3553
 msgid "Invalid database counter value"
 msgstr ""
 
@@ -160,7 +160,7 @@ msgstr ""
 #. User input validation error message.
 #: ../lib/pytis/data/types_.py:1303 ../lib/pytis/data/types_.py:1341
 #: ../lib/pytis/data/types_.py:1371 ../lib/pytis/data/types_.py:1391
-#: ../lib/pytis/data/types_.py:2110
+#: ../lib/pytis/data/types_.py:2111
 msgid "Invalid format"
 msgstr ""
 
@@ -189,38 +189,60 @@ msgstr ""
 msgid "Date outside the allowed range"
 msgstr ""
 
-#: ../lib/pytis/data/types_.py:2224
+#: ../lib/pytis/data/types_.py:2127
+#, python-format
+msgid "%d min"
+msgid_plural "%d min"
+msgstr[0] ""
+
+#: ../lib/pytis/data/types_.py:2129
+#, python-format
+msgid "%d h"
+msgid_plural "%d h"
+msgstr[0] ""
+
+#: ../lib/pytis/data/types_.py:2131
+#, python-format
+msgid "%d day"
+msgid_plural "%d days"
+msgstr[0] ""
+
+#: ../lib/pytis/data/types_.py:2133
+msgid "less than 1 min"
+msgstr ""
+
+#: ../lib/pytis/data/types_.py:2244
 msgid "Invalid boolean type input value"
 msgstr ""
 
-#: ../lib/pytis/data/types_.py:2415
+#: ../lib/pytis/data/types_.py:2435
 msgid "Invalid graphics format"
 msgstr ""
 
-#: ../lib/pytis/data/types_.py:2473
+#: ../lib/pytis/data/types_.py:2493
 #, python-format
 msgid "Minimal pixel size %(minsize)s exceeded"
 msgstr ""
 
-#: ../lib/pytis/data/types_.py:2476
+#: ../lib/pytis/data/types_.py:2496
 #, python-format
 msgid "Maximal pixel size %(maxsize)s exceeded"
 msgstr ""
 
-#: ../lib/pytis/data/types_.py:2480
+#: ../lib/pytis/data/types_.py:2500
 #, python-format
 msgid "Unsupported format %(format)s; valid formats: %(formats)s"
 msgstr ""
 
-#: ../lib/pytis/data/types_.py:2527
+#: ../lib/pytis/data/types_.py:2547
 msgid "Invalid hierarchical value format"
 msgstr ""
 
-#: ../lib/pytis/data/types_.py:2529
+#: ../lib/pytis/data/types_.py:2549
 msgid "One of hierarchical value items is too long"
 msgstr ""
 
-#: ../lib/pytis/data/types_.py:2531
+#: ../lib/pytis/data/types_.py:2551
 msgid "One of hierarchical value items contains invalid characters"
 msgstr ""
 

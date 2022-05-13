@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pytis 0.1\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2022-04-12 20:24+0200\n"
-"PO-Revision-Date: 2017-09-12 21:37+0200\n"
+"POT-Creation-Date: 2022-05-13 14:03+0200\n"
+"PO-Revision-Date: 2022-05-13 14:08+0200\n"
 "Last-Translator: Hynek Hanke <hanke@brailcom.org>\n"
 "Language-Team: Czech <wiking@lists.freebsoft.org>\n"
 "Language: cs\n"
@@ -70,7 +70,7 @@ msgstr "Chybné uživatelské jméno nebo heslo"
 msgid "Method not implemented"
 msgstr "Volána neimplementovaná metoda"
 
-#: ../lib/pytis/data/postgresql.py:3547
+#: ../lib/pytis/data/postgresql.py:3553
 msgid "Invalid database counter value"
 msgstr "Chybná hodnota čítače z databáze"
 
@@ -161,7 +161,7 @@ msgstr "Neplatná MD5 suma"
 #. User input validation error message.
 #: ../lib/pytis/data/types_.py:1303 ../lib/pytis/data/types_.py:1341
 #: ../lib/pytis/data/types_.py:1371 ../lib/pytis/data/types_.py:1391
-#: ../lib/pytis/data/types_.py:2110
+#: ../lib/pytis/data/types_.py:2111
 msgid "Invalid format"
 msgstr "Neplatný formát"
 
@@ -190,38 +190,66 @@ msgstr "Chybný formát data nebo času"
 msgid "Date outside the allowed range"
 msgstr "Datum mimo povolený rozsah"
 
-#: ../lib/pytis/data/types_.py:2224
+#: ../lib/pytis/data/types_.py:2127
+#, python-format
+msgid "%d min"
+msgid_plural "%d min"
+msgstr[0] "%d min"
+msgstr[1] "%d min"
+msgstr[2] "%d min"
+
+#: ../lib/pytis/data/types_.py:2129
+#, python-format
+msgid "%d h"
+msgid_plural "%d h"
+msgstr[0] "%d hod"
+msgstr[1] "%d hod"
+msgstr[2] "%d hod"
+
+#: ../lib/pytis/data/types_.py:2131
+#, python-format
+msgid "%d day"
+msgid_plural "%d days"
+msgstr[0] "%d den"
+msgstr[1] "%d dny"
+msgstr[2] "%d dní"
+
+#: ../lib/pytis/data/types_.py:2133
+msgid "less than 1 min"
+msgstr "méně než 1 min"
+
+#: ../lib/pytis/data/types_.py:2244
 msgid "Invalid boolean type input value"
 msgstr "Neplatná vstupní hodnota typu boolean"
 
-#: ../lib/pytis/data/types_.py:2415
+#: ../lib/pytis/data/types_.py:2435
 msgid "Invalid graphics format"
 msgstr "Neplatný grafický formát"
 
-#: ../lib/pytis/data/types_.py:2473
+#: ../lib/pytis/data/types_.py:2493
 #, python-format
 msgid "Minimal pixel size %(minsize)s exceeded"
 msgstr "Minimální rozměr %(minsize)s pixelů nedodržen"
 
-#: ../lib/pytis/data/types_.py:2476
+#: ../lib/pytis/data/types_.py:2496
 #, python-format
 msgid "Maximal pixel size %(maxsize)s exceeded"
 msgstr "Maximální rozměr %(maxsize)s pixelů překročen"
 
-#: ../lib/pytis/data/types_.py:2480
+#: ../lib/pytis/data/types_.py:2500
 #, python-format
 msgid "Unsupported format %(format)s; valid formats: %(formats)s"
 msgstr "Nepodporovaný formát %(format)s; platné formáty: %(formats)s"
 
-#: ../lib/pytis/data/types_.py:2527
+#: ../lib/pytis/data/types_.py:2547
 msgid "Invalid hierarchical value format"
 msgstr "Chybný formát hierarchické hodnoty"
 
-#: ../lib/pytis/data/types_.py:2529
+#: ../lib/pytis/data/types_.py:2549
 msgid "One of hierarchical value items is too long"
 msgstr "Jedna z položek hierarchické hodnoty je příliš dlouhá"
 
-#: ../lib/pytis/data/types_.py:2531
+#: ../lib/pytis/data/types_.py:2551
 msgid "One of hierarchical value items contains invalid characters"
 msgstr "Jedna z položek hierarchické hodnoty obsahuje neplatné znaky"
 

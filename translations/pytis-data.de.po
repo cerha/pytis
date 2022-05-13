@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pytis 0.1\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2022-04-12 20:24+0200\n"
+"POT-Creation-Date: 2022-05-13 14:03+0200\n"
 "PO-Revision-Date: 2011-12-29 12:15+0100\n"
 "Last-Translator: Pavel Vohnout <vohnout@officehouse.cz>\n"
 "Language-Team: German <wiking@lists.freebsoft.org>\n"
@@ -70,7 +70,7 @@ msgstr "Falsches Format für Datum oder Zeit "
 msgid "Method not implemented"
 msgstr ""
 
-#: ../lib/pytis/data/postgresql.py:3547
+#: ../lib/pytis/data/postgresql.py:3553
 #, fuzzy
 msgid "Invalid database counter value"
 msgstr "Falsches Datum oder Zeit "
@@ -164,7 +164,7 @@ msgstr "Ungültiger Wert"
 #. User input validation error message.
 #: ../lib/pytis/data/types_.py:1303 ../lib/pytis/data/types_.py:1341
 #: ../lib/pytis/data/types_.py:1371 ../lib/pytis/data/types_.py:1391
-#: ../lib/pytis/data/types_.py:2110
+#: ../lib/pytis/data/types_.py:2111
 msgid "Invalid format"
 msgstr "Ungültiges Format"
 
@@ -193,42 +193,67 @@ msgstr "Falsches Format für Datum oder Zeit "
 msgid "Date outside the allowed range"
 msgstr "Datum außerhalb des zulässigen Umfangs"
 
-#: ../lib/pytis/data/types_.py:2224
+#: ../lib/pytis/data/types_.py:2127
+#, python-format
+msgid "%d min"
+msgid_plural "%d min"
+msgstr[0] ""
+msgstr[1] ""
+
+#: ../lib/pytis/data/types_.py:2129
+#, python-format
+msgid "%d h"
+msgid_plural "%d h"
+msgstr[0] ""
+msgstr[1] ""
+
+#: ../lib/pytis/data/types_.py:2131
+#, python-format
+msgid "%d day"
+msgid_plural "%d days"
+msgstr[0] ""
+msgstr[1] ""
+
+#: ../lib/pytis/data/types_.py:2133
+msgid "less than 1 min"
+msgstr ""
+
+#: ../lib/pytis/data/types_.py:2244
 #, fuzzy
 msgid "Invalid boolean type input value"
 msgstr "Falsches Datum oder Zeit "
 
-#: ../lib/pytis/data/types_.py:2415
+#: ../lib/pytis/data/types_.py:2435
 #, fuzzy
 msgid "Invalid graphics format"
 msgstr "Ungültiges Format"
 
-#: ../lib/pytis/data/types_.py:2473
+#: ../lib/pytis/data/types_.py:2493
 #, fuzzy, python-format
 msgid "Minimal pixel size %(minsize)s exceeded"
 msgstr "Max. Pixelmaß %(maxsize)s überschritten"
 
-#: ../lib/pytis/data/types_.py:2476
+#: ../lib/pytis/data/types_.py:2496
 #, fuzzy, python-format
 msgid "Maximal pixel size %(maxsize)s exceeded"
 msgstr "max. Größe %(maxlen)s überschritten"
 
-#: ../lib/pytis/data/types_.py:2480
+#: ../lib/pytis/data/types_.py:2500
 #, fuzzy, python-format
 msgid "Unsupported format %(format)s; valid formats: %(formats)s"
 msgstr "Format entspricht nicht %(format)s; gültige Formate: %(formats)s"
 
-#: ../lib/pytis/data/types_.py:2527
+#: ../lib/pytis/data/types_.py:2547
 #, fuzzy
 msgid "Invalid hierarchical value format"
 msgstr "Falsches Format für Datum oder Zeit "
 
-#: ../lib/pytis/data/types_.py:2529
+#: ../lib/pytis/data/types_.py:2549
 #, fuzzy
 msgid "One of hierarchical value items is too long"
 msgstr "Falsches Format für Datum oder Zeit "
 
-#: ../lib/pytis/data/types_.py:2531
+#: ../lib/pytis/data/types_.py:2551
 msgid "One of hierarchical value items contains invalid characters"
 msgstr ""
 
