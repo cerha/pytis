@@ -475,7 +475,7 @@ def visit_access_right(element, compiler, **kw):
         extra = '(%s)' % (_function_arguments(o),)
     else:
         extra = ''
-    if isinstance(o, SQLView):
+    if isinstance(o, SQLView) or isinstance(o, SQLMaterializedView):
         kind = ''                       # PostgreSQL requires this
     else:
         kind = o._DB_OBJECT + ' '
