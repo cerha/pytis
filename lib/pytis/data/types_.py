@@ -2124,7 +2124,7 @@ class TimeInterval(Type):
         seconds = value.total_seconds()
         if format == self.NATURAL_FORMAT:
             def minutes(value):
-                return _.ngettext("%d min", "%d min", int(value.seconds) // 60)
+                return _.ngettext("%d min", "%d min", int(value.seconds) % 3600 // 60)
             def hours(value):
                 return _.ngettext("%d h", "%d h", int(value.seconds) // 3600)
             def days(value):
