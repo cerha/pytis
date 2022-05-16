@@ -2627,7 +2627,7 @@ class EditForm(RecordForm, TitledForm, Refreshable):
         group_sizer = self._create_group(panel, group)
         # Add outer sizer with margins and alignment.
         sizer = wx.BoxSizer(wx.HORIZONTAL)
-        sizer.Add(group_sizer, 0, wx.ALIGN_CENTER | wx.LEFT | wx.RIGHT, 8)
+        sizer.Add(group_sizer, 0, wx.LEFT | wx.RIGHT, 8)
         panel.SetSizer(sizer)
         # SetMinSize is necessary here in order to get correct results from
         # form.GetVirtualSize(), especially when wx.Notebook is involved.
