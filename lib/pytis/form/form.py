@@ -3464,7 +3464,7 @@ class QueryFieldsForm(_VirtualEditForm):
         elif not self._autoapply:
             self._query_fields_apply_button = button = wx_button(
                 panel, _("Apply"),
-                callback=self._apply_query_fields,
+                callback=lambda e: self._apply_query_fields(self._row),
                 tooltip=_("Reload form data with current query field values."),
             )
             panel.Sizer.Add(button, 0, wx.ALIGN_BOTTOM | wx.BOTTOM, 6)
