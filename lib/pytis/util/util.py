@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2021 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2022 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2017 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -1306,7 +1306,7 @@ class Attachment:
     @property
     def data(self):
         if self._data is None:
-            with open(self._filename) as f:
+            with open(self._filename, 'rb') as f:
                 data = f.read()
         elif isinstance(self._data, bytes):
             data = self._data
