@@ -54,6 +54,8 @@ _ = translations('pytis-data')
 
 unistr = type(u'')  # Python 2/3 transition hack.
 
+# In order to pass uuid objeect, it is necessary to call register_uuid
+psycopg2.extras.register_uuid()
 
 class _DBAPIAccessor(PostgreSQLAccessor):
 

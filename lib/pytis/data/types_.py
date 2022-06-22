@@ -47,6 +47,7 @@ import io
 import _thread
 import time
 import sys
+import uuid
 
 from pytis.util import (
     Counter, InvalidAccessError, LimitedCache, OPERATIONAL, ProgramError,
@@ -183,7 +184,7 @@ class Type(with_metaclass(_MType, object)):
         See the class docstring for description of available arguments.  Don't
         override the constructor in derived classes, unless you really know
         what you are doing.  Normally you want to override the '_init()' method
-        in derived classes to define specific type constructor arguemnts or
+        in derived classes to define specific type constructor arguments or
         default values of inherited arguments.
 
         The purpose of overriding '_init()' instead of '__init__()' is to be
@@ -2256,6 +2257,37 @@ class Boolean(Type):
 
     def sqlalchemy_type(self):
         return sqlalchemy.Boolean()
+
+
+class Uuid(Type):
+    """Uuid type.
+
+    Uuid type is represented by python's immutable UUID object (UUID class).
+
+    Constructor arguments:
+
+      version -- optional argument; if given, the resulting UUID will have
+        its variant and version number set according to RFC 4122, overriding bits
+        in the given hex, bytes, bytes_le, fields, or int.
+
+    """
+
+    def _init(self, version=None):
+        self._version = version
+        super(Uuid, self)._init()
+
+    def _validate(self, obj):
+        if obj is None:
+            value = None
+        else:
+            value = uuid.UUID(obj, version=self._version)
+        return Value(self, value)
+
+    def _export(self, value):
+        return unistr(value)
+
+    def sqlalchemy_type(self):
+        return sqlalchemy.dialects.postgresql.UUID(as_uuid=True)
 
 
 class Binary(Limited):

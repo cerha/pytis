@@ -45,7 +45,7 @@ from pytis.data import (
     DBConnectionPool, DBData, ColumnSpec, DBColumnBinding, Row, Function,
     dbtable, reversed_sorting, Array, Binary, Boolean, Date, DateTime,
     Float, FullTextIndex, Inet, Integer, LTree, Macaddr, Number, Range,
-    Serial, String, Time, TimeInterval, ival, sval, Type, Value,
+    Uuid, Serial, String, Time, TimeInterval, ival, sval, Type, Value,
     Operator, AND, OR, EQ, NE, GT, LT, FORWARD, BACKWARD, ASCENDENT,
     DESCENDANT,
 )
@@ -1354,6 +1354,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                         'inet': Inet,
                         'macaddr': Macaddr,
                         'bytea': Binary,
+                        'uuid': Uuid,
                         'oid': pytis.data.Oid,  # for backward compatibility
                         'sql_identifier': String,
                         }

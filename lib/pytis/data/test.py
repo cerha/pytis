@@ -341,6 +341,20 @@ class TestBoolean(_TestType):
         assert pd.Boolean() != pd.String()
 
 
+class TestUuid(_TestType):
+    _type = pd.Uuid
+
+    def test_validation(self):
+        import uuid
+        t = pd.Uuid()
+        s_uuid = '{a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11}'
+        assert self._validate(s_uuid) == uuid.Uuid(s_uuid)
+
+    def test_non_equality(self):
+        assert pd.Uuid() != pd.String()
+
+
+
 class TestDateTime(_TestType):
     _type = pd.DateTime
 

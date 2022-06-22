@@ -40,7 +40,7 @@ from .types_ import (  # noqa: F401
     Password, RegexString, Color, Inet, Macaddr, Email, TreeOrderBase, TreeOrder,
     FullTextIndex, DateTime, LocalDateTime, DateTimeRange, ISODateTime, Date,
     DateRange, Time, LocalTime, TimeInterval, date_and_time, add_timedelta,
-    Boolean, Binary, Image, LTree, Array, Enumerator, TransactionalEnumerator,
+    Boolean, Uuid, Binary, Image, LTree, Array, Enumerator, TransactionalEnumerator,
     FixedEnumerator, DataEnumerator, ValidationError, Value, WMValue,
     sval, ival, fval, bval, dval, dtval, tval, wmval,
 )
