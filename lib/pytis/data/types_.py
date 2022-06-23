@@ -2272,6 +2272,8 @@ class Uuid(Type):
 
     """
 
+    _SPECIAL_VALUES = Type._SPECIAL_VALUES + ((None, ''),)
+
     def _init(self, version=None):
         self._version = version
         super(Uuid, self)._init()
@@ -2280,7 +2282,10 @@ class Uuid(Type):
         if obj is None:
             value = None
         else:
-            value = uuid.UUID(obj, version=self._version)
+            try:
+                value = uuid.UUID(obj, version=self._version)
+            except ValueError as e:
+                raise ValidationError(*e.args)
         return Value(self, value)
 
     def _export(self, value):
