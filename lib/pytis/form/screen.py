@@ -3609,9 +3609,10 @@ def open_file(filename, mode='w'):
       mode -- mode for opening the file
 
     """
-    if pytis.remote.client_available():
+    cmode = _client_mode()
+    if cmode == 'remote':
         f = pytis.remote.open_file(filename, mode=mode)
-    else:
+    elif cmode == 'local':
         f = open(filename, mode)
     return f
 
@@ -3701,10 +3702,11 @@ def launch_file(filename):
     run in the background in all cases.
 
     """
-    if pytis.remote.client_available():
+    cmode = _client_mode()
+    if cmode == 'remote':
         with open(filename, 'rb') as f:
             _launch_file_remotely(f, suffix=os.path.splitext(filename)[1])
-    else:
+    elif cmode == 'local':
         _launch_file_locally(filename)
 
 
@@ -3753,13 +3755,14 @@ def open_data_as_file(data, suffix, decrypt=False):
     run in the background in all cases.
 
     """
-    if pytis.remote.client_available():
+    cmode = _client_mode()
+    if cmode == 'remote':
         if hasattr(data, 'read'):
             srcfile = data
         else:
             srcfile = io.BytesIO(data)
         _launch_file_remotely(srcfile, suffix=suffix, decrypt=decrypt)
-    else:
+    elif cmode == 'local':
         with temp_file_launcher(suffix=suffix) as f:
             if hasattr(data, 'read'):
                 while True:
@@ -3781,9 +3784,10 @@ def launch_url(url):
     run in the background in all cases.
 
     """
-    if pytis.remote.client_available():
+    cmode = _client_mode()
+    if cmode == 'remote':
         pytis.remote.launch_url(url)
-    else:
+    elif cmode == 'local':
         import webbrowser
         webbrowser.open(url)
 
