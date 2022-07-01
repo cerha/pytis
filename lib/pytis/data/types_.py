@@ -2274,9 +2274,9 @@ class Uuid(Type):
 
     _SPECIAL_VALUES = Type._SPECIAL_VALUES + ((None, ''),)
 
-    def _init(self, version=None):
+    def _init(self, version=None, **kwargs):
         self._version = version
-        super(Uuid, self)._init()
+        super(Uuid, self)._init(**kwargs)
 
     def _validate(self, obj):
         if obj is None:
