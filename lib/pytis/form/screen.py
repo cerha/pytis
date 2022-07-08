@@ -3325,21 +3325,22 @@ def _client_mode():
     """
     if pytis.remote.client_available():
         return 'remote'
-    else:
-        from .application import remote_connection_initially_available
-        if remote_connection_initially_available():
-            cancel = _("Cancel")
-            answer = pytis.form.run_dialog(pytis.form.Message,
-                                           _("This operation requires remote client connection "
-                                             "which is currently broken.\nYou may complete the "
-                                             "operation with restriction to server's local "
-                                             "resources or cancel."),
-                                           icon=pytis.form.Message.ICON_ERROR,
-                                           buttons=(_("Continue"), cancel),
-                                           default=cancel)
-            if answer == cancel:
-                return None
+    elif not pytis.remote.client_ip():
         return 'local'
+    else:
+        cancel = _("Cancel")
+        answer = pytis.form.run_dialog(pytis.form.Message,
+                                       _("This operation requires remote client connection "
+                                         "which is currently broken.\nYou may complete the "
+                                         "operation with restriction to server's local "
+                                         "resources or cancel."),
+                                       icon=pytis.form.Message.ICON_ERROR,
+                                       buttons=(_("Continue"), cancel),
+                                       default=cancel)
+        if answer == cancel:
+            return None
+        else:
+            return 'local'
 
 
 def _dirname(client_mode, filename):

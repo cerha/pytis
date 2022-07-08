@@ -253,9 +253,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
                 top_level_exception()
 
         wx.CallAfter(init)
-        client_available = pytis.remote.client_available()
-        pytis.remote.RPCInfo.remote_connection_initially_available = client_available
-        pytis.remote.RPCInfo.remote_status_info = (client_available, time.time())
+        pytis.remote.RPCInfo.remote_status_info = (pytis.remote.client_available(), time.time())
         return True
 
     def _frame_title(self, title):
@@ -2232,12 +2230,6 @@ def built_in_status_fields():
 # don't do so for the functions below.  If the 'application' object
 # is made public in future (which seems most desirable), these
 # functions can be turned into its methods.
-
-
-def remote_connection_initially_available():
-    """Return True if the remote connection was available at application startup."""
-    return pytis.remote.RPCInfo.remote_connection_initially_available
-
 
 def get_recent_directory(key):
     """Return the last directory set for given 'key' as a string or None."""

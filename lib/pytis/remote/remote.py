@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2021 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2022 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2011-2018 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -53,7 +53,6 @@ class RPCInfo(object):
     access_data = None
     remote_client_version = None
     remote_status_info = (False, time.time())
-    remote_connection_initially_available = False
     connection_order = 0
     access_data_version = 0
 
