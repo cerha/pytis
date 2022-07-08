@@ -128,7 +128,11 @@ def client_ip():
 
 
 def client_available():
-    """Return true, iff remote client is available."""
+    """Return True, iff remote client is available.
+
+    Returns True if running remotely and the remote connection actually works.
+
+    """
     if client_ip() is None:
         return False
     try:
