@@ -253,7 +253,6 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
                 top_level_exception()
 
         wx.CallAfter(init)
-        pytis.remote.RPCInfo.remote_status_info = (pytis.remote.client_available(), time.time())
         return True
 
     def _frame_title(self, title):
@@ -2166,6 +2165,9 @@ def block_yield(block=False):
     _yield_blocked = block
 
 
+_remote_connection_last_available = None
+
+
 def built_in_status_fields():
     """Return the built-in status bar fields as a tuple of 'StatusField' instances.
 
@@ -2185,27 +2187,27 @@ def built_in_status_fields():
             return ''
 
     def _refresh_remote_status():
-        rpc_info = pytis.remote.RPCInfo
-        last_status, last_time = rpc_info.remote_status_info
-        if pytis.remote.client_available():
-            if not last_status:
-                last_time = time.time()
-                rpc_info.remote_status_info = (True, last_time)
-                log(OPERATIONAL, "RPC connection established.")
-            version = rpc_info.remote_client_version or _("Not available")
+        global _remote_connection_last_available
+        if not pytis.remote.client_ip():
+            status = _("N/A")
+            icon = 'status-offline'
+            tooltip = _("Running locally.")
+        elif pytis.remote.client_available():
+            #log(OPERATIONAL, "RPC connection established.")
+            version = pytis.remote.RPCInfo.remote_client_version or _("Not available")
             status = _("Ok")
             icon = 'status-online'
             tooltip = _("Connected.") + "\n" + _("Client version: %s", version)
+            _remote_connection_last_available = time.localtime()
         else:
-            if last_status:
-                last_time = time.time()
-                rpc_info.remote_status_info = (False, time.time())
-                log(OPERATIONAL, "RPC connection lost.")
-            tooltip = _("Not available.")
-            status = _("N/A")
+            #log(OPERATIONAL, "RPC connection lost.")
+            status = _("Error")
             icon = 'status-error'
-        changed = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(last_time))
-        tooltip += '\n' + _("Status changed: %s", changed)
+            if _remote_connection_last_available:
+                timestamp = time.strftime('%Y-%m-%d %H:%M:%S', _remote_connection_last_available)
+                tooltip = _("Connection lost.") + '\n' + _("Last available: %s", timestamp)
+            else:
+                tooltip = _("Connection not established.")
         return (status, icon, tooltip)
 
     def _refresh_user_config():

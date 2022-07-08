@@ -52,7 +52,6 @@ class RPCInfo(object):
     connection = None
     access_data = None
     remote_client_version = None
-    remote_status_info = (False, time.time())
     connection_order = 0
     access_data_version = 0
 
