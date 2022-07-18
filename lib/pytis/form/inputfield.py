@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2021 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2022 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2017 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -70,131 +70,16 @@ from .application import (
 _ = pytis.util.translations('pytis-wx')
 
 
-class _Completer(wx.PopupWindow):
-    """Autocompletion selection control."""
+class _Completer(wx.TextCompleterSimple):
+    """wx autocompletion API implementation on top of 'PresentedRow.completions()'."""
 
-    def __init__(self, ctrl):
-        """Initialize the selection control for given `wx.TextCtrl' instance."""
-        super(_Completer, self).__init__(ctrl.GetParent())
-        self._ctrl = ctrl
-        self._last_insertion_point = 0
-        self._list = listctrl = wx.ListCtrl(self, pos=wx.Point(0, 0), style=(wx.LC_REPORT |
-                                                                             wx.LC_SINGLE_SEL |
-                                                                             wx.LC_NO_HEADER |
-                                                                             wx.BORDER_NONE))
-        self.update(ctrl.GetValue(), False)
-        wx_callback(wx.EVT_LEFT_DOWN, ctrl, self._on_ctrl_mouse_down)
-        wx_callback(wx.EVT_LEFT_UP, ctrl, self._on_ctrl_mouse_up)
-        wx_callback(wx.EVT_KILL_FOCUS, ctrl, self._on_ctrl_kill_focus)
-        wx_callback(wx.EVT_LISTBOX, listctrl, self._on_list_item_selected)
-        wx_callback(wx.EVT_LEFT_DOWN, listctrl, self._on_list_click)
-        wx_callback(wx.EVT_LEFT_DCLICK, listctrl, self._on_list_dclick)
+    def __init__(self, row, field_id):
+        super(_Completer, self).__init__()
+        self._row = row
+        self._field_id = field_id
 
-    def _on_ctrl_mouse_down(self, event):
-        self._last_insertion_point = self._ctrl.GetInsertionPoint()
-        event.Skip()
-
-    def _on_ctrl_mouse_up(self, event):
-        if self._ctrl.GetInsertionPoint() == self._last_insertion_point and self._ctrl.IsEditable():
-            self._show(not self.IsShown())
-        event.Skip()
-
-    def _on_ctrl_kill_focus(self, event):
-        self._show(False)
-        event.Skip()
-
-    def _on_list_item_selected(self, event):
-        self._set_value_from_selected()
-        event.Skip()
-
-    def _on_list_click(self, event):
-        # TODO: Mouse events on the popup frame don't work when the parent form is
-        # a modal form (displayed using .ShowModal()).  If we want the events to
-        # work as expected, we need to avoid displaying popup forms modally.
-        sel, flag = self._list.HitTest(event.GetPosition())
-        if sel != -1:
-            self._list.Select(sel)
-            self._set_value_from_selected()
-
-    def _on_list_dclick(self, event):
-        self._set_value_from_selected()
-
-    def _set_value_from_selected(self):
-        sel = self._list.GetFirstSelected()
-        if sel > -1:
-            text = self._list.GetItem(sel, 0).GetText()
-            self._ctrl.SetValue(text)
-            self._ctrl.SetInsertionPointEnd()
-            self._ctrl.SetSelection(-1, -1)
-            self._show(False)
-
-    def _show(self, show=True):
-        if show and self._list.GetItemCount() > 0:
-            size = self.Size
-            height = self._ctrl.Size.height
-            x, y = self._ctrl.ClientToScreen(0, height)
-            if (y + size.height) >= wx.SystemSettings.GetMetric(wx.SYS_SCREEN_Y):
-                y = y - height - size.height
-            self.SetPosition(wx.Point(x, y))
-            self.Show(True)
-        else:
-            self.Show(False)
-
-    def on_key_down(self, event):
-        """Handle TextCtrl keypresses if they belong to the completer.
-
-        Returns True if the event was processed and False when it should be passed on.
-
-        """
-        listctrl = self._list
-        if listctrl.GetItemCount() == 0:
-            return False
-        code = event.GetKeyCode()
-        if code in (wx.WXK_DOWN, wx.WXK_UP):
-            sel = listctrl.GetFirstSelected()
-            if code == wx.WXK_DOWN and sel < (listctrl.GetItemCount() - 1):
-                listctrl.Select(sel + 1)
-            elif code == wx.WXK_UP and sel > 0:
-                listctrl.Select(sel - 1)
-            if sel != -1:
-                listctrl.EnsureVisible(sel)
-            self._show()
-            return True
-        if self.IsShown():
-            if code == wx.WXK_RETURN:
-                self._set_value_from_selected()
-                return True
-            if code == wx.WXK_ESCAPE:
-                self._show(False)
-                return True
-        return False
-
-    def update(self, completions, show):
-        """Update the list of available completions."""
-        self._show(False)
-        listctrl = self._list
-        listctrl.ClearAll()
-        listctrl.InsertColumn(0, "")
-        height_limit = None
-        # Set initial size very large to make GetViewRect to always return sizes
-        # without scrollbars.
-        listctrl.SetSize((1000, 1000))
-        for i, choice in enumerate(completions):
-            listctrl.InsertItem(i, "")
-            listctrl.SetItem(i, 0, choice)
-            if i == 10:
-                height_limit = listctrl.GetViewRect()[3]
-        listctrl.SetColumnWidth(0, wx.LIST_AUTOSIZE)
-        width, height = listctrl.GetViewRect()[2:]
-        if height_limit:
-            height = height_limit
-            width += wx.SystemSettings.GetMetric(wx.SYS_VSCROLL_X)
-        listctrl.SetSize((width - 3, height - 3))
-        self.SetClientSize(listctrl.GetSize())
-        if completions and show:
-            self._show(True)
-            listctrl.Select(0)
-            listctrl.EnsureVisible(0)
+    def GetCompletions(self, prefix):
+        return self._row.completions(self._field_id, prefix=prefix)
 
 
 @pytis.api.implements(pytis.api.Field)
@@ -329,7 +214,6 @@ class InputField(KeyHandler, CommandHandler):
         self._guardian = guardian
         self._id = id = spec.id()
         self._want_focus = False
-        self._initial_focus = False
         self._last_focused_ctrl = None
         self._connection_closed = False
         if row.new():
@@ -732,7 +616,7 @@ class InputField(KeyHandler, CommandHandler):
         """
         return self._valid() and self._last_check_result is None
 
-    def set_focus(self, initial=False):
+    def set_focus(self):
         """Make the field active for user input.
 
         Passing initial=True will suppress showing completer popup which is not
@@ -740,7 +624,6 @@ class InputField(KeyHandler, CommandHandler):
 
         """
         self._want_focus = True
-        self._initial_focus = initial
 
     def enabled(self):
         """Return true if the field is editable by the user.
@@ -861,10 +744,7 @@ class TextField(InputField):
         wx_callback(wx.EVT_TEXT, control, self._on_change)
         wx_callback(wx.EVT_TEXT_ENTER, control, self._on_enter_key)
         if not self._denied and not self._readonly and self._row.has_completer(self.id()):
-            self._completer = _Completer(control)
-        else:
-            self._completer = None
-        self._update_completions = None
+            control.AutoComplete(_Completer(self._row, self.id()))
         return control
 
     def _set_ctrl_editable(self, ctrl, editable):
@@ -877,11 +757,6 @@ class TextField(InputField):
             validator = wx.DefaultValidator
         ctrl.SetValidator(validator)
         ctrl.SetOwnBackgroundColour(color)
-
-    def on_key_down(self, event):
-        if self._enabled and self._completer and self._completer.on_key_down(event):
-            return
-        super(TextField, self).on_key_down(event)
 
     def _text_ctrl_style(self):
         style = wx.TE_PROCESS_ENTER
@@ -899,19 +774,6 @@ class TextField(InputField):
         else:
             event.GetEventObject().Navigate()
 
-    def _on_idle(self, event):
-        super(TextField, self)._on_idle(event)
-        text = self._update_completions
-        if text is not None:
-            initial = self._initial_focus
-            self._update_completions = None
-            self._initial_focus = False
-            # If the field has no focus, the change is *most likely* not originated by the
-            # user, so we we don't popup the selection (the second argument to update()).
-            self._completer.update(self._row.completions(self.id(), prefix=text),
-                                   self._enabled and wx_focused_window() == self._ctrl
-                                   and not initial)
-
     def _on_change(self, event=None):
         value = self._get_value()
         post_process = self._post_process_func()
@@ -924,8 +786,6 @@ class TextField(InputField):
             # wx 3.x and later does not support wx.EVT_TEXT_MAXLEN on multiline TextCtrl fields.
             # Thus we handle maxlen ourselves here without using wx.EVT_TEXT_MAXLEN altogether.
             message(_("Maximal length exceeded."), beep_=True)
-        if event and self._completer:
-            self._update_completions = event.GetString()
         super(TextField, self)._on_change(event=event)
 
     def _post_process_func(self):
@@ -2500,8 +2360,6 @@ class StructuredTextField(TextField):
         ctrl.SetFont(wx.Font(ctrl.GetFont().GetPointSize(), wx.FONTFAMILY_MODERN,
                              wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL))
         wx_callback(wx.EVT_TEXT, ctrl, self._on_change)
-        self._completer = None
-        self._update_completions = None
         self._storage = self._row.attachment_storage(self._id)
         return ctrl
 

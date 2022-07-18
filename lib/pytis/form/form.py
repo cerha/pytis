@@ -2591,7 +2591,7 @@ class EditForm(RecordForm, TitledForm, Refreshable):
         if not field and self._fields:
             field = find(True, self._fields, key=lambda f: f.enabled()) or self._fields[0]
         if field:
-            field.set_focus(initial=True)
+            field.set_focus()
 
     def _create_form_parts(self):
         # Create all parts and add them to top-level sizer.
