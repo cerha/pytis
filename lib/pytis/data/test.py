@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2021 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2022 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2017 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -25,9 +25,9 @@ from builtins import range
 import copy
 import datetime
 import decimal
-import time
 import io
 import sys
+import time
 
 import pytest
 import unittest
@@ -569,6 +569,31 @@ class TestBinary(_TestType):
         assert e is None
         assert v.type() == t1
         assert v.value() == b''
+
+
+class TestJSON(_TestType):
+    _type = pd.JSON
+
+    def test_validation(self):
+        t = pd.JSON()
+        assert self._validate(t, '{"a": "A", "b": "B"}') == {'a': 'A', 'b': 'B'}
+        assert self._validate(t, '["foo", 10, 3.14, true, null]') == ['foo', 10, 3.14, True, None]
+        self._check_not_valid(t, "{'foo': 'bar'}")
+        self._check_not_valid(t, "{foo: 'bar'}")
+        self._check_not_valid(t, "{2: 3}")
+        self._check_not_valid(t, '"foo"')
+        self._check_not_valid(t, 'foo')
+        self._check_not_valid(t, 'false')
+        self._check_not_valid(t, '1')
+
+    def test_adjust(self):
+        t = pd.JSON()
+        for v in ({'a': 'A', 'b': 'B'}, ['foo', 10, 3.14, True, None]):
+            value = pd.Value(t, v)
+            assert value.value() == v
+        for v in ("foo", False, 1, {1: 2}, [pd.Integer()]):
+            with pytest.raises(TypeError):
+                pd.Value(t, v)
 
 
 class TestImage(_TestType):
@@ -1230,6 +1255,10 @@ class _DBBaseTest(unittest.TestCase):
         self._connector.commit()
         cursor.close()
         return result
+
+    def _sql_commands(self, *commands):
+        for command in commands:
+            self._sql_command(command)
 
     def setUp(self):
         self._dconnection = pd.DBConnection(**_connection_data)
@@ -3142,11 +3171,13 @@ class DBFunction(_DBBaseTest):
     def setUp(self):
         _DBBaseTest.setUp(self)
         try:
-            self._sql_command("create table tab (x int)")
-            self._sql_command("create table tab1 (x int)")
-            self._sql_command("insert into tab1 values(10)")
-            self._sql_command("insert into tab1 values(20)")
-            self._sql_command("insert into tab1 values(30)")
+            self._sql_commands(
+                "create table tab (x int)",
+                "create table tab1 (x int)",
+                "insert into tab1 values(10)",
+                "insert into tab1 values(20)",
+                "insert into tab1 values(30)",
+            )
             for q in ("foo1(int) returns int as 'select $1+1'",
                       "foo2(text,text) returns text as 'select $1 || $2'",
                       "foo3() returns int as 'select min(x) from tab'",
@@ -3292,17 +3323,19 @@ class DBSearchPath(_DBTest):
 
     def setUp(self):
         _DBTest.setUp(self)
-        for q in ("create schema special",
-                  "create table special.cstat(stat char(2) PRIMARY KEY, "
-                  "nazev varchar(40) UNIQUE NOT NULL)",
-                  "insert into special.cstat values ('sk', 'Slovakia')",):
-            self._sql_command(q)
+        self._sql_commands(
+            "create schema special",
+            "create table special.cstat(stat char(2) PRIMARY KEY, "
+            "nazev varchar(40) UNIQUE NOT NULL)",
+            "insert into special.cstat values ('sk', 'Slovakia')",
+        )
 
     def tearDown(self):
         try:
-            for q in ("drop table special.cstat",
-                      "drop schema special",):
-                self._sql_command(q)
+            self._sql_commands(
+                "drop table special.cstat",
+                "drop schema special",
+            )
         except Exception:
             pass
         _DBTest.tearDown(self)
@@ -3431,6 +3464,60 @@ class DBCrypto(_DBBaseTest):
               sort=('y',))
         data.delete_many(pd.GT('y', fval(-10.0)))
         check(())
+
+
+class JSONDBTest(_DBBaseTest):
+
+    def setUp(self):
+        _DBBaseTest.setUp(self)
+        try:
+            self._sql_commands(
+                "create table json_test (id serial primary key, data jsonb not null)",
+                "insert into json_test values (1, '{\"bar\": 8, \"foo\": true}')",
+            )
+        except Exception:
+            self.tearDown()
+            raise
+        key = pd.DBColumnBinding('id', 'json_test', 'id')
+        self._data = pd.DBDataDefault(
+            (key, pd.DBColumnBinding('data', 'json_test', 'data', type_=pd.JSONB),), key, self._dconnection
+        )
+
+    def tearDown(self):
+        try:
+            self._sql_command("drop table json_test")
+        except Exception:
+            pass
+        _DBBaseTest.tearDown(self)
+
+    def _get(self, id):
+        row = self._data.row(pd.ival(id))
+        if row:
+            return row['data'].value()
+        else:
+            return None
+
+    def _insert(self, id, data):
+        self._data.insert(pd.Row((
+            ('id', pd.ival(id)),
+            ('data', pd.Value(pd.JSON(), data)),
+        )))
+
+    def test_retrieve(self):
+        assert self._get(1) == {'bar': 8, 'foo': True}
+
+    def test_insert(self):
+        for id, value in (
+                (2, {'foo': False, 'bar': 10}),
+                (3, ['foo', 1, 3.14, True, None]),
+        ):
+            assert self._get(id) is None
+            self._insert(id, value)
+            assert self._get(id) == value
+        self._insert(4, (True, False))
+        assert self._get(4) == [True, False]
+
+
 
 
 ###################

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2021 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2022 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2015 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -144,6 +144,8 @@ class _DBAPIAccessor(PostgreSQLAccessor):
                     raise Exception("Unsupported range type", arg)
                 bounds = ('[' if arg.lower_inc() else '(') + (']' if arg.upper_inc() else ')')
                 arg = c(lower, upper, bounds=bounds)
+            elif isinstance(arg, (dict, tuple, list)):
+                arg = psycopg2.extras.Json(arg)
             return arg
         if isinstance(query, basestring):
             query_args = {}

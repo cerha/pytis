@@ -41,12 +41,13 @@ from future.utils import with_metaclass, python_2_unicode_compatible
 
 import datetime
 import decimal
+import io
+import json
 import re
 import string
-import io
+import sys
 import _thread
 import time
-import sys
 import uuid
 
 from pytis.util import (
@@ -2674,6 +2675,60 @@ class Array(Limited):
 
     def sqlalchemy_type(self):
         return sqlalchemy.dialects.postgresql.ARRAY(self.inner_type().sqlalchemy_type())
+
+
+class JSON(Type):
+
+    _SPECIAL_VALUES = Type._SPECIAL_VALUES + ((None, ''),)
+
+    def sqlalchemy_type(self):
+        import pytis.data.gensqlalchemy
+        return pytis.data.gensqlalchemy.JSON()
+
+    def adjust_value(self, value):
+        def check(x):
+            if x is None:
+                pass
+            elif isinstance(x, (int, long, float, decimal.Decimal, bool, basestring)):
+                pass
+            elif isinstance(x, dict):
+                for k, v in value.items():
+                    if not isinstance(k, basestring):
+                        raise TypeError("JSON dict keys must be strings", value)
+                    check(v)
+            elif isinstance(x, (tuple, list)):
+                for v in x:
+                    check(v)
+            else:
+                raise TypeError("Unsupported JSON value", value)
+        if value is None:
+            return None
+        if not isinstance(value, (dict, tuple, list)):
+            raise TypeError("Only structured JSON values accepted (dict, list, tuple)", value)
+        check(value)
+        return value
+
+    def _validate(self, obj):
+        assert isinstance(obj, basestring), obj
+        try:
+            value = json.loads(obj)
+        # TODO PY3: ValueError is for Python 2 compatibility.  Use json.JSONDecodeError in Py3.
+        except ValueError:   # json.JSONDecodeError:  (not defined in Python 2)
+            # Translators: User input validation error message.
+            raise ValidationError(_(u"Not a JSON string"))
+        if not isinstance(value, (list, dict)):
+            raise ValidationError(_(u"Not a structured JSON value"))
+        return Value(self, value)
+
+    def _export(self, value):
+        return json.dumps(value)
+
+
+class JSONB(JSON):
+
+    def sqlalchemy_type(self):
+        import pytis.data.gensqlalchemy
+        return pytis.data.gensqlalchemy.JSONB()
 
 
 # Pomocné třídy

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2021 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2022 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2012-2016 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -679,6 +679,8 @@ NUMRANGE = sqlalchemy.dialects.postgresql.NUMRANGE
 TSRANGE = sqlalchemy.dialects.postgresql.TSRANGE
 TSTZRANGE = sqlalchemy.dialects.postgresql.TSTZRANGE
 DATERANGE = sqlalchemy.dialects.postgresql.DATERANGE
+JSON = sqlalchemy.dialects.postgresql.JSON
+JSONB = sqlalchemy.dialects.postgresql.JSONB
 
 
 @compiles(sqlalchemy.schema.CreateTable, 'postgresql')

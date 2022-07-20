@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2021 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2022 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2017 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -45,9 +45,9 @@ from pytis.data import (
     DBConnectionPool, DBData, ColumnSpec, DBColumnBinding, Row, Function,
     dbtable, reversed_sorting, Array, Binary, Boolean, Date, DateTime,
     Float, FullTextIndex, Inet, Integer, LTree, Macaddr, Number, Range,
-    Uuid, Serial, String, Time, TimeInterval, ival, sval, Type, Value,
-    Operator, AND, OR, EQ, NE, GT, LT, FORWARD, BACKWARD, ASCENDENT,
-    DESCENDANT,
+    Uuid, JSON, JSONB, Serial, String, Time, TimeInterval, ival, sval,
+    Type, Value, Operator, AND, OR, EQ, NE, GT, LT, FORWARD, BACKWARD,
+    ASCENDENT, DESCENDANT,
 )
 import pytis.util
 from pytis.util import (
@@ -1355,6 +1355,8 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                         'macaddr': Macaddr,
                         'bytea': Binary,
                         'uuid': Uuid,
+                        'json': JSON,
+                        'jsonb': JSONB,
                         'oid': pytis.data.Oid,  # for backward compatibility
                         'sql_identifier': String,
                         }
