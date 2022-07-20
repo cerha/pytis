@@ -860,7 +860,6 @@ class TextField(InputField):
         control.SetValidator(self.TextValidator(control, filter=filter))
         wx_callback(wx.EVT_TEXT, control, self._on_change)
         wx_callback(wx.EVT_TEXT_ENTER, control, self._on_enter_key)
-        wx_callback(wx.EVT_KILL_FOCUS, control, self._on_ctrl_kill_focus)
         if not self._denied and not self._readonly and self._row.has_completer(self.id()):
             self._completer = _Completer(control)
         else:
@@ -899,11 +898,6 @@ class TextField(InputField):
             event.Skip()
         else:
             event.GetEventObject().Navigate()
-
-    def _on_ctrl_kill_focus(self, event):
-        # Work around the problem of invisible selection text when
-        # the field background color is set.
-        event.GetEventObject().SetSelection(0, 0)
 
     def _on_idle(self, event):
         super(TextField, self)._on_idle(event)
