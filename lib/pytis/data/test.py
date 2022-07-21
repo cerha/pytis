@@ -595,6 +595,26 @@ class TestJSON(_TestType):
             with pytest.raises(TypeError):
                 pd.Value(t, v)
 
+    def test_schema(self):
+        schema = {
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "type": "object",
+            "properties": {
+                "description": {"type": "string"},
+                "active": {"type": "boolean"},
+                "age": {"type": "number"},
+                "height": {"type": "number"},
+            },
+            "additionalProperties": False,
+        }
+        t = pd.JSON(schema=schema)
+        self._validate(t, '{"description": "Fluffy jellyfish", "age": 12, "active": true}')
+        self._validate(t, '{}')
+        self._check_not_valid(t, '{"description": 10}')
+        self._check_not_valid(t, '{"age": "12"}')
+        self._check_not_valid(t, '{"active": null}')
+        self._check_not_valid(t, '{"foo": "bar"}')
+
 
 class TestImage(_TestType):
     _type = pd.Image

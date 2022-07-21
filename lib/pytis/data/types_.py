@@ -2681,31 +2681,67 @@ class JSON(Type):
 
     _SPECIAL_VALUES = Type._SPECIAL_VALUES + ((None, ''),)
 
+    class _hashabledict(dict):
+        def __key(self):
+            def val(v):
+                if isinstance(v, dict):
+                    return self.__class__(v)
+                elif isinstance(v, list):
+                    return tuple(v)
+                else:
+                    return v
+            return tuple((k, val(v)) for k, v in sorted(self.items()))
+        def __hash__(self):
+            return hash(self.__key())
+        def __eq__(self, other):
+            return self.__key() == other.__key()
+
+    def _make(class_, *args, **kwargs):
+        if kwargs.get('schema') is not None:
+            # Type arguments must be hashable.
+            kwargs['schema'] = class_._hashabledict(kwargs['schema'])
+        return Type._make(class_, *args, **kwargs)
+    _make = staticmethod(_make)
+
+    def _init(self, schema=None, **kwargs):
+        super(JSON, self)._init(**kwargs)
+        if schema:
+            import jsonschema
+            jsonschema.Validator.check_schema(schema)
+            validator = jsonschema.validators.validator_for(schema)(schema)
+        else:
+            validator = None
+        self._validator = validator
+
+    def _check(self, x):
+        if x is None:
+            return True
+        elif isinstance(x, (int, long, float, decimal.Decimal, bool, basestring)):
+            return True
+        elif isinstance(x, dict):
+            for k, v in x.items():
+                if not isinstance(k, basestring):
+                    return False
+                if not self._check(v):
+                    return False
+            return True
+        elif isinstance(x, (tuple, list)):
+            for v in x:
+                if not self._check(v):
+                    return False
+            return True
+        else:
+            return False
+
     def sqlalchemy_type(self):
         import pytis.data.gensqlalchemy
         return pytis.data.gensqlalchemy.JSON()
 
     def adjust_value(self, value):
-        def check(x):
-            if x is None:
-                pass
-            elif isinstance(x, (int, long, float, decimal.Decimal, bool, basestring)):
-                pass
-            elif isinstance(x, dict):
-                for k, v in value.items():
-                    if not isinstance(k, basestring):
-                        raise TypeError("JSON dict keys must be strings", value)
-                    check(v)
-            elif isinstance(x, (tuple, list)):
-                for v in x:
-                    check(v)
-            else:
-                raise TypeError("Unsupported JSON value", value)
         if value is None:
             return None
-        if not isinstance(value, (dict, tuple, list)):
-            raise TypeError("Only structured JSON values accepted (dict, list, tuple)", value)
-        check(value)
+        elif not isinstance(value, (dict, tuple, list)) or not self._check(value):
+            raise TypeError("Unsupported JSON value", value)
         return value
 
     def _validate(self, obj):
@@ -2716,8 +2752,14 @@ class JSON(Type):
         except ValueError:   # json.JSONDecodeError:  (not defined in Python 2)
             # Translators: User input validation error message.
             raise ValidationError(_(u"Not a JSON string"))
-        if not isinstance(value, (list, dict)):
-            raise ValidationError(_(u"Not a structured JSON value"))
+        if not isinstance(value, (list, dict, tuple)) or not self._check(value):
+            raise ValidationError(_(u"Unsupported JSON value"))
+        elif self._validator:
+            import jsonschema
+            try:
+                self._validator.validate(value)
+            except jsonschema.ValidationError:
+                raise ValidationError(_(u"JSON value doesn't match schema definition"))
         return Value(self, value)
 
     def _export(self, value):
