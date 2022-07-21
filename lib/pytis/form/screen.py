@@ -3314,7 +3314,7 @@ def _wildcards(filetypes, patterns, pattern):
     return wildcards
 
 
-def _client_mode():
+def client_mode():
     """Return the client operation mode as one of 'remote', 'local' or None.
 
     If the remote connection exists, 'remote' is returned.  If it existed at
@@ -3323,10 +3323,10 @@ def _client_mode():
     cancel, None is returned.  In all other cases 'local' is returned.
 
     """
-    if pytis.remote.client_available():
-        return 'remote'
-    elif not pytis.remote.client_ip():
+    if not pytis.remote.client_available():
         return 'local'
+    elif pytis.remote.client_connection_ok():
+        return 'remote'
     else:
         cancel = _("Cancel")
         answer = pytis.form.run_dialog(pytis.form.Message,
@@ -3343,18 +3343,18 @@ def _client_mode():
             return 'local'
 
 
-def _dirname(client_mode, filename):
+def _dirname(cmode, filename):
     """Return the directory name for given file name in given client mode.
 
     Arguments:
 
-      client_mode -- 'local' for local file names (in application server's
+      cmode -- 'local' for local file names (in application server's
         filesystem) or 'remote' for file names from remote client's filesystem.
       filename -- file name as a string.
 
     """
     if filename:
-        if client_mode == 'local':
+        if cmode == 'local':
             pathmod = os.path
         elif '\\' in filename:
             import ntpath as pathmod
@@ -3365,11 +3365,11 @@ def _dirname(client_mode, filename):
         return None
 
 
-def _get_recent_directory(client_mode, context):
-    if client_mode and context:
-        directory = pytis.form.get_recent_directory((client_mode, context))
+def _get_recent_directory(cmode, context):
+    if cmode and context:
+        directory = pytis.form.get_recent_directory((cmode, context))
         if directory is None:
-            directory = pytis.form.get_recent_directory((client_mode, 'default'))
+            directory = pytis.form.get_recent_directory((cmode, 'default'))
     else:
         directory = None
     return directory
@@ -3398,7 +3398,7 @@ def select_file(filename=None, patterns=(), pattern=None, filetypes=None, contex
         directory is stored separately.
 
     """
-    cmode = _client_mode()
+    cmode = client_mode()
     directory = _get_recent_directory(cmode, context)
     if cmode == 'remote':
         result = pytis.remote.select_file(filename=filename, directory=directory,
@@ -3430,7 +3430,7 @@ def select_files(directory=None, patterns=(), pattern=None, filetypes=None, cont
 
     """
     # TODO: directory is ignored in the remote variant.
-    cmode = _client_mode()
+    cmode = client_mode()
     if directory is None:
         directory = _get_recent_directory(cmode, context)
     else:
@@ -3460,7 +3460,7 @@ def select_directory(context='default'):
     exists, the returned directory belongs to the client's filesystem.
 
     """
-    cmode = _client_mode()
+    cmode = client_mode()
     directory = _get_recent_directory(cmode, context)
     if cmode == 'remote':
         result = pytis.remote.select_directory(directory=directory)
@@ -3491,7 +3491,7 @@ def make_selected_file(filename, mode='w', encoding=None, patterns=(), pattern=N
       context -- see 'pyts.form.select_file()'
 
     """
-    cmode = _client_mode()
+    cmode = client_mode()
     directory = _get_recent_directory(cmode, context)
     if encoding is None and 'b' not in mode:
         # Supply default encoding only for text modes.
@@ -3573,7 +3573,7 @@ def open_selected_file(patterns=(), pattern=None, filetypes=None, encrypt=None, 
 
     """
     # TODO: Encryption not supported for the local variant.
-    cmode = _client_mode()
+    cmode = client_mode()
     directory = _get_recent_directory(cmode, context)
     if cmode == 'remote':
         f = pytis.remote.open_selected_file(directory=directory, encrypt=encrypt,
@@ -3610,7 +3610,7 @@ def open_file(filename, mode='w'):
       mode -- mode for opening the file
 
     """
-    cmode = _client_mode()
+    cmode = client_mode()
     if cmode == 'remote':
         f = pytis.remote.open_file(filename, mode=mode)
     elif cmode == 'local':
@@ -3703,7 +3703,7 @@ def launch_file(filename):
     run in the background in all cases.
 
     """
-    cmode = _client_mode()
+    cmode = client_mode()
     if cmode == 'remote':
         with open(filename, 'rb') as f:
             _launch_file_remotely(f, suffix=os.path.splitext(filename)[1])
@@ -3756,7 +3756,7 @@ def open_data_as_file(data, suffix, decrypt=False):
     run in the background in all cases.
 
     """
-    cmode = _client_mode()
+    cmode = client_mode()
     if cmode == 'remote':
         if hasattr(data, 'read'):
             srcfile = data
@@ -3785,7 +3785,7 @@ def launch_url(url):
     run in the background in all cases.
 
     """
-    cmode = _client_mode()
+    cmode = client_mode()
     if cmode == 'remote':
         pytis.remote.launch_url(url)
     elif cmode == 'local':

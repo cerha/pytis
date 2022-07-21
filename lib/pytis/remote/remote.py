@@ -50,10 +50,10 @@ _remove_x2go_info_file = True
 class RPCInfo(object):
     """Container for RPC communication data."""
     connection = None
-    access_data = None
-    remote_client_version = None
     connection_order = 0
+    access_data = None
     access_data_version = 0
+    remote_client_version = None
 
 
 class Connector(object):
@@ -128,12 +128,28 @@ def client_ip():
 
 
 def client_available():
-    """Return True, iff remote client is available.
+    """Return True iff running a remote Pytis client session (Pytis2Go).
+
+    The result of client_ip() returns an IP address for any X2Go session, even
+    if a remote RPyC connection was not initialized.
+
+    This function returns True if we are inside an X2Go session ('client_ip()'
+    returns an IP address) and the remote Pytis RPyC connection is available.
+
+    Use 'client_connection_ok()' to further check if the client connection
+    actually works.
+
+    """
+    return client_ip() is not None and _rpc_access_data() is not None
+
+
+def client_connection_ok():
+    """Return True, iff remote client connection is active.
 
     Returns True if running remotely and the remote connection actually works.
 
     """
-    if client_ip() is None:
+    if not client_available():
         return False
     try:
         return _request('echo', 'hello') == 'hello'
@@ -239,15 +255,18 @@ def _read_x2go_info_file():
                 return access_data
     return None
 
-
-def _connect():
+def _rpc_access_data():
     access_data = _read_x2go_info_file() or RPCInfo.access_data
     if not access_data:
         return None
-    connector = Connector(access_data.get('password'))
     if access_data != RPCInfo.access_data:
         RPCInfo.access_data = access_data
         RPCInfo.access_data_version += 1
+    return access_data
+
+def _connect():
+    access_data = _rpc_access_data()
+    connector = Connector(access_data.get('password'))
     RPCInfo.connection = connection = connector.connect('localhost', access_data.get('port'))
     RPCInfo.connection_order += 1
     RPCInfo.remote_client_version = version = connection.root.x2goclient_version()

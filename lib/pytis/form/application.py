@@ -2188,19 +2188,17 @@ def built_in_status_fields():
 
     def _refresh_remote_status():
         global _remote_connection_last_available
-        if not pytis.remote.client_ip():
+        if not pytis.remote.client_available():
             status = _("N/A")
             icon = 'status-offline'
             tooltip = _("Running locally.")
-        elif pytis.remote.client_available():
-            #log(OPERATIONAL, "RPC connection established.")
+        elif pytis.remote.client_connection_ok():
             version = pytis.remote.RPCInfo.remote_client_version or _("Not available")
             status = _("Ok")
             icon = 'status-online'
             tooltip = _("Connected.") + "\n" + _("Client version: %s", version)
             _remote_connection_last_available = time.localtime()
         else:
-            #log(OPERATIONAL, "RPC connection lost.")
             status = _("Error")
             icon = 'status-error'
             if _remote_connection_last_available:

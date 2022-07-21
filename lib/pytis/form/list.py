@@ -1896,14 +1896,15 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                 return
             after_export = None
         else:
-            if pytis.remote.client_available():
-                log(EVENT, 'RPC communication on %s available' % pytis.remote.client_ip())
+            cmode = pytis.form.client_mode()
+            if cmode == 'remote':
                 export_file = pytis.remote.make_temporary_file(mode='wb', suffix=suffix)
                 after_export = pytis.remote.launch_file
-            else:
-                log(EVENT, 'RPC communication not available')
+            elif cmode == 'local':
                 export_file = tempfile.NamedTemporaryFile(mode='wb', suffix=suffix)
                 after_export = pytis.form.launch_file
+            else:
+                return
         if fileformat == 'XLSX':
             export_method = self._export_xlsx
         else:

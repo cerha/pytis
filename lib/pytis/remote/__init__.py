@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2021 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2022 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2011-2018 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -23,7 +23,7 @@ except ImportError as e:
         raise e
 
 from .remote import (  # noqa!
-    client_ip, client_available, session_password,
+    client_ip, client_available, client_connection_ok, session_password,
     get_clipboard_text, set_clipboard_text,
     launch_file, launch_url,
     make_selected_file, make_temporary_file,

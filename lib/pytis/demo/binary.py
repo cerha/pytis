@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2020 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2020, 2022 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2007-2016 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -98,7 +98,7 @@ class BinaryData(Specification):
         return keys
 
     def _upload_encrypted(self, row):
-        if not pytis.remote.client_available():
+        if not pytis.remote.client_connection_ok():
             app.error(_("Remote connection not available."))
             return
         keys = self._select_encryption_keys()
@@ -143,7 +143,7 @@ class BinaryData(Specification):
                                               ('data', pytis.data.Value(type_, buf)),)))
 
     def _download_decrypted(self, row):
-        if not pytis.remote.client_available():
+        if not pytis.remote.client_connection_ok():
             app.error(_("Remote connection not available."))
             return
         data = row.data().row(row['id'])['data'].value()

@@ -2263,7 +2263,7 @@ class RecordForm(LookupForm):
             return False
         try:
             # In case of remote file, make local copy
-            if pytis.remote.client_available():
+            if pytis.remote.client_connection_ok():
                 import tempfile
                 flocal = tempfile.NamedTemporaryFile()
                 filename = flocal.name

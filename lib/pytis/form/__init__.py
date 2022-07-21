@@ -50,7 +50,7 @@ from .screen import (  # noqa: F401
     popup_menu, printout, get_icon, select_file, select_files,
     select_directory, make_selected_file, write_selected_file,
     open_selected_file, open_file, write_file, launch_file, temp_file_launcher,
-    open_data_as_file, launch_url,
+    open_data_as_file, launch_url, client_mode
 )
 
 from .dialog import (  # noqa: F401
