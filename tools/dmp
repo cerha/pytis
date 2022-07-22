@@ -1,12 +1,16 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
+from __future__ import unicode_literals
+from past.builtins import basestring, unicode
+from builtins import object
+
 import codecs
 import optparse
 import string
 import sys
 
 import pytis.extensions
-
 import pytis.data.postgresql
 
 
@@ -24,13 +28,13 @@ def decode(string):
 def run_queries(queries, cursor, connection, dry_run, quiet=False):
     for q in queries:
         if dry_run:
-            print q
+            print(q)
         else:
             cursor.execute(q)
     if not dry_run:
         connection.commit()
     if not quiet:
-        print "Changes applied, don't forget to update summary rights to get them fully applied."
+        print("Changes applied, don't forget to update summary rights to get them fully applied.")
 
 
 def command_ls(parameters, dry_run, args):
@@ -44,24 +48,24 @@ def command_ls(parameters, dry_run, args):
     else:
         action = args[0]
         if n_args != 2 or action not in ('menu', 'rights',):
-            print 'Error: extra arguments'
+            print('Error: extra arguments')
             return
         kwargs['specifications'] = [args[1]]
     if action not in ('menu', 'roles', 'rights', 'norights', 'exrights', 'missing', 'extra',):
-        print 'Error: invalid action: %s' % (action,)
+        print('Error: invalid action: %s' % (action,))
         return
     return pytis.extensions.dmp_ls(parameters, dry_run, action, **kwargs)
 
 
 def command_system_rights(parameters, dry_run, args, system=True):
     if not args:
-        print "Error: missing shortname"
+        print("Error: missing shortname")
         return
     shortname = args.pop(0)
     requests = []
     for spec in args:
         if not spec:
-            print "Error: invalid argument:", spec
+            print("Error: invalid argument:", spec)
             return
         if spec[0] == '+':
             granted = True
@@ -76,7 +80,7 @@ def command_system_rights(parameters, dry_run, args, system=True):
             granted = True
         separator_pos = spec.find(':')
         if separator_pos < 0:
-            print "Error: invalid argument:", spec
+            print("Error: invalid argument:", spec)
             return
         role = spec[:separator_pos]
         right_columns = spec[separator_pos + 1:].split('/')
@@ -90,7 +94,7 @@ def command_system_rights(parameters, dry_run, args, system=True):
             try:
                 form_specification = resolver.specification(specification_name)
             except Exception as e:
-                print "Error: specification not found:", e
+                print("Error: specification not found:", e)
                 return
             columns_spec = columns[1:]
             columns = []
@@ -101,7 +105,7 @@ def command_system_rights(parameters, dry_run, args, system=True):
                         columns.append(colid)
         if right not in ('*', 'view', 'insert', 'update', 'delete', 'print', 'export', 'call',
                          'show',):
-            print "Error: invalid right:", right
+            print("Error: invalid right:", right)
             return
         if system and right == '*':
             rights_to_change = ('view', 'insert', 'update', 'delete', 'print', 'export', 'call',)
@@ -119,17 +123,17 @@ def command_rights(connection, dry_run, args):
 
 def command_import(parameters, dry_run, args):
     if len(args) > 0:
-        print 'Error: extra arguments'
+        print('Error: extra arguments')
         return
     return pytis.extensions.dmp_import(parameters, dry_run)
 
 
 def command_add_member(parameters, dry_run, args):
     if len(args) < 2:
-        print "Error: missing specification name"
+        print("Error: missing specification name")
         return
     if len(args) > 2:
-        print 'Error: extra arguments'
+        print('Error: extra arguments')
         return
     member, role = args
     return pytis.extensions.dmp_add_member(parameters, dry_run, member, role)
@@ -137,10 +141,10 @@ def command_add_member(parameters, dry_run, args):
 
 def command_reset_rights(parameters, dry_run, args):
     if len(args) < 1:
-        print "Error: missing specification name"
+        print("Error: missing specification name")
         return
     if len(args) > 1:
-        print 'Error: extra arguments'
+        print('Error: extra arguments')
         return
     specification = args[0]
     return pytis.extensions.dmp_reset_rights(parameters, dry_run, specification)
@@ -148,10 +152,10 @@ def command_reset_rights(parameters, dry_run, args):
 
 def command_copy_rights(parameters, dry_run, args):
     if len(args) < 2:
-        print "Error: missing shortname"
+        print("Error: missing shortname")
         return
     if len(args) > 2:
-        print 'Error: extra arguments'
+        print('Error: extra arguments')
         return
     from_shortname, to_shortname = args
     return pytis.extensions.dmp_copy_rights(parameters, dry_run, from_shortname, to_shortname)
@@ -159,10 +163,10 @@ def command_copy_rights(parameters, dry_run, args):
 
 def command_add_action(parameters, dry_run, args):
     if len(args) < 1:
-        print "Error: missing argument"
+        print("Error: missing argument")
         return
     if len(args) > 3:
-        print 'Error: extra arguments'
+        print('Error: extra arguments')
         return
     fullname = args[0]
     title = None
@@ -177,10 +181,10 @@ def command_add_action(parameters, dry_run, args):
 
 def command_update_form(parameters, dry_run, args):
     if len(args) < 1:
-        print "Error: missing defs directory or specification name"
+        print("Error: missing defs directory or specification name")
         return
     if len(args) > 2:
-        print 'Error: extra arguments'
+        print('Error: extra arguments')
         return
     if len(args) > 1:
         fullname = args[1]
@@ -193,10 +197,10 @@ def command_update_form(parameters, dry_run, args):
 
 def command_rename_specification(parameters, dry_run, args):
     if len(args) < 2:
-        print "Error: missing name"
+        print("Error: missing name")
         return
     if len(args) > 2:
-        print 'Error: extra arguments'
+        print('Error: extra arguments')
         return
     old_name, new_name = args
     return pytis.extensions.dmp_rename_specification(parameters, dry_run, old_name, new_name)
@@ -204,14 +208,14 @@ def command_rename_specification(parameters, dry_run, args):
 
 def command_delete(parameters, dry_run, args):
     if not args:
-        print "Error: missing action identifier"
+        print("Error: missing action identifier")
         return
     action = args.pop(0)
     if args:
-        print "Error: extra arguments:", args
+        print("Error: extra arguments:", args)
         return
     if not action:
-        print "Error: empty action"
+        print("Error: empty action")
     if action[0] in string.digits:
         result = pytis.extensions.dmp_delete_menu(parameters, dry_run, action)
     elif len(action.split('/')) > 2:
@@ -223,18 +227,18 @@ def command_delete(parameters, dry_run, args):
 
 def command_convert_system_rights(parameters, dry_run, args):
     if not args:
-        print "Error: missing shortname"
+        print("Error: missing shortname")
         return
     shortname = args.pop(0)
     if args:
-        print "Error: extra arguments:", args
+        print("Error: extra arguments:", args)
         return
     return pytis.extensions.dmp_convert_system_rights(parameters, dry_run, shortname)
 
 
 def command_commit(parameters, dry_run, args):
     if args:
-        print "Error: commit takes no arguments"
+        print("Error: commit takes no arguments")
         return
     return pytis.extensions.dmp_commit(parameters, dry_run)
 
@@ -296,7 +300,9 @@ def parse_options():
         if not arg or arg[0] != '-':
             break
         command_index += 1
-    args = [unicode(arg, sys.stdin.encoding) for arg in sys.argv[command_index:]]
+    args = sys.argv[command_index:]
+    if sys.version_info[0] == 2:
+        args = [unicode(arg, sys.stdin.encoding) for arg in args]
     if not args or not find_command(args[0]):
         parser.print_help()
         sys.exit(1)
