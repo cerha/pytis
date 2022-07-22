@@ -779,8 +779,10 @@ class TextField(InputField):
         post_process = self._post_process_func()
         if post_process:
             value = post_process(value)
-            if value != self._get_value():
-                self._set_value(value)
+            if value != self._ctrl.GetValue():
+                selection = self._ctrl.GetSelection()
+                self._ctrl.SetValue(value)
+                self._ctrl.SetSelection(*selection)
         maxlen = self._maxlen()
         if maxlen is not None and len(value) > maxlen:
             # wx 3.x and later does not support wx.EVT_TEXT_MAXLEN on multiline TextCtrl fields.
