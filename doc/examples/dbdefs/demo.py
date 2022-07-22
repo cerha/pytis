@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2019-2020 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2019-2022 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2012-2015 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -50,7 +50,6 @@ class Foo(sql.SQLTable):
                    ('def', 20,),
                    )
     unique = (('foo', 'n',),)
-    with_oids = False
     access_rights = (('ALL', 'foo-users',),)
 
 class Foo2(Foo):
@@ -62,7 +61,6 @@ class Foo2(Foo):
     check = ('n > 0',)
     init_columns = ()
     init_values = ()
-    with_oids = False
     access_rights = (('ALL', True,),)
 
 class Bar(sql.SQLTable):

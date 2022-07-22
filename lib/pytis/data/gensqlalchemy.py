@@ -2409,7 +2409,6 @@ class SQLTable(_SQLIndexable, _SQLTabular):
         'sqlalchemy.ForeignKey' constructor (e.g. 'onupdate') may be given.
         For single column foreign key constraints it is preferable to use
         'references' argument in 'Column' definitions.
-      with_oids -- iff True then oids are assigned to the table rows; boolean
       index_columns -- tuple of tuples or 'Arguments' instances.  Each of the
         tuples or 'Arguments' instances contains names of columns or SQLAlchemy
         expressions to include within a single index.  An additional keyword
@@ -2452,7 +2451,6 @@ class SQLTable(_SQLIndexable, _SQLTabular):
     unique = ()
     exclude_constraints = ()
     foreign_keys = ()
-    with_oids = False
     triggers = ()
 
     def __new__(cls, metadata, search_path):
@@ -2506,10 +2504,6 @@ class SQLTable(_SQLIndexable, _SQLTabular):
         obj.pytis_key = key
         for f in foreign_constraints:
             _forward_foreign_keys.append(_ForwardForeignKey(*(f[:5] + (obj,))))
-        for c in cls.inherits:
-            if c.with_oids != cls.with_oids:
-                raise SQLException("Can't change oids from inherited table",
-                                   (cls.pytis_name(), c.pytis_name(),))
         return obj
 
     def _init(self, *args, **kwargs):
@@ -2678,7 +2672,6 @@ class SQLTable(_SQLIndexable, _SQLTabular):
                 sqlalchemy.event.listen(self, 'after_create', _ColumnComment(self, c))
 
     def _create_parameters(self):
-        self._alter_table("SET %s OIDS" % ("WITH" if self.with_oids else "WITHOUT",))
         if self.tablespace:
             self._alter_table('SET TABLESPACE "%s"' % (self.tablespace,))
 

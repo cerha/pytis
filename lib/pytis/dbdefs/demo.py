@@ -55,7 +55,6 @@ class CmsUsers(sql.SQLTable):
         sql.Column('passwd', pytis.data.String(not_null=True)),
         sql.Column('fullname', pytis.data.String(not_null=True)),
     )
-    with_oids = True
     depends_on = ()
     access_rights = (('all', 'pytis-demo'), ('select', 'www-data'))
 
@@ -67,7 +66,6 @@ class Continents(sql.SQLTable):
         sql.Column('name', pytis.data.String(not_null=True), "Continent name", unique=True),
         sql.Column('smallest', pytis.data.String(), "Smallest country"),
     )
-    with_oids = True
     depends_on = ()
     access_rights = (('all', 'pytis-demo'), ('select', 'www-data'))
 
@@ -98,7 +96,6 @@ class Countries(sql.SQLTable):
                    "Short name", unique=True),
         sql.Column('fullname', pytis.data.String(not_null=True), "Full name", unique=True),
     )
-    with_oids = True
     depends_on = ()
     access_rights = (('all', 'pytis-demo'), ('select', 'www-data'))
 
@@ -362,7 +359,6 @@ class Longtable(sql.SQLTable):
         sql.PrimaryColumn('id', pytis.data.Serial(), _("ID")),
         sql.Column('value', pytis.data.String(maxlen=6, not_null=False), _("Value")),
     )
-    with_oids = True
     depends_on = ()
     access_rights = ()
 
@@ -430,7 +426,6 @@ class Insurance(sql.SQLTable):
         sql.Column('value', pytis.data.Integer(not_null=False), "Value"),
         sql.Column('fee', pytis.data.Integer(not_null=True), "Fee %"),
     )
-    with_oids = True
     depends_on = ()
     access_rights = ()
     init_columns = ('description', 'value', 'fee')
@@ -451,7 +446,6 @@ class Products(sql.SQLTable):
         sql.Column('marked', pytis.data.Boolean(not_null=True), _("Marked"), default=False),
         sql.Column('notes', pytis.data.String(not_null=False), _("Notes")),
     )
-    with_oids = True
     depends_on = ()
     access_rights = (('all', 'pytis-demo'), ('select', 'www-data'))
 
@@ -475,7 +469,6 @@ class RangeTypes(sql.SQLTable):
         sql.Column('datetime_range', pytis.data.DateTimeRange(not_null=True), _("DateTime")),
         sql.Column('int_range', pytis.data.IntegerRange(not_null=True), _("Integer")),
     )
-    with_oids = True
     depends_on = ()
     access_rights = (('all', 'pytis-demo'), ('select', 'www-data'))
 
@@ -490,7 +483,6 @@ class RuntimeFilterDemo(sql.SQLTable):
         sql.Column('continent', pytis.data.String(minlen=2, maxlen=2, not_null=True),
                    references=sql.r.Continents),
     )
-    with_oids = True
     depends_on = ()
     access_rights = (('all', 'pytis-demo'), ('select', 'www-data'))
 
@@ -502,7 +494,6 @@ class Passwords(sql.SQLTable):
         sql.Column('name', pytis.data.String(not_null=True), _("Name"), unique=True),
         sql.Column('passwd', pytis.data.String(not_null=True), _("Password")),
     )
-    with_oids = True
     depends_on = ()
     access_rights = (('all', 'pytis-demo'), ('select', 'www-data'))
 
@@ -515,7 +506,6 @@ class BinaryData(sql.SQLTable):
         sql.Column('descr', pytis.data.String(not_null=True), _("Description")),
         sql.Column('filename', pytis.data.String(not_null=True), _("File name")),
     )
-    with_oids = True
     depends_on = ()
     access_rights = (('all', 'pytis-demo'), ('select', 'www-data'))
 
@@ -530,7 +520,6 @@ class Images(sql.SQLTable):
         sql.Column('descr', pytis.data.String(not_null=False), _("Description")),
         sql.Column('size', pytis.data.String(not_null=True), _("Size")),
     )
-    with_oids = True
     depends_on = ()
     access_rights = (('all', 'pytis-demo'), ('select', 'www-data'))
 
@@ -543,7 +532,6 @@ class XTree(sql.SQLTable):
         sql.Column('amount', pytis.data.Integer(not_null=False)),
         sql.Column('description', pytis.data.String(not_null=False)),
     )
-    with_oids = True
     depends_on = ()
     access_rights = (('all', 'pytis-demo'), ('select', 'www-data'))
 
@@ -591,7 +579,6 @@ class Files(sql.SQLTable):
     )
     init_columns = ('id', 'file', 'url')
     init_values = ((0, '/Python26/README.txt', 'http://www.python.org',),)
-    with_oids = True
     depends_on = ()
     access_rights = (('all', 'pytis-demo'), ('select', 'www-data'))
 
