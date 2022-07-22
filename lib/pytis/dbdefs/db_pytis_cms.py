@@ -12,7 +12,6 @@ from pytis.data.dbdefs import and_
 class CmsLanguages(sql.SQLTable):
     """Codebook of languages available in the CMS."""
     name = 'cms_languages'
-    external = True
     schemas = cms_schemas.value(globals())
     fields = (
         sql.PrimaryColumn('lang_id', pytis.data.Serial()),
@@ -25,7 +24,6 @@ class CmsLanguages(sql.SQLTable):
 class CmsModules(sql.SQLTable):
     """Codebook of extension modules available in the CMS."""
     name = 'cms_modules'
-    external = True
     schemas = cms_schemas.value(globals())
     fields = (
         sql.PrimaryColumn('mod_id', pytis.data.Serial()),
@@ -39,7 +37,6 @@ class CmsMenuStructure(sql.SQLTable):
     """Language independent menu structure."""
     name = 'cms_menu_structure'
     schemas = cms_schemas.value(globals())
-    external = True
     fields = (sql.PrimaryColumn('menu_item_id', pytis.data.Serial()),
               sql.Column('identifier', pytis.data.String(maxlen=32, not_null=True),),
               sql.Column('parent', pytis.data.Integer(not_null=False),
@@ -68,7 +65,6 @@ class CmsMenuStructureTreeOrder(sql.SQLFunction):
     schemas = cms_schemas.value(globals())
     name = 'cms_menu_structure_tree_order'
     arguments = (sql.Column('', pytis.data.Integer()),)
-    external = True
     result_type = pytis.data.LTree()
     multirow = False
     stability = 'VOLATILE'
@@ -79,7 +75,6 @@ class CmsMenuStructureTreeOrder(sql.SQLFunction):
 class CmsMenuTexts(sql.SQLTable):
     """Language dependent texts and properties for menu items."""
     name = 'cms_menu_texts'
-    external = True
     schemas = cms_schemas.value(globals())
     fields = (sql.Column('menu_item_id', pytis.data.Integer(not_null=True),
                          references=sql.gA('cms_menu_structure', ondelete='CASCADE')),
@@ -99,7 +94,6 @@ class CmsMenu(sql.SQLView):
     """Complete menu structure with texts for each language defined in cms_languages."""
     name = 'cms_menu'
     schemas = cms_schemas.value(globals())
-    external = True
 
     @classmethod
     def query(cls):
@@ -181,7 +175,6 @@ class CmsMenu(sql.SQLView):
 class CmsRoles(sql.SQLTable):
     """CMS roles."""
     name = 'cms_roles'
-    external = True
     schemas = cms_schemas.value(globals())
     fields = (sql.PrimaryColumn('role_id', pytis.data.Serial()),
               sql.Column('name', pytis.data.String(not_null=True)),
@@ -203,7 +196,6 @@ class CmsActions(sql.SQLTable):
     Module independent actions have NULL in the mod_id column.
     """
     name = 'cms_actions'
-    external = True
     schemas = cms_schemas.value(globals())
     fields = (sql.PrimaryColumn('action_id', pytis.data.Serial()),
               sql.Column('mod_id', pytis.data.Integer(not_null=False),
@@ -224,7 +216,6 @@ class CmsActions(sql.SQLTable):
 class CmsRightsAssignment(sql.SQLTable):
     """Underlying binding table between menu items, roles and module actions."""
     name = 'cms_rights_assignment'
-    external = True
     schemas = cms_schemas.value(globals())
     fields = (sql.PrimaryColumn('rights_assignment_id', pytis.data.Serial()),
               sql.Column('menu_item_id', pytis.data.Integer(not_null=True),
@@ -242,7 +233,6 @@ class CmsRightsAssignment(sql.SQLTable):
 class CmsRights(sql.SQLView):
     """User editable access rights assignment."""
     name = 'cms_rights'
-    external = True
     schemas = cms_schemas.value(globals())
 
     @classmethod
@@ -281,7 +271,6 @@ class CmsThemes(sql.SQLTable):
     """Definition of available color themes."""
     name = 'cms_themes'
     schemas = cms_schemas.value(globals())
-    external = True
     fields = (sql.PrimaryColumn('theme_id', pytis.data.Serial()),
               sql.Column('name', pytis.data.String(not_null=True), unique=True),
               sql.Column('foreground', pytis.data.Color(not_null=False)),
@@ -329,7 +318,6 @@ class CmsUserRoleAssignment(sql.SQLTable):
     """Binding table assigning CMS roles to CMS users."""
     name = 'cms_user_role_assignment'
     schemas = cms_schemas.value(globals())
-    external = True
     fields = (sql.PrimaryColumn('user_role_id', pytis.data.Serial()),
               sql.Column('uid', pytis.data.Integer(not_null=True),
                          references=sql.gA(cms_users_table.value(globals()), ondelete='CASCADE')),
@@ -360,7 +348,6 @@ class CmsSessionLogData(sql.SQLTable):
     """Log of web user logins (underlying data)."""
     name = 'cms_session_log_data'
     schemas = cms_schemas.value(globals())
-    external = True
     fields = (sql.PrimaryColumn('log_id', pytis.data.Serial()),
               sql.Column('session_id', pytis.data.Integer(not_null=False),
                          references=sql.gA('cms_session', ondelete='SET NULL')),
@@ -382,7 +369,6 @@ class CmsAccessLogData(sql.SQLTable):
     """Log of cms page access."""
     name = 'cms_access_log_data'
     schemas = cms_schemas.value(globals())
-    external = True
     fields = (sql.PrimaryColumn('log_id', pytis.data.Serial()),
               sql.Column('timestamp', pytis.data.DateTime(not_null=True)),
               sql.Column('uri', pytis.data.String(not_null=True)),
