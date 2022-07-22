@@ -3770,6 +3770,8 @@ class SQLPyFunction(SQLFunctional):
                 return line[-indentation:]
         if sys.version_info[0] == 2:
             lines = [unistr(line.rstrip(), 'utf-8') for line in lines]
+        else:
+            lines = [line.rstrip() for line in lines]
         return [reindent(line) for line in lines if line.strip()]
 
 
