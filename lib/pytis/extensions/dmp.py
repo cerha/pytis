@@ -323,7 +323,7 @@ class DMPObject(object):
             return resolver.specification(name)
         except Exception as e:
             add_message(messages, DMPMessage.ERROR_MESSAGE,
-                        "Couldn't load specification", (e,))
+                        "Couldn't load specification", (name, e))
             return None
 
     def _disable_triggers(self, transaction=None, disable_import=False):
