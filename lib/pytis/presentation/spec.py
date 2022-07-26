@@ -5627,9 +5627,6 @@ class Specification(with_metaclass(_SpecificationMetaclass, SpecificationBase)):
         self_spec_name = self._spec_name()
         i = 0
         for c in table.specification_fields():
-            descr = None
-            if c.label():
-                descr = c.doc()
             editable = Editable.ALWAYS
             type_ = c.type()
             if isinstance(type_, pytis.data.Serial):
@@ -5661,7 +5658,7 @@ class Specification(with_metaclass(_SpecificationMetaclass, SpecificationBase)):
                     if orig_c is not None:
                         default = nextval('%s_%s_seq' % (orig_c.table.name, orig_c.name,),
                                           connection_name=self.connection)
-            f = Field(c.id(), c.label(), type=type_, descr=descr, default=default,
+            f = Field(c.id(), c.label(), type=type_, descr=c.doc(), default=default,
                       editable=editable, codebook=codebook,  # not_null=type_.not_null(),
                       crypto_name=c.crypto_name())
             xfields.append(f)
