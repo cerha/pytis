@@ -1602,9 +1602,9 @@ class SQLObject(object):
         pairs (RIGHT, ROLE); if ROLE is 'True' then the right is granted to
         all users
       owner -- database owner of the object; string
-      external -- iff true then do not create the object as it's just a
-        declaration of a database object defined outside our specifications,
-        to be used by objects of our specifications
+      external -- iff true then do not create the object.  Used for definition
+         of "abstract" database objects which may be further modified and
+         included in a project by setting their 'external' attribute to False.
       db_name -- actual name of the database object; string.  It is useful only
         with overloaded functions or *different* objects in different schemas
         when the Python object names must be different (as required by

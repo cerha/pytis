@@ -8,6 +8,16 @@ from pytis.data.dbdefs import ival, sval
 from pytis.util import translations
 import pytis.data
 
+sql.SQLFlexibleValue.set_value('app_default_access_rights', (('all', 'demo',),))
+sql.SQLFlexibleValue.set_value('app_pytis_schemas', (('public',),))
+sql.SQLFlexibleValue.set_value('app_cms_rights', (('all', 'demo',),))
+sql.SQLFlexibleValue.set_value('app_cms_rights_rw', (('all', 'demo',),))
+sql.SQLFlexibleValue.set_value('app_cms_schemas', (('public',),))
+sql.SQLFlexibleValue.set_value('app_cms_users_table', 'cms_users')
+sql.SQLFlexibleValue.set_value('app_http_attachment_storage_rights', (('insert', 'demo'),
+                                                                      ('delete', 'demo'),
+                                                                      ('select', 'demowebuser'),))
+
 import pytis.dbdefs.db_pytis_base
 import pytis.dbdefs.db_pytis_common
 import pytis.dbdefs.db_pytis_config
@@ -25,15 +35,6 @@ from pytis.dbdefs.db_pytis_base import Base_PyFunction
 
 _ = translations('pytis-demo')
 
-sql.SQLFlexibleValue.set_value('app_default_access_rights', (('all', 'demo',),))
-sql.SQLFlexibleValue.set_value('app_pytis_schemas', (('public',),))
-sql.SQLFlexibleValue.set_value('app_cms_rights', (('all', 'demo',),))
-sql.SQLFlexibleValue.set_value('app_cms_rights_rw', (('all', 'demo',),))
-sql.SQLFlexibleValue.set_value('app_cms_schemas', (('public',),))
-sql.SQLFlexibleValue.set_value('app_cms_users_table', 'cms_users')
-sql.SQLFlexibleValue.set_value('app_http_attachment_storage_rights', (('insert', 'demo'),
-                                                                      ('delete', 'demo'),
-                                                                      ('select', 'demowebuser'),))
 
 # TODO: Rewrite to pytis.dbdefs.db_pytis_output.EPytisOutputTemplates.add_init_values()
 # if this is still relevant...
@@ -78,6 +79,9 @@ class CmsAttachments(sql.SQLTable):
         sql.Column('thumbnail', pytis.data.Binary()),
     )
     unique = (('file_id', 'menu_item_id',),)
+
+
+pytis.dbdefs.db_pytis_cms.use_cms()
 
 
 class Continents(sql.SQLTable):

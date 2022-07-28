@@ -19,6 +19,61 @@ cms_rights_rw = sql.SQLFlexibleValue('app_cms_rights_rw',
                                      environment='GSQL_CMS_RIGHTS_RW',
                                      default=(('all', 'pytis',),))
 
+def use_cms(classes=None):
+    """Declare usage of Pytis CMS DB objects.
+
+    Pytis CMS classes are by default marked as 'external' and thus are not
+    included in gsql output after mere import of pytis.dbdefs.db_pytis_cms.
+    Calling this function will setup the classes for usage.
+
+    Arguments:
+
+      classes -- the set of classes to mark for usage as an iterable.  If None,
+        the default set of Pytis CMS classes is used.
+
+    """
+    if not classes:
+        classes = (
+            CmsLanguages,
+            CmsModules,
+            CmsMenuStructure,
+            CmsMenuStructureTreeOrder,
+            CmsMenuTexts,
+            CmsMenu,
+            CmsRoles,
+            CmsActions,
+            CmsRightsAssignment,
+            CmsRights,
+            CmsUserRoleAssignment,
+            CmsSession,
+            CmsSessionLogData,
+            CmsSessionLog,
+            X186,
+            CmsThemes,
+        )
+    for cls in classes:
+        cls.external = False
+
+
+def extend(cms_class, extension_class):
+    """Extend existing Pytis CMS class by attributes of given extension class.
+
+    We need to alter the existing classes, because it is not possible to create
+    new derived classes and use them instead of the original classes.  This is
+    because gsql will fail if it finds two classes with the same name (even
+    though one of them is marked as 'external').  So we need to define a new
+    class (not inherited from the original gsql class) and dynamically override
+    all public attributes of the original 'cms_class' by the attributes of the
+    'extension_class'.
+
+    This makes it possible for example to add application specific columns to
+    the tables defined by Pytis CMS.
+
+    """
+    for name, value in extension_class.__dict__.items():
+        if not name.startswith('_'):
+            setattr(cms_class, name, value)
+
 
 class CmsLanguages(sql.SQLTable):
     """Codebook of languages available in the CMS."""
@@ -333,7 +388,8 @@ class CmsUsersTable(sql.SQLTable):
     schemas = cms_schemas.value(globals())
     fields = (sql.PrimaryColumn('uid', pytis.data.Serial()),)
     depends_on = ()
-    access_rights = ()
+    access_rights = cms_rights.value(globals())
+    external = True
 
 
 class CmsUserRoleAssignment(sql.SQLTable):
@@ -356,6 +412,7 @@ class CmsSession(sql.SQLTable):
     """Web user session information for authentication and login history."""
     name = 'cms_session'
     schemas = cms_schemas.value(globals())
+    external = True
     fields = (sql.PrimaryColumn('session_id', pytis.data.Serial()),
               sql.Column('uid', pytis.data.Integer(not_null=True),
                          references=sql.gA(cms_users_table.value(globals()), ondelete='CASCADE')),
@@ -412,6 +469,7 @@ class CmsAccessLogData(sql.SQLTable):
 class X186(sql.SQLRaw):
     name = '@186'
     schemas = cms_schemas.value(globals())
+    external = True
 
     @classmethod
     def sql(class_):
@@ -424,6 +482,7 @@ class X186(sql.SQLRaw):
 class CmsUsers(sql.SQLTable):
     name = 'pytis_cms_users'
     schemas = cms_schemas.value(globals())
+    external = True
     fields = (sql.PrimaryColumn('uid', pytis.data.Serial()),
               sql.Column('login', pytis.data.String(not_null=True), unique=True),
               sql.Column('fullname', pytis.data.String(not_null=True)),
@@ -436,6 +495,7 @@ class CmsUsers(sql.SQLTable):
 class CmsUserRoles(sql.SQLView):
     name = 'cms_user_roles'
     schemas = cms_schemas.value(globals())
+    external = True
 
     @classmethod
     def query(cls):
@@ -476,6 +536,7 @@ class CmsSessionLog(sql.SQLView):
     """Log of web user logins (user visible information)."""
     name = 'cms_session_log'
     schemas = cms_schemas.value(globals())
+    external = True
 
     @classmethod
     def query(cls):
