@@ -305,7 +305,7 @@ class PytisUser(sql.SQLFunction):
     access_rights = ()
 
     def body(self):
-        return "select user"
+        return "select user::varchar"
 
 
 class CPytisActionTypes(sql.SQLTable):
