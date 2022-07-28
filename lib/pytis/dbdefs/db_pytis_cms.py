@@ -5,8 +5,19 @@ from __future__ import unicode_literals
 import sqlalchemy
 import pytis.data.gensqlalchemy as sql
 import pytis.data
-from pytis.dbdefs.db_pytis_base import cms_rights, cms_schemas, cms_users_table, cms_rights_rw
 from pytis.data.dbdefs import and_
+
+cms_users_table = sql.SQLFlexibleValue('app_cms_users_table',
+                                       default='cms_users_table')
+cms_schemas = sql.SQLFlexibleValue('app_cms_schemas',
+                                   environment='GSQL_CMS_SCHEMAS',
+                                   default=(('public',),))
+cms_rights = sql.SQLFlexibleValue('app_cms_rights',
+                                  environment='GSQL_CMS_RIGHTS',
+                                  default=(('all', 'pytis',),))
+cms_rights_rw = sql.SQLFlexibleValue('app_cms_rights_rw',
+                                     environment='GSQL_CMS_RIGHTS_RW',
+                                     default=(('all', 'pytis',),))
 
 
 class CmsLanguages(sql.SQLTable):
