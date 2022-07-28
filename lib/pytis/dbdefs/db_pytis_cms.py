@@ -11,7 +11,7 @@ from pytis.data.dbdefs import and_
 
 class CmsLanguages(sql.SQLTable):
     """Codebook of languages available in the CMS."""
-    name = '_cms_languages'
+    name = 'cms_languages'
     external = True
     schemas = cms_schemas.value(globals())
     fields = (
@@ -24,7 +24,7 @@ class CmsLanguages(sql.SQLTable):
 
 class CmsModules(sql.SQLTable):
     """Codebook of extension modules available in the CMS."""
-    name = '_cms_modules'
+    name = 'cms_modules'
     external = True
     schemas = cms_schemas.value(globals())
     fields = (
@@ -37,7 +37,7 @@ class CmsModules(sql.SQLTable):
 
 class CmsMenuStructure(sql.SQLTable):
     """Language independent menu structure."""
-    name = '_cms_menu_structure'
+    name = 'cms_menu_structure'
     schemas = cms_schemas.value(globals())
     external = True
     fields = (sql.PrimaryColumn('menu_item_id', pytis.data.Serial()),
@@ -78,7 +78,7 @@ class CmsMenuStructureTreeOrder(sql.SQLFunction):
 
 class CmsMenuTexts(sql.SQLTable):
     """Language dependent texts and properties for menu items."""
-    name = '_cms_menu_texts'
+    name = 'cms_menu_texts'
     external = True
     schemas = cms_schemas.value(globals())
     fields = (sql.Column('menu_item_id', pytis.data.Integer(not_null=True),
@@ -97,7 +97,7 @@ class CmsMenuTexts(sql.SQLTable):
 
 class CmsMenu(sql.SQLView):
     """Complete menu structure with texts for each language defined in cms_languages."""
-    name = '_cms_menu'
+    name = 'cms_menu'
     schemas = cms_schemas.value(globals())
     external = True
 
@@ -180,7 +180,7 @@ class CmsMenu(sql.SQLView):
 
 class CmsRoles(sql.SQLTable):
     """CMS roles."""
-    name = '_cms_roles'
+    name = 'cms_roles'
     external = True
     schemas = cms_schemas.value(globals())
     fields = (sql.PrimaryColumn('role_id', pytis.data.Serial()),
@@ -202,7 +202,7 @@ class CmsActions(sql.SQLTable):
     (Including both module independent actions and per module actions.)
     Module independent actions have NULL in the mod_id column.
     """
-    name = '_cms_actions'
+    name = 'cms_actions'
     external = True
     schemas = cms_schemas.value(globals())
     fields = (sql.PrimaryColumn('action_id', pytis.data.Serial()),
@@ -223,7 +223,7 @@ class CmsActions(sql.SQLTable):
 
 class CmsRightsAssignment(sql.SQLTable):
     """Underlying binding table between menu items, roles and module actions."""
-    name = '_cms_rights_assignment'
+    name = 'cms_rights_assignment'
     external = True
     schemas = cms_schemas.value(globals())
     fields = (sql.PrimaryColumn('rights_assignment_id', pytis.data.Serial()),
@@ -241,7 +241,7 @@ class CmsRightsAssignment(sql.SQLTable):
 
 class CmsRights(sql.SQLView):
     """User editable access rights assignment."""
-    name = '_cms_rights'
+    name = 'cms_rights'
     external = True
     schemas = cms_schemas.value(globals())
 
@@ -279,7 +279,7 @@ class CmsRights(sql.SQLView):
 
 class CmsThemes(sql.SQLTable):
     """Definition of available color themes."""
-    name = '_cms_themes'
+    name = 'cms_themes'
     schemas = cms_schemas.value(globals())
     external = True
     fields = (sql.PrimaryColumn('theme_id', pytis.data.Serial()),
@@ -327,7 +327,7 @@ class CmsUsersTable(sql.SQLTable):
 
 class CmsUserRoleAssignment(sql.SQLTable):
     """Binding table assigning CMS roles to CMS users."""
-    name = '_cms_user_role_assignment'
+    name = 'cms_user_role_assignment'
     schemas = cms_schemas.value(globals())
     external = True
     fields = (sql.PrimaryColumn('user_role_id', pytis.data.Serial()),
@@ -358,7 +358,7 @@ class CmsSession(sql.SQLTable):
 
 class CmsSessionLogData(sql.SQLTable):
     """Log of web user logins (underlying data)."""
-    name = '_cms_session_log_data'
+    name = 'cms_session_log_data'
     schemas = cms_schemas.value(globals())
     external = True
     fields = (sql.PrimaryColumn('log_id', pytis.data.Serial()),
@@ -380,7 +380,7 @@ class CmsSessionLogData(sql.SQLTable):
 
 class CmsAccessLogData(sql.SQLTable):
     """Log of cms page access."""
-    name = '_cms_access_log_data'
+    name = 'cms_access_log_data'
     schemas = cms_schemas.value(globals())
     external = True
     fields = (sql.PrimaryColumn('log_id', pytis.data.Serial()),
