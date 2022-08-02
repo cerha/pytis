@@ -29,9 +29,9 @@ pass the wxPython binary archive URL to `pip install`:
 ```
 pip install -r requirements.txt -f URL
 ```
-The URL for Debian is:
-  https://extras.wxpython.org/wxPython4/extras/linux/gtk3/debian-9
-For Ubuntu:
-  https://extras.wxpython.org/wxPython4/extras/linux/gtk3/ubuntu-18.04
+The URL for Debian 10 is for example:
+  https://extras.wxpython.org/wxPython4/extras/linux/gtk3/debian-10
+See the list of all supported systems:
+  https://extras.wxpython.org/wxPython4/extras/linux/gtk3
 
 See https://wxpython.org/ for more details.
