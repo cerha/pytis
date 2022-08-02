@@ -419,7 +419,7 @@ class Products(Specification):
         pytis.form.open_data_as_file(result.getvalue(), '.pdf')
 
     def _content(self, record):
-        par = os.path.pardir
+        pardir = os.path.pardir
         return pytis.util.lcg_node(
             (
                 lcg.fieldset((
@@ -430,7 +430,8 @@ class Products(Specification):
                 if record['notes'].value() else lcg.Content(),
             ),
             title=record['product'].value(),
-            resource_path=(os.path.normpath(os.path.join(__file__, par, par, par, par, 'css')),),
+            resource_path=(os.path.normpath(os.path.join(os.path.dirname(pytis.__file__),
+                                                         pardir, pardir, 'resources')),),
             resources=('pytis-demo-product.css',),
         )
 
