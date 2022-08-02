@@ -1761,10 +1761,11 @@ def lcg_node(content, title=None, resource_path=(), resources=()):
         searched.  The LCG's resource directory is appended automatically.  The
         arrangement of files in resource directories must follow the standard
         expected by 'lcg.ResourceProvider'.
-      resources -- list 'lcg.Resource' instances or string resource file names.
-        The 'lcg.Resource' instances will be passed to the resource provider as
-        statically defined resources.  The string names will be allocated
-        through the resource provider (searched within 'resource_path').
+      resources -- list of 'lcg.Resource' instances or string resource file
+        names.  The 'lcg.Resource' instances will be passed to the resource
+        provider as statically defined resources.  The string names will be
+        allocated through the resource provider (searched within
+        'resource_path').
 
     The content is returned as an 'lcg.ContentNode' instance.
 
