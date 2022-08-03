@@ -2243,6 +2243,7 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler, KeyHandler):
         self._httpd = httpd = self.ResourceServer(weakref.ref(self))
         threading.Thread(target=httpd.serve_forever).start()
         self._resource_base_uri = 'http://localhost:%d/' % httpd.socket.getsockname()[1]
+        self._navigation_timeout = time.time()
 
     def _on_destroy(self, event):
         self._httpd.shutdown()
@@ -2286,7 +2287,12 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler, KeyHandler):
             self._webview.RunScript(script)
             event.Veto()
             return
-        if ':' in uri:
+        # The navigation timeout hack below prevents endless navigation loop when
+        # EVT_WEBVIEW_NAVIGATING is fired again after SetPage() is called within
+        # the handler.  This started to happen with some recent wxPython versions,
+        # probably 4.1.
+        if ':' in uri and (uri != self._webview.GetCurrentURL()
+                           or time.time() > self._navigation_timeout):
             # TODO: This would probably be better implemented using wx.WebView
             # sheme handlers support (WebView.RegisterHandler()), but it currently
             # doesn't seem to work in wx Python.
@@ -2297,6 +2303,7 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler, KeyHandler):
                 handler = self._custom_scheme_handlers[scheme]
                 handler(uri, name, **kwargs)
                 event.Veto()
+                self._navigation_timeout = time.time() + 0.1
                 return
         if ((self._restricted_navigation_uri is not None and
              not uri.startswith(self._restricted_navigation_uri) and
