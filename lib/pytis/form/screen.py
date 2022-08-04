@@ -2219,14 +2219,6 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler, KeyHandler):
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer.Add(webview, 1, wx.EXPAND)
         self.SetSizer(sizer)
-        # This can be actually anything what can be recognized later in
-        # _on_resource_request() and what is recognized by webkit as a valid
-        # URL.  We used the 'resource:' prefix before, but it doesn't work
-        # with newer webkit versions (webkit doesn't allow loading such URL).
-        # In any case, resources are not actually loaded through HTTP from
-        # localhost even though the URL suggests it.  They are loaded by
-        # _on_resource_request().
-        self._resource_base_uri = 'http://localhost/pytis-resources/'
         self._custom_scheme_handlers = {
             'help': self._help_handler,
             'form': self._form_handler,
