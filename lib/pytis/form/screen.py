@@ -3604,7 +3604,7 @@ def open_selected_file(patterns=(), pattern=None, filetypes=None, encrypt=None, 
         if filename:
             if context:
                 pytis.form.set_recent_directory((cmode, context), os.path.dirname(filename))
-            return open(filename), os.path.basename(filename)
+            return open(filename, 'rb'), os.path.basename(filename)
     return None, None
 
 
