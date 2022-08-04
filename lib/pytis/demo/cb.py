@@ -93,7 +93,7 @@ class Countries(Specification):
     'continent' refers to the codebook of continents.
 
     Link: [form:cb.Continents?select_row=EU]
-    Link: [call:demo.defs.cb.pokus?hello=Doly;x=5;b=x;b=3]
+    Link: [call:pytis.demo.cb.pokus?message=Hello&x=5&y=3]
 
     """
     public = True
@@ -149,6 +149,11 @@ class Countries(Specification):
         except KeyError:
             article_name = record['name'].value().replace(' ', '_')
         return 'https://en.wikipedia.org/wiki/' + article_name
+
+
+@pytis.form.help_proc
+def pokus(message, x=None, y=None):
+    pytis.form.run_dialog(pytis.form.Message, "%s\nx=%d, y=%d" % (message, x, y))
 
 
 class DisabledCountries(Countries):
