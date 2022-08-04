@@ -4460,7 +4460,7 @@ class FileAttachmentStorage(AttachmentStorage):
     def retrieve(self, filename, transaction=None):
         path = os.path.join(self._directory, filename)
         if os.path.exists(path):
-            return open(path)
+            return open(path, 'rb')
         else:
             return None
 
