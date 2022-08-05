@@ -2292,11 +2292,10 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler, KeyHandler):
             # sheme handlers (WebView.RegisterHandler()), but they don't allow
             # handling the action without actually loading some content into the
             # browser (which we need in form: and call: handlers).
-            scheme, link = uri.split(':', 1)
-            name, kwargs = self._parse_kwargs(link)
+            scheme, path, kwargs = self._parse_uri(uri)
             if scheme in self._custom_scheme_handlers:
                 handler = self._custom_scheme_handlers[scheme]
-                handler(uri, name, **kwargs)
+                handler(uri, path, **kwargs)
                 event.Veto()
                 self._navigation_timeout = time.time() + 0.1
                 return
@@ -2308,21 +2307,21 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler, KeyHandler):
             event.Veto()
         event.Skip()
 
-    def _help_handler(self, uri, name):
+    def _help_handler(self, uri, path):
         from pytis.help import help_page, HelpExporter
         self.load_content(help_page(uri), base_uri=uri, exporter_class=HelpExporter)
 
-    def _form_handler(self, uri, name, **kwargs):
-        view_spec = pytis.config.resolver.get(name, 'view_spec')
+    def _form_handler(self, uri, path, **kwargs):
+        view_spec = pytis.config.resolver.get(path, 'view_spec')
         if view_spec.bindings():
             cls = pytis.form.MultiBrowseDualForm
         else:
             cls = pytis.form.BrowseForm
-        pytis.form.run_form(cls, name, **kwargs)
+        pytis.form.run_form(cls, path, **kwargs)
 
-    def _call_handler(self, uri, name, **kwargs):
+    def _call_handler(self, uri, path, **kwargs):
         try:
-            module_name, proc_name = name.rsplit('.', 1)
+            module_name, proc_name = path.rsplit('.', 1)
             module = __import__(module_name)
             for component in module_name.split('.')[1:]:
                 module = getattr(module, component)
@@ -2334,19 +2333,20 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler, KeyHandler):
         except Exception:
             top_level_exception()
 
-    def _parse_kwargs(self, uri):
+    def _parse_uri(self, uri):
         def value(v):
             v = [int(x) if x.isdigit() else x for x in v]
             if len(v) == 1:
                 v = v[0]
             return v
-        if '?' in uri:
+        scheme, path = uri.split(':', 1)
+        if '?' in path:
             import urllib.parse
-            uri, query = uri.split('?', 1)
+            path, query = path.split('?', 1)
             kwargs = dict((k, value(v)) for k, v in urllib.parse.parse_qs(query).items())
         else:
             kwargs = {}
-        return uri, kwargs
+        return scheme, path, kwargs
 
     def _resource_uri(self, resource, absolute=True):
         uri = resource.uri()
