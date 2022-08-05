@@ -2152,10 +2152,13 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler, KeyHandler):
         a document is loaded through 'load_uri()' as it is assumed that network
         document's resources are loaded through their network URIs.
 
-        Note, it might be possible to load resources through a custom handler
-        registered by 'wx.WebView.RegisterHandler', but it currently doesn't
-        work in wx Python and it is too wx.WebView specific.  This solution
-        should be generic and work with any browser technology.
+        Note, it would seem reasonable to load resources through a custom
+        scheme handler derived from 'wx.html2.WebViewHandler' (registered by
+        'wx.html2.WebView.RegisterHandler'), but it is not the best fit,
+        because wx uses a single global handler instance shared by all webview
+        instances. This complicates our use case because we keep a separate set
+        of resources for every loaded document so we need a separate handler
+        for each browser instance.
 
         """
         def __init__(self, browser_ref):
@@ -2285,10 +2288,10 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler, KeyHandler):
         # probably 4.1.
         if ':' in uri and (uri != self._webview.GetCurrentURL()
                            or time.time() > self._navigation_timeout):
-            # TODO: This would probably be better implemented using wx.WebView
-            # sheme handlers support (WebView.RegisterHandler()), but it currently
-            # doesn't seem to work in wx Python.
-            # See https://groups.google.com/forum/#!topic/wxpython-users/IYhprRa4KJs
+            # TODO: It would seem nice to implement custom schemes using wx.WebView
+            # sheme handlers (WebView.RegisterHandler()), but they don't allow
+            # handling the action without actually loading some content into the
+            # browser (which we need in form: and call: handlers).
             scheme, link = uri.split(':', 1)
             name, kwargs = self._parse_kwargs(link)
             if scheme in self._custom_scheme_handlers:
