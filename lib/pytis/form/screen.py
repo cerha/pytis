@@ -2161,16 +2161,47 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler, KeyHandler):
         for each browser instance.
 
         """
-        def __init__(self, browser_ref):
-            self._browser_ref = browser_ref
+        def __init__(self):
+            self._resource_provider = None
             socketserver.TCPServer.__init__(self, ('', 0), Browser.ResourceHandler)
 
+        def load_resources(self, resource_provider):
+            """Make resources of given 'lcg.ResourceProvider' available on the server.
+
+            Use given 'lcg.RecourceProvider' instance as the source of
+            currently available resources for the related browser instance.
+
+            The browser should call this method after every document load.
+            This allows the server to serve the related resources included
+            within the LCG document.  Pass None to unload.
+
+            """
+            self._resource_provider = resource_provider
+
         def find_resource(self, uri):
-            browser = self._browser_ref()
-            if browser:
-                return browser.find_resource(uri)
-            else:
-                return None
+            """Return the 'lcg.Resource' instance for given URI.
+
+            Searches the resources of the 'lcg.ResourceProvider' instance most
+            recently loaded using the 'load_resources()' method.
+
+            Returns None when there is no matching resource.
+
+            """
+            if self._resource_provider:
+                # Try searching the existing resources by URI first.
+                for resource in self._resource_provider.resources():
+                    if resource.filename() == uri:
+                        return resource
+                    if isinstance(resource, lcg.Image):
+                        thumbnail = resource.thumbnail()
+                        if thumbnail and thumbnail.filename() == uri:
+                            return thumbnail
+                # If URI doesn't match any existing resource, try locating the
+                # resource using the standard resource provider's algorithm
+                # (including searching resource directories).
+                return self._resource_provider.resource(uri)
+            return None
+
 
     class ResourceHandler(http.server.SimpleHTTPRequestHandler):
 
@@ -2205,17 +2236,16 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler, KeyHandler):
         _STYLES = ('default.css',)
 
         def __init__(self, *args, **kwargs):
-            self._get_resource_uri = kwargs.pop('get_resource_uri')
+            self._resource_base_uri = kwargs.pop('resource_base_uri')
             kwargs['styles'] = self._STYLES
             super(Browser.Exporter, self).__init__(*args, **kwargs)
 
         def _uri_resource(self, context, resource):
-            return self._get_resource_uri(resource)
+            return resource.uri() or self._resource_base_uri + resource.filename()
 
     def __init__(self, parent, guardian=None):
         wx.Panel.__init__(self, parent)
         CallbackHandler.__init__(self)
-        self._resource_provider = None
         self._restricted_navigation_uri = None
         self._guardian = guardian
         self._webview = webview = wx.html2.WebView.New(self)
@@ -2235,28 +2265,28 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler, KeyHandler):
         wx_callback(wx.html2.EVT_WEBVIEW_TITLE_CHANGED, webview, self._on_title_changed)
         self.Bind(wx.EVT_WINDOW_DESTROY, self._on_destroy)
         KeyHandler.__init__(self, webview)
-        self._httpd = httpd = self.ResourceServer(weakref.ref(self))
-        threading.Thread(target=httpd.serve_forever).start()
-        self._resource_base_uri = 'http://localhost:%d/' % httpd.socket.getsockname()[1]
+        self._resource_server = server = self.ResourceServer()
+        threading.Thread(target=server.serve_forever).start()
         self._navigation_timeout = time.time()
 
     def _on_destroy(self, event):
-        self._httpd.shutdown()
-        self._httpd.socket.close()
+        self._resource_server.shutdown()
+        self._resource_server.socket.close()
         event.Skip()
 
     def _exporter(self, exporter_class):
         try:
             exporter = self._exporter_instance[exporter_class]
         except KeyError:
-            exporter = exporter_class(get_resource_uri=self._resource_uri,
-                                      # SVG plots don't display well in the embedded browser.
-                                      # LinePlot doesn't display grid and constant plot lines,
-                                      # even though the same SVG displays well in ordinary
-                                      # browsers.  Thus we rather convert SVG to PNG.
-                                      allow_svg=False,
-                                      translations=pytis.util.translation_path())
-            self._exporter_instance[exporter_class] = exporter
+            exporter = self._exporter_instance[exporter_class] = exporter_class(
+                resource_base_uri=('http://localhost:%d/' %
+                                   self._resource_server.socket.getsockname()[1]),
+                # SVG plots don't display well in the embedded browser.  LinePlot doesn't
+                # display grid and constant plot lines, even though the same SVG displays
+                # well in ordinary browsers.  Thus we rather convert SVG to PNG.
+                allow_svg=False,
+                translations=pytis.util.translation_path(),
+            )
         return exporter
 
     def _on_loaded(self, event):
@@ -2348,14 +2378,6 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler, KeyHandler):
             kwargs = {}
         return scheme, path, kwargs
 
-    def _resource_uri(self, resource, absolute=True):
-        uri = resource.uri()
-        if uri is None:
-            uri = resource.filename()
-            if absolute:
-                uri = self._resource_base_uri + uri
-        return uri
-
     def _can_go_forward(self):
         return self._webview.CanGoForward()
 
@@ -2418,35 +2440,6 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler, KeyHandler):
         """Reload the current browser document from its original source."""
         self._webview.Reload(wx.html2.WEBVIEW_RELOAD_NO_CACHE)
 
-    def find_resource(self, uri):
-        """Return the 'lcg.Resource' instance for given URI within the current document.
-
-        Returns None when there is no matching resource within the currently
-        loaded document.  Aplicable only for documents loaded through
-        'load_content' (where the resources are included within the
-        'lcg.ContentNode' instance) or 'load_html()' when its
-        'resource_provider' argument was passed.  Otherwise it will always
-        return None.
-
-        This method is actually only meant to be used internally by the built
-        in resource server (see Browser.ResourceServer).
-
-        """
-        if self._resource_provider:
-            # Try searching the existing resources by URI first.
-            for resource in self._resource_provider.resources():
-                if self._resource_uri(resource, absolute=False) == uri:
-                    return resource
-                if isinstance(resource, lcg.Image):
-                    thumbnail = resource.thumbnail()
-                    if thumbnail and self._resource_uri(thumbnail, absolute=False) == uri:
-                        return thumbnail
-            # If URI doesn't match any existing resource, try locating the
-            # resource using the standard resource provider's algorithm
-            # (including searching resource directories).
-            return self._resource_provider.resource(uri)
-        return None
-
     def load_uri(self, uri, restrict_navigation=None):
         """Load browser content from given URL.
 
@@ -2458,7 +2451,7 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler, KeyHandler):
             prefix.
 
         """
-        self._resource_provider = None
+        self._resource_server.load_resources(None)
         self._restricted_navigation_uri = restrict_navigation
         self._webview.LoadURL(uri)
 
@@ -2483,7 +2476,7 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler, KeyHandler):
         """
         if sys.version_info[0] == 2 and isinstance(html, unistr):
             html = html.encode('utf-8')
-        self._resource_provider = resource_provider
+        self._resource_server.load_resources(resource_provider)
         self._restricted_navigation_uri = restrict_navigation
         self._webview.SetPage(html, base_uri)
 
