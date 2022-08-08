@@ -320,6 +320,9 @@ class Menu(Specification):
                 readonly = not (pytis.form.has_access(spec_name, pytis.data.Permission.UPDATE) or
                                 pytis.form.has_access(spec_name, pytis.data.Permission.INSERT))
                 return pp.HttpAttachmentStorage(uri, readonly=readonly)
+            elif storage.startswith('db:'):
+                table, column_id = storage.split(':')[1:]
+                return pp.DbAttachmentStorage(table, column_id, record[column_id].value())
             else:
                 directory = os.path.join(storage, record['identifier'].value())
                 return pp.FileAttachmentStorage(directory, base_uri=base_uri)
