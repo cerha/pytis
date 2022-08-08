@@ -41,6 +41,7 @@ import lcg
 import os
 import re
 import string
+import sys
 import types
 import weakref
 import io
@@ -4754,8 +4755,9 @@ class DbAttachmentStorage(AttachmentStorage):
         self._server.socket.close()
 
     def _generate_ticket(self):
+        x = ord if sys.version_info[0] == 2 else pytis.util.identity
         try:
-            ticket = ''.join(['%02x' % ord(c) for c in os.urandom(16)])
+            ticket = ''.join(['%02x' % x(c) for c in os.urandom(16)])
         except NotImplementedError:
             import random
             random.seed()
