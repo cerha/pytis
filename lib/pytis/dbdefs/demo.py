@@ -59,6 +59,27 @@ class CmsUsers(sql.SQLTable):
     access_rights = (('all', 'pytis-demo'), ('select', 'www-data'))
 
 
+class CmsAttachments(sql.SQLTable):
+    name = 'cms_attachments'
+    fields = (
+        sql.PrimaryColumn('file_id', pytis.data.LargeSerial()),
+        sql.Column('menu_item_id', pytis.data.Integer(not_null=False),
+                   references=sql.a(sql.r.CmsMenuStructure.menu_item_id)),
+        sql.Column('file_name', pytis.data.String(not_null=True)),
+        sql.Column('byte_size', pytis.data.Integer(not_null=True)),
+        sql.Column('width', pytis.data.Integer()),
+        sql.Column('height', pytis.data.Integer()),
+        sql.Column('resized_width', pytis.data.Integer()),
+        sql.Column('resized_height', pytis.data.Integer()),
+        sql.Column('thumbnail_width', pytis.data.Integer()),
+        sql.Column('thumbnail_height', pytis.data.Integer()),
+        sql.Column('file', pytis.data.Binary(not_null=True)),
+        sql.Column('resized', pytis.data.Binary()),
+        sql.Column('thumbnail', pytis.data.Binary()),
+    )
+    unique = (('file_id', 'menu_item_id',),)
+
+
 class Continents(sql.SQLTable):
     name = 'continents'
     fields = (

@@ -63,9 +63,9 @@ def specification_path(specification_name):
     """Return specification path and the relative specification name.
 
     Given the fully qualified specification name, return pair (PATH, NAME)
-    where PATH is the search path (one of 'pytis.config.search_modules' members) of
-    the specification name and NAME is the specification name without the path.
-    If no path is identified then PATH is empty and NAME is
+    where PATH is the search path (one of 'pytis.config.search_modules'
+    members) of the specification name and NAME is the specification name
+    without the path.  If no path is identified then PATH is empty and NAME is
     'specification_name'.
 
     Arguments:
@@ -4692,6 +4692,8 @@ class DbAttachmentStorage(AttachmentStorage):
     for one page, so there will be a constraint:
 
        unique page_id, file_name
+
+    See 'pytis.dbdefs.demo.CmsAttachments' for sample DB specification.
 
 
     """
