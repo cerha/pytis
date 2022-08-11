@@ -4147,7 +4147,7 @@ def _encoded_output(output):
 
 
 def _gsql_process(loader, regexp, no_deps, views, functions, names_only, pretty, schema, source,
-                  config_file, upgrade, plpython3, debug, module_name):
+                  config_file, upgrade, plpython3, debug, module_name, limit_class):
     global _output
     if upgrade:
         if alembic is None:
@@ -4180,11 +4180,11 @@ def _gsql_process(loader, regexp, no_deps, views, functions, names_only, pretty,
     else:
         upgrade_metadata = None
     _gsql_process_1(loader, regexp, no_deps, views, functions, names_only, source,
-                    upgrade_metadata, module_name)
+                    upgrade_metadata, module_name, limit_class)
 
 
 def _gsql_process_1(loader, regexp, no_deps, views, functions, names_only, source,
-                    upgrade_metadata, module_name):
+                    upgrade_metadata, module_name, limit_class):
     def callback(cls):
         # Callback called when a new DB specification class is created (during its
         # module is loaded by Python).
@@ -4214,6 +4214,8 @@ def _gsql_process_1(loader, regexp, no_deps, views, functions, names_only, sourc
             cls = o.__class__
         else:
             cls = o
+        if limit_class and not issubclass(cls, limit_class):
+            return False
         if ((module_name is not None
              and not o.__module__ == module_name
              and not o.__module__.startswith(module_name + '.'))):
@@ -4438,7 +4440,7 @@ def _gsql_process_1(loader, regexp, no_deps, views, functions, names_only, sourc
 
 def gsql_file(file_name, regexp=None, no_deps=False, views=False, functions=False,
               names_only=False, pretty=0, schema=None, source=False, config_file=None,
-              upgrade=False, plpython3=False, debug=False):
+              upgrade=False, plpython3=False, debug=False, limit_class=None):
     """Generate SQL code from given specification file.
 
     Arguments:
@@ -4461,6 +4463,8 @@ def gsql_file(file_name, regexp=None, no_deps=False, views=False, functions=Fals
       upgrade -- iff true, generate SQL commands for upgrade rather than creation
       plpython3 -- iff true, use 'plpython3u' for PL/Python functions
       debug -- iff true, print some debugging information to standard error output
+      limit_class -- if not None, limit output to specifications derived from given
+        Python class
 
     If both 'views' and 'functions' are specified, output both views and
     functions.
@@ -4472,13 +4476,13 @@ def gsql_file(file_name, regexp=None, no_deps=False, views=False, functions=Fals
         with open(file_name, 'rb') as f:
             exec(compile(f.read(), file_name, 'exec'), copy.copy(globals()))
     _gsql_process(loader, regexp, no_deps, views, functions, names_only, pretty, schema, source,
-                  config_file, upgrade, plpython3, debug, None)
+                  config_file, upgrade, plpython3, debug, None, limit_class)
 
 
 def gsql_module(module_name, regexp=None, no_deps=False, views=False, functions=False,
                 names_only=False, pretty=0, schema=None, source=False,
                 config_file=None, upgrade=False, plpython3=False, debug=False,
-                limit_module=False):
+                limit_module=False, limit_class=None):
     """Generate SQL code from given specification module.
 
     Arguments:
@@ -4503,6 +4507,8 @@ def gsql_module(module_name, regexp=None, no_deps=False, views=False, functions=
       debug -- iff true, print some debugging information to standard error output
       limit_module -- iff true, limit output to specifications defined directly
         in the given module
+      limit_class -- if not None, limit output to specifications derived from given
+        Python class
 
     If both 'views' and 'functions' are specified, output both views and
     functions.
@@ -4513,7 +4519,8 @@ def gsql_module(module_name, regexp=None, no_deps=False, views=False, functions=
     def loader(module_name=module_name):
         pytis.util.load_module(module_name)
     _gsql_process(loader, regexp, no_deps, views, functions, names_only, pretty, schema, source,
-                  config_file, upgrade, plpython3, debug, (module_name if limit_module else None))
+                  config_file, upgrade, plpython3, debug, (module_name if limit_module else None),
+                  limit_class)
 
 
 def capture(function, *args, **kwargs):

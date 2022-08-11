@@ -32,6 +32,8 @@ def parse_options():
                       help="output specifications matching and dependent on REGEXP")
     parser.add_option("--limit-module", action="store_true", dest="limit_module",
                       help="output only specifications defined directly in the module"),
+    parser.add_option("--limit-class", action="store", dest="limit_class",
+                      help="output only specifications derived from class of given name"),
     parser.add_option("--no-deps", action="store_true", dest="no_deps",
                       help="do not output dependent objects on --limit")
     parser.add_option("--views", action="store_true", dest="views",
@@ -87,13 +89,28 @@ def update_config(options):
 def run():
     options, module = parse_options()
     update_config(options)
+    if options.limit_class:
+        if '.' in options.limit_class:
+            module_name, limit_class_name = options.limit_class.rsplit('.', 1)
+            limit_class_module = __import__(module_name)
+            for component in module_name.split('.')[1:]:
+                limit_class_module = getattr(limit_class_module, component)
+        else:
+            limit_class_module, limit_class_name = pytis.data.gensqlalchemy, options.limit_class
+        limit_class = getattr(limit_class_module, limit_class_name)
+        if not issubclass(limit_class, pytis.data.gensqlalchemy.SQLObject):
+            raise TypeError("Class passed to --limit-class must be SQLObject subclass.\n")
+    else:
+        limit_class = None
+
     pytis.data.gensqlalchemy.gsql_module(module, regexp=options.regexp,
                                          no_deps=options.no_deps,
                                          views=options.views, functions=options.functions,
                                          names_only=options.names_only, pretty=options.pretty,
                                          schema=options.schema, source=options.source,
                                          upgrade=options.upgrade, plpython3=options.plpython3,
-                                         debug=options.debug, limit_module=options.limit_module)
+                                         debug=options.debug, limit_module=options.limit_module,
+                                         limit_class=limit_class)
 
 
 if __name__ == '__main__':
