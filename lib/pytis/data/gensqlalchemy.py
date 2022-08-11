@@ -3362,8 +3362,6 @@ class SQLFunctional(_SQLReplaceable, _SQLTabular):
     replaces = None
     function_name = None        # obsolete
 
-    _LANGUAGE = None
-
     __visit_name__ = 'function'
 
     RECORD = 'RECORD'
@@ -3591,9 +3589,12 @@ class SQLFunctional(_SQLReplaceable, _SQLTabular):
         query_prefix = (('CREATE OR REPLACE FUNCTION "%s"."%s"(%s) RETURNS %s%s '
                          'LANGUAGE %s%s%s AS %s\n') %
                         (self.schema, name, arguments, result_type_prefix, result_type,
-                         self._LANGUAGE, stability, security, marker,))
+                         self._language(), stability, security, marker,))
         query_suffix = '\n%s' % (marker,)
         return query_prefix, query_suffix
+
+    def _language(self):
+        return None
 
     def _alter_owner_command(self):
         arguments = _function_arguments(self)
@@ -3612,7 +3613,8 @@ class SQLFunction(_SQLQuery, SQLFunctional):
     'SQLAlchemy.sql.ClauseElement' instances.
 
     """
-    _LANGUAGE = 'sql'
+    def _language(self):
+        return 'sql'
 
     def _pytis_query_objects(self):
         return [self.body()]
@@ -3625,7 +3627,8 @@ class SQLPlFunction(SQLFunctional):
     about function definition.
 
     """
-    _LANGUAGE = 'plpgsql'
+    def _language(self):
+        return 'plpgsql'
 
 
 class SQLPyFunction(SQLFunctional):
@@ -3652,8 +3655,6 @@ class SQLPyFunction(SQLFunctional):
     specifications.
 
     """
-    _LANGUAGE = 'plpythonu'
-
     _SUBROUTINE_MATCHER = re.compile('( *)(@staticmethod\r?\n?|class )', re.MULTILINE)
 
     class Util(object):
@@ -3671,6 +3672,12 @@ class SQLPyFunction(SQLFunctional):
         code.
 
         """
+
+    def _language(self):
+        if _plpython3:
+            return 'plpython3u'
+        else:
+            return 'plpythonu'
 
     def body(self):
         # The method itself
@@ -3775,7 +3782,8 @@ class SQLPy3Function(SQLPyFunction):
     about function definition.
 
     """
-    _LANGUAGE = 'plpython3u'
+    def _language(self):
+        return 'plpython3u'
 
 
 class SQLAggregate(SQLFunctional):
@@ -4130,7 +4138,7 @@ def _gsql_output(output):
 
 _debug = False
 _pretty = 0
-
+_plpython3 = False
 
 def _encoded_output(output):
     if not hasattr(output, 'encoding') or output.encoding is None:
@@ -4139,7 +4147,7 @@ def _encoded_output(output):
 
 
 def _gsql_process(loader, regexp, no_deps, views, functions, names_only, pretty, schema, source,
-                  config_file, upgrade, debug, module_name):
+                  config_file, upgrade, plpython3, debug, module_name):
     global _output
     if upgrade:
         if alembic is None:
@@ -4152,6 +4160,8 @@ def _gsql_process(loader, regexp, no_deps, views, functions, names_only, pretty,
     _debug = debug
     global _pretty
     _pretty = pretty
+    global _plpython3
+    _plpython3 = plpython3
     global _enforced_schema, _enforced_schema_objects
     _enforced_schema = schema
     _enforced_schema_objects = set()
@@ -4428,7 +4438,7 @@ def _gsql_process_1(loader, regexp, no_deps, views, functions, names_only, sourc
 
 def gsql_file(file_name, regexp=None, no_deps=False, views=False, functions=False,
               names_only=False, pretty=0, schema=None, source=False, config_file=None,
-              upgrade=False, debug=False):
+              upgrade=False, plpython3=False, debug=False):
     """Generate SQL code from given specification file.
 
     Arguments:
@@ -4449,6 +4459,7 @@ def gsql_file(file_name, regexp=None, no_deps=False, views=False, functions=Fals
       source -- iff true, print source files and lines
       config_file -- name of pytis configuration file
       upgrade -- iff true, generate SQL commands for upgrade rather than creation
+      plpython3 -- iff true, use 'plpython3u' for PL/Python functions
       debug -- iff true, print some debugging information to standard error output
 
     If both 'views' and 'functions' are specified, output both views and
@@ -4461,12 +4472,13 @@ def gsql_file(file_name, regexp=None, no_deps=False, views=False, functions=Fals
         with open(file_name, 'rb') as f:
             exec(compile(f.read(), file_name, 'exec'), copy.copy(globals()))
     _gsql_process(loader, regexp, no_deps, views, functions, names_only, pretty, schema, source,
-                  config_file, upgrade, debug, None)
+                  config_file, upgrade, plpython3, debug, None)
 
 
 def gsql_module(module_name, regexp=None, no_deps=False, views=False, functions=False,
-                names_only=False, pretty=0, schema=None, source=False, config_file=None,
-                upgrade=False, debug=False, limit_module=False):
+                names_only=False, pretty=0, schema=None, source=False,
+                config_file=None, upgrade=False, plpython3=False, debug=False,
+                limit_module=False):
     """Generate SQL code from given specification module.
 
     Arguments:
@@ -4487,6 +4499,7 @@ def gsql_module(module_name, regexp=None, no_deps=False, views=False, functions=
       source -- iff true, print source files and lines
       config_file -- name of pytis configuration file
       upgrade -- iff true, generate SQL commands for upgrade rather than creation
+      plpython3 -- iff true, use 'plpython3u' for PL/Python functions
       debug -- iff true, print some debugging information to standard error output
       limit_module -- iff true, limit output to specifications defined directly
         in the given module
@@ -4500,7 +4513,7 @@ def gsql_module(module_name, regexp=None, no_deps=False, views=False, functions=
     def loader(module_name=module_name):
         pytis.util.load_module(module_name)
     _gsql_process(loader, regexp, no_deps, views, functions, names_only, pretty, schema, source,
-                  config_file, upgrade, debug, (module_name if limit_module else None))
+                  config_file, upgrade, plpython3, debug, (module_name if limit_module else None))
 
 
 def capture(function, *args, **kwargs):

@@ -85,7 +85,9 @@ class Base_PyFunction(sql.SQLPyFunction):
 
 
 class Base_Py3Function(Base_PyFunction):
-    _LANGUAGE = 'plpython3u'
+
+    def _language(self):
+        return 'plpython3u'
 
 
 class Base_PyTriggerFunction(Base_PyFunction):

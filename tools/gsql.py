@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2019, 2020 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2019-2022 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2012-2018 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -48,6 +48,8 @@ def parse_options():
                       help="print source info")
     parser.add_option("--upgrade", action="store_true", dest="upgrade",
                       help="output SQL commands for upgrade (experimental)")
+    parser.add_option("--plpython3", action="store_true", dest="plpython3",
+                      help="Use the Python 3 version of PL/Python (plpython3u)")
     parser.add_option("--config", action="store", type="string", dest="config_file",
                       help="pytis configuration file for database access (on upgrade)")
     parser.add_option("--debug", action="store_true", dest="debug",
@@ -90,8 +92,8 @@ def run():
                                          views=options.views, functions=options.functions,
                                          names_only=options.names_only, pretty=options.pretty,
                                          schema=options.schema, source=options.source,
-                                         upgrade=options.upgrade, debug=options.debug,
-                                         limit_module=options.limit_module)
+                                         upgrade=options.upgrade, plpython3=options.plpython3,
+                                         debug=options.debug, limit_module=options.limit_module)
 
 
 if __name__ == '__main__':
