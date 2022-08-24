@@ -1131,7 +1131,8 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         if last_x != x or last_y != y:
             timestamp = 1000 * int(time.time()) + int(datetime.datetime.now().microsecond // 1000)
             self._last_grid_mouse_position = x, y, timestamp
-        event.Skip()
+        # Don't call event.Skip() here to prevent grid rows selection on mouse drag
+        # (require using Shift/Ctrl to create/extend the selection).
 
     def _on_label_mouse_move(self, event):
         def nearest_column(x):
