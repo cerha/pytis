@@ -1046,6 +1046,10 @@ class PytisClientAPIService(rpyc.Service):
         """
         assert isinstance(path, basestring), path
         if sys.platform == 'win32':
+            import win32api
+            # This hack "fixes" the problem of "WindowsError [Error 5] Access Denied"
+            # which ocures even on totally safe-looking paths.
+            path = win32api.GetShortPathName(path)
             os.startfile(path)
         elif sys.platform == 'darwin':
             # The Mac OS 'open' utility reuses the viewer application
