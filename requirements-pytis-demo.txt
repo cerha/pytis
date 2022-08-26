@@ -6,6 +6,8 @@ Pillow
 psycopg2-binary
 pycrypto
 PyMuPDF
+# PyPDF2==1.27.10 for Python 2.7
+PyPDF2
 pytest
 pygobject
 reportlab
