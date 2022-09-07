@@ -2516,6 +2516,10 @@ class StructuredTextField(TextField):
             row.form.field.filename.refresh()
             row['filename'] = pytis.data.Value(row.type('filename'), filename)
 
+    def _check_file_selected(self, row, filename):
+        if not filename:
+            return ('filename', _("File not selected!"))
+
     def _image_preview_computer(self, row, filename):
         if filename:
             f = self._storage_op('retrieve', filename, transaction=self._row.transaction())
@@ -2582,7 +2586,7 @@ class StructuredTextField(TextField):
             # TODO: Warn the user?
             filename = None
         fields = (
-            Field('filename', _("Available files"), not_null=True,
+            Field('filename', _("Available files"),
                   compact=True, width=40, height=7, enumerator=enumerator,
                   selection_type=SelectionType.LISTBOX),
             Field('preview', _("Preview"), compact=True, width=200, height=200,
@@ -2621,6 +2625,7 @@ class StructuredTextField(TextField):
                                     tooltip=link.tooltip()),
                        layout=(HGroup(('filename', button), ('preview',)),
                                'align', 'size', 'orig_size', 'preview_size', 'tooltip'),
+                       check=(self._check_file_selected,),
                        transaction=transaction)
         if row:
             filename = row['filename'].value()
@@ -2646,7 +2651,7 @@ class StructuredTextField(TextField):
             # TODO: Warn the user?
             filename = None
         fields = (
-            Field('filename', _("Available files"), not_null=True,
+            Field('filename', _("Available files"),
                   compact=True, width=40, height=7, enumerator=enumerator,
                   selection_type=SelectionType.LISTBOX),
             Field('title', _(u"Title"), width=50,
@@ -2661,7 +2666,8 @@ class StructuredTextField(TextField):
                        prefill=dict(filename=filename,
                                     title=link.title(),
                                     tooltip=link.tooltip()),
-                       layout=('filename', button, 'title', 'tooltip'))
+                       layout=('filename', button, 'title', 'tooltip'),
+                       check=(self._check_file_selected,))
         if row:
             link.update(target=row['filename'].value(),
                         title=row['title'].value(),
