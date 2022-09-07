@@ -1285,7 +1285,7 @@ class ListBoxField(EnumerationField):
             # avoid very wide field when values are too long.
             width = min(max(width, min_width), 3 * min_width)
         height = int(char2px(ctrl, 1, 1)[1] * (self.height() or ctrl.GetCount()) * 1.46)
-        ctrl.SetSize((width, height))
+        ctrl.SetMinSize((width, height))
 
     def _set_value(self, value):
         super(ListBoxField, self)._set_value(value)
