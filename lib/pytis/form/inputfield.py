@@ -2619,7 +2619,7 @@ class StructuredTextField(TextField):
                        prefill=dict(filename=filename,
                                     align=link.align(),
                                     tooltip=link.tooltip()),
-                       layout=(HGroup(('filename', button), 'preview'),
+                       layout=(HGroup(('filename', button), ('preview',)),
                                'align', 'size', 'orig_size', 'preview_size', 'tooltip'),
                        transaction=transaction)
         if row:
