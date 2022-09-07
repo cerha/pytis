@@ -2522,6 +2522,9 @@ class StructuredTextField(TextField):
             if f:
                 try:
                     return pytis.data.Image.Data(f, filename=filename)
+                except ValueError as e:
+                    run_dialog(Error, title=_("Invalid value"),
+                               message="{}: {}".format(filename, e))
                 finally:
                     f.close()
         return None
