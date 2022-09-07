@@ -2582,8 +2582,8 @@ class StructuredTextField(TextField):
             # TODO: Warn the user?
             filename = None
         fields = (
-            Field('filename', _("Available files"), height=7, not_null=True,
-                  compact=True, width=25, enumerator=enumerator,
+            Field('filename', _("Available files"), not_null=True,
+                  compact=True, width=40, height=7, enumerator=enumerator,
                   selection_type=SelectionType.LISTBOX),
             Field('preview', _("Preview"), compact=True, width=200, height=200,
                   computer=computer(self._image_preview_computer),
@@ -2646,8 +2646,8 @@ class StructuredTextField(TextField):
             # TODO: Warn the user?
             filename = None
         fields = (
-            Field('filename', _("Available files"), height=7, not_null=True,
-                  compact=True, width=25, enumerator=enumerator,
+            Field('filename', _("Available files"), not_null=True,
+                  compact=True, width=40, height=7, enumerator=enumerator,
                   selection_type=SelectionType.LISTBOX),
             Field('title', _(u"Title"), width=50,
                   descr=_("Enter the link label displayed within document text. "
