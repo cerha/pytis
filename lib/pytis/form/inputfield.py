@@ -2498,6 +2498,10 @@ class StructuredTextField(TextField):
 
     def _load_new_file(self, row):
         fh, filename = pytis.form.open_selected_file(context='attachments')
+        if filename and (' ' in filename or any(ord(c) > 127 for c in filename)):
+            run_dialog(Error, title=_("Invalid file name"),
+                       message="{}: {}".format(filename, _("Invalid characters in file name.")))
+            return
         if fh:
             try:
                 if 'size' in row:
