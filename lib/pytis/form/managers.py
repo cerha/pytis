@@ -248,13 +248,14 @@ class FormSettingsManager(UserSetttingsManager):
 
     """
     _TABLE = 'e_pytis_form_settings'
-    _COLUMNS = ('id', 'username', 'spec_name', 'form_name', 'pickle', 'dump')
+    _COLUMNS = ('id', 'username', 'spec_name', 'form_name', 'settings')
 
     def _settings(self, spec_name, form_name, transaction=None):
-        settings = self._load(spec_name=spec_name, form_name=form_name, transaction=transaction)
-        if settings is None:
-            settings = {}
-        return settings
+        row = self._row(spec_name=spec_name, form_name=form_name, transaction=transaction)
+        if row:
+            return row['settings'].value()
+        else:
+            return {}
 
     def set(self, spec_name, form_name, option, value, transaction=None):
         """Save value of user specific form configuration option.
@@ -268,9 +269,8 @@ class FormSettingsManager(UserSetttingsManager):
         """
         settings = self._settings(spec_name, form_name, transaction=transaction)
         settings[option] = value
-        values = dict(pickle=self._pickle(settings),
-                      dump='\n'.join(['%s: %s' % item for item in settings.items()]))
-        self._save(values, spec_name=spec_name, form_name=form_name, transaction=transaction)
+        self._save(dict(settings=settings), spec_name=spec_name, form_name=form_name,
+                   transaction=transaction)
 
     def get(self, spec_name, form_name, option, default=None, transaction=None):
         """Return previously saved user specific form configuration option.
@@ -284,6 +284,31 @@ class FormSettingsManager(UserSetttingsManager):
         """
         settings = self._settings(spec_name, form_name, transaction=transaction)
         return settings.get(option, default)
+
+
+class LegacyFormSettingsManager(LegacyUserSetttingsManager):
+    _TABLE = 'e_pytis_form_settings'
+    _COLUMNS = ('id', 'username', 'spec_name', 'form_name', 'pickle', 'dump')
+
+    def _settings(self, spec_name, form_name, transaction=None):
+        settings = self._load(spec_name=spec_name, form_name=form_name, transaction=transaction)
+        if settings is None:
+            settings = {}
+        return settings
+
+    def set(self, spec_name, form_name, option, value, transaction=None):
+        settings = self._settings(spec_name, form_name, transaction=transaction)
+        settings[option] = value
+        values = dict(pickle=self._pickle(settings),
+                      dump='\n'.join(['%s: %s' % item for item in settings.items()]))
+        self._save(values, spec_name=spec_name, form_name=form_name, transaction=transaction)
+
+    def get(self, spec_name, form_name, option, default=None, transaction=None):
+        settings = self._settings(spec_name, form_name, transaction=transaction)
+        result = settings.get(option, default)
+        if option in ('binding_order', 'hidden_bindings'):
+            result = list(result)
+        return result
 
 
 class FormProfileManager(LegacyUserSetttingsManager):

@@ -31,8 +31,7 @@ class EPytisFormSettings(sql.SQLTable):
               sql.Column('username', pytis.data.Name(not_null=True)),
               sql.Column('spec_name', pytis.data.String(not_null=True)),
               sql.Column('form_name', pytis.data.String(not_null=True)),
-              sql.Column('pickle', pytis.data.String(not_null=True)),
-              sql.Column('dump', pytis.data.String(not_null=False)),
+              sql.Column('settings', pytis.data.JSON(not_null=True)),
               )
     inherits = (XChanges,)
     unique = (('username', 'spec_name', 'form_name',),)

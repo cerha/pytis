@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2020 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2020, 2022 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2018 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -1084,10 +1084,10 @@ class MultiSideForm(MultiForm):
         return form_class(parent, self._resolver, binding.name(), full_init=False, **kwargs)
 
     def _create_subforms(self, parent):
-        saved_order = self._get_saved_setting('binding_order', ())
-        hidden = self._get_saved_setting('hidden_bindings', ())
+        saved_order = self._get_saved_setting('binding_order', [])
+        hidden = self._get_saved_setting('hidden_bindings', [])
         spec_bindings = self._subform_bindings()
-        spec_order_without_new = tuple(b.id() for b in spec_bindings if b.id() in saved_order)
+        spec_order_without_new = [b.id() for b in spec_bindings if b.id() in saved_order]
         if not saved_order or saved_order == spec_order_without_new and not hidden:
             # If saved order matches the specification order (excluding new items),
             # we show new items in the order of the specification.
@@ -1104,9 +1104,8 @@ class MultiSideForm(MultiForm):
                 [(bdict[bid], False) for bid in saved_order if bid in bdict]
             )
         # Make sure new forms don't show as new on next startup.
-        self._set_saved_setting('binding_order', tuple(b.id() for b, new in bindings))
-        self._set_saved_setting('hidden_bindings', tuple(b.id() for b in spec_bindings
-                                                         if b in hidden))
+        self._set_saved_setting('binding_order', [b.id() for b, new in bindings])
+        self._set_saved_setting('hidden_bindings', [b.id() for b in spec_bindings if b in hidden])
         return [(self._create_subform(parent, binding), binding.title(),
                  'new-tab' if new else None,
                  _("This form was newly added to the application. "
@@ -1161,8 +1160,8 @@ class MultiSideForm(MultiForm):
         # Remember also hidden bindings in order to be able to recognize bindings
         # newly added to the specification in future run (see _create_subforms()).
         all_bindings = [binding.id() for binding in self._subform_bindings()]
-        binding_order = tuple(form.binding().id() for form in self._subforms())
-        hidden_bindings = tuple(set(all_bindings) - set(binding_order))
+        binding_order = [form.binding().id() for form in self._subforms()]
+        hidden_bindings = list(set(all_bindings) - set(binding_order))
         self._set_saved_setting('binding_order', binding_order)
         self._set_saved_setting('hidden_bindings', hidden_bindings)
 

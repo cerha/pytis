@@ -22,8 +22,9 @@ import sys
 import getopt
 import pytis.util
 import pytis.data as pd
-from pytis.form.managers import LegacyApplicationConfigManager
-
+from pytis.form.managers import (
+    LegacyApplicationConfigManager, LegacyFormSettingsManager,
+)
 
 def die(message):
     sys.stderr.write(message + "\n")
@@ -59,6 +60,23 @@ def run():
             data.update_many(pd.EQ('username', pd.sval(username)),
                              pd.Row((('options', pd.Value(pd.JSON(), options)),)),
                              transaction=transaction)
+        data = pd.dbtable('e_pytis_form_settings',
+                          ('id', 'username', 'spec_name', 'form_name', 'settings'))
+        for uname in data.distinct('username', transaction=transaction):
+            username = uname.value()
+            mgr = LegacyFormSettingsManager(pytis.config.dbconnection, username=username)
+            for sname in data.distinct('spec_name', condition=pd.EQ('username', uname),
+                                       transaction=transaction):
+                spec_name = sname.value()
+                for fname in data.distinct('form_name',
+                                           condition=pd.AND(pd.EQ('username', uname),
+                                                            pd.EQ('spec_name', sname)),
+                                           transaction=transaction):
+                    form_name = fname.value()
+                    row = mgr._row(spec_name=spec_name, form_name=form_name, transaction=transaction)
+                    settings = mgr._unpickle(row['pickle'].value())
+                    data.update(row['id'], pd.Row((('settings', pd.Value(pd.JSON(), settings)),)),
+                                transaction=transaction)
     except Exception:
         transaction.rollback()
         raise
