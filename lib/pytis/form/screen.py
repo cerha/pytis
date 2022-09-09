@@ -3362,9 +3362,9 @@ def _dirname(cmode, filename):
 
 def _get_recent_directory(cmode, context):
     if cmode and context:
-        directory = pytis.form.get_recent_directory((cmode, context))
+        directory = pytis.form.get_recent_directory(cmode, context)
         if directory is None:
-            directory = pytis.form.get_recent_directory((cmode, 'default'))
+            directory = pytis.form.get_recent_directory(cmode, 'default')
     else:
         directory = None
     return directory
@@ -3406,7 +3406,7 @@ def select_file(filename=None, patterns=(), pattern=None, filetypes=None, contex
     else:
         result = None
     if context and result:
-        pytis.form.set_recent_directory((cmode, context), _dirname(cmode, result))
+        pytis.form.set_recent_directory(cmode, context, _dirname(cmode, result))
     return result
 
 
@@ -3440,7 +3440,7 @@ def select_files(directory=None, patterns=(), pattern=None, filetypes=None, cont
     else:
         result = None
     if context and result:
-        pytis.form.set_recent_directory((cmode, context), _dirname(cmode, result[0]))
+        pytis.form.set_recent_directory(cmode, context, _dirname(cmode, result[0]))
     return result
 
 
@@ -3464,7 +3464,7 @@ def select_directory(context='default'):
     else:
         result = None
     if context and result:
-        pytis.form.set_recent_directory((cmode, context), result)
+        pytis.form.set_recent_directory(cmode, context, result)
     return result
 
 
@@ -3507,7 +3507,7 @@ def make_selected_file(filename, mode='w', encoding=None, patterns=(), pattern=N
     else:
         result = None
     if context and result:
-        pytis.form.set_recent_directory((cmode, context), _dirname(cmode, result.name))
+        pytis.form.set_recent_directory(cmode, context, _dirname(cmode, result.name))
     return result
 
 
@@ -3583,7 +3583,7 @@ def open_selected_file(patterns=(), pattern=None, filetypes=None, encrypt=None, 
             else:
                 import posixpath as pathmod
             if context:
-                pytis.form.set_recent_directory((cmode, context), pathmod.dirname(filename))
+                pytis.form.set_recent_directory(cmode, context, pathmod.dirname(filename))
             return f, pathmod.basename(filename)
     elif cmode == 'local':
         filename = pytis.form.run_dialog(pytis.form.FileDialog, dir=directory,
@@ -3591,7 +3591,7 @@ def open_selected_file(patterns=(), pattern=None, filetypes=None, encrypt=None, 
                                          wildcards=_wildcards(filetypes, patterns, pattern))
         if filename:
             if context:
-                pytis.form.set_recent_directory((cmode, context), os.path.dirname(filename))
+                pytis.form.set_recent_directory(cmode, context, os.path.dirname(filename))
             return open(filename, 'rb'), os.path.basename(filename)
     return None, None
 

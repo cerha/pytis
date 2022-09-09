@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2019 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2019, 2022 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2010-2018 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -21,8 +21,8 @@ from __future__ import print_function
 import sys
 import getopt
 import pytis.util
-import pytis.data
-from pytis.form import DBConfigurationStorage
+import pytis.data as pd
+from pytis.form.managers import LegacyApplicationConfigManager
 
 
 def die(message):
@@ -31,14 +31,10 @@ def die(message):
 
 
 def usage(msg=None):
-    message = ("View/update saved Pytis user configurations.\n"
-               "Usage: %s [options] command username [option [value]]\n"
+    message = ("Update saved Pytis user configurations.\n"
+               "Usage: %s [options]\n"
                "  options: Pytis command line options to specify database connection"
-               " (defined by pytis configuration)\n"
-               "  command: One of 'set', 'get', 'unset'\n"
-               "  username: Name of the pytis user whose configuration is to be operated\n"
-               "  option: Configuration option name (optional for the 'get' command)\n"
-               "  value: The new option value (only for the 'set' command)") % sys.argv[0]
+               " (defined by pytis configuration)\n") % sys.argv[0]
     if msg:
         message += '\n' + msg
     die(message)
@@ -48,48 +44,26 @@ def run():
     # Process command line options and init configuration.
     try:
         pytis.config.add_command_line_options(sys.argv)
-        command, username = sys.argv[1:3]
-        option = len(sys.argv) > 3 and sys.argv[3] or None
-        value = len(sys.argv) > 4 and sys.argv[4] or None
     except getopt.GetoptError as e:
         usage(e.msg)
-    except ValueError as e:
-        usage()
-    if command not in ('get', 'set', 'unset'):
-        usage("Unknown command '%s'" % command)
-    if command != 'get' and option is None:
-        usage("Option name is mandatory for command '%s'" % command)
-    if command == 'set' and value is None:
-        usage("Value must be specified for command '%s'" % command)
-    if command != 'set' and value is not None:
-        usage("Value makes no sense for command '%s'" % command)
-    storage = DBConfigurationStorage(pytis.config.dbconnection, username=username)
-    cfg = dict(storage.read())
-    if command == 'get':
-        if option is not None:
-            if option not in cfg:
-                die("Option '%s' not set for user '%s'." % (option, username))
-            options = (option,)
-        else:
-            if not cfg.keys():
-                die("No options set for user '%s'." % username)
-            options = sorted(cfg.keys())
-        for option in options:
-            print("%s = %s" % (option, cfg[option]))
+    # Avoid pytis logging during the update.
+    pytis.config.log_exclude = [pytis.util.ACTION, pytis.util.EVENT,
+                                pytis.util.DEBUG, pytis.util.OPERATIONAL]
+    transaction = pd.transaction()
+    try:
+        data = pd.dbtable('e_pytis_config', ('id', 'username', 'options'))
+        for v in data.distinct('username', transaction=transaction):
+            username = v.value()
+            acm = LegacyApplicationConfigManager(pytis.config.dbconnection, username=username)
+            options = acm.load(transaction=transaction)
+            data.update_many(pd.EQ('username', pd.sval(username)),
+                             pd.Row((('options', pd.Value(pd.JSON(), options)),)),
+                             transaction=transaction)
+    except Exception:
+        transaction.rollback()
+        raise
     else:
-        if command == 'unset':
-            if option not in cfg:
-                die("Option '%s' not set for user '%s'." % (option, username))
-            else:
-                del cfg[option]
-        else:  # command == 'set'
-            cfg[option] = value
-        # Avoid pytis logging during the update.
-        pytis.config.log_exclude = [pytis.util.ACTION, pytis.util.EVENT,
-                                    pytis.util.DEBUG, pytis.util.OPERATIONAL]
-        # Update the saved configuration.
-        storage.write(cfg.items())
-
+        transaction.commit()
 
 if __name__ == '__main__':
     run()

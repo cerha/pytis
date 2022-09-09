@@ -15,11 +15,10 @@ class EPytisConfig(sql.SQLTable):
     schemas = pytis_schemas.value(globals())
     fields = (sql.PrimaryColumn('id', pytis.data.Serial()),
               sql.Column('username', pytis.data.Name(not_null=True)),
-              sql.Column('option', pytis.data.String(not_null=True)),
-              sql.Column('value', pytis.data.String(not_null=True)),
+              sql.Column('options', pytis.data.JSON(not_null=True)),
               )
     inherits = (XChanges,)
-    unique = (('username', 'option',),)
+    unique = (('username',),)
     depends_on = ()
     access_rights = default_access_rights.value(globals())
 

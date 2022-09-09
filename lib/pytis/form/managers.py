@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2020 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2022 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2011-2017 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -58,6 +58,7 @@ import pytis.form
 import pytis.presentation
 
 from pytis.presentation import Profile
+from pytis.util import log, OPERATIONAL
 
 
 class UserSetttingsManager(object):
@@ -65,7 +66,21 @@ class UserSetttingsManager(object):
     _TABLE = None
     _COLUMNS = ()
 
+    def __new__(cls, dbconnection, username=None):
+        try:
+            pytis.data.dbtable(cls._TABLE, cls._COLUMNS, dbconnection)
+        except pytis.data.DBException as e:
+            log(OPERATIONAL, "Failed initializing {}: {}".format(cls.__name__, e))
+            cls = globals()['Legacy' + cls.__name__]
+            instance = object.__new__(cls)
+            # When returning another class's instance, we need to call __init__() manually.
+            cls.__init__(instance, dbconnection, username=username)
+            return instance
+        else:
+            return object.__new__(cls)
+
     def __init__(self, dbconnection, username=None):
+        log(OPERATIONAL, "Initializing on {}({}).".format(self._TABLE, ', '.join(self._COLUMNS)))
         self._dbconnection = dbconnection
         self._username = username or pytis.config.dbuser
         self._data = pytis.data.dbtable(self._TABLE, self._COLUMNS, dbconnection)
@@ -105,23 +120,6 @@ class UserSetttingsManager(object):
         self._data.close()
         return rows
 
-    def _pickle(self, value):
-        result = base64.b64encode(pickle.dumps(value, protocol=2))
-        if sys.version_info[0] > 2:
-            # Remove also protocol=2 above when Python 2 support is not needed.
-            result = str(result, 'ascii')
-        return result
-
-    def _unpickle(self, value):
-        return pickle.loads(base64.b64decode(value))
-
-    def _load(self, transaction=None, pickled_column='pickle', **key):
-        row = self._row(transaction=transaction, **key)
-        if row:
-            return self._unpickle(row[pickled_column].value())
-        else:
-            return None
-
     def _save(self, values, transaction=None, **key):
         row = self._row(transaction=transaction, **key)
         if row:
@@ -150,23 +148,74 @@ class ApplicationConfigManager(UserSetttingsManager):
 
     """
     _TABLE = 'e_pytis_config'
-    _COLUMNS = ('id', 'username', 'option', 'value')
+    _COLUMNS = ('id', 'username', 'options')
 
     def load(self, transaction=None):
         """Return previously stored configuration options as a tuple of (name, value) pairs."""
-        rows = self._rows()
-        return [(r['option'].value(), self._unpickle(r['value'].value()))
-                for r in rows]
+        row = self._row(transaction=transaction)
+        if row:
+            return row['options'].value()
+        else:
+            return {}
+
+    def save(self, options, transaction=None):
+        """Store given configuration options (dict instance)."""
+        assert isinstance(options, dict)
+        self._save(dict(options=options), transaction=transaction)
+
+
+class LegacyUserSetttingsManager(UserSetttingsManager):
+
+    def _pickle(self, value):
+        result = base64.b64encode(pickle.dumps(value, protocol=2))
+        if sys.version_info[0] > 2:
+            # Remove also protocol=2 above when Python 2 support is not needed.
+            result = str(result, 'ascii')
+        return result
+
+    def _unpickle(self, value):
+        return pickle.loads(base64.b64decode(value))
+
+    def _load(self, transaction=None, pickled_column='pickle', **key):
+        row = self._row(transaction=transaction, **key)
+        if row:
+            return self._unpickle(row[pickled_column].value())
+        else:
+            return None
+
+
+class LegacyApplicationConfigManager(LegacyUserSetttingsManager):
+    _TABLE = 'e_pytis_config'
+    _COLUMNS = ('id', 'username', 'option', 'value')
+
+    def load(self, transaction=None):
+        def tuple2list(value):
+            if isinstance(value, (tuple, list)):
+                value = [tuple2list(x) for x in value]
+            return value
+        options = dict((r['option'].value(), tuple2list(self._unpickle(r['value'].value())))
+                       for r in self._rows())
+        recent_forms = options.get('recent_forms', [])
+        if recent_forms and isinstance(recent_forms[0][1], dict):
+            options['recent_forms'] = [[title, params['form_class'].__name__, params['name']]
+                                       for title, params in options['recent_forms']]
+        startup_forms = options.get('saved_startup_forms', [])
+        if startup_forms and issubclass(startup_forms[0][0], pytis.form.Form):
+            options['saved_startup_forms'] = [[cls.__name__, spec_name]
+                                              for cls, spec_name in startup_forms]
+        recent_directories = options.get('recent_directories', [])
+        if recent_directories and isinstance(recent_directories, list):
+            options['recent_directories'] = dict((':'.join(k), v) for k, v in recent_directories)
+        return options
 
     def save(self, config, transaction=None):
-        """Store configuration options as a tuple of (name, value) pairs."""
-        assert isinstance(config, (tuple, list))
+        assert isinstance(config, dict)
         db_options = dict(self.load())
-        deletes = set(db_options.keys()) - set(dict(config).keys())
+        deletes = set(db_options.keys()) - set(config.keys())
         for option in deletes:
             condition = self._condition(option=option)
             self._data.delete_many(condition, transaction=transaction)
-        for option, value in config:
+        for option, value in config.items():
             if option in db_options.keys():
                 if value != db_options[option]:
                     db_value = self._pickle(value)
@@ -237,7 +286,7 @@ class FormSettingsManager(UserSetttingsManager):
         return settings.get(option, default)
 
 
-class FormProfileManager(UserSetttingsManager):
+class FormProfileManager(LegacyUserSetttingsManager):
     """Accessor of database storage of form profiles.
 
     This manager is a little more complicated then the others as it must
@@ -601,7 +650,7 @@ class FormProfileManager(UserSetttingsManager):
         return prefix + str(max(user_profile_numbers + [0]) + 1)
 
 
-class FormProfileParamsManager(UserSetttingsManager):
+class FormProfileParamsManager(LegacyUserSetttingsManager):
     """Accessor of database storage of form profile parameters.
 
     This manager is only used internally by FormProfileManager to retrieve form
@@ -646,7 +695,7 @@ class FormProfileParamsManager(UserSetttingsManager):
                    transaction=transaction)
 
 
-class AggregatedViewsManager(UserSetttingsManager):
+class AggregatedViewsManager(LegacyUserSetttingsManager):
     """Accessor of database storage of saved aggregation form setups.
 
     Aggregation form setups are the properties defined by the user in the

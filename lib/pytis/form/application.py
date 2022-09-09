@@ -203,7 +203,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
             log(OPERATIONAL, "Form action logging not activated:", e)
             self._logger = None
         # Read the stored configuration.
-        for option, value in self._application_config_manager.load():
+        for option, value in self._application_config_manager.load().items():
             if hasattr(pytis.config, option):
                 setattr(pytis.config, option, value)
             else:
@@ -211,29 +211,29 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         # Read in access rights.
         init_access_rights(pytis.config.dbconnection)
         # Init the recent forms list.
-        recent_forms = self._get_state_param(self._STATE_RECENT_FORMS, (), (list, tuple), tuple)
+        recent_forms = self._get_state_param(self._STATE_RECENT_FORMS, [], list, list)
         self._recent_forms = []
-        for title, args in recent_forms:
-            if ((self._is_valid_spec(args['name']) and
-                 issubclass(args['form_class'], pytis.form.Form))):
-                self._recent_forms.append((title, args))
+        for title, form_name, spec_name in recent_forms:
+            form_class = getattr(pytis.form, form_name, None)
+            if issubclass(form_class, pytis.form.Form) and self._is_valid_spec(spec_name):
+                self._recent_forms.append((title, form_name, spec_name))
             else:
-                log(OPERATIONAL, "Ignoring recent form:", args)
-        self._set_state_param(self._STATE_RECENT_FORMS, tuple(self._recent_forms))
+                log(OPERATIONAL, "Ignoring recent form:", (title, form_name, spec_name))
+        self._set_state_param(self._STATE_RECENT_FORMS, list(self._recent_forms))
         # Init the recent directories memory.
-        directories = self._get_state_param(self._STATE_RECENT_DIRECTORIES, (), tuple, tuple)
-        self._recent_directories.update(dict(directories))
+        recent_directories = self._get_state_param(self._STATE_RECENT_DIRECTORIES, {}, dict)
+        self._recent_directories.update(recent_directories)
         # Initialize the menubar.
         mb = self._create_menubar()
         if mb is None:
             return False
         # Finish and show the frame.
         #
-        # TODO: There are problems when users use multiply monitors or start application
+        # TODO: There are problems when users use multiple monitors or start application
         # with different screens or screen resolutions. So until we find the adequate
         # solution, we use some safe default frame size.
         #
-        # frame.SetSize(self._get_state_param(self._STATE_FRAME_SIZE, (1000, 800), tuple, int))
+        # frame.SetSize(self._get_state_param(self._STATE_FRAME_SIZE, [1000, 800], list, int))
         frame.SetSize((1000, 800))
         wx_callback(wx.EVT_SIZE, frame, self._on_frame_size)
         self.SetTopWindow(frame)
@@ -311,7 +311,9 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
                            pytis.form.BrowseDualForm)
                 startup_forms.append((cls, name.strip()))
         saved_forms = []
-        for cls, name in self._get_state_param(self._STATE_STARTUP_FORMS, (), tuple, tuple):
+        for cls, name in self._get_state_param(self._STATE_STARTUP_FORMS, [], list, list):
+            if isinstance(cls, basestring):
+                cls = getattr(pytis.form, cls)
             if ((issubclass(cls, pytis.form.Form) and
                  self._is_valid_spec(name) and
                  (cls, name) not in startup_forms)):
@@ -663,34 +665,32 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
                 menu.Append(wmitem(i, form).create(self._frame, menu))
 
     def _update_recent_forms(self, item=None):
-        if self._recent_forms_menu is not None:
+        if item is not None:
+            try:
+                self._recent_forms.remove(item)
+            except ValueError:
+                pass
+            self._recent_forms.insert(0, item)
+            if len(self._recent_forms) > 10:
+                self._recent_forms[10:] = []
+        if self._recent_forms_menu and self._recent_forms_menu.wx_menu():
             menu = self._recent_forms_menu.wx_menu()
-            if menu is None:
-                return
-            recent = self._recent_forms
-            if item is not None:
-                try:
-                    recent.remove(item)
-                except ValueError:
-                    pass
-                recent.insert(0, item)
-                if len(self._recent_forms) > 10:
-                    self._recent_forms[10:] = []
-            for item in menu.GetMenuItems():
-                menu.Remove(item.GetId())
-                item.Destroy()
-            for item in self._recent_forms_menu_items():
-                if isinstance(item, MSeparator):
+            for wxitem in menu.GetMenuItems():
+                menu.Remove(wxitem.GetId())
+                wxitem.Destroy()
+            for mitem in self._recent_forms_menu_items():
+                if isinstance(mitem, MSeparator):
                     menu.AppendSeparator()
                 else:
-                    menu.Append(item.create(self._frame, menu))
+                    menu.Append(mitem.create(self._frame, menu))
 
     def _recent_forms_menu_items(self):
         items = [MItem(acceskey_prefix(i) + title,
-                       help=_("Open the form (%s)",
-                              args['form_class'].__name__ + '/' + args['name']),
-                       command=Application.COMMAND_RUN_FORM, args=args)
-                 for i, (title, args) in enumerate(self._recent_forms)]
+                       help=_("Open the form (%s)", form_name + '/' + spec_name),
+                       command=Application.COMMAND_RUN_FORM,
+                       args=dict(form_class=getattr(pytis.form, form_name),
+                                 name=spec_name))
+                 for i, (title, form_name, spec_name) in enumerate(self._recent_forms)]
         items.append(MSeparator())
         items.append(MItem(_("Clear"),
                            help=_("Clear the menu of recent forms"),
@@ -776,16 +776,15 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
                 log(EVENT, "Couldn't close application with modal windows:",
                     self._modals.top())
                 return False
-            self._set_state_param(self._STATE_STARTUP_FORMS, tuple(
-                (f.__class__, f.name())
+            self._set_state_param(self._STATE_STARTUP_FORMS, [
+                (f.__class__.__name__, f.name())
                 for f in self._windows.items()
                 if not isinstance(f, (pytis.form.AggregationForm,
                                       pytis.form.AggregationDualForm))
-            ))
-            self._set_state_param(self._STATE_RECENT_FORMS, tuple(self._recent_forms))
-            self._set_state_param(self._STATE_RECENT_DIRECTORIES,
-                                  tuple(self._recent_directories.items()))
-            self._set_state_param(self._STATE_FRAME_SIZE, tuple(self._frame.GetSize()))
+            ])
+            self._set_state_param(self._STATE_RECENT_FORMS, list(self._recent_forms))
+            self._set_state_param(self._STATE_RECENT_DIRECTORIES, self._recent_directories)
+            self._set_state_param(self._STATE_FRAME_SIZE, list(self._frame.GetSize()))
         except Exception as e:
             safelog(str(e))
         try:
@@ -799,13 +798,13 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         except Exception as e:
             safelog(str(e))
         try:
-            options = list(self._saved_state.items())
+            options = self._saved_state
             for option, initial_value in self._initial_config:
                 current_value = getattr(pytis.config, option)
                 if current_value != initial_value:
-                    options.append((option, current_value))
+                    options[option] = current_value
             self._application_config_manager.save(options)
-            log(OPERATIONAL, "Configuration saved: %d items" % len(options))
+            log(OPERATIONAL, "Configuration saved: %s" % ', '.join(options.keys()))
         except Exception as e:
             safelog("Saving changed configuration failed:", str(e))
         try:
@@ -1017,9 +1016,8 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
                     form.show()
                     self._update_window_menu()
                     if not isinstance(form, pytis.form.WebForm):
-                        item = (self._form_menu_item_title(form),
-                                dict(form_class=form_class, name=name))
-                        self._update_recent_forms(item)
+                        title = self._form_menu_item_title(form)
+                        self._update_recent_forms((title, form_class.__name__, name))
         except UserBreakException:
             pass
         except SystemExit:
@@ -2233,11 +2231,11 @@ def built_in_status_fields():
 # is made public in future (which seems most desirable), these
 # functions can be turned into its methods.
 
-def get_recent_directory(key):
-    """Return the last directory set for given 'key' as a string or None."""
-    return pytis.form.app._recent_directories.get(key)
+def get_recent_directory(cmode, context):
+    """Return the last directory set for given client mode and context as a string or None."""
+    return pytis.form.app._recent_directories.get(':'.join(cmode, context))
 
 
-def set_recent_directory(key, directory):
-    """Remember given 'directory' for given 'key'."""
-    pytis.form.app._recent_directories[key] = directory
+def set_recent_directory(cmode, context, directory):
+    """Remember given 'directory' for given client mode and context."""
+    pytis.form.app._recent_directories[':'.join(cmode, context)] = directory
