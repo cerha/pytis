@@ -2305,12 +2305,11 @@ class FoldableForm(ListForm):
             # filters.
             folding_state = self.Folding(level=None).folding_state()
         elif isinstance(folding_state, self.Folding):
-            # HACK: Profiles from specification contain a 'Folding'
-            # instance, while saved profiles contain a
-            # 'Folding._FoldingState' instance.  A single folding
+            # HACK: Profiles from specification contain a 'FoldableForm.Folding'
+            # instance, while saved profiles contain the result of
+            # 'FoldableForm.Folding.folding_state()'.  A single folding
             # specification should be used in both cases and it should be
-            # defined as a public specification class in pytis.presentation
-            # (spec.py).
+            # documented in pytis.presentation (spec.py).
             folding_state = folding_state.folding_state()
         self._init_folding(folding_state)
 
