@@ -25,7 +25,7 @@ import pytis.presentation
 import pytis.data as pd
 from pytis.form.managers import (
     LegacyApplicationConfigManager, LegacyFormSettingsManager, LegacyFormProfileManager,
-    FormProfileManager,
+    FormProfileManager, LegacyAggregatedViewsManager,
 )
 
 def die(message):
@@ -96,6 +96,26 @@ def run():
                                                  default_profile, transaction=transaction)
                     for profile in profiles:
                         newmgr.save_profile(spec_name, form_name, profile, transaction=transaction)
+        data = pd.dbtable('e_pytis_aggregated_views',
+                          ('id', 'username', 'spec_name', 'aggregated_view_id', 'params'))
+        for uname in data.distinct('username', transaction=transaction):
+            username = uname.value()
+            mgr = LegacyAggregatedViewsManager(pytis.config.dbconnection, username=username)
+            for sname in data.distinct('spec_name', condition=pd.EQ('username', uname),
+                                       transaction=transaction):
+                spec_name = sname.value()
+                for aggregated_view_id in mgr.list(spec_name, transaction=transaction):
+                    row = mgr._row(spec_name=spec_name, aggregated_view_id=aggregated_view_id,
+                                   transaction=transaction)
+                    av = mgr.load(spec_name, aggregated_view_id)
+                    params = dict(
+                        name=av.name(),
+                        group_by_columns=av.group_by_columns(),
+                        aggregation_columns=av.aggregation_columns(),
+                    )
+                    data.update(row['id'], pd.Row((('params', pd.Value(pd.JSON(), params)),)),
+                                transaction=transaction)
+
     except Exception:
         transaction.rollback()
         raise

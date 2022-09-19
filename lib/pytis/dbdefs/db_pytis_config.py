@@ -133,8 +133,7 @@ class EPytisAggregatedViews(sql.SQLTable):
               sql.Column('username', pytis.data.Name(not_null=True)),
               sql.Column('spec_name', pytis.data.String(not_null=True)),
               sql.Column('aggregated_view_id', pytis.data.String(not_null=True)),
-              sql.Column('title', pytis.data.String(not_null=True)),
-              sql.Column('pickle', pytis.data.String(not_null=True)),
+              sql.Column('params', pytis.data.JSON(not_null=True)),
               )
     inherits = (XChanges,)
     unique = (('username', 'spec_name', 'aggregated_view_id',),)

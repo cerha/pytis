@@ -1002,20 +1002,20 @@ class LegacyFormProfileParamsManager(LegacyUserSetttingsManager):
                    transaction=transaction)
 
 
-class AggregatedViewsManager(LegacyUserSetttingsManager):
+class AggregatedViewsManager(UserSetttingsManager):
     """Accessor of database storage of saved aggregation form setups.
 
     Aggregation form setups are the properties defined by the user in the
     aggregation form setup dialog and represented by a
     'pytis.presentation.AggregatedView' instance.  Users may create several
     named setups for each specification and these setups will appear as
-    separate items in the aggregarion menu in a form toolbar.  instance and are
-    related to a specification, so all forms above given specification share
+    separate items in the aggregation menu in a form toolbar.  Aggregated views
+    are related to a specification, so all forms above given 'spec_name' share
     the list of available aggregation setups.
 
     """
     _TABLE = 'e_pytis_aggregated_views'
-    _COLUMNS = ('id', 'username', 'spec_name', 'aggregated_view_id', 'title', 'pickle')
+    _COLUMNS = ('id', 'username', 'spec_name', 'aggregated_view_id', 'params')
 
     def save(self, spec_name, aggregated_view, transaction=None):
         """Save aggregation form setup.
@@ -1027,10 +1027,11 @@ class AggregatedViewsManager(LegacyUserSetttingsManager):
 
         """
         assert isinstance(aggregated_view, pytis.presentation.AggregatedView)
-        values = dict(title=aggregated_view.name(),
-                      pickle=self._pickle(aggregated_view))
-        self._save(values, spec_name=spec_name, aggregated_view_id=aggregated_view.id(),
-                   transaction=transaction)
+        self._save(dict(params=dict(
+            name=aggregated_view.name(),
+            group_by_columns=aggregated_view.group_by_columns(),
+            aggregation_columns=aggregated_view.aggregation_columns(),
+        )), spec_name=spec_name, aggregated_view_id=aggregated_view.id(), transaction=transaction)
 
     def load(self, spec_name, aggregated_view_id, transaction=None):
         """Return previously saved aggregated view setup.
@@ -1043,8 +1044,19 @@ class AggregatedViewsManager(LegacyUserSetttingsManager):
         view is found, None is returned.
 
         """
-        return self._load(spec_name=spec_name, aggregated_view_id=aggregated_view_id,
-                          transaction=transaction)
+        row = self._row(spec_name=spec_name, aggregated_view_id=aggregated_view_id,
+                        transaction=transaction)
+        if row:
+            params = row['params'].value()
+            return pytis.presentation.AggregatedView(
+                id=aggregated_view_id,
+                name=params['name'],
+                group_by_columns=tuple(params['group_by_columns']),
+                aggregation_columns=tuple(params['aggregation_columns']),
+            )
+        else:
+            return None
+
 
     def drop(self, spec_name, aggregated_view_id, transaction=None):
         """Remove the previously saved aggregated view setup.
@@ -1068,5 +1080,30 @@ class AggregatedViewsManager(LegacyUserSetttingsManager):
         identifiers previously saved using 'save()' for given 'spec_name'.
 
         """
+        return tuple(row['aggregated_view_id'].value()
+                     for row in self._rows(spec_name=spec_name, transaction=transaction))
+
+
+class LegacyAggregatedViewsManager(LegacyUserSetttingsManager):
+    _TABLE = 'e_pytis_aggregated_views'
+    _COLUMNS = ('id', 'username', 'spec_name', 'aggregated_view_id', 'title', 'pickle')
+
+    def save(self, spec_name, aggregated_view, transaction=None):
+        assert isinstance(aggregated_view, pytis.presentation.AggregatedView)
+        values = dict(title=aggregated_view.name(),
+                      pickle=self._pickle(aggregated_view))
+        self._save(values, spec_name=spec_name, aggregated_view_id=aggregated_view.id(),
+                   transaction=transaction)
+
+    def load(self, spec_name, aggregated_view_id, transaction=None):
+        return self._load(spec_name=spec_name, aggregated_view_id=aggregated_view_id,
+                          transaction=transaction)
+
+    def drop(self, spec_name, aggregated_view_id, transaction=None):
+        row = self._row(spec_name=spec_name, aggregated_view_id=aggregated_view_id)
+        if row:
+            self._data.delete(row['id'], transaction=transaction)
+
+    def list(self, spec_name, transaction=None):
         return tuple(row['aggregated_view_id'].value()
                      for row in self._rows(spec_name=spec_name, transaction=transaction))
