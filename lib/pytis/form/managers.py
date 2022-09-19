@@ -29,11 +29,9 @@ needed by a typical pytis application at startup and these managers are then
 accessible from within pytis through functions defined in application.py, such
 as 'profile_manager()', etc.
 
-Most of the settings are stored as pickled python objects.  Pickling and
-unpickling is done internally by the manager, so the API works transparently
-with python objects.  These objects just must be safe to pickle and unpickle
-(ideally they should consist just of basic python data types or they must
-implement additional support for pickling).
+Most of the settings are stored as JSON objects, but the API works with pytis
+classes, such as 'pytis.presentation.Profile()'.  Conversion to/from these
+classes is done internally by the manager.
 
 Settings are always identified by the current user (the 'username' argument of
 the manager's constructor) and additionally by other selectors such as
@@ -141,17 +139,16 @@ class UserSetttingsManager(object):
 class ApplicationConfigManager(UserSetttingsManager):
     """Application configuration storage manager.
 
-    The options are saved in a simple database table as a single string value
-    per user containing the pickled sequence of options and values.  The
-    methods 'load()' and 'save()' can be used to retrieve and store such
-    sequences.
+    The options are saved in a simple database table as JSON objects, one per
+    user.  The methods 'load()' and 'save()' can be used to retrieve and store
+    the settings as Python dictionaries of options.
 
     """
     _TABLE = 'e_pytis_config'
     _COLUMNS = ('id', 'username', 'options')
 
     def load(self, transaction=None):
-        """Return previously stored configuration options as a tuple of (name, value) pairs."""
+        """Return previously stored configuration as a dictionary of options."""
         row = self._row(transaction=transaction)
         if row:
             return row['options'].value()
@@ -320,13 +317,10 @@ class FormProfileManager(UserSetttingsManager):
     validate them against the current specification combine them into resulting
     'pytis.presentation.Profile' instances
 
-    Moreover, the filters can not be simply pickled/unpickled as they are.  The
-    'pytis.data.Operator' instances often refer to values with pytis data
-    types, which have enumerators and other references to ``living'' data
-    objects.  Thus we prefer to convert the Operator instances into our own
-    simple structure of basic immutable python objects and restore
-    'pytis.data.Operator' instances back after unpickling (the form's data
-    object is needed to do that).
+    The key aspect of this class is serialization of pytis filters
+    ('pytis.data.Operator' instances).  The Operator instances ale converted
+    (packed/unpacked) to/from our own structure of basic Python/JSON data
+    types.
 
     Forms are referenced by unique string identifiers (see the 'spec_name' and
     'form_name' arguements of the manager's methods).
