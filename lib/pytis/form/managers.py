@@ -311,7 +311,7 @@ class LegacyFormSettingsManager(LegacyUserSetttingsManager):
         return result
 
 
-class FormProfileManager(LegacyUserSetttingsManager):
+class FormProfileManager(UserSetttingsManager):
     """Accessor of database storage of form profiles.
 
     This manager is a little more complicated then the others as it must
@@ -333,10 +333,10 @@ class FormProfileManager(LegacyUserSetttingsManager):
 
     """
     _TABLE = 'e_pytis_form_profile_base'
-    _COLUMNS = ('id', 'username', 'spec_name', 'profile_id', 'title',
-                'pickle', 'dump', 'errors')
+    _COLUMNS = ('id', 'username', 'spec_name', 'profile_id', 'title', 'filter', 'errors')
     _OPERATORS = ('AND', 'OR', 'NOT', 'EQ', 'NE', 'WM', 'NW', 'LT', 'LE', 'GT', 'GE', 'IN')
-    _PROFILE_PARAMS = ('sorting', 'columns', 'grouping', 'folding', 'aggregations', 'column_widths')
+    _PROFILE_PARAMS = ('sorting', 'columns', 'grouping', 'folding', 'aggregations',
+                       'column_widths')
 
     USER_PROFILE_PREFIX = '_user_profile_'
     """Profile identifier prefix used for user defined profiles.
@@ -349,6 +349,367 @@ class FormProfileManager(LegacyUserSetttingsManager):
     def __init__(self, dbconnection, username=None):
         super(FormProfileManager, self).__init__(dbconnection, username=username)
         self._params_manager = FormProfileParamsManager(dbconnection, username=username)
+
+    def _pack_filter(self, something):
+        if isinstance(something, pytis.form.IN):
+            return (something.name(), (something.column_id(), something.spec_name(),
+                                       something.table_column_id(), something.profile_id()), {})
+        elif isinstance(something, pytis.data.Operator):
+            args = tuple([self._pack_filter(arg) for arg in something.args()])
+            return (something.name(), args, something.kwargs())
+        elif isinstance(something, pytis.data.Value):
+            t = something.type()
+            export_kwargs = {}
+            if isinstance(t, pytis.data.Date):
+                export_kwargs['format'] = '%Y-%m-%d'
+            elif isinstance(t, pytis.data.Time):
+                export_kwargs['format'] = '%H:%M:%S'
+            elif isinstance(t, pytis.data.DateTime):
+                export_kwargs['format'] = '%Y-%m-%d %H:%M:%S'
+            elif isinstance(t, pytis.data.Float):
+                export_kwargs['locale_format'] = False
+            return [something.export(**export_kwargs)]
+        elif isinstance(something, pytis.data.WMValue):
+            return [something.value()]
+        elif isinstance(something, basestring):
+            return something
+        else:
+            raise pytis.util.ProgramError("Unknown object in filter operator:", something)
+
+    def _unpack_filter(self, packed, data_object, delete_columns=(), rename_columns={}):
+        def find_column(col):
+            col = rename_columns.get(col, col)
+            column = data_object.find_column(col)
+            if column is None:
+                note = " (can't remove from filter)" if col in delete_columns else ""
+                raise Exception("Unknown column '%s'%s" % (col, note))
+            return column
+        name, packed_args, kwargs = packed
+        if name not in self._OPERATORS:
+            raise Exception("Invalid filter operator '%s'." % name)
+        op = getattr(pytis.data, name)
+        if name in ('AND', 'OR', 'NOT'):
+            args = [self._unpack_filter(arg, data_object, delete_columns=delete_columns,
+                                        rename_columns=rename_columns)
+                    for arg in packed_args]
+        elif name == 'IN':
+            op = pytis.form.IN
+            args = packed_args
+        else:
+            if len(packed_args) != 2:
+                raise Exception("Invalid number of filter operator arguments: %s" %
+                                repr(packed_args))
+            if isinstance(packed_args[1], list):
+                column, val = find_column(packed_args[0]), packed_args[1][0]
+                if isinstance(val, str if sys.version_info[0] == 2 else bytes):
+                    # TODO: This is probably completely redundant in Python 3...
+                    try:
+                        val = val.decode('utf-8')
+                    except UnicodeDecodeError:
+                        val = val.decode('iso-8859-2')
+                t = column.type()
+                if name in ('WM', 'NW'):
+                    value, err = t.wm_validate(val)
+                else:
+                    validation_kwargs = {}
+                    if isinstance(t, pytis.data.Date):
+                        validation_kwargs['format'] = '%Y-%m-%d'
+                    elif isinstance(t, pytis.data.Time):
+                        validation_kwargs['format'] = '%H:%M:%S'
+                    elif isinstance(t, pytis.data.DateTime):
+                        validation_kwargs['format'] = '%Y-%m-%d %H:%M:%S'
+                    elif isinstance(t, pytis.data.Float):
+                        validation_kwargs['locale_format'] = False
+                    value, err = t.validate(val, strict=False, **validation_kwargs)
+                if err is not None:
+                    raise Exception("Invalid filter operand for '%s': %s" % (column.id(), err))
+                args = column.id(), value
+            else:
+                args = tuple([find_column(col).id() for col in packed_args])
+        return op(*args, **kwargs)
+
+    def _errors(self, profile, p):
+        errors = ['%s: %s' % (param, error) for param, error in profile.errors() if p(param)]
+        if errors:
+            return "\n".join(errors)
+        else:
+            return None
+
+    def _load_filter(self, data_object, packed_filter, delete_columns=(), rename_columns={}):
+        if packed_filter:
+            try:
+                filter = self._unpack_filter(packed_filter, data_object,
+                                             delete_columns=delete_columns,
+                                             rename_columns=rename_columns)
+            except Exception as e:
+                return None, (('filter', str(e)),)
+            else:
+                return filter, ()
+        else:
+            return None, ()
+
+    def _validate_params(self, view_spec, params):
+        errors = []
+        for param, getcol in (('columns', lambda x: x),
+                              ('sorting', lambda x: x[0]),
+                              ('grouping', lambda x: x)):
+            sequence = params.get(param)
+            if sequence is not None:
+                for x in sequence:
+                    col = getcol(x)
+                    f = view_spec.field(col)
+                    if f is None:
+                        errors.append((param, "Unknown column '%s'" % col))
+                    elif param == 'columns' and f.disable_column():
+                        errors.append((param, "Disabled column '%s'" % col))
+        return tuple(errors)
+
+    def _update_params(self, params, rename_columns, delete_columns):
+        for param, getcol, getitem in (('columns', lambda x: x, lambda x, col: col),
+                                       ('sorting', lambda x: x[0], lambda x, col: (col, x[1])),
+                                       ('grouping', lambda x: x, lambda x, col: col)):
+            items = params.get(param)
+            if items is not None:
+                params[param] = tuple(
+                    getitem(item, rename_columns.get(col, col))
+                    for item, col in [(x, getcol(x)) for x in items]
+                    if col not in delete_columns
+                )
+
+    def _in_transaction(self, transaction, operation, *args, **kwargs):
+        if transaction is None:
+            transaction = pytis.data.DBTransactionDefault(self._dbconnection)
+            kwargs['transaction'] = transaction
+            try:
+                operation(*args, **kwargs)
+            except Exception:
+                try:
+                    transaction.rollback()
+                except Exception:
+                    pass
+                raise
+            else:
+                transaction.commit()
+        else:
+            kwargs['transaction'] = transaction
+            operation(*args, **kwargs)
+
+    def _profile_params(self, profile):
+        return dict([(param, getattr(profile, param)()) for param in self._PROFILE_PARAMS])
+
+    def save_profile(self, spec_name, form_name, profile, transaction=None):
+        """Save user specific configuration of a form.
+
+        Arguments:
+
+          spec_name, form_name -- unique string identification of a form to which the
+            profile belongs (see 'FormProfileManager' class docuemntation).
+          profile -- form profile as a 'pytis.presentation.Profile' instance.
+          transaction -- Existing DB transaction if the operation should be
+            performed as a part of it.  If None, a local transaction will be
+            created if necessary.
+
+        """
+        def save_params(transaction):
+            params = self._profile_params(profile)
+            self._params_manager.save(spec_name, form_name, profile.id(), params,
+                                      errors=self._errors(profile, lambda p: p != 'filter'),
+                                      transaction=transaction)
+        if profile.id().startswith(self.USER_PROFILE_PREFIX):
+            # Save filter and form parameters for user defined profiles.
+            def save_profile(transaction):
+                self._save(dict(title=profile.title(),
+                                filter=profile.filter() and self._pack_filter(profile.filter()),
+                                errors=self._errors(profile, lambda p: p == 'filter')),
+                           spec_name=spec_name, profile_id=profile.id(), transaction=transaction)
+                save_params(transaction)
+            self._in_transaction(transaction, save_profile)
+        else:
+            # Only save user specific form parameters for system profiles.
+            save_params(transaction)
+
+    def load_profiles(self, spec_name, form_name, view_spec, data_object, default_profile,
+                      transaction=None, rename_columns={}, delete_columns=()):
+        """Return list of form profiles including previously saved user customizations.
+
+        Arguments:
+          spec_name -- string specification name
+          form_name -- unique string form identification
+          view_spec -- ViewSpec instance of given specification to be used for
+            profile validation
+          data_object -- data object of given specification to be used for
+            profile validation
+          default_profile -- 'pytis.presentation.Profile' instance representing
+            form's default profile
+          rename_columns -- dictionary to use for renaming columns in all
+            loaded profiles.  Keys are the column identifiers to rename and
+            values are the new column identifiers.
+          delete_columns -- sequence of column ids to drop from all loaded profiles
+
+        Returns a list of 'pytis.presentation.Profile' instances including
+        predefined system profiles (possibly with their user customizations) as
+        well as user defined profiles.
+
+        """
+        def load_params(profile_id):
+            params = self._params_manager.load(spec_name, form_name, profile_id,
+                                               transaction=transaction)
+            if rename_columns or delete_columns:
+                self._update_params(params, rename_columns, delete_columns)
+            errors = self._validate_params(view_spec, params)
+            return params, errors
+        profiles = []
+        # Load user customizations of system profiles first.
+        for profile in (default_profile,) + tuple(view_spec.profiles().unnest()):
+            # System profiles define the title and filter, which can not be
+            # changed, so we only load saved form parameters if they are valid.
+            # One of the reasons why filter of system profiles can not be
+            # changed is that it often contains dynamic conditions, such as
+            # EQ('date', now()) which are destroyed when saved (the saved
+            # condition would be EQ('date', '2011-03-01') for example).
+            params, errors = load_params(profile.id())
+            if not errors:
+                for param, value in self._profile_params(profile).items():
+                    if params.get(param) is None:
+                        params[param] = value
+                profile = Profile(profile.id(), profile.title(), filter=profile.filter(), **params)
+            profiles.append(profile)
+        # Now load also user defined profiles.
+        for row in self._rows(spec_name=spec_name, transaction=transaction):
+            filter_, filter_errors = self._load_filter(data_object, row['filter'].value(),
+                                                       delete_columns=delete_columns,
+                                                       rename_columns=rename_columns)
+            params, param_errors = load_params(row['profile_id'].value())
+            profiles.append(Profile(row['profile_id'].value(),
+                                    row['title'].value(),
+                                    filter=filter_,
+                                    errors=filter_errors + param_errors,
+                                    **params))
+        return profiles
+
+    def load_filter(self, spec_name, data_object, profile_id, transaction=None):
+        """Return a previously saved user defined filter.
+
+        Arguments:
+          spec_name -- string form specification name
+          data_object -- data object of given specification to be used for filter validation
+          profile_id -- string identifier of the profile
+          transaction -- Existing DB transaction if the operation should be
+            performed as a part of it.  If None, a local transaction will be
+            created if necessary.
+
+        Returns a tuple (filter, title), where filter is a
+        'pytis.data.Operator' instance or None when given profile exists, but
+        has no filter and title is the user defined title of the profile.
+
+        Raises exception if no such profile is found or is invalid.
+
+        """
+        row = self._row(transaction=transaction, spec_name=spec_name, profile_id=profile_id)
+        if row:
+            filter_, errors = self._load_filter(data_object, row['filter'].value())
+            if errors:
+                raise Exception("Saved profile %s for %s is invalid!" % (profile_id, spec_name))
+            return filter_, row['title'].value()
+        else:
+            raise Exception("Saved profile %s for %s doesn't exist!" % (profile_id, spec_name))
+
+    def drop_profile(self, spec_name, form_name, profile_id, transaction=None):
+        """Remove the previously saved form configuration.
+
+        Arguments:
+          spec_name -- string specification name
+          form_name -- unique string form identification
+          profile_id -- string identifier of the profile to drop
+
+        """
+        if profile_id.startswith(self.USER_PROFILE_PREFIX):
+            # Drop filter and form parameters for user defined profiles.
+            def drop(spec_name, form_name, profile_id, transaction):
+                self._drop(spec_name=spec_name, profile_id=profile_id, transaction=transaction)
+                self._params_manager.drop(spec_name, form_name, profile_id, transaction=transaction)
+            self._in_transaction(transaction, drop, spec_name, form_name, profile_id)
+        else:
+            # Only drop user specific form parameters for system profiles.
+            self._params_manager.drop(spec_name, form_name, profile_id, transaction=transaction)
+
+    def list_spec_names(self, transaction=None):
+        """Return a sequence of distinct specification names for which profiles were saved."""
+        values = self._data.distinct('spec_name', condition=self._condition(),
+                                     transaction=transaction)
+        return [v.value() for v in values]
+
+    def list_form_names(self, spec_name, transaction=None):
+        """Return a sequence of distinct form names for which profiles were saved."""
+        return self._params_manager.list_form_names(spec_name, transaction=transaction)
+
+    def new_user_profile_id(self, profiles):
+        """Generate a new unique user profile id based on given list of existing profiles."""
+        prefix = self.USER_PROFILE_PREFIX
+        user_profile_numbers = [int(profile.id()[len(prefix):]) for profile in profiles
+                                if (profile.id().startswith(prefix) and
+                                    profile.id()[len(prefix):].isdigit())]
+        return prefix + str(max(user_profile_numbers + [0]) + 1)
+
+
+class FormProfileParamsManager(UserSetttingsManager):
+    """Accessor of database storage of form profile parameters.
+
+    This manager is only used internally by FormProfileManager to retrieve form
+    specific profile parameters which are then combined with form independent
+    profile parameters (filter).
+
+    """
+    _TABLE = 'e_pytis_form_profile_params'
+    _COLUMNS = ('id', 'username', 'spec_name', 'profile_id', 'form_name', 'params', 'errors')
+
+    def load(self, spec_name, form_name, profile_id, transaction=None):
+        """Return previously stored form profile parameters dictionary."""
+        row = self._row(spec_name=spec_name, form_name=form_name, profile_id=profile_id,
+                        transaction=transaction)
+        if row:
+            return row['params'].value()
+        else:
+            return {}
+
+    def list_form_names(self, spec_name, transaction=None):
+        """Return a sequence of form names for which profiles were saved."""
+        condition = self._condition(spec_name=spec_name)
+        values = self._data.distinct('form_name', condition=condition, transaction=transaction)
+        return [v.value() for v in values]
+
+    def save(self, spec_name, form_name, profile_id, params, errors, transaction=None):
+        """Save form profile parameters dictionary."""
+        assert isinstance(params, dict)
+        self._save(dict(params=params, errors=errors),
+                   spec_name=spec_name, form_name=form_name, profile_id=profile_id,
+                   transaction=transaction)
+
+    def drop(self, spec_name, form_name, profile_id, transaction=None):
+        """Remove the previously saved form parameters.
+
+        Arguments:
+          spec_name, form_name -- unique string identification of a form to which the
+            profile belongs (see 'FormProfileManager' class docuemntation).
+          profile_id -- string identifier of the profile to drop.
+
+        """
+        self._drop(spec_name=spec_name, form_name=form_name, profile_id=profile_id,
+                   transaction=transaction)
+
+
+class LegacyFormProfileManager(LegacyUserSetttingsManager):
+    _TABLE = 'e_pytis_form_profile_base'
+    _COLUMNS = ('id', 'username', 'spec_name', 'profile_id', 'title',
+                'pickle', 'dump', 'errors')
+    _OPERATORS = ('AND', 'OR', 'NOT', 'EQ', 'NE', 'WM', 'NW', 'LT', 'LE', 'GT', 'GE', 'IN')
+    _PROFILE_PARAMS = ('sorting', 'columns', 'grouping', 'folding', 'aggregations', 'column_widths')
+
+    USER_PROFILE_PREFIX = '_user_profile_'
+
+    def __init__(self, dbconnection, username=None):
+        super(LegacyFormProfileManager, self).__init__(dbconnection, username=username)
+        self._params_manager = LegacyFormProfileParamsManager(dbconnection, username=username)
 
     def _pack_filter(self, something):
         if isinstance(something, pytis.form.IN):
@@ -515,18 +876,6 @@ class FormProfileManager(LegacyUserSetttingsManager):
         return dict([(param, getattr(profile, param)()) for param in self._PROFILE_PARAMS])
 
     def save_profile(self, spec_name, form_name, profile, transaction=None):
-        """Save user specific configuration of a form.
-
-        Arguments:
-
-          spec_name, form_name -- unique string identification of a form to which the
-            profile belongs (see 'FormProfileManager' class docuemntation).
-          profile -- form profile as a 'pytis.presentation.Profile' instance.
-          transaction -- Existing DB transaction if the operation should be
-            performed as a part of it.  If None, a local transaction will be
-            created if necessary.
-
-        """
         def save_params(transaction):
             params = self._profile_params(profile)
             self._params_manager.save(spec_name, form_name, profile.id(), params,
@@ -551,27 +900,6 @@ class FormProfileManager(LegacyUserSetttingsManager):
 
     def load_profiles(self, spec_name, form_name, view_spec, data_object, default_profile,
                       transaction=None, rename_columns={}, delete_columns=()):
-        """Return list of form profiles including previously saved user customizations.
-
-        Arguments:
-          spec_name -- string specification name
-          form_name -- unique string form identification
-          view_spec -- ViewSpec instance of given specification to be used for
-            profile validation
-          data_object -- data object of given specification to be used for
-            profile validation
-          default_profile -- 'pytis.presentation.Profile' instance representing
-            form's default profile
-          rename_columns -- dictionary to use for renaming columns in all
-            loaded profiles.  Keys are the column identifiers to rename and
-            values are the new column identifiers.
-          delete_columns -- sequence of column ids to drop from all loaded profiles
-
-        Returns a list of 'pytis.presentation.Profile' instances including
-        predefined system profiles (possibly with their user customizations) as
-        well as user defined profiles.
-
-        """
         def load_params(profile_id):
             params = self._params_manager.load(spec_name, form_name, profile_id,
                                                transaction=transaction)
@@ -610,23 +938,6 @@ class FormProfileManager(LegacyUserSetttingsManager):
         return profiles
 
     def load_filter(self, spec_name, data_object, profile_id, transaction=None):
-        """Return a previously saved user defined filter.
-
-        Arguments:
-          spec_name -- string form specification name
-          data_object -- data object of given specification to be used for filter validation
-          profile_id -- string identifier of the profile
-          transaction -- Existing DB transaction if the operation should be
-            performed as a part of it.  If None, a local transaction will be
-            created if necessary.
-
-        Returns a tuple (filter, title), where filter is a
-        'pytis.data.Operator' instance or None when given profile exists, but
-        has no filter and title is the user defined title of the profile.
-
-        Raises exception if no such profile is found or is invalid.
-
-        """
         row = self._row(transaction=transaction, spec_name=spec_name, profile_id=profile_id)
         if row:
             packed_filter = self._unpickle(row['pickle'].value())
@@ -638,14 +949,6 @@ class FormProfileManager(LegacyUserSetttingsManager):
             raise Exception("Saved profile %s for %s doesn't exist!" % (profile_id, spec_name))
 
     def drop_profile(self, spec_name, form_name, profile_id, transaction=None):
-        """Remove the previously saved form configuration.
-
-        Arguments:
-          spec_name -- string specification name
-          form_name -- unique string form identification
-          profile_id -- string identifier of the profile to drop
-
-        """
         if profile_id.startswith(self.USER_PROFILE_PREFIX):
             # Drop filter and form parameters for user defined profiles.
             def drop(spec_name, form_name, profile_id, transaction):
@@ -657,17 +960,14 @@ class FormProfileManager(LegacyUserSetttingsManager):
             self._params_manager.drop(spec_name, form_name, profile_id, transaction=transaction)
 
     def list_spec_names(self, transaction=None):
-        """Return a sequence of distinct specification names for which profiles were saved."""
         values = self._data.distinct('spec_name', condition=self._condition(),
                                      transaction=transaction)
         return [v.value() for v in values]
 
     def list_form_names(self, spec_name, transaction=None):
-        """Return a sequence of distinct form names for which profiles were saved."""
         return self._params_manager.list_form_names(spec_name, transaction=transaction)
 
     def new_user_profile_id(self, profiles):
-        """Generate a new unique user profile id based on given list of existing profiles."""
         prefix = self.USER_PROFILE_PREFIX
         user_profile_numbers = [int(profile.id()[len(prefix):]) for profile in profiles
                                 if (profile.id().startswith(prefix) and
@@ -675,31 +975,21 @@ class FormProfileManager(LegacyUserSetttingsManager):
         return prefix + str(max(user_profile_numbers + [0]) + 1)
 
 
-class FormProfileParamsManager(LegacyUserSetttingsManager):
-    """Accessor of database storage of form profile parameters.
-
-    This manager is only used internally by FormProfileManager to retrieve form
-    specific profile parameters which are then combined with form independent
-    profile parameters (filter).
-
-    """
+class LegacyFormProfileParamsManager(LegacyUserSetttingsManager):
     _TABLE = 'e_pytis_form_profile_params'
     _COLUMNS = ('id', 'username', 'spec_name', 'profile_id', 'form_name', 'pickle', 'dump',
                 'errors',)
 
     def load(self, spec_name, form_name, profile_id, transaction=None):
-        """Return previously stored form profile parameters dictionary."""
         return self._load(spec_name=spec_name, form_name=form_name, profile_id=profile_id,
                           transaction=transaction) or {}
 
     def list_form_names(self, spec_name, transaction=None):
-        """Return a sequence of form names for which profiles were saved."""
         condition = self._condition(spec_name=spec_name)
         values = self._data.distinct('form_name', condition=condition, transaction=transaction)
         return [v.value() for v in values]
 
     def save(self, spec_name, form_name, profile_id, params, dump, errors, transaction=None):
-        """Save form profile parameters dictionary."""
         assert isinstance(params, dict)
         values = dict(pickle=self._pickle(params),
                       dump=dump,
@@ -708,14 +998,6 @@ class FormProfileParamsManager(LegacyUserSetttingsManager):
                    transaction=transaction)
 
     def drop(self, spec_name, form_name, profile_id, transaction=None):
-        """Remove the previously saved form parameters.
-
-        Arguments:
-          spec_name, form_name -- unique string identification of a form to which the
-            profile belongs (see 'FormProfileManager' class docuemntation).
-          profile_id -- string identifier of the profile to drop.
-
-        """
         self._drop(spec_name=spec_name, form_name=form_name, profile_id=profile_id,
                    transaction=transaction)
 

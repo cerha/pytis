@@ -792,19 +792,19 @@ class Profile(object):
         assert isinstance(title, basestring), title
         assert descr is None or isinstance(descr, basestring), descr
         assert filter is None or isinstance(filter, pytis.data.Operator), filter
-        assert sorting is None or isinstance(sorting, tuple), sorting
-        assert grouping is None or isinstance(grouping, (basestring, tuple)), grouping
+        assert sorting is None or isinstance(sorting, (tuple, list)), sorting
+        assert grouping is None or isinstance(grouping, (basestring, tuple, list)), grouping
         assert columns is None or isinstance(columns, (tuple, list)), columns
         assert aggregations is None or isinstance(aggregations, (tuple, list)), aggregations
         self._id = id
         self._title = title
         self._descr = descr
         self._filter = filter
-        self._sorting = sorting
-        self._grouping = grouping and xtuple(grouping)
-        self._columns = columns and tuple(columns)
-        self._aggregations = aggregations and tuple(aggregations)
-        self._folding = folding
+        self._sorting = None if sorting is None else tuple(tuple(x) for x in sorting)
+        self._grouping = None if grouping is None else xtuple(grouping)
+        self._columns = None if columns is None else tuple(columns)
+        self._aggregations = None if aggregations is None else tuple(aggregations)
+        self._folding = None if folding is None else tuple(folding)
         self._column_widths = column_widths
         self._errors = errors
 

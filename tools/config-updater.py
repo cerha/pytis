@@ -21,9 +21,11 @@ from __future__ import print_function
 import sys
 import getopt
 import pytis.util
+import pytis.presentation
 import pytis.data as pd
 from pytis.form.managers import (
-    LegacyApplicationConfigManager, LegacyFormSettingsManager,
+    LegacyApplicationConfigManager, LegacyFormSettingsManager, LegacyFormProfileManager,
+    FormProfileManager,
 )
 
 def die(message):
@@ -50,13 +52,15 @@ def run():
     # Avoid pytis logging during the update.
     pytis.config.log_exclude = [pytis.util.ACTION, pytis.util.EVENT,
                                 pytis.util.DEBUG, pytis.util.OPERATIONAL]
+    resolver = pytis.util.resolver()
     transaction = pd.transaction()
+    default_profile = pytis.presentation.Profile('__default_profile__', '-')
     try:
         data = pd.dbtable('e_pytis_config', ('id', 'username', 'options'))
         for v in data.distinct('username', transaction=transaction):
             username = v.value()
-            acm = LegacyApplicationConfigManager(pytis.config.dbconnection, username=username)
-            options = acm.load(transaction=transaction)
+            mgr = LegacyApplicationConfigManager(pytis.config.dbconnection, username=username)
+            options = mgr.load(transaction=transaction)
             data.update_many(pd.EQ('username', pd.sval(username)),
                              pd.Row((('options', pd.Value(pd.JSON(), options)),)),
                              transaction=transaction)
@@ -77,11 +81,27 @@ def run():
                     settings = mgr._unpickle(row['pickle'].value())
                     data.update(row['id'], pd.Row((('settings', pd.Value(pd.JSON(), settings)),)),
                                 transaction=transaction)
+        data = pd.dbtable('e_pytis_form_profile_base',
+                          ('id', 'username', 'spec_name', 'profile_id', 'title', 'filter'))
+        for uname in data.distinct('username', transaction=transaction):
+            username = uname.value()
+            mgr = LegacyFormProfileManager(pytis.config.dbconnection, username=username)
+            newmgr = FormProfileManager(pytis.config.dbconnection, username=username)
+            for spec_name in mgr.list_spec_names(transaction=transaction):
+                for form_name in mgr.list_form_names(spec_name, transaction=transaction):
+                    view_spec = resolver.get(spec_name, 'view_spec')
+                    data_spec = resolver.get(spec_name, 'data_spec')
+                    data_object = data_spec.create(dbconnection_spec=pytis.config.dbconnection)
+                    profiles = mgr.load_profiles(spec_name, form_name, view_spec, data_object,
+                                                 default_profile, transaction=transaction)
+                    for profile in profiles:
+                        newmgr.save_profile(spec_name, form_name, profile, transaction=transaction)
     except Exception:
         transaction.rollback()
         raise
     else:
         transaction.commit()
+
 
 if __name__ == '__main__':
     run()

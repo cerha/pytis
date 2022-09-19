@@ -48,8 +48,7 @@ class EPytisFormProfileBase(sql.SQLTable):
               sql.Column('spec_name', pytis.data.String(not_null=True)),
               sql.Column('profile_id', pytis.data.String(not_null=True)),
               sql.Column('title', pytis.data.String(not_null=True)),
-              sql.Column('pickle', pytis.data.String(not_null=True)),
-              sql.Column('dump', pytis.data.String(not_null=False)),
+              sql.Column('filter', pytis.data.JSON(not_null=True)),
               sql.Column('errors', pytis.data.String(not_null=False)),
               )
     inherits = (XChanges,)
@@ -67,8 +66,7 @@ class EPytisFormProfileParams(sql.SQLTable):
               sql.Column('spec_name', pytis.data.String(not_null=True)),
               sql.Column('form_name', pytis.data.String(not_null=True)),
               sql.Column('profile_id', pytis.data.String(not_null=True)),
-              sql.Column('pickle', pytis.data.String(not_null=True)),
-              sql.Column('dump', pytis.data.String(not_null=False)),
+              sql.Column('params', pytis.data.JSON(not_null=True)),
               sql.Column('errors', pytis.data.String(not_null=False)),
               )
     inherits = (XChanges,)
@@ -87,20 +85,14 @@ class EvPytisFormProfiles(sql.SQLView):
         profile = sql.t.EPytisFormProfileBase.alias('profile')
         params = sql.t.EPytisFormProfileParams.alias('params')
         return sqlalchemy.select(
-            cls._exclude(profile, 'id', 'username', 'spec_name', 'profile_id', 'pickle', 'dump',
-                         'errors') +
-            cls._exclude(params, 'id', 'pickle', 'dump', 'errors') +
+            cls._exclude(profile, 'id', 'username', 'spec_name', 'profile_id', 'errors') +
+            cls._exclude(params, 'id', 'errors') +
             [sql.gL("profile.id||'.'||params.id").label('id'),
              sql.gL("'form/'|| params.form_name ||'/'|| profile.spec_name ||'//'")
              .label('fullname'),
              sql.gL("case when profile.errors is not null and params.errors is not null "
                     "then profile.errors ||'\n'||params.errors "
-                    "else coalesce(profile.errors, params.errors) end").label('errors'),
-             sql.gL("case when profile.dump is not null and params.dump is not null "
-                    "then profile.dump ||'\n'||params.dump "
-                    "else coalesce(profile.dump, params.dump) end").label('dump'),
-             profile.c.pickle.label('pickled_filter'),
-             params.c.pickle.label('pickled_params')],
+                    "else coalesce(profile.errors, params.errors) end").label('errors')],
             from_obj=[
                 profile.join(
                     params, and_(
