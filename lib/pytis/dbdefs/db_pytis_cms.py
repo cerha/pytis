@@ -55,27 +55,49 @@ def use_cms(classes=None):
         cls.external = False
 
 
-def extend(cms_class, extension_class):
-    """Extend existing Pytis CMS class by attributes of given extension class.
+class CmsExtensible:
+    """Extensible CMS DB specification.
 
-    We need to alter the existing classes, because it is not possible to create
-    new derived classes and use them instead of the original classes.  This is
-    because gsql will fail if it finds two classes with the same name (even
-    though one of them is marked as 'external').  So we need to define a new
-    class (not inherited from the original gsql class) and dynamically override
-    all public attributes of the original 'cms_class' by the attributes of the
-    'extension_class'.
-
-    This makes it possible for example to add application specific columns to
-    the tables defined by Pytis CMS.
+    All Pytis CMS DB specification classes are derived from this class and thus
+    may be extended (customized for project needs) via the method 'extend()' of
+    this class.
 
     """
-    for name, value in extension_class.__dict__.items():
-        if not name.startswith('_'):
-            setattr(cms_class, name, value)
+
+    @classmethod
+    def extend(cls, extension_class):
+        """Extend existing Pytis CMS class by attributes of given extension class.
+
+        We need to alter the existing classes, because it is not possible to create
+        new derived classes and use them instead of the original classes.  This is
+        because gsql will fail if it finds two classes with the same name (even
+        though one of them is marked as 'external').  So we need to define a new
+        class (not inherited from the original gsql class) and dynamically override
+        all public attributes of the original 'cls' by the attributes of the
+        'extension_class'.
+
+        This makes it possible for example to add application specific columns to
+        the tables defined by Pytis CMS.
+
+        Example:
+
+        @pytis.dbdefs.db_pytis_cms.CmsRoles.extend
+        class CmsRoles:
+            fields = tuple(
+                list(pytis.dbdefs.db_pytis_cms.CmsRoles.fields) + [
+                    sql.Column('project', pytis.data.String(maxlen=6),
+                               references=sql.a(sql.r.Projects.code)),
+                ]
+            )
 
 
-class CmsLanguages(sql.SQLTable):
+        """
+        for name, value in extension_class.__dict__.items():
+            if not name.startswith('_'):
+                setattr(cls, name, value)
+
+
+class CmsLanguages(sql.SQLTable, CmsExtensible):
     """Codebook of languages available in the CMS."""
     name = 'cms_languages'
     external = True
@@ -88,7 +110,7 @@ class CmsLanguages(sql.SQLTable):
     access_rights = cms_rights.value(globals())
 
 
-class CmsModules(sql.SQLTable):
+class CmsModules(sql.SQLTable, CmsExtensible):
     """Codebook of extension modules available in the CMS."""
     name = 'cms_modules'
     external = True
@@ -101,7 +123,7 @@ class CmsModules(sql.SQLTable):
     access_rights = cms_rights.value(globals())
 
 
-class CmsMenuStructure(sql.SQLTable):
+class CmsMenuStructure(sql.SQLTable, CmsExtensible):
     """Language independent menu structure."""
     name = 'cms_menu_structure'
     schemas = cms_schemas.value(globals())
@@ -129,7 +151,7 @@ class CmsMenuStructure(sql.SQLTable):
     access_rights = cms_rights.value(globals())
 
 
-class CmsMenuStructureTreeOrder(sql.SQLFunction):
+class CmsMenuStructureTreeOrder(sql.SQLFunction, CmsExtensible):
     """Generate a sortable string representing the hierarchical position of given menu item."""
     schemas = cms_schemas.value(globals())
     name = 'cms_menu_structure_tree_order'
@@ -142,7 +164,7 @@ class CmsMenuStructureTreeOrder(sql.SQLFunction):
     access_rights = ()
 
 
-class CmsMenuTexts(sql.SQLTable):
+class CmsMenuTexts(sql.SQLTable, CmsExtensible):
     """Language dependent texts and properties for menu items."""
     name = 'cms_menu_texts'
     external = True
@@ -161,7 +183,7 @@ class CmsMenuTexts(sql.SQLTable):
     access_rights = cms_rights.value(globals())
 
 
-class CmsMenu(sql.SQLView):
+class CmsMenu(sql.SQLView, CmsExtensible):
     """Complete menu structure with texts for each language defined in cms_languages."""
     name = 'cms_menu'
     schemas = cms_schemas.value(globals())
@@ -244,7 +266,7 @@ class CmsMenu(sql.SQLView):
     access_rights = cms_rights.value(globals())
 
 
-class CmsRoles(sql.SQLTable):
+class CmsRoles(sql.SQLTable, CmsExtensible):
     """CMS roles."""
     name = 'cms_roles'
     external = True
@@ -263,7 +285,7 @@ class CmsRoles(sql.SQLTable):
     )
 
 
-class CmsActions(sql.SQLTable):
+class CmsActions(sql.SQLTable, CmsExtensible):
     """Enumeration of valid actions.
     (Including both module independent actions and per module actions.)
     Module independent actions have NULL in the mod_id column.
@@ -287,7 +309,7 @@ class CmsActions(sql.SQLTable):
     )
 
 
-class CmsRightsAssignment(sql.SQLTable):
+class CmsRightsAssignment(sql.SQLTable, CmsExtensible):
     """Underlying binding table between menu items, roles and module actions."""
     name = 'cms_rights_assignment'
     external = True
@@ -305,7 +327,7 @@ class CmsRightsAssignment(sql.SQLTable):
     access_rights = cms_rights.value(globals())
 
 
-class CmsRights(sql.SQLView):
+class CmsRights(sql.SQLView, CmsExtensible):
     """User editable access rights assignment."""
     name = 'cms_rights'
     external = True
@@ -343,7 +365,7 @@ class CmsRights(sql.SQLView):
     access_rights = cms_rights.value(globals())
 
 
-class CmsThemes(sql.SQLTable):
+class CmsThemes(sql.SQLTable, CmsExtensible):
     """Definition of available color themes."""
     name = 'cms_themes'
     schemas = cms_schemas.value(globals())
@@ -383,7 +405,7 @@ class CmsThemes(sql.SQLTable):
     access_rights = cms_rights.value(globals())
 
 
-class CmsUsersTable(sql.SQLTable):
+class CmsUsersTable(sql.SQLTable, CmsExtensible):
     name = 'cms_users_table'
     schemas = cms_schemas.value(globals())
     fields = (sql.PrimaryColumn('uid', pytis.data.Serial()),)
@@ -392,7 +414,7 @@ class CmsUsersTable(sql.SQLTable):
     external = True
 
 
-class CmsUserRoleAssignment(sql.SQLTable):
+class CmsUserRoleAssignment(sql.SQLTable, CmsExtensible):
     """Binding table assigning CMS roles to CMS users."""
     name = 'cms_user_role_assignment'
     schemas = cms_schemas.value(globals())
@@ -408,7 +430,7 @@ class CmsUserRoleAssignment(sql.SQLTable):
     access_rights = cms_rights.value(globals())
 
 
-class CmsSession(sql.SQLTable):
+class CmsSession(sql.SQLTable, CmsExtensible):
     """Web user session information for authentication and login history."""
     name = 'cms_session'
     schemas = cms_schemas.value(globals())
@@ -424,7 +446,7 @@ class CmsSession(sql.SQLTable):
     access_rights = cms_rights_rw.value(globals())
 
 
-class CmsSessionLogData(sql.SQLTable):
+class CmsSessionLogData(sql.SQLTable, CmsExtensible):
     """Log of web user logins (underlying data)."""
     name = 'cms_session_log_data'
     schemas = cms_schemas.value(globals())
@@ -446,7 +468,7 @@ class CmsSessionLogData(sql.SQLTable):
     access_rights = cms_rights_rw.value(globals())
 
 
-class CmsAccessLogData(sql.SQLTable):
+class CmsAccessLogData(sql.SQLTable, CmsExtensible):
     """Log of cms page access."""
     name = 'cms_access_log_data'
     schemas = cms_schemas.value(globals())
@@ -479,7 +501,7 @@ class X186(sql.SQLRaw):
     depends_on = (CmsSession, CmsSessionLogData,)
 
 
-class CmsUsers(sql.SQLTable):
+class CmsUsers(sql.SQLTable, CmsExtensible):
     name = 'pytis_cms_users'
     schemas = cms_schemas.value(globals())
     external = True
@@ -492,7 +514,7 @@ class CmsUsers(sql.SQLTable):
     access_rights = ()
 
 
-class CmsUserRoles(sql.SQLView):
+class CmsUserRoles(sql.SQLView, CmsExtensible):
     name = 'cms_user_roles'
     schemas = cms_schemas.value(globals())
     external = True
@@ -532,7 +554,7 @@ class CmsUserRoles(sql.SQLView):
     access_rights = cms_rights.value(globals())
 
 
-class CmsSessionLog(sql.SQLView):
+class CmsSessionLog(sql.SQLView, CmsExtensible):
     """Log of web user logins (user visible information)."""
     name = 'cms_session_log'
     schemas = cms_schemas.value(globals())
