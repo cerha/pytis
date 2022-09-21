@@ -10,6 +10,7 @@ pycrypto
 pymupdf
 pygobject
 reportlab
+# RPyC 3.3.0 is needed in python 2.7, newest version works on Python 3
 rpyc
 sqlalchemy
 wxpython
