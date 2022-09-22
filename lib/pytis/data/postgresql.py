@@ -2183,7 +2183,10 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             sdirection = ecase(direction,
                                (FORWARD, ASCENDENT),
                                (BACKWARD, DESCENDANT))
-            sorting = (tuple(sorting) + tuple((c.id(), sdirection) for c in self.key()))
+            sorting = tuple(sorting)
+            if self._pdbb_column_groups is None:
+                # Row doesn't contain key columns when grouping (aggregation) is on.
+                sorting += tuple((c.id(), sdirection) for c in self.key())
             processed = []
             conditions = []
             for cid, dir in sorting:
@@ -2214,7 +2217,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         common_cond = AND(select_cond,
                           sorting_condition(sorting, True, row, False))
         sort_string = self._pdbb_sort2sql(sorting)
-        # Najdi první řádek splňující požadovanou podmínku
+        # Find the first row matching given condition.
         search_cond = AND(common_cond, condition)
         cond_string = self._pdbb_condition2sql(search_cond)
         if direction == FORWARD:
@@ -2231,7 +2234,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         data_ = self._pg_query(query, transaction=transaction)
         if not data_:
             return 0
-        # Zjisti vzdálenost mezi aktuálním a vyhledaným řádkem
+        # Determine the distance between the current and the found row.
         row_found = self._pg_make_row_from_raw_data(
             data_, template=self._pg_make_row_template_limited)
         search_cond = AND(common_cond,
