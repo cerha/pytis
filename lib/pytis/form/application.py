@@ -166,7 +166,9 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         pytis.form.app = self
 
         # Initialize login and password.
-        db_operation(pd.dbtable, 'pg_catalog.pg_tables', ('tablename',))
+        success, result = db_operation(pd.dbtable, 'pg_catalog.pg_tables', ('tablename',))
+        if not success:
+            return False
         # Unlock crypto keys
         self._unlock_crypto_keys()
 
