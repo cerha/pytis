@@ -5652,18 +5652,31 @@ class Specification(with_metaclass(_SpecificationMetaclass, SpecificationBase)):
                     # We ignore self references here to avoid infinite
                     # recursion in the resolver.
                     codebook = None
+            orig_sqla_column = c.original_column() # The sqlalchemy.sql.schema.Column instance.
+            if orig_sqla_column is not None:
+                # Get the corresponding pytis.data.gensqlalchemy.Column instance
+                original_column = next((c for c in orig_sqla_column.table.specification_fields()
+                                        if c.id() == orig_sqla_column.name), None)
+            else:
+                original_column = None
             default = c.default()
             if default is None and isinstance(type_, pytis.data.Serial):
                 if isinstance(table, pytis.data.gensqlalchemy.SQLTable):
                     default = nextval('%s_%s_seq' % (table.pytis_name(real=True), c.id(),),
                                       connection_name=self.connection)
-                else:
-                    orig_c = c.original_column()
-                    if orig_c is not None:
-                        default = nextval('%s_%s_seq' % (orig_c.table.name, orig_c.name,),
-                                          connection_name=self.connection)
-            f = Field(c.id(), c.label(), type=type_, descr=c.doc(), default=default,
-                      editable=editable, codebook=codebook,  # not_null=type_.not_null(),
+                elif orig_sqla_column is not None:
+                    default = nextval('%s_%s_seq' % (orig_sqla_column.table.name,
+                                                     orig_sqla_column.name),
+                                      connection_name=self.connection)
+            label = c.label()
+            if label is None and original_column is not None:
+                label = original_column.label()
+            descr = c.doc()
+            if descr is None and original_column is not None:
+                descr = original_column.doc()
+            f = Field(c.id(), label, type=type_, descr=descr, default=default,
+                      editable=editable, codebook=codebook,
+                      # not_null=type_.not_null(),
                       crypto_name=c.crypto_name())
             xfields.append(f)
             xfields_map[c.id()] = i
