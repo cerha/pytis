@@ -774,8 +774,9 @@ class Profile(object):
           aggregations -- aggregation functions enabled in this profile in the
             same format as accepted by the 'aggregations' argument of
             'ViewSpec'.  If None, 'ViewSpec' aggregations apply.
-          folding -- folding specification ('FoldableForm.Folding' instance)
-            If None, the 'ViewSpec' folding applies.
+          folding -- defines the initial folding level as integer (0=everything
+            folded, 1=single level unfolded, etc.) or None (use the default
+            folding defined at specification level).
           column_widths -- dictionary of table column widths keyed by string
             column identifiers with integer values representing pixel width.
             This is not designed to be used in specifications, but rather for
@@ -804,7 +805,21 @@ class Profile(object):
         self._grouping = None if grouping is None else xtuple(grouping)
         self._columns = None if columns is None else tuple(columns)
         self._aggregations = None if aggregations is None else tuple(aggregations)
-        self._folding = None if folding is None else tuple(folding)
+        if isinstance(folding, int):
+            # Int or None the only officially supported (and documented) way of
+            # defining folding in specifications.  Internally, however, Pytis uses
+            # the format produced by pytis.form.FoldableForm.Folding.folding_state()
+            # so we always convert to this format.
+            # Note, it might make sense to define a class in pytis.presentation module
+            # which would allow more detailed folding state setup and would be used as
+            # the official documented folding state specification instead of the
+            # currently used pytis.form.FoldableForm.Folding.folding_state() format.
+            folding = [folding, []]
+        elif isinstance(folding, pytis.form.FoldableForm.Folding):
+            # For backwards compatibility only.  Specifications previously contained
+            # pytis.form.FoldableForm.Folding instances.
+            folding = folding.folding_state()
+        self._folding = folding
         self._column_widths = column_widths
         self._errors = errors
 
@@ -852,6 +867,7 @@ class Profile(object):
         return self._aggregations
 
     def folding(self):
+        """Return folding in the format produced by 'FoldableForm.Folding.folding_state()'."""
         return self._folding
 
     def column_widths(self):
@@ -1634,8 +1650,8 @@ class ViewSpec(object):
             'Orientation.VERTICAL', the side forms will be displayed on the
             right side.
 
-          folding -- 'FoldableForm.Folding' instance defining initial
-            folding.  'None' means use the standard folding.
+          folding -- initial folding level (0=everything folded, 1=single level
+            unfolded, etc.).  'None' means use the standard folding.
 
           arguments -- sequence of 'DBBinding' instances defining table
             arguments, when the table is actually a row returning function.
@@ -1889,6 +1905,15 @@ class ViewSpec(object):
             query_fields = QueryFields(query_fields)
         else:
             assert query_fields is None or isinstance(query_fields, QueryFields), query_fields
+        if initial_folding:
+            folding = initial_folding  # initial_folding is deprecated!
+        if isinstance(folding, int):
+            # See the notes in Profile constructor for more details.
+            folding = [folding, []]
+        elif isinstance(folding, pytis.form.FoldableForm.Folding):
+            # For backwards compatibility only.  Specifications previously contained
+            # pytis.form.FoldableForm.Folding instances.
+            folding = folding.folding_state()
         self._title = title
         self._singular = singular
         self._columns = columns
@@ -1915,7 +1940,7 @@ class ViewSpec(object):
         self._aggregated_views = tuple(aggregated_views)
         self._bindings = tuple(bindings)
         self._orientation = orientation
-        self._folding = folding or initial_folding  # initial_folding is deprecated!
+        self._folding = folding
         self._arguments = arguments
         self._argument_provider = argument_provider
         self._condition_provider = condition_provider
@@ -2055,7 +2080,7 @@ class ViewSpec(object):
         return self._orientation
 
     def folding(self):
-        """Return initial folding as a 'FoldableForm.Folding' instance or 'None'."""
+        """Return folding in the format produced by 'FoldableForm.Folding.folding_state()'."""
         return self._folding
 
     def arguments(self):

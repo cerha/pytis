@@ -2243,8 +2243,8 @@ class FoldableForm(ListForm):
         def folding_state(self):
             def transform(folding):
                 level = folding.level()
-                subnodes = [(k, transform(v),) for k, v in folding.subnodes().items()]
-                return (level, subnodes,)
+                subnodes = [[k, transform(v)] for k, v in folding.subnodes().items()]
+                return [level, subnodes]
             return transform(self._folding)
 
         def set_folding_state(self, state):
@@ -2274,9 +2274,7 @@ class FoldableForm(ListForm):
     def _init_folding(self, folding_state=None):
         self._folding = self._default_folding()
         if folding_state is None:
-            view_folding = self._view.folding()
-            if view_folding is not None:
-                folding_state = view_folding.folding_state()
+            folding_state = self._view.folding()
         if folding_state is not None:
             self._folding.set_folding_state(folding_state)
 
@@ -2301,13 +2299,6 @@ class FoldableForm(ListForm):
             # because the default (initial) folding would conflict with
             # filters.
             folding_state = self.Folding(level=None).folding_state()
-        elif isinstance(folding_state, self.Folding):
-            # HACK: Profiles from specification contain a 'FoldableForm.Folding'
-            # instance, while saved profiles contain the result of
-            # 'FoldableForm.Folding.folding_state()'.  A single folding
-            # specification should be used in both cases and it should be
-            # documented in pytis.presentation (spec.py).
-            folding_state = folding_state.folding_state()
         self._init_folding(folding_state)
 
     def _profile_parameters_to_save(self):
