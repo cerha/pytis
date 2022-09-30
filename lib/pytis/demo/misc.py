@@ -608,6 +608,7 @@ class ObsoleteTree(Specification):
 class _TreeOrderLTree(pp.PrettyFoldable, pd.Name):
     pass
 
+import pytis.form as pf
 
 class Tree(Specification):
     """Demonstration of a foldable form."""
@@ -618,6 +619,13 @@ class Tree(Specification):
     columns = ('name', 'amount', 'description',)
     sorting = (('id', pd.ASCENDENT,),)
     aggregations = (pd.Data.AGG_SUM,)
+
+    folding=pf.FoldableForm.Folding(level=None)
+    def profiles(self):
+        return pp.Profiles(
+            pp.Profile('pokus', _("Pokus"),
+                       folding=pf.FoldableForm.Folding(level=None)),
+        )
 
     def _customize_fields(self, fields):
         fields.set_property('label', id=_("ID"), name=_("Name"), amount=_("Amount"),

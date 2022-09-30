@@ -36,15 +36,12 @@ import copy
 import datetime
 import functools
 import io
-import os
 import tempfile
 import time
-import threading
 
 import wx
 import wx.grid
 
-import lcg
 import pytis.data
 import pytis.form
 import pytis.output
@@ -55,16 +52,15 @@ from pytis.presentation import (
     PrettyFoldable,
 )
 from pytis.util import (
-    ACTION, DEBUG, EVENT, OPERATIONAL,
-    Attribute, ProgramError, ResolverError, SimpleCache, Structure,
-    UNDEFINED, find, form_view_data, log,
+    ACTION, DEBUG, EVENT, OPERATIONAL, UNDEFINED,
+    Attribute, ProgramError, ResolverError, SimpleCache, Structure, find, log,
 )
 
 import pytis.remote
 
 from .event import UserBreakException, wx_callback
 from .dialog import (
-    AggregationSetupDialog, Error, Warning, FileDialog, ProgressDialog,
+    AggregationSetupDialog, Error, Warning, ProgressDialog,
     MultiQuestion, Question, CheckListDialog,
 )
 from .form import (
@@ -970,7 +966,8 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         if column_index is not None:
             cid = self._columns[column_index].id()
             menu.append(MItem(_("Hide this column"),
-                              command=ListForm.COMMAND_TOGGLE_COLUMN(column_id=cid, position=None)))
+                              command=ListForm.COMMAND_TOGGLE_COLUMN(column_id=cid,
+                                                                     position=None)))
 
         hidden_columns = [c for c in self._available_columns() if c not in self._columns]
         if hidden_columns:
@@ -2368,7 +2365,7 @@ class FoldableForm(ListForm):
 
     def _determine_sorting(self, col, direction, primary):
         sorting = super(FoldableForm, self)._determine_sorting(col, direction, primary)
-        if sorting is () and self._folding_column_id is not None:
+        if sorting == () and self._folding_column_id is not None:
             sorting = tuple(self._default_sorting())
         return sorting
 
@@ -2906,11 +2903,13 @@ class BrowseForm(FoldableForm):
                 MItem(_("Add row to selection"),
                       command=ListForm.COMMAND_ADD_ROW_TO_SELECTION(),
                       icon='selection-add',
-                      help=_("Add this row to the current selection of rows for bulk operations.")),
+                      help=_("Add this row to the current selection of rows for "
+                             "bulk operations.")),
                 MItem(_("Remove row from selection"),
                       icon='selection-remove',
                       command=ListForm.COMMAND_REMOVE_ROW_FROM_SELECTION(),
-                      help=_("Remove this row from the current selection of rows for bulk operations.")),
+                      help=_("Remove this row from the current selection of rows "
+                             "for bulk operations.")),
             )
             actions = self._action_mitems(self._view.actions(), context=ActionContext.SELECTION)
             if actions:
@@ -2934,15 +2933,16 @@ class BrowseForm(FoldableForm):
                     separator = [MSeparator()]
                 else:
                     separator = []
-                menu += (Menu(_("Filter existing values (operator IN)"),
-                              (self._in_operator_mitems(row, self._explicit_in_operator_links) +
-                               separator +
-                               self._in_operator_mitems(row, self._automatic_in_operator_links))),
-                         Menu(_("Filter missing values (operator NOT IN)"),
-                              (self._in_operator_mitems(row, self._explicit_in_operator_links, True) +
-                               separator +
-                               self._in_operator_mitems(row, self._automatic_in_operator_links, True))),
-                         )
+                menu += (
+                    Menu(_("Filter existing values (operator IN)"),
+                         (self._in_operator_mitems(row, self._explicit_in_operator_links) +
+                          separator +
+                          self._in_operator_mitems(row, self._automatic_in_operator_links))),
+                    Menu(_("Filter missing values (operator NOT IN)"),
+                         (self._in_operator_mitems(row, self._explicit_in_operator_links, True) +
+                          separator +
+                          self._in_operator_mitems(row, self._automatic_in_operator_links, True))),
+                )
             dual = self._dualform()
             if self._view.bindings() and not (isinstance(dual, pytis.form.MultiBrowseDualForm) and
                                               dual.main_form() == self):
