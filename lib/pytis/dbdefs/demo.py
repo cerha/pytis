@@ -556,6 +556,19 @@ class XTree(sql.SQLTable):
     depends_on = ()
     access_rights = (('all', 'pytis-demo'), ('select', 'www-data'))
 
+    init_columns = ('id', 'name', 'amount', 'description')
+    init_values = (
+        ('ovoce', 'Fruit', None, ''),
+        ('ovoce.jablka', 'Apple', 5, 'Red balls'),
+        ('ovoce.pomeranče', 'Orange', None, 'Orange balls'),
+        ('ovoce.pomeranče.španělské', 'European Orange', 3, 'Orange balls from Spain'),
+        ('ovoce.pomeranče.kubánské', 'American Orange', 2, 'Orange balls from Cuba'),
+        ('zelenina', 'Vegetable', None, ''),
+        ('zelenina.čočka', 'Lentils', 10, 'Many brown seeds'),
+        ('zelenina.salát', 'Lettuce', 4, 'Green leaves'),
+        ('zelenina.špenát', 'Spinach', 1, 'Other green leaves'),
+    )
+
 
 class Tree(sql.SQLView):
     name = 'tree'
@@ -578,18 +591,6 @@ class Tree(sql.SQLView):
     depends_on = (XTree,)
     access_rights = (('all', 'pytis-demo'), ('select', 'www-data'))
 
-    init_columns = ('id, name', 'amount', 'description')
-    init_values = (
-        ('ovoce', 'Fruit', None, ''),
-        ('ovoce.jablka', 'Apple', 5, 'Red balls'),
-        ('ovoce.pomeranče', 'Orange', None, 'Orange balls'),
-        ('ovoce.pomeranče.španělské', 'European Orange', 3, 'Orange balls from Spain'),
-        ('ovoce.pomeranče.kubánské', 'American Orange', 2, 'Orange balls from Cuba'),
-        ('zelenina', 'Vegetable', None, ''),
-        ('zelenina.čočka', 'Lentils', 10, 'Many brown seeds'),
-        ('zelenina.salát', 'Lettuce', 4, 'Green leaves'),
-        ('zelenina.špenát', 'Spinach', 1, 'Other green leaves'),
-    )
 
 class Files(sql.SQLTable):
     name = 'files'
