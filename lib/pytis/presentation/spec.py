@@ -2866,9 +2866,6 @@ class CodebookSpec(object):
     def enable_autocompletion(self):
         return self._enable_autocompletion
 
-    def arguments(self):
-        return self._arguments
-
 
 class FormType(object):
     """Specifikace abstraktního typu formuláře podle účelu jeho otevření.
