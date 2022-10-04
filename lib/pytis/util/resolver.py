@@ -160,15 +160,7 @@ class Resolver(object):
             raise ResolverError(("Resolver error loading specification '%s': %s is not a "
                                  "pytis.presentation.Specification subclass.") %
                                 (name, specification,))
-        if 'resolver' in pytis.util.argument_names(specification.__init__):
-            # TODO: Remove this temporary hack for backwards compatibility.
-            # Now it is necessary for example because some specifications in
-            # applications may override the constructor and expect the resolver
-            # argument (typically when they define kwargs).
-            args = (self,)
-        else:
-            args = ()
-        return specification(*args, **dict(kwargs))
+        return specification(**dict(kwargs))
 
     def _get_method_result(self, key):
         name, kwargs, method_name = key
