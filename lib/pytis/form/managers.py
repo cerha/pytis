@@ -197,7 +197,7 @@ class LegacyApplicationConfigManager(LegacyUserSetttingsManager):
             options['recent_forms'] = [[title, params['form_class'].__name__, params['name']]
                                        for title, params in options['recent_forms']]
         startup_forms = options.get('saved_startup_forms', [])
-        if startup_forms and issubclass(startup_forms[0][0], pytis.form.Form):
+        if startup_forms and isinstance(startup_forms[0][0], type):
             options['saved_startup_forms'] = [[cls.__name__, spec_name]
                                               for cls, spec_name in startup_forms]
         recent_directories = options.get('recent_directories', [])
