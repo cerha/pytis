@@ -169,7 +169,7 @@ class Resolver(object):
             raise ResolverError(("Resolver error loading specification '%s': %s is not a "
                                  "pytis.presentation.Specification subclass.") %
                                 (name, specification,))
-        if pytis.util.argument_names(specification.__init__):
+        if 'resolver' in pytis.util.argument_names(specification.__init__):
             # TODO: Remove this temporary hack for backwards compatibility.
             # Now it is necessary for example because some specifications in
             # applications may override the constructor and expect the resolver
