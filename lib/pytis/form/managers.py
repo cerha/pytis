@@ -213,6 +213,14 @@ class LegacyApplicationConfigManager(LegacyUserSetttingsManager):
             condition = self._condition(option=option)
             self._data.delete_many(condition, transaction=transaction)
         for option, value in config.items():
+            if option == 'recent_forms':
+                value = tuple([(title, dict(form_class=getattr(pytis.form, classname), name=name))
+                               for title, classname, name in value])
+            if option == 'saved_startup_forms':
+                value = tuple([(getattr(pytis.form, classname), spec_name)
+                               for classname, spec_name in value])
+            if option == 'recent_directories':
+                value = tuple([(':'.split(k), v) for k, v in value])
             if option in db_options.keys():
                 if value != db_options[option]:
                     db_value = self._pickle(value)
