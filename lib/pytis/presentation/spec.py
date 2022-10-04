@@ -5855,12 +5855,7 @@ class Specification(with_metaclass(_SpecificationMetaclass, SpecificationBase)):
         # That's all
         Specification._access_rights = access_rights
 
-    def __init__(self, resolver=None):
-        # TODO: the `resolver' argument is not normally passed now.  It is here
-        # just for backwards compatibility for specifications which override
-        # the constructor for some reason (mostly because they define
-        # additional kwargs).  Once the resolver argument is removed from
-        # applications, it should be removed from here too.
+    def __init__(self):
         for attr in ('fields', 'arguments', 'crypto_names', 'access_rights', 'condition',
                      'distinct_on', 'bindings', 'cb', 'check', 'sorting', 'profiles', 'filters',
                      'folding', 'query_fields', 'ro_select',):
@@ -6260,4 +6255,4 @@ class Specification(with_metaclass(_SpecificationMetaclass, SpecificationBase)):
                     def value(self, *args, **kwargs):
                         return function(*args, **kwargs)
             setattr(Spec, key, value)
-        return Spec(resolver)
+        return Spec()
