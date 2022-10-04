@@ -46,12 +46,14 @@ import types
 import weakref
 import io
 
+import pytis
 import pytis.data
+import pytis.presentation
 
 from pytis.util import (
     argument_names, camel_case_to_lower, find, is_sequence, sameclass,
     public_attributes, public_attr_values, split_camel_case, xtuple, nextval,
-    log, OPERATIONAL, ProgramError, ResolverError, UNDEFINED,
+    log, OPERATIONAL, ProgramError, UNDEFINED,
 )
 
 # Needed for urllib.request, urllib.error (urllib2 in Python 2).
@@ -5198,7 +5200,6 @@ class _SpecificationMetaclass(type):
 
 
 class Specification(with_metaclass(_SpecificationMetaclass, SpecificationBase)):
-
     """Souhrnná specifikační třída sestavující specifikace automaticky.
 
     Tato třída zjednodušuje vytváření specifikací tím, že definuje vlastní
