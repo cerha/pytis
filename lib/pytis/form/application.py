@@ -2233,9 +2233,9 @@ def built_in_status_fields():
 
 def get_recent_directory(cmode, context):
     """Return the last directory set for given client mode and context as a string or None."""
-    return pytis.form.app._recent_directories.get(':'.join(cmode, context))
+    return pytis.form.app._recent_directories.get(':'.join((cmode, context)))
 
 
 def set_recent_directory(cmode, context, directory):
     """Remember given 'directory' for given client mode and context."""
-    pytis.form.app._recent_directories[':'.join(cmode, context)] = directory
+    pytis.form.app._recent_directories[':'.join((cmode, context))] = directory
