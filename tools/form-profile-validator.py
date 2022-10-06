@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2019, 2021 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2019-2022 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2010-2018 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -24,6 +24,7 @@ import argparse
 import pytis.util
 import pytis.data
 
+import pytis
 from pytis.form import FormProfileManager
 from pytis.presentation import Profile
 
@@ -81,7 +82,7 @@ def run():
     total_invalid = 0
     skipped = 0
     usernames = [v.value() for v in data.distinct('username')]
-    resolver = pytis.util.resolver()
+    resolver = pytis.config.resolver
     for username in usernames:
         manager = FormProfileManager(pytis.config.dbconnection, username=username)
         for spec_name in manager.list_spec_names():

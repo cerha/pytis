@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2020 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2022 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2002-2017 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -28,6 +28,7 @@ from future.utils import python_2_unicode_compatible
 
 import copy
 
+import pytis
 import pytis.data
 from pytis.util import (
     UNDEFINED, ProgramError, Resolver, argument_names,
@@ -208,8 +209,8 @@ class PresentedRow(object):
           new -- boolean flag determining whether the row represents a new
             record for insertion or an existing row for select or update.
           resolver -- a 'Resolver' instance for specification retrieval.  If
-            not used, the global resolver returned by 'pytis.util.resolver()'
-            will be used.
+            not used, the global resolver from 'pytis.config.resolver' will be
+            used.
 
         Initial field values are determined depending on the argument 'row',
         which can have one of the following values:
@@ -252,7 +253,7 @@ class PresentedRow(object):
         self._singleline = singleline
         self._new = new
         self._transaction = transaction
-        self._resolver = resolver or pytis.util.resolver()
+        self._resolver = resolver or pytis.config.resolver
         self._callbacks = {}
         self._formatted_value_cache = {}
         self._completer_cache = {}

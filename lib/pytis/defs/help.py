@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2019 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2019-2022 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2009-2015 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -16,6 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import pytis
 import pytis.data as pd
 import pytis.presentation as pp
 import pytis.util
@@ -187,7 +188,7 @@ class ItemsHelp(Specification):
     def _label(self, record, spec_name, kind, identifier):
         if not kind or not identifier:
             return None
-        resolver = pytis.util.resolver()
+        resolver = pytis.config.resolver
         try:
             view_spec = resolver.get(spec_name, 'view_spec')
         except pytis.util.ResolverError:

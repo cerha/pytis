@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2021 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2022 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2002-2017 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -193,7 +193,7 @@ def enum(name, **kwargs):
     specifikace, ze které bude získán datový objekt enumerátoru.
 
     """
-    data_spec = pytis.util.resolver().get(name, 'data_spec')
+    data_spec = pytis.config.resolver.get(name, 'data_spec')
     return pd.DataEnumerator(data_spec, **kwargs)
 
 

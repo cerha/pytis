@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2021 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2022 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2012-2017 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -41,6 +41,7 @@ from __future__ import unicode_literals
 import sys
 import os
 import lcg
+import pytis
 import pytis.data as pd
 import pytis.form
 import pytis.util
@@ -96,7 +97,7 @@ class HelpUpdater(object):
         if self._done.get(spec_name):
             return
         self._done[spec_name] = True
-        resolver = pytis.util.resolver()
+        resolver = pytis.config.resolver
         try:
             view_spec = resolver.get(spec_name, 'view_spec')
         except pytis.util.ResolverError as e:
@@ -167,7 +168,7 @@ class HelpUpdater(object):
             self._update_spec_help(spec_name)
 
     def _spec_link(self, spec_name):
-        resolver = pytis.util.resolver()
+        resolver = pytis.config.resolver
         try:
             view_spec = resolver.get(spec_name, 'view_spec')
         except pytis.util.ResolverError as e:
@@ -186,7 +187,7 @@ class HelpUpdater(object):
             else:
                 return None
         elif '::' in spec_name:
-            resolver = pytis.util.resolver()
+            resolver = pytis.config.resolver
             mainname, sidename = spec_name.split('::')
             try:
                 bspec = resolver.get(mainname, 'binding_spec')
@@ -352,7 +353,7 @@ class HelpGenerator(object):
 
     def _spec_link(self, spec_name, title=None):
         if title is None:
-            resolver = pytis.util.resolver()
+            resolver = pytis.config.resolver
             try:
                 view_spec = resolver.get(spec_name, 'view_spec')
             except pytis.util.ResolverError:
@@ -374,7 +375,7 @@ class HelpGenerator(object):
         if not pytis.form.has_access(spec_name):
             return (_("Access Denied"),
                     lcg.p(_("You don't have permissions for specification „%s“.") % spec_name))
-        resolver = pytis.util.resolver()
+        resolver = pytis.config.resolver
         try:
             view_spec = resolver.get(spec_name, 'view_spec')
         except pytis.util.ResolverError:

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2019, 2021 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2019-2022 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2002-2015 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -49,6 +49,7 @@ import io
 import lcg
 
 from lcg import UMm
+import pytis
 import pytis.data
 import pytis.output
 import pytis.presentation
@@ -490,7 +491,7 @@ class LCGFormatter(object):
     @classmethod
     def _retrieve_codebooks(class_, view_spec, resolver=None):
         if resolver is None:
-            resolver = pytis.util.resolver()
+            resolver = pytis.config.resolver
         codebooks = []
         for field in view_spec.fields():
             cb = field.codebook()
@@ -635,7 +636,7 @@ class LCGFormatter(object):
                     ('current_row.' + cid, _("column value insertion")),
                     ('table', _("complete table insertion")),
                     ('data.' + cid, _("value insertion in repeated table row")))]) + "\n")
-        resolver = pytis.util.resolver()
+        resolver = pytis.config.resolver
         try:
             view_spec = resolver.get(module, 'view_spec')
         except ResolverError:

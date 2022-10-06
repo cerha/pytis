@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2019 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2022 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2005-2013 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -22,6 +22,7 @@
 from past.builtins import basestring
 from HyperText.HTML import TABLE, TR, TD, TH, Select, Href, URL, nbsp
 
+import pytis
 import pytis.data
 import pytis.util
 from pytis.extensions import dbselect
@@ -54,7 +55,7 @@ class BaseDBTable(object):
         self._columns = columns
         self._condition = condition
         self._sort = sort
-        self._view = pytis.util.resolver().get(self._spec, 'view_spec')
+        self._view = pytis.config.resolver.get(self._spec, 'view_spec')
         self._data = pytis.util.data_object(self._spec)
         self._fields = self._get_fields()
         self._klass = klass

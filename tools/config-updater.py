@@ -52,7 +52,7 @@ def run():
     # Avoid pytis logging during the update.
     pytis.config.log_exclude = [pytis.util.ACTION, pytis.util.EVENT,
                                 pytis.util.DEBUG, pytis.util.OPERATIONAL]
-    resolver = pytis.util.resolver()
+    resolver = pytis.config.resolver
     transaction = pd.transaction()
     default_profile = pytis.presentation.Profile('__default_profile__', '-')
     try:
