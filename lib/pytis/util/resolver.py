@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2024 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2025 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2018 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -30,11 +30,6 @@ from __future__ import print_function
 from builtins import range
 import sys
 import pytis.util
-
-
-def resolver():
-    """Deprecated: Use config.resolver instead."""
-    return pytis.config.resolver
 
 
 def _issubclass(c1, c2):
