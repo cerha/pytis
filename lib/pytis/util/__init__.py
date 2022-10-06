@@ -48,7 +48,7 @@ from .log import (  # noqa: F401
 )
 
 from .resolver import (  # noqa: F401
-    ResolverError, Resolver, resolver,
+    ResolverError, Resolver,
 )
 
 from .configuration import (  # noqa: F401
