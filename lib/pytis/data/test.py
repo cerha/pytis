@@ -347,8 +347,8 @@ class TestUuid(_TestType):
     def test_validation(self):
         import uuid
         t = pd.Uuid()
-        s_uuid = '{a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11}'
-        assert self._validate(s_uuid) == uuid.Uuid(s_uuid)
+        v = '{a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11}'
+        assert self._validate(t, v) == uuid.UUID(v)
 
     def test_non_equality(self):
         assert pd.Uuid() != pd.String()
