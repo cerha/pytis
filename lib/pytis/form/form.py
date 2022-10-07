@@ -1546,7 +1546,7 @@ class LookupForm(InnerForm):
                                  col=col, direction=direction)
             if sorting is None:
                 return None
-            elif sorting is ():
+            elif sorting == ():
                 sorting = self._lf_initial_sorting
             else:
                 mapping = {pytis.data.ASCENDENT: self.SORTING_ASCENDENT,
