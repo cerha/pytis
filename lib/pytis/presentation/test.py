@@ -284,8 +284,8 @@ class TestPresentedRow:
         self._check_values(row, total=3, d=4)
 
     def test_binary_computer(self):
-        a = '\x04\x00\x00\x05\x00\x19\x00'
-        b = '\x00\x05\x04\xa4\xbb\x10\x00'
+        a = b'\x04\x00\x00\x05\x00\x19\x00'
+        b = b'\x00\x05\x04\xa4\xbb\x10\x00'
         row = self._row((
             pp.Field('x', type=pd.String()),
             pp.Field('data', type=pd.Binary(not_null=True),
