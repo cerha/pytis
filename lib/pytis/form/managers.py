@@ -220,7 +220,7 @@ class LegacyApplicationConfigManager(LegacyUserSetttingsManager):
                 value = tuple([(getattr(pytis.form, classname), spec_name)
                                for classname, spec_name in value])
             if option == 'recent_directories':
-                value = tuple([(':'.split(k), v) for k, v in value])
+                value = tuple([(':'.split(k), v) for k, v in value.items()])
             if option in db_options.keys():
                 if value != db_options[option]:
                     db_value = self._pickle(value)
