@@ -36,9 +36,7 @@ import sys
 import copy
 import contextlib
 import os
-import re
 import string
-import stat
 import types
 import wx
 import wx.html2
@@ -2127,106 +2125,6 @@ def help_proc(func):
     return HelpProc(func)
 
 
-class ResourceHandler(wx.html2.WebViewHandler):
-    """WebView scheme handler serving LCG resources for browser documents.
-
-    There is just a single global instance of this class by wx design, but we
-    need to keep a separate set of resources (represented by
-    'lcg.ResourceProvider') for each browser instance.
-
-    This is done by keeping resource provider instances in a dictionary keyed
-    by a browser specific prefix.  This prefix is assigned to every browser
-    instance which then uses it for prefixing URLs of all resources (through
-    its LCG exporter).  So the whole principal is the following:
-
-    1) The browser asks the resource handler for a prefix (calling the
-       'prefix()' method).
-    2) Receives for example 'rsrc:/xy/' (where 'xy' is specific for given
-       browser instance and resource handler keeps track of the prefixes).
-    3) The browser exports the page so that all resources have this prefix in
-       their URLs (for example 'rsrc:/xy/style.css').
-    4) The browser passes the set of resources contained in the page to the
-       resource handler (calling the 'load_resources()' method).
-    5) The browser loads the exported page into the webview which triggers
-       loading the resources by their URLs and these URLs are routed to the
-       resource handler thanks to the 'rsrc:' scheme.
-    6) The resource handler dispatches the request by the URL prefix
-       'rsrc:/xy/' to the resource provider instance for browser 'xy'.
-
-    """
-    _providers = {}
-    _url_matcher = re.compile(r'(rsrc:/\w+/)(.*)')
-
-    @classmethod
-    def prefix(cls, browser):
-        """Return the base URI for given browser instance."""
-        return 'rsrc:/%x/' % id(browser)
-
-    @classmethod
-    def load_resources(cls, browser, resource_provider):
-        """Make resources of given 'lcg.ResourceProvider' available for given browser.
-
-        Use given 'lcg.RecourceProvider' instance as the source of
-        currently available resources for the related browser instance.
-
-        The browser should call this method after every document load.
-        This allows the server to serve the related resources included
-        within the LCG document.  Pass None to unload.
-
-        """
-        for prefix in [prefix for prefix, (ref, provider) in cls._providers.items() if not ref()]:
-            del cls._providers[prefix]
-        prefix = cls.prefix(browser)
-        if resource_provider:
-            cls._providers[prefix] = (weakref.ref(browser), resource_provider)
-        elif prefix in cls._providers:
-            del cls._providers[prefix]
-
-    def _provider(self, prefix):
-        try:
-            return self._providers[prefix][1]
-        except KeyError:
-            return None
-
-    def _find_resource(self, url):
-        match = self._url_matcher.match(url)
-        if match:
-            prefix, filename = match.groups()
-            provider = self._provider(prefix)
-            if provider:
-                # Try searching the existing resources by URL first.
-                for resource in provider.resources():
-                    if resource.filename() == filename:
-                        return resource
-                    if isinstance(resource, lcg.Image):
-                        thumbnail = resource.thumbnail()
-                        if thumbnail and thumbnail.filename() == filename:
-                            return thumbnail
-                # If filename doesn't match any existing resource, try locating the
-                # resource using the standard resource provider's algorithm
-                # (including searching resource directories).
-                return provider.resource(filename)
-        return None
-
-    def _response(self, filename, data, mimetype, mtime=None):
-        return wx.FSFile(data, location=filename, mimetype=mimetype, anchor='',
-                         modif=(wx.DateTime.FromTimeT(mtime) if mtime else wx.DateTime.Now()))
-
-    def GetFile(self, url):
-        """WebViewHandler API method."""
-        resource = self._find_resource(url)
-        if resource:
-            mimetype = mimetypes.guess_type(resource.filename())[0] or 'application/octetstream'
-            path = resource.src_file()
-            if path:
-                return self._response(resource.filename(), open(path, 'rb'), mimetype,
-                                      mtime=os.stat(path)[stat.ST_MTIME])
-            content = resource.get()
-            if content:
-                return self._response(resource.filename(), io.BytesIO(content), mimetype)
-        log(OPERATIONAL, "Resource file not found:", url)
-
-
 class Browser(wx.Panel, CommandHandler, CallbackHandler, KeyHandler):
     """Web Browser widget.
 
@@ -2239,19 +2137,111 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler, KeyHandler):
     """Callback called when the document title changes (called with the title as the argument)."""
     CALL_URI_CHANGED = 'CALL_URI_CHANGED'
     """Callback called when the current uri changes (called with the uri as the argument)."""
-    _resource_handler_registered = False
+
+    class ResourceServer(socketserver.TCPServer):
+        """HTTP server to handle external resources for the current browser document.
+
+        An instance of HTTP server is run for each browser instance.  The
+        server runs in a separate thread and is shutdown when the browser is
+        deallocated (see Browser.__del__).  Its purpose is to serve external
+        resources (images, scripts, css, ...) for the current document loaded
+        within the browser.  The resources are part of the 'lcg.Content'
+        instance when the document is loaded throuch 'load_content()' or may be
+        passed separately through 'resource_provider' argument when the
+        document is loaded through 'load_html'.  Resources are not handled when
+        a document is loaded through 'load_uri()' as it is assumed that network
+        document's resources are loaded through their network URIs.
+
+        Note, it would seem reasonable to load resources through a custom
+        scheme handler derived from 'wx.html2.WebViewHandler' (registered by
+        'wx.html2.WebView.RegisterHandler'), but it is not the best fit,
+        because wx uses a single global handler instance shared by all webview
+        instances. This complicates our use case because we keep a separate set
+        of resources for every loaded document so we need a separate handler
+        for each browser instance.
+
+        """
+        def __init__(self):
+            self._resource_provider = None
+            socketserver.TCPServer.__init__(self, ('', 0), Browser.ResourceHandler)
+
+        def load_resources(self, resource_provider):
+            """Make resources of given 'lcg.ResourceProvider' available on the server.
+
+            Use given 'lcg.RecourceProvider' instance as the source of
+            currently available resources for the related browser instance.
+
+            The browser should call this method after every document load.
+            This allows the server to serve the related resources included
+            within the LCG document.  Pass None to unload.
+
+            """
+            self._resource_provider = resource_provider
+
+        def find_resource(self, uri):
+            """Return the 'lcg.Resource' instance for given URI.
+
+            Searches the resources of the 'lcg.ResourceProvider' instance most
+            recently loaded using the 'load_resources()' method.
+
+            Returns None when there is no matching resource.
+
+            """
+            if self._resource_provider:
+                # Try searching the existing resources by URI first.
+                for resource in self._resource_provider.resources():
+                    if resource.filename() == uri:
+                        return resource
+                    if isinstance(resource, lcg.Image):
+                        thumbnail = resource.thumbnail()
+                        if thumbnail and thumbnail.filename() == uri:
+                            return thumbnail
+                # If URI doesn't match any existing resource, try locating the
+                # resource using the standard resource provider's algorithm
+                # (including searching resource directories).
+                return self._resource_provider.resource(uri)
+            return None
+
+
+    class ResourceHandler(http.server.SimpleHTTPRequestHandler):
+
+        def do_GET(self):
+            uri = self.path
+            if uri != '/favicon.ico':
+                resource = self.server.find_resource(uri[1:])
+                if resource:
+                    mime_type, encoding = mimetypes.guess_type(uri)
+                    path = resource.src_file()
+                    if path:
+                        return self._send_data(mime_type, open(path, 'rb'))
+                    content = resource.get()
+                    if content:
+                        return self._send_data(mime_type, io.BytesIO(content))
+            self.send_error(404, 'Not found: %s' % uri)
+
+        def _send_data(self, mime_type, f):
+            with f:
+                self.send_response(200)
+                self.send_header("Content-type", mime_type or 'application/octet-stream')
+                self.end_headers()
+                while True:
+                    # Read the file in 0.5MB chunks.
+                    data = f.read(524288)
+                    if not data:
+                        break
+                    self.wfile.write(data)
 
     class Exporter(lcg.StyledHtmlExporter, lcg.HtmlExporter):
 
         _STYLES = ('default.css',)
 
         def __init__(self, *args, **kwargs):
-            self._resource_uri_prefix = kwargs.pop('resource_uri_prefix')
+            self._resource_base_uri = kwargs.pop('resource_base_uri')
             kwargs['styles'] = self._STYLES
             super(Browser.Exporter, self).__init__(*args, **kwargs)
 
         def _uri_resource(self, context, resource):
-            return resource.uri() or self._resource_uri_prefix + resource.filename()
+            return resource.uri() or self._resource_base_uri + resource.filename()
 
     def __init__(self, parent, guardian=None):
         wx.Panel.__init__(self, parent)
@@ -2259,9 +2249,6 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler, KeyHandler):
         self._restricted_navigation_uri = None
         self._guardian = guardian
         self._webview = webview = wx.html2.WebView.New(self)
-        if not self.__class__._resource_handler_registered:
-            webview.RegisterHandler(ResourceHandler('rsrc'))
-            self.__class__._resource_handler_registered = True
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer.Add(webview, 1, wx.EXPAND)
         self.SetSizer(sizer)
@@ -2276,16 +2263,24 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler, KeyHandler):
         wx_callback(wx.html2.EVT_WEBVIEW_LOADED, webview, self._on_loaded)
         wx_callback(wx.html2.EVT_WEBVIEW_ERROR, webview, self._on_error)
         wx_callback(wx.html2.EVT_WEBVIEW_TITLE_CHANGED, webview, self._on_title_changed)
-        self.Bind(wx.EVT_WINDOW_DESTROY, ResourceHandler.load_resources(self, None))
+        self.Bind(wx.EVT_WINDOW_DESTROY, self._on_destroy)
         KeyHandler.__init__(self, webview)
+        self._resource_server = server = self.ResourceServer()
+        threading.Thread(target=server.serve_forever).start()
         self._navigation_timeout = time.time()
+
+    def _on_destroy(self, event):
+        self._resource_server.shutdown()
+        self._resource_server.socket.close()
+        event.Skip()
 
     def _exporter(self, exporter_class):
         try:
             exporter = self._exporter_instance[exporter_class]
         except KeyError:
             exporter = self._exporter_instance[exporter_class] = exporter_class(
-                resource_uri_prefix=ResourceHandler.prefix(self),
+                resource_base_uri=('http://localhost:%d/' %
+                                   self._resource_server.socket.getsockname()[1]),
                 # SVG plots don't display well in the embedded browser.  LinePlot doesn't
                 # display grid and constant plot lines, even though the same SVG displays
                 # well in ordinary browsers.  Thus we rather convert SVG to PNG.
@@ -2456,7 +2451,7 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler, KeyHandler):
             prefix.
 
         """
-        ResourceHandler.load_resources(self, None)
+        self._resource_server.load_resources(None)
         self._restricted_navigation_uri = restrict_navigation
         self._webview.LoadURL(uri)
 
@@ -2481,7 +2476,7 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler, KeyHandler):
         """
         if sys.version_info[0] == 2 and isinstance(html, unistr):
             html = html.encode('utf-8')
-        ResourceHandler.load_resources(self, resource_provider)
+        self._resource_server.load_resources(resource_provider)
         self._restricted_navigation_uri = restrict_navigation
         self._webview.SetPage(html, base_uri)
 
