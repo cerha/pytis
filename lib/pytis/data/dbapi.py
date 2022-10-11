@@ -42,7 +42,7 @@ import psycopg2.extras
 
 import pytis
 from pytis.util import log, translations, Locked, DEBUG, OPERATIONAL
-from pytis.data import AccessRights, Permission, Range, RestrictedData
+from pytis.data import AccessRights, Permission, Range, JSON, RestrictedData
 from .dbdata import (DBConnection, DBException, DBInsertException, DBLockException,
                      DBLoginException, DBRetryException, DBSystemException, DBUserException)
 from .postgresql import (DBDataPostgreSQL, DBPostgreSQLCounter, DBPostgreSQLFunction,
@@ -144,7 +144,7 @@ class _DBAPIAccessor(PostgreSQLAccessor):
                     raise Exception("Unsupported range type", arg)
                 bounds = ('[' if arg.lower_inc() else '(') + (']' if arg.upper_inc() else ')')
                 arg = c(lower, upper, bounds=bounds)
-            elif isinstance(arg, (dict, tuple, list)):
+            elif isinstance(arg, JSON.JSONValue):
                 arg = psycopg2.extras.Json(arg)
             return arg
         if isinstance(query, basestring):

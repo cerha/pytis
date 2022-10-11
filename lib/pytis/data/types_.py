@@ -2696,6 +2696,16 @@ class JSON(Type):
         def __eq__(self, other):
             return self.__key() == other.__key()
 
+    class JSONValue:
+        """Wrapper type allowing recognition of JSON values in DB interface."""
+        pass
+
+    class JSONArray(list, JSONValue):
+        pass
+
+    class JSONObject(dict, JSONValue):
+        pass
+
     def _make(class_, *args, **kwargs):
         if kwargs.get('schema') is not None:
             # Type arguments must be hashable.
@@ -2713,36 +2723,27 @@ class JSON(Type):
             validator = None
         self._validator = validator
 
-    def _check(self, x):
-        if x is None:
-            return True
-        elif isinstance(x, (int, long, float, decimal.Decimal, bool, basestring)):
-            return True
-        elif isinstance(x, dict):
-            for k, v in x.items():
-                if not isinstance(k, basestring):
-                    return False
-                if not self._check(v):
-                    return False
-            return True
+    def _adjust_value(self, x, allow_primitive_value=True):
+        if allow_primitive_value and isinstance(x, (int, long, float, decimal.Decimal,
+                                                    bool, basestring, type(None))):
+            return x
         elif isinstance(x, (tuple, list)):
-            for v in x:
-                if not self._check(v):
-                    return False
-            return True
+            return [self._adjust_value(v) for v in x]
+        elif isinstance(x, dict) and all(isinstance(k, basestring) for k in x.keys()):
+            return dict((k, self._adjust_value(v)) for k, v in x.items())
         else:
-            return False
-
-    def sqlalchemy_type(self):
-        import pytis.data.gensqlalchemy
-        return pytis.data.gensqlalchemy.JSON()
+            raise TypeError("Unsupported JSON value", x)
 
     def adjust_value(self, value):
         if value is None:
             return None
-        elif not isinstance(value, (dict, tuple, list)) or not self._check(value):
-            raise TypeError("Unsupported JSON value", value)
-        return value
+        else:
+            wrapper = self.JSONObject if isinstance(value, dict) else self.JSONArray
+            return wrapper(self._adjust_value(value, allow_primitive_value=False))
+
+    def sqlalchemy_type(self):
+        import pytis.data.gensqlalchemy
+        return pytis.data.gensqlalchemy.JSON()
 
     def _validate(self, obj):
         assert isinstance(obj, basestring), obj
@@ -2752,9 +2753,11 @@ class JSON(Type):
         except ValueError:   # json.JSONDecodeError:  (not defined in Python 2)
             # Translators: User input validation error message.
             raise ValidationError(_(u"Not a JSON string"))
-        if not isinstance(value, (list, dict, tuple)) or not self._check(value):
+        try:
+            self._adjust_value(value, allow_primitive_value=False)
+        except TypeError:
             raise ValidationError(_(u"Unsupported JSON value"))
-        elif self._validator:
+        if self._validator:
             import jsonschema
             try:
                 self._validator.validate(value)
