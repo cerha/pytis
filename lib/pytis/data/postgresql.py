@@ -77,10 +77,7 @@ class _PgValue(object):
         t = value.type()
         if isinstance(t, Array) and v is not None:
             result = [vv.value() for vv in v]
-        elif isinstance(t, Binary) and v is not None:
-            # TODO: This is actually only necessary in Python 2.  Psycopg2 seems
-            # to accept bytes in Python 3 without problems so this may not be
-            # necessary.
+        elif isinstance(t, Binary) and v is not None and sys.version_info[0] == 2:
             result = memoryview(v)
         else:
             result = v
