@@ -188,11 +188,11 @@ class TestMenu(_TestBase):
     def test_add(self):
         pytis.extensions.dmp_add_action(_parameters, False,
                                         'form/pytis.form.BrowseForm/misc.YProducts//',
-                                        "Products", None)
+                                        "2.1111", None)
         self._check_no_change()
         pytis.extensions.dmp_add_action(_parameters, False,
                                         'form/pytis.form.BrowseForm/misc.XProducts//',
-                                        "Products", None)
+                                        "2.1112", None)
         pytis.extensions.dmp_add_action(_parameters, False,
                                         'form/pytis.form.BrowseForm/misc.XProducts//',
                                         '2.1112.11235', None)
@@ -205,8 +205,8 @@ class TestMenu(_TestBase):
         self._check_no_change()
         pytis.extensions.dmp_add_action(_parameters, False,
                                         'form/pytis.form.BrowseForm/misc.XProducts//',
-                                        '2.1112.11236', None)
-        pytis.extensions.dmp_delete_menu(_parameters, False, '2.1112.11236')
+                                        "2.1112", None)
+        pytis.extensions.dmp_delete_menu(_parameters, False, '2.1112')
         changes = self._compare_menu(self._orig_menu, self._read_menu())
         assert all([not c for c in changes])
         self._check_no_change()
