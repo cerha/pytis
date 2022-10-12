@@ -3558,8 +3558,7 @@ class Field(object):
               null_display=None, inline_display=None, inline_referer=None,
               allow_codebook_insert=False, codebook_insert_spec=None,
               codebook_insert_prefill=None, codebook_update_prefill=None,
-              codebook_runtime_filter=None, runtime_filter=None,
-              runtime_arguments=None, selection_type=None, completer=None,
+              runtime_filter=None, runtime_arguments=None, selection_type=None, completer=None,
               orientation=None, post_process=None, filter=None, filter_list=None,
               style=None, link=(), filename=None, inline=False, filename_extensions=(),
               text_format=TextFormat.PLAIN, attachment_storage=None, printable=False,
@@ -3608,9 +3607,6 @@ class Field(object):
         assert codebook_update_prefill is None or callable(codebook_update_prefill), \
             codebook_update_prefill
         assert width is None or isinstance(width, int)
-        if codebook_runtime_filter is not None:
-            assert runtime_filter is None
-            runtime_filter = codebook_runtime_filter
         assert runtime_filter is None or isinstance(runtime_filter, Computer), runtime_filter
         assert runtime_arguments is None or isinstance(runtime_arguments, Computer), \
             runtime_arguments
