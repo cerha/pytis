@@ -1738,7 +1738,7 @@ class ViewSpec(object):
               redirect=None, focus_field=None, description=None, help=None, row_style=None,
               profiles=(), filters=(), default_filter=None,
               aggregations=(), grouping_functions=(), aggregated_views=(), bindings=(),
-              orientation=Orientation.HORIZONTAL, folding=None, initial_folding=None,
+              orientation=Orientation.HORIZONTAL, folding=None,
               arguments=None, argument_provider=None, condition_provider=None,
               query_fields=None, referer=None, spec_name='', public=None):
         def err(msg, *args):
@@ -1907,8 +1907,6 @@ class ViewSpec(object):
             query_fields = QueryFields(query_fields)
         else:
             assert query_fields is None or isinstance(query_fields, QueryFields), query_fields
-        if initial_folding:
-            folding = initial_folding  # initial_folding is deprecated!
         if isinstance(folding, int):
             # See the notes in Profile constructor for more details.
             folding = [folding, []]
@@ -5567,7 +5565,7 @@ class Specification(with_metaclass(_SpecificationMetaclass, SpecificationBase)):
         # applications, it should be removed from here too.
         for attr in ('fields', 'arguments', 'crypto_names', 'access_rights', 'condition',
                      'distinct_on', 'bindings', 'cb', 'check', 'sorting', 'profiles', 'filters',
-                     'folding', 'initial_folding', 'query_fields', 'ro_select',):
+                     'folding', 'query_fields', 'ro_select',):
             if hasattr(self, attr):
                 value = getattr(self, attr)
                 if callable(value) and len(argument_names(value)) == 0:
@@ -5581,7 +5579,7 @@ class Specification(with_metaclass(_SpecificationMetaclass, SpecificationBase)):
                      'redirect', 'focus_field', 'description', 'help', 'row_style',
                      'profiles', 'filters', 'default_filter',
                      'aggregations', 'grouping_functions', 'aggregated_views',
-                     'orientation', 'folding', 'initial_folding',
+                     'orientation', 'folding',
                      'arguments', 'argument_provider', 'condition_provider',
                      'query_fields', 'referer', 'spec_name', 'public'):
             if hasattr(self, attr):
