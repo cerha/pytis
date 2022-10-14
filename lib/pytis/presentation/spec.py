@@ -817,9 +817,10 @@ class Profile(object):
             # the official documented folding state specification instead of the
             # currently used pytis.form.FoldableForm.Folding.folding_state() format.
             folding = [folding, []]
-        elif isinstance(folding, pytis.form.FoldableForm.Folding):
+        elif hasattr(folding, 'folding_state'):
             # For backwards compatibility only.  Specifications previously contained
-            # pytis.form.FoldableForm.Folding instances.
+            # pytis.form.FoldableForm.Folding instances.  Testing with has_attr instead
+            # of isinstance to prevent pytis.form dependency here.
             folding = folding.folding_state()
         self._folding = folding
         self._column_widths = column_widths
@@ -1910,9 +1911,10 @@ class ViewSpec(object):
         if isinstance(folding, int):
             # See the notes in Profile constructor for more details.
             folding = [folding, []]
-        elif isinstance(folding, pytis.form.FoldableForm.Folding):
+        elif hasattr(folding, 'folding_state'):
             # For backwards compatibility only.  Specifications previously contained
-            # pytis.form.FoldableForm.Folding instances.
+            # pytis.form.FoldableForm.Folding instances.  Testing with has_attr instead
+            # of isinstance to prevent pytis.form dependency here.
             folding = folding.folding_state()
         self._title = title
         self._singular = singular
