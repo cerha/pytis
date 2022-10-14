@@ -2115,9 +2115,7 @@ class ViewSpec(object):
 
 
 class BindingSpec(object):
-    """Specifikace vazby dvou náhledů při propojení do duálního formuláře.
-
-    DEPRECATED: Use 'Binding' instead.
+    """DEPRECATED: Use 'Binding' instead.
 
     Definuje vlastnosti napojení dvou formulářů při jejich spojení do duálního
     formuláře.  Definována je jak datová vazba, tak některé prezentační
@@ -2137,7 +2135,7 @@ class BindingSpec(object):
 
     def __init__(self, title=None, binding_column=None, side_binding_column=None,
                  hide_binding_column=True, append_condition=None, condition=None, description=None,
-                 help=None, sash_ratio=0.5, orientation=Orientation.HORIZONTAL):
+                 help=None, orientation=Orientation.HORIZONTAL):
         """Inicialize the specification.
 
         Arguments:
@@ -2172,12 +2170,6 @@ class BindingSpec(object):
             also possible to supply it in a separate file.  See the Help tutorial for more
             information.
 
-          sash_ratio -- the relative proportion of the size of the two forms.  The value is a
-            decimal number in the range from zero to one.  The default value of 0.5 denotes equal
-            space for both forms.  Lower value means less space for the main form.  The ratio only
-            has effect when displaying two table forms separated horizontally.  Layout forms are
-            sized according to their width/height.
-
           orientation -- the default orientation of the dual form separator as one of 'Orientation'
             constants.  In horizontal orientation, the main form is above the side form, in
             vertical it is on the left side.
@@ -2197,7 +2189,6 @@ class BindingSpec(object):
         assert description is None or isinstance(description, basestring), description
         assert help is None or isinstance(help, basestring), help
         assert orientation in public_attributes(Orientation), orientation
-        assert isinstance(sash_ratio, float) and 0 < sash_ratio < 1, sash_ratio
         self._title = title
         self._binding_column = binding_column
         if side_binding_column is None:
@@ -2207,7 +2198,6 @@ class BindingSpec(object):
         self._description = description
         self._help = help
         self._condition = condition
-        self._sash_ratio = sash_ratio
         self._orientation = orientation
 
     def title(self):
@@ -2230,9 +2220,6 @@ class BindingSpec(object):
 
     def condition(self):
         return self._condition
-
-    def sash_ratio(self):
-        return self._sash_ratio
 
     def orientation(self):
         return self._orientation
