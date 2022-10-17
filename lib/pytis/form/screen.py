@@ -3370,7 +3370,8 @@ def _get_recent_directory(cmode, context):
     return directory
 
 
-def select_file(filename=None, patterns=(), pattern=None, filetypes=None, context='default'):
+def select_file(filename=None, patterns=(), pattern=None, filetypes=None, directory=None,
+                context='default'):
     """Return a filename selected by the user in a GUI dialog.
 
     Returns None if the user cancels the dialog.  If remote client connection
@@ -3385,6 +3386,7 @@ def select_file(filename=None, patterns=(), pattern=None, filetypes=None, contex
         Non-matching files are grayed out on Mac OS and completely hidden on
         Linux and Windows.
       patterns, pattern -- Depracated, use filetypes.
+      directory -- the initial directory or None
       context -- selector of the memory for keeping track of the most recently
         used directory.  If not None, the initial dialog directory will be
         loaded from given memory and the memory will be updated by the path of
@@ -3394,7 +3396,10 @@ def select_file(filename=None, patterns=(), pattern=None, filetypes=None, contex
 
     """
     cmode = client_mode()
-    directory = _get_recent_directory(cmode, context)
+    if directory is None:
+        directory = _get_recent_directory(cmode, context)
+    else:
+        context = None  # Prevent storing the explicitly passed directory when dialog closed.
     if cmode == 'remote':
         result = pytis.remote.select_file(filename=filename, directory=directory,
                                           patterns=patterns, pattern=pattern,
@@ -3429,7 +3434,7 @@ def select_files(directory=None, patterns=(), pattern=None, filetypes=None, cont
     if directory is None:
         directory = _get_recent_directory(cmode, context)
     else:
-        context = None  # Prevent storing the passed directory when dialog closed.
+        context = None  # Prevent storing the explicitly passed directory when dialog closed.
     if cmode == 'remote':
         result = pytis.remote.select_file(directory=directory, patterns=patterns, pattern=pattern,
                                           filetypes=filetypes, multi=True)
@@ -3444,11 +3449,12 @@ def select_files(directory=None, patterns=(), pattern=None, filetypes=None, cont
     return result
 
 
-def select_directory(context='default'):
+def select_directory(directory=None, context='default'):
     """Return a directory selected by the user in a GUI dialog.
 
     Arguments:
 
+      directory -- the initial directory or None
       context -- see 'pyts.form.select_file()'
 
     Returns None if the user cancels the dialog.  If remote client connection
@@ -3456,7 +3462,10 @@ def select_directory(context='default'):
 
     """
     cmode = client_mode()
-    directory = _get_recent_directory(cmode, context)
+    if directory is None:
+        directory = _get_recent_directory(cmode, context)
+    else:
+        context = None  # Prevent storing the explicitly passed directory when dialog closed.
     if cmode == 'remote':
         result = pytis.remote.select_directory(directory=directory)
     elif cmode == 'local':
@@ -3469,7 +3478,7 @@ def select_directory(context='default'):
 
 
 def make_selected_file(filename, mode='w', encoding=None, patterns=(), pattern=None,
-                       filetypes=None, context='default'):
+                       filetypes=None, directory=None, context='default'):
     """Return a write-only 'file' like object of a user selected file.
 
     The file is selected by the user using a GUI dialog.  Returns 'None' if the
@@ -3483,11 +3492,15 @@ def make_selected_file(filename, mode='w', encoding=None, patterns=(), pattern=N
       mode -- default mode for opening the file
       encoding -- output encoding, string or None
       patterns, pattern, filetypes -- see 'pyts.form.select_file()'
+      directory -- the initial directory or None
       context -- see 'pyts.form.select_file()'
 
     """
     cmode = client_mode()
-    directory = _get_recent_directory(cmode, context)
+    if directory is None:
+        directory = _get_recent_directory(cmode, context)
+    else:
+        context = None  # Prevent storing the explicitly passed directory when dialog closed.
     if encoding is None and 'b' not in mode:
         # Supply default encoding only for text modes.
         encoding = 'utf-8'
@@ -3551,7 +3564,8 @@ def write_selected_file(data, filename, mode='w', encoding=None, patterns=(), pa
         return False
 
 
-def open_selected_file(patterns=(), pattern=None, filetypes=None, encrypt=None, context='default'):
+def open_selected_file(patterns=(), pattern=None, filetypes=None, encrypt=None,
+                       directory=None, context='default'):
     """Return a read-only 'file' like object of a user selected file and its filename.
 
     The file is selected by the user using a GUI dialog.  Returns a pair (fh,
@@ -3564,12 +3578,16 @@ def open_selected_file(patterns=(), pattern=None, filetypes=None, encrypt=None, 
       encrypt -- list of encryption keys to use to encrypt the file; if the
         list is empty then let the user select the keys; if 'None' then
         don't encrypt the file
+      directory -- the initial directory or None
       context -- see 'pyts.form.select_file()'
 
     """
     # TODO: Encryption not supported for the local variant.
     cmode = client_mode()
-    directory = _get_recent_directory(cmode, context)
+    if directory is None:
+        directory = _get_recent_directory(cmode, context)
+    else:
+        context = None  # Prevent storing the explicitly passed directory when dialog closed.
     if cmode == 'remote':
         f = pytis.remote.open_selected_file(directory=directory, encrypt=encrypt,
                                             patterns=patterns, pattern=pattern,
