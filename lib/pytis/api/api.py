@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2020 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2020, 2022 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2017 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -304,6 +304,14 @@ class Application(API):
           default -- the default selected answer ('Yes' when True, 'No' when False).
 
         """
+        pass
+
+    def refresh(self):
+        """Refresh visible application components."""
+        pass
+
+    def exit(self):
+        """Exit the application."""
         pass
 
 

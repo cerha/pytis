@@ -1330,11 +1330,18 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
             self._statusbar.set_status('message', message)
 
     # Public API accessed through 'pytis.api.app' by Pytis applications.
+    # See 'pytis.api.Application' for documentation.
 
     @property
     def api_form(self):
         form = self.current_form(inner=True)
         return form.provider() if form else None
+
+    def api_refresh(self):
+        Application.COMMAND_REFRESH.invoke(interactive=False)
+
+    def api_exit(self):
+        Application.COMMAND_EXIT.invoke()
 
     def api_echo(self, message, kind='info'):
         self.message(message, kind=kind)
