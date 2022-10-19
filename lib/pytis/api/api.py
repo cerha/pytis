@@ -191,6 +191,13 @@ class Form(API):
     (tabular) form.  Returns None if the form currently has no active row.
 
     """
+    selection = property()
+    """Iterator over all currently selected rows.
+
+    The iterator returns all rows present in the current selection as
+    'PresentedRow' instances in the order of their presence in the form.
+
+    """
 
     def clear_selection(self):
         """Unselect all rows that are currently selected (if any)."""
@@ -389,6 +396,10 @@ def test_api_definition():
         @property
         def api_row(self):
             return None
+
+        @property
+        def api_selection(self):
+            return ()
 
         def api_clear_selection(self):
             return 'rows unselected'
