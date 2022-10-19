@@ -198,6 +198,18 @@ class Form(API):
     'PresentedRow' instances in the order of their presence in the form.
 
     """
+    main_form = property()
+    """The main form of a dual form.
+
+    Returns None if the form is not dual form.
+
+    """
+    side_form = property()
+    """The current side form of a dual form.
+
+    Returns None if the form is not dual form.
+
+    """
 
     def clear_selection(self):
         """Unselect all rows that are currently selected (if any)."""
@@ -400,6 +412,14 @@ def test_api_definition():
         @property
         def api_selection(self):
             return ()
+
+        @property
+        def api_main_form(self):
+            return MyForm().provider()
+
+        @property
+        def api_side_form(self):
+            return MyForm().provider()
 
         def api_clear_selection(self):
             return 'rows unselected'

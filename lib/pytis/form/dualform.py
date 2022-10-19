@@ -363,6 +363,14 @@ class DualForm(Form, Refreshable):
     def _print_form_kwargs(self):
         return dict(form_bindings=self._main_form.bindings())
 
+    @property
+    def api_main_form():
+        return self.main_form()
+
+    @property
+    def api_side_form():
+        return self.side_form()
+
 
 class ImmediateSelectionDualForm(DualForm):
     """Duální formulář s okamžitou obnovou vedlejšího formuláře."""

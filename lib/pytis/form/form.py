@@ -603,6 +603,14 @@ class Form(wx.Panel, KeyHandler, CallbackHandler, CommandHandler):
     def api_selection(self):
         return None
 
+    @property
+    def api_main_form(self):
+        return None
+
+    @property
+    def api_side_form(self):
+        return None
+
     def api_clear_selection(self):
         pass
 
