@@ -183,6 +183,14 @@ class Form(API):
     Returns None if the form has no query fields panel.
 
     """
+    row = property()
+    """The current form row as 'pytis.presentation.PresentedRow' instance.
+
+    The current row is the currently active (focused) row of the form.  It
+    represents the currently displayed record or the focused row in a multirow
+    (tabular) form.  Returns None if the form currently has no active row.
+
+    """
 
     def clear_selection(self):
         """Unselect all rows that are currently selected (if any)."""
@@ -377,6 +385,10 @@ def test_api_definition():
         @property
         def api_query_fields(self):
             return 'the query fields'
+
+        @property
+        def api_row(self):
+            return None
 
         def api_clear_selection(self):
             return 'rows unselected'

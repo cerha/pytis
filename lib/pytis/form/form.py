@@ -595,6 +595,10 @@ class Form(wx.Panel, KeyHandler, CallbackHandler, CommandHandler):
     def api_query_fields(self):
         return None
 
+    @property
+    def api_row(self):
+        return None
+
     def api_clear_selection(self):
         pass
 
@@ -2470,6 +2474,10 @@ class RecordForm(LookupForm):
 
     def api_clear_selection(self):
         self.unselect_selected_rows()
+
+    @property
+    def api_row(self):
+        return self.current_row()
 
 # Editační formulář
 
