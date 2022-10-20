@@ -308,7 +308,10 @@ class PytisCryptoGenerateKey(Base_PyFunction):
         rsa = Crypto.PublicKey.RSA.generate(bits)
         public = rsa.publickey().exportKey()
         private = rsa.exportKey()
-        return [public, private]
+        if isinstance(private, bytes):
+            return [public.decode('utf-8'), private.decode('utf-8')]
+        else:
+            return [public, private]
 
 
 class PytisCryptoDecryptUsingKey(Base_PyFunction):
@@ -327,8 +330,13 @@ class PytisCryptoDecryptUsingKey(Base_PyFunction):
         private, encrypted = args
         import Crypto.PublicKey.RSA
         import base64
+        private = private.encode('utf-8')
+        encrypted = encrypted.encode('utf-8')
         rsa = Crypto.PublicKey.RSA.importKey(private)
-        return rsa.decrypt(base64.decodestring(encrypted))
+        decrypted = rsa.decrypt(base64.decodestring(encrypted))
+        if isinstance(decrypted, bytes):
+            decrypted = decrypted.decode('utf-8')
+        return decrypted
 
 
 class PytisCryptoEncryptUsingKey(Base_PyFunction):
@@ -347,9 +355,14 @@ class PytisCryptoEncryptUsingKey(Base_PyFunction):
         public, text = args
         import Crypto.PublicKey.RSA
         import base64
+        public = public.encode('utf-8')
+        text = text.encode('utf-8')
         rsa = Crypto.PublicKey.RSA.importKey(public)
         encrypted = rsa.encrypt(text, None)[0]
-        return base64.b64encode(encrypted)
+        encoded = base64.b64encode(encrypted)
+        if isinstance(encoded, bytes):
+            encoded = encoded.decode('utf-8')
+        return encoded
 
 
 class PytisCryptoDbKey(sql.SQLPlFunction):
