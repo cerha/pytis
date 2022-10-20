@@ -603,6 +603,9 @@ class Form(wx.Panel, KeyHandler, CallbackHandler, CommandHandler):
     def api_selection(self):
         return None
 
+    def api_refresh(self):
+        pass
+
     @property
     def api_main_form(self):
         return None
@@ -795,6 +798,9 @@ class Refreshable(object):
 
         """
         pass
+
+    def api_refresh(self):
+        self.refresh()
 
 
 class PopupForm(object):

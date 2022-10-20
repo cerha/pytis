@@ -211,6 +211,10 @@ class Form(API):
 
     """
 
+    def refresh(self):
+        """Refresh the form UI, typically reload data from DB if applicable."""
+        pass
+
     def clear_selection(self):
         """Unselect all rows that are currently selected (if any)."""
         pass
@@ -423,6 +427,9 @@ def test_api_definition():
 
         def api_clear_selection(self):
             return 'rows unselected'
+
+        def api_refresh(self):
+            pass
 
     @implements(pytis.api.Application, incomplete=True)
     class MyApp:
