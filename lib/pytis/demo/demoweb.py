@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2019 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2022 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2009-2015 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -42,9 +42,10 @@ import pytis.cms.web
 from pytis.presentation import Field, computer, Editable, SelectionType, CbComputer
 from pytis.util import translations
 import pytis.data as pd
-import demo.defs
+import pytis.demo
 
-from pytis.cms.web import *  # noqa: F401,F403
+#from pytis.cms.web import (
+#)
 
 _ = translations('pytis-demo')
 
@@ -63,20 +64,20 @@ class Products(pytis.cms.web.EmbeddablePytisModule):
     manually.
 
     """
-    class Spec(wiking.Specification, demo.defs.misc.Products):
+    class Spec(wiking.Specification, pytis.demo.misc.Products):
         # Include the complete specification without any modifications.
         pass
 
 
 class Countries(pytis.cms.web.EmbeddablePytisModule):
 
-    class Spec(wiking.Specification, demo.defs.cb.Countries):
+    class Spec(wiking.Specification, pytis.demo.cb.Countries):
         _continents = 'Continents'
 
 
 class Continents(pytis.cms.web.EmbeddablePytisModule):
 
-    class Spec(wiking.Specification, demo.defs.cb.Continents):
+    class Spec(wiking.Specification, pytis.demo.cb.Continents):
         pass
 
 
