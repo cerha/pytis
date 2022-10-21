@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2019 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2022 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2008-2014 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -19,7 +19,7 @@
 
 from __future__ import unicode_literals
 
-from lcg import Document, UFont, UMm
+from lcg import UFont, UMm
 from pytis.output import Center, Group, LongTable, Null, PageNumber, Table, VSpace, \
     f_smaller, \
     PAGE_WIDTH, PAGE_HEIGHT, PAGE_LANDSCAPE_MODE, PAGE_TOP_MARGIN, PAGE_BOTTOM_MARGIN, \
@@ -91,4 +91,4 @@ class ContinentCountries(pytis.output.PrintSpecification):
         table_countries = data_table(pcond)
         parts.append(VSpace(UFont(1)))
         parts.append(f_smaller(table_countries))
-        return Document(Group(*parts, vertical=True))
+        return Group(*parts, vertical=True)
