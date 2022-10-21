@@ -37,6 +37,20 @@ from pytis.util import super_, DEBUG, OPERATIONAL, ACTION, EVENT
 import pytis.data as pd
 from pytis.data import bval, fval, ival, sval
 
+"""Test DB initialization notes:
+
+Prior to running the tests from this module, it is necessary to have a working
+Python environment with modules from requirements.txt and
+requirements-devel.txt.  Then the following commands will initialize the
+database:
+
+createdb test
+echo "create extension pgcrypto" | psql test
+echo "ALTER DATABASE test SET default_text_search_config to 'simple';" | psql test
+tools/gsql.py pytis.dbdefs.db_pytis_common | psql test
+tools/gsql.py pytis.dbdefs.db_pytis_crypto | psql test
+
+"""
 
 _connection_data = {'database': 'test'}
 
