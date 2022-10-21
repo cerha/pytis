@@ -308,10 +308,7 @@ class Classes(unittest.TestCase):
         assert util.direct_public_members(self._B) == ('y',)
         assert util.direct_public_members(self._C) == ()
         assert util.direct_public_members(self._D) == ()
-        assert sorted(util.direct_public_members(self)) == ['setUpClass',
-                                                            'tearDownClass',
-                                                            'test_direct_public_members',
-                                                            'test_public_attributes']
+        assert 'test_direct_public_members' in util.direct_public_members(self)
 
 
 class Caching(unittest.TestCase):
