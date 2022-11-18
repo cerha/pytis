@@ -33,6 +33,7 @@ import sys
 import time
 
 import pytis
+from pytis.api import app
 from pytis.util import OPERATIONAL, log, translations
 
 _ = translations('pytis-wx')
@@ -357,8 +358,7 @@ def launch_file(path):
         return _request('launch_file', path)
     except Exception as e:
         import pytis.form
-        pytis.form.run_dialog(pytis.form.Error, _("Unable to open file %(filename)s: %(error)s",
-                                                  filename=path, error=e))
+        app.error(_("Unable to open file %(filename)s: %(error)s", filename=path, error=e))
 
 
 def launch_url(url):
@@ -367,7 +367,7 @@ def launch_url(url):
         return _request('launch_file', url)
     except Exception:
         import pytis.form
-        pytis.form.run_dialog(pytis.form.Error, _("Unable to open URL %s", url))
+        app.error(_("Unable to open URL %s", url))
 
 
 def open_file(filename, mode, encoding=None, encrypt=None, decrypt=False):
@@ -380,8 +380,7 @@ def open_file(filename, mode, encoding=None, encrypt=None, decrypt=False):
         return _request('open_file', filename, mode, encoding=encoding, encrypt=encrypt)
     except Exception as e:
         import pytis.form
-        pytis.form.run_dialog(pytis.form.Error, _("Unable to open file %(filename)s: %(error)s",
-                                                  filename=filename, error=e))
+        app.error(_("Unable to open file %(filename)s: %(error)s", filename=filename, error=e))
 
 
 def open_selected_file(directory=None, patterns=(), pattern=None, filetypes=None, encrypt=None):
@@ -402,7 +401,7 @@ def open_selected_file(directory=None, patterns=(), pattern=None, filetypes=None
                         patterns=patterns, pattern=pattern, encrypt=encrypt)
     except Exception as e:
         import pytis.form
-        pytis.form.run_dialog(pytis.form.Error, _("Unable to select a file for download: %s", e))
+        app.error(_("Unable to select a file for download: %s", e))
 
 
 def make_selected_file(directory=None, filename=None, patterns=(), pattern=None, filetypes=None,
@@ -427,7 +426,7 @@ def make_selected_file(directory=None, filename=None, patterns=(), pattern=None,
                         mode=mode, decrypt=decrypt)
     except Exception as e:
         import pytis.form
-        pytis.form.run_dialog(pytis.form.Error, _("Unable to select a file to save: %s", e))
+        app.error(_("Unable to select a file to save: %s", e))
 
 
 def make_temporary_file(suffix='', encoding=None, mode='wb', decrypt=False):
@@ -447,7 +446,7 @@ def select_directory(directory=None, title=_("Directory selection")):
         return _request('select_directory', directory=directory, **kwargs)
     except Exception as e:
         import pytis.form
-        pytis.form.run_dialog(pytis.form.Error, _("Failed selecting directory: %s", e))
+        app.error(_("Failed selecting directory: %s", e))
 
 
 def select_file(filename=None, directory=None, title=None,
@@ -482,7 +481,7 @@ def select_file(filename=None, directory=None, title=None,
                         patterns=patterns, pattern=pattern, multi=multi, **kwargs)
     except Exception as e:
         import pytis.form
-        pytis.form.run_dialog(pytis.form.Error, _("Failed selecting file: %s", e))
+        app.error(_("Failed selecting file: %s", e))
 
 
 def run_python(script):

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2021 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2022 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2002-2014 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -34,6 +34,7 @@ import re
 import sys
 
 import pytis.data
+from pytis.api import app
 from pytis.util import translations, ProgramError
 
 # Needed for subprocess.getstatusoutput (commands.getstatusoutput in Python 2).
@@ -146,15 +147,14 @@ class UserDefaultPrinter(object):
 
 def set_default_printer():
     from pytis.presentation import Field
-    from pytis.form import Error, Text, InputForm, run_dialog, run_form
+    from pytis.form import Text, InputForm, run_form
     try:
         import cups
         import cupshelpers
     except ImportError:
-        run_dialog(Error,
-                   _("Default printer setup failed.\n"
-                     "CUPS Python interface not present.\n"
-                     "Please, contact the system administrator."))
+        app.error(_("Default printer setup failed.\n"
+                    "CUPS Python interface not present.\n"
+                    "Please, contact the system administrator."))
         return None
     connection = cups.Connection()
     user_default = UserDefaultPrinter()

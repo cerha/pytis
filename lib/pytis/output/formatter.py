@@ -50,6 +50,7 @@ import lcg
 
 from lcg import UMm
 import pytis
+import pytis.api
 import pytis.data
 import pytis.output
 import pytis.presentation
@@ -180,7 +181,7 @@ class _DataIterator(lcg.SubstitutionIterator):
                 import pytis.form
                 message = (_("Going to format a table with many rows (%d).", count) + "\n" +
                            _("Do you want to continue printing anyway?"))
-                if not pytis.form.run_dialog(pytis.form.Question, message):
+                if not pytis.api.app.question(message):
                     raise pytis.form.UserBreakException()
 
     def _value(self):
@@ -566,10 +567,9 @@ class LCGFormatter(object):
         try:
             pdf = exporter.export(context, global_presentation=presentation)
         except lcg.SubstitutionIterator.IteratorError as e:
-            message = _("Invalid use of iterator.\n"
-                        "Maybe you refer to an non-existent or inaccessible object in the table?")
-            message += "\n" + unistr(e)
-            pytis.form.run_dialog(pytis.form.Error, message)
+            pytis.api.app.error(_("Invalid use of iterator.\n"
+                                  "Maybe you refer to an non-existent or "
+                                  "inaccessible object in the table?") + "\n" + unistr(e))
             return ''
         show_time = pytis.data.DateTime.now()
         log(EVENT, ('Output formatting took %.3fs (PDF export %.3fs)' %

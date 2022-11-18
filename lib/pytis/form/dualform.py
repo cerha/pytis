@@ -33,11 +33,11 @@ import wx
 import io
 import fitz
 
+import pytis.api
 import pytis.data
 from pytis.presentation import Orientation
 from pytis.util import EVENT, log, translations, ProgramError
 
-from .dialog import MultiQuestion
 from .event import wx_callback
 from .form import (
     BrowsableShowForm, EditForm, Form, Refreshable, ShowForm, WebForm,
@@ -49,7 +49,7 @@ from .screen import (
     popup_menu, wx_focused_window, get_icon,
 )
 from .application import (
-    current_form, has_access, message, run_dialog, run_form, top_window
+    current_form, has_access, message, run_form, top_window
 )
 _ = translations('pytis-wx')
 
@@ -1221,7 +1221,7 @@ class MultiSideForm(MultiForm):
         if form.COMMAND_UPDATE_PROFILE.enabled():
             msg = _("Can't filter when the current profile is not saved!")
             bsave, bquit = _("Save"), _("Cancel")
-            if run_dialog(MultiQuestion, msg, buttons=(bsave, bquit), default=bsave) != bsave:
+            if pytis.api.app.question(msg, answers=(bsave, bquit), default=bsave) != bsave:
                 return
             form.COMMAND_UPDATE_PROFILE.invoke()
         condition = form.side_form_in_condition()

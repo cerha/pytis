@@ -24,6 +24,7 @@ from past.builtins import basestring
 import pytis
 import pytis.util
 import pytis.data as pd
+from pytis.api import app
 from pytis.util import ProgramError, translations, xtuple
 
 _ = translations('pytis-wx')
@@ -227,7 +228,7 @@ def safe_commit(transaction, msg=None):
         transaction.commit()
         return True
     except pd.DBSystemException:
-        pytis.form.run_dialog(pytis.form.Error, msg or DEFAULT_MSG)
+        app.error(msg or DEFAULT_MSG)
         return False
 
 
@@ -246,5 +247,5 @@ def safe_rollback(transaction, msg=None):
         transaction.rollback()
         return True
     except pd.DBSystemException:
-        pytis.form.run_dialog(pytis.form.Error, msg or DEFAULT_MSG)
+        app.error(msg or DEFAULT_MSG)
         return False

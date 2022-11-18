@@ -42,6 +42,7 @@ import time
 import wx
 import wx.grid
 
+import pytis.api
 import pytis.data
 import pytis.form
 import pytis.output
@@ -1839,7 +1840,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             else:
                 problem = None
         if problem:
-            run_dialog(Warning, problem + '\n' + _("Export aborted."))
+            pytis.api.app.warning(problem + '\n' + _("Export aborted."))
             return
         import pkgutil
         xls_available = pkgutil.find_loader('xlsxwriter') is not None
@@ -1890,7 +1891,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                 if not export_file:
                     return
             except (IOError, OSError):
-                run_dialog(Error, _("Unable to open the file for writing!"))
+                pytis.api.app.error(_("Unable to open the file for writing!"))
                 return
             after_export = None
         else:
@@ -1942,7 +1943,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             msg = (_("Encoding %s not supported.", pytis.config.export_encoding)
                    if isinstance(e, LookupError) else
                    _("Unable to encode data to %s.", pytis.config.export_encoding))
-            run_dialog(Error, msg + '\n' + _("Using UTF-8 instead."))
+            pytis.api.app.error(msg + '\n' + _("Using UTF-8 instead."))
             encoded = result.encode('utf-8')
         return encoded
 
@@ -2331,12 +2332,12 @@ class FoldableForm(ListForm):
             else:
                 return False
         if self._folding_enabled() and is_in(condition):
-            if not run_dialog(Question, _("You attempted to use a filter with the IN operator\n"
-                                          "on a foldable form. This operation may potentially\n"
-                                          "take several minutes. You can greatly speed up the\n"
-                                          "operation by turning the folding off (sorting by\n"
-                                          "another column).\n"
-                                          "Really continue?"), True):
+            if not pytis.api.app.question(_("You attempted to use a filter with the IN operator\n"
+                                            "on a foldable form. This operation may potentially\n"
+                                            "take several minutes. You can greatly speed up the\n"
+                                            "operation by turning the folding off (sorting by\n"
+                                            "another column).\n"
+                                            "Really continue?"), default=True):
                 # This should abort profile selection in _cmd_apply_profile and
                 # return the previously selected profile.
                 raise UserBreakException()
@@ -2863,9 +2864,8 @@ class BrowseForm(FoldableForm):
                 # is actually selected.
                 if self._current_profile_changed():
                     msg = _("Can not filter as long as the current profile is unsaved!")
-                    bsave, bquit = _("Save"), _("Cancel")
-                    if run_dialog(MultiQuestion, msg, buttons=(bsave, bquit),
-                                  default=bsave) != bsave:
+                    asave, aquit = _("Save"), _("Cancel")
+                    if pytis.api.app.question(msg, answers=(asave, aquit), default=asave) != asave:
                         return
                     self._cmd_update_profile()
                 filter = pytis.form.IN(column, self.name(), f.id(), profile_id)

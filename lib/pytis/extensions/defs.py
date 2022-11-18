@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2021 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2022 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2006-2015 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -26,6 +26,7 @@ import pytis
 import pytis.util
 import pytis.data as pd
 
+from pytis.api import app
 from pytis.presentation import PresentedRow
 from pytis.util import Resolver, ResolverError, identity, log, EVENT, OPERATIONAL
 
@@ -154,8 +155,7 @@ def check_form():
             data_spec = resolver.get(spec, 'data_spec')
             view_spec = resolver.get(spec, 'view_spec')
         except ResolverError:
-            msg = 'Specifikace nenalezena.'
-            pytis.form.run_dialog(pytis.form.Warning, msg)
+            app.warning('Specifikace nenalezena.')
             return
         data = data_spec.create(dbconnection_spec=pytis.config.dbconnection)
         # Title

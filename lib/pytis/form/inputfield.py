@@ -39,6 +39,7 @@ import textwrap
 import wx.lib.colourselect
 
 import lcg
+import pytis.api
 import pytis.data
 import pytis.form
 import pytis.util
@@ -607,8 +608,7 @@ class InputField(KeyHandler, CommandHandler):
             errmsg = self._check()
         if errmsg:
             if interactive:
-                run_dialog(Error, title=_("Invalid value"),
-                           message=self.spec().label() + ": " + errmsg)
+                pytis.api.app.error(self.spec().label() + ": " + errmsg, title=_("Invalid value"))
             else:
                 message(errmsg, beep_=True)
         return error is None
@@ -2094,8 +2094,8 @@ class StructuredTextField(TextField):
                 return [r.filename() for r in self._storage.resources(transaction=transaction)
                         if isinstance(r, lcg.Image) ^ (not self._images)]
             except AttachmentStorage.StorageError as e:
-                run_dialog(Error, title=_("Error accessing attachment storrage"),
-                           message=_("Error accessing attachment storrage") + ':\n' + e)
+                pytis.api.app.error(title=_("Error accessing attachment storrage"),
+                                    message=_("Error accessing attachment storrage") + ':\n' + e)
                 return []
 
     class ImageAlignments(Enumeration):
@@ -2416,8 +2416,8 @@ class StructuredTextField(TextField):
         except AttachmentStorage.InvalidImageFormat as e:
             message(_("Invalid image format!"), beep_=True)
         except AttachmentStorage.StorageError as e:
-            run_dialog(Error, title=_("Error accessing attachment storrage"),
-                       message=_("Error accessing attachment storrage") + ":\n" + e)
+            pytis.api.app.error(title=_("Error accessing attachment storrage"),
+                                message=_("Error accessing attachment storrage") + ":\n" + e)
 
     def _cmd_search(self):
         pass
@@ -2505,8 +2505,9 @@ class StructuredTextField(TextField):
     def _load_new_file(self, row):
         fh, filename = pytis.form.open_selected_file(context='attachments')
         if filename and (' ' in filename or any(ord(c) > 127 for c in filename)):
-            run_dialog(Error, title=_("Invalid file name"),
-                       message="{}: {}".format(filename, _("Invalid characters in file name.")))
+            pytis.api.app.error(title=_("Invalid file name"),
+                                message="{}: {}".format(filename,
+                                                        _("Invalid characters in file name.")))
             return
         if fh:
             try:
@@ -2533,8 +2534,8 @@ class StructuredTextField(TextField):
                 try:
                     return pytis.data.Image.Data(f, filename=filename)
                 except ValueError as e:
-                    run_dialog(Error, title=_("Invalid value"),
-                               message="{}: {}".format(filename, e))
+                    pytis.api.app.error(title=_("Invalid value"),
+                                        message="{}: {}".format(filename, e))
                 finally:
                     f.close()
         return None

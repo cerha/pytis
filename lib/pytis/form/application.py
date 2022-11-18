@@ -302,8 +302,8 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
                         if not issubclass(cls, pytis.form.Form):
                             raise AttributeError
                     except AttributeError:
-                        self.run_dialog(dialog.Error, _("Invalid form class in 'startup_forms':") +
-                                        ' ' + cls_name)
+                        pytis.api.app.error(_("Invalid form class in 'startup_forms':") +
+                                            ' ' + cls_name)
                         continue
                 else:
                     cls = (name.find('::') == -1 and
@@ -981,7 +981,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
                 form = None
             if form is None:
                 busy_cursor(False)
-                self.run_dialog(dialog.Error, _("Form creation failed: %s", name))
+                pytis.api.app.error(_("Form creation failed: %s", name))
             else:
                 if isinstance(form, pytis.form.PopupForm):
                     log(EVENT, "Opening modal form:", form)
@@ -1540,7 +1540,7 @@ def delete_record(view, data, transaction, record,
         elif result == 1:
             return True
         elif isinstance(result, basestring):
-            run_dialog(dialog.Error, result)
+            pytis.api.app.error(result)
             return False
         elif isinstance(result, pd.Operator):
             ask = False
@@ -1552,7 +1552,7 @@ def delete_record(view, data, transaction, record,
             message(_("This form doesn't allow deletion."), beep_=True)
             return False
         op, arg = data.delete, key
-    if ask and not run_dialog(dialog.Question, question):
+    if ask and not pytis.api.app.question(question):
         return False
     log(EVENT, 'Deleting record:', arg)
     success, result = db_operation(op, arg, transaction=transaction)
@@ -1616,7 +1616,7 @@ def db_op(operation, args=(), kwargs={}, in_transaction=False, quiet=False):
                 pytis.form.app.login_hook(success=True)
             return True, result
         except pd.DataAccessException:
-            run_dialog(dialog.Error, _("Access denied"))
+            pytis.api.app.error(_("Access denied"))
             return FAILURE
         except pd.DBLoginException:
             if pytis.config.dbconnection.password() is not None and pytis.form.app:
@@ -1675,12 +1675,11 @@ def db_op(operation, args=(), kwargs={}, in_transaction=False, quiet=False):
             if quiet:
                 return FAILURE
             if in_transaction:
-                run_dialog(dialog.Error, message, title=_("Database error"))
+                pytis.api.app.error(message, title=_("Database error"))
                 return FAILURE
             else:
                 message += '\n' + _("Try again?")
-                if not run_dialog(dialog.Question, message, title=_("Database error"),
-                                  icon=dialog.Question.ICON_ERROR):
+                if not pytis.api.app.question(message, title=_("Database error")):
                     return FAILURE
 
 
@@ -1691,9 +1690,7 @@ def delete_record_question(msg=None):
 
     """
     log(EVENT, 'Record deletion dialog')
-    if msg is None:
-        msg = _("Are you sure to delete the record permanently?")
-    if not run_dialog(dialog.Question, msg):
+    if not pytis.api.app.question(msg or _("Are you sure to delete the record permanently?")):
         log(EVENT, 'Record deletion refused by user')
         return False
     log(EVENT, u'Record deletion confirmed by user')

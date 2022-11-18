@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2021 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2022 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2018 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -31,6 +31,7 @@ from builtins import range
 import functools
 import wx
 
+import pytis.api
 import pytis.data
 from pytis.presentation import Field
 from pytis.util import find
@@ -270,8 +271,7 @@ class SFDialog(SFSDialog):
     class SFConditionError(Exception):
 
         def __init__(self, i, ctrl, msg):
-            msg = _("Error in condition no. %d: %s", i + 1, msg)
-            pytis.form.run_dialog(Error, msg)
+            pytis.api.app.error(_("Error in condition no. %d: %s", i + 1, msg))
             # ctrl.SetFocus()
             # self.focus()
             super(SFDialog.SFConditionError, self).__init__(msg)
@@ -412,8 +412,7 @@ class SFDialog(SFSDialog):
         try:
             operators = self._decompose_condition(self._condition or empty)
         except Exception as e:
-            pytis.form.run_dialog(Warning,
-                                  _("Failed to decompose the conditional expression:") + " " +
+            pytis.api.app.warning(_("Failed to decompose the conditional expression:") + " " +
                                   str(e))
             operators = self._decompose_condition(empty)
         for i, items in enumerate(operators):
@@ -735,8 +734,7 @@ class FilterDialog(SFDialog):
             if op != pytis.data.Data.AGG_COUNT and not isinstance(col.type(), pytis.data.Number):
                 # TODO: We should also support Date and maybe other types, but first it must be
                 # implemented in the data interface.
-                pytis.form.run_dialog(Error,
-                                      _("Operation not supported for the selected column type."))
+                pytis.api.app.error(_("Operation not supported for the selected column type."))
                 v = ''
             else:
                 result = self._compute_aggregate(op, col.id(), condition)

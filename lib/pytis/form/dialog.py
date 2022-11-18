@@ -43,6 +43,7 @@ import sys
 import traceback
 import wx.adv
 
+import pytis.api
 import pytis.data
 import pytis.form
 import pytis.util
@@ -903,8 +904,7 @@ class BugReport(GenericDialog):
     def _on_send_bug_report(self, event):
         to = pytis.config.bug_report_address
         if not to:
-            pytis.form.run_dialog(pytis.form.Message,
-                                  _("Destination address not known. The configuration option "
+            pytis.api.app.message(_("Destination address not known. The configuration option "
                                     "`bug_report_address' must be set."))
             return
         sender = pytis.config.sender_address
@@ -930,7 +930,7 @@ class BugReport(GenericDialog):
             send_mail(subject, message, to, sender,
                       message_id=email.utils.make_msgid('pytis_bugs'))
         except Exception as e:
-            pytis.form.run_dialog(Error, _("Failed sending error report:") + "\n" + unistr(e))
+            pytis.api.app.error(_("Failed sending error report:") + "\n" + unistr(e))
         else:
             self._dialog.FindWindowByName('feedback').SetLabel(
                 _("The report has been sent succesfully.")
@@ -1132,8 +1132,7 @@ class AggregationSetupDialog(GenericDialog):
             self._aggregation_columns = [spec for spec, checkbox in self._aggregation_controls
                                          if checkbox.IsChecked()]
             if not self._group_by_columns:
-                pytis.form.run_dialog(Warning,
-                                      _("You need to select at least one grouping column."))
+                pytis.api.app.warning(_("You need to select at least one grouping column."))
                 return
         return super(AggregationSetupDialog, self)._on_button(event)
 

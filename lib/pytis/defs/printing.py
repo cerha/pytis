@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2019, 2020 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2019-2022 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2010-2015 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -19,12 +19,13 @@
 from __future__ import unicode_literals
 
 import pytis.util
-from pytis.util import nextval
 import pytis.data
 import pytis.extensions
-from pytis.presentation import Field, Editable, procedure
 import pytis.form
 import pytis.presentation
+from pytis.api import app
+from pytis.presentation import Field, Editable, procedure
+from pytis.util import nextval
 
 _ = pytis.util.translations('pytis-defs')
 
@@ -90,11 +91,10 @@ class UserOutputTemplates(pytis.presentation.Specification):
 
     def on_delete_record(self, row):
         if not row['username'].value():
-            pytis.form.run_dialog(pytis.form.Warning, _("Můžete mazat pouze své vlastní záznamy."))
+            app.warning(_("Můžete mazat pouze své vlastní záznamy."))
             return None
         template = row['specification'].value()
-        question = _("Opravdu chcete vymazat tiskovou sestavu %s?") % (template,)
-        if not pytis.form.run_dialog(pytis.form.Question, question):
+        if not app.question(_("Opravdu chcete vymazat tiskovou sestavu %s?") % (template,)):
             return None
         return pytis.data.EQ(row.keys()[0], row.key()[0])
 
@@ -124,13 +124,11 @@ class DirectUserOutputTemplates(UserOutputTemplates):
         condition = pytis.data.AND(pytis.data.EQ('module', s(module)),
                                    pytis.data.EQ('specification', s(specification)))
         if not data.select(condition):
-            message = _("Tisková sestava neexistuje: ") + specification
-            pytis.form.run_dialog(pytis.form.Error, message)
+            app.error(_("Tisková sestava neexistuje: ") + specification)
             return
         row = data.fetchone()
         if data.fetchone() is not None:
-            message = _("Tisková sestava se vyskytuje ve více exemplářích: ") + specification
-            pytis.form.run_dialog(pytis.form.Error, message)
+            app.error(_("Tisková sestava se vyskytuje ve více exemplářích: ") + specification)
             return
         record = pytis.presentation.PresentedRow(view_spec.fields(), data, row)
         if pytis.form.delete_record(view_spec, data, None, record):

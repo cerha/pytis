@@ -25,6 +25,7 @@ import pytis.extensions
 import pytis.form
 import pytis.presentation
 import pytis.util
+from pytis.api import app
 from pytis.util import nextval
 from pytis.presentation import Editable, Field, procedure
 
@@ -60,7 +61,7 @@ class _ApplicationRolesSpecification(pytis.presentation.Specification):
 
     def on_edit_record(self, row):
         if not self._row_editable(row):
-            pytis.form.run_dialog(pytis.form.Warning, _(u"Správcovské role nelze editovat"))
+            app.warning(_(u"Správcovské role nelze editovat"))
             return None
         return pytis.form.run_form(pytis.form.PopupEditForm,
                                    'menu.' + self.__class__.__name__,
@@ -68,15 +69,14 @@ class _ApplicationRolesSpecification(pytis.presentation.Specification):
 
     def _row_deleteable(self, row):
         if not self._row_editable(row):
-            pytis.form.run_dialog(pytis.form.Warning, _(u"Správcovské role nelze mazat"))
+            app.warning(_(u"Správcovské role nelze mazat"))
             return False
         return True
 
     def on_delete_record(self, row):
         if not self._row_deleteable(row):
             return None
-        if not pytis.form.run_dialog(pytis.form.Question,
-                                     _(u"Opravdu chcete záznam zcela vymazat?")):
+        if not app.question(_(u"Opravdu chcete záznam zcela vymazat?")):
             return None
         return pytis.data.EQ(row.keys()[0], row.key()[0])
 
@@ -159,8 +159,7 @@ class ApplicationRoles(_ApplicationRolesSpecification):
 
     def on_delete_record(self, row):
         if self._row_deleteable(row):
-            pytis.form.run_dialog(pytis.form.Warning,
-                                  _(u"Role nelze mazat, nastavte datum zrušení"))
+            app.warning(_(u"Role nelze mazat, nastavte datum zrušení"))
         return None
 
     def _copy_roles(self, row):
@@ -223,8 +222,7 @@ class ApplicationRolesMembership(_ApplicationRolesSpecification):
         return row['purposeid'].value() != 'admn' and row['mpurposeid'].value() != 'admn'
 
     def on_edit_record(self, row):
-        pytis.form.run_dialog(pytis.form.Warning,
-                              _(u"Přiřazení rolí nelze editovat, jen přidávat a mazat"))
+        app.warning(_(u"Přiřazení rolí nelze editovat, jen přidávat a mazat"))
         return None
 
 
@@ -330,28 +328,26 @@ class ApplicationMenu(pytis.presentation.Specification):
 
     def on_edit_record(self, row):
         if row['locked'].value():
-            pytis.form.run_dialog(pytis.form.Warning, _(u"Tuto položku menu nelze editovat"))
+            app.warning(_(u"Tuto položku menu nelze editovat"))
             return None
         return pytis.form.run_form(pytis.form.PopupEditForm,
                                    'menu.' + self.__class__.__name__, select_row=row['id'])
 
     def on_delete_record(self, row):
         if row['locked'].value():
-            pytis.form.run_dialog(pytis.form.Warning, _(u"Tuto položku menu nelze smazat"))
+            app.warning(_(u"Tuto položku menu nelze smazat"))
             return None
         if row['name'].value():
-            pytis.form.run_dialog(pytis.form.Warning, _(u"Koncové položky menu nelze mazat"))
+            app.warning(_(u"Koncové položky menu nelze mazat"))
             return None
         wm_value = row['position'].value() + '.*'
         if ((row.data().select(condition=pytis.data.AND(pytis.data.LTreeMatch('position',
                                                                               wm_value),
                                                         pytis.data.NE('position', row['position'])))
              > 0)):
-            pytis.form.run_dialog(pytis.form.Warning,
-                                  _(u"Nelze mazat položky obsahující jiné položky"))
+            app.warning(_(u"Nelze mazat položky obsahující jiné položky"))
             return None
-        if not pytis.form.run_dialog(pytis.form.Question,
-                                     _(u"Opravdu chcete záznam zcela vymazat?")):
+        if not app.question(_(u"Opravdu chcete záznam zcela vymazat?")):
             return None
         return pytis.data.EQ(row.keys()[0], row.key()[0])
 
@@ -499,18 +495,16 @@ class ApplicationMenuM(pytis.presentation.Specification):
             to_columns = set([f.id() for f in view_spec.fields()])
             missing_columns = from_columns - to_columns
             if missing_columns:
-                message = (_(u"Ve specifikaci chybí tyto sloupce práv: %s.\n"
-                             u"Chcete práva přesto zkopírovat?") %
-                           (', '.join(list(missing_columns)),))
-                if not pytis.form.run_dialog(pytis.form.Question, message):
+                if not app.question(_(u"Ve specifikaci chybí tyto sloupce práv: %s.\n"
+                                      u"Chcete práva přesto zkopírovat?") %
+                                    (', '.join(list(missing_columns)),)):
                     return
         pytis.data.dbfunction(dbdefs.PytisCopyRights, from_shortname, to_shortname)
 
     def _remove_redundant(self, row):
-        if not pytis.form.run_dialog(pytis.form.Question,
-                                     (_(u"Opravdu chcete odstranit nadbytečná práva položky "
-                                        "\"%s\"?") %
-                                      (row['title'].value() or '',))):
+        if not app.question((_(u"Opravdu chcete odstranit nadbytečná práva položky "
+                               "\"%s\"?") %
+                             (row['title'].value() or '',))):
             return
         pytis.data.dbfunction(dbdefs.PytisRemoveRedundant, row['shortname'].value())
 
@@ -666,7 +660,7 @@ class _ApplicationMenuRightsBase(pytis.presentation.Specification):
             for menuid, title in items:
                 if menuid != current_menuid:
                     message = message + '\n  ' + (title or _(u"[bez titulku]"))
-            pytis.form.run_dialog(pytis.form.Warning, message)
+            app.warning(message)
 
     def _codebook_rights_check(self):
         main_form = pytis.form.current_form().main_form()
@@ -747,7 +741,7 @@ class ApplicationMenuRights(_ApplicationMenuRightsBase):
 
     def on_edit_record(self, row):
         if not self._row_editable(row):
-            pytis.form.run_dialog(pytis.form.Warning, _(u"Systémová práva nelze editovat"))
+            app.warning(_(u"Systémová práva nelze editovat"))
             return None
         self._before_edit_checks()
         result = pytis.form.run_form(pytis.form.PopupEditForm,
@@ -758,7 +752,7 @@ class ApplicationMenuRights(_ApplicationMenuRightsBase):
 
     def _row_deleteable(self, row):
         if not self._row_editable(row):
-            pytis.form.run_dialog(pytis.form.Warning, _(u"Systémová práva nelze mazat"))
+            app.warning(_(u"Systémová práva nelze mazat"))
             return False
         return True
 
@@ -766,8 +760,7 @@ class ApplicationMenuRights(_ApplicationMenuRightsBase):
         if not self._row_deleteable(row):
             return None
         self._before_edit_checks()
-        if not pytis.form.run_dialog(pytis.form.Question,
-                                     _(u"Opravdu chcete záznam zcela vymazat?")):
+        if not app.question(_(u"Opravdu chcete záznam zcela vymazat?")):
             return None
         result = row.data().delete((row['id'],))
         if result:
@@ -782,7 +775,7 @@ class ApplicationMenuRights(_ApplicationMenuRightsBase):
             message = _(u"Změny aplikovány")
         else:
             message = _(u"Provádění změn uzamčeno, změny nebyly aplikovány")
-        pytis.form.run_dialog(pytis.form.Message, message)
+        app.message(message)
 
 
 class _RightsTree(pytis.presentation.PrettyFoldable, pytis.data.String):
@@ -851,7 +844,7 @@ class ApplicationMenuRightsFoldable(_ApplicationMenuRightsBase):
 
     def on_edit_record(self, row):
         if not self._row_editable(row):
-            pytis.form.run_dialog(pytis.form.Warning, _(u"Systémová práva nelze editovat"))
+            app.warning(_(u"Systémová práva nelze editovat"))
             return None
         self._before_edit_checks()
         result = pytis.form.run_form(pytis.form.PopupEditForm, 'menu.ApplicationMenuRights',
@@ -862,7 +855,7 @@ class ApplicationMenuRightsFoldable(_ApplicationMenuRightsBase):
 
     def _row_deleteable(self, row):
         if not self._row_editable(row):
-            pytis.form.run_dialog(pytis.form.Warning, _(u"Systémová práva nelze mazat"))
+            app.warning(_(u"Systémová práva nelze mazat"))
             return False
         return True
 
@@ -870,8 +863,7 @@ class ApplicationMenuRightsFoldable(_ApplicationMenuRightsBase):
         if not self._row_deleteable(row):
             return None
         self._before_edit_checks()
-        if not pytis.form.run_dialog(pytis.form.Question,
-                                     _(u"Opravdu chcete záznam zcela vymazat?")):
+        if not app.question(_(u"Opravdu chcete záznam zcela vymazat?")):
             return None
         data = pytis.util.data_object('menu.ApplicationMenuRights')
         result = data.delete((row['id'],))

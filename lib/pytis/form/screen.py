@@ -57,6 +57,7 @@ import wx.lib.pdfviewer
 import wx.lib.agw.supertooltip as supertooltip
 
 import pytis
+import pytis.api
 import pytis.form
 import pytis.output
 import pytis.presentation
@@ -2101,9 +2102,8 @@ class HelpProc(object):
     def __call__(self, **kwargs):
         action = 'proc/%s/%s/' % (self._func.__name__, self._func.__module__)
         if not pytis.form.action_has_access(action):
-            msg = _(u"You don't have priviledges to invoke the action '%s'.\n"
-                    u"Please contact the access rights administrator.") % (action,)
-            pytis.form.run_dialog(pytis.form.Error, msg)
+            pytis.api.app.error(_(u"You don't have priviledges to invoke the action '%s'.\n"
+                                  u"Please contact the access rights administrator.") % (action,))
         else:
             self._func(**kwargs)
 
@@ -3324,8 +3324,7 @@ def client_mode():
         return 'remote'
     else:
         cancel = _("Cancel")
-        answer = pytis.form.run_dialog(pytis.form.Message,
-                                       _("This operation requires remote client connection "
+        answer = pytis.api.app.message(_("This operation requires remote client connection "
                                          "which is currently broken.\nYou may complete the "
                                          "operation with restriction to server's local "
                                          "resources or cancel."),
@@ -3659,7 +3658,7 @@ def _launch_file_remotely(f, suffix, decrypt=False):
         remote_file = pytis.remote.make_temporary_file(suffix=suffix, decrypt=decrypt)
     except Exception as e:
         log(OPERATIONAL, "Can't create remote temporary file:", str(e))
-        pytis.form.run_dialog(pytis.form.Error, _("Unable to create temporary file: %s", e))
+        pytis.api.app.error(_("Unable to create temporary file: %s", e))
     try:
         while True:
             data = f.read(10 * 1024 * 1024)
@@ -3689,8 +3688,8 @@ def _launch_file_locally(filename):
             command = match['view'] % (filename,)
             shell = True
         else:
-            pytis.form.run_dialog(pytis.form.Error, _("Viewer for '%s' (%s) not found.",
-                                                      filename, mime_type or 'unknown'))
+            pytis.api.app.error(_("Viewer for '%s' (%s) not found.",
+                                  filename, mime_type or 'unknown'))
             return
     log(OPERATIONAL, "Launching local file viewer:", command)
     proc = subprocess.Popen(command, shell=shell)
@@ -3814,7 +3813,7 @@ class _PrintResolver(pytis.output.OutputResolver):
         # (new style) specification class.
 
         def body(self, resolver=None, **kwargs):
-            pytis.form.run_dialog(pytis.form.Error, _("Print specification not found!"))
+            pytis.api.app.error(_("Print specification not found!"))
 
         def doc_header(self, resolver=None, **kwargs):
             return None
@@ -3894,9 +3893,8 @@ def printout(spec_name, template_id, parameters=None, output_file=None,
         except lcg.SubstitutionIterator.NotStartedError:
             tbstring = pytis.util.format_traceback()
             log(OPERATIONAL, 'Print exception caught', tbstring)
-            pytis.form.run_dialog(pytis.form.Error,
-                                  _("Invalid use of identifier `data' in print specification.\n"
-                                    "Maybe use `current_row' instead?"))
+            pytis.api.app.error(_("Invalid use of identifier `data' in print specification.\n"
+                                  "Maybe use `current_row' instead?"))
             raise UserBreakException()
 
     try:

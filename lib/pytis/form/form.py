@@ -1918,15 +1918,14 @@ class RecordForm(LookupForm):
                                        transaction=self._open_transaction())
         if success and locked is not None:
             log(EVENT, 'Record is locked')
-            run_dialog(Message, _(u"The record is locked."))
+            pytis.api.app.message(_(u"The record is locked."))
             return False
         else:
             return True
 
     def _on_closed_connection(self):
-        run_dialog(Error,
-                   _("The database connection was closed because of long inactivity.") + "\n" +
-                   _("Please close the form using the Cancel button."))
+        pytis.api.app.error(_("The database connection was closed because of long inactivity.") +
+                            "\n" + _("Please close the form using the Cancel button."))
 
     def _check_record(self, row):
         # Perform integrity checks for given PresentedRow instance.
@@ -2085,26 +2084,23 @@ class RecordForm(LookupForm):
                 if not editable:
                     continue
                 if self._row[fid].type().not_null():
-                    msg = (_(u"This form contains the mandatory field %s,\n"
-                             u"but you don't have access to its codebook values.",
-                             field.label()) + '\n' +
-                           _(u"Please contact the access rights administrator."))
-                    run_dialog(Error, msg)
+                    pytis.api.app.error(_(u"This form contains the mandatory field %s,\n"
+                                          u"but you don't have access to its codebook values.",
+                                          field.label()) + '\n' +
+                                        _(u"Please contact the access rights administrator."))
                     return False
                 else:
-                    msg = (_(u"This form contains the field %s,\n"
-                             u"but you don't have access to its codebook values.",
-                             field.label()) + '\n' +
-                           _(u"Please contact the access rights administrator."))
-                    run_dialog(Warning, msg)
+                    pytis.api.app.warning(_(u"This form contains the field %s,\n"
+                                            u"but you don't have access to its codebook values.",
+                                            field.label()) + '\n' +
+                                          _(u"Please contact the access rights administrator."))
             crypto_name = field.crypto_name()
             if ((crypto_name and self._row[fid].type().not_null() and
                  crypto_name not in decrypted_names())):
-                msg = _(u"This form contains the mandatory field %s,\n"
-                        u"but this field is encrypted and the encryption "
-                        u"area '%s' has not been unlocked.",
-                        field.label(), crypto_name)
-                run_dialog(Error, msg)
+                pytis.api.app.error(_(u"This form contains the mandatory field %s,\n"
+                                      u"but this field is encrypted and the encryption "
+                                      u"area '%s' has not been unlocked.",
+                                      field.label(), crypto_name))
                 return False
 
         import copy as copy_
@@ -2118,8 +2114,7 @@ class RecordForm(LookupForm):
         result = new_record(self._name, prefill=prefill, copied_row=copied_row)
         if result:
             if not self.select_row(result.row(), quiet=True):
-                msg = _(u"The inserted record didn't appear in the current view.")
-                run_dialog(Warning, msg)
+                pytis.api.app.warning(_(u"The inserted record didn't appear in the current view."))
 
     def _can_edit_record(self):
         return self.current_row() is not None
@@ -2223,7 +2218,7 @@ class RecordForm(LookupForm):
         def error_dialog(message, line_number=None):
             if line_number is not None:
                 message = _("Error at line %d:", line_number) + '\n' + message
-            run_dialog(Error, message)
+            pytis.api.app.error(message)
 
         class Separators(pytis.presentation.Enumeration):
             enumeration = (
@@ -2416,17 +2411,17 @@ class RecordForm(LookupForm):
             if self._lf_filter and retry:
                 profile = find(True, self._profiles, lambda p: p.filter() is None)
                 if profile:
-                    if run_dialog(Question, title=_("Record not found"),
-                                  message=_("The searched record was not found. "
-                                            "It may be caused by the active filter.\n"
-                                            "Do you want to activate the unfiltered "
-                                            "profile %s and try searching again?",
-                                            profile.title())):
+                    if pytis.api.app.question(_("The searched record was not found. "
+                                                "It may be caused by the active filter.\n"
+                                                "Do you want to activate the unfiltered "
+                                                "profile %s and try searching again?",
+                                                profile.title()),
+                                              title=_("Record not found")):
                         self._apply_profile(profile)
                         return self.select_row(position, retry=False)
                     else:
                         return False
-            run_dialog(Warning, _("Record not found"))
+            pytis.api.app.warning(_("Record not found"))
         return self._select_row(row)
 
     def current_row(self):
@@ -2588,10 +2583,10 @@ class EditForm(RecordForm, TitledForm, Refreshable):
     def _on_idle_close_transactions(self):
         age = pytis.form.last_event_age()
         if ((self._edit_form_timeout is not None and age > self._edit_form_timeout)):
-            edit = run_dialog(Question, title=_("Continue editing?"),
-                              message=_("The time limit for form editing has expired.\n"
-                                        "Do you want to continue?"),
-                              timeout=20)
+            edit = pytis.api.app.question(_("The time limit for form editing has expired.\n"
+                                            "Do you want to continue?"),
+                                          title=_("Continue editing?"),
+                                          timeout=20)
             if not edit:
                 self._disable_buttons(self.Parent)
                 callback = self._transaction_timeout_callback
@@ -2599,8 +2594,7 @@ class EditForm(RecordForm, TitledForm, Refreshable):
                     callback()
                 self._edit_form_timeout = None
                 if edit is None:
-                    run_dialog(Error,
-                               _("The time limit for form editation has elapsed."))
+                    pytis.api.app.error(_("The time limit for form editation has elapsed."))
         if self._open_transaction() is not None:
             self._transaction.set_max_age(age)
         super(EditForm, self)._on_idle_close_transactions()
@@ -2836,7 +2830,7 @@ class EditForm(RecordForm, TitledForm, Refreshable):
         if msg:
             if field_id:
                 msg = self._view.field(field_id).label() + ": " + msg
-            run_dialog(Error, title=_("Integrity check failed"), message=msg)
+            pytis.api.app.error(msg, title=_("Integrity check failed"))
         if field_id:
             f = self._field(field_id)
             if f:
@@ -2988,7 +2982,7 @@ class EditForm(RecordForm, TitledForm, Refreshable):
             if ((isinstance(result, tuple) and
                  isinstance(result[0], basestring))):
                 msg = "%s\n\n%s" % (result[0], msg)
-            run_dialog(Error, msg)
+            pytis.api.app.error(msg)
             return False
 
     def _insert_op_args(self, rdata):
@@ -2999,9 +2993,8 @@ class EditForm(RecordForm, TitledForm, Refreshable):
 
     def _exit_check(self):
         if self.changed():
-            q = _(u"Unsaved changes in form data!") + "\n" + \
-                _(u"Do you really want to close the form?")
-            if not run_dialog(Question, q):
+            if not pytis.api.app.question(_(u"Unsaved changes in form data!") + "\n" + \
+                                          _(u"Do you really want to close the form?")):
                 return False
         return True
 
@@ -3227,7 +3220,7 @@ class PopupEditForm(PopupForm, EditForm):
                     self._row[id] = pytis.data.Value(self._row.type(id), value.value())
             else:
                 self.set_status('progress', '')
-                run_dialog(Message, _(u"All records processed."))
+                pytis.api.app.message(_(u"All records processed."))
                 self._inserted_data = None
         self._set_focus_field()
 
@@ -3235,9 +3228,8 @@ class PopupEditForm(PopupForm, EditForm):
         i = self._inserted_data_pointer
         data = self._inserted_data
         if data is not None and i <= len(data):
-            msg = _("Not all input records processed yet.\n" +
-                    "Really quit batch insertion?")
-            if not run_dialog(Question, msg, default=False):
+            if not pytis.api.app.question(_("Not all input records processed yet.\n" +
+                                            "Really quit batch insertion?"), default=False):
                 return False
         return super(PopupEditForm, self)._exit_check()
 
@@ -3523,7 +3515,7 @@ class QueryFieldsForm(_VirtualEditForm):
             self._query_fields_apply_button.Enable(enabled)
         if self._unapplied_query_field_changes_after_restore:
             self._unapplied_query_field_changes_after_restore = False
-            if run_dialog(Question, _("Query fields contain unapplied changes. Apply now?"), True):
+            if pytis.api.app.question(_("Query fields contain unapplied changes. Apply now?")):
                 self._apply_query_fields(self._row)
 
     def _on_query_fields_changed(self):
@@ -3691,17 +3683,19 @@ class StructuredTextEditor(ResizableEditForm, PopupEditForm):
             if current_db_value != value_before_edits:
                 diff = pytis.util.html_diff(value_before_edits, current_db_value,
                                             _("Original text"), _("Concurrently changed version"))
-                msg = _("Someone else has changed the same text while you made your "
-                        "modifications. You can see the overview of the changes below.\n"
-                        "The safest resolution is to discard your changes and start "
-                        "over with the new version of the text. If your modifications\n"
-                        "were too extensive, you can try incorporating the below listed "
-                        "changes into your version.")
                 revert, merge, ignore = (_(u"Discard my changes"), _(u"Merge"),
                                          _(u"Ignore the concurrent changes"))
-                answer = run_dialog(MultiQuestion, title=_(u"Conflicting modifications"),
-                                    message=msg, report=diff, report_format=TextFormat.HTML,
-                                    buttons=(revert, ignore))  # TODO: Add merge button.
+                answer = pytis.api.app.question(
+                    _("Someone else has changed the same text while you made your "
+                      "modifications. You can see the overview of the changes below.\n"
+                      "The safest resolution is to discard your changes and start "
+                      "over with the new version of the text. If your modifications\n"
+                      "were too extensive, you can try incorporating the below listed "
+                      "changes into your version."),
+                    title=_(u"Conflicting modifications"),
+                    report=diff, report_format=TextFormat.HTML,
+                    answers=(revert, ignore), # TODO: Add merge button.
+                )
                 if answer == merge:
                     success, field_id = False, self._editor_field_id
                 elif answer == ignore:

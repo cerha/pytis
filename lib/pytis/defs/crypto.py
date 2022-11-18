@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2019-2021 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2019-2022 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2014-2015 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -20,6 +20,7 @@ from builtins import range
 
 import pytis.data
 import pytis.extensions
+from pytis.api import app
 from pytis.presentation import Specification, Field, Binding
 from pytis.util import rsa_encrypt, translations
 from pytis.dbdefs import db_pytis_crypto
@@ -75,15 +76,14 @@ class CryptoAreas(Specification):
         connection_data = pytis.config.dbconnection
         key_id, key = pytis.extensions.crypto_admin_key(area, 'admin', connection_data)
         if not key_id or not key:
-            pytis.form.run_dialog(pytis.form.Error,
-                                  _(u"Nebyl nalezen klíč administrátora pro tuto oblast"))
+            app.error(_(u"Nebyl nalezen klíč administrátora pro tuto oblast"))
             return
         row = pytis.form.new_record("crypto.NewAdminPasswd", multi_insert=False)
         if not row:
             return
         old_password = row["old_password"].value()
         if not pytis.extensions.check_crypto_password(key, old_password, connection_data):
-            pytis.form.run_dialog(pytis.form.Error, _(u"Chybné heslo"))
+            app.error(_(u"Chybné heslo"))
         encrypted_old_password = rsa_encrypt(db_key, old_password)
         new_password = row["new_password"].value()
         encrypted_new_password = rsa_encrypt(db_key, new_password)
@@ -92,9 +92,9 @@ class CryptoAreas(Specification):
                               ('old_psw', pytis.data.sval(encrypted_old_password),),
                               ('new_psw', pytis.data.sval(encrypted_new_password),),))
         if not function.call(row)[0][0].value():
-            pytis.form.run_dialog(pytis.form.Error, _(u"Heslo se změnit nepodařilo"))
+            app.error(_(u"Heslo se změnit nepodařilo"))
             return
-        pytis.form.run_dialog(pytis.form.Message, _(u"Heslo bylo změněno"))
+        app.message(_(u"Heslo bylo změněno"))
 
     def on_new_record(self, *args, **kwargs):
         return None
@@ -211,7 +211,7 @@ class Users(Specification):
                                                  user_password=user_password)
         if error:
             transaction.rollback()
-            pytis.form.run_dialog(pytis.form.Error, "Error: %s" % (error,))
+            app.error("Error: %s" % (error,))
         else:
             transaction.commit()
 
@@ -222,20 +222,19 @@ class Users(Specification):
         connection_data = pytis.config.dbconnection
         key_id, key = pytis.extensions.crypto_admin_key(area, pytis.config.dbuser, connection_data)
         if not key_id or not key:
-            pytis.form.run_dialog(pytis.form.Error,
-                                  _(u"Nebyl nalezen klíč pro tuto oblast"))
+            app.error(_(u"Nebyl nalezen klíč pro tuto oblast"))
             return 'name'
         crypto_password = row['admin_password'].value()
         if not pytis.extensions.check_crypto_password(key, crypto_password, connection_data):
-            pytis.form.run_dialog(pytis.form.Error, _(u"Chybné heslo"))
+            app.error(_(u"Chybné heslo"))
             return 'admin_password'
 
     def on_edit_record(self, row):
-        pytis.form.run_dialog(pytis.form.Warning, _(u"Uživatele lze jen přidávat a odebírat"))
+        app.warning(_(u"Uživatele lze jen přidávat a odebírat"))
         return None
 
     def on_delete_record(self, row):
         if row['username'].value() == 'admin':
-            pytis.form.run_dialog(pytis.form.Error, _(u"Administrátory mazat nelze"))
+            app.error(_(u"Administrátory mazat nelze"))
             return None
         return True

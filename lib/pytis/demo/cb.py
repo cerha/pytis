@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2020 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2022 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2007-2018 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -153,7 +153,7 @@ class Countries(Specification):
 
 @pytis.form.help_proc
 def pokus(message, x=None, y=None):
-    pytis.form.run_dialog(pytis.form.Message, "%s\nx=%d, y=%d" % (message, x, y))
+    app.message("%s\nx=%d, y=%d" % (message, x, y))
 
 
 class DisabledCountries(Countries):
