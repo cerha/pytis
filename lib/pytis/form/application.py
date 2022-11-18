@@ -1355,14 +1355,17 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
     def api_error(self, message):
         return self.run_dialog(dialog.Error, message)
 
-    def api_question(self, message, answers=None, default=None):
+    def api_question(self, message, answers=None, default=None, title=None, timeout=None):
+        if not title:
+            title = _("Question")
         if answers is not None:
-            return self.run_dialog(dialog.MultiQuestion, message, answers, default=default)
+            return self.run_dialog(dialog.MultiQuestion, message, answers, default=default,
+                                   title=title, timeout=timeout)
         else:
             if default is None:
                 default = True
-            return self.run_dialog(dialog.Question, message, default=default)
-
+            return self.run_dialog(dialog.Question, message, default=default,
+                                   title=title, timeout=timeout)
 
     def _input(self, type, title, label, default=None, width=None, height=None, descr=None,
                noselect=False):

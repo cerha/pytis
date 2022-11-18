@@ -452,9 +452,21 @@ class MultiQuestion(Message):
     """Dialog vyžadující odpověď na otázku výběrem z tlačítek."""
 
     def __init__(self, parent, message, buttons, default=None,
-                 title=_("Question"), icon=Message.ICON_QUESTION, **kwargs):
+                 title=_("Question"), icon=Message.ICON_QUESTION, timeout=None, **kwargs):
         super_(MultiQuestion).__init__(self, parent, message, title=title, buttons=buttons,
                                        default=default, icon=icon, **kwargs)
+        self._timeout_limit = timeout
+
+    def _create_dialog(self):
+        super(MultiQuestion, self)._create_dialog()
+        if self._timeout_limit is not None:
+            def destroy():
+                try:
+                    self._dialog.EndModal(-1000)
+                except Exception:
+                    # The wx instance of `self' may already be inactive
+                    pass
+            wx.FutureCall(self._timeout_limit * 1000, destroy)
 
 
 class Question(MultiQuestion):
@@ -464,9 +476,7 @@ class Question(MultiQuestion):
     otázku kladně - stiskne tlačítko s nápisem 'GenericDialog.BUTTON_YES'.
 
     """
-    def __init__(self, parent, message, default=True,
-                 title=_("Question"), icon=Message.ICON_QUESTION, timeout=None,
-                 **kwargs):
+    def __init__(self, parent, message, default=True, **kwargs):
         """Inicializuj dialog.
 
         Argumenty:
@@ -494,21 +504,8 @@ class Question(MultiQuestion):
         else:
             default = self.BUTTON_NO
         self._COMMIT_BUTTON = default
-        super_(Question).__init__(self, parent, message, title=title,
-                                  buttons=(self.BUTTON_YES, self.BUTTON_NO),
-                                  default=default, icon=icon, **kwargs)
-        self._timeout_limit = timeout
-
-    def _create_dialog(self):
-        super(Question, self)._create_dialog()
-        if self._timeout_limit is not None:
-            def destroy():
-                try:
-                    self._dialog.EndModal(-1000)
-                except Exception:
-                    # The wx instance of `self' may already be inactive
-                    pass
-            wx.FutureCall(self._timeout_limit * 1000, destroy)
+        super_(Question).__init__(self, parent, message, buttons=(self.BUTTON_YES, self.BUTTON_NO),
+                                  default=default, **kwargs)
 
     def _customize_result(self, result):
         if result == -1000:

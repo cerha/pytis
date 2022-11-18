@@ -322,7 +322,7 @@ class Application(API):
         """
         pass
 
-    def question(self, message, answers=None, default=None):
+    def question(self, message, answers=None, default=None, title=None, timeout=None):
         """Display given question in an interactive dialog.
 
         The user needs to answer by pressing one of the available buttons.
@@ -333,7 +333,7 @@ class Application(API):
         Arguments:
 
           message -- the question to be displayed.
-          answers -- Available answers.  When None, the default answers are
+          answers -- available answers.  When None, the default answers are
             'Yes' and 'No' and True/False is returned on pressing Yes/No.
             Custom answers may be specified as a sequence of button label
             strings.  Pressing one of the buttons results in returning given
@@ -342,6 +342,10 @@ class Application(API):
             If no answers are given (the answers are Yes/No), the value is a
             boolean - True for 'Yes', False for 'No'.  Otherwise the value must
             be a string matching one of the given answers.
+          title -- dialog window title as a string.
+          timeout -- dialog timeout in seconds; integer.  If not None, the
+            dialog is automatically closed after given timeout returning 'None'
+            as the answer.
 
         """
         pass
