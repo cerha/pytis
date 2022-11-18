@@ -1346,14 +1346,14 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
     def api_echo(self, message, kind='info'):
         self.message(message, kind=kind)
 
-    def api_message(self, message):
-        return self.run_dialog(dialog.Message, message)
+    def api_message(self, message, title=None):
+        return self.run_dialog(dialog.Message, message, title=title or _("Message"))
 
-    def api_warning(self, message):
-        return self.run_dialog(dialog.Warning, message)
+    def api_warning(self, message, title=None):
+        return self.run_dialog(dialog.Warning, message, title=title or _("Warning"))
 
-    def api_error(self, message):
-        return self.run_dialog(dialog.Error, message)
+    def api_error(self, message, title=None):
+        return self.run_dialog(dialog.Error, message, title=title or _("Error"))
 
     def api_question(self, message, answers=None, default=None, title=None, timeout=None):
         if not title:
