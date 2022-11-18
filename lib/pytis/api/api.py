@@ -346,6 +346,84 @@ class Application(API):
         """
         pass
 
+    def input_text(self, title, label, default=None, not_null=False, width=20, height=1,
+                   descr=None, noselect=False):
+        """Display a form for entering a single textual value and return this value.
+
+        Arguments:
+          title -- input form main title as a string.
+          label -- field label as a string.
+          default -- initial field value as a string.
+          not_null -- iff True, it will not be possible to submit the form without
+            entering a value.
+          width -- input field width (number of characters).
+          height -- input field height (number of characters).
+          descr -- field description displayed in a tooltip of a blue icon right
+            from the field.
+          noselect -- the initial input field value is by default initially
+            selected, which results in overwriting the whole value when the
+            user starts typing.  Passing True here avoids this initial
+            selection.
+
+        Returns the value entered into the field as a string or None if the
+        form was escaped or the value was empty (only possible when not_null is
+        False).
+
+        """
+        pass
+
+    def input_date(self, title, label, default=None, not_null=True, descr=None, noselect=False):
+        """Display a form for entering a date and return this value.
+
+        Arguments:
+          title -- input form main title as a string.
+          label -- field label as a string.
+          default -- initial field value as 'datetime.date' or None.
+          not_null -- iff True, it will not be possible to submit the form without
+            entering a value.
+          descr -- field description displayed in a tooltip of a blue icon right
+            from the field.
+          noselect -- the initial input field value is by default initially
+            selected, which results in overwriting the whole value when the
+            user starts typing.  Passing True here avoids this initial
+            selection.
+
+        Returns the value entered into the field as a 'datetime.date' instance or
+        None if the form was escaped or the value was empty (only possible when
+        not_null is False).
+
+        """
+        pass
+
+    def input_number(self, title, label, default=None, not_null=True, width=14, precision=None,
+                     minimum=None, maximum=None, descr=None, noselect=False):
+        """Display a form for entering a single numeric value and return this value.
+
+        Arguments:
+          title -- input form main title as a string.
+          label -- field label as a string.
+          default -- initial field value as int or float (float when
+            precision is given).
+          not_null -- iff True, it will not be possible to submit the form without
+            entering a value.
+          width -- total input field width (number of characters).
+          precision -- number of digits after decimal point or None for an integer field.
+          minimum -- minimal value; 'None' denotes no limit.
+          maximum -- maximal value; 'None' denotes no limit.
+          descr -- field description displayed in a tooltip of a blue icon right
+            from the field.
+          noselect -- the initial input field value is by default initially
+            selected, which results in overwriting the whole value when the
+            user starts typing.  Passing True here avoids this initial
+            selection.
+
+        Returns the value entered into the field as int or float (float when
+        precision was given) or None if the form was escaped or the value was empty
+        (only possible when not_null is False).
+
+        """
+        pass
+
     def refresh(self):
         """Refresh visible application components."""
         pass

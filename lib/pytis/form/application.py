@@ -1364,6 +1364,49 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
             return self.run_dialog(dialog.Question, message, default=default)
 
 
+    def _input(self, type, title, label, default=None, width=None, height=None, descr=None,
+               noselect=False):
+        row = run_form(
+            pytis.form.InputForm, title=title, fields=(
+                Field('f', label, default=default, type=type, width=width, height=height,
+                      descr=descr),
+            ),
+            avoid_initial_selection=noselect,
+        )
+        if row:
+            return row['f'].value()
+        else:
+            return None
+
+    def api_input_text(self, title, label, default=None, not_null=False, width=20, height=1,
+                       descr=None, noselect=False):
+        return self._input(pd.String(not_null=not_null), title, label, default=default,
+                           width=width, height=height, descr=descr, noselect=noselect)
+
+    def api_input_date(self, title, label, default=None, not_null=True, descr=None,
+                       noselect=False):
+        return self._input(pd.Date(not_null=not_null), title, label, default=default,
+                           descr=descr, noselect=noselect)
+
+    def api_input_number(self, title, label, default=None, not_null=True, width=14, precision=None,
+                         minimum=None, maximum=None, descr=None, noselect=False):
+        if precision:
+            quantizer = decimal.Decimal('1.' + '0' * precision)
+
+            def quantize(number):
+                if number is not None:
+                    return decimal.Decimal(number).quantize(quantizer)
+                else:
+                    return None
+
+            t = pd.Float(precision=precision, not_null=not_null,
+                         minimum=quantize(minimum), maximum=quantize(maximum))
+        else:
+            t = pd.Integer(not_null=not_null, minimum=minimum, maximum=maximum)
+        return self._input(t, title, label, default=default, width=width,
+                           descr=descr, noselect=noselect)
+
+
 class DbActionLogger(object):
     """Log user actions into the database."""
 
@@ -1662,11 +1705,11 @@ def run_dialog(arg1, *args, **kwargs):
     if pytis.form.app is None:
         log(OPERATIONAL, "Attempt to run a dialog:", (arg1, args, kwargs))
     elif arg1 == InputDialog:
-        return input_text(title=kwargs.get('message'),
-                          label=kwargs.get('prompt', '').rstrip(':'),
-                          default=kwargs.get('value'),
-                          width=kwargs.get('input_width'),
-                          height=kwargs.get('input_height'))
+        return pytis.api.app.input_text(title=kwargs.get('message'),
+                                        label=kwargs.get('prompt', '').rstrip(':'),
+                                        default=kwargs.get('value'),
+                                        width=kwargs.get('input_width'),
+                                        height=kwargs.get('input_height'))
     elif arg1 == InputNumeric:
         precision = kwargs.get('decimal_width', 0)
         minimum = kwargs.get('min_value')
@@ -1677,14 +1720,14 @@ def run_dialog(arg1, *args, **kwargs):
         else:
             t = pd.Integer()
             cast = int
-        value = input_number(title=kwargs.get('message'),
-                             label=kwargs.get('prompt', '').rstrip(':'),
-                             width=kwargs.get('integer_width', 10) + precision + 1,
-                             precision=precision,
-                             minimum=cast(minimum) if minimum else None,
-                             maximum=cast(maximum) if maximum else None,
-                             avoid_initial_selection=kwargs.get('select_on_entry', False),
-                             default=kwargs.get('value'))
+        value = pytis.api.app.input_number(title=kwargs.get('message'),
+                                           label=kwargs.get('prompt', '').rstrip(':'),
+                                           width=kwargs.get('integer_width', 10) + precision + 1,
+                                           precision=precision,
+                                           minimum=cast(minimum) if minimum else None,
+                                           maximum=cast(maximum) if maximum else None,
+                                           noselect=not kwargs.get('select_on_entry', False),
+                                           default=kwargs.get('value'))
         return pd.Value(t, value)
 
     elif arg1 == InputDate:
@@ -1694,9 +1737,9 @@ def run_dialog(arg1, *args, **kwargs):
             value, error = pd.Date().validate(value)
             if value:
                 value = value.value()
-        value = input_date(title=kwargs.get('message'),
-                           label=kwargs.get('prompt', '').rstrip(':'),
-                           default=value)
+        value = pytis.api.app.input_date(title=kwargs.get('message'),
+                                         label=kwargs.get('prompt', '').rstrip(':'),
+                                         default=value)
         return pd.Value(pd.Date(), value)
     else:
         return pytis.form.app.run_dialog(arg1, *args, **kwargs)
@@ -1715,126 +1758,6 @@ class InputNumeric(object):
 class InputDate(object):
     """Legacy hack for replacing the DEPRECATED InputDate dialog by InputForm."""
     pass
-
-
-def input_text(title, label, default=None, not_null=False, width=20, height=1, descr=None,
-               avoid_initial_selection=True):
-    """Display a form for entering a single textual value and return this value.
-
-    Arguments:
-      title -- input form main title (basestring).
-      label -- field label (basestring).
-      default -- initial field value (basestring).
-      not_null -- iff True, it will not be possible to submit the form without
-        entering a value.
-      width -- input field width (number of characters).
-      height -- input field height (number of characters).
-      descr -- field description displayed in a tooltip of a blue icon right
-        from the field.
-      avoid_initial_selection -- the input field value is by default initially
-        selected, which results in overwriting the whole value when the user
-        starts typing.  Passing False here avoids this initial selection.
-
-    Returns the value entered into the field as a basestring or None if the
-    form was escaped or the value was empty (only possible when not_null is
-    False).
-
-    """
-    row = run_form(
-        pytis.form.InputForm, title=title, fields=(
-            Field('text', label, default=default, type=pd.String(not_null=not_null),
-                  width=width, height=height, descr=descr),
-        ),
-        avoid_initial_selection=avoid_initial_selection,
-    )
-    if row:
-        return row['text'].value()
-    else:
-        return None
-
-
-def input_number(title, label, default=None, not_null=True, width=14, precision=None,
-                 minimum=None, maximum=None, descr=None, avoid_initial_selection=True):
-    """Display a form for entering a single numeric value and return this value.
-
-    Arguments:
-      title -- input form main title (basestring).
-      label -- field label (basestring).
-      default -- initial field value as int or float (float when
-        precision is given).
-      not_null -- iff True, it will not be possible to submit the form without
-        entering a value.
-      width -- total input field width (number of characters).
-      precision -- number of digits after decimal point or None for an integer field.
-      minimum -- minimal value; 'None' denotes no limit.
-      maximum -- maximal value; 'None' denotes no limit.
-      descr -- field description displayed in a tooltip of a blue icon right
-        from the field.
-      avoid_initial_selection -- the input field value is by default initially
-        selected, which results in overwriting the whole value when the user
-        starts typing.  Passing False here avoids this initial selection.
-
-    Returns the value entered into the field as int or float (float when
-    precision was given) or None if the form was escaped or the value was empty
-    (only possible when not_null is False).
-
-    """
-    if precision:
-        quantizer = decimal.Decimal('1.' + '0' * precision)
-
-        def quantize(number):
-            if number is not None:
-                return decimal.Decimal(number).quantize(quantizer)
-            else:
-                return None
-
-        t = pd.Float(precision=precision, not_null=not_null,
-                     minimum=quantize(minimum), maximum=quantize(maximum))
-    else:
-        t = pd.Integer(not_null=not_null, minimum=minimum, maximum=maximum)
-    row = run_form(
-        pytis.form.InputForm, title=title, fields=(
-            Field('number', label, default=default, type=t, width=width, descr=descr),
-        ),
-        avoid_initial_selection=avoid_initial_selection,
-    )
-    if row:
-        return row['number'].value()
-    else:
-        return None
-
-
-def input_date(title, label, default=None, not_null=True, descr=None,
-               avoid_initial_selection=True):
-    """Display a form for entering a date and return this value.
-
-    Arguments:
-      title -- input form main title (basestring).
-      label -- field label (basestring).
-      default -- initial field value as 'datetime.date' or None.
-      not_null -- iff True, it will not be possible to submit the form without
-        entering a value.
-      descr -- field description displayed in a tooltip of a blue icon right
-        from the field.
-      avoid_initial_selection -- the input field value is by default initially
-        selected, which results in overwriting the whole value when the user
-        starts typing.  Passing False here avoids this initial selection.
-
-    Returns the value entered into the field as a 'datetime.date' instance or
-    None if the form was escaped or the value was empty (only possible when
-    not_null is False).
-
-    """
-    row = run_form(
-        pytis.form.InputForm, title=title, fields=(
-            Field('date', label, default=default, type=pd.Date(not_null=not_null), descr=descr),
-        ),
-        avoid_initial_selection=avoid_initial_selection,
-    )
-    if row:
-        return row['date'].value()
-    else:
-        return None
 
 
 def current_form(**kwargs):
