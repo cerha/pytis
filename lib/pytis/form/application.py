@@ -1388,8 +1388,8 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
 
     def api_input_date(self, title, label, default=None, not_null=True, descr=None,
                        noselect=False):
-        return self._input(pd.Date(not_null=not_null), title, label, default=default,
-                           descr=descr, noselect=noselect)
+        return self._input(pd.Date(not_null=not_null), title, label or _("Date"),
+                           default=default, descr=descr, noselect=noselect)
 
     def api_input_number(self, title, label, default=None, not_null=True, width=14, precision=None,
                          minimum=None, maximum=None, descr=None, noselect=False):
