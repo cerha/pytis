@@ -39,7 +39,6 @@ import cgitb
 import datetime
 import email.utils
 import os
-import sys
 import traceback
 import wx.adv
 
@@ -379,8 +378,7 @@ class Message(GenericDialog):
           'icon' -- Jedna z ICON_* konstant třídy ('ICON_INFO' atd.).
 
         """
-        super_(Message).__init__(self, parent, title, buttons,
-                                 default=default, **kwargs)
+        super_(Message).__init__(self, parent, title, buttons, default=default, **kwargs)
         assert icon in self._icons + (None,)
         if message:
             self._message = unistr(message)
@@ -390,15 +388,15 @@ class Message(GenericDialog):
 
     def _create_content(self, sizer):
         """Vytvoř obsah - to co bude vyplňovat plochu okna nad tlačítky."""
-        message = wx.StaticText(self._dialog, -1, self._message)
         icon = self._icon and self._create_icon(self._icon)
-        if icon is not None:
-            content = wx.BoxSizer()
-            content.Add(icon, 0, wx.ALL | wx.ALIGN_CENTER_VERTICAL, 5)
-            content.Add(message, 1, wx.EXPAND | wx.ALL, 12)
-        else:
-            content = message
-        sizer.Add(content, 0, wx.ALL | wx.CENTER, 5)
+        message = self._message and wx.StaticText(self._dialog, -1, self._message)
+        if icon:
+            box = wx.BoxSizer()
+            box.Add(icon, 0, wx.ALL | wx.ALIGN_CENTER_VERTICAL, 5)
+            box.Add(message or 0, 1, wx.EXPAND | wx.ALL, 12)
+            sizer.Add(box, 0, wx.EXPAND | wx.ALL | wx.CENTER, 5)
+        elif self._message:
+            sizer.Add(message, 0, wx.ALL | wx.CENTER, 5)
 
 
 class Warning(Message):
