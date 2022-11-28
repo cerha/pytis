@@ -31,6 +31,7 @@ from builtins import range
 import copy
 import decimal
 import gi
+import lcg
 import os.path
 import string
 import sys
@@ -1332,6 +1333,16 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
     # Public API accessed through 'pytis.api.app' by Pytis applications.
     # See 'pytis.api.Application' for documentation.
 
+    def _dialog_content_kwargs(self, content):
+        if not content:
+            return dict()
+        elif isinstance(content, lcg.Content):
+            return dict(report=content)
+        elif isinstance(content, basestring):
+            return dict(report=content, report_format=pytis.presentation.TextFormat.PLAIN)
+        else:
+            raise ProgramError("Invalid 'content': {}".format(content))
+
     @property
     def api_form(self):
         form = self.current_form(inner=True)
@@ -1346,26 +1357,32 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
     def api_echo(self, message, kind='info'):
         self.message(message, kind=kind)
 
-    def api_message(self, message, title=None):
-        return self.run_dialog(dialog.Message, message, title=title or _("Message"))
+    def api_message(self, message, title=None, content=None):
+        return self.run_dialog(dialog.Message, message, title=title or _("Message"),
+                               **self._dialog_content_kwargs(content))
 
-    def api_warning(self, message, title=None):
-        return self.run_dialog(dialog.Warning, message, title=title or _("Warning"))
+    def api_warning(self, message, title=None, content=None):
+        return self.run_dialog(dialog.Warning, message, title=title or _("Warning"),
+                               **self._dialog_content_kwargs(content))
 
-    def api_error(self, message, title=None):
-        return self.run_dialog(dialog.Error, message, title=title or _("Error"))
+    def api_error(self, message, title=None, content=None):
+        return self.run_dialog(dialog.Error, message, title=title or _("Error"),
+                               **self._dialog_content_kwargs(content))
 
-    def api_question(self, message, answers=None, default=None, title=None, timeout=None):
+    def api_question(self, message, answers=None, default=None, title=None, content=None,
+                     timeout=None):
         if not title:
             title = _("Question")
         if answers is not None:
             return self.run_dialog(dialog.MultiQuestion, message, answers, default=default,
-                                   title=title, timeout=timeout)
+                                   title=title, timeout=timeout,
+                                   **self._dialog_content_kwargs(content))
         else:
             if default is None:
                 default = True
             return self.run_dialog(dialog.Question, message, default=default,
-                                   title=title, timeout=timeout)
+                                   title=title, timeout=timeout,
+                                   **self._dialog_content_kwargs(content))
 
     def _input(self, type, title, label, default=None, width=None, height=None, descr=None,
                noselect=False):

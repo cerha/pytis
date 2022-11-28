@@ -286,7 +286,7 @@ class Application(API):
         """
         pass
 
-    def message(self, message, title=None):
+    def message(self, message, title=None, content=None):
         """Display given message in an interactive dialog.
 
         The user needs to confirm the dialog before continuing.
@@ -295,11 +295,15 @@ class Application(API):
 
           message -- the text to be displayed.
           title -- dialog window title as a string.
+          content -- additional content to be displayed under the message in a
+            possibly scrollable view.  May be passed as 'lcg.Content' instance
+            which is exported and displayed in an HTML component or a string
+            which is displayed as plain text.
 
         """
         pass
 
-    def warning(self, message, title=None):
+    def warning(self, message, title=None, content=None):
         """Display warning in an interactive dialog.
 
         The user needs to confirm the dialog before continuing.
@@ -308,11 +312,15 @@ class Application(API):
 
           message -- the warning text to be displayed.
           title -- dialog window title as a string.
+          content -- additional content to be displayed under the message in a
+            possibly scrollable view.  May be passed as 'lcg.Content' instance
+            which is exported and displayed in an HTML component or a string
+            which is displayed as plain text.
 
         """
         pass
 
-    def error(self, message, title=None):
+    def error(self, message, title=None, content=None):
         """Display given error message in an interactive dialog.
 
         The user needs to confirm the dialog before continuing.
@@ -321,11 +329,16 @@ class Application(API):
 
           message -- the error text to be displayed.
           title -- dialog window title as a string.
+          content -- additional content to be displayed under the message in a
+            possibly scrollable view.  May be passed as 'lcg.Content' instance
+            which is exported and displayed in an HTML component or a string
+            which is displayed as plain text.
 
         """
         pass
 
-    def question(self, message, answers=None, default=None, title=None, timeout=None):
+    def question(self, message, answers=None, default=None, title=None, content=None,
+                 timeout=None):
         """Display given question in an interactive dialog.
 
         The user needs to answer by pressing one of the available buttons.
@@ -346,6 +359,10 @@ class Application(API):
             boolean - True for 'Yes', False for 'No'.  Otherwise the value must
             be a string matching one of the given answers.
           title -- dialog window title as a string.
+          content -- additional content to be displayed under the message in a
+            possibly scrollable view.  May be passed as 'lcg.Content' instance
+            which is exported and displayed in an HTML component or a string
+            which is displayed as plain text.
           timeout -- dialog timeout in seconds; integer.  If not None, the
             dialog is automatically closed after given timeout returning 'None'
             as the answer.
