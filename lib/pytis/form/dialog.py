@@ -38,6 +38,7 @@ from future import standard_library
 import cgitb
 import datetime
 import email.utils
+import lcg
 import os
 import sys
 import threading
@@ -125,7 +126,7 @@ class GenericDialog(Dialog):
     "Nápis pro tlačítko nesouhlasu."
 
     def __init__(self, parent, title, buttons, default=None, report=None,
-                 report_format=TextFormat.PLAIN, report_size=(None, None)):
+                 report_format=None, report_size=(None, None)):
         """Inicializuj dialog.
 
         Argumenty:
@@ -135,15 +136,14 @@ class GenericDialog(Dialog):
           buttons -- sekvence názvů tlačítek dialogu, strings
           default -- název předvoleného tlačítka (string obsažený v 'buttons',
             nebo 'None')
-          report -- Text reportu, který má být zobrazen v okně dialogu.  Jedná
-            se o delší text, který bude automaticky scrollovatelný.  Je možné
-            zobrazit také komplexní text s HTML či Wiki formátováním.  V
-            takovém případě je nutné toto indikovat argumentem 'report_format'.
-            Pro vstupní formát platí stejná pravidla, jako v případě třídy
-            'InfoWindow'.
+          report -- Dodatečný obsah, který má být zobrazen v okně dialogu
+            (typicky delší scrollovatelný text).  Jde buďto o řetězec, jehož
+            formátování je možné dále určit arguemntem 'report_format', nebo
+            přímo LCG obsah jako instance 'lcg.Content'.
           report_format -- konstanta třídy 'TextFormat' určující jak má být
             nakládáno se vstupním textem argumentu 'report'.  V případě, že
-            není žádný report specifikován, je tento argument irelevantní.
+            report není specifikován, nebo nejde o řetězec, je tento argument
+            irelevantní.
           report_size -- report window size as a pair of integers (width,
             height) in characters.  If any of the numbers is 'None' given size
             will be will automatically accommodate to the size of the contents
@@ -153,8 +153,9 @@ class GenericDialog(Dialog):
         assert isinstance(title, basestring), title
         assert isinstance(buttons, (list, tuple)), buttons
         assert default is None or default in buttons, default
-        assert report is None or isinstance(report, basestring), report
-        assert report_format in pytis.util.public_attr_values(TextFormat), report_format
+        assert report is None or isinstance(report, (basestring, lcg.Content)), report
+        assert report_format is None or \
+            report_format in pytis.util.public_attr_values(TextFormat), report_format
         assert isinstance(report_size, (list, tuple)) and len(report_size) == 2, report_size
         super_(GenericDialog).__init__(self, parent)
         self._title = unistr(title)
@@ -874,8 +875,7 @@ class BugReport(GenericDialog):
         if isinstance(html, bytes):
             # Python 2 hack to avoid ASCII decoding error in unicode concatenation on next line.
             html = html.decode('utf-8')
-        nb.AddPage(wx_text_view(nb, "<html>" + html + "</html>",
-                                format=TextFormat.HTML, width=74, height=14),
+        nb.AddPage(wx_text_view(nb, html, format=TextFormat.HTML, width=74, height=14),
                    _("Exception details"))
         nb.AddPage(wx.TextCtrl(nb, value='', name='message', size=(740, 200),
                                style=wx.TE_MULTILINE),

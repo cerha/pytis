@@ -1802,6 +1802,52 @@ def parse_lcg_text(text, resource_path=(), resources=()):
     content = lcg.Parser().parse(text)
     return lcg_node(content=content, resource_path=resource_path, resources=resources)
 
+def content(content, format=None, resources=()):
+    """Return lcg.ContentNode created from given content.
+
+    Arguments:
+
+      content -- content as a string, 'lcg.Content' instance or a sequence of
+        'lcg.Content' instances.  'lcg.Content' instance is returned as is,
+        sequence of 'lcg.Content' instances is wrapped in a newly created
+        'lcg.Container' instance (passing it given 'resources') and a string is
+        converted to 'lcg.Content' according to the 'format' argument value.
+      format -- input format of the text content as one of 'TextFormat'
+        constants.  'TextFormat.PLAIN' for preformatted plain text,
+        'TextFormat.HTML' for HTML source fragment (excluding <html>, <head>
+        and <body> tags) or 'TextFormat.LCG' for LCG structured text source to
+        be processed by LCG Parser.  This argument is irrelevant if content is
+        not given as a string.
+      resources -- list of 'lcg.Resource' instances or string resource file
+        names.  The 'lcg.Resource' instances will be passed to the resource
+        provider as statically defined resources.  The string names will be
+        allocated through the resource provider (searched within
+        'resource_path').
+
+    The content is returned as an 'lcg.ContentNode' instance.
+
+    """
+    import lcg
+    if isinstance(content, basestring):
+        from pytis.presentation import TextFormat
+        if format is None or format == TextFormat.LCG:
+            content = lcg.Container(lcg.Parser().parse(content), resources=resources)
+        elif format == TextFormat.PLAIN:
+            assert not resources, resources
+            content = lcg.PreformattedText(content)
+        elif format == TextFormat.HTML:
+            assert not resources, resources
+            content = lcg.HtmlContent(content)
+        else:
+            raise ProgramError('Invalid content format:', format)
+    else:
+        assert format is None, format
+        if isinstance(content, (tuple, list)) or resources:
+            content = lcg.Container(content, resources=resources)
+        else:
+            assert isinstance(content, lcg.Content), content
+    return content
+
 
 def lcg_to_html(text, styles=('default.css',), resource_path=()):
     """Return given LCG structured text converted to HTML.

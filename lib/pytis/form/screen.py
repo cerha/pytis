@@ -1636,8 +1636,7 @@ class StatusBar(object):
 class InfoWindow(object):
     """Nemodální okno pro zobrazení textových informací."""
 
-    def __init__(self, title, text, format=TextFormat.PLAIN, parent=None,
-                 _name='info', **kwargs):
+    def __init__(self, title, text, format=TextFormat.PLAIN, parent=None, _name='info', **kwargs):
         """Display information window in a standalone frame.
 
         Arguments:
@@ -3207,13 +3206,14 @@ def wx_checkbox(parent, label=None, tooltip=None, checked=False):
     return checkbox
 
 
-def wx_text_view(parent, content, format=TextFormat.PLAIN, width=None, height=None, resources=()):
+def wx_text_view(parent, content, format=None, width=None, height=None, resources=()):
     """Return a wx widget displaying given text content.
 
     Arguments:
 
-      content -- text content to be displayed.  The text is treated according
-        to 'format' (see below).
+      content -- text content to be displayed as a string or a 'lcg.Content'
+        instance.  If string, its formatting must be further specified by the
+        arguemnt 'format' (see below).
       format -- input format of the text content as one of 'TextFormat'
         constants.  In case of plain text ('TextFormat.PLAIN'), the text is
         displayed as is in a 'wx.TextCtrl' widget.  In case of
@@ -3236,9 +3236,8 @@ def wx_text_view(parent, content, format=TextFormat.PLAIN, width=None, height=No
 
     """
     import wx
-    assert isinstance(content, basestring)
-    assert format == TextFormat.LCG or not resources
     if format == TextFormat.PLAIN:
+        assert isinstance(content, basestring)
         lines = content.splitlines()
         if width is None:
             width = min(max([len(l) for l in lines]), 80)
@@ -3252,22 +3251,9 @@ def wx_text_view(parent, content, format=TextFormat.PLAIN, width=None, height=No
         ctrl.SetInitialSize((size[0] + 30, size[1] + 2))
         return ctrl
     else:
+        content = pytis.util.content(content, format=format, resources=resources)
         browser = Browser(parent)
-        if format == TextFormat.LCG:
-            node = pytis.util.parse_lcg_text(content, resources=resources)
-            browser.load_content(node)
-        elif format == TextFormat.HTML:
-            if '<html' not in content[:100].lower():
-                content = ('<html>'
-                           '<head>'
-                           '<meta content="text/html; charset=UTF-8" http-equiv="content-type">'
-                           '</head>'
-                           '<body>' + content +
-                           '</body>'
-                           '</html>')
-            browser.load_html(content)
-        else:
-            raise ProgramError("Unknown text format: %s" % format)
+        browser.load_content(content)
         # We can' adjust the default size according to the content size, but since
         # webkit 1.3.8, there should be a new method webview.get_viewport_attributes(),
         # which will allow it.
@@ -3276,7 +3262,7 @@ def wx_text_view(parent, content, format=TextFormat.PLAIN, width=None, height=No
         if height is None:
             height = 30
         browser.SetSize(char2px(parent, width, height))
-    return browser
+        return browser
 
 
 # The functions below are conterparts of pytis.remote public funtions
