@@ -3246,22 +3246,16 @@ def wx_text_view(parent, content, format=None, width=None, height=None, resource
         style = wx.TE_MULTILINE | wx.TE_DONTWRAP | wx.TE_READONLY
         ctrl = wx.TextCtrl(parent, style=style)
         ctrl.SetValue(content)
-        size = char2px(ctrl, width, height)
+        px_width, px_height = char2px(ctrl, width, height)
         # Slightly enlarge the size to avoid scrollbars when not necessary (for small sizes).
-        ctrl.SetInitialSize((size[0] + 30, size[1] + 2))
+        ctrl.SetInitialSize((px_width + 30, px_height + 2))
         return ctrl
     else:
         content = pytis.util.content(content, format=format, resources=resources)
         browser = Browser(parent)
         browser.load_content(content)
         # We can' adjust the default size according to the content size, but since
-        # webkit 1.3.8, there should be a new method webview.get_viewport_attributes(),
-        # which will allow it.
-        if width is None:
-            width = 90
-        if height is None:
-            height = 30
-        browser.SetSize(char2px(parent, width, height))
+        browser.SetInitialSize(char2px(browser, width or 90, height or 30))
         return browser
 
 
