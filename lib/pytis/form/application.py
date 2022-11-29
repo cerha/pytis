@@ -1357,15 +1357,15 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
     def api_echo(self, message, kind='info'):
         self.message(message, kind=kind)
 
-    def api_message(self, message, title=None, content=None):
+    def api_message(self, message=None, title=None, content=None):
         return self.run_dialog(dialog.Message, message, title=title or _("Message"),
                                **self._dialog_content_kwargs(content))
 
-    def api_warning(self, message, title=None, content=None):
+    def api_warning(self, message=None, title=None, content=None):
         return self.run_dialog(dialog.Warning, message, title=title or _("Warning"),
                                **self._dialog_content_kwargs(content))
 
-    def api_error(self, message, title=None, content=None):
+    def api_error(self, message=None, title=None, content=None):
         return self.run_dialog(dialog.Error, message, title=title or _("Error"),
                                **self._dialog_content_kwargs(content))
 

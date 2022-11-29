@@ -286,7 +286,7 @@ class Application(API):
         """
         pass
 
-    def message(self, message, title=None, content=None):
+    def message(self, message=None, title=None, content=None):
         """Display given message in an interactive dialog.
 
         The user needs to confirm the dialog before continuing.
@@ -303,7 +303,7 @@ class Application(API):
         """
         pass
 
-    def warning(self, message, title=None, content=None):
+    def warning(self, message=None, title=None, content=None):
         """Display warning in an interactive dialog.
 
         The user needs to confirm the dialog before continuing.
@@ -320,7 +320,7 @@ class Application(API):
         """
         pass
 
-    def error(self, message, title=None, content=None):
+    def error(self, message=None, title=None, content=None):
         """Display given error message in an interactive dialog.
 
         The user needs to confirm the dialog before continuing.
