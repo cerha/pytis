@@ -619,18 +619,20 @@ class ProgressDialog(OperationDialog):
                                          maximum=100, parent=self._parent,
                                          style=self._style)
 
-    def _update(self, progress, newmsg=''):
+    def _update(self, progress=None, message=None, newmsg=None):
         # progress is a number in range 1..100.
-        font = self._dialog.GetFont()
-        new_width = min(self._dialog.GetFullTextExtent(newmsg, font)[0] + 30,
-                        wx.DisplaySize()[0] - 50)
-        current_size = self._dialog.GetSize()
-        if new_width > current_size.width:
-            self._dialog.SetSize((new_width, current_size.height))
+        # newmsg is for backwards compatibility. Pass 'message' in new code.
+        message = message or newmsg
+        if message:
+            message_width = self._dialog.GetFullTextExtent(message, self._dialog.GetFont())[0]
+            new_width = min(message_width + 30, wx.DisplaySize()[0] - 50)
+            current_size = self._dialog.Size
+            if new_width > current_size.width:
+                self._dialog.SetSize((new_width, current_size.height))
         if progress is None:
-            continue_, skip = self._dialog.Pulse(newmsg=newmsg)
+            continue_, skip = self._dialog.Pulse(newmsg=message)
         else:
-            continue_, skip = self._dialog.Update(progress, newmsg=newmsg)
+            continue_, skip = self._dialog.Update(progress, newmsg=message)
         # Note, we currently don't support skiping (which is actually not
         # very well documented in wx, but wx.PD_CAN_SKIP seems to work).
         # If we want skipping, we can return an object with .skip and .abort
