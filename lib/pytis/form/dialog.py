@@ -583,7 +583,7 @@ class ProgressDialog(OperationDialog):
     """
     def __init__(self, parent, function, args=(), kwargs={},
                  title=_("Operation in progress"), message=_("Please wait..."),
-                 elapsed_time=False, estimated_time=False,
+                 maximum=100, elapsed_time=False, estimated_time=False,
                  remaining_time=False, can_abort=False):
         """Inicializuj dialog.
 
@@ -592,6 +592,8 @@ class ProgressDialog(OperationDialog):
           parent, function, args, kwargs, message, title -- stejné, jako u
             rodičovské třídy, pouze 'function' musí navíc přijímat odkaz na
             aktualizační funkci jako první argument (viz dokumentace třídy).
+          maximum -- value determining the range in which the progress is
+            updated.
           elapsed_time -- Pokud je 'True', zobrazí se uběhlý čas
           estimated_time -- Pokud je 'True', zobrazí se předpokládaný čas
           remaining_time -- Pokud je 'True', zobrazí se zbývající čas
@@ -600,7 +602,6 @@ class ProgressDialog(OperationDialog):
             třídy).
 
         """
-
         super_(ProgressDialog).__init__(self, parent, function, args=args,
                                         kwargs=kwargs, message=message,
                                         title=title)
@@ -614,14 +615,15 @@ class ProgressDialog(OperationDialog):
         if can_abort:
             style = style | wx.PD_CAN_ABORT
         self._style = style
+        self._maximum = maximum
 
     def _create_dialog(self):
         self._dialog = wx.ProgressDialog(self._title, unistr(self._message),
-                                         maximum=100, parent=self._parent,
+                                         maximum=self._maximum, parent=self._parent,
                                          style=self._style)
 
     def _update(self, progress=None, message=None, newmsg=None):
-        # progress is a number in range 1..100.
+        # progress is a number in range from 0 to the 'maximum' passed to the constructor.
         # newmsg is for backwards compatibility. Pass 'message' in new code.
         message = message or newmsg
         if message:
