@@ -1409,6 +1409,29 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         return self._input(t, title, label, default=default, width=width,
                            descr=descr, noselect=noselect)
 
+    def api_run(self, function, args=(), kwargs={}, title=None, message=None, progress=True,
+                maximum=100, elapsed_time=False, estimated_time=False, remaining_time=False,
+                can_abort=False):
+        if progress:
+            dlg = dialog.ProgressDialog
+            dialog_kwargs = dict(
+                maximum=maximum,
+                elapsed_time=elapsed_time,
+                estimated_time=estimated_time,
+                remaining_time=remaining_time,
+                can_abort=can_abort,
+            )
+        else:
+            assert not any((elapsed_time, estimated_time, remaining_time, can_abort))
+            dlg = dialog.OperationDialog
+            dialog_kwargs = dict()
+        return self.run_dialog(
+            dlg, function, args, kwargs,
+            title=title or _("Operation in progress"),
+            message=message or _("Please wait..."),
+            **dialog_kwargs
+        )
+
 
 class DbActionLogger(object):
     """Log user actions into the database."""

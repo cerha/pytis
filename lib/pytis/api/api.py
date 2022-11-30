@@ -431,6 +431,59 @@ class Application(API):
         """
         pass
 
+    def run(self, function, args=(), kwargs={}, title=None, message=None, progress=True,
+            maximum=100, elapsed_time=False, estimated_time=False, remaining_time=False,
+            can_abort=False):
+        """Execute a long running operation showing a progress dialog.
+
+        The dialog is displayed until the operation is finished and may inform
+        the user about the progress of the operation visually (by a progress
+        bar) and textually (by a progress message).
+
+        Arguments:
+          function -- the Python function to be executed.
+          args -- tuple of arguments to be passed to 'function'.
+          kwargs -- dictionary of keyword arguments to be passed to 'function'.
+          title -- dialog window title as a string.
+          message -- the initial progress message to be displayed within the
+            dialog.  The message can be further updated to indicate the
+            operation progress (see "Progress updates" below).
+          progress -- if false, progress updates are not supported.  All
+            remaining arguments are ignored, the dialog just statically
+            displays the 'message' and waits until the operation is finished.
+          maximum -- value determining the range in which the progress is
+            updated (see Progress updates below).
+          elapsed_time -- if true, the dialog will display the time elapsed
+            from the start.
+          estimated_time -- if true, the dialog will display the estimated
+            total execution time.
+          remaining_time -- if true, the dialog will display the estimated
+            remaining time to the end.
+          can_abort -- if true, the executed function may be aborted if it is
+            written properly (see Progress updates below).
+
+        Progress updates
+
+        The progress updates must be directly supported by the called function
+        (if the function doesn't support progress updates, pass false to
+        'progress' and the remaining rules will not apply).  The function must
+        (in addition to 'args' and 'kwargs') accept the first positional
+        argument 'update' and call it as a function periodically to update the
+        progress.  The 'update' function accepts two keyword arguments (both
+        optional) 'progress' and 'message'.  The argument 'progress' (if not
+        None) is a number between zero and the 'maximum' passed to 'app.run()'
+        (see above).  It will move the visual progress indicator proportionally
+        to given position between zero and the maximum.  The argument 'message'
+        (if not None) updates the progress message displayed within the dialog.
+        If 'can_abort' was true, the caller should also check the return value
+        of the 'update' function and abort the operation if the return value is
+        false.
+
+        Returns the value returned by 'function' when finished.
+
+        """
+        pass
+
     def refresh(self):
         """Refresh visible application components."""
         pass
