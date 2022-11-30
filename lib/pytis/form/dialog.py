@@ -643,6 +643,7 @@ class ProgressDialog(OperationDialog):
         return continue_
 
     def _run_dialog(self):
+        pytis.form.wx_yield_(full=True)
         return self._function(self._update, *self._args, **self._kwargs)
 
     def _customize_result(self, result):
