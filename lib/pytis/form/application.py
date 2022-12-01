@@ -1435,6 +1435,9 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
     def api_launch_file(self, path):
         return pytis.form.launch_file(path)
 
+    def api_launch_url(self, url):
+        return pytis.form.launch_url(url)
+
 
 class DbActionLogger(object):
     """Log user actions into the database."""

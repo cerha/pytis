@@ -505,6 +505,18 @@ class Application(API):
         """
         pass
 
+    def launch_url(self, url):
+        """Open given URL in a web browser.
+
+        The browser will be launched on the client machine (remotely) if remote
+        client connection exists.
+
+        This function is non-blocking.  It returns immediately and the browser is
+        run in the background in all cases.
+
+        """
+        pass
+
     def refresh(self):
         """Refresh visible application components."""
         pass
