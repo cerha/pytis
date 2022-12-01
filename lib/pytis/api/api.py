@@ -484,6 +484,27 @@ class Application(API):
         """
         pass
 
+    def launch_file(self, path):
+        """Launch a viewer for given local file.
+
+        path -- Full path to the file in the local (server side) filesystem.
+
+        The viewer will be launched on the client machine (remotely) if remote
+        client connection exists.  The file will be temporarily copied to the
+        client machine in this case and cleaned up automatically afterwards.
+
+        If the viewer is run remotely on a client machine (such as on Windows),
+        client side file associations will take effect.  If the viewer is run
+        locally (on the application server), the viewer is determined through
+        Mailcap.  For PDF files, the viewer set through the configuration option
+        'postscript_viewer' (if set) takes precedence.
+
+        This method is non-blocking.  It returns immediately and the viewer is
+        run in the background in all cases.
+
+        """
+        pass
+
     def refresh(self):
         """Refresh visible application components."""
         pass
