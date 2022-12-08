@@ -2273,9 +2273,7 @@ class RecordForm(LookupForm):
         separator = result['separator'].value()
         if separator == 'other':
             separator = result['custom'].value()
-        fh = pytis.api.app.open_selected_file(
-            patterns=(('CSV files', ('*.csv', '*.CSV', '*.txt', '*.TXT')),)
-        )
+        fh = pytis.api.app.open_selected_file(filetypes=('csv', 'txt'))
         if not fh:
             message(_(u"No file given. Process terminated."), beep_=True)
             return False

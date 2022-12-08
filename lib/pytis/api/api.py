@@ -585,8 +585,7 @@ class Application(API):
         """
         pass
 
-    def select_file(self, filename=None, patterns=(), pattern=None, filetypes=None, directory=None,
-                    context='default'):
+    def select_file(self, filename=None, filetypes=None, directory=None, context='default'):
         """Return a filename selected by the user in a GUI dialog.
 
         Returns None if the user cancels the dialog.  If remote client connection
@@ -600,7 +599,6 @@ class Application(API):
             available for selection.  The exact behavior depends on the Client OS.
             Non-matching files are grayed out on Mac OS and completely hidden on
             Linux and Windows.
-          patterns, pattern -- Depracated, use filetypes.
           directory -- the initial directory or None
           context -- selector of the memory for keeping track of the most recently
             used directory.  If not None, the initial dialog directory will be
@@ -612,8 +610,7 @@ class Application(API):
         """
         pass
 
-    def select_files(self, directory=None, patterns=(), pattern=None, filetypes=None,
-                     context='default'):
+    def select_files(self, directory=None, filetypes=None, context='default'):
         """Return a tuple of filenames selected by the user in a GUI dialog.
 
         Returns empty tuple if the user cancels the dialog.  If remote client
@@ -623,7 +620,7 @@ class Application(API):
         Arguments:
 
           directory -- the initial directory or None
-          patterns, pattern, filetypes -- see 'Application.select_file()'
+          filetypes -- see 'Application.select_file()'
           context -- see 'Application.select_file()' - unused if 'directory' not None.
 
         """
@@ -643,8 +640,8 @@ class Application(API):
         """
         pass
 
-    def make_selected_file(self, filename, mode='w', encoding=None, patterns=(), pattern=None,
-                           filetypes=None, directory=None, context='default'):
+    def make_selected_file(self, filename, mode='w', encoding=None, filetypes=None,
+                           directory=None, context='default'):
         """Return a write-only 'file' like object of a user selected file.
 
         The file is selected by the user using a GUI dialog.  Returns None if
@@ -657,15 +654,15 @@ class Application(API):
           filename -- default filename or None
           mode -- default mode for opening the file
           encoding -- output encoding, string or None
-          patterns, pattern, filetypes -- see 'Application.select_file()'
+          filetypes -- see 'Application.select_file()'
           directory -- the initial directory or None
           context -- see 'Application.select_file()'
 
         """
         pass
 
-    def write_selected_file(self, data, filename, mode='w', encoding=None, patterns=(),
-                            pattern=None, filetypes=None, context='default'):
+    def write_selected_file(self, data, filename, mode='w', encoding=None, filetypes=None,
+                            context='default'):
         """Write 'data' to a file selected by the user using a GUI dialog.
 
         The file is selected by the user using a GUI dialog.  Returns 'True' if the
@@ -685,8 +682,7 @@ class Application(API):
         """
         pass
 
-    def open_selected_file(self, directory=None, patterns=(), pattern=None, filetypes=None,
-                           encrypt=None, context='default'):
+    def open_selected_file(self, directory=None, filetypes=None, encrypt=None, context='default'):
         """Return a read-only 'file' like object of a user selected file.
 
         The file is selected by the user using a GUI dialog.  Returns None if
@@ -699,7 +695,7 @@ class Application(API):
         Arguments:
 
           directory -- the initial directory or None
-          patterns, pattern, filetypes -- see 'Application.select_file()'
+          filetypes -- see 'Application.select_file()'
           encrypt -- list of encryption keys to use to encrypt the file; if the
             list is empty then let the user select the keys; if 'None' then
             don't encrypt the file

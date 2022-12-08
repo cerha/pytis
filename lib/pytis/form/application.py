@@ -1360,22 +1360,11 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
             else:
                 return 'local'
 
-    def _wildcards(self, filetypes, patterns, pattern):
+    def _wildcards(self, filetypes):
         if filetypes:
             wildcards = (_("Files of the required type") + ' (' + ', '.join(filetypes) + ')',
                          ';'.join(['*.{}'.format(ext) for ext in filetypes]),
                          _("All files"), "*")
-        elif patterns or pattern:
-            # Temporary backwards compatibility treatment.
-            patterns = list(patterns) + [(_("All files"), "*")]
-            if pattern and xtuple(pattern) not in [xtuple(pat) for label, pat in patterns]:
-                patterns.insert(0, (_("Files of the required type"), pattern))
-            wildcards = functools.reduce(
-                lambda a, b: a + ("%s (%s)" % (b[0], ', '.join(xtuple(b[1]))),
-                                  ';'.join(xtuple(b[1]))),
-                patterns,
-                (),
-            )
         else:
             wildcards = ()
         return wildcards
@@ -1653,8 +1642,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
             import webbrowser
             webbrowser.open(url)
 
-    def api_select_file(self, filename=None, patterns=(), pattern=None, filetypes=None,
-                        directory=None, context='default'):
+    def api_select_file(self, filename=None, filetypes=None, directory=None, context='default'):
         cmode = self.client_mode()
         if directory is None:
             directory = self._get_recent_directory(cmode, context)
@@ -1662,20 +1650,18 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
             context = None  # Prevent storing the explicitly passed directory when dialog closed.
         if cmode == 'remote':
             path = pytis.remote.select_file(filename=filename, directory=directory,
-                                            patterns=patterns, pattern=pattern,
                                             filetypes=filetypes, multi=False)
         elif cmode == 'local':
             path = self.run_dialog(dialog.FileDialog, file=filename, dir=directory,
                                    mode=dialog.FileDialog.OPEN, multi=False,
-                                   wildcards=self._wildcards(filetypes, patterns, pattern))
+                                   wildcards=self._wildcards(filetypes))
         else:
             path = None
         if path and context:
             self._set_recent_directory(cmode, context, self._dirname(cmode, path))
         return path
 
-    def api_select_files(self, directory=None, patterns=(), pattern=None, filetypes=None,
-                         context='default'):
+    def api_select_files(self, directory=None, filetypes=None, context='default'):
         # TODO: directory is ignored in the remote variant.
         cmode = self.client_mode()
         if directory is None:
@@ -1683,12 +1669,11 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         else:
             context = None  # Prevent storing the explicitly passed directory when dialog closed.
         if cmode == 'remote':
-            paths = pytis.remote.select_file(directory=directory, patterns=patterns,
-                                             pattern=pattern, filetypes=filetypes, multi=True)
+            paths = pytis.remote.select_file(directory=directory, filetypes=filetypes, multi=True)
         elif cmode == 'local':
             paths = self.run_dialog(dialog.FileDialog, dir=directory,
                                     mode=dialog.FileDialog.OPEN, multi=True,
-                                    wildcards=self._wildcards(filetypes, patterns, pattern))
+                                    wildcards=self._wildcards(filetypes))
         else:
             paths = None
         if paths and context:
@@ -1711,8 +1696,8 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
             self._set_recent_directory(cmode, context, path)
         return path
 
-    def api_make_selected_file(self, filename, mode='w', encoding=None, patterns=(), pattern=None,
-                               filetypes=None, directory=None, context='default'):
+    def api_make_selected_file(self, filename, mode='w', encoding=None, filetypes=None,
+                               directory=None, context='default'):
         cmode = self.client_mode()
         if directory is None:
             directory = self._get_recent_directory(cmode, context)
@@ -1724,12 +1709,12 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         if cmode == 'remote':
             f = self._wrap_exposed_file_wrapper(pytis.remote.make_selected_file(
                 filename=filename, directory=directory, mode=mode, encoding=encoding,
-                patterns=patterns, pattern=pattern, filetypes=filetypes,
+                filetypes=filetypes,
             ))
         elif cmode == 'local':
             path = self.run_dialog(dialog.FileDialog, file=filename, dir=directory,
                                    mode=dialog.FileDialog.SAVE,
-                                   wildcards=self._wildcards(filetypes, patterns, pattern))
+                                   wildcards=self._wildcards(filetypes))
             f = open(path, mode) if path else None
         else:
             f = None
@@ -1737,11 +1722,10 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
             self._set_recent_directory(cmode, context, self._dirname(cmode, f.name))
         return f
 
-    def api_write_selected_file(self, data, filename, mode='w', encoding=None, patterns=(),
-                                pattern=None, filetypes=None, context='default'):
-        f = make_selected_file(filename=filename, mode=mode, encoding=encoding,
-                               patterns=patterns, pattern=pattern, filetypes=filetypes,
-                               context=context)
+    def api_write_selected_file(self, data, filename, mode='w', encoding=None, filetypes=None,
+                                context='default'):
+        f = self.api_make_selected_file(filename=filename, mode=mode, encoding=encoding,
+                                        filetypes=filetypes, context=context)
         if f:
             if sys.version_info[0] == 2 and isinstance(data, bytes):
                 # TODO: The older version of P2Go's pytisproc.py currently distributed
@@ -1759,8 +1743,8 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         else:
             return False
 
-    def api_open_selected_file(self, directory=None, patterns=(), pattern=None, filetypes=None,
-                               encrypt=None, context='default'):
+    def api_open_selected_file(self, directory=None, filetypes=None, encrypt=None,
+                               context='default'):
         # TODO: Encryption not supported for the local variant.
         cmode = self.client_mode()
         if directory is None:
@@ -1770,13 +1754,12 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         if cmode == 'remote':
             f = self._wrap_exposed_file_wrapper(pytis.remote.open_selected_file(
                 directory=directory, encrypt=encrypt,
-                patterns=patterns, pattern=pattern,
                 filetypes=filetypes
             ))
         elif cmode == 'local':
             path = self.run_dialog(dialog.FileDialog, dir=directory,
                                    mode=dialog.FileDialog.OPEN,
-                                   wildcards=self._wildcards(filetypes, patterns, pattern))
+                                   wildcards=self._wildcards(filetypes))
             f = open(path, 'rb') if path else None
         else:
             f = None
@@ -2559,26 +2542,37 @@ def built_in_status_fields():
 
 # Deprecated backwards compatibility aliases.
 
+def _file_selection_kwargs(pattern=None, patterns=(), filetypes=None, **kwargs):
+    # Backwards compatibility treatment of pattern/patterns.
+    if patterns or pattern:
+        assert filetypes is None, filetypes
+        if pattern:
+            patterns = tuple(patterns) + (('', pattern),)
+        filetypes = tuple(functools.reduce(
+            lambda a, b: a + tuple(x.split('.')[-1] for x in b[-1].split(';')), patterns, (),
+        ))
+    return dict(kwargs, filetypes=filetypes)
+
 def launch_url(*args, **kwargs):
     return pytis.api.app.launch_url(*args, **kwargs)
 
 def select_file(*args, **kwargs):
-    return pytis.api.app.select_file(*args, **kwargs)
+    return pytis.api.app.select_file(*args, **_file_selection_kwargs(**kwargs))
 
 def select_files(*args, **kwargs):
-    return pytis.api.app.select_files(*args, **kwargs)
+    return pytis.api.app.select_files(*args, **_file_selection_kwargs(**kwargs))
 
 def select_directory(*args, **kwargs):
     return pytis.api.app.select_directory(*args, **kwargs)
 
 def make_selected_file(*args, **kwargs):
-    return pytis.api.app.make_selected_file(*args, **kwargs)
+    return pytis.api.app.make_selected_file(*args, **_file_selection_kwargs(**kwargs))
 
 def write_selected_file(*args, **kwargs):
-    return pytis.api.app.write_selected_file(*args, **kwargs)
+    return pytis.api.app.write_selected_file(*args, **_file_selection_kwargs(**kwargs))
 
 def open_selected_file(*args, **kwargs):
-    f = pytis.api.app.open_selected_file(*args, **kwargs)
+    f = pytis.api.app.open_selected_file(*args, **_file_selection_kwargs(**kwargs))
     if not f:
         filename = None
     elif hasattr(f, 'filename'):
