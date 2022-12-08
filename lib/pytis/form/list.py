@@ -1877,17 +1877,17 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         suffix = '.' + fileformat.lower()
         if action == 'save':
             if fileformat == 'XLSX':
-                patterns = ((_("Files %s", "XLSX (*.xlsx)"), "*.xlsx"),)
+                filetypes = ('xlsx',)
             else:
-                patterns = ((_("Files %s", "TXT (*.txt)"), "*.txt"),
-                            (_("Files %s", "CSV (*.csv)"), "*.csv"))
+                filetypes = ('txt', 'csv')
                 suffix = '.txt'
             filename = 'export'
             if not pytis.remote.client_available():
                 filename += '-' + pytis.config.dbconnection.user()
             try:
-                export_file = pytis.form.make_selected_file(filename=filename + suffix, mode='wb',
-                                                            patterns=patterns, context='export')
+                export_file = pytis.api.app.make_selected_file(filename=filename + suffix,
+                                                               mode='wb', filetypes=filetypes,
+                                                               context='export')
                 if not export_file:
                     return
             except (IOError, OSError):
@@ -1901,7 +1901,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                 after_export = pytis.remote.launch_file
             elif cmode == 'local':
                 export_file = tempfile.NamedTemporaryFile(mode='wb', suffix=suffix)
-                after_export = pytis.form.launch_file
+                after_export = pytis.api.app.launch_file
             else:
                 return
         if fileformat == 'XLSX':

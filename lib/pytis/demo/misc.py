@@ -681,7 +681,7 @@ class Files(Specification):
                 )
 
     def _open_file(self, row):
-        pytis.form.launch_file(row['file'].value())
+        app.launch_file(row['file'].value())
 
     def _open_url(self, row):
         import pytis.windows

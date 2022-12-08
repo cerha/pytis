@@ -1988,9 +1988,9 @@ class FileField(Invocable, InputField):
         return self._enabled
 
     def _cmd_load(self):
-        pattern = ';'.join(['*.%s' % ext for ext in self._spec.filename_extensions()]) or None
-        # msg = _("Select the file for field '%s'", self.spec().label())
-        fh = pytis.api.app.open_selected_file(pattern=pattern, context='file-field')
+        # title = _("Select the file for field '%s'", self.spec().label())
+        fh = pytis.api.app.open_selected_file(filetypes=self._spec.filename_extensions(),
+                                              context='file-field')
         if fh:
             try:
                 filename = fh.filename if hasattr(fh, 'filename') else os.path.basename(fh.name)
@@ -2014,9 +2014,9 @@ class FileField(Invocable, InputField):
     def _cmd_save(self):
         # msg = _("Save value of %s") % self.spec().label()
         try:
-            saved = pytis.form.write_selected_file(self._value, mode='wb',
-                                                   filename=self._row.filename(self._id),
-                                                   context='file-field')
+            saved = pytis.api.app.write_selected_file(self._value, mode='wb',
+                                                      filename=self._row.filename(self._id),
+                                                      context='file-field')
         except IOError as e:
             message(_("Error writing file to disk:") + ' ' + str(e), beep_=True)
         else:

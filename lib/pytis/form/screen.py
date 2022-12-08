@@ -3331,7 +3331,7 @@ def printout(spec_name, template_id, parameters=None, output_file=None,
 
     def run_viewer(filename):
         try:
-            pytis.form.launch_file(filename)
+            pytis.api.app.launch_file(filename)
         finally:
             try:
                 os.remove(filename)
