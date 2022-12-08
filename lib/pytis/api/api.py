@@ -542,20 +542,30 @@ class Application(API):
         """
         pass
 
-    def launch_file(self, path):
-        """Launch a viewer for given local file.
+    def launch_file(self, path=None, data=None, suffix=None, decrypt=False):
+        """Launch a viewer for given local file or data.
 
-        path -- Full path to the file in the local (server side) filesystem.
+        Arguments:
+
+          path -- full path to the file in the local (server side) filesystem.
+            If not None, 'data' and 'suffix' must be None.
+          data -- the file data as 'bytes' or a file like object.  This is the
+            contents of the file to be viewed.  If not None, 'path' must be
+            None.
+          suffix -- the filename suffix including the leading dot.  Only
+            relevant if 'data' is not None.
+          decrypt -- if True then decrypt 'data' before saving on remote
+            client's machine.
 
         The viewer will be launched on the client machine (remotely) if remote
         client connection exists.  The file will be temporarily copied to the
         client machine in this case and cleaned up automatically afterwards.
 
-        If the viewer is run remotely on a client machine (such as on Windows),
-        client side file associations will take effect.  If the viewer is run
-        locally (on the application server), the viewer is determined through
-        Mailcap.  For PDF files, the viewer set through the configuration option
-        'postscript_viewer' (if set) takes precedence.
+        The client's side file associations will take effect in case of remote
+        invocation.  If the viewer is run locally (on the application server),
+        the viewer is determined through Mailcap.  For PDF files, the viewer
+        set through the configuration option 'postscript_viewer' (if set) takes
+        precedence.
 
         This method is non-blocking.  It returns immediately and the viewer is
         run in the background in all cases.
@@ -571,6 +581,152 @@ class Application(API):
 
         This function is non-blocking.  It returns immediately and the browser is
         run in the background in all cases.
+
+        """
+        pass
+
+    def select_file(self, filename=None, patterns=(), pattern=None, filetypes=None, directory=None,
+                    context='default'):
+        """Return a filename selected by the user in a GUI dialog.
+
+        Returns None if the user cancels the dialog.  If remote client connection
+        exists, the returned filename belongs to the client's filesystem.
+
+        Arguments:
+
+          filename -- initial (default) filename or None
+          filetypes -- sequence of allowed filename extensions as case insensitive
+            strings.  If present (not None), only files of given types will be
+            available for selection.  The exact behavior depends on the Client OS.
+            Non-matching files are grayed out on Mac OS and completely hidden on
+            Linux and Windows.
+          patterns, pattern -- Depracated, use filetypes.
+          directory -- the initial directory or None
+          context -- selector of the memory for keeping track of the most recently
+            used directory.  If not None, the initial dialog directory will be
+            loaded from given memory and the memory will be updated by the path of
+            the selected file when the dialog is closed.  The selector is an
+            arbitrary string - for each unique string the most recently used
+            directory is stored separately.
+
+        """
+        pass
+
+    def select_files(self, directory=None, patterns=(), pattern=None, filetypes=None,
+                     context='default'):
+        """Return a tuple of filenames selected by the user in a GUI dialog.
+
+        Returns empty tuple if the user cancels the dialog.  If remote client
+        connection exists, the returned filenames belong to the client's
+        filesystem.
+
+        Arguments:
+
+          directory -- the initial directory or None
+          patterns, pattern, filetypes -- see 'Application.select_file()'
+          context -- see 'Application.select_file()' - unused if 'directory' not None.
+
+        """
+        pass
+
+    def select_directory(self, directory=None, context='default'):
+        """Return a directory selected by the user in a GUI dialog.
+
+        Arguments:
+
+          directory -- the initial directory or None
+          context -- see 'Application.select_file()'
+
+        Returns None if the user cancels the dialog.  If remote client connection
+        exists, the returned directory belongs to the client's filesystem.
+
+        """
+        pass
+
+    def make_selected_file(self, filename, mode='w', encoding=None, patterns=(), pattern=None,
+                           filetypes=None, directory=None, context='default'):
+        """Return a write-only 'file' like object of a user selected file.
+
+        The file is selected by the user using a GUI dialog.  Returns None if
+        the user cancels the dialog.  If remote client connection exists, the
+        returned file is created in the client's filesystem (the returned
+        object is an 'ExposedFileWrapper' instance).
+
+        Arguments:
+
+          filename -- default filename or None
+          mode -- default mode for opening the file
+          encoding -- output encoding, string or None
+          patterns, pattern, filetypes -- see 'Application.select_file()'
+          directory -- the initial directory or None
+          context -- see 'Application.select_file()'
+
+        """
+        pass
+
+    def write_selected_file(self, data, filename, mode='w', encoding=None, patterns=(),
+                            pattern=None, filetypes=None, context='default'):
+        """Write 'data' to a file selected by the user using a GUI dialog.
+
+        The file is selected by the user using a GUI dialog.  Returns 'True' if the
+        file was created and written succesfully or 'False' if the user cancels the
+        dialog.  If remote client connection exists, the file is created in the
+        client's filesystem.
+
+        Arguments:
+
+          data -- the file data as a string or bytes
+          filename -- default filename or None
+          mode -- default mode for opening the file
+          encoding -- output encoding, string or None
+          filetypes -- see 'Application.select_file()'
+          context -- see 'Application.select_file()'
+
+        """
+        pass
+
+    def open_selected_file(self, directory=None, patterns=(), pattern=None, filetypes=None,
+                           encrypt=None, context='default'):
+        """Return a read-only 'file' like object of a user selected file.
+
+        The file is selected by the user using a GUI dialog.  Returns None if
+        the user cancels the dialog.  If remote client connection exists, the
+        returned file is created in the client's filesystem (the returned
+        object is an 'ExposedFileWrapper' instance).
+
+        The file is always open in binary mode. (TODO: add 'mode' argument)
+
+        Arguments:
+
+          directory -- the initial directory or None
+          patterns, pattern, filetypes -- see 'Application.select_file()'
+          encrypt -- list of encryption keys to use to encrypt the file; if the
+            list is empty then let the user select the keys; if 'None' then
+            don't encrypt the file
+          context -- see 'Application.select_file()'
+
+        """
+        pass
+
+    def open_file(self, filename, mode='w'):
+        """Return a read-only 'file' like object of the given file.
+
+        Arguments:
+
+          filename -- name of the file to open, basestring
+          mode -- mode for opening the file
+
+        """
+        pass
+
+    def write_file(self, data, filename, mode='w'):
+        """Write given 'data' to given file.
+
+        Arguments:
+
+          data -- the (possibly binary) data as a basestring
+          filename -- name of the file to write to, basestring
+          mode -- mode for opening the file
 
         """
         pass

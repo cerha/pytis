@@ -2273,9 +2273,10 @@ class RecordForm(LookupForm):
         separator = result['separator'].value()
         if separator == 'other':
             separator = result['custom'].value()
-        fh, filename = pytis.form.open_selected_file(
-            patterns=(('CSV files', ('*.csv', '*.CSV', '*.txt', '*.TXT')),))
-        if filename is None:
+        fh = pytis.api.app.open_selected_file(
+            patterns=(('CSV files', ('*.csv', '*.CSV', '*.txt', '*.TXT')),)
+        )
+        if not fh:
             message(_(u"No file given. Process terminated."), beep_=True)
             return False
         try:
@@ -2362,7 +2363,7 @@ class RecordForm(LookupForm):
         exporter = lcg.export.pdf.PDFExporter()  # translations=cfg.translation_path)
         context = exporter.context(node, 'cs')
         pdf = exporter.export(context)
-        pytis.form.open_data_as_file(pdf, '.pdf')
+        pytis.api.app.launch_file(data=pdf, suffix='.pdf')
 
     # Public methods
 

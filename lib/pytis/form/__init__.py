@@ -47,10 +47,7 @@ from .screen import (  # noqa: F401
     is_busy_cursor, modal, copy_to_clipboard, paste_from_clipboard,
     hotkey_string, file_menu_items, help_proc, char2px,
     dlg2px, acceskey_prefix, orientation2wx, make_fullname, mitem,
-    popup_menu, printout, get_icon, select_file, select_files,
-    select_directory, make_selected_file, write_selected_file,
-    open_selected_file, open_file, write_file, launch_file, temp_file_launcher,
-    open_data_as_file, launch_url, client_mode
+    popup_menu, printout, get_icon,
 )
 
 from .dialog import (  # noqa: F401
@@ -96,7 +93,10 @@ from .application import (  # noqa: F401
     frame_title, close_forms, set_status, refresh_status, message,
     global_keymap, block_refresh, _dump_rights,
     init_access_rights, has_access, action_has_access, wx_yield_,
-    block_yield, built_in_status_fields, get_recent_directory, set_recent_directory,
+    block_yield, built_in_status_fields,
+    select_file, select_files, select_directory, make_selected_file, write_selected_file,
+    open_selected_file, open_file, write_file, launch_file,
+    open_data_as_file, launch_url
 )
 
 from .configui import (  # noqa: F401

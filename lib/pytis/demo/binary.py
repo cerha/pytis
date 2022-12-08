@@ -19,6 +19,8 @@
 
 from __future__ import unicode_literals
 
+import os.path
+
 import pytis.data
 import pytis.form
 from pytis.presentation import Binding, Specification, Editable, Action, computer
@@ -106,30 +108,26 @@ class BinaryData(Specification):
         if keys is None:
             app.error(_("No key selected."))
             return
-        f = pytis.remote.open_selected_file(encrypt=keys)
+        f = app.open_selected_file(encrypt=keys)
         if f is None:
             app.error(_("No file selected."))
             return
-        try:
+        with f:
             fname = f.name
-            if '\\' in fname:
-                import ntpath
-                p = ntpath
-            else:
-                import os
-                p = os.path
             data = ''
             while True:
                 next_data = f.read()
                 if not next_data:
                     break
                 data += next_data
-        finally:
-            f.close()
         if not data:
             app.error(_("Encryption error."))
             return
-        filename = p.split(fname)[-1]
+        if '\\' in fname:
+            import ntpath
+            filename = ntpath.split(fname)[-1]
+        else:
+            filename = os.path.split(fname)[-1]
         type_ = row['data'].type()
         try:
             buf = type_.Data(data, filename=filename)
@@ -150,7 +148,7 @@ class BinaryData(Specification):
         if data is None:
             app.message(_("No data in this row. %s"))
             return
-        f = pytis.remote.make_selected_file(filename=row['filename'].value(), decrypt=True)
+        f = app.make_selected_file(filename=row['filename'].value(), decrypt=True)
         if f is None:
             return
         f.write(data)

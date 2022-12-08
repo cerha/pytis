@@ -416,7 +416,7 @@ class Products(Specification):
             merger.append(PdfFileReader(io.BytesIO(output.getvalue())))
         result = io.BytesIO()
         merger.write(result)
-        pytis.form.open_data_as_file(result.getvalue(), '.pdf')
+        app.launch_file(data=result, suffix='.pdf')
 
     def _content(self, record):
         pardir = os.path.pardir
@@ -564,7 +564,6 @@ and retrieve the result (however procedures are typically called for their side 
 the documentation of 'run_procedure()' for more detail.
 
 """
-
 
 @procedure
 def mark_products(product_id=None, mark=True):

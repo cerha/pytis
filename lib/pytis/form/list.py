@@ -1895,7 +1895,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                 return
             after_export = None
         else:
-            cmode = pytis.form.client_mode()
+            cmode = pytis.form.app.client_mode()
             if cmode == 'remote':
                 export_file = pytis.remote.make_temporary_file(mode='wb', suffix=suffix)
                 after_export = pytis.remote.launch_file

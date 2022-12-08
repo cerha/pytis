@@ -30,12 +30,15 @@ from builtins import range
 
 import copy
 import decimal
+import functools
 import gi
+import io
 import lcg
 import os.path
 import string
 import sys
 import _thread
+import tempfile
 import time
 import wx
 import wx.html
@@ -48,7 +51,7 @@ import pytis.util
 import pytis.remote
 from pytis.util import (
     ACTION, DEBUG, EVENT, OPERATIONAL, ProgramError, ResolverError, Stack, XStack,
-    argument_names, find, format_traceback, identity, log, rsa_encrypt,
+    argument_names, find, format_traceback, identity, log, rsa_encrypt, xtuple,
 )
 from .command import CommandHandler
 from .event import (
@@ -1330,6 +1333,80 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         if self._statusbar:
             self._statusbar.set_status('message', message)
 
+    def client_mode(self):
+        """Return the client operation mode as one of 'remote', 'local' or None.
+
+        If the remote connection exists, 'remote' is returned.  If it existed at
+        the application startup, but doesn't exist now, the user is asked whether
+        to continue locally or cancel the operation.  If the user decides to
+        cancel, None is returned.  In all other cases 'local' is returned.
+
+        """
+        if not pytis.remote.client_available():
+            return 'local'
+        elif pytis.remote.client_connection_ok():
+            return 'remote'
+        else:
+            cancel = _("Cancel")
+            answer = pytis.api.app.question(_("This operation requires remote client connection "
+                                              "which is currently broken.\nYou may complete the "
+                                              "operation with restriction to server's local "
+                                              "resources or cancel."),
+                                            #icon=dialog.Message.ICON_ERROR,
+                                            answers=(_("Continue"), cancel),
+                                            default=cancel)
+            if answer is None or answer == cancel:
+                return None
+            else:
+                return 'local'
+
+    def _wildcards(self, filetypes, patterns, pattern):
+        if filetypes:
+            wildcards = (_("Files of the required type") + ' (' + ', '.join(filetypes) + ')',
+                         ';'.join(['*.{}'.format(ext) for ext in filetypes]),
+                         _("All files"), "*")
+        elif patterns or pattern:
+            # Temporary backwards compatibility treatment.
+            patterns = list(patterns) + [(_("All files"), "*")]
+            if pattern and xtuple(pattern) not in [xtuple(pat) for label, pat in patterns]:
+                patterns.insert(0, (_("Files of the required type"), pattern))
+            wildcards = functools.reduce(
+                lambda a, b: a + ("%s (%s)" % (b[0], ', '.join(xtuple(b[1]))),
+                                  ';'.join(xtuple(b[1]))),
+                patterns,
+                (),
+            )
+        else:
+            wildcards = ()
+        return wildcards
+
+    def _splitpath(self, cmode, path):
+        # Quict hack: unistr makes a local string from rpyc netref obtained from fh.name.
+        # Othervise fails with RPyC AttributeError on p.rfind('/') in posixpath.py
+        path = unistr(path)
+        if cmode == 'local':
+            pathmod = os.path
+        elif '\\' in path:
+            import ntpath as pathmod
+        else:
+            import posixpath as pathmod
+        return pathmod.dirname(path), pathmod.basename(path)
+
+    def _dirname(self, cmode, path):
+        return self._splitpath(cmode, path)[0]
+
+    def _get_recent_directory(self, cmode, context):
+        if cmode and context:
+            directory = self._recent_directories.get(':'.join((cmode, context)))
+            if directory is None:
+                directory = self._recent_directories.get(':'.join((cmode, 'default')))
+        else:
+            directory = None
+        return directory
+
+    def _set_recent_directory(self, cmode, context, directory):
+        self._recent_directories[':'.join((cmode, context))] = directory
+
     # Public API accessed through 'pytis.api.app' by Pytis applications.
     # See 'pytis.api.Application' for documentation.
 
@@ -1342,6 +1419,25 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
             return dict(report=content, report_format=pytis.presentation.TextFormat.PLAIN)
         else:
             raise ProgramError("Invalid 'content': {}".format(content))
+
+    class _ExposedFileWrapper(object):
+        def __init__(self, instance, dirname, filename):
+            self._instance = instance
+            self.dirname = dirname
+            self.filename = filename
+        def __getattr__(self, name):
+            return getattr(self._instance, name)
+        def __enter__(self):
+            return self
+        def __exit__(self, exc_type, exc_value, exc_tb):
+            self._instance.close()
+
+    def _wrap_exposed_file_wrapper(self, f):
+        # Wrap further to add context manager support to legacy ExposedFileWrapper
+        # from older Pytis2Go versions (which don't load remote clientapi.py).
+        if f:
+            f = self._ExposedFileWrapper(f, *self._splitpath('remote', f.name))
+        return f
 
     @property
     def api_form(self):
@@ -1474,11 +1570,240 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
             **dialog_kwargs
         )
 
-    def api_launch_file(self, path):
-        return pytis.form.launch_file(path)
+    def api_launch_file(self, path=None, data=None, suffix=None, decrypt=False):
+        if path:
+            assert data is None and suffix is None
+        else:
+            assert data is not None and suffix is not None
+        cmode = self.client_mode()
+        if cmode == 'remote':
+            if path:
+                source_file = open(path, 'rb')
+                close_source_file = True
+                suffix = os.path.splitext(path)[1]
+            elif hasattr(data, 'read'):
+                source_file = data
+                close_source_file = False  # The calling side is supposed to close its file.
+            else:
+                source_file = io.BytesIO(data)
+                close_source_file = False
+            try:
+                remote_file = pytis.remote.make_temporary_file(suffix=suffix, decrypt=decrypt)
+            except Exception as e:
+                log(OPERATIONAL, "Can't create remote temporary file:", str(e))
+                pytis.api.app.error(_("Unable to create temporary file: %s", e))
+            try:
+                while True:
+                    data = source_file.read(10 * 1024 * 1024)
+                    if not data:
+                        break
+                    remote_file.write(data)
+                log(OPERATIONAL, "Launching remote file viewer on %s:" % pytis.remote.client_ip(),
+                    remote_file.name)
+                pytis.remote.launch_file(remote_file.name)
+            finally:
+                if close_source_file:
+                    source_file.close()
+                remote_file.close()
+        elif cmode == 'local':
+            if path:
+                import mimetypes
+                import subprocess
+                mime_type = mimetypes.guess_type(path)[0]
+                if mime_type == 'application/pdf' and pytis.config.postscript_viewer:
+                    # Open a local PDF viewer for a PDF file if a specific PDF viewer is configured.
+                    command = (pytis.config.postscript_viewer, path)
+                    shell = False
+                elif mime_type:
+                    # Find the viewer through mailcap.
+                    import mailcap
+                    match = mailcap.findmatch(mailcap.getcaps(), mime_type)[1]
+                    if match:
+                        command = match['view'] % (path,)
+                        shell = True
+                    else:
+                        pytis.api.app.error(_("Viewer for '%s' (%s) not found.",
+                                              path, mime_type or 'unknown'))
+                        return
+                log(OPERATIONAL, "Launching local file viewer:", command)
+                proc = subprocess.Popen(command, shell=shell)
+                proc.wait()
+            else:
+                with tempfile.NamedTemporaryFile(suffix=suffix) as f:
+                    if hasattr(data, 'read'):
+                        while True:
+                            chunk = data.read(10 * 1024 * 1024)
+                            if not chunk:
+                                break
+                            f.write(chunk)
+                    else:
+                        f.write(data)
+                    f.flush()
+                    # Call ourselves with temp file path.
+                    self.api_launch_file(path=f.name)
+                    # Give the viewer some time to read the file as it will be
+                    # removed when the "with" statement is left.
+                    time.sleep(1)
 
     def api_launch_url(self, url):
-        return pytis.form.launch_url(url)
+        cmode = self.client_mode()
+        if cmode == 'remote':
+            pytis.remote.launch_url(url)
+        elif cmode == 'local':
+            import webbrowser
+            webbrowser.open(url)
+
+    def api_select_file(self, filename=None, patterns=(), pattern=None, filetypes=None,
+                        directory=None, context='default'):
+        cmode = self.client_mode()
+        if directory is None:
+            directory = self._get_recent_directory(cmode, context)
+        else:
+            context = None  # Prevent storing the explicitly passed directory when dialog closed.
+        if cmode == 'remote':
+            path = pytis.remote.select_file(filename=filename, directory=directory,
+                                            patterns=patterns, pattern=pattern,
+                                            filetypes=filetypes, multi=False)
+        elif cmode == 'local':
+            path = self.run_dialog(dialog.FileDialog, file=filename, dir=directory,
+                                   mode=dialog.FileDialog.OPEN, multi=False,
+                                   wildcards=self._wildcards(filetypes, patterns, pattern))
+        else:
+            path = None
+        if path and context:
+            self._set_recent_directory(cmode, context, self._dirname(cmode, path))
+        return path
+
+    def api_select_files(self, directory=None, patterns=(), pattern=None, filetypes=None,
+                         context='default'):
+        # TODO: directory is ignored in the remote variant.
+        cmode = self.client_mode()
+        if directory is None:
+            directory = self._get_recent_directory(cmode, context)
+        else:
+            context = None  # Prevent storing the explicitly passed directory when dialog closed.
+        if cmode == 'remote':
+            paths = pytis.remote.select_file(directory=directory, patterns=patterns,
+                                             pattern=pattern, filetypes=filetypes, multi=True)
+        elif cmode == 'local':
+            paths = self.run_dialog(dialog.FileDialog, dir=directory,
+                                    mode=dialog.FileDialog.OPEN, multi=True,
+                                    wildcards=self._wildcards(filetypes, patterns, pattern))
+        else:
+            paths = None
+        if paths and context:
+            self._set_recent_directory(cmode, context, self._dirname(cmode, paths[0]))
+        return paths
+
+    def api_select_directory(self, directory=None, context='default'):
+        cmode = self.client_mode()
+        if directory is None:
+            directory = self._get_recent_directory(cmode, context)
+        else:
+            context = None  # Prevent storing the explicitly passed directory when dialog closed.
+        if cmode == 'remote':
+            path = pytis.remote.select_directory(directory=directory)
+        elif cmode == 'local':
+            path = self.run_dialog(dialog.DirDialog, path=directory)
+        else:
+            path = None
+        if path and context:
+            self._set_recent_directory(cmode, context, path)
+        return path
+
+    def api_make_selected_file(self, filename, mode='w', encoding=None, patterns=(), pattern=None,
+                               filetypes=None, directory=None, context='default'):
+        cmode = self.client_mode()
+        if directory is None:
+            directory = self._get_recent_directory(cmode, context)
+        else:
+            context = None  # Prevent storing the explicitly passed directory when dialog closed.
+        if encoding is None and 'b' in mode:
+            # Supply default encoding only for binary modes.
+            encoding = 'utf-8'
+        if cmode == 'remote':
+            f = self._wrap_exposed_file_wrapper(pytis.remote.make_selected_file(
+                filename=filename, directory=directory, mode=mode, encoding=encoding,
+                patterns=patterns, pattern=pattern, filetypes=filetypes,
+            ))
+        elif cmode == 'local':
+            path = self.run_dialog(dialog.FileDialog, file=filename, dir=directory,
+                                   mode=dialog.FileDialog.SAVE,
+                                   wildcards=self._wildcards(filetypes, patterns, pattern))
+            f = open(path, mode) if path else None
+        else:
+            f = None
+        if f and context:
+            self._set_recent_directory(cmode, context, self._dirname(cmode, f.name))
+        return f
+
+    def api_write_selected_file(self, data, filename, mode='w', encoding=None, patterns=(),
+                                pattern=None, filetypes=None, context='default'):
+        f = make_selected_file(filename=filename, mode=mode, encoding=encoding,
+                               patterns=patterns, pattern=pattern, filetypes=filetypes,
+                               context=context)
+        if f:
+            if sys.version_info[0] == 2 and isinstance(data, bytes):
+                # TODO: The older version of P2Go's pytisproc.py currently distributed
+                # between users doesn't handle text encoding quite well.  It attempts
+                # to encode everything which is not a 'buffer'.  We can remove this
+                # hack once all clients have a newer P2Go version.  As this doesn't
+                # even work in Python 3 (which doesn't have buffer) old clients will
+                # not work with Python3 at all.
+                data = buffer(data)
+            try:
+                f.write(data)
+            finally:
+                f.close()
+            return True
+        else:
+            return False
+
+    def api_open_selected_file(self, directory=None, patterns=(), pattern=None, filetypes=None,
+                               encrypt=None, context='default'):
+        # TODO: Encryption not supported for the local variant.
+        cmode = self.client_mode()
+        if directory is None:
+            directory = self._get_recent_directory(cmode, context)
+        else:
+            context = None  # Prevent storing the explicitly passed directory when dialog closed.
+        if cmode == 'remote':
+            f = self._wrap_exposed_file_wrapper(pytis.remote.open_selected_file(
+                directory=directory, encrypt=encrypt,
+                patterns=patterns, pattern=pattern,
+                filetypes=filetypes
+            ))
+        elif cmode == 'local':
+            path = self.run_dialog(dialog.FileDialog, dir=directory,
+                                   mode=dialog.FileDialog.OPEN,
+                                   wildcards=self._wildcards(filetypes, patterns, pattern))
+            f = open(path, 'rb') if path else None
+        else:
+            f = None
+        if f and context:
+            self._set_recent_directory(cmode, context, self._dirname(cmode, f.name))
+        return f
+
+    def api_open_file(self, filename, mode='w'):
+        cmode = self.client_mode()
+        if cmode == 'remote':
+            f = pytis.remote.open_file(filename, mode=mode)
+        elif cmode == 'local':
+            f = open(filename, mode)
+        return f
+
+    def api_write_file(self, data, filename, mode='w'):
+        if isinstance(data, bytes):
+            # Maybe the same problem as described in write_selected_file() may apply
+            # here?  Morover RPyC doesn't seem to pass pd.Binary.Data correctly
+            # and leads to "TypeError: argument 1 must be convertible to a buffer,
+            # not Data" on remote write attempt.  See issue #2.
+            data = buffer(data)
+        f = self.api_open_file(filename, mode=mode)
+        try:
+            f.write(data)
+        finally:
+            f.close()
 
 
 class DbActionLogger(object):
@@ -2232,16 +2557,44 @@ def built_in_status_fields():
                     refresh_interval=10000, width=8),
     )
 
-# Duplication of application methods here is a huge mess, so we
-# don't do so for the functions below.  If the 'application' object
-# is made public in future (which seems most desirable), these
-# functions can be turned into its methods.
+# Deprecated backwards compatibility aliases.
 
-def get_recent_directory(cmode, context):
-    """Return the last directory set for given client mode and context as a string or None."""
-    return pytis.form.app._recent_directories.get(':'.join((cmode, context)))
+def launch_url(*args, **kwargs):
+    return pytis.api.app.launch_url(*args, **kwargs)
 
+def select_file(*args, **kwargs):
+    return pytis.api.app.select_file(*args, **kwargs)
 
-def set_recent_directory(cmode, context, directory):
-    """Remember given 'directory' for given client mode and context."""
-    pytis.form.app._recent_directories[':'.join((cmode, context))] = directory
+def select_files(*args, **kwargs):
+    return pytis.api.app.select_files(*args, **kwargs)
+
+def select_directory(*args, **kwargs):
+    return pytis.api.app.select_directory(*args, **kwargs)
+
+def make_selected_file(*args, **kwargs):
+    return pytis.api.app.make_selected_file(*args, **kwargs)
+
+def write_selected_file(*args, **kwargs):
+    return pytis.api.app.write_selected_file(*args, **kwargs)
+
+def open_selected_file(*args, **kwargs):
+    f = pytis.api.app.open_selected_file(*args, **kwargs)
+    if not f:
+        filename = None
+    elif hasattr(f, 'filename'):
+        filename = f.filename
+    else:
+        filename = os.path.basename(f.name)
+    return f, filename
+
+def open_file(*args, **kwargs):
+    return pytis.api.app.open_file(*args, **kwargs)
+
+def write_file(*args, **kwargs):
+    return pytis.api.app.write_file(*args, **kwargs)
+
+def launch_file(path):
+    return pytis.api.app.launch_file(path)
+
+def open_data_as_file(data, suffix, decrypt=False):
+    return pytis.api.app.launch_file(data=data, suffix=suffix, decrypt=decrypt)

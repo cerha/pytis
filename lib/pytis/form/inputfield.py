@@ -58,7 +58,7 @@ from .form import RecordForm
 from .event import wx_callback
 from .screen import (
     CallbackHandler, InfoWindow, KeyHandler, MSeparator, TextHeadingSelector,
-    char2px, dlg2px, file_menu_items, get_icon, mitem, open_data_as_file,
+    char2px, dlg2px, file_menu_items, get_icon, mitem,
     paste_from_clipboard, popup_menu, wx_button, wx_focused_window,
     copy_to_clipboard, field_size
 )
@@ -1982,7 +1982,7 @@ class FileField(Invocable, InputField):
         return self._enabled and self._value is not None and self._filename_extension()
 
     def _cmd_open(self):
-        open_data_as_file(self._value, suffix=self._filename_extension())
+        pytis.api.app.launch_file(data=self._value, suffix=self._filename_extension())
 
     def _can_load(self):
         return self._enabled
@@ -1990,9 +1990,10 @@ class FileField(Invocable, InputField):
     def _cmd_load(self):
         pattern = ';'.join(['*.%s' % ext for ext in self._spec.filename_extensions()]) or None
         # msg = _("Select the file for field '%s'", self.spec().label())
-        fh, filename = pytis.form.open_selected_file(pattern=pattern, context='file-field')
+        fh = pytis.api.app.open_selected_file(pattern=pattern, context='file-field')
         if fh:
             try:
+                filename = fh.filename if hasattr(fh, 'filename') else os.path.basename(fh.name)
                 try:
                     self._value = self._type.Data(fh, filename=filename)
                 except pytis.data.ValidationError as e:
@@ -2503,14 +2504,16 @@ class StructuredTextField(TextField):
         self.set_focus()
 
     def _load_new_file(self, row):
-        fh, filename = pytis.form.open_selected_file(context='attachments')
-        if filename and (' ' in filename or any(ord(c) > 127 for c in filename)):
-            pytis.api.app.error(title=_("Invalid file name"),
-                                message="{}: {}".format(filename,
-                                                        _("Invalid characters in file name.")))
-            return
+        fh = pytis.api.app.open_selected_file(context='attachments')
         if fh:
             try:
+                filename = fh.filename if hasattr(fh, 'filename') else os.path.basename(f.name)
+                if ' ' in filename or any(ord(c) > 127 for c in filename):
+                    pytis.api.app.error(
+                        title=_("Invalid file name"),
+                        message="{}: {}".format(filename, _("Invalid characters in file name.")),
+                    )
+                    return
                 if 'size' in row:
                     size = self.ImageSizes.thumbnail_size_bounds(row['size'].value(), None)
                     values = dict(has_thumbnail=(size is not None), thumbnail_size=size)
