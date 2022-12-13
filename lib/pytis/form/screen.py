@@ -54,11 +54,11 @@ import wx.lib.pdfviewer
 import wx.lib.agw.supertooltip as supertooltip
 
 import pytis
-import pytis.api
 import pytis.form
 import pytis.output
 import pytis.presentation
 import pytis.util
+from pytis.api import app
 from pytis.presentation import Orientation, TextFormat, StatusField
 from pytis.util import find, xtuple, log, DEBUG, EVENT, OPERATIONAL, ProgramError
 from .event import wx_callback, top_level_exception, UserBreakException
@@ -288,7 +288,7 @@ def file_menu_items(fields, row, select_arguments):
         return result
 
     def open_file(field_id, filename):
-        pytis.api.app.launch_file(data=field_data(field_id), suffix=os.path.splitext(filename)[1])
+        app.launch_file(data=field_data(field_id), suffix=os.path.splitext(filename)[1])
 
     def can_open(fspec):
         crypto_name = fspec.crypto_name()
@@ -2098,8 +2098,8 @@ class HelpProc(object):
     def __call__(self, **kwargs):
         action = 'proc/%s/%s/' % (self._func.__name__, self._func.__module__)
         if not pytis.form.action_has_access(action):
-            pytis.api.app.error(_(u"You don't have priviledges to invoke the action '%s'.\n"
-                                  u"Please contact the access rights administrator.") % (action,))
+            app.error(_(u"You don't have priviledges to invoke the action '%s'.\n"
+                        u"Please contact the access rights administrator.") % (action,))
         else:
             self._func(**kwargs)
 
@@ -3264,7 +3264,7 @@ class _PrintResolver(pytis.output.OutputResolver):
         # (new style) specification class.
 
         def body(self, resolver=None, **kwargs):
-            pytis.api.app.error(_("Print specification not found!"))
+            app.error(_("Print specification not found!"))
 
         def doc_header(self, resolver=None, **kwargs):
             return None
@@ -3331,7 +3331,7 @@ def printout(spec_name, template_id, parameters=None, output_file=None,
 
     def run_viewer(filename):
         try:
-            pytis.api.app.launch_file(filename)
+            app.launch_file(filename)
         finally:
             try:
                 os.remove(filename)
@@ -3344,8 +3344,8 @@ def printout(spec_name, template_id, parameters=None, output_file=None,
         except lcg.SubstitutionIterator.NotStartedError:
             tbstring = pytis.util.format_traceback()
             log(OPERATIONAL, 'Print exception caught', tbstring)
-            pytis.api.app.error(_("Invalid use of identifier `data' in print specification.\n"
-                                  "Maybe use `current_row' instead?"))
+            app.error(_("Invalid use of identifier `data' in print specification.\n"
+                        "Maybe use `current_row' instead?"))
             raise UserBreakException()
 
     try:

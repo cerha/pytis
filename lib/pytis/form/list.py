@@ -42,11 +42,11 @@ import time
 import wx
 import wx.grid
 
-import pytis.api
 import pytis.data
 import pytis.form
 import pytis.output
 
+from pytis.api import app
 from pytis.presentation import (
     Action, ActionGroup, AggregatedView, CodebookSpec, Field, Editable,
     FormType, SelectionType, Link, TextFormat, ViewSpec, ActionContext,
@@ -1840,7 +1840,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             else:
                 problem = None
         if problem:
-            pytis.api.app.warning(problem + '\n' + _("Export aborted."))
+            app.warning(problem + '\n' + _("Export aborted."))
             return
         import pkgutil
         xls_available = pkgutil.find_loader('xlsxwriter') is not None
@@ -1885,13 +1885,13 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             if not pytis.remote.client_available():
                 filename += '-' + pytis.config.dbconnection.user()
             try:
-                export_file = pytis.api.app.make_selected_file(filename=filename + suffix,
-                                                               mode='wb', filetypes=filetypes,
-                                                               context='export')
+                export_file = app.make_selected_file(filename=filename + suffix,
+                                                     mode='wb', filetypes=filetypes,
+                                                     context='export')
                 if not export_file:
                     return
             except (IOError, OSError):
-                pytis.api.app.error(_("Unable to open the file for writing!"))
+                app.error(_("Unable to open the file for writing!"))
                 return
             after_export = None
         else:
@@ -1901,7 +1901,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                 after_export = pytis.remote.launch_file
             elif cmode == 'local':
                 export_file = tempfile.NamedTemporaryFile(mode='wb', suffix=suffix)
-                after_export = pytis.api.app.launch_file
+                after_export = app.launch_file
             else:
                 return
         if fileformat == 'XLSX':
@@ -1943,7 +1943,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             msg = (_("Encoding %s not supported.", pytis.config.export_encoding)
                    if isinstance(e, LookupError) else
                    _("Unable to encode data to %s.", pytis.config.export_encoding))
-            pytis.api.app.error(msg + '\n' + _("Using UTF-8 instead."))
+            app.error(msg + '\n' + _("Using UTF-8 instead."))
             encoded = result.encode('utf-8')
         return encoded
 
@@ -2332,12 +2332,12 @@ class FoldableForm(ListForm):
             else:
                 return False
         if self._folding_enabled() and is_in(condition):
-            if not pytis.api.app.question(_("You attempted to use a filter with the IN operator\n"
-                                            "on a foldable form. This operation may potentially\n"
-                                            "take several minutes. You can greatly speed up the\n"
-                                            "operation by turning the folding off (sorting by\n"
-                                            "another column).\n"
-                                            "Really continue?"), default=True):
+            if not app.question(_("You attempted to use a filter with the IN operator\n"
+                                  "on a foldable form. This operation may potentially\n"
+                                  "take several minutes. You can greatly speed up the\n"
+                                  "operation by turning the folding off (sorting by\n"
+                                  "another column).\n"
+                                  "Really continue?"), default=True):
                 # This should abort profile selection in _cmd_apply_profile and
                 # return the previously selected profile.
                 raise UserBreakException()
@@ -2865,7 +2865,7 @@ class BrowseForm(FoldableForm):
                 if self._current_profile_changed():
                     msg = _("Can not filter as long as the current profile is unsaved!")
                     asave, aquit = _("Save"), _("Cancel")
-                    if pytis.api.app.question(msg, answers=(asave, aquit), default=asave) != asave:
+                    if app.question(msg, answers=(asave, aquit), default=asave) != asave:
                         return
                     self._cmd_update_profile()
                 filter = pytis.form.IN(column, self.name(), f.id(), profile_id)

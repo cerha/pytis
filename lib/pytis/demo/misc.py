@@ -686,7 +686,7 @@ class Files(Specification):
     def _open_url(self, row):
         import pytis.windows
         url = row['url'].value()
-        pytis.windows.launch_url(url)
+        app.launch_url(url)
 
 
 class StandalonePrint(pytis.output.PrintSpecification):

@@ -47,7 +47,7 @@ import wx
 import wx.aui
 
 import pytis.form
-import pytis.api
+from pytis.api import app
 from pytis.util import DEBUG, OPERATIONAL, format_traceback, log, translations
 
 
@@ -353,8 +353,8 @@ def _stop_check(start_time, confirmed, command_number):
         block_idle(True)
         _stop_check_running = True
         try:
-            answer = pytis.api.app.question(_("Form startup already takes long. "
-                                              "Should it be interrupted?"))
+            answer = app.question(_("Form startup already takes long. "
+                                    "Should it be interrupted?"))
         finally:
             _stop_check_running = False
             block_idle(False)

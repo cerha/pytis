@@ -13,8 +13,11 @@ K API je aktuálně možné přistupovat skrze dva hlavní přístupové body:
 
 1. 'pytis.api.app' je globální instance 'pytis.api.Application' poskytující
    přístup běžící pytisové aplikaci.  Tato instance je k dispozici již v době
-   importu modulu, takže ji lze importovat např. způsobem 'from pytis.api
-   import app' (pro jednotnost doporučováno vždy takto).
+   importu modulu, takže ji lze importovat takto:
+
+   from pytis.api import app
+
+   Pro jednotnost je doporučováno importovat vždy tímto způsobem.
 
    Ve skriptech (které běží bez spuštěné aplikace) lze instanci 'pytis.api.app'
    používat s tím, že zde je použití omezeno na přístup ke sdíleným parametrům

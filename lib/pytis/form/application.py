@@ -49,6 +49,7 @@ import pytis.form
 from pytis.presentation import Field, Specification, StatusField, computer, Text
 import pytis.util
 import pytis.remote
+from pytis.api import app
 from pytis.util import (
     ACTION, DEBUG, EVENT, OPERATIONAL, ProgramError, ResolverError, Stack, XStack,
     argument_names, find, format_traceback, identity, log, rsa_encrypt, xtuple,
@@ -306,8 +307,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
                         if not issubclass(cls, pytis.form.Form):
                             raise AttributeError
                     except AttributeError:
-                        pytis.api.app.error(_("Invalid form class in 'startup_forms':") +
-                                            ' ' + cls_name)
+                        app.error(_("Invalid form class in 'startup_forms':") + ' ' + cls_name)
                         continue
                 else:
                     cls = (name.find('::') == -1 and
@@ -985,7 +985,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
                 form = None
             if form is None:
                 busy_cursor(False)
-                pytis.api.app.error(_("Form creation failed: %s", name))
+                app.error(_("Form creation failed: %s", name))
             else:
                 if isinstance(form, pytis.form.PopupForm):
                     log(EVENT, "Opening modal form:", form)
@@ -1348,13 +1348,13 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
             return 'remote'
         else:
             cancel = _("Cancel")
-            answer = pytis.api.app.question(_("This operation requires remote client connection "
-                                              "which is currently broken.\nYou may complete the "
-                                              "operation with restriction to server's local "
-                                              "resources or cancel."),
-                                            #icon=dialog.Message.ICON_ERROR,
-                                            answers=(_("Continue"), cancel),
-                                            default=cancel)
+            answer = app.question(_("This operation requires remote client connection "
+                                    "which is currently broken.\nYou may complete the "
+                                    "operation with restriction to server's local "
+                                    "resources or cancel."),
+                                  #icon=dialog.Message.ICON_ERROR,
+                                  answers=(_("Continue"), cancel),
+                                  default=cancel)
             if answer is None or answer == cancel:
                 return None
             else:
@@ -1580,7 +1580,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
                 remote_file = pytis.remote.make_temporary_file(suffix=suffix, decrypt=decrypt)
             except Exception as e:
                 log(OPERATIONAL, "Can't create remote temporary file:", str(e))
-                pytis.api.app.error(_("Unable to create temporary file: %s", e))
+                app.error(_("Unable to create temporary file: %s", e))
             try:
                 while True:
                     data = source_file.read(10 * 1024 * 1024)
@@ -1611,8 +1611,8 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
                         command = match['view'] % (path,)
                         shell = True
                     else:
-                        pytis.api.app.error(_("Viewer for '%s' (%s) not found.",
-                                              path, mime_type or 'unknown'))
+                        app.error(_("Viewer for '%s' (%s) not found.",
+                                    path, mime_type or 'unknown'))
                         return
                 log(OPERATIONAL, "Launching local file viewer:", command)
                 proc = subprocess.Popen(command, shell=shell)
@@ -1919,7 +1919,7 @@ def delete_record(view, data, transaction, record,
         elif result == 1:
             return True
         elif isinstance(result, basestring):
-            pytis.api.app.error(result)
+            app.error(result)
             return False
         elif isinstance(result, pd.Operator):
             ask = False
@@ -1931,7 +1931,7 @@ def delete_record(view, data, transaction, record,
             message(_("This form doesn't allow deletion."), beep_=True)
             return False
         op, arg = data.delete, key
-    if ask and not pytis.api.app.question(question):
+    if ask and not app.question(question):
         return False
     log(EVENT, 'Deleting record:', arg)
     success, result = db_operation(op, arg, transaction=transaction)
@@ -1995,7 +1995,7 @@ def db_op(operation, args=(), kwargs={}, in_transaction=False, quiet=False):
                 pytis.form.app.login_hook(success=True)
             return True, result
         except pd.DataAccessException:
-            pytis.api.app.error(_("Access denied"))
+            app.error(_("Access denied"))
             return FAILURE
         except pd.DBLoginException:
             if pytis.config.dbconnection.password() is not None and pytis.form.app:
@@ -2028,7 +2028,7 @@ def db_op(operation, args=(), kwargs={}, in_transaction=False, quiet=False):
                         password=row['password'].value()
                     )
                 except pd.DBLoginException as e:
-                    pytis.api.app.echo(e.message())
+                    app.echo(e.message())
                     return 'password'
                 else:
                     return None
@@ -2054,11 +2054,11 @@ def db_op(operation, args=(), kwargs={}, in_transaction=False, quiet=False):
             if quiet:
                 return FAILURE
             if in_transaction:
-                pytis.api.app.error(message, title=_("Database error"))
+                app.error(message, title=_("Database error"))
                 return FAILURE
             else:
                 message += '\n' + _("Try again?")
-                if not pytis.api.app.question(message, title=_("Database error")):
+                if not app.question(message, title=_("Database error")):
                     return FAILURE
 
 
@@ -2069,7 +2069,7 @@ def delete_record_question(msg=None):
 
     """
     log(EVENT, 'Record deletion dialog')
-    if not pytis.api.app.question(msg or _("Are you sure to delete the record permanently?")):
+    if not app.question(msg or _("Are you sure to delete the record permanently?")):
         log(EVENT, 'Record deletion refused by user')
         return False
     log(EVENT, u'Record deletion confirmed by user')
@@ -2084,11 +2084,11 @@ def run_dialog(arg1, *args, **kwargs):
     if pytis.form.app is None:
         log(OPERATIONAL, "Attempt to run a dialog:", (arg1, args, kwargs))
     elif arg1 == InputDialog:
-        return pytis.api.app.input_text(title=kwargs.get('message'),
-                                        label=kwargs.get('prompt', '').rstrip(':'),
-                                        default=kwargs.get('value'),
-                                        width=kwargs.get('input_width'),
-                                        height=kwargs.get('input_height'))
+        return app.input_text(title=kwargs.get('message'),
+                              label=kwargs.get('prompt', '').rstrip(':'),
+                              default=kwargs.get('value'),
+                              width=kwargs.get('input_width'),
+                              height=kwargs.get('input_height'))
     elif arg1 == InputNumeric:
         precision = kwargs.get('decimal_width', 0)
         minimum = kwargs.get('min_value')
@@ -2099,14 +2099,14 @@ def run_dialog(arg1, *args, **kwargs):
         else:
             t = pd.Integer()
             cast = int
-        value = pytis.api.app.input_number(title=kwargs.get('message'),
-                                           label=kwargs.get('prompt', '').rstrip(':'),
-                                           width=kwargs.get('integer_width', 10) + precision + 1,
-                                           precision=precision,
-                                           minimum=cast(minimum) if minimum else None,
-                                           maximum=cast(maximum) if maximum else None,
-                                           noselect=not kwargs.get('select_on_entry', False),
-                                           default=kwargs.get('value'))
+        value = app.input_number(title=kwargs.get('message'),
+                                 label=kwargs.get('prompt', '').rstrip(':'),
+                                 width=kwargs.get('integer_width', 10) + precision + 1,
+                                 precision=precision,
+                                 minimum=cast(minimum) if minimum else None,
+                                 maximum=cast(maximum) if maximum else None,
+                                 noselect=not kwargs.get('select_on_entry', False),
+                                 default=kwargs.get('value'))
         return pd.Value(t, value)
 
     elif arg1 == InputDate:
@@ -2116,9 +2116,9 @@ def run_dialog(arg1, *args, **kwargs):
             value, error = pd.Date().validate(value)
             if value:
                 value = value.value()
-        value = pytis.api.app.input_date(title=kwargs.get('message'),
-                                         label=kwargs.get('prompt', '').rstrip(':'),
-                                         default=value)
+        value = app.input_date(title=kwargs.get('message'),
+                               label=kwargs.get('prompt', '').rstrip(':'),
+                               default=value)
         return pd.Value(pd.Date(), value)
     else:
         return pytis.form.app.run_dialog(arg1, *args, **kwargs)
@@ -2222,7 +2222,7 @@ def refresh_status(id=None):
 
 
 def message(message, beep_=False):
-    """Deprecated.  Use 'pytis.api.app.echo()'."""
+    """Deprecated.  Use 'app.echo()'."""
     if pytis.form.app:
         pytis.form.app.message(message, kind='error' if beep_ else 'info')
 
@@ -2554,25 +2554,25 @@ def _file_selection_kwargs(pattern=None, patterns=(), filetypes=None, **kwargs):
     return dict(kwargs, filetypes=filetypes)
 
 def launch_url(*args, **kwargs):
-    return pytis.api.app.launch_url(*args, **kwargs)
+    return app.launch_url(*args, **kwargs)
 
 def select_file(*args, **kwargs):
-    return pytis.api.app.select_file(*args, **_file_selection_kwargs(**kwargs))
+    return app.select_file(*args, **_file_selection_kwargs(**kwargs))
 
 def select_files(*args, **kwargs):
-    return pytis.api.app.select_files(*args, **_file_selection_kwargs(**kwargs))
+    return app.select_files(*args, **_file_selection_kwargs(**kwargs))
 
 def select_directory(*args, **kwargs):
-    return pytis.api.app.select_directory(*args, **kwargs)
+    return app.select_directory(*args, **kwargs)
 
 def make_selected_file(*args, **kwargs):
-    return pytis.api.app.make_selected_file(*args, **_file_selection_kwargs(**kwargs))
+    return app.make_selected_file(*args, **_file_selection_kwargs(**kwargs))
 
 def write_selected_file(*args, **kwargs):
-    return pytis.api.app.write_selected_file(*args, **_file_selection_kwargs(**kwargs))
+    return app.write_selected_file(*args, **_file_selection_kwargs(**kwargs))
 
 def open_selected_file(*args, **kwargs):
-    f = pytis.api.app.open_selected_file(*args, **_file_selection_kwargs(**kwargs))
+    f = app.open_selected_file(*args, **_file_selection_kwargs(**kwargs))
     if not f:
         filename = None
     elif hasattr(f, 'filename'):
@@ -2582,13 +2582,13 @@ def open_selected_file(*args, **kwargs):
     return f, filename
 
 def open_file(*args, **kwargs):
-    return pytis.api.app.open_file(*args, **kwargs)
+    return app.open_file(*args, **kwargs)
 
 def write_file(*args, **kwargs):
-    return pytis.api.app.write_file(*args, **kwargs)
+    return app.write_file(*args, **kwargs)
 
 def launch_file(path):
-    return pytis.api.app.launch_file(path)
+    return app.launch_file(path)
 
 def open_data_as_file(data, suffix, decrypt=False):
-    return pytis.api.app.launch_file(data=data, suffix=suffix, decrypt=decrypt)
+    return app.launch_file(data=data, suffix=suffix, decrypt=decrypt)

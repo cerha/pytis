@@ -33,8 +33,8 @@ import wx
 import io
 import fitz
 
-import pytis.api
 import pytis.data
+from pytis.api import app
 from pytis.presentation import Orientation
 from pytis.util import EVENT, log, translations, ProgramError
 
@@ -1221,7 +1221,7 @@ class MultiSideForm(MultiForm):
         if form.COMMAND_UPDATE_PROFILE.enabled():
             msg = _("Can't filter when the current profile is not saved!")
             bsave, bquit = _("Save"), _("Cancel")
-            if pytis.api.app.question(msg, answers=(bsave, bquit), default=bsave) != bsave:
+            if app.question(msg, answers=(bsave, bquit), default=bsave) != bsave:
                 return
             form.COMMAND_UPDATE_PROFILE.invoke()
         condition = form.side_form_in_condition()

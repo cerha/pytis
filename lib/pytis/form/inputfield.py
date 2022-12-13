@@ -43,6 +43,7 @@ import pytis.api
 import pytis.data
 import pytis.form
 import pytis.util
+from pytis.api import app
 from pytis.presentation import (
     AttachmentStorage, Button, CodebookSpec, Editable, Enumeration,
     Field, HGroup, Orientation, PostProcess, PresentedRow,
@@ -608,7 +609,7 @@ class InputField(KeyHandler, CommandHandler):
             errmsg = self._check()
         if errmsg:
             if interactive:
-                pytis.api.app.error(self.spec().label() + ": " + errmsg, title=_("Invalid value"))
+                app.error(self.spec().label() + ": " + errmsg, title=_("Invalid value"))
             else:
                 message(errmsg, beep_=True)
         return error is None
@@ -1982,15 +1983,15 @@ class FileField(Invocable, InputField):
         return self._enabled and self._value is not None and self._filename_extension()
 
     def _cmd_open(self):
-        pytis.api.app.launch_file(data=self._value, suffix=self._filename_extension())
+        app.launch_file(data=self._value, suffix=self._filename_extension())
 
     def _can_load(self):
         return self._enabled
 
     def _cmd_load(self):
         # title = _("Select the file for field '%s'", self.spec().label())
-        fh = pytis.api.app.open_selected_file(filetypes=self._spec.filename_extensions(),
-                                              context='file-field')
+        fh = app.open_selected_file(filetypes=self._spec.filename_extensions(),
+                                    context='file-field')
         if fh:
             try:
                 filename = fh.filename if hasattr(fh, 'filename') else os.path.basename(fh.name)
@@ -2014,16 +2015,16 @@ class FileField(Invocable, InputField):
     def _cmd_save(self):
         # msg = _("Save value of %s") % self.spec().label()
         try:
-            saved = pytis.api.app.write_selected_file(self._value, mode='wb',
-                                                      filename=self._row.filename(self._id),
-                                                      context='file-field')
+            saved = app.write_selected_file(self._value, mode='wb',
+                                            filename=self._row.filename(self._id),
+                                            context='file-field')
         except IOError as e:
-            message(_("Error writing file to disk:") + ' ' + str(e), beep_=True)
+            app.echo(_("Error writing file to disk:") + ' ' + str(e), beep_=True)
         else:
             if saved:
-                message(_("File saved."))
+                app.echo(_("File saved."))
             else:
-                message(_("Saving file canceled."))
+                app.echo(_("Saving file canceled."))
 
     def _can_clear(self):
         return self._enabled and self._value is not None
@@ -2095,8 +2096,8 @@ class StructuredTextField(TextField):
                 return [r.filename() for r in self._storage.resources(transaction=transaction)
                         if isinstance(r, lcg.Image) ^ (not self._images)]
             except AttachmentStorage.StorageError as e:
-                pytis.api.app.error(title=_("Error accessing attachment storrage"),
-                                    message=_("Error accessing attachment storrage") + ':\n' + e)
+                app.error(title=_("Error accessing attachment storrage"),
+                          message=_("Error accessing attachment storrage") + ':\n' + e)
                 return []
 
     class ImageAlignments(Enumeration):
@@ -2417,8 +2418,8 @@ class StructuredTextField(TextField):
         except AttachmentStorage.InvalidImageFormat as e:
             message(_("Invalid image format!"), beep_=True)
         except AttachmentStorage.StorageError as e:
-            pytis.api.app.error(title=_("Error accessing attachment storrage"),
-                                message=_("Error accessing attachment storrage") + ":\n" + e)
+            app.error(title=_("Error accessing attachment storrage"),
+                      message=_("Error accessing attachment storrage") + ":\n" + e)
 
     def _cmd_search(self):
         pass
@@ -2504,12 +2505,12 @@ class StructuredTextField(TextField):
         self.set_focus()
 
     def _load_new_file(self, row):
-        fh = pytis.api.app.open_selected_file(context='attachments')
+        fh = app.open_selected_file(context='attachments')
         if fh:
             try:
                 filename = fh.filename if hasattr(fh, 'filename') else os.path.basename(f.name)
                 if ' ' in filename or any(ord(c) > 127 for c in filename):
-                    pytis.api.app.error(
+                    app.error(
                         title=_("Invalid file name"),
                         message="{}: {}".format(filename, _("Invalid characters in file name.")),
                     )
@@ -2537,8 +2538,8 @@ class StructuredTextField(TextField):
                 try:
                     return pytis.data.Image.Data(f, filename=filename)
                 except ValueError as e:
-                    pytis.api.app.error(title=_("Invalid value"),
-                                        message="{}: {}".format(filename, e))
+                    app.error(title=_("Invalid value"),
+                              message="{}: {}".format(filename, e))
                 finally:
                     f.close()
         return None
