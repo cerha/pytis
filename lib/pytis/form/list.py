@@ -60,10 +60,7 @@ from pytis.util import (
 import pytis.remote
 
 from .event import UserBreakException, wx_callback
-from .dialog import (
-    AggregationSetupDialog, Error, Warning, ProgressDialog,
-    MultiQuestion, Question, CheckListDialog,
-)
+from .dialog import AggregationSetupDialog, CheckListDialog
 from .form import (
     BrowsableShowForm, Form, LookupForm, PopupEditForm, PopupForm,
     QueryFieldsForm, RecordForm, Refreshable, ShowForm, TitledForm,
@@ -1911,8 +1908,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         try:
             # We prefer exporting all data into memory and write to the file in the
             # end in order to prevent numerous rpc calls in case of remote export.
-            data = pytis.form.run_dialog(ProgressDialog, export_method,
-                                         kwargs=dict(only_selected=(scope == 'selection')))
+            data = app.run(export_method, kwargs=dict(only_selected=(scope == 'selection')))
             export_file.write(data)
             if after_export:
                 export_file.flush()

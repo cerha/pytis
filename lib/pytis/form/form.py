@@ -1377,15 +1377,17 @@ class LookupForm(InnerForm):
         return profile.id().startswith(pytis.form.FormProfileManager.USER_PROFILE_PREFIX)
 
     def _handle_invalid_profile(self, profile):
-        msg = _("User profile \"%s\" is invalid.\n"
-                "The form specification has probably changed and the saved\n"
-                "profile is incompatible now. You can either remove the profile,\n"
-                "or keep it and ask the administrator to update it.", profile.title())
-        errors = '\n'.join(['%s: %s' % (param, error) for param, error in profile.errors()])
         keep, remove = (_(u"Keep"), _(u"Remove"))
-        answer = run_dialog(MultiQuestion, title=_("Invalid profile"), message=msg,
-                            icon=Question.ICON_ERROR, buttons=(keep, remove),
-                            report=errors, default=keep)
+        answer = app.question(
+            _("User profile \"%s\" is invalid.\n"
+              "The form specification has probably changed and the saved\n"
+              "profile is incompatible now. You can either remove the profile,\n"
+              "or keep it and ask the administrator to update it.", profile.title()),
+            title=_("Invalid profile"),
+            #icon=Question.ICON_ERROR,
+            answers=(keep, remove), default=keep,
+            content='\n'.join(['%s: %s' % (param, error) for param, error in profile.errors()]),
+        )
         if answer == remove:
             if self._is_user_defined_profile(profile):
                 self._profiles.remove(profile)

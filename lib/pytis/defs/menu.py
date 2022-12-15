@@ -674,8 +674,7 @@ class _ApplicationMenuRightsBase(pytis.presentation.Specification):
                   menu_checker.check_reverse_codebook_rights(spec_name, new=True))
         if errors:
             message = ('\n'.join(errors)) + '\n\n\n'
-            pytis.form.run_dialog(pytis.form.Warning, "Rozporuplná přístupová práva k číselníku",
-                                  report=message)
+            app.warning("Rozporuplná přístupová práva k číselníku", content=message)
 
     def _before_edit_checks(self):
         self._multiaction_check()

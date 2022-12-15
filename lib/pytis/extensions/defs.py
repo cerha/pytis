@@ -178,7 +178,7 @@ def check_form():
         #     obsah += "Nejsou definovány"
         # Default select
         _get_default_select(spec)
-        pytis.form.run_dialog(pytis.form.Message, "DEFS: %s" % spec, report=obsah)
+        app.message("DEFS: %s" % spec, content=obsah)
 
 
 def cmd_check_form():
@@ -417,13 +417,12 @@ class MenuChecker(object):
                 for error in results:
                     errors.append("Specifikace %s: %s" % (name, error))
                     last_error = "%s\n%s...)" % (name, error[:width - 4])
-        pytis.form.run_dialog(pytis.form.ProgressDialog, check_specs, args=(specnames,),
-                              message='Kontroluji datové specifikace...'.ljust(width) + '\n\n\n\n',
-                              elapsed_time=True, can_abort=True)
+        app.run(check_specs, (specnames,),
+                message='Kontroluji datové specifikace...'.ljust(width) + '\n\n\n\n',
+                elapsed_time=True, can_abort=True)
         if errors:
             errors = pytis.util.remove_duplicates(errors)
-            pytis.form.run_dialog(pytis.form.Message, "Chyby ve specifikacích",
-                                  report="\n".join(errors))
+            app.message("Chyby ve specifikacích", content="\n".join(errors))
 
     def batch_check(self, reporter):
         errors = []
@@ -470,13 +469,12 @@ class MenuChecker(object):
                 for error in results:
                     errors.append("Specifikace %s: %s" % (name, error))
                     last_error = "%s\n%s...)" % (name, error[:width - 4])
-        pytis.form.run_dialog(pytis.form.ProgressDialog, check_specs, args=(specnames,),
-                              message='Kontroluji přístupová práva...'.ljust(width) + '\n\n\n\n',
-                              elapsed_time=True, can_abort=True)
+        app.run(check_specs, (specnames,),
+                message='Kontroluji přístupová práva...'.ljust(width) + '\n\n\n\n',
+                elapsed_time=True, can_abort=True)
         if errors:
             errors = pytis.util.remove_duplicates(errors)
-            pytis.form.run_dialog(pytis.form.Message, "Chyby v přístupových právech",
-                                  report="\n".join(errors))
+            app.message("Chyby v přístupových právech", content="\n".join(errors))
 
 
 class AppChecker(MenuChecker):
@@ -553,5 +551,4 @@ def cache_spec(*args, **kwargs):
     msg = '\n'.join(('Načítám specifikace (přerušte pomocí Esc).', '',
                      'Načítání je možno trvale vypnout pomocí dialogu',
                      '"Nastavení uživatelského rozhraní"'))
-    pytis.form.run_dialog(pytis.form.ProgressDialog, do, args=(get_menu_defs(),),
-                          message=msg, elapsed_time=True, can_abort=True)
+    app.run(do, args=(get_menu_defs(),), message=msg, elapsed_time=True, can_abort=True)

@@ -339,15 +339,14 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
                     startup_forms.extend(reversed([x for x, ch in zip(saved_forms, checked) if ch]))
 
         def run_startup_forms(update, startup_forms):
-            i, total = 0, len(startup_forms)
+            total = len(startup_forms)
             msg = _("Opening form: %s (%d/%d)")
-            for cls, name in startup_forms:
-                update(int(float(i) / total * 100), newmsg=msg % (name, i + 1, total,))
+            for i, (cls, name) in enumerate(startup_forms):
+                update(i, message=msg % (name, i + 1, total))
                 try:
                     run_form(cls, name)
                 except Exception as e:
                     log(OPERATIONAL, "Unable to init startup form:", (cls, name, e))
-                i += 1
         menu_items = pytis.extensions.get_menu_forms()
         if menu_items:
             # get_menu_forms() returns an empty list if DMP is not used!
@@ -359,9 +358,8 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
                         break
             startup_forms = filtered_forms
         if len(startup_forms) > 1:
-            self.run_dialog(dialog.ProgressDialog, run_startup_forms, args=(startup_forms,),
-                            title=_("Opening saved forms"),
-                            message=_("Opening form") + ' ' * 40)  # , can_abort=True)
+            app.run(run_startup_forms, args=(startup_forms,), maximum=len(startup_forms),
+                    title=_("Opening saved forms"), message=_("Opening form") + ' ' * 40)
         else:
             run_startup_forms(lambda *args, **kwargs: True, startup_forms)
         self._frame.SetTitle(self._frame_title(pytis.config.application_name))
