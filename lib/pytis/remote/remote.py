@@ -357,7 +357,6 @@ def launch_file(path):
     try:
         return _request('launch_file', path)
     except Exception as e:
-        import pytis.form
         app.error(_("Unable to open file %(filename)s: %(error)s", filename=path, error=e))
 
 
@@ -366,7 +365,6 @@ def launch_url(url):
     try:
         return _request('launch_file', url)
     except Exception:
-        import pytis.form
         app.error(_("Unable to open URL %s", url))
 
 
@@ -379,7 +377,6 @@ def open_file(filename, mode, encoding=None, encrypt=None, decrypt=False):
     try:
         return _request('open_file', filename, mode, encoding=encoding, encrypt=encrypt)
     except Exception as e:
-        import pytis.form
         app.error(_("Unable to open file %(filename)s: %(error)s", filename=filename, error=e))
 
 
@@ -400,7 +397,6 @@ def open_selected_file(directory=None, patterns=(), pattern=None, filetypes=None
         return _request('open_selected_file', directory=directory,
                         patterns=patterns, pattern=pattern, encrypt=encrypt)
     except Exception as e:
-        import pytis.form
         app.error(_("Unable to select a file for download: %s", e))
 
 
@@ -425,7 +421,6 @@ def make_selected_file(directory=None, filename=None, patterns=(), pattern=None,
                         patterns=patterns, pattern=pattern, encoding=encoding,
                         mode=mode, decrypt=decrypt)
     except Exception as e:
-        import pytis.form
         app.error(_("Unable to select a file to save: %s", e))
 
 
@@ -445,7 +440,6 @@ def select_directory(directory=None, title=_("Directory selection")):
     try:
         return _request('select_directory', directory=directory, **kwargs)
     except Exception as e:
-        import pytis.form
         app.error(_("Failed selecting directory: %s", e))
 
 
@@ -480,7 +474,6 @@ def select_file(filename=None, directory=None, title=None,
         return _request('select_file', filename=filename, directory=directory,
                         patterns=patterns, pattern=pattern, multi=multi, **kwargs)
     except Exception as e:
-        import pytis.form
         app.error(_("Failed selecting file: %s", e))
 
 
