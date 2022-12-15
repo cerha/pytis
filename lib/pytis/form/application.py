@@ -1410,10 +1410,8 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
             raise ProgramError("Invalid 'content': {}".format(content))
 
     class _ExposedFileWrapper(object):
-        def __init__(self, instance, dirname, filename):
+        def __init__(self, instance):
             self._instance = instance
-            self.dirname = dirname
-            self.filename = filename
         def __getattr__(self, name):
             return getattr(self._instance, name)
         def __enter__(self):
@@ -1422,10 +1420,11 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
             self._instance.close()
 
     def _wrap_exposed_file_wrapper(self, f):
-        # Wrap further to add context manager support to legacy ExposedFileWrapper
-        # from older Pytis2Go versions (which don't load remote clientapi.py).
         if f:
-            f = self._ExposedFileWrapper(f, *self._splitpath('remote', f.name))
+            # Further wrap the ExposedFileWrapper instance to add context manager
+            # support to legacy ExposedFileWrapper from older Pytis2Go versions
+            # (which don't load remote clientapi.py).
+            f = self._ExposedFileWrapper(f)
         return f
 
     @property
@@ -1641,6 +1640,11 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         elif cmode == 'local':
             import webbrowser
             webbrowser.open(url)
+
+    def api_splitpath(self, path):
+        # Well, rely on self.client_mode() to return the same value as
+        # for which the path was originally created.
+        return self._splitpath(self.client_mode(), path)
 
     def api_select_file(self, filename=None, filetypes=None, directory=None, context='default'):
         cmode = self.client_mode()
@@ -2573,12 +2577,10 @@ def write_selected_file(*args, **kwargs):
 
 def open_selected_file(*args, **kwargs):
     f = app.open_selected_file(*args, **_file_selection_kwargs(**kwargs))
-    if not f:
-        filename = None
-    elif hasattr(f, 'filename'):
-        filename = f.filename
+    if f:
+        filename = app.splitpath(f.name)[1]
     else:
-        filename = os.path.basename(f.name)
+        filename = None
     return f, filename
 
 def open_file(*args, **kwargs):

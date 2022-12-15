@@ -585,6 +585,26 @@ class Application(API):
         """
         pass
 
+    def splitpath(self, path):
+        """Split the path obtained from 'Application.select_file()' and similar methods.
+
+        'Application.select_file()' returns a path name, but the caller doesn't
+        know whether it comes from a local filesystem or a remote (client)
+        machine.  The same applies for 'f.name' of a file object returned by
+        'Application.open_selected_file()'.  It is not clear which path
+        separator applies for such paths.  This method should be used to split
+        such paths correctly.
+
+        Returns a pair of strings (dirname, filename).
+
+        Arguments:
+
+          path -- path to a local or remote file returned by 'select_file()' or
+            similar method.
+
+        """
+        pass
+
     def select_file(self, filename=None, filetypes=None, directory=None, context='default'):
         """Return a filename selected by the user in a GUI dialog.
 

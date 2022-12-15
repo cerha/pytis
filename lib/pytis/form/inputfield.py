@@ -1994,7 +1994,7 @@ class FileField(Invocable, InputField):
                                     context='file-field')
         if fh:
             try:
-                filename = fh.filename if hasattr(fh, 'filename') else os.path.basename(fh.name)
+                filename = app.splitpath(fh.name)[1]
                 try:
                     self._value = self._type.Data(fh, filename=filename)
                 except pytis.data.ValidationError as e:
@@ -2508,7 +2508,7 @@ class StructuredTextField(TextField):
         fh = app.open_selected_file(context='attachments')
         if fh:
             try:
-                filename = fh.filename if hasattr(fh, 'filename') else os.path.basename(f.name)
+                filename = app.splitpath(fh.name)[1]
                 if ' ' in filename or any(ord(c) > 127 for c in filename):
                     app.error(
                         title=_("Invalid file name"),
