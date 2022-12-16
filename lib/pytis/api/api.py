@@ -24,7 +24,7 @@ from __future__ import unicode_literals
 from __future__ import absolute_import
 
 import inspect
-
+import pytis.data
 
 def implements(api_class, incomplete=False):
     """Decorator for marking a class which implements a particular API.
@@ -743,6 +743,24 @@ class Application(API):
           data -- the (possibly binary) data as a basestring
           filename -- name of the file to write to, basestring
           mode -- mode for opening the file
+
+        """
+        pass
+
+    def has_access(self, name, perm=pytis.data.Permission.VIEW, column=None):
+        """Return true if the current user has given permission for given form specification.
+
+        Arguments:
+
+          name -- specification name as a string.  May also be a dual name
+            (containing `::').  In such a case, the permission is checked for both
+            names and 'column=None' is assumed regardless of the actual 'column'
+            value.
+          perm -- access permission as one of `pytis.data.Permission' constants.
+          column -- string identifier of the column to check or 'None' (no specific
+            column checked)
+
+        Raises 'ResolverError' if given specification name cannot be found.
 
         """
         pass

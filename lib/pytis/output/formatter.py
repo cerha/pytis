@@ -157,15 +157,14 @@ class _DataIterator(lcg.SubstitutionIterator):
         if codebooks:
             self._codebooks = {}
             for field_id, cb_fields, cb in codebooks:
-                permitted = pytis.form.has_access(form_name, perm=pytis.data.Permission.VIEW,
-                                                  column=field_id)
+                permitted = app.has_access(form_name, perm=pytis.data.Permission.VIEW,
+                                           column=field_id)
                 columns = []
                 secret_columns = []
                 for cb_id, _cb_label in cb_fields:
                     columns.append(cb_id)
                     if (not permitted or
-                        not pytis.form.has_access(cb, perm=pytis.data.Permission.VIEW,
-                                                  column=cb_id)):
+                        not app.has_access(cb, perm=pytis.data.Permission.VIEW, column=cb_id)):
                         secret_columns.append(cb_id)
                 self._codebooks[field_id] = (columns, secret_columns)
         super(_DataIterator, self).__init__()
@@ -282,8 +281,8 @@ class LCGFormatter(object):
                         form_name = binding.name()
                         if form_name is None:
                             continue
-                        if ((pytis.form.has_access(form_name) and
-                             pytis.form.has_access(form_name, perm=pytis.data.Permission.PRINT))):
+                        if ((app.has_access(form_name) and
+                             app.has_access(form_name, perm=pytis.data.Permission.PRINT))):
                             # I tried to use closure here, but it produced unexpected results
                             class MakeBinding(object):
 
@@ -306,8 +305,7 @@ class LCGFormatter(object):
                         codebook_dictionary[field_id] = field_dictionary = _ProxyDict()
                         for cb_id, _cb_label in cb_fields:
                             if (permitted and
-                                pytis.form.has_access(cb, perm=pytis.data.Permission.VIEW,
-                                                      column=cb_id)):
+                                app.has_access(cb, perm=pytis.data.Permission.VIEW, column=cb_id)):
                                 def cb_value(current_row=current_row, field_id=field_id,
                                              cb_id=cb_id):
                                     return current_row.cb_value(field_id, cb_id).export()
@@ -343,8 +341,7 @@ class LCGFormatter(object):
             if form is None:
                 return lcg.Content()
             colid = column.id()
-            if not pytis.form.has_access(form.name(), perm=pytis.data.Permission.VIEW,
-                                         column=colid):
+            if not app.has_access(form.name(), perm=pytis.data.Permission.VIEW, column=colid):
                 return column.type().secret_export()
             data = form.data()
             condition = form.condition()
@@ -642,7 +639,7 @@ class LCGFormatter(object):
         except ResolverError:
             return text
         bindings = view_spec.bindings()
-        bindings = [b for b in bindings if b.name() and pytis.form.has_access(b.name())]
+        bindings = [b for b in bindings if b.name() and app.has_access(b.name())]
         text += _("Column identifiers:") + "\n"
         for field in view_spec.fields():
             text += '  %s ... %s\n' % (field.id(), field.label(),)
@@ -658,8 +655,8 @@ class LCGFormatter(object):
             for b in bindings:
                 binding_id = re.sub('[^A-Za-z0-9_]', '_', b.id())
                 form_name = b.name()
-                if ((pytis.form.has_access(form_name) and
-                     pytis.form.has_access(form_name, perm=pytis.data.Permission.PRINT))):
+                if ((app.has_access(form_name) and
+                     app.has_access(form_name, perm=pytis.data.Permission.PRINT))):
                     text += '  ${Binding.%s.table} ... %s\n' % (binding_id, b.title(),)
                     text += ('  ${Binding.%s.data.%s} ... %s\n' %
                              (binding_id, cid, b.title(),))

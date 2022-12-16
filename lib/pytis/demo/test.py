@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2019-2020 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2019-2022 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2012 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -89,21 +89,17 @@ class _TestBase:
                   'pytis_update_rights_redundancy',):
             self._query("select %s()" % (f,))
 
-    def _reload_rights(self):
-        import pytis.form.application
-        pytis.form.application.init_access_rights(pytis.data.DBConnection(**_connection_data))
-
     def _check_rights(self, expected_rights):
         for shortname, permission, column, permitted in expected_rights:
-            assert pytis.form.action_has_access(shortname, permission, column) == permitted
+            assert pytis.form.app.action_has_access(shortname, permission, column) == permitted
             if shortname[:5] == 'form/':
                 rights = self._resolver.specification(shortname[5:]).data_spec().access_rights()
                 assert rights.permitted(permission, (pytis.config.dbuser,), column=column) == permitted
 
     def _read_rights(self):
-        import pytis.form.application
-        self._reload_rights()
-        access_rights = pytis.form.application._access_rights
+        import pytis.form
+        pytis.form.app._init_access_rights()
+        access_rights = pytis.form.app._access_rights
         spec_rights = pytis.presentation.Specification._access_rights
         return access_rights, spec_rights
 

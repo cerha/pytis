@@ -49,7 +49,7 @@ from .screen import (
     popup_menu, wx_focused_window, get_icon,
 )
 from .application import (
-    current_form, has_access, message, run_form, top_window
+    current_form, message, run_form, top_window
 )
 _ = translations('pytis-wx')
 
@@ -1075,10 +1075,10 @@ class MultiSideForm(MultiForm):
         # tabs might work.
         return [binding for binding in self._main_form.bindings()
                 # Note: binding.name() is None for web forms.
-                if binding.name() is None or has_access(binding.name())]
+                if binding.name() is None or app.has_access(binding.name())]
 
     def _create_subform(self, parent, binding):
-        if binding.name() and not has_access(binding.name()):
+        if binding.name() and not app.has_access(binding.name()):
             return None
         kwargs = dict(guardian=self, binding=binding, main_form=self._main_form)
         if binding.single():
@@ -1131,7 +1131,7 @@ class MultiSideForm(MultiForm):
                                                                     _command_handler=self),
                                state=lambda b=b: b.id() in bindings)
                      for b in sorted(self._subform_bindings(), key=lambda b: b.title())
-                     if b.name() is None or has_access(b.name())])
+                     if b.name() is None or app.has_access(b.name())])
 
     def _on_tab_mouse_right(self, event):
         selection = event.GetSelection()

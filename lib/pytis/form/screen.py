@@ -1174,12 +1174,12 @@ class MItem(_TitledMenuObject):
             command = pytis.form.Application.COMMAND_HANDLED_ACTION
             function_name = components[1]
             arguments = dict(handler=find_symbol(function_name),
-                             enabled=lambda: pytis.form.action_has_access(action))
+                             enabled=lambda: pytis.form.app.action_has_access(action))
         elif kind == 'proc':
             command = pytis.form.Application.COMMAND_RUN_PROCEDURE
             proc_name, spec_name = components[1], components[2]
             arguments = dict(proc_name=proc_name, spec_name=spec_name,
-                             enabled=lambda: pytis.form.action_has_access(action))
+                             enabled=lambda: pytis.form.app.action_has_access(action))
         elif kind == 'NEW_RECORD':
             command = pytis.form.Application.COMMAND_NEW_RECORD
             arguments = dict(name=components[1])
@@ -2097,7 +2097,7 @@ class HelpProc(object):
 
     def __call__(self, **kwargs):
         action = 'proc/%s/%s/' % (self._func.__name__, self._func.__module__)
-        if not pytis.form.action_has_access(action):
+        if not pytis.form.app.action_has_access(action):
             app.error(_(u"You don't have priviledges to invoke the action '%s'.\n"
                         u"Please contact the access rights administrator.") % (action,))
         else:

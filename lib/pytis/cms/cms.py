@@ -36,6 +36,7 @@ import pytis.data as pd
 import pytis.presentation as pp
 import pytis.util
 from pytis.presentation import Field, VGroup, Binding, Action, CodebookSpec, computer
+from pytis.api import app
 
 _ = pytis.util.translations('pytis-defs')
 
@@ -314,11 +315,10 @@ class Menu(Specification):
         storage = os.environ.get('PYTIS_CMS_ATTACHMENTS_STORAGE')
         if storage and record['identifier'].value():
             if storage.startswith('http://') or storage.startswith('https://'):
-                import pytis.form
                 uri = storage + '/' + record['identifier'].value()
                 spec_name = self._action_spec_name()
-                readonly = not (pytis.form.has_access(spec_name, pytis.data.Permission.UPDATE) or
-                                pytis.form.has_access(spec_name, pytis.data.Permission.INSERT))
+                readonly = not (app.has_access(spec_name, pytis.data.Permission.UPDATE) or
+                                app.has_access(spec_name, pytis.data.Permission.INSERT))
                 return pp.HttpAttachmentStorage(uri, readonly=readonly)
             elif storage.startswith('db:'):
                 table, column_id = storage.split(':')[1:]
@@ -395,8 +395,7 @@ class Menu(Specification):
                 try:
                     resources = storage.resources()
                 except pp.AttachmentStorage.StorageError as e:
-                    from pytis.form import message
-                    message(_("Chyba přísutu k úložišti příloh: %s") % e, beep_=True)
+                    app.echo(_("Chyba přísutu k úložišti příloh: %s", e), kind='error')
                     resources = ()
             else:
                 resources = ()

@@ -45,6 +45,7 @@ import pytis
 import pytis.data as pd
 import pytis.form
 import pytis.util
+from pytis.api import app
 
 from pytis.util import log, OPERATIONAL, translations, ProgramError
 
@@ -372,7 +373,7 @@ class HelpGenerator(object):
         return ()
 
     def _spec_help_content(self, spec_name):
-        if not pytis.form.has_access(spec_name):
+        if not app.has_access(spec_name):
             return (_("Access Denied"),
                     lcg.p(_("You don't have permissions for specification „%s“.") % spec_name))
         resolver = pytis.config.resolver

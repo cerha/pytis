@@ -61,9 +61,9 @@ from .screen import (
     DEFAULT_WINDOW_BACKGROUND_COLOUR,
 )
 from .application import (
-    Application, action_has_access, block_refresh, block_yield,
+    Application, block_refresh, block_yield,
     current_form, db_op, db_operation, decrypted_names,
-    delete_record, form_settings_manager, has_access, message, new_record,
+    delete_record, form_settings_manager, message, new_record,
     profile_manager, refresh, run_dialog, run_form, top_window,
 )
 from .dialog import (
@@ -434,10 +434,10 @@ class Form(wx.Panel, KeyHandler, CallbackHandler, CommandHandler):
         DELETE = pytis.data.Permission.DELETE
         EXPORT = pytis.data.Permission.EXPORT
         if perm == DELETE:
-            result = has_access(self.name(), perm=perm)
+            result = app.has_access(self.name(), perm=perm)
         else:
             for col in self._data.columns():
-                if has_access(self.name(), perm=perm, column=col.id()):
+                if app.has_access(self.name(), perm=perm, column=col.id()):
                     result = True
                     break
             else:
@@ -676,9 +676,9 @@ class InnerForm(Form):
         printing_form = 'printing.DirectUserOutputTemplates'
         menu = [MItem(p.title(), command=pytis.form.BrowseForm.COMMAND_PRINT(spec=p))
                 for p in print_spec
-                if action_has_access('print/%s' % (p.dmp_name(),),
-                                     perm=pytis.data.Permission.PRINT)]
-        if has_access(self.name(), perm=pytis.data.Permission.PRINT):
+                if pytis.form.app.action_has_access('print/%s' % (p.dmp_name(),),
+                                                    perm=pytis.data.Permission.PRINT)]
+        if app.has_access(self.name(), perm=pytis.data.Permission.PRINT):
             menu.append(MSeparator())
             prefill = dict(module=pytis.data.sval(name))
             menu.append(pytis.extensions.new_record_mitem(_("New report"), printing_form,
@@ -2080,7 +2080,7 @@ class RecordForm(LookupForm):
             if fid not in layout_field_ids:
                 continue
             codebook = field.codebook()
-            if codebook and not has_access(codebook) and field.computer() is None:
+            if codebook and not app.has_access(codebook) and field.computer() is None:
                 editable = field.editable()
                 if callable(editable):
                     editable = editable(self._row)
