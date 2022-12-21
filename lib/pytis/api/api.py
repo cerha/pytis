@@ -456,9 +456,10 @@ class Application(API):
           title -- window title as a string.
           fields -- sequence of form field specifications as
             'pytis.presentation.Field' instances.
-          prefill -- initial field values as a dictionary keyed by field id
-            with values of the corresponding inner Python type (same as in
-            'pytis.presentation.PresentedRow' constructor).
+          prefill -- initial field values as a dictionary or None.  The
+            dictionary keys are field identifiers and values are either the
+            corresponding internal Python values valid for the fields's data
+            type or 'pytis.data.Value' instances directly.
           layout -- form layout as in 'pytis.presentation.ViewSpec'
             constructor.
           check -- form check function as in 'pytis.presentation.ViewSpec'
@@ -469,6 +470,26 @@ class Application(API):
             avoids this initial selection.
 
         Returns a 'pp.PresentedRow' instance containing field values or None if
+        the user cancels the form.
+
+        """
+        pass
+
+    def edit_record(self, name, key, set_values=None, transaction=None):
+        """Edit record in a modal form.
+
+        Arguments:
+
+          name -- specification name as a string.
+          key -- record key as a 'pytis.data.Value' instance.
+          set_values -- dictionary of row values to change in openened form (or
+            None).  The dictionary keys are field identifiers and values are
+            either the corresponding internal Python values valid for the
+            fields's data type or 'pytis.data.Value' instances directly.  These
+            values will not affect the initial row state and thus will appear
+            as changed to the user.
+
+        Returns a 'pp.PresentedRow' instance of the updated record or None if
         the user cancels the form.
 
         """

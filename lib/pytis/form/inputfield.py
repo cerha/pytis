@@ -1458,8 +1458,7 @@ class GenericCodebookField(GenericEnumerationField):
     def _reload_enumeration(self):
         pass
 
-    def _select_row_arg(self):
-        """Return the value for RecordForm 'select_row' argument."""
+    def _cb_key(self):
         value = self._row[self.id()]
         if self._valid() and value.value():
             return {self._type.enumerator().value_column(): value}
@@ -1479,7 +1478,7 @@ class GenericCodebookField(GenericEnumerationField):
         else:
             condition = validity_condition or runtime_filter_condition
         result = run_form(pytis.form.CodebookForm, self._cb_name, begin_search=begin_search,
-                          select_row=self._select_row_arg(), transaction=self._row.transaction(),
+                          select_row=self._cb_key(), transaction=self._row.transaction(),
                           condition=condition, arguments=self._codebook_arguments())
         if result:  # may be None or False!
             self._set_value(result.format(enumerator.value_column()))
@@ -1791,7 +1790,7 @@ class ListField(GenericCodebookField, CallbackHandler):
                           _("Open form for new codebook record insertion.")),
                 UICommand(Application.COMMAND_RUN_FORM(form_class=pytis.form.BrowseForm,
                                                        name=self._cb_name,
-                                                       select_row=self._select_row_arg()),
+                                                       select_row=self._cb_key()),
                           _("Show the entire table"),
                           _("Open the codebook in a standalone form.")),
                 )
@@ -1848,9 +1847,8 @@ class ListField(GenericCodebookField, CallbackHandler):
                 kwargs['transaction'] = transaction
             on_edit_record(row=self._current_row(), **kwargs)
         else:
-            run_form(pytis.form.PopupEditForm, self._cb_name,
-                     select_row=self._select_row_arg(),
-                     set_values=prefill, transaction=transaction)
+            app.edit_record(self._cb_name, self._cb_key(),
+                            set_values=prefill, transaction=transaction)
         self._reload_enumeration()
         self._run_callback(self.CALL_LIST_CHANGE, self._row)
         self.set_focus()

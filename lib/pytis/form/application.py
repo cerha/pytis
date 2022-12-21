@@ -1616,6 +1616,10 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
                         prefill=prefill, layout=layout, check=check or (),
                         avoid_initial_selection=noselect)
 
+    def api_edit_record(self, name, key, set_values=None, transaction=None):
+        return run_form(pytis.form.PopupEditForm, name, select_row=key, set_values=set_values,
+                        transaction=transaction)
+
     def api_run(self, function, args=(), kwargs={}, over=None, title=None, message=None,
                 progress=True, maximum=None, elapsed_time=False, estimated_time=False,
                 remaining_time=False, can_abort=False, new_thread=False):
