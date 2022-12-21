@@ -1409,6 +1409,11 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         return self._input(t, title, label, default=default, width=width,
                            descr=descr, noselect=noselect)
 
+    def api_input_form(self, title, fields, prefill=None, layout=None, check=None, noselect=False):
+        return run_form(pytis.form.InputForm, title=title, fields=fields,
+                        prefill=prefill, layout=layout, check=check or (),
+                        avoid_initial_selection=noselect)
+
     def api_run(self, function, args=(), kwargs={}, title=None, message=None, progress=True,
                 maximum=100, elapsed_time=False, estimated_time=False, remaining_time=False,
                 can_abort=False):

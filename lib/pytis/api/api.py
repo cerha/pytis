@@ -431,6 +431,32 @@ class Application(API):
         """
         pass
 
+    def input_form(self, title, fields, prefill=None, layout=None, check=None, noselect=False):
+        """Display modal form to collect user input from user defined fields.
+
+        Arguments:
+
+          title -- window title as a string.
+          fields -- sequence of form field specifications as
+            'pytis.presentation.Field' instances.
+          prefill -- initial field values as a dictionary keyed by field id
+            with values of the corresponding inner Python type (same as in
+            'pytis.presentation.PresentedRow' constructor).
+          layout -- form layout as in 'pytis.presentation.ViewSpec'
+            constructor.
+          check -- form check function as in 'pytis.presentation.ViewSpec'
+            constructor.
+          noselect -- the initial input field values are by default initially
+            selected when the field is entered, which results in overwriting
+            the whole value when the user starts typing.  Passing True here
+            avoids this initial selection.
+
+        Returns a 'pp.PresentedRow' instance containing field values or None if
+        the user cancels the form.
+
+        """
+        pass
+
     def run(self, function, args=(), kwargs={}, title=None, message=None, progress=True,
             maximum=100, elapsed_time=False, estimated_time=False, remaining_time=False,
             can_abort=False):
