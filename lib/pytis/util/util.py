@@ -895,7 +895,8 @@ def argument_names(callable):
     if sys.version_info[0] == 2:
         args = tuple(inspect.getargspec(callable)[0])
     else:
-        args = tuple(inspect.signature(callable).parameters)
+        args = [a.name for a in inspect.signature(callable).parameters.values()
+                if a.kind in (a.KEYWORD_ONLY, a.POSITIONAL_ONLY, a.POSITIONAL_OR_KEYWORD)]
     if args and args[0] == 'self':
         args = args[1:]
     return tuple(args)
