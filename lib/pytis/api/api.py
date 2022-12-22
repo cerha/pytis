@@ -452,7 +452,6 @@ class Application(API):
         """Display modal form to collect user input from user defined fields.
 
         Arguments:
-
           title -- window title as a string.
           fields -- sequence of form field specifications as
             'pytis.presentation.Field' instances.
@@ -479,7 +478,6 @@ class Application(API):
         """Edit record in a modal form.
 
         Arguments:
-
           name -- specification name as a string.
           key -- record key as a 'pytis.data.Value' instance.
           set_values -- dictionary of row values to change in openened form (or
@@ -491,6 +489,49 @@ class Application(API):
 
         Returns a 'pp.PresentedRow' instance of the updated record or None if
         the user cancels the form.
+
+        """
+        pass
+
+    def run_form(self, name, select_row=None, multi=True, sorting=None, filter=None,
+                 condition=None, profile=None, binding=None):
+        """Display given form in the main application frame.
+
+        Arguments:
+          name -- specification name as a string.
+          select_row -- the row to be intially selected within the opened form.
+            It may be a 'pytis.data.Value' instance (the row key), their tuple
+            (a multi-column key), a non-negative integer (the ordinal position
+            of the row to be selected starting from zero), a dictionary of
+            'pytis.data.Value' instances keyed by column ids (to select the
+            first row with matching values), 'pytis.data.Row' instance (its key
+            columns will be used to get the row key) or None to perform no
+            initial row selection.
+          multi -- iff True, prefer multiform over plain browse form.  This
+            means that a multiform (incuding side forms) will be used when the
+            specification defines 'bindings'.  If there are no bindings or
+            'multi' is set to False, just a simple form without side forms will
+            be opened.
+          sorting -- specification of initial form sorting in the same format
+            as the argument 'sorting' of the 'Profile' constructor.  If not
+            None, overrides the sorting of the default form profile.
+          filter -- initial filter condition as a 'pytis.data.Operator'
+            instance.  This filter is indicated to the user and can be modified
+            as any other user-defined filter (as opposed to 'condition').  If
+            not None, overrides the filter of the default form profile.
+          condition -- 'pytis.data.Operator' instance filtering the rows of the
+            underlying data object.  This condition is not indicated to the user
+            and it is not possible to turn it of from the UI.
+          profile -- id of the initial profile to be loaded.  If not None, it
+            must be one of the available system profiles (defined in
+            specification) and the arguments 'filter' and 'sorting' must be
+            None (they are determined by the profile).
+          binding -- id of the side form binding to be initially selected.
+
+        The form type is selected automatically.  If name contains '::' (the
+        legacy dual form separator), the form is a dual form.  If the form
+        specification defines 'bindings', the form is a multiform with side
+        form tabs.  Otherwise the form is a plain browse form (simple table).
 
         """
         pass

@@ -1620,6 +1620,24 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         return run_form(pytis.form.PopupEditForm, name, select_row=key, set_values=set_values,
                         transaction=transaction)
 
+    def api_run_form(self, name, select_row=None, multi=True, sorting=None, filter=None,
+                     condition=None, profile=None, binding=None):
+        form_class = pytis.form.BrowseForm
+        kwargs = {}
+        if '::' in name:
+            form_class = pytis.form.BrowseDualForm
+        elif multi:
+            try:
+                specification = pytis.config.resolver.specification(name)
+            except ResolverError:
+                pass
+            else:
+                if specification.view_spec().bindings():
+                    form_class = pytis.form.MultiBrowseDualForm
+                    kwargs = dict(binding=binding)
+        return run_form(form_class, name, select_row=select_row, sorting=sorting,
+                        filter=filter, condition=condition, profile_id=profile, **kwargs)
+
     def api_run(self, function, args=(), kwargs={}, over=None, title=None, message=None,
                 progress=True, maximum=None, elapsed_time=False, estimated_time=False,
                 remaining_time=False, can_abort=False, new_thread=False):
