@@ -1638,6 +1638,16 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         return run_form(form_class, name, select_row=select_row, sorting=sorting,
                         filter=filter, condition=condition, profile_id=profile, **kwargs)
 
+    def api_codebook(self, name, select_row=0, columns=None, sorting=None, filter=None,
+                     condition=None, multirow=False, begin_search=None, transaction=None):
+        if multirow:
+            form_class = pytis.form.SelectRowsForm
+        else:
+            form_class = pytis.form.CodebookForm
+        return run_form(form_class, name, select_row=select_row, columns=columns,
+                        sorting=sorting, filter=filter, condition=condition,
+                        begin_search=begin_search, transaction=transaction)
+
     def api_run(self, function, args=(), kwargs={}, over=None, title=None, message=None,
                 progress=True, maximum=None, elapsed_time=False, estimated_time=False,
                 remaining_time=False, can_abort=False, new_thread=False):

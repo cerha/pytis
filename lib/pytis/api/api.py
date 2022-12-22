@@ -536,6 +536,42 @@ class Application(API):
         """
         pass
 
+    def codebook(self, name, select_row=0, columns=None, sorting=None, filter=None,
+                 condition=None, multirow=False, begin_search=None, transaction=None):
+        """Display a modal codebook selection form and return the selected row.
+
+        Arguments:
+          name -- specification name as a string.
+          select_row -- the row to be intially selected within the opened form.
+            It may be a 'pytis.data.Value' instance (the row key), their tuple
+            (a multi-column key), a non-negative integer (the ordinal position
+            of the row to be selected starting from zero), a dictionary of
+            'pytis.data.Value' instances keyed by column ids (to select the
+            first row with matching values), 'pytis.data.Row' instance (its key
+            columns will be used to get the row key) or None to perform no
+            initial row selection.
+          columns -- sequence of column identifiels to override the 'columns'
+            defined by specification.
+          sorting -- specification of initial form sorting in the same format
+            as the argument 'sorting' of the 'Profile' constructor.  If not
+            None, overrides the sorting of the default form profile.
+          filter -- initial filter condition as a 'pytis.data.Operator'
+            instance.  This filter is indicated to the user and can be modified
+            as any other user-defined filter (as opposed to 'condition').  If
+            not None, overrides the filter of the default form profile.
+          condition -- 'pytis.data.Operator' instance filtering the rows of the
+            underlying data object.  This condition is not indicated to the user
+            and it is not possible to turn it of from the UI.
+          multirow -- allow selection of multiple rows.
+          begin_search -- id of the column on which to start incremental seach.
+          transaction -- DB transaction to run in.
+
+        Returns the selected row as 'pytis.data.Row' instance or a tuple of
+        such rows when 'multirow' is True.  Returns None when the user cancels
+        the form.
+
+        """
+
     def run(self, function, args=(), kwargs={}, over=None, title=None, message=None,
             progress=True, maximum=None, elapsed_time=False, estimated_time=False,
             remaining_time=False, can_abort=False, new_thread=False):
