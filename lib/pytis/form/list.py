@@ -73,7 +73,7 @@ from .screen import (
 )
 from .search import sfs_columns
 from .application import (
-    Application, aggregated_views_manager, block_refresh, current_form,
+    Application, aggregated_views_manager, current_form,
     message, refresh, run_dialog, run_form,
 )
 from .grid import TableRowIterator, GridTable
@@ -1500,7 +1500,9 @@ class ListForm(RecordForm, TitledForm, Refreshable):
     # Zpracování příkazů
 
     def _cmd_delete_record(self):
-        if block_refresh(lambda: super(ListForm, self)._cmd_delete_record()):
+        with Refreshable.block_refresh():
+            result = super(ListForm, self)._cmd_delete_record()
+        if result:
             r = self._current_cell()[0]
             if r < self._table.number_of_rows(min_value=(r + 2)) - 1:
                 self._select_cell(row=r)

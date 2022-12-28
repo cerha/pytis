@@ -30,6 +30,7 @@ from past.builtins import basestring
 from builtins import object
 from future.utils import python_2_unicode_compatible
 
+import contextlib
 import copy
 import lcg
 import time
@@ -61,7 +62,7 @@ from .screen import (
     DEFAULT_WINDOW_BACKGROUND_COLOUR,
 )
 from .application import (
-    Application, block_refresh, block_yield,
+    Application, block_yield,
     current_form, db_op, db_operation, decrypted_names,
     delete_record, form_settings_manager, message, new_record,
     profile_manager, refresh, run_dialog, run_form, top_window,
@@ -755,22 +756,16 @@ class Refreshable(object):
     _block_refresh = 0
 
     @classmethod
-    def block_refresh(cls, function, *args, **kwargs):
-        """Block performing any refresh during given 'function' runs.
-
-        All arguments are passed on th the called function.
-
-        Returns: The result returned by the function.
+    @contextlib.contextmanager
+    def block_refresh(cls):
+        """Block performing any refresh within this contextmanager scope.
 
         Refresh is blocked globally for all existing forms.
 
         """
         Refreshable._block_refresh += 1
-        try:
-            result = function(*args, **kwargs)
-        finally:
-            Refreshable._block_refresh -= 1
-        return result
+        yield
+        Refreshable._block_refresh -= 1
 
     def refresh(self, interactive=False):
         """Refresh form data from data source.
@@ -1275,10 +1270,12 @@ class LookupForm(InnerForm):
         if condition is not None and next:
             direction = back and pytis.data.BACKWARD or pytis.data.FORWARD
         else:
-            direction, condition = block_refresh(
-                lambda: run_dialog(SearchDialog, self._lf_sfs_columns(),
-                                   self.current_row(), col=self._current_column_id(),
-                                   condition=self._lf_search_condition))
+            with Refreshable.block_refresh():
+                direction, condition = run_dialog(
+                    SearchDialog, self._lf_sfs_columns(), self.current_row(),
+                    col=self._current_column_id(),
+                    condition=self._lf_search_condition,
+                )
         if direction is not None:
             self._lf_search_condition = condition
             self._search(condition, direction)

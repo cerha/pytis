@@ -91,9 +91,7 @@ from .application import (  # noqa: F401
     recent_forms_menu, wx_frame, profile_manager, form_settings_manager,
     aggregated_views_manager, decrypted_names, log_user_action,
     frame_title, close_forms, set_status, refresh_status, message,
-    global_keymap, block_refresh,
-    has_access, wx_yield_,
-    block_yield, built_in_status_fields,
+    global_keymap, has_access, wx_yield_, block_yield, built_in_status_fields,
     select_file, select_files, select_directory, make_selected_file, write_selected_file,
     open_selected_file, open_file, write_file, launch_file,
     open_data_as_file, launch_url

@@ -1190,7 +1190,8 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
             wx_yield_()
             proc = pytis.config.resolver.get_object(spec_name, proc_name)
             if block_refresh_:
-                result = block_refresh(proc, *args, **kwargs)
+                with pytis.form.Refreshable.block_refresh():
+                    result = proc(*args, **kwargs)
             else:
                 result = proc(*args, **kwargs)
             if False:
@@ -2429,15 +2430,6 @@ def global_keymap():
         return pytis.form.app.keymap
     except AttributeError:
         return Keymap()
-
-
-def block_refresh(function, *args, **kwargs):
-    """Zablokuj veškerý refresh po dobu provádění funkce 'function'.
-
-    Vrací: výsledek vrácený volanou funkcí.
-
-    """
-    return pytis.form.Refreshable.block_refresh(function, *args, **kwargs)
 
 
 _yield_lock = None
