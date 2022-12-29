@@ -1775,9 +1775,9 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
 
     def api_new_record(self, specification, prefill=None, inserted_data=None, multi_insert=True,
                        copied_row=None, set_values=None, block_on_new_record=False,
-                       spec_kwargs={}, transaction=None):
+                       transaction=None):
         name = self._spec_name(specification)
-        view = pytis.config.resolver.get(name, 'view_spec', **spec_kwargs)
+        view = pytis.config.resolver.get(name, 'view_spec')
         kwargs = dict(prefill=prefill)
         if copied_row and view.on_copy_record():
             on_new_record = view.on_copy_record()
@@ -1799,7 +1799,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         return run_form(pytis.form.PopupInsertForm, name,
                         prefill=prefill, inserted_data=inserted_data,
                         multi_insert=multi_insert, transaction=transaction,
-                        set_values=set_values, spec_kwargs=spec_kwargs)
+                        set_values=set_values)
 
     def api_show_record(self, specification, row):
         assert isinstance(row, (PresentedRow, pytis.data.Row, pytis.data.Value)), row

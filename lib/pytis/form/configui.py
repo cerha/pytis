@@ -183,8 +183,7 @@ class ConfigForm(PopupEditForm):
         fields = [Field(option, _LABELS.get(option, option), descr=descr(option),
                         **_FIELDSPEC_KWARGS.get(option, {}))
                   for option in self._layout().order()]
-        return ViewSpec(_("User interface settings"),
-                        fields, layout=self._layout(), **self._spec_kwargs)
+        return ViewSpec(_("User interface settings"), fields, layout=self._layout())
 
     def _create_data_object(self):
         columns = [pytis.data.ColumnSpec(option, pytis.config.option(option).type())

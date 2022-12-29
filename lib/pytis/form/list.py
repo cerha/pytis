@@ -3177,8 +3177,7 @@ class AggregationForm(BrowseForm):
         return ViewSpec(view.title(), fields)
 
     def _create_data_object(self):
-        return pytis.util.data_object(self._name, spec_kwargs=self._spec_kwargs,
-                                      kwargs=self._data_kwargs)
+        return pytis.util.data_object(self._name, kwargs=self._data_kwargs)
 
     def _current_arguments(self):
         return self._af_aggregation_arguments
