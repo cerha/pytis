@@ -155,8 +155,6 @@ class Form(wx.Panel, KeyHandler, CallbackHandler, CommandHandler):
             klávesových událostí \"nahoru\".  Typicky je to formulář, který
             tuto instanci vytváří.
           transaction -- transaction to use when manipulating data
-          spec_kwargs -- dictionary of keyword arguments passed to the view
-            specification constructor.
           full_init -- iff false, don't perform full form initialization.  This
             means performing just necessary wx initialization to make the form
             available without creating its content and data structures.  This
@@ -217,14 +215,12 @@ class Form(wx.Panel, KeyHandler, CallbackHandler, CommandHandler):
     def __repr__(self):
         return str(self)
 
-    def _full_init(self, resolver, name, guardian=None, transaction=None,
-                   spec_kwargs={}, **kwargs):
+    def _full_init(self, resolver, name, guardian=None, transaction=None, **kwargs):
         import pytis.extensions
         start_time = pytis.data.DateTime.now(without_timezone=True)
         self._resolver = resolver
         self._guardian = guardian or self.Parent
         self._governing_transaction = transaction
-        self._spec_kwargs = copy.copy(spec_kwargs)
         KeyHandler.__init__(self)
         CallbackHandler.__init__(self)
         try:
@@ -278,13 +274,13 @@ class Form(wx.Panel, KeyHandler, CallbackHandler, CommandHandler):
 
     def _create_view_spec(self):
         t = time.time()
-        spec = self._resolver.get(self._name, 'view_spec', **self._spec_kwargs)
+        spec = self._resolver.get(self._name, 'view_spec')
         log(EVENT, 'Specification read in %.3fs:' % (time.time() - t), spec)
         assert isinstance(spec, ViewSpec)
         return spec
 
     def _create_data_object(self):
-        return pytis.util.data_object(self._name, spec_kwargs=self._spec_kwargs)
+        return pytis.util.data_object(self._name)
 
     def _create_form(self):
         # Build the form from parts
