@@ -1148,15 +1148,13 @@ def load_module(module_name):
 
 # TODO: kwargs -> **kwargs
 
-def data_object(spec, spec_kwargs=None, kwargs=None):
+def data_object(spec, kwargs=None):
     """Create a data object for given specification.
 
     Arguments:
 
       spec -- specification name as a string or a 'pytis.data.DataFactory'
         instance.
-      spec_kwargs -- a dictionary of keyword arguments passed to the
-        specification.
       kwargs -- a dictionary of keyword arguments passed to the data object
         constructor.  The argument 'connection_data' is added automatically
         if the data class is derived from 'pytis.data.DBData'.
@@ -1167,9 +1165,7 @@ def data_object(spec, spec_kwargs=None, kwargs=None):
     import pytis
     import pytis.data
     if isinstance(spec, basestring):
-        if spec_kwargs is None:
-            spec_kwargs = {}
-        factory = pytis.config.resolver.get(spec, 'data_spec', **spec_kwargs)
+        factory = pytis.config.resolver.get(spec, 'data_spec')
     else:
         factory = spec
     assert isinstance(factory, pytis.data.DataFactory)

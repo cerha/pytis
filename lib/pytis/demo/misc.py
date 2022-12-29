@@ -116,22 +116,6 @@ class InputFields(Specification):
     title = _("Enumeration fields")
     data_cls = pd.RestrictedMemData
 
-    def __init__(self, resolver, title=_("Field Types")):
-        """Dynamically parametrized specification example.
-
-        The 'title' argument is just an example how to make the specification
-        dynamically customizable.  In this case it just sets the title, but any
-        arguments can be used to parametrize specification construction.  These
-        parameters can be passed through the form constructor argument
-        'spec_kwargs'.  This makes it possible to use a single specification in
-        different contexts with different parameters.  In most situations, you
-        want to create more specification classes (e.g. derived classes), but
-        parametrization may be more practical in certain use cases.
-
-        """
-        self.title = title
-        super(InputFields, self).__init__(resolver)
-
     def fields(self):
         return (
             # Basic fields

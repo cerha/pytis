@@ -644,9 +644,7 @@ class Application(API):
         pass
 
     def new_record(self, specification, prefill=None, inserted_data=None, multi_insert=True,
-                   copied_row=None, set_values=None, block_on_new_record=False,
-                   # spec_kwargs is here temporarily just for backwards compatibility...
-                   spec_kwargs={}, transaction=None):
+                   copied_row=None, set_values=None, block_on_new_record=False, transaction=None):
         """Insert a new record using a modal form.
 
         Arguments:
