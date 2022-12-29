@@ -572,6 +572,25 @@ class Application(API):
 
         """
 
+    def run_procedure(self, spec_name, proc_name, *args, **kwargs):
+        """Run application defined procedure.
+
+        Arguments:
+
+          spec_name -- specification name as a string.
+
+          proc_name -- name of the procedure within the specification.
+
+        All other arguments, including keyword arguments, are passed on to the
+        invoked procedure, except for the keyword argument 'block_refresh'.
+        When 'block_refresh' is passed and is True, automatic refreshing of all
+        currently open forms will be blocked until the procedure returns.
+
+        Returns the value returned by the procedure.
+
+        """
+        pass
+
     def run(self, function, args=(), kwargs={}, over=None, title=None, message=None,
             progress=True, maximum=None, elapsed_time=False, estimated_time=False,
             remaining_time=False, can_abort=False, new_thread=False):

@@ -1171,13 +1171,13 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         return result
 
     def _can_run_procedure(self, spec_name, proc_name, args=(),
-                           block_refresh_=False, enabled=None, **kwargs):
+                           block_refresh=False, enabled=None, **kwargs):
         if not self._public_spec(spec_name):
             return False
         return enabled is None and True or enabled(**kwargs)
 
     def _cmd_run_procedure(self, spec_name, proc_name, args=(),
-                           block_refresh_=False, enabled=None, **kwargs):
+                           block_refresh=False, enabled=None, **kwargs):
         # Dokumentace viz funkce run_procedure().
         result = None
         try:
@@ -1189,7 +1189,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
             focused = wx_focused_window()
             wx_yield_()
             proc = pytis.config.resolver.get_object(spec_name, proc_name)
-            if block_refresh_:
+            if block_refresh:
                 with pytis.form.Refreshable.block_refresh():
                     result = proc(*args, **kwargs)
             else:
@@ -1649,6 +1649,12 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
                         sorting=sorting, filter=filter, condition=condition,
                         begin_search=begin_search, transaction=transaction)
 
+    def api_run_procedure(self, spec_name, proc_name, *args, **kwargs):
+        assert 'args' not in kwargs, "The keyword argument 'args' is reserved for internal use!"
+        return Application.COMMAND_RUN_PROCEDURE.invoke(spec_name=spec_name,
+                                                        proc_name=proc_name,
+                                                        args=args, **kwargs)
+
     def api_run(self, function, args=(), kwargs={}, over=None, title=None, message=None,
                 progress=True, maximum=None, elapsed_time=False, estimated_time=False,
                 remaining_time=False, can_abort=False, new_thread=False):
@@ -2042,29 +2048,6 @@ def run_form(form_class, name=None, **kwargs):
         message(_("Opening form refused."), beep_=True)
         return False
     return cmd.invoke(**kwargs)
-
-
-def run_procedure(spec_name, proc_name, *args, **kwargs):
-    """Spusť proceduru.
-
-    Argumenty:
-
-      spec_name -- jméno specifikace pro resolver.
-
-      proc_name -- jméno procedury, která má být spuštěna.
-
-    Všechny další argumenty (včetně klíčových) budou předány spouštěné
-    proceduře.  Výjimkou je klíčový argument 'block_refresh_', který předán
-    není, ale pokud je pravdivý, tak bude volání procedury obaleno voláním
-    'block_refresh()'.
-
-    Návratová hodnota procedury je návratovou hodnotou volání této metody.
-
-    """
-    assert 'args' not in kwargs, "The keyword argument 'args' is reserved for internal use!"
-    return Application.COMMAND_RUN_PROCEDURE.invoke(spec_name=spec_name,
-                                                    proc_name=proc_name,
-                                                    args=args, **kwargs)
 
 
 def new_record(name, prefill=None, inserted_data=None, multi_insert=True,
@@ -2589,3 +2572,8 @@ def open_data_as_file(data, suffix, decrypt=False):
 
 def has_access(name, perm=pd.Permission.VIEW, column=None):
     return app.has_access(name, perm=perm, column=column)
+
+def run_procedure(spec_name, proc_name, *args, **kwargs):
+    if 'block_refresh_' in kwargs:
+        kwargs['block_refresh'] = kwargs.pop('block_refresh_')
+    return app.run_procedure(spec_name, proc_name, *args, **kwargs)
