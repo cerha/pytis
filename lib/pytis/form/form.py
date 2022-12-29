@@ -162,8 +162,6 @@ class Form(wx.Panel, KeyHandler, CallbackHandler, CommandHandler):
           transaction -- transaction to use when manipulating data
           spec_kwargs -- dictionary of keyword arguments passed to the view
             specification constructor.
-          data_kwargs -- dictionary of additional keyword arguments passed to
-            the data object constructor.
           full_init -- iff false, don't perform full form initialization.  This
             means performing just necessary wx initialization to make the form
             available without creating its content and data structures.  This
@@ -225,14 +223,13 @@ class Form(wx.Panel, KeyHandler, CallbackHandler, CommandHandler):
         return str(self)
 
     def _full_init(self, resolver, name, guardian=None, transaction=None,
-                   spec_kwargs={}, data_kwargs={}, **kwargs):
+                   spec_kwargs={}, **kwargs):
         import pytis.extensions
         start_time = pytis.data.DateTime.now(without_timezone=True)
         self._resolver = resolver
         self._guardian = guardian or self.Parent
         self._governing_transaction = transaction
         self._spec_kwargs = copy.copy(spec_kwargs)
-        self._data_kwargs = copy.copy(data_kwargs)
         KeyHandler.__init__(self)
         CallbackHandler.__init__(self)
         try:
@@ -290,8 +287,7 @@ class Form(wx.Panel, KeyHandler, CallbackHandler, CommandHandler):
         return spec
 
     def _create_data_object(self):
-        return pytis.util.data_object(self._name, spec_kwargs=self._spec_kwargs,
-                                      kwargs=self._data_kwargs)
+        return pytis.util.data_object(self._name, spec_kwargs=self._spec_kwargs)
 
     def _create_form(self):
         # Build the form from parts

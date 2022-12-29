@@ -3158,10 +3158,16 @@ class AggregationForm(BrowseForm):
             label = labels[column_id] + '/' + agg_labels[op]
             operations.append((op, column_id, agg_column_id))
             fields.append(Field(agg_column_id, label))
-        self._data_kwargs['operations'] = tuple(operations)
-        self._data_kwargs['column_groups'] = tuple(column_groups)
-        self._data_kwargs['condition'] = self._af_aggregation_condition
+        self._data_kwargs = dict(
+            operations=tuple(operations),
+            column_groups=tuple(column_groups),
+            condition=self._af_aggregation_condition,
+        )
         return ViewSpec(view.title(), fields)
+
+    def _create_data_object(self):
+        return pytis.util.data_object(self._name, spec_kwargs=self._spec_kwargs,
+                                      kwargs=self._data_kwargs)
 
     def _current_arguments(self):
         return self._af_aggregation_arguments
