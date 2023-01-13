@@ -151,8 +151,8 @@ class Application(pytis.presentation.Application):
                     break
                 time.sleep(0.01)
 
-        pytis.form.run_dialog(pytis.form.ProgressDialog, operation, can_abort=True)
-        pytis.form.run_dialog(pytis.form.OperationDialog, operation, kwargs=dict(count=376))
+        app.run(operation, can_abort=True)
+        app.run(operation, kwargs=dict(count=376), progress=False)
 
 
 class TestApplication(object):

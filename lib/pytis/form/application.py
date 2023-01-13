@@ -1414,12 +1414,13 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
                         prefill=prefill, layout=layout, check=check or (),
                         avoid_initial_selection=noselect)
 
-    def api_run(self, function, args=(), kwargs={}, title=None, message=None, progress=True,
-                maximum=100, elapsed_time=False, estimated_time=False, remaining_time=False,
-                can_abort=False):
+    def api_run(self, function, args=(), kwargs={}, over=None, title=None, message=None,
+                progress=True, maximum=None, elapsed_time=False, estimated_time=False,
+                remaining_time=False, can_abort=False):
         if progress:
             dlg = dialog.ProgressDialog
             dialog_kwargs = dict(
+                over=over,
                 maximum=maximum,
                 elapsed_time=elapsed_time,
                 estimated_time=estimated_time,

@@ -457,9 +457,9 @@ class Application(API):
         """
         pass
 
-    def run(self, function, args=(), kwargs={}, title=None, message=None, progress=True,
-            maximum=100, elapsed_time=False, estimated_time=False, remaining_time=False,
-            can_abort=False):
+    def run(self, function, args=(), kwargs={}, over=None, title=None, message=None,
+            progress=True, maximum=None, elapsed_time=False, estimated_time=False,
+            remaining_time=False, can_abort=False):
         """Execute a long running operation showing a progress dialog.
 
         The dialog is displayed until the operation is finished and may inform
@@ -470,6 +470,9 @@ class Application(API):
           function -- the Python function to be executed.
           args -- tuple of arguments to be passed to 'function'.
           kwargs -- dictionary of keyword arguments to be passed to 'function'.
+          over -- sequence of arguments to call 'function' repeatedly for each
+            element.  If not None, the function will be called with each item
+            as an argument preceeding 'args'.
           title -- dialog window title as a string.
           message -- the initial progress message to be displayed within the
             dialog.  The message can be further updated to indicate the
