@@ -625,7 +625,7 @@ class ProgressDialog(OperationDialog):
     def _update(self, progress=None, message=None, newmsg=None):
         # progress is a number in range from 0 to the 'maximum' passed to the constructor.
         # newmsg is for backwards compatibility. Pass 'message' in new code.
-        message = message or newmsg
+        message = message or newmsg or ''
         if message:
             message_width = self._dialog.GetFullTextExtent(message, self._dialog.GetFont())[0]
             new_width = min(message_width + 30, wx.DisplaySize()[0] - 50)
