@@ -22,6 +22,7 @@ from __future__ import unicode_literals
 import os
 import pytest
 import sys
+import time
 import wx
 
 import pytis.presentation
@@ -144,20 +145,14 @@ class Application(pytis.presentation.Application):
         if app.question("Do you want to exit now?\nAnswer `No' if you want the test to continue."):
             return
 
-        def xx(update=None):
-            print("xx() starting...")
-            a = 1
-            for i in range(1000):
-                if update:
-                    update(i // 10, str(i))
-                else:
-                    for j in range(10000):
-                        a += 1
-            print("xx() finished...")
-            return "xxxx"
+        def operation(update=None, count=1000):
+            for i in range(count):
+                if update and not update(100 * i // count, _("Processing: %d/%d", i, count)):
+                    break
+                time.sleep(0.01)
 
-        pytis.form.run_dialog(pytis.form.OperationDialog, xx)
-        pytis.form.run_dialog(pytis.form.ProgressDialog, xx)
+        pytis.form.run_dialog(pytis.form.ProgressDialog, operation, can_abort=True)
+        pytis.form.run_dialog(pytis.form.OperationDialog, operation, kwargs=dict(count=376))
 
 
 class TestApplication(object):

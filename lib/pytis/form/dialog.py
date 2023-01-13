@@ -628,9 +628,14 @@ class ProgressDialog(OperationDialog):
         if new_width > current_size.width:
             self._dialog.SetSize((new_width, current_size.height))
         if progress is None:
-            return self._dialog.Pulse(newmsg=newmsg)
+            continue_, skip = self._dialog.Pulse(newmsg=newmsg)
         else:
-            return self._dialog.Update(progress, newmsg=newmsg)
+            continue_, skip = self._dialog.Update(progress, newmsg=newmsg)
+        # Note, we currently don't support skiping (which is actually not
+        # very well documented in wx, but wx.PD_CAN_SKIP seems to work).
+        # If we want skipping, we can return an object with .skip and .abort
+        # attributes and __bool__() for backwards compatibility.
+        return continue_
 
     def _run_dialog(self):
         return self._function(self._update, *self._args, **self._kwargs)
