@@ -553,7 +553,8 @@ class OperationDialog(Message):
     def _on_show(self):
         self._result = self._function(*self._args, **self._kwargs)
         pytis.form.wx_yield_(full=True)
-        self._end_modal(wx.ID_OK)
+        if self._dialog.IsShown():
+            self._end_modal(wx.ID_OK)
 
     def _customize_result(self, result):
         return self._result
