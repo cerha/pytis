@@ -628,7 +628,7 @@ class ProgressDialog(OperationDialog):
         if new_width > current_size.width:
             self._dialog.SetSize((new_width, current_size.height))
         if progress is None:
-            return self._dialog.UpdatePulse(newmsg=newmsg)
+            return self._dialog.Pulse(newmsg=newmsg)
         else:
             return self._dialog.Update(progress, newmsg=newmsg)
 
