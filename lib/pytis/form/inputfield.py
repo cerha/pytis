@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2022 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2023 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2017 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -289,7 +289,13 @@ class InputField(KeyHandler, CommandHandler):
             if isinstance(x, tuple):
                 box.Add(*x)
             else:
+                minsize = x.MinSize if hasattr(x, 'MinSize') else None
                 box.Add(x, 0, wx.FIXED_MINSIZE)
+                if hasattr(x, 'MinSize') and minsize != x.MinSize:
+                    # This hack prevents the previously set minsize to drop
+                    # unexpectedly, which happened for example with the ListBoxField
+                    # present in cmd_run_any_form() input form.
+                    x.SetMinSize(minsize)
         return box
 
     def _hbox(self, *content):
