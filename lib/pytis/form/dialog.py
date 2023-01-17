@@ -636,7 +636,15 @@ class ProgressDialog(OperationDialog):
             # good.
             continue_, skip = self._dialog.Pulse(newmsg=message)
         else:
-            continue_, skip = self._dialog.Update(progress, newmsg=message)
+            if progress is None:
+                progress = self._dialog.Value
+            for i in range(10):
+                # HACK: Calling Update just once (without even calling Refresh)
+                # should be enough, but it doesn't reliably update the gauge.
+                # Repeating 10 times seems to work in most cases.  Hopefully it
+                # will not slow down processes which call update often.
+                continue_, skip = self._dialog.Update(progress, newmsg=message)
+                self._dialog.Refresh()
         # Note, we currently don't support skiping (which is actually not
         # very well documented in wx, but wx.PD_CAN_SKIP seems to work).
         # If we want skipping, we can return an object with .skip and .abort
