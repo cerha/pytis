@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2021 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2023 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2007-2018 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -88,7 +88,7 @@ class Application(pytis.presentation.Application):
                        (mf(_("Continents"), 'cb.Continents', binding='islands'),
                         mf(_("Countries"), 'cb.Countries'),
                         )),
-                  MItem(_("Dialog test"), command='dialog_test'),
+                  MItem(_("Dialog test"), command='dialog_test', hotkey='Alt-d'),
                   bf(_("Password fields"), 'misc.Passwords'),
                   mf(_('Products'), 'misc.Products'),
                   bf(_('Tree Order'), 'misc.ObsoleteTree'),
@@ -145,14 +145,33 @@ class Application(pytis.presentation.Application):
         if app.question("Do you want to exit now?\nAnswer `No' if you want the test to continue."):
             return
 
-        def operation(update=None, count=1000):
-            for i in range(count):
-                if update and not update(100 * i // count, _("Processing: %d/%d", i, count)):
+        def func1(update, data):
+            for i, x in enumerate(data):
+                if update and not update(i, _("Processing: %d/%d", i, len(data))):
                     break
-                time.sleep(0.01)
+                print('Processing:', x)
+                time.sleep(0.1)
 
-        app.run(operation, can_abort=True)
-        app.run(operation, kwargs=dict(count=376), progress=False)
+        import string
+        app.run(func1, (string.ascii_letters,), maximum=len(string.ascii_letters), can_abort=True)
+
+        def func2(update, x):
+            #update(message=_("Processing: %s", x))
+            print('Processing:', x)
+            time.sleep(2)
+
+        chars = 'ABCD'
+        def gen():
+            for x in chars:
+                yield x
+
+        app.run(func2, over=gen(), maximum=len(chars), can_abort=True)
+
+        def func3(count=100):
+            for i in range(count):
+                print('Processing: %d/%d' % (i + 1, count))
+                time.sleep(0.1)
+        app.run(func3, kwargs=dict(count=18), progress=False)
 
 
 class TestApplication(object):
