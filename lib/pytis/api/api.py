@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2020, 2022 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2020, 2022, 2023 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2017 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -470,9 +470,17 @@ class Application(API):
           function -- the Python function to be executed.
           args -- tuple of arguments to be passed to 'function'.
           kwargs -- dictionary of keyword arguments to be passed to 'function'.
-          over -- sequence of arguments to call 'function' repeatedly for each
-            element.  If not None, the function will be called with each item
-            as an argument preceeding 'args'.
+          over -- sequence of arguments to call 'function' repeatedly with each
+            of them.  If not None, the function will be called with each item
+            as an argument preceeding 'args'.  Additionally, if 'function'
+            accepts an argument named 'n', the ordinal number of the item
+            within the sequence (starting from zero) will be passed as
+            additional keyword argument 'n'.  The progress will be updated
+            automatically to reflect the curent position within the sequence.
+            You can still call 'update' to update the progress message, but you
+            should avoid passing it 'progress'.  When passing an iterable
+            object with unknown lenght (such as a generator), you need to pass
+            its expected length as the 'maximum' arument.
           title -- dialog window title as a string.
           message -- the initial progress message to be displayed within the
             dialog.  The message can be further updated to indicate the
@@ -481,7 +489,8 @@ class Application(API):
             remaining arguments are ignored, the dialog just statically
             displays the 'message' and waits until the operation is finished.
           maximum -- value determining the range in which the progress is
-            updated (see Progress updates below).
+            updated (see Progress updates below).  The default value is 100 if
+            'over' is None.
           elapsed_time -- if true, the dialog will display the time elapsed
             from the start.
           estimated_time -- if true, the dialog will display the estimated
@@ -499,10 +508,11 @@ class Application(API):
         (in addition to 'args' and 'kwargs') accept the first positional
         argument 'update' and call it as a function periodically to update the
         progress.  The 'update' function accepts two keyword arguments (both
-        optional) 'progress' and 'message'.  The argument 'progress' (if not
-        None) is a number between zero and the 'maximum' passed to 'app.run()'
-        (see above).  It will move the visual progress indicator proportionally
-        to given position between zero and the maximum.  The argument 'message'
+        optional) 'progress' and 'message'.  The argument 'progress' can also
+        be passed as the first positional argument.  If not None, it is a
+        number between zero and the 'maximum' passed to 'app.run()' (see
+        above).  It will move the visual progress indicator proportionally to
+        given position between zero and the maximum.  The argument 'message'
         (if not None) updates the progress message displayed within the dialog.
         If 'can_abort' was true, the caller should also check the return value
         of the 'update' function and abort the operation if the return value is

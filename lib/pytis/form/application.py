@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2022 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2023 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2017 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -1417,11 +1417,29 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
     def api_run(self, function, args=(), kwargs={}, over=None, title=None, message=None,
                 progress=True, maximum=None, elapsed_time=False, estimated_time=False,
                 remaining_time=False, can_abort=False):
+        if over is not None:
+            try:
+                count = len(over)
+            except TypeError:
+                assert maximum is not None, \
+                    "Pass item count as 'maximum' when 'over' is of unknown length."
+                count = maximum
+            # We use maximum 100 rather than the actual item count, because wx.ProgressBar
+            # doesn't give sensible results for small maximum/progress values.
+            maximum = 100
+            func = function
+            def function(update, *args, **kwargs):
+                pass_n = ('n' in pytis.util.argument_names(func) and 'n' not in kwargs)
+                for n, arg in enumerate(over):
+                    if not update(progress=max(1, min(maximum, n / count * 100))):
+                        break
+                    if pass_n:
+                        kwargs['n'] = n
+                    func(update, arg, *args, **kwargs)
         if progress:
             dlg = dialog.ProgressDialog
             dialog_kwargs = dict(
-                over=over,
-                maximum=maximum,
+                maximum=maximum if maximum is not None else 100,
                 elapsed_time=elapsed_time,
                 estimated_time=estimated_time,
                 remaining_time=remaining_time,

@@ -577,9 +577,9 @@ class ProgressDialog(OperationDialog):
     operace) je vrácena návratová hodnota funkce vykonávající operaci.
 
     """
-    def __init__(self, parent, function, args=(), kwargs={}, over=None,
+    def __init__(self, parent, function, args=(), kwargs={},
                  title=_("Operation in progress"), message=_("Please wait..."),
-                 maximum=None, elapsed_time=False, estimated_time=False,
+                 maximum=100, elapsed_time=False, estimated_time=False,
                  remaining_time=False, can_abort=False):
         """Inicializuj dialog.
 
@@ -590,9 +590,6 @@ class ProgressDialog(OperationDialog):
             aktualizační funkci jako první argument (viz dokumentace třídy).
           maximum -- value determining the range in which the progress is
             updated.
-          over -- sequence of arguments to call 'function' repeatedly for each
-            element.  If not None, the function will be called with each item
-            as an argument preceeding 'args'.
           elapsed_time -- Pokud je 'True', zobrazí se uběhlý čas
           estimated_time -- Pokud je 'True', zobrazí se předpokládaný čas
           remaining_time -- Pokud je 'True', zobrazí se zbývající čas
@@ -614,10 +611,7 @@ class ProgressDialog(OperationDialog):
         if can_abort:
             style = style | wx.PD_CAN_ABORT
         self._style = style
-        if maximum is None:
-            maximum = len(over) if over else 100
         self._maximum = maximum
-        self._over = over
 
     def _create_dialog(self):
         self._dialog = wx.ProgressDialog(self._title, unistr(self._message),
@@ -627,14 +621,19 @@ class ProgressDialog(OperationDialog):
     def _update(self, progress=None, message=None, newmsg=None):
         # progress is a number in range from 0 to the 'maximum' passed to the constructor.
         # newmsg is for backwards compatibility. Pass 'message' in new code.
-        message = message or newmsg or ''
+        message = message or newmsg
         if message:
-            message_width = self._dialog.GetFullTextExtent(message, self._dialog.GetFont())[0]
-            new_width = min(message_width + 30, wx.DisplaySize()[0] - 50)
-            current_size = self._dialog.Size
-            if new_width > current_size.width:
-                self._dialog.SetSize((new_width, current_size.height))
-        if progress is None:
+            message_width = self._dialog.GetFullTextExtent(message, self._dialog.Font)[0]
+            dialog_width = min(message_width + 30, wx.DisplaySize()[0] - 50)
+            if dialog_width > self._dialog.Size.width:
+                self._dialog.SetSize((dialog_width, self._dialog.Size.height))
+        else:
+            message = self._dialog.Message
+        if progress == -1 or progress is None and self._dialog.Value == 0:
+            # TODO: Pulsing doesn't really work well.  The indicator is not
+            # updated reliably.  It starts to move a little when update is
+            # called at least 50 times per second but it still doesn't look
+            # good.
             continue_, skip = self._dialog.Pulse(newmsg=message)
         else:
             continue_, skip = self._dialog.Update(progress, newmsg=message)
@@ -646,13 +645,7 @@ class ProgressDialog(OperationDialog):
 
     def _run_dialog(self):
         pytis.form.wx_yield_(full=True)
-        if self._over:
-            for i, arg in enumerate(self._over):
-                if not self._update(progress=i):
-                    break
-                self._function(self._update, arg, *self._args, **self._kwargs)
-        else:
-            return self._function(self._update, *self._args, **self._kwargs)
+        return self._function(self._update, *self._args, **self._kwargs)
 
     def _customize_result(self, result):
         return result
