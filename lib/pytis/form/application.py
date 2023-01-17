@@ -1416,7 +1416,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
 
     def api_run(self, function, args=(), kwargs={}, over=None, title=None, message=None,
                 progress=True, maximum=None, elapsed_time=False, estimated_time=False,
-                remaining_time=False, can_abort=False):
+                remaining_time=False, can_abort=False, new_thread=False):
         if over is not None:
             try:
                 count = len(over)
@@ -1444,6 +1444,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
                 estimated_time=estimated_time,
                 remaining_time=remaining_time,
                 can_abort=can_abort,
+                new_thread=new_thread,
             )
         else:
             assert not any((elapsed_time, estimated_time, remaining_time, can_abort))

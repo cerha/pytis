@@ -459,7 +459,7 @@ class Application(API):
 
     def run(self, function, args=(), kwargs={}, over=None, title=None, message=None,
             progress=True, maximum=None, elapsed_time=False, estimated_time=False,
-            remaining_time=False, can_abort=False):
+            remaining_time=False, can_abort=False, new_thread=False):
         """Execute a long running operation showing a progress dialog.
 
         The dialog is displayed until the operation is finished and may inform
@@ -499,6 +499,8 @@ class Application(API):
             remaining time to the end.
           can_abort -- if true, the executed function may be aborted if it is
             written properly (see Progress updates below).
+          new_thread -- experimantal support for invoking function in a
+            separate thread.
 
         Progress updates
 

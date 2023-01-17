@@ -156,7 +156,7 @@ class Application(pytis.presentation.Application):
         app.run(func1, (string.ascii_letters,), maximum=len(string.ascii_letters), can_abort=True)
 
         def func2(update, x):
-            #update(message=_("Processing: %s", x))
+            update(message=_("Processing: %s", x))
             print('Processing:', x)
             time.sleep(2)
 

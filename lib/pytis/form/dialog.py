@@ -39,6 +39,9 @@ import cgitb
 import datetime
 import email.utils
 import os
+import sys
+import threading
+import time
 import traceback
 import wx.adv
 
@@ -53,6 +56,12 @@ from pytis.util import ProgramError, super_, send_mail
 from .command import CommandHandler
 from .event import wx_callback
 from .screen import KeyHandler, wx_focused_window, wx_text_ctrl, wx_text_view
+
+if sys.version_info[0] == 2:
+    import Queue as queue
+else:
+    import queue
+
 
 # Needed for subprocess.getstatusoutput (commands.getstatusoutput in Python 2).
 standard_library.install_aliases()
@@ -580,7 +589,7 @@ class ProgressDialog(OperationDialog):
     def __init__(self, parent, function, args=(), kwargs={},
                  title=_("Operation in progress"), message=_("Please wait..."),
                  maximum=100, elapsed_time=False, estimated_time=False,
-                 remaining_time=False, can_abort=False):
+                 remaining_time=False, can_abort=False, new_thread=False):
         """Inicializuj dialog.
 
         Argumenty:
@@ -596,6 +605,8 @@ class ProgressDialog(OperationDialog):
           can_abort -- Pokud je 'True', bude možno vykonávání funkce přerušit,
             pokud to funkce vykonávající operaci umožňuje (viz. docstring
             třídy).
+          new_thread -- experimantal support for invoking function in a
+            separate thread.
 
         """
         super_(ProgressDialog).__init__(self, parent, function, args=args,
@@ -612,6 +623,7 @@ class ProgressDialog(OperationDialog):
             style = style | wx.PD_CAN_ABORT
         self._style = style
         self._maximum = maximum
+        self._new_thread = new_thread
 
     def _create_dialog(self):
         self._dialog = wx.ProgressDialog(self._title, unistr(self._message),
@@ -651,9 +663,40 @@ class ProgressDialog(OperationDialog):
         # attributes and __bool__() for backwards compatibility.
         return continue_
 
+    class _Queued:
+        def __init__(self, function):
+            self._function = function
+            self._queue = queue.Queue()
+
+        def __call__(self, *args, **kwargs):
+            def function():
+                result = self._function(*args, **kwargs)
+                self._queue.put(result)
+            return function()
+
+        def result(self):
+            while True:
+                try:
+                    return self._queue.get(block=False)
+                except queue.Empty:
+                    pytis.form.wx_yield_(full=True)
+                    #time.sleep(0.01)
+
     def _run_dialog(self):
-        pytis.form.wx_yield_(full=True)
-        return self._function(self._update, *self._args, **self._kwargs)
+        if self._new_thread:
+            def update(*args, **kwargs):
+                update_ = self._Queued(self._update)
+                wx.CallAfter(update_, *args, **kwargs)
+                return update_.result()
+
+            function = self._Queued(self._function)
+            thread = threading.Thread(target=function,
+                                      args=(update,) + self._args, kwargs=self._kwargs)
+            thread.start()
+            return function.result()
+        else:
+            pytis.form.wx_yield_(full=True)
+            return self._function(self._update, *self._args, **self._kwargs)
 
     def _customize_result(self, result):
         return result
