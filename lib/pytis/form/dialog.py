@@ -651,48 +651,6 @@ class ProgressDialog(OperationDialog):
         return result
 
 
-class RepeatedOperationDialog(ProgressDialog):
-    """Dialog pro opakované spouštění operace nad seznamem argumentů.
-
-    Tento dialog je speciálním případem použití 'ProgressDialog' pro cyklické
-    spouštění operace nad seznamem argumentů.  Uživatel pouze nemusí psát
-    funkci provádějící cyklus a aktualizující ProgressBar.
-
-    """
-    def __init__(self, parent, function, args=(), step=None, **kwargs):
-        """Inicializuj dialog.
-
-        Argumenty:
-
-          function --
-          args --
-          kwargs --
-          step -- celé číslo, udávající počet procent, po kterých je
-            progressbar aktualizován.  Pokud je step
-
-          Ostatní argumenty jsou shodné jako u rodičovské třídy.
-
-        """
-        assert step is None or isinstance(step, int) and 1 <= step <= 99, step
-
-        def do(update, *args_list):
-            total = len(args_list)
-            last_status = 0
-            for n, arg in enumerate(args_list):
-                status = int(n / total * 100)
-                if step is None or status // step != last_status // step:
-                    last_status = status
-                    try:
-                        msg = self._message % arg
-                    except TypeError:
-                        msg = ''
-                    if not update(status, newmsg=msg):
-                        break
-                function(arg)
-
-        super_(RepeatedOperationDialog).__init__(self, parent, do, args=args, **kwargs)
-
-
 class Calendar(GenericDialog):
     """Dialog zobrazující kalendář, umožňující výběr dne.
 
