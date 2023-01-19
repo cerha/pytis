@@ -1,15 +1,11 @@
-#title Standardy vıvoje
+#title Standardy vÃ½voje
 
-- [[management][Obecná organizaèní pravidla]]
+- [[management][ObecnÃ¡ organizaÄnÃ­ pravidla]]
 
-- [[cvs][Pravidla pro práci s CVS]]
+- [[design][ObecnÃ© principy nÃ¡vrhu systÃ©mu a tvorby kÃ³du]]
 
-- [[design][Obecné principy návrhu systému a tvorby kódu]]
+- [[formatting][Pravidla pro psanÃ­ a formÃ¡tovÃ¡nÃ­ kÃ³du]]
 
-- [[formatting][Pravidla pro psaní a formátování kódu]]
+- [[reliability][TestovÃ¡nÃ­ kÃ³du]]
 
-- [[reliability][Testování kódu]]
-
-- [[tips][Tipy a triky]]
-
-- [[bugs][Chyby pou¾ívaného softwaru]]
+- [[bugs][Chyby pouÅ¾Ã­vanÃ©ho softwaru]]

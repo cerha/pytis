@@ -1,98 +1,98 @@
-#title Pravidla pro psaní a formátování kódu
+#title Pravidla pro psanÃ­ a formÃ¡tovÃ¡nÃ­ kÃ³du
 
-* Obecné zásady
+* ObecnÃ© zÃ¡sady
 
-- Jako v¹ude i zde platí principy srozumitelnosti, pøehlednosti a
+- Jako vÅ¡ude iÂ zde platÃ­ principy srozumitelnosti, pÅ™ehlednosti a
   konzistence.
 
-- V¹echny adresáøe, soubory a identifikátory jsou v angliètinì, s vıjimkou
-  tìch, které obsahují úèetní termíny -- ty jsou v èe¹tinì.
+- VÅ¡echny adresÃ¡Å™e, soubory a identifikÃ¡tory jsou vÂ angliÄtinÄ›, sÂ vÃ½jimkou
+  tÄ›ch, kterÃ© obsahujÃ­ ÃºÄetnÃ­ termÃ­ny -- ty jsou vÂ ÄeÅ¡tinÄ›.
 
-- Komentáøe a dokumentaèní øetìzce jsou v èe¹tinì.
+- KomentÃ¡Å™e a dokumentaÄnÃ­ Å™etÄ›zce jsou vÂ ÄeÅ¡tinÄ›.
 
-- Místa, kde je potøeba nìco dodìlat nebo opravit, se oznaèují komentáøem
-  obsahujícím øetìzec =TODO:=, za kterım následuje popis toho, co je potøeba
-  udìlat.  Takto lze snadno rekurzivním grepem nalézt v¹echny nedodìlky.
+- MÃ­sta, kde je potÅ™eba nÄ›co dodÄ›lat nebo opravit, se oznaÄujÃ­ komentÃ¡Å™em
+  obsahujÃ­cÃ­m Å™etÄ›zec =TODO:=, za kterÃ½m nÃ¡sleduje popis toho, co je potÅ™eba
+  udÄ›lat.  Takto lze snadno rekurzivnÃ­m grepem nalÃ©zt vÅ¡echny nedodÄ›lky.
 
-- V¹echna nezøejmá místa ve zdrojovém kódu musí bıt øádnì okomentována ihned
-  v okam¾iku svého vzniku.  Pokud se tak nedìje, jsou mo¾né jenom dvì
-  varianty: a) nestane se tak ji¾ nikdy; b) dodateènì se vymı¹lí, co to
-  vlastnì znamená a jakım v¹ím zpùsobem to ji¾ bylo pou¾ito.  Navíc je
-  nezøejmé vìci stejnì nutno vysvìtlit, tak¾e se tím nic neu¹etøí, spí¹e
-  naopak.  Øádné popisky jednak u¹etøí pozdìj¹í vysvìtlování a *zejména* pak
-  pøípadná pozdìj¹í nedorozumìní.
+- VÅ¡echna nezÅ™ejmÃ¡ mÃ­sta ve zdrojovÃ©m kÃ³du musÃ­ bÃ½t Å™Ã¡dnÄ› okomentovÃ¡na ihned
+  vÂ okamÅ¾iku svÃ©ho vzniku.  Pokud se tak nedÄ›je, jsou moÅ¾nÃ© jenom dvÄ›
+  varianty: a) nestane se tak jiÅ¾ nikdy; b) dodateÄnÄ› se vymÃ½Å¡lÃ­, co to
+  vlastnÄ› znamenÃ¡ a jakÃ½m vÅ¡Ã­m zpÅ¯sobem to jiÅ¾ bylo pouÅ¾ito.  NavÃ­c je
+  nezÅ™ejmÃ© vÄ›ci stejnÄ› nutno vysvÄ›tlit, takÅ¾e se tÃ­m nic neuÅ¡etÅ™Ã­, spÃ­Å¡e
+  naopak.  Å˜Ã¡dnÃ© popisky jednak uÅ¡etÅ™Ã­ pozdÄ›jÅ¡Ã­ vysvÄ›tlovÃ¡nÃ­ a *zejmÃ©na* pak
+  pÅ™Ã­padnÃ¡ pozdÄ›jÅ¡Ã­ nedorozumÄ›nÃ­.
 
-- Je nutné dùslednì rozli¹ovat které tøídy, metody a promìnné jsou
-  exportované a které interní.  Exportované jsou pouze ty objekty, které
-  takové bıt musí, bez jejich exportu ne¹lo nìco udìlat.  Zavedením ka¾dé
-  exportované metody se k nìèemu zavazujeme, není tøeba to dìlat zbyteènì.
-
-
-* Formátování pythonového kódu
-
-Formátování pythonového kódu se øídí dokumentem [[http://www.python.org/doc/essays/styleguide.html][Python Style Guide]], není-li
-ní¾e specifikováno jinak.
-
-K zásadám uvedenım v [[http://www.python.org/doc/essays/styleguide.html][Python Style Guide]] definujeme následující upøesnìní a
-doplòky:
-
-- Mezi identifikátorem funkce a závorkou uvozující seznam jejích argumentù se
-  nedìlá mezera.
-
-- Pro øetìzce v kódu (ne dokumentaèní øetìzce) se doporuèuje pøednostnì
-  pou¾ívat apostrofy (není tøeba maèkat shift).  Uvozovky je vhodné pou¾ívat
-  tehdy, pokud øetìzec mù¾e obsahovat apostrofy (typicky øetìzce obsahující
-  SQL pøíkazy).
+- Je nutnÃ© dÅ¯slednÄ› rozliÅ¡ovat kterÃ© tÅ™Ã­dy, metody a promÄ›nnÃ© jsou
+  exportovanÃ© a kterÃ© internÃ­.  ExportovanÃ© jsou pouze ty objekty, kterÃ©
+  takovÃ© bÃ½t musÃ­, bez jejich exportu neÅ¡lo nÄ›co udÄ›lat.  ZavedenÃ­m kaÅ¾dÃ©
+  exportovanÃ© metody se kÂ nÄ›Äemu zavazujeme, nenÃ­ tÅ™eba to dÄ›lat zbyteÄnÄ›.
 
 
-* Pojmenovávání metod a funkcí
+* FormÃ¡tovÃ¡nÃ­ pythonovÃ©ho kÃ³du
 
-- Metody, které pouze nìco zji¹»ují, vrací informaci bez provádìní vedlej¹ích
-  efektù, neobsahují ve svém názvu slovesa.  Viz napøíklad standardní metoda
-  =keys= nebo na¹e metoda =row=.
+FormÃ¡tovÃ¡nÃ­ pythonovÃ©ho kÃ³du se Å™Ã­dÃ­ dokumentem [[http://www.python.org/doc/essays/styleguide.html][Python Style Guide]], nenÃ­-li
+nÃ­Å¾e specifikovÃ¡no jinak.
 
-- Dùsledkem pøedchozího pravidla je, ¾e metody vracející hodnoty atributù
-  tøídy *nezaèínají* prefixem =get=.  Viz napøíklad na¹e metoda =columns=.
+KÂ zÃ¡sadÃ¡m uvedenÃ½m vÂ [[http://www.python.org/doc/essays/styleguide.html][Python Style Guide]] definujeme nÃ¡sledujÃ­cÃ­ upÅ™esnÄ›nÃ­ a
+doplÅˆky:
 
-- Vıjimkou jsou metody vracející pravdivostní hodnoty, ty obvykle zaèínají
-  prefixem =is= nebo obsahují jiné sloveso v nerozkazovacím tvaru.  Viz
-  napøíklad standardní funkce =isinstance=, metoda =has_key= nebo na¹e metoda
+- Mezi identifikÃ¡torem funkce a zÃ¡vorkou uvozujÃ­cÃ­ seznam jejÃ­ch argumentÅ¯ se
+  nedÄ›lÃ¡ mezera.
+
+- Pro Å™etÄ›zce vÂ kÃ³du (ne dokumentaÄnÃ­ Å™etÄ›zce) se doporuÄuje pÅ™ednostnÄ›
+  pouÅ¾Ã­vat apostrofy (nenÃ­ tÅ™eba maÄkat shift).  Uvozovky je vhodnÃ© pouÅ¾Ã­vat
+  tehdy, pokud Å™etÄ›zec mÅ¯Å¾e obsahovat apostrofy (typicky Å™etÄ›zce obsahujÃ­cÃ­
+  SQL pÅ™Ã­kazy).
+
+
+* PojmenovÃ¡vÃ¡nÃ­ metod a funkcÃ­
+
+- Metody, kterÃ© pouze nÄ›co zjiÅ¡Å¥ujÃ­, vracÃ­ informaci bez provÃ¡dÄ›nÃ­ vedlejÅ¡Ã­ch
+  efektÅ¯, neobsahujÃ­ ve svÃ©m nÃ¡zvu slovesa.  Viz napÅ™Ã­klad standardnÃ­ metoda
+  =keys= nebo naÅ¡e metoda =row=.
+
+- DÅ¯sledkem pÅ™edchozÃ­ho pravidla je, Å¾e metody vracejÃ­cÃ­ hodnoty atributÅ¯
+  tÅ™Ã­dy *nezaÄÃ­najÃ­* prefixem =get=.  Viz napÅ™Ã­klad naÅ¡e metoda =columns=.
+
+- VÃ½jimkou jsou metody vracejÃ­cÃ­ pravdivostnÃ­ hodnoty, ty obvykle zaÄÃ­najÃ­
+  prefixem =is= nebo obsahujÃ­ jinÃ© sloveso vÂ nerozkazovacÃ­m tvaru.  Viz
+  napÅ™Ã­klad standardnÃ­ funkce =isinstance=, metoda =has_key= nebo naÅ¡e metoda
   =is_hidden=.
 
-- Metody, které provádí nìjakou èinnost nebo vedlej¹í efekty obsahují ve svém
-  názvu sloveso v rozkazovacím zpùsobu.  Viz napøíklad standardní funkce
-  =reload= nebo na¹e metody =select= (provádí vedlej¹í efekt inicializace
+- Metody, kterÃ© provÃ¡dÃ­ nÄ›jakou Äinnost nebo vedlejÅ¡Ã­ efekty obsahujÃ­ ve svÃ©m
+  nÃ¡zvu sloveso vÂ rozkazovacÃ­m zpÅ¯sobu.  Viz napÅ™Ã­klad standardnÃ­ funkce
+  =reload= nebo naÅ¡e metody =select= (provÃ¡dÃ­ vedlejÅ¡Ã­ efekt inicializace
   dotazu) a =insert=.
 
-- Metody, které slou¾í jako callbacky u¾ivatelského rozhraní, zaèínají
+- Metody, kterÃ© slouÅ¾Ã­ jako callbacky uÅ¾ivatelskÃ©ho rozhranÃ­, zaÄÃ­najÃ­
   prefixem =on_=.
   
 
-* Velikost písmen v Pythonu
+* Velikost pÃ­smen vÂ Pythonu
 
-- Jména adresáøù obsahují pouze malá písmena a mìla by bıt krátká a pouze
-  jednoslovná.
-  Pøíklad: =dir=
+- JmÃ©na adresÃ¡Å™Å¯ obsahujÃ­ pouze malÃ¡ pÃ­smena a mÄ›la by bÃ½t krÃ¡tkÃ¡ a pouze
+  jednoslovnÃ¡.
+  PÅ™Ã­klad: =dir=
 
-- Soubory, které obsahují víceménì pouze definici jedné tøídy, se jmenují
-  stejnì jako tato tøída.[1]
-  Pøíklad: =FooBar.py=
+- Soubory, kterÃ© obsahujÃ­ vÃ­cemÃ©nÄ› pouze definici jednÃ© tÅ™Ã­dy, se jmenujÃ­
+  stejnÄ› jako tato tÅ™Ã­da.[1]
+  PÅ™Ã­klad: =FooBar.py=
 
-- Ostatní soubory by mìly mít jednoslovnı název obsahující pouze malá písmena.
-  Pøíklad: =tools.py=
+- OstatnÃ­ soubory by mÄ›ly mÃ­t jednoslovnÃ½ nÃ¡zev obsahujÃ­cÃ­ pouze malÃ¡ pÃ­smena.
+  PÅ™Ã­klad: =tools.py=
   
-- Jména tøíd se zapisují v "all caps" bez podtr¾ítek.
-  Pøíklad: =FooBar=
+- JmÃ©na tÅ™Ã­d se zapisujÃ­ vÂ "all caps" bez podtrÅ¾Ã­tek.
+  PÅ™Ã­klad: =FooBar=
 
-- Jména konstant se zapisují velkımi písmeny s podtr¾ítky.
-  Pøíklad: =FOO_BAR=
+- JmÃ©na konstant se zapisujÃ­ velkÃ½mi pÃ­smeny sÂ podtrÅ¾Ã­tky.
+  PÅ™Ã­klad: =FOO_BAR=
 
-- Jména metod, atributù tøíd a promìnnıch se zapisují malımi písmeny
-  s podtr¾ítky.  Pro lokální promìnné je vhodné pou¾ívat krátké názvy, není-li
-  to na úkor srozumitelnosti.
-  Pøíklad: =foo_bar=
+- JmÃ©na metod, atributÅ¯ tÅ™Ã­d a promÄ›nnÃ½ch se zapisujÃ­ malÃ½mi pÃ­smeny
+  sÂ podtrÅ¾Ã­tky.  Pro lokÃ¡lnÃ­ promÄ›nnÃ© je vhodnÃ© pouÅ¾Ã­vat krÃ¡tkÃ© nÃ¡zvy, nenÃ­-li
+  to na Ãºkor srozumitelnosti.
+  PÅ™Ã­klad: =foo_bar=
 
-Pøíklad -- soubor =dir/FooBar.py=:
+PÅ™Ã­klad -- soubor =dir/FooBar.py=:
 
 <example>
 class FooBar:
@@ -103,150 +103,150 @@ class FooBar:
          self.magic_number = self.magic_number + z
 </example>
 
-Komu tento zápis identifikátorù nevyhovuje a preferuje formátování dle
-[[http://www.gnu.org/prep/standards_toc.html][GNU Coding Standards]], mù¾e pou¾ít =glasses-mode= v Emacsu.
+Komu tento zÃ¡pis identifikÃ¡torÅ¯ nevyhovuje a preferuje formÃ¡tovÃ¡nÃ­ dle
+[[http://www.gnu.org/prep/standards_toc.html][GNU Coding Standards]], mÅ¯Å¾e pouÅ¾Ã­t =glasses-mode= vÂ Emacsu.
 
 
 * Moduly
 
-V na¹em pojetí je _modulem_ mno¾ina v¹ech zdrojovıch souborù v adresáøi.
-V souboru =__init__.py= jsou symboly jednotlivıch souborù konstrukcí
-=from soubor import *= zaøazeny do jmenného prostoru modulu.
+VÂ naÅ¡em pojetÃ­ je _modulem_ mnoÅ¾ina vÅ¡ech zdrojovÃ½ch souborÅ¯ vÂ adresÃ¡Å™i.
+VÂ souboru =__init__.py= jsou symboly jednotlivÃ½ch souborÅ¯ konstrukcÃ­
+=from soubor import *= zaÅ™azeny do jmennÃ©ho prostoru modulu.
 
-Pro importy _modulù_ pak platí:
+Pro importy _modulÅ¯_ pak platÃ­:
 
-- Soubor =__init__.py= v adresáøi obsahujícím moduly je prázdnı nebo obsahuje
-  pouze odùvodnìné importy.
+- Soubor =__init__.py= vÂ adresÃ¡Å™i obsahujÃ­cÃ­m moduly je prÃ¡zdnÃ½ nebo obsahuje
+  pouze odÅ¯vodnÄ›nÃ© importy.
 
-- Konstrukci =from ... import *= lze pou¾ít v následujících pøípadech:
+- Konstrukci =from ... import *= lze pouÅ¾Ã­t vÂ nÃ¡sledujÃ­cÃ­ch pÅ™Ã­padech:
 
-  . Jde-li o import tøídy ze stejnojmenného modulu.
+  . Jde-li oÂ import tÅ™Ã­dy ze stejnojmennÃ©ho modulu.
 
-  . Jde-li o import modulu =pytis.util=.
+  . Jde-li oÂ import modulu =pytis.util=.
 
-- Importy typu =from MODULE import SOMETHING= je dobré pou¾ívat pouze
-  v pøípadì, ¾e SOMETHING se vyskytuje v kódu èasto.  Jinak by mìlo mít
-  pøednost u¾ití =import MODULE= se zápisem =MODULE.SOMETHING=, proto¾e pak
-  je jasné, odkud =SOMETHING= pochází.
+- Importy typu =from MODULE import SOMETHING= je dobrÃ© pouÅ¾Ã­vat pouze
+  vÂ pÅ™Ã­padÄ›, Å¾e SOMETHING se vyskytuje vÂ kÃ³du Äasto.  Jinak by mÄ›lo mÃ­t
+  pÅ™ednost uÅ¾itÃ­ =import MODULE= se zÃ¡pisem =MODULE.SOMETHING=, protoÅ¾e pak
+  je jasnÃ©, odkud =SOMETHING= pochÃ¡zÃ­.
 
-- Ve¹keré importu balíku a z balíku =wxPython= jsou povoleny pouze v modulu
-  =pytis.form= a musí bıt provádìny prostøednictvím obalovacích modulù,
-  napøíklad:
+- VeÅ¡kerÃ© importu balÃ­ku a zÂ balÃ­ku =wxPython= jsou povoleny pouze vÂ modulu
+  =pytis.form= a musÃ­ bÃ½t provÃ¡dÄ›ny prostÅ™ednictvÃ­m obalovacÃ­ch modulÅ¯,
+  napÅ™Ã­klad:
   
   <example>
   import grid
   import wx
   </example>
 
-  Toto opatøení je nutné, aby ka¾dı modul bylo mo¾no naimportovat i na serveru,
-  kde nebì¾í X Window.
+  Toto opatÅ™enÃ­ je nutnÃ©, aby kaÅ¾dÃ½ modul bylo moÅ¾no naimportovat iÂ na serveru,
+  kde nebÄ›Å¾Ã­ XÂ Window.
 
 
-* Dal¹í pravidla tıkající se Pythonu
+* DalÅ¡Ã­ pravidla tÃ½kajÃ­cÃ­ se Pythonu
 
-- Jazykovì závislé øetìzce jsou v èe¹tinì a jsou obaleny voláním funkce
+- JazykovÄ› zÃ¡vislÃ© Å™etÄ›zce jsou vÂ ÄeÅ¡tinÄ› a jsou obaleny volÃ¡nÃ­m funkce
   =pytis.util._=.
 
-- Vyu¾íváme pøíkazu =assert= a to jednak pro kontrolu typù argumentù funkcí a
-  metod (kde to má vıznam) a jednak pro pøíle¾itostné kontroly dat.
+- VyuÅ¾Ã­vÃ¡me pÅ™Ã­kazu =assert= a to jednak pro kontrolu typÅ¯ argumentÅ¯ funkcÃ­ a
+  metod (kde to mÃ¡ vÃ½znam) a jednak pro pÅ™Ã­leÅ¾itostnÃ© kontroly dat.
 
-- Tuples vs. lists: Pokud jsou pøijímány jako argument, mìla by obecnì daná
-  funkce akceptovat tuple i list.  Pokud jsou vraceny jako návratová hodnota,
-  mìlo by bıt pøesnì specifikováno, zda jde o tuple nebo list.  Pro hodnoty,
-  je¾ by nemìly bıt pøímo modifikovány, by se mìlo pou¾ívat tuple, v opaèném
-  pøípadì list.
+- Tuples vs. lists: Pokud jsou pÅ™ijÃ­mÃ¡ny jako argument, mÄ›la by obecnÄ› danÃ¡
+  funkce akceptovat tuple iÂ list.  Pokud jsou vraceny jako nÃ¡vratovÃ¡ hodnota,
+  mÄ›lo by bÃ½t pÅ™esnÄ› specifikovÃ¡no, zda jde oÂ tuple nebo list.  Pro hodnoty,
+  jeÅ¾ by nemÄ›ly bÃ½t pÅ™Ã­mo modifikovÃ¡ny, by se mÄ›lo pouÅ¾Ã­vat tuple, vÂ opaÄnÃ©m
+  pÅ™Ã­padÄ› list.
 
-- Pokud nìjaká metoda vrací hodnotu urèitého typu (napø. integer) a zároveò
-  za urèitıch okolností potøebuje signalizovat neexistenci po¾adované
-  hodnoty, mìlo by bıt jako návratová hodnota odpovídající neexistenci
-  pou¾íváno =None= a ne nìjaká speciální hodnota daného typu (napø. -1).
-  Jednak je to jasnìj¹í a jednak to neomezuje pozdìj¹í mo¾né roz¹íøení
-  rozsahu vracenıch hodnot.
+- Pokud nÄ›jakÃ¡ metoda vracÃ­ hodnotu urÄitÃ©ho typu (napÅ™. integer) a zÃ¡roveÅˆ
+  za urÄitÃ½ch okolnostÃ­ potÅ™ebuje signalizovat neexistenci poÅ¾adovanÃ©
+  hodnoty, mÄ›lo by bÃ½t jako nÃ¡vratovÃ¡ hodnota odpovÃ­dajÃ­cÃ­ neexistenci
+  pouÅ¾Ã­vÃ¡no =None= a ne nÄ›jakÃ¡ speciÃ¡lnÃ­ hodnota danÃ©ho typu (napÅ™. -1).
+  Jednak je to jasnÄ›jÅ¡Ã­ a jednak to neomezuje pozdÄ›jÅ¡Ã­ moÅ¾nÃ© rozÅ¡Ã­Å™enÃ­
+  rozsahu vracenÃ½ch hodnot.
 
-- Pou¾ívají-li se vıètové konstanty (obdoba enum z C), doporuèuje se pro
-  jejich hodnoty pou¾ívat øetìzce (ne tedy napø. èísla jako v C, pokud pro to
-  není nìjakı zvlá¹tní dùvod), shodné s názvem pøíslu¹né konstanty.  To
-  jednak odstraní nutnost o¹etøovat kolize pøi pøidávání novıch konstant do
-  vıètu a jednak to usnadòuje ladìní.
+- PouÅ¾Ã­vajÃ­-li se vÃ½ÄtovÃ© konstanty (obdoba enum zÂ C), doporuÄuje se pro
+  jejich hodnoty pouÅ¾Ã­vat Å™etÄ›zce (ne tedy napÅ™. ÄÃ­sla jako vÂ C, pokud pro to
+  nenÃ­ nÄ›jakÃ½ zvlÃ¡Å¡tnÃ­ dÅ¯vod), shodnÃ© sÂ nÃ¡zvem pÅ™Ã­sluÅ¡nÃ© konstanty.  To
+  jednak odstranÃ­ nutnost oÅ¡etÅ™ovat kolize pÅ™i pÅ™idÃ¡vÃ¡nÃ­ novÃ½ch konstant do
+  vÃ½Ätu a jednak to usnadÅˆuje ladÄ›nÃ­.
 
-- Pokud má nìjaká funkce volitelné argumenty, musí bıt v jejím volání v¹echny
-  takové vyu¾ité argumenty identifikovány svım jménem, ne pouze poøadím.
-  Vıjimky jsou pøípustné pouze v pøípadech, kdy by uvádìní jmen argumentù ve
-  voláních bylo obzvlá¹tì obtì¾ující a pøitom je nepravdìpodobné, ¾e
-  v budoucnosti dojde ke zmìnám tìchto argumentù.  V takovıch situacích musí
-  bıt v pøíslu¹né funkci explicitnì dokumentováno, ¾e takovı volitelnı
-  argument není nutno identifikovat jeho jménem.
+- Pokud mÃ¡ nÄ›jakÃ¡ funkce volitelnÃ© argumenty, musÃ­ bÃ½t vÂ jejÃ­m volÃ¡nÃ­ vÅ¡echny
+  takovÃ© vyuÅ¾itÃ© argumenty identifikovÃ¡ny svÃ½m jmÃ©nem, ne pouze poÅ™adÃ­m.
+  VÃ½jimky jsou pÅ™Ã­pustnÃ© pouze vÂ pÅ™Ã­padech, kdy by uvÃ¡dÄ›nÃ­ jmen argumentÅ¯ ve
+  volÃ¡nÃ­ch bylo obzvlÃ¡Å¡tÄ› obtÄ›Å¾ujÃ­cÃ­ a pÅ™itom je nepravdÄ›podobnÃ©, Å¾e
+  vÂ budoucnosti dojde ke zmÄ›nÃ¡m tÄ›chto argumentÅ¯.  VÂ takovÃ½ch situacÃ­ch musÃ­
+  bÃ½t vÂ pÅ™Ã­sluÅ¡nÃ© funkci explicitnÄ› dokumentovÃ¡no, Å¾e takovÃ½ volitelnÃ½
+  argument nenÃ­ nutno identifikovat jeho jmÃ©nem.
 
-- Pokud je na nìkterém místì zapotøebí provést návrat o nìkolik úrovní volání
-  vı¹e bez signalizace chyby, je k tomu urèena funkce =pytis.util.throw=.
-  V cílovém místì musí bıt odpovídající kód obalen funkcí =pytis.util.catch=.
+- Pokud je na nÄ›kterÃ©m mÃ­stÄ› zapotÅ™ebÃ­ provÃ©st nÃ¡vrat oÂ nÄ›kolik ÃºrovnÃ­ volÃ¡nÃ­
+  vÃ½Å¡e bez signalizace chyby, je kÂ tomu urÄena funkce =pytis.util.throw=.
+  VÂ cÃ­lovÃ©m mÃ­stÄ› musÃ­ bÃ½t odpovÃ­dajÃ­cÃ­ kÃ³d obalen funkcÃ­ =pytis.util.catch=.
 
 
-* Dokumentaèní øetìzce
+* DokumentaÄnÃ­ Å™etÄ›zce
 
-I kdy¾ øada vìcí mù¾e bıt popsána v samostatnıch dokumentech, mìlo by co
-nejvíce podstatnıch informací bıt pøímo ve zdrojovıch textech.  Za bì¾nıch
-okolností se nikdy nedaøí udr¾et plnou korespondenci separátní dokumentace a
-zdrojového kódu a je dùle¾ité pøesné informace udr¾ovat pøímo na místì, kde se
-s nimi pracuje, jinak vznikne zmatek.
+IÂ kdyÅ¾ Å™ada vÄ›cÃ­ mÅ¯Å¾e bÃ½t popsÃ¡na vÂ samostatnÃ½ch dokumentech, mÄ›lo by co
+nejvÃ­ce podstatnÃ½ch informacÃ­ bÃ½t pÅ™Ã­mo ve zdrojovÃ½ch textech.  Za bÄ›Å¾nÃ½ch
+okolnostÃ­ se nikdy nedaÅ™Ã­ udrÅ¾et plnou korespondenci separÃ¡tnÃ­ dokumentace a
+zdrojovÃ©ho kÃ³du a je dÅ¯leÅ¾itÃ© pÅ™esnÃ© informace udrÅ¾ovat pÅ™Ã­mo na mÃ­stÄ›, kde se
+sÂ nimi pracuje, jinak vznikne zmatek.
 
-Obzvlá¹» dùle¾ité je pøesnì dokumentovat v dokumentaèních øetìzcích v¹echny
-exportované tøídy, metody a promìnné a také moduly (dokumentují se
-v souborech =__init__.py=).
+ObzvlÃ¡Å¡Å¥ dÅ¯leÅ¾itÃ© je pÅ™esnÄ› dokumentovat vÂ dokumentaÄnÃ­ch Å™etÄ›zcÃ­ch vÅ¡echny
+exportovanÃ© tÅ™Ã­dy, metody a promÄ›nnÃ© a takÃ© moduly (dokumentujÃ­ se
+vÂ souborech =__init__.py=).
 
-Doporuèenı pøeklad slova "raise" v souvislosti s vıjimkami je "vyvolat".
+DoporuÄenÃ½ pÅ™eklad slova "raise" vÂ souvislosti sÂ vÃ½jimkami je "vyvolat".
 
-Pro zpracování dokumentaèních øetìzcù je mo¾no pou¾ívat nástroj =pydoc=,
-kterı je standardní souèástí distribuce Pythonu od verze 2.1.  Upravená verze
-tohoto nástroje, lépe vyhovující na¹im potøebám, je k dispozici v adresáøi
+Pro zpracovÃ¡nÃ­ dokumentaÄnÃ­ch Å™etÄ›zcÅ¯ je moÅ¾no pouÅ¾Ã­vat nÃ¡stroj =pydoc=,
+kterÃ½ je standardnÃ­ souÄÃ¡stÃ­ distribuce Pythonu od verzeÂ 2.1.  UpravenÃ¡ verze
+tohoto nÃ¡stroje, lÃ©pe vyhovujÃ­cÃ­ naÅ¡im potÅ™ebÃ¡m, je kÂ dispozici vÂ adresÃ¡Å™i
 =tools=.
 
-** Formátování dokumentaèních øetìzcù
+** FormÃ¡tovÃ¡nÃ­ dokumentaÄnÃ­ch Å™etÄ›zcÅ¯
 
-Formátování se obecnì øídí pravidly pro
-[[http://www.python.org/sigs/doc-sig/stext.html][Structured Text]], není-li
-ní¾e uvedeno jinak.  Upøesòující, modifikovaná a doplòující pravidla jsou:
+FormÃ¡tovÃ¡nÃ­ se obecnÄ› Å™Ã­dÃ­ pravidly pro
+[[http://www.python.org/sigs/doc-sig/stext.html][Structured Text]], nenÃ­-li
+nÃ­Å¾e uvedeno jinak.  UpÅ™esÅˆujÃ­cÃ­, modifikovanÃ¡ a doplÅˆujÃ­cÃ­ pravidla jsou:
 
-- Polo¾ky seznamu argumentù funkcí je mo¾né oddìlovat prázdnımi øádky, pokud
-  jsou jednotlivé popisy víceøádkové.  V tom pøípadì oddìlení usnadní
-  formátování (mo¾nost vyu¾ití Emacsovıch pøíkazù pro práci s odstavci).  Tam
-  kde toto není dùle¾ité se doporuèuje prázdné øádky vynechávat a zamezit tak
-  zbyteènému roztahování u¾ tak dlouhého dokumentaèního øetìzce.
+- PoloÅ¾ky seznamu argumentÅ¯ funkcÃ­ je moÅ¾nÃ© oddÄ›lovat prÃ¡zdnÃ½mi Å™Ã¡dky, pokud
+  jsou jednotlivÃ© popisy vÃ­ceÅ™Ã¡dkovÃ©.  V tom pÅ™Ã­padÄ› oddÄ›lenÃ­ usnadnÃ­
+  formÃ¡tovÃ¡nÃ­ (moÅ¾nost vyuÅ¾itÃ­ EmacsovÃ½ch pÅ™Ã­kazÅ¯ pro prÃ¡ci s odstavci).  Tam
+  kde toto nenÃ­ dÅ¯leÅ¾itÃ© se doporuÄuje prÃ¡zdnÃ© Å™Ã¡dky vynechÃ¡vat a zamezit tak
+  zbyteÄnÃ©mu roztahovÃ¡nÃ­ uÅ¾ tak dlouhÃ©ho dokumentaÄnÃ­ho Å™etÄ›zce.
 
-- Návratová hodnota je popsána v samostatném odstavci uvozeném údernım
-  vırazem =Vrací:=.  Popis návratové hodnoty za "Vrací" pokraèuje na tém¾e
-  øádku.
+- NÃ¡vratovÃ¡ hodnota je popsÃ¡na vÂ samostatnÃ©m odstavci uvozenÃ©m ÃºdernÃ½m
+  vÃ½razem =VracÃ­:=.  Popis nÃ¡vratovÃ© hodnoty za "VracÃ­" pokraÄuje na tÃ©mÅ¾e
+  Å™Ã¡dku.
 
-- Seznam vıjimek je uvozen odstavcem =Vıjimky:= a formátuje se stejnì jako
-  seznam argumentù.
+- Seznam vÃ½jimek je uvozen odstavcem =VÃ½jimky:= a formÃ¡tuje se stejnÄ› jako
+  seznam argumentÅ¯.
 
-- Pøed otevírajícími trojitımi uvozovkami dokumentaèního øetìzce a za jeho
-  uzavírajícími trojitımi uvozovkami se nedìlají prázdné øádky.  Neplıtváme
-  tak zbyteènì místem.
+- PÅ™ed otevÃ­rajÃ­cÃ­mi trojitÃ½mi uvozovkami dokumentaÄnÃ­ho Å™etÄ›zce a za jeho
+  uzavÃ­rajÃ­cÃ­mi trojitÃ½mi uvozovkami se nedÄ›lajÃ­ prÃ¡zdnÃ© Å™Ã¡dky.  NeplÃ½tvÃ¡me
+  tak zbyteÄnÄ› mÃ­stem.
 
-- Pokraèování øádkù polo¾ky definièního seznamu se z prostorovıch a
-  estetickıch dùvodù doporuèuje dìlat s dvoumezerovım odsazením.  Napøíklad:
+- PokraÄovÃ¡nÃ­ Å™Ã¡dkÅ¯ poloÅ¾ky definiÄnÃ­ho seznamu se zÂ prostorovÃ½ch a
+  estetickÃ½ch dÅ¯vodÅ¯ doporuÄuje dÄ›lat sÂ dvoumezerovÃ½m odsazenÃ­m.  NapÅ™Ã­klad:
 
   <example>
-    foo -- velice zajímavá polo¾ka, její¾ popis si zaslou¾í bıt
-      dostateènì dlouhı
+    foo -- velice zajÃ­mavÃ¡ poloÅ¾ka, jejÃ­Å¾ popis si zaslouÅ¾Ã­ bÃ½t
+      dostateÄnÄ› dlouhÃ½
   </example>
 
-- Vyskytují-li se uvnitø dokumentaèního øetìzce uvozovky, je vhodné pøed nì
-  vkládat backslash.  Dokumentaèní øetìzec v Emacsu nebo vıstupu a2ps pak
-  nebude zbyteènì strakatı.
+- VyskytujÃ­-li se uvnitÅ™ dokumentaÄnÃ­ho Å™etÄ›zce uvozovky, je vhodnÃ© pÅ™ed nÄ›
+  vklÃ¡dat backslash.  DokumentaÄnÃ­ Å™etÄ›zec vÂ Emacsu nebo vÃ½stupu a2ps pak
+  nebude zbyteÄnÄ› strakatÃ½.
 
-- Doporuèuje se za teèkou za vìtou dìlat dvì mezery.  To umo¾òuje v Emacsu
-  pou¾ívat pøíkazy pro práci s vìtami.
+- DoporuÄuje se za teÄkou za vÄ›tou dÄ›lat dvÄ› mezery.  To umoÅ¾Åˆuje vÂ Emacsu
+  pouÅ¾Ã­vat pÅ™Ã­kazy pro prÃ¡ci sÂ vÄ›tami.
   
-- Nedoporuèuje se zatím pou¾ívat hypertextové odkazy, jejich formát mù¾e
-  záviset na pou¾itém nástroji.
+- NedoporuÄuje se zatÃ­m pouÅ¾Ã­vat hypertextovÃ© odkazy, jejich formÃ¡t mÅ¯Å¾e
+  zÃ¡viset na pouÅ¾itÃ©m nÃ¡stroji.
 
-Pøíklad formátování dokumentaèního øetìzce:
+PÅ™Ã­klad formÃ¡tovÃ¡nÃ­ dokumentaÄnÃ­ho Å™etÄ›zce:
 
 <example>
 def foo(x, y):
-    """Seèti 'x' a 'y'.
+    """SeÄti 'x' a 'y'.
 
     Bla bla bla...
 
@@ -255,9 +255,9 @@ def foo(x, y):
       x -- ...
       y -- ...
 
-    Vrací: integer, souèet 'x' a 'y'.
+    VracÃ­: integer, souÄet 'x' a 'y'.
 
-    Vıjimky:
+    VÃ½jimky:
 
       DBException -- ...
       Exception -- ...
@@ -265,87 +265,87 @@ def foo(x, y):
     Bla bla bla...
 
     """
-    ... (kód)
+    ... (kÃ³d)
 </example>
 
-** Obsah dokumentaèních øetìzcù
+** Obsah dokumentaÄnÃ­ch Å™etÄ›zcÅ¯
 
-Dùvodem existence dokumentaèních øetìzcù je jejich informaèní hodnota, je
-proto tøeba pøi psaní dokumentaèních øetìzcù na ni dbát.  Vìt¹inou není nutné
-uvádìt zøejmé vìci (i kdy¾ nìkdy to nutné je, aby text mìl hlavu a patu,
-nebo» dùle¾itá je i forma sdìlení informace) a naopak je dùle¾ité uvádìt
-konkrétní pøesné informace.
+DÅ¯vodem existence dokumentaÄnÃ­ch Å™etÄ›zcÅ¯ je jejich informaÄnÃ­ hodnota, je
+proto tÅ™eba pÅ™i psanÃ­ dokumentaÄnÃ­ch Å™etÄ›zcÅ¯ na ni dbÃ¡t.  VÄ›tÅ¡inou nenÃ­ nutnÃ©
+uvÃ¡dÄ›t zÅ™ejmÃ© vÄ›ci (iÂ kdyÅ¾ nÄ›kdy to nutnÃ© je, aby text mÄ›l hlavu a patu,
+neboÅ¥ dÅ¯leÅ¾itÃ¡ je iÂ forma sdÄ›lenÃ­ informace) a naopak je dÅ¯leÅ¾itÃ© uvÃ¡dÄ›t
+konkrÃ©tnÃ­ pÅ™esnÃ© informace.
 
-Uveïme pøíklad dokumentaèního øetìzce pro metodu =Row.keys()=.  Nejprve
-pøíklad ¹patného dokumentaèního øetìzce:
+UveÄme pÅ™Ã­klad dokumentaÄnÃ­ho Å™etÄ›zce pro metodu =Row.keys()=.  Nejprve
+pÅ™Ã­klad Å¡patnÃ©ho dokumentaÄnÃ­ho Å™etÄ›zce:
 
 <example>
-  """Vra» seznam v¹ech klíèù."""
+  """VraÅ¥ seznam vÅ¡ech klÃ­ÄÅ¯."""
 </example>
 
-Takovı dokumentaèní øetìzec neøíká vùbec nic, proto¾e popis platí na
-libovolnou metodu =keys=.  Je napsán jenom proto, aby na daném místì nìjakı
-dokumentaèní øetìzec byl -- pro formu, ne pro u¾itek.
+TakovÃ½ dokumentaÄnÃ­ Å™etÄ›zec neÅ™Ã­kÃ¡ vÅ¯bec nic, protoÅ¾e popis platÃ­ na
+libovolnou metodu =keys=.  Je napsÃ¡n jenom proto, aby na danÃ©m mÃ­stÄ› nÄ›jakÃ½
+dokumentaÄnÃ­ Å™etÄ›zec byl -- pro formu, ne pro uÅ¾itek.
 
-Zkusme dokumentaèní øetìzec vylep¹it:
+Zkusme dokumentaÄnÃ­ Å™etÄ›zec vylepÅ¡it:
 
 <example>
-  """Vra» seznam názvù v¹ech sloupcù jako strings.
+  """VraÅ¥ seznam nÃ¡zvÅ¯ vÅ¡ech sloupcÅ¯ jako strings.
 
-  Poøadí polo¾ek vráceného seznamu je nedefinováno.
+  PoÅ™adÃ­ poloÅ¾ek vrÃ¡cenÃ©ho seznamu je nedefinovÃ¡no.
 
   """
 </example>
 
-První vìta øíká, jakého typu jsou polo¾ky seznamu (dùle¾itá informace) a co
-to vlastnì ty klíèe jsou (dùle¾itá informace).  Poslední je vhodné uvést
-i v pøípadì, ¾e pojem "klíè" je definován v dokumentaèním øetìzci tøídy,
-nebo» se tím ètenáøi u¹etøí zbyteèné dohledávání.  Pokud by se ale jednalo
-o nìco slo¾itìj¹ího, je lep¹í uvést (explicitní) referenci, proto¾e jinak
-hrozí rozjezd popisù -- pro ètenáøe je lep¹í dohledávat ne¾ dostat zastaralou
-a ji¾ neplatnou informaci.
+PrvnÃ­ vÄ›ta Å™Ã­kÃ¡, jakÃ©ho typu jsou poloÅ¾ky seznamu (dÅ¯leÅ¾itÃ¡ informace) a co
+to vlastnÄ› ty klÃ­Äe jsou (dÅ¯leÅ¾itÃ¡ informace).  PoslednÃ­ je vhodnÃ© uvÃ©st
+iÂ vÂ pÅ™Ã­padÄ›, Å¾e pojem "klÃ­Ä" je definovÃ¡n vÂ dokumentaÄnÃ­m Å™etÄ›zci tÅ™Ã­dy,
+neboÅ¥ se tÃ­m ÄtenÃ¡Å™i uÅ¡etÅ™Ã­ zbyteÄnÃ© dohledÃ¡vÃ¡nÃ­.  Pokud by se ale jednalo
+oÂ nÄ›co sloÅ¾itÄ›jÅ¡Ã­ho, je lepÅ¡Ã­ uvÃ©st (explicitnÃ­) referenci, protoÅ¾e jinak
+hrozÃ­ rozjezd popisÅ¯ -- pro ÄtenÃ¡Å™e je lepÅ¡Ã­ dohledÃ¡vat neÅ¾ dostat zastaralou
+a jiÅ¾ neplatnou informaci.
 
-Druhá vìta je v tøídì =Row= také dùle¾itá, proto¾e =Row= má slovníkovı
-i sekvenèní charakter, tak¾e nìkdo mù¾e nad poøadím spekulovat nebo se na nì
-dokonce (chybnì) spoléhat.  Navíc dictionaries obvykle vrací své klíèe
-setøídìné abecednì, co¾ =Row= nedìlá, a to mù¾e opìt mást (i kdy¾ by nemìlo).
-Tak¾e pøesto¾e èistì technicky je tato vìta redundantní, u¹etøí ètenáøi
-zbyteèné pøemı¹lení a udìlá mu okam¾itì jasno; stejnì tak u¹etøí zbyteèné
-otázky implementátorovi, bude-li potøebovat implementaci zmìnit a bude se
-bát, zda to nenaru¹í stávající kód.
+DruhÃ¡ vÄ›ta je vÂ tÅ™Ã­dÄ› =Row= takÃ© dÅ¯leÅ¾itÃ¡, protoÅ¾e =Row= mÃ¡ slovnÃ­kovÃ½
+iÂ sekvenÄnÃ­ charakter, takÅ¾e nÄ›kdo mÅ¯Å¾e nad poÅ™adÃ­m spekulovat nebo se na nÄ›
+dokonce (chybnÄ›) spolÃ©hat.  NavÃ­c dictionaries obvykle vracÃ­ svÃ© klÃ­Äe
+setÅ™Ã­dÄ›nÃ© abecednÄ›, coÅ¾ =Row= nedÄ›lÃ¡, aÂ to mÅ¯Å¾e opÄ›t mÃ¡st (iÂ kdyÅ¾ by nemÄ›lo).
+TakÅ¾e pÅ™estoÅ¾e ÄistÄ› technicky je tato vÄ›ta redundantnÃ­, uÅ¡etÅ™Ã­ ÄtenÃ¡Å™i
+zbyteÄnÃ© pÅ™emÃ½Å¡lenÃ­ a udÄ›lÃ¡ mu okamÅ¾itÄ› jasno; stejnÄ› tak uÅ¡etÅ™Ã­ zbyteÄnÃ©
+otÃ¡zky implementÃ¡torovi, bude-li potÅ™ebovat implementaci zmÄ›nit a bude se
+bÃ¡t, zda to nenaruÅ¡Ã­ stÃ¡vajÃ­cÃ­ kÃ³d.
 
-Dále je nutno dbát na následující pravidla:
+DÃ¡le je nutno dbÃ¡t na nÃ¡sledujÃ­cÃ­ pravidla:
 
-- V dokumentaèních øetìzcích se nepopisují privátní atributy tøídy ani se tam
-  neuvádí pro u¾ivatele tøídy nepodstatné implementaèní poznámky.  Obojí
-  patøí do komentáøù v kódu.  Privátní objekty jako takové v¹ak své
-  dokumentaèní øetìzce mít mohou, pøi generování dokumentace je lze vynechat.
+- VÂ dokumentaÄnÃ­ch Å™etÄ›zcÃ­ch se nepopisujÃ­ privÃ¡tnÃ­ atributy tÅ™Ã­dy ani se tam
+  neuvÃ¡dÃ­ pro uÅ¾ivatele tÅ™Ã­dy nepodstatnÃ© implementaÄnÃ­ poznÃ¡mky.  ObojÃ­
+  patÅ™Ã­ do komentÃ¡Å™Å¯ vÂ kÃ³du.  PrivÃ¡tnÃ­ objekty jako takovÃ© vÅ¡ak svÃ©
+  dokumentaÄnÃ­ Å™etÄ›zce mÃ­t mohou, pÅ™i generovÃ¡nÃ­ dokumentace je lze vynechat.
 
-- Vrací-li nìjaká funkce pravdivostní hodnotu, lze v dokumentaèním øetìzci
-  uvádìt, ¾e vrací =TRUE= nebo =FALSE= pouze v pøípadì, ¾e jsou skuteènì
-  vraceny pøesnì tyto konstanty.  Pokud mù¾e bıt pravdivostní hodnota vrácena
-  i v jiné podobì (napøíklad jako =0=, =1=, =None=, apod.), je nutno vracenou
-  hodnotu popisovat jinak, doporuèují se termíny *pravda* a *nepravda*.
+- VracÃ­-li nÄ›jakÃ¡ funkce pravdivostnÃ­ hodnotu, lze vÂ dokumentaÄnÃ­m Å™etÄ›zci
+  uvÃ¡dÄ›t, Å¾e vracÃ­ =TRUE= nebo =FALSE= pouze vÂ pÅ™Ã­padÄ›, Å¾e jsou skuteÄnÄ›
+  vraceny pÅ™esnÄ› tyto konstanty.  Pokud mÅ¯Å¾e bÃ½t pravdivostnÃ­ hodnota vrÃ¡cena
+  iÂ v jinÃ© podobÄ› (napÅ™Ã­klad jako =0=, =1=, =None=, apod.), je nutno vracenou
+  hodnotu popisovat jinak, doporuÄujÃ­ se termÃ­ny *pravda* a *nepravda*.
 
 
 * <nop>ChangeLog
 
-<nop>ChangeLog soubory slou¾í k následujícím úèelùm:
+<nop>ChangeLog soubory slouÅ¾Ã­ kÂ nÃ¡sledujÃ­cÃ­m ÃºÄelÅ¯m:
 
-- Obecné informace o zmìnách.
+- ObecnÃ© informace oÂ zmÄ›nÃ¡ch.
 
-- Stopování, kde mohlo dojít ke zmìnì zpùsobující zji¹tìné neoèekávané
-  chování.
+- StopovÃ¡nÃ­, kde mohlo dojÃ­t ke zmÄ›nÄ› zpÅ¯sobujÃ­cÃ­ zjiÅ¡tÄ›nÃ© neoÄekÃ¡vanÃ©
+  chovÃ¡nÃ­.
 
-- Informace pro commit hlá¹ky.
+- Informace pro commit hlÃ¡Å¡ky.
 
-Záznamy do <nop>ChangeLogs se pí¹í s ohledem na tyto úèely.  Øídí se pøimìøenì
-zásadami uvedenımi v [[info:(standards)Change Logs]].  Pí¹í se v èe¹tinì.
+ZÃ¡znamy do <nop>ChangeLogs se pÃ­Å¡Ã­ sÂ ohledem na tyto ÃºÄely.  Å˜Ã­dÃ­ se pÅ™imÄ›Å™enÄ›
+zÃ¡sadami uvedenÃ½mi vÂ [[info:(standards)Change Logs]].  PÃ­Å¡Ã­ se vÂ ÄeÅ¡tinÄ›.
 
-=ChangeLog= souborù zavádíme radìji ménì ne¾ více.
+=ChangeLog= souborÅ¯ zavÃ¡dÃ­me radÄ›ji mÃ©nÄ› neÅ¾ vÃ­ce.
 
 
 Footnotes:
-[1] V tomto pøípadì je vhodné, aby soubor =__init__.py= v adresáøi modulu
-    obsahoval import této tøídy.  To zabrání zbyteèné ukecanosti, staèí pak
-    psát =...dir.FooBar= místo =...dir.FooBar.FooBar=.
+[1] VÂ tomto pÅ™Ã­padÄ› je vhodnÃ©, aby soubor =__init__.py= vÂ adresÃ¡Å™i modulu
+    obsahoval import tÃ©to tÅ™Ã­dy.  To zabrÃ¡nÃ­ zbyteÄnÃ© ukecanosti, staÄÃ­ pak
+    psÃ¡t =...dir.FooBar= mÃ­sto =...dir.FooBar.FooBar=.

@@ -1,67 +1,67 @@
-#title Obecné principy návrhu systému a tvorby kódu
+#title ObecnÃ© principy nÃ¡vrhu systÃ©mu a tvorby kÃ³du
 
-* Obecné zásady
+* ObecnÃ© zÃ¡sady
 
-Pøi tvorbì èehokoliv bychom mìli mít na pamìti následující principy:
+PÅ™i tvorbÄ› Äehokoliv bychom mÄ›li mÃ­t na pamÄ›ti nÃ¡sledujÃ­cÃ­ principy:
 
-Srozumitelnost :: U v¹eho by mìlo bıt jasné, jak to funguje a k èemu to
-slou¾í.  Tím se nemyslí, ¾e v¹e musí bıt triviální, nıbr¾ se tím míní to, ¾e
-v¹e musí bıt pokud mo¾no samoobjasòující a pokud to není mo¾né, tak to musí
-bıt øádnì popsáno a vysvìtleno.
+Srozumitelnost :: UÂ vÅ¡eho by mÄ›lo bÃ½t jasnÃ©, jak to funguje a kÂ Äemu to
+slouÅ¾Ã­.  TÃ­m se nemyslÃ­, Å¾e vÅ¡e musÃ­ bÃ½t triviÃ¡lnÃ­, nÃ½brÅ¾ se tÃ­m mÃ­nÃ­ to, Å¾e
+vÅ¡e musÃ­ bÃ½t pokud moÅ¾no samoobjasÅˆujÃ­cÃ­ a pokud to nenÃ­ moÅ¾nÃ©, tak to musÃ­
+bÃ½t Å™Ã¡dnÄ› popsÃ¡no a vysvÄ›tleno.
 
-Pøehlednost :: V tom, co vytvoøíme, se musí snadno orientovat autor,
-spoluautoøi i diváci.
+PÅ™ehlednost :: VÂ tom, co vytvoÅ™Ã­me, se musÃ­ snadno orientovat autor,
+spoluautoÅ™i iÂ divÃ¡ci.
 
-Konzistence :: Jednotlivé èásti systému si nesmí navzájem odporovat nebo
-realizovat jednu a tuté¾ vìc na rùznıch místech rùznımi prostøedky.
+Konzistence :: JednotlivÃ© ÄÃ¡sti systÃ©mu si nesmÃ­ navzÃ¡jem odporovat nebo
+realizovat jednu a tutÃ©Å¾ vÄ›c na rÅ¯znÃ½ch mÃ­stech rÅ¯znÃ½mi prostÅ™edky.
 
-Na "provizorní" øe¹ení musí bıt nahlí¾eno s maximální opatrností.  Taková
-øe¹ení bıvají velmi vitální a mohou se snadno pøemìnit v nepøíjemné
+Na "provizornÃ­" Å™eÅ¡enÃ­ musÃ­ bÃ½t nahlÃ­Å¾eno sÂ maximÃ¡lnÃ­ opatrnostÃ­.  TakovÃ¡
+Å™eÅ¡enÃ­ bÃ½vajÃ­ velmi vitÃ¡lnÃ­ a mohou se snadno pÅ™emÄ›nit vÂ nepÅ™Ã­jemnÃ©
 kostlivce.
 
-** Zásada dokumentovanosti
+** ZÃ¡sada dokumentovanosti
 
-Je u¾iteèné, kdy¾ je v dokumentaèních øetìzcích, pøíp. komentáøích, pojednáno
-o tom, proè jsou které vìci definovány, tak jak jsou definovány, a jakı
-zpùsob jejich pou¾ití se v aplikaci pøedpokládá (ne jak se to kóduje, nıbr¾
-kolik instancí té které tøídy se bude vytváøet, èemu budou odpovídat, co od
-dané tøídy oèekáváme, atd.).
+Je uÅ¾iteÄnÃ©, kdyÅ¾ je vÂ dokumentaÄnÃ­ch Å™etÄ›zcÃ­ch, pÅ™Ã­p. komentÃ¡Å™Ã­ch, pojednÃ¡no
+oÂ tom, proÄ jsou kterÃ© vÄ›ci definovÃ¡ny, tak jak jsou definovÃ¡ny, aÂ jakÃ½
+zpÅ¯sob jejich pouÅ¾itÃ­ se vÂ aplikaci pÅ™edpoklÃ¡dÃ¡ (ne jak se to kÃ³duje, nÃ½brÅ¾
+kolik instancÃ­ tÃ© kterÃ© tÅ™Ã­dy se bude vytvÃ¡Å™et, Äemu budou odpovÃ­dat, co od
+danÃ© tÅ™Ã­dy oÄekÃ¡vÃ¡me, atd.).
 
-Pomù¾e to:
+PomÅ¯Å¾e to:
 
-- Autorovi utøídit si my¹lenky.
+- Autorovi utÅ™Ã­dit si myÅ¡lenky.
 
-- Ètenáøi snáze pochopit zámìr autora a u¹etøit si práci se znovuvynalézáním
-  ji¾ objeveného.
+- ÄŒtenÃ¡Å™i snÃ¡ze pochopit zÃ¡mÄ›r autora a uÅ¡etÅ™it si prÃ¡ci se znovuvynalÃ©zÃ¡nÃ­m
+  jiÅ¾ objevenÃ©ho.
 
-- Zjednodu¹it si následnou práci na dokumentaèních øetìzcích i kódu.
+- ZjednoduÅ¡it si nÃ¡slednou prÃ¡ci na dokumentaÄnÃ­ch Å™etÄ›zcÃ­ch iÂ kÃ³du.
 
-- V¹em zpìtnì zjistit, proè jsou nìkteré vìci udìlány, tak jak jsou.
+- VÅ¡em zpÄ›tnÄ› zjistit, proÄ jsou nÄ›kterÃ© vÄ›ci udÄ›lÃ¡ny, tak jak jsou.
 
-Zejména je hodnì dùle¾ité dbát na sdìlení vìcného zámìru, proto¾e to umo¾òuje
-velmi rychle pochopit hned ze zaèátku základní principy.  Pokud je èlovìk
-naopak nucen základní principy indukovat z jejich aplikací, dochází ke
-zbyteènému zdr¾ování a zejména vzniká zvı¹ené riziko vymy¹lení jinıch
-základních principù a následnıch zmatkù.
+ZejmÃ©na je hodnÄ› dÅ¯leÅ¾itÃ© dbÃ¡t na sdÄ›lenÃ­ vÄ›cnÃ©ho zÃ¡mÄ›ru, protoÅ¾e to umoÅ¾Åˆuje
+velmi rychle pochopit hned ze zaÄÃ¡tku zÃ¡kladnÃ­ principy.  Pokud je ÄlovÄ›k
+naopak nucen zÃ¡kladnÃ­ principy indukovat zÂ jejich aplikacÃ­, dochÃ¡zÃ­ ke
+zbyteÄnÃ©mu zdrÅ¾ovÃ¡nÃ­ a zejmÃ©na vznikÃ¡ zvÃ½Å¡enÃ© riziko vymyÅ¡lenÃ­ jinÃ½ch
+zÃ¡kladnÃ­ch principÅ¯ a nÃ¡slednÃ½ch zmatkÅ¯.
 
 
-* Tvorba kódu
+* Tvorba kÃ³du
 
 ** Modularita
 
-Kód by mìl bıt rozèlenìn do dostateènì malıch celkù s jasnì definovanou
-funkcionalitou a pøesnì definovanım API.  To nám umo¾ní jednak se v ka¾dé
-èásti zamìøit pouze na jedinı konkrétní problém a jednak udr¾et celı systém
-na uzdì.
+KÃ³d by mÄ›l bÃ½t rozÄlenÄ›n do dostateÄnÄ› malÃ½ch celkÅ¯ sÂ jasnÄ› definovanou
+funkcionalitou a pÅ™esnÄ› definovanÃ½m API.  To nÃ¡m umoÅ¾nÃ­ jednak se vÂ kaÅ¾dÃ©
+ÄÃ¡sti zamÄ›Å™it pouze na jedinÃ½ konkrÃ©tnÃ­ problÃ©m a jednak udrÅ¾et celÃ½ systÃ©m
+na uzdÄ›.
 
-** Datová a funkèní abstrakce
+** DatovÃ¡ a funkÄnÃ­ abstrakce
 
-Ve¹kerá data, která se nelokálnì pøedávají mezi rùznımi èástmi programu, by
-mìla mít jasnì definovanou podobu a mìla by bıt reprezentována instancemi
-na¹ich speciálních tøíd k tomu urèenıch.  To zajistí, ¾e je v¹ude jasné, co
-je co a jak to vypadá.
+VeÅ¡kerÃ¡ data, kterÃ¡ se nelokÃ¡lnÄ› pÅ™edÃ¡vajÃ­ mezi rÅ¯znÃ½mi ÄÃ¡stmi programu, by
+mÄ›la mÃ­t jasnÄ› definovanou podobu a mÄ›la by bÃ½t reprezentovÃ¡na instancemi
+naÅ¡ich speciÃ¡lnÃ­ch tÅ™Ã­d kÂ tomu urÄenÃ½ch.  To zajistÃ­, Å¾e je vÅ¡ude jasnÃ©, co
+je co a jak to vypadÃ¡.
 
-Pro ka¾dı nástroj, kterı pou¾íváme (databázové rozhraní, u¾ivatelské
-rozhraní, logování, ...), bychom mìli mít vlastní jednoduché a jasnì
-definované API.  To nás odstíní od problémù a komplexnosti pou¾itého nástroje
-a umo¾ní nám snadno vyu¾ívat to a jen to, co potøebujeme.
+Pro kaÅ¾dÃ½ nÃ¡stroj, kterÃ½ pouÅ¾Ã­vÃ¡me (databÃ¡zovÃ© rozhranÃ­, uÅ¾ivatelskÃ©
+rozhranÃ­, logovÃ¡nÃ­,Â ...), bychom mÄ›li mÃ­t vlastnÃ­ jednoduchÃ© a jasnÄ›
+definovanÃ© API.  To nÃ¡s odstÃ­nÃ­ od problÃ©mÅ¯ a komplexnosti pouÅ¾itÃ©ho nÃ¡stroje
+a umoÅ¾nÃ­ nÃ¡m snadno vyuÅ¾Ã­vat to a jen to, co potÅ™ebujeme.

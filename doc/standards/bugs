@@ -1,73 +1,73 @@
 * PostgreSQL
 
-- Verze 7.1.2: Provede-li se pøi práci s kurzorem SQL pøíkaz =MOVE= jeho¾
-  parametr =count= je =0=, není poté mo¾no z kurzoru vytáhnout ¾ádná dal¹í
+- Verze 7.1.2: Provede-li se pÅ™i prÃ¡ci sÂ kurzorem SQL pÅ™Ã­kaz =MOVE= jehoÅ¾
+  parametr =count= je =0=, nenÃ­ potÃ© moÅ¾no zÂ kurzoru vytÃ¡hnout Å¾Ã¡dnÃ¡ dalÅ¡Ã­
   data.
 
-  Tento problém je nefatální, lze jej o¹etøit na úrovni databázového
-  rozhraní.  Aktuální implementace provádí pøed ka¾dım provedením MOVE test,
-  zda se nejedná o nulovı posun.  Pokud by k nìmu mìlo jít, není proveden
-  (co¾ nevadí, proto¾e nulovı posuvu nemá ¾ádnı praktickı vıznam).
+  Tento problÃ©m je nefatÃ¡lnÃ­, lze jej oÅ¡etÅ™it na Ãºrovni databÃ¡zovÃ©ho
+  rozhranÃ­.  AktuÃ¡lnÃ­ implementace provÃ¡dÃ­ pÅ™ed kaÅ¾dÃ½m provedenÃ­m MOVE test,
+  zda se nejednÃ¡ oÂ nulovÃ½ posun.  Pokud by kÂ nÄ›mu mÄ›lo jÃ­t, nenÃ­ proveden
+  (coÅ¾ nevadÃ­, protoÅ¾e nulovÃ½ posuvu nemÃ¡ Å¾Ã¡dnÃ½ praktickÃ½ vÃ½znam).
 
-  Chyba byla oznámena, byla v¹ak za tıden moderátorem pgsql-bugs odmítnuta
-  bez udání dùvodu.
+  Chyba byla oznÃ¡mena, byla vÅ¡ak za tÃ½den moderÃ¡torem pgsql-bugs odmÃ­tnuta
+  bez udÃ¡nÃ­ dÅ¯vodu.
 
-- Verze 7.1.2: Pokud v kurzoru vytvoøeném komplikovanìj¹ím SELECTem dojde
-  k pøekroèení hranic dat, kurzor pøestane vracet data.  Pøesnìj¹í definice
-  "komplikavanìj¹í" není známa, patrnì musí bıt pøítomna vazba mezi více
-  tabulkami a tøídìní (to je v pøípadì na¹eho rozhraní pøítomno v¾dy), není
-  to v¹ak jisté.
+- Verze 7.1.2: Pokud vÂ kurzoru vytvoÅ™enÃ©m komplikovanÄ›jÅ¡Ã­m SELECTem dojde
+  kÂ pÅ™ekroÄenÃ­ hranic dat, kurzor pÅ™estane vracet data.  PÅ™esnÄ›jÅ¡Ã­ definice
+  "komplikavanÄ›jÅ¡Ã­" nenÃ­ znÃ¡ma, patrnÄ› musÃ­ bÃ½t pÅ™Ã­tomna vazba mezi vÃ­ce
+  tabulkami a tÅ™Ã­dÄ›nÃ­ (to je vÂ pÅ™Ã­padÄ› naÅ¡eho rozhranÃ­ pÅ™Ã­tomno vÅ¾dy), nenÃ­
+  to vÅ¡ak jistÃ©.
 
-  Chyba mù¾e zpùsobit na¹emu softwaru záva¾né problémy v pøípadì, ¾e vazby
-  mezi na¹imi tabulkami budou generovat "komplikovanìj¹í" SELECTy.  Nemyslím
-  si, ¾e je to pøíli¹ pravdìpodobné, ale zejména vzhledem k nejistému vıznamu
-  "komplikovanìj¹í" to nelze vylouèit.
+  Chyba mÅ¯Å¾e zpÅ¯sobit naÅ¡emu softwaru zÃ¡vaÅ¾nÃ© problÃ©my vÂ pÅ™Ã­padÄ›, Å¾e vazby
+  mezi naÅ¡imi tabulkami budou generovat "komplikovanÄ›jÅ¡Ã­" SELECTy.  NemyslÃ­m
+  si, Å¾e je to pÅ™Ã­liÅ¡ pravdÄ›podobnÃ©, ale zejmÃ©na vzhledem kÂ nejistÃ©mu vÃ½znamu
+  "komplikovanÄ›jÅ¡Ã­" to nelze vylouÄit.
 
-  Chyba byla oznámena, odezva zatím ¾ádná.
+  Chyba byla oznÃ¡mena, odezva zatÃ­m Å¾Ã¡dnÃ¡.
 
 
 * Python
 
-- Verze 2.1 a star¹í, spolu s wxWindows 2.2.6.1: Pøi nastavenıch èeskıch
-  locales po importu wxWindows nefunguje práce s reálnımi èísly a to tak ¾e
-  vùbec.  Napøíklad *parser* pøi naèítání modulu zprzní èíslo zapsané jako
-  =1.1= (obvykle je oøe¾e na celé èíslo).
+- Verze 2.1 a starÅ¡Ã­, spolu sÂ wxWindowsÂ 2.2.6.1: PÅ™i nastavenÃ½ch ÄeskÃ½ch
+  locales po importu wxWindows nefunguje prÃ¡ce sÂ reÃ¡lnÃ½mi ÄÃ­sly a to tak Å¾e
+  vÅ¯bec.  NapÅ™Ã­klad *parser* pÅ™i naÄÃ­tÃ¡nÃ­ modulu zprznÃ­ ÄÃ­slo zapsanÃ© jako
+  =1.1= (obvykle je oÅ™eÅ¾e na celÃ© ÄÃ­slo).
 
-  Chyba nám zpùsobí vıznamné potí¾e, jestli¾e budeme ve zdrojovıch textech
-  pou¾ívat zápisy reálnıch èísel, budeme-li naèítat reálná èísla z databáze a
-  v dal¹ích podobnıch pøípadech.  Obejít chybu lze nastavením =LC_NUMERIC= na
-  =C= na *úplném zaèátku* programu.  Je potom ov¹em potøeba dbát na to, aby
-  byla tato promìnná správnì nastavena pro u¾ivatelské vstupy.
+  Chyba nÃ¡m zpÅ¯sobÃ­ vÃ½znamnÃ© potÃ­Å¾e, jestliÅ¾e budeme ve zdrojovÃ½ch textech
+  pouÅ¾Ã­vat zÃ¡pisy reÃ¡lnÃ½ch ÄÃ­sel, budeme-li naÄÃ­tat reÃ¡lnÃ¡ ÄÃ­sla zÂ databÃ¡ze a
+  vÂ dalÅ¡Ã­ch podobnÃ½ch pÅ™Ã­padech.  ObejÃ­t chybu lze nastavenÃ­m =LC_NUMERIC= na
+  =C= na *ÃºplnÃ©m zaÄÃ¡tku* programu.  Je potom ovÅ¡em potÅ™eba dbÃ¡t na to, aby
+  byla tato promÄ›nnÃ¡ sprÃ¡vnÄ› nastavena pro uÅ¾ivatelskÃ© vstupy.
 
-  Chyba je vıvojáøùm Pythonu patrnì ji¾ známa, viz mail
-  <m14rr0x8vg.fsf@pavel.brailcom.cz> v devel@.
+  Chyba je vÃ½vojÃ¡Å™Å¯m Pythonu patrnÄ› jiÅ¾ znÃ¡ma, viz mail
+  <m14rr0x8vg.fsf@pavel.brailcom.cz> vÂ devel@.
 
 
 * wxWindows
 
-- Verze 2.2.6.1: Jsou problémy s funkcí =wxWindow.Reparent=.  Za urèitıch
-  okolností mù¾e dojít ke zhroucení aplikace (segmentation fault).  Nemìlo by
-  docházet ke zmìnì rodièe okna na jiného rodièe ne¾ byl ten, kterı byl
-  uveden pøi vytváøení okna, zejména pak nelze zmìnit rodièe okna, je¾
-  pùvodnì nemìlo vùbec ¾ádného rodièe.
+- Verze 2.2.6.1: Jsou problÃ©my sÂ funkcÃ­ =wxWindow.Reparent=.  Za urÄitÃ½ch
+  okolnostÃ­ mÅ¯Å¾e dojÃ­t ke zhroucenÃ­ aplikace (segmentation fault).  NemÄ›lo by
+  dochÃ¡zet ke zmÄ›nÄ› rodiÄe okna na jinÃ©ho rodiÄe neÅ¾ byl ten, kterÃ½ byl
+  uveden pÅ™i vytvÃ¡Å™enÃ­ okna, zejmÃ©na pak nelze zmÄ›nit rodiÄe okna, jeÅ¾
+  pÅ¯vodnÄ› nemÄ›lo vÅ¯bec Å¾Ã¡dnÃ©ho rodiÄe.
 
-  Tento problém se zatím nezdá bıt fatální.  Souèasné pou¾ití =Reparent= se
-  podaøilo upravit zpùsobem, kdy dochází pouze k vypisování hlá¹ek o kritické
-  chybì Gtk na standardní chybovı vıstup.
+  Tento problÃ©m se zatÃ­m nezdÃ¡ bÃ½t fatÃ¡lnÃ­.  SouÄasnÃ© pouÅ¾itÃ­ =Reparent= se
+  podaÅ™ilo upravit zpÅ¯sobem, kdy dochÃ¡zÃ­ pouze kÂ vypisovÃ¡nÃ­ hlÃ¡Å¡ek oÂ kritickÃ©
+  chybÄ› Gtk na standardnÃ­ chybovÃ½ vÃ½stup.
 
-  Chyba vzhledem ke své malé záva¾nosti a komplikovanosti její kompletní
-  diagnózy nebyla oznámena.
+  Chyba vzhledem ke svÃ© malÃ© zÃ¡vaÅ¾nosti a komplikovanosti jejÃ­ kompletnÃ­
+  diagnÃ³zy nebyla oznÃ¡mena.
 
-- Verze 2.2.9.2: Pøi otevøení vìt¹ího mno¾ství oken (napø. 8 a více) na frame
-  stacku a pøi pokusu o jejich sekvenèní zavírání dojde po jisté dobì k
-  spadnutí celé aplikace s hlá¹kou:
+- Verze 2.2.9.2: PÅ™i otevÅ™enÃ­ vÄ›tÅ¡Ã­ho mnoÅ¾stvÃ­ oken (napÅ™. 8 a vÃ­ce) na frame
+  stacku a pÅ™i pokusu o jejich sekvenÄnÃ­ zavÃ­rÃ¡nÃ­ dojde po jistÃ© dobÄ› k
+  spadnutÃ­ celÃ© aplikace s hlÃ¡Å¡kou:
 
     "Gdk-ERROR **: undefined font type
 
     aborting...
-    neúspì¹nì ukonèen (SIGABRT)"
+    neÃºspÄ›Å¡nÄ› ukonÄen (SIGABRT)"
 
-  Cnyba se neprojevuje ve verzi 2.3.1. V této verzi je asi odstranìna, tak¾e
-  asi nemá vıznam se zabıvat odstranìním této chyby v 2.2.9.2.
+  Cnyba se neprojevuje ve verzi 2.3.1. V tÃ©to verzi je asi odstranÄ›na, takÅ¾e
+  asi nemÃ¡ vÃ½znam se zabÃ½vat odstranÄ›nÃ­m tÃ©to chyby v 2.2.9.2.
 
   

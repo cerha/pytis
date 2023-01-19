@@ -1,41 +1,21 @@
-#title Obecná organizaèní pravidla
+#title ObecnÃ¡ organizaÄnÃ­ pravidla
 
 * Pravidla pro pravidla
 
-V¹echna pravidla, na kterıch se domluvíme, se zanesou do dokumentù v CVS
-adresáøi =doc/standards/=.  Úèelem tìchto dokumentù je:
+VÅ¡echna pravidla, na kterÃ½ch se domluvÃ­me, se zanesou do dokumentÅ¯ vÂ adresÃ¡Å™i
+=doc/standards/=.  ÃšÄelem tÄ›chto dokumentÅ¯ je:
 
-- Mo¾nost kdykoliv si pravidla ujasnit, ovìøit èi zopakovat.
+- MoÅ¾nost kdykoliv si pravidla ujasnit, ovÄ›Å™it Äi zopakovat.
 
-- Mo¾nost rychle a snadno s pravidly seznámit pøípadné nové vıvojáøe.
+- MoÅ¾nost rychle a snadno sÂ pravidly seznÃ¡mit pÅ™Ã­padnÃ© novÃ© vÃ½vojÃ¡Å™e.
 
-- Zamezení vymı¹lení jedné a té¾e vìci opakovanì stále dokola jenom proto, ¾e
-  se na ni èasem zapomene.
+- ZamezenÃ­ vymÃ½Å¡lenÃ­ jednÃ© a tÃ©Å¾e vÄ›ci opakovanÄ› stÃ¡le dokola jenom proto, Å¾e
+  se na ni Äasem zapomene.
 
-Dokumenty jsou v plain text formátu, je mo¾no (a doporuèeno) pou¾ívat
-znaèkování Emacs Wiki (http://www.gci-net.com/~johnw/Emacs/emacs-wiki.el).
-Øádky v tìchto dokumentech by nemìly pøesahovat délku 77 znakù, aby
-nepøesáhly standardní maximální délku 79 znakù ani po odsazení anebo ve
-vıstupu diffu.
+Dokumenty jsou vÂ plain text formÃ¡tu, je moÅ¾no (aÂ doporuÄeno) pouÅ¾Ã­vat
+znaÄkovÃ¡nÃ­ Emacs Wiki (http://www.gci-net.com/~johnw/Emacs/emacs-wiki.el).
+Å˜Ã¡dky vÂ tÄ›chto dokumentech by nemÄ›ly pÅ™esahovat dÃ©lku 77Â znakÅ¯, aby
+nepÅ™esÃ¡hly standardnÃ­ maximÃ¡lnÃ­ dÃ©lku 79Â znakÅ¯ ani po odsazenÃ­ anebo ve
+vÃ½stupu diffu.
 
-K oznamování zmìn v dokumentech do mailing listu lze vyu¾ít pøíkazu
-
-<verbatim>
-  diff -C 3 --show-function-line='^\*+ '
-</verbatim>
-
-V závislosti na charakteru dokumentu a zmìn mù¾e bıt nìkdy vhodnìj¹í uvádìt
-více kontextovıch øádkù, napø. =-C 7=.
-
-
-* Software
-
-Software, kterı je vy¾adován EBASem a není souèástí Debianu (nebo v nìm není
-v potøebné verzi) je k dispozici na [[http://devel.brailcom.org/ebas]].
-
-
-* ©ablony souborù
-
-V CVS adresáøi =templates= jsou ¹ablony èasto pou¾ívanıch schémat souborù,
-je¾ lze vyu¾ít pøi zakládání novıch souborù.
 

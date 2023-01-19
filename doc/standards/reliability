@@ -1,130 +1,130 @@
-#title Zaji¹tování spolehlivosti napsaného kódu
+#title ZajiÅ¡tovÃ¡nÃ­ spolehlivosti napsanÃ©ho kÃ³du
 
-* Motivace a úèel
+* Motivace a ÃºÄel
 
-Tento dokument definuje postupy, jejich¾ cílem je zajistit, aby námi napsanı
-kód neobsahoval extrémní mno¾ství chyb a abychom se pøíli¹ èasto nesetkávali
-s nepøíjemnımi pøekvapeními.  Je tøeba si uvìdomit, ¾e u tohoto softwarového
-systému je nutná znaèná míra spolehlivosti, kterou sice nemù¾eme v rámci danıch
-omezení plnì zajistit, mù¾eme se jí v¹ak alespoò trochu pøiblí¾it.
+Tento dokument definuje postupy, jejichÅ¾ cÃ­lem je zajistit, aby nÃ¡mi napsanÃ½
+kÃ³d neobsahoval extrÃ©mnÃ­ mnoÅ¾stvÃ­ chyb a abychom se pÅ™Ã­liÅ¡ Äasto nesetkÃ¡vali
+sÂ nepÅ™Ã­jemnÃ½mi pÅ™ekvapenÃ­mi.  Je tÅ™eba si uvÄ›domit, Å¾e uÂ tohoto softwarovÃ©ho
+systÃ©mu je nutnÃ¡ znaÄnÃ¡ mÃ­ra spolehlivosti, kterou sice nemÅ¯Å¾eme vÂ rÃ¡mci danÃ½ch
+omezenÃ­ plnÄ› zajistit, mÅ¯Å¾eme se jÃ­ vÅ¡ak alespoÅˆ trochu pÅ™iblÃ­Å¾it.
 
-Nepøíjemná pøekvapení nám mù¾e pøipravit napøíklad:
+NepÅ™Ã­jemnÃ¡ pÅ™ekvapenÃ­ nÃ¡m mÅ¯Å¾e pÅ™ipravit napÅ™Ã­klad:
 
-- Nedokumentovanı nebo nedostateènì dokumentovanı objekt, o nìm¾ jeho u¾ivatelé
-  nìco chybnì implicitnì pøedpokládají.
+- NedokumentovanÃ½ nebo nedostateÄnÄ› dokumentovanÃ½ objekt, oÂ nÄ›mÅ¾ jeho uÅ¾ivatelÃ©
+  nÄ›co chybnÄ› implicitnÄ› pÅ™edpoklÃ¡dajÃ­.
 
-- "Drobná" zmìna kódu, která zmìní chování objektu a následnì zpùsobí havárii
-  v úplnì jiné èásti systému.
+- "DrobnÃ¡" zmÄ›na kÃ³du, kterÃ¡ zmÄ›nÃ­ chovÃ¡nÃ­ objektu a nÃ¡slednÄ› zpÅ¯sobÃ­ havÃ¡rii
+  vÂ ÃºplnÄ› jinÃ© ÄÃ¡sti systÃ©mu.
 
-Tento dokument se tıká pouze funkènosti a spolehlivosti napsaného kódu.
-Nezabıvá se tvorbou specifikací, návrhem algoritmù a postupù (viz dokument
-[[design]]) ani obecnımi konvencemi psaní kódu a dokumentace (ty jsou definovány
-v dokumentu [[formatting]]).  Takté¾ se nezabıvá testováním systému jako celku,
-tyto postupy bude potøeba vymyslet, a¾ to bude aktuální.
+Tento dokument se tÃ½kÃ¡ pouze funkÄnosti a spolehlivosti napsanÃ©ho kÃ³du.
+NezabÃ½vÃ¡ se tvorbou specifikacÃ­, nÃ¡vrhem algoritmÅ¯ a postupÅ¯ (viz dokument
+[[design]]) ani obecnÃ½mi konvencemi psanÃ­ kÃ³du a dokumentace (ty jsou definovÃ¡ny
+vÂ dokumentu [[formatting]]).  TaktÃ©Å¾ se nezabÃ½vÃ¡ testovÃ¡nÃ­m systÃ©mu jako celku,
+tyto postupy bude potÅ™eba vymyslet, aÅ¾ to bude aktuÃ¡lnÃ­.
 
-Postupy zde uvedené by mìly bıt pokud mo¾no nepøíli¹ slo¾ité, a» u¾ co se tıèe
-jejich pochopení a osvojení nebo realizace.  Vıjimku tvoøí tvorba testù, která
-je v¾dy pracná (nikoliv z hlediska pou¾itıch nástrojù, nıbr¾ z hlediska
-vymy¹lení testù, jejich mno¾ství a následné údr¾by).  I zde ov¹em do znaèné
-míry platí, ¾e se jedná pouze o urèité uèesání toho, co by èlovìk *mìl udìlat
-tak jako tak*, pouze uvedené do urèité formy.  Z dlouhodobého hlediska se pak
-formální práce navíc vyplatí, nebo» umo¾òuje po ka¾dé zmìnì kódu velmi snadno
-dát orientaèní odpovìï na otázku "funguje *v¹e* i po této zmìnì?".
+Postupy zde uvedenÃ© by mÄ›ly bÃ½t pokud moÅ¾no nepÅ™Ã­liÅ¡ sloÅ¾itÃ©, aÅ¥ uÅ¾ co se tÃ½Äe
+jejich pochopenÃ­ a osvojenÃ­ nebo realizace.  VÃ½jimku tvoÅ™Ã­ tvorba testÅ¯, kterÃ¡
+je vÅ¾dy pracnÃ¡ (nikoliv zÂ hlediska pouÅ¾itÃ½ch nÃ¡strojÅ¯, nÃ½brÅ¾ zÂ hlediska
+vymyÅ¡lenÃ­ testÅ¯, jejich mnoÅ¾stvÃ­ a nÃ¡slednÃ© ÃºdrÅ¾by).  IÂ zde ovÅ¡em do znaÄnÃ©
+mÃ­ry platÃ­, Å¾e se jednÃ¡ pouze oÂ urÄitÃ© uÄesÃ¡nÃ­ toho, co by ÄlovÄ›k *mÄ›l udÄ›lat
+tak jako tak*, pouze uvedenÃ© do urÄitÃ© formy.  ZÂ dlouhodobÃ©ho hlediska se pak
+formÃ¡lnÃ­ prÃ¡ce navÃ­c vyplatÃ­, neboÅ¥ umoÅ¾Åˆuje po kaÅ¾dÃ© zmÄ›nÄ› kÃ³du velmi snadno
+dÃ¡t orientaÄnÃ­ odpovÄ›Ä na otÃ¡zku "funguje *vÅ¡e* iÂ po tÃ©to zmÄ›nÄ›?".
 
 
-* Kontrola kódu
+* Kontrola kÃ³du
 
-Ka¾dı novı kód, a» u¾ zbrusu novı nebo modifikovanı stávající, musí projít
-jakımsi základním kontrolním procesem.  Tento proces je definován následujícím
-kontrolním seznamem akcí, které se musí provést v¾dy pøed tím, ne¾ je mo¾no kód
-prohlásit za hotovı a funkèní:
+KaÅ¾dÃ½ novÃ½ kÃ³d, aÅ¥ uÅ¾ zbrusu novÃ½ nebo modifikovanÃ½ stÃ¡vajÃ­cÃ­, musÃ­ projÃ­t
+jakÃ½msi zÃ¡kladnÃ­m kontrolnÃ­m procesem.  Tento proces je definovÃ¡n nÃ¡sledujÃ­cÃ­m
+kontrolnÃ­m seznamem akcÃ­, kterÃ© se musÃ­ provÃ©st vÅ¾dy pÅ™ed tÃ­m, neÅ¾ je moÅ¾no kÃ³d
+prohlÃ¡sit za hotovÃ½ a funkÄnÃ­:
 
-1. Optická kontrola kódu.
+1. OptickÃ¡ kontrola kÃ³du.
 
-   Je nutno celı kód projít a podívat se, není-li tam nìco oèividnì ¹karedého
-   nebo neladícího.  Èlovìk by mìl mít pocit, ¾e kód vypadá dobøe a neskrıvá se
-   v nìm nìjaká záludnost.  To se tıká jak vıkonnıch èástí, tak jmen
-   identifikátorù a obsahu dokumentaèních øetìzcù a komentáøù.  Pokud tento
-   pocit v nìkterém místì nemá, je tøeba kód opravit nebo (není-li okam¾itá
-   oprava mo¾ná) toto místo patøiènì okomentovat a oznaèit symbolem =TODO=.
+   Je nutno celÃ½ kÃ³d projÃ­t a podÃ­vat se, nenÃ­-li tam nÄ›co oÄividnÄ› Å¡karedÃ©ho
+   nebo neladÃ­cÃ­ho.  ÄŒlovÄ›k by mÄ›l mÃ­t pocit, Å¾e kÃ³d vypadÃ¡ dobÅ™e a neskrÃ½vÃ¡ se
+   vÂ nÄ›m nÄ›jakÃ¡ zÃ¡ludnost.  To se tÃ½kÃ¡ jak vÃ½konnÃ½ch ÄÃ¡stÃ­, tak jmen
+   identifikÃ¡torÅ¯ a obsahu dokumentaÄnÃ­ch Å™etÄ›zcÅ¯ a komentÃ¡Å™Å¯.  Pokud tento
+   pocit vÂ nÄ›kterÃ©m mÃ­stÄ› nemÃ¡, je tÅ™eba kÃ³d opravit nebo (nenÃ­-li okamÅ¾itÃ¡
+   oprava moÅ¾nÃ¡) toto mÃ­sto patÅ™iÄnÄ› okomentovat a oznaÄit symbolem =TODO=.
 
 2. Import modulu.
 
-   Ovìøí se tak, ¾e kód je alespoò syntakticky správnì.
+   OvÄ›Å™Ã­ se tak, Å¾e kÃ³d je alespoÅˆ syntakticky sprÃ¡vnÄ›.
 
-3. Kontrola dokumentaèních øetìzcù -- existence a úplnost.
+3. Kontrola dokumentaÄnÃ­ch Å™etÄ›zcÅ¯ -- existence a Ãºplnost.
 
-   V¹echny veøejné metody, které nedìdí dokumentaèní øetìzec bez jakékoliv
-   zmìny od svého pøedka, musí bıt vybaveny vlastním dokumentaèním øetìzcem.
-   Tento øetìzec musí plnì specifikovat chování metody -- pokud by nìkdo pouze
-   podle dokumentaèních øetìzcù napsal novı kód bez nahlí¾ení do kódu
-   stávajícího, pøíslu¹nı objekt musí stále plnì fungovat.
+   VÅ¡echny veÅ™ejnÃ© metody, kterÃ© nedÄ›dÃ­ dokumentaÄnÃ­ Å™etÄ›zec bez jakÃ©koliv
+   zmÄ›ny od svÃ©ho pÅ™edka, musÃ­ bÃ½t vybaveny vlastnÃ­m dokumentaÄnÃ­m Å™etÄ›zcem.
+   Tento Å™etÄ›zec musÃ­ plnÄ› specifikovat chovÃ¡nÃ­ metody -- pokud by nÄ›kdo pouze
+   podle dokumentaÄnÃ­ch Å™etÄ›zcÅ¯ napsal novÃ½ kÃ³d bez nahlÃ­Å¾enÃ­ do kÃ³du
+   stÃ¡vajÃ­cÃ­ho, pÅ™Ã­sluÅ¡nÃ½ objekt musÃ­ stÃ¡le plnÄ› fungovat.
 
 4. Kontrola [[http://pychecker.sourceforge.net/][pycheckerem]].[1]
 
-   To u¹etøí práci pøi následném ladìní a také zajistí, ¾e napøíklad nechybí
-   dokumentaèní øetìzce.
+   To uÅ¡etÅ™Ã­ prÃ¡ci pÅ™i nÃ¡slednÃ©m ladÄ›nÃ­ a takÃ© zajistÃ­, Å¾e napÅ™Ã­klad nechybÃ­
+   dokumentaÄnÃ­ Å™etÄ›zce.
 
-5. Doplnìní a aktualizace testù.
+5. DoplnÄ›nÃ­ a aktualizace testÅ¯.
 
-   Pro v¹echny nové dokumentaèní øetìzce je tøeba vytvoøit nové testy kompletnì
-   ovìøující v dokumentaèním øetìzci popsanou funkcionalitu (je-li to mo¾né a
-   schùdné).  Pro v¹echny modifikované dokumentaèní øetìzce je nutno
-   zkontrolovat, zda jim odpovídající testy stále je¹tì platí a zda není tøeba
-   doplnit nové testy.
+   Pro vÅ¡echny novÃ© dokumentaÄnÃ­ Å™etÄ›zce je tÅ™eba vytvoÅ™it novÃ© testy kompletnÄ›
+   ovÄ›Å™ujÃ­cÃ­ vÂ dokumentaÄnÃ­m Å™etÄ›zci popsanou funkcionalitu (je-li to moÅ¾nÃ© a
+   schÅ¯dnÃ©).  Pro vÅ¡echny modifikovanÃ© dokumentaÄnÃ­ Å™etÄ›zce je nutno
+   zkontrolovat, zda jim odpovÃ­dajÃ­cÃ­ testy stÃ¡le jeÅ¡tÄ› platÃ­ a zda nenÃ­ tÅ™eba
+   doplnit novÃ© testy.
 
-   Testy se nemusí (ale mohou) psát pro èistì na¹e pomocné nástroje, které
-   nejsou souèástí distribuce systému, jako napøíklad nìkteré ladící nástroje.
+   Testy se nemusÃ­ (ale mohou) psÃ¡t pro ÄistÄ› naÅ¡e pomocnÃ© nÃ¡stroje, kterÃ©
+   nejsou souÄÃ¡stÃ­ distribuce systÃ©mu, jako napÅ™Ã­klad nÄ›kterÃ© ladÃ­cÃ­ nÃ¡stroje.
 
-6. Provedení testù.
+6. ProvedenÃ­ testÅ¯.
 
-   Spustí se v¹echny testy a zkontroluje se, ¾e v¹echny uspìly.
+   SpustÃ­ se vÅ¡echny testy a zkontroluje se, Å¾e vÅ¡echny uspÄ›ly.
 
 7. Audit.
 
-   Pokud se jedná o zcela novı kód nebo rozsáhlej¹í zmìny, mìl by bıt
-   zkontrolován jinım vıvojáøem, ne¾ kterı jej psal.  Tato kontrola by mìla
-   spoèívat v pøimìøené aplikaci bodù 1., 3. a 6.
+   Pokud se jednÃ¡ oÂ zcela novÃ½ kÃ³d nebo rozsÃ¡hlejÅ¡Ã­ zmÄ›ny, mÄ›l by bÃ½t
+   zkontrolovÃ¡n jinÃ½m vÃ½vojÃ¡Å™em, neÅ¾ kterÃ½ jej psal.  Tato kontrola by mÄ›la
+   spoÄÃ­vat vÂ pÅ™imÄ›Å™enÃ© aplikaci bodÅ¯ 1., 3. a 6.
    
 
-* Psaní testù
+* PsanÃ­ testÅ¯
 
-Pro testování kódu pou¾íváme nástroj [[http://pyunit.sourceforge.net/][PyUnit]].  Tento nástroj je dostupnı
-v Debianu a pro úvod do jeho pou¾ívání odkazujeme na jeho dokumentaci, která je
-pomìrnì krátká a snadno pochopitelná.
+Pro testovÃ¡nÃ­ kÃ³du pouÅ¾Ã­vÃ¡me nÃ¡stroj [[http://pyunit.sourceforge.net/][PyUnit]].  Tento nÃ¡stroj je dostupnÃ½
+vÂ Debianu a pro Ãºvod do jeho pouÅ¾Ã­vÃ¡nÃ­ odkazujeme na jeho dokumentaci, kterÃ¡ je
+pomÄ›rnÄ› krÃ¡tkÃ¡ a snadno pochopitelnÃ¡.
 
-** Pravidla pro psaní testù
+** Pravidla pro psanÃ­ testÅ¯
 
-PyUnit je celkovì obecnı prostøedek, zpùsob jeho pou¾ití v na¹em systému
-definují následující pravidla:
+PyUnit je celkovÄ› obecnÃ½ prostÅ™edek, zpÅ¯sob jeho pouÅ¾itÃ­ vÂ naÅ¡em systÃ©mu
+definujÃ­ nÃ¡sledujÃ­cÃ­ pravidla:
 
-- Ka¾dı koncovı adresáø hierarchie modulù obsahuje v jednom souboru testy pro
-  v¹echny moduly tohoto adresáøe.  Tento soubor je ve stejném adresáøi a
+- KaÅ¾dÃ½ koncovÃ½ adresÃ¡Å™ hierarchie modulÅ¯ obsahuje vÂ jednom souboru testy pro
+  vÅ¡echny moduly tohoto adresÃ¡Å™e.  Tento soubor je ve stejnÃ©m adresÃ¡Å™i a
   jmenuje se =_test.py=.
 
-- Ka¾dı nekoncovı adresáø (tj. adresáø obsahující dal¹í modulové podadresáøe)
-  má té¾ soubor =_test.py=, kterı kromì pøípadnıch testù pro soubory v tomto
-  adresáøi obsahuje té¾ volání testování pro v¹echny podadresáøe.  To znamená,
-  ¾e provìøit celı adresáøovı strom lze v¾dy spu¹tìním testování v koøeni
-  daného stromu.
+- KaÅ¾dÃ½ nekoncovÃ½ adresÃ¡Å™ (tj. adresÃ¡Å™ obsahujÃ­cÃ­ dalÅ¡Ã­ modulovÃ© podadresÃ¡Å™e)
+  mÃ¡ tÃ©Å¾ soubor =_test.py=, kterÃ½ kromÄ› pÅ™Ã­padnÃ½ch testÅ¯ pro soubory vÂ tomto
+  adresÃ¡Å™i obsahuje tÃ©Å¾ volÃ¡nÃ­ testovÃ¡nÃ­ pro vÅ¡echny podadresÃ¡Å™e.  To znamenÃ¡,
+  Å¾e provÄ›Å™it celÃ½ adresÃ¡Å™ovÃ½ strom lze vÅ¾dy spuÅ¡tÄ›nÃ­m testovÃ¡nÃ­ vÂ koÅ™eni
+  danÃ©ho stromu.
 
-- Ka¾dı soubor =_test.py= musí definovat funkci =get_tests()=, která vrací
-  kompletní test suite daného souboru (kromì testù, které z nìjakého dùvodu
-  nemají bıt provádìny).
+- KaÅ¾dÃ½ soubor =_test.py= musÃ­ definovat funkci =get_tests()=, kterÃ¡ vracÃ­
+  kompletnÃ­ test suite danÃ©ho souboru (kromÄ› testÅ¯, kterÃ© z nÄ›jakÃ©ho dÅ¯vodu
+  nemajÃ­ bÃ½t provÃ¡dÄ›ny).
 
-- Soubor =_test.py= je spustitelnı a pøi svém spu¹tìní musí provést v¹echny své
+- Soubor =_test.py= je spustitelnÃ½ a pÅ™i svÃ©m spuÅ¡tÄ›nÃ­ musÃ­ provÃ©st vÅ¡echny svÃ©
   testy.
 
-- Nalezne-li se v kódu chyba (neodhalená ¾ádnım testem), mìl by se pro ni
-  vytvoøit novı test.  (Pøi psaní kódu a tvorbì testù se dost èasto zapomíná na
-  rùzné okrajové podmínky.)
+- Nalezne-li se vÂ kÃ³du chyba (neodhalenÃ¡ Å¾Ã¡dnÃ½m testem), mÄ›l by se pro ni
+  vytvoÅ™it novÃ½ test.  (PÅ™i psanÃ­ kÃ³du a tvorbÄ› testÅ¯ se dost Äasto zapomÃ­nÃ¡ na
+  rÅ¯znÃ© okrajovÃ© podmÃ­nky.)
 
-- Testy nemusí mít ¾ádné dokumentaèní øetìzce (nepøedstavují API).
+- Testy nemusÃ­ mÃ­t Å¾Ã¡dnÃ© dokumentaÄnÃ­ Å™etÄ›zce (nepÅ™edstavujÃ­ API).
 
-Modul =pytis.util.test= obsahuje drobné pomùcky usnadòující definování testù.
-Mìl by bıt vyu¾íván.
+Modul =pytis.util.test= obsahuje drobnÃ© pomÅ¯cky usnadÅˆujÃ­cÃ­ definovÃ¡nÃ­ testÅ¯.
+MÄ›l by bÃ½t vyuÅ¾Ã­vÃ¡n.
 
-©ablona souboru =_test.py=:
+Å ablona souboru =_test.py=:
 
 <example>
 #!/usr/bin/env python
@@ -159,105 +159,105 @@ if __name__ == '__main__':
     unittest.main(defaultTest='get_tests')
 </example>
 
-Konkrétní pøíklady testù lze nalézt ve stávajících souborech =_test.py=.
+KonkrÃ©tnÃ­ pÅ™Ã­klady testÅ¯ lze nalÃ©zt ve stÃ¡vajÃ­cÃ­ch souborech =_test.py=.
 
-Pokud pro nìjakou funkcionalitu nelze rozumnì test vytvoøit (bylo by to pøíli¹
-pracné nebo nelze jednodu¹e naemulovat odpovídající situaci), je potøeba
-vytvoøit prázdnı test a oznaèit jej komentáøem obsahujícím øetìzec =EMPTY=.
-Budeme tak mít zdokumentováno co není (o)testováno.
+Pokud pro nÄ›jakou funkcionalitu nelze rozumnÄ› test vytvoÅ™it (bylo by to pÅ™Ã­liÅ¡
+pracnÃ© nebo nelze jednoduÅ¡e naemulovat odpovÃ­dajÃ­cÃ­ situaci), je potÅ™eba
+vytvoÅ™it prÃ¡zdnÃ½ test a oznaÄit jej komentÃ¡Å™em obsahujÃ­cÃ­m Å™etÄ›zec =EMPTY=.
+Budeme tak mÃ­t zdokumentovÃ¡no co nenÃ­ (o)testovÃ¡no.
 
-** Interaktivní testy a testování GUI
+** InteraktivnÃ­ testy a testovÃ¡nÃ­ GUI
 
-Bohu¾el se neobejdeme bez interaktivních testù, tj. testù vy¾adujících bìhem
-svého bìhu ruèní obsluhu.  Interaktivní testy jsou velmi nepøíjemné, proto¾e
-zdr¾ují, pøidávají práci, jejich vısledky jsou závislé na spolehlivosti
-obsluhy a lidé je neradi spou¹tìjí, tak¾e odhalování chyb se zpo¾ïuje.
-Neinteraktivní testy GUI v¹ak vzhledem k chybìjícímu know-how nejsme schopni
-vytváøet.
+BohuÅ¾el se neobejdeme bez interaktivnÃ­ch testÅ¯, tj. testÅ¯ vyÅ¾adujÃ­cÃ­ch bÄ›hem
+svÃ©ho bÄ›hu ruÄnÃ­ obsluhu.  InteraktivnÃ­ testy jsou velmi nepÅ™Ã­jemnÃ©, protoÅ¾e
+zdrÅ¾ujÃ­, pÅ™idÃ¡vajÃ­ prÃ¡ci, jejich vÃ½sledky jsou zÃ¡vislÃ© na spolehlivosti
+obsluhy a lidÃ© je neradi spouÅ¡tÄ›jÃ­, takÅ¾e odhalovÃ¡nÃ­ chyb se zpoÅ¾Äuje.
+NeinteraktivnÃ­ testy GUI vÅ¡ak vzhledem kÂ chybÄ›jÃ­cÃ­mu know-how nejsme schopni
+vytvÃ¡Å™et.
 
-Pro tvorbu interaktivních testù platí následující zásady:
+Pro tvorbu interaktivnÃ­ch testÅ¯ platÃ­ nÃ¡sledujÃ­cÃ­ zÃ¡sady:
 
-- Interaktivním testùm je nutno se co nejvíce vyhıbat a omezit je skuteènì
-  jenom na to, co opravdu nelze otestovat automaticky.  Pokud napøíklad
-  testujeme, ¾e funguje konstrukce u¾ivatelského rozhraní na základì na¹í
-  specifikace, není potøeba to dìlat interaktivnì, informace o struktuøe
-  zkonstruovaného u¾ivatelského rozhraní (tlaèítka, nápisy na nich, atd.) by
-  mìlo bıt mo¾no zjistit prostøedky wxWindows.  Co se stane po stisku
-  tlaèítka lze také zjistit programovì, zavoláním odpovídající callbackové
-  funkce.  Vizuálnì je pak nutno kontrolovat spí¹e jenom celkovı vzhled
-  (jestli nìkde není nìco rozsypaného, apod.) a pøípadnì, ¾e callbacky jsou
-  navì¹eny na správné prvky.
+- InteraktivnÃ­m testÅ¯m je nutno se co nejvÃ­ce vyhÃ½bat a omezit je skuteÄnÄ›
+  jenom na to, co opravdu nelze otestovat automaticky.  Pokud napÅ™Ã­klad
+  testujeme, Å¾e funguje konstrukce uÅ¾ivatelskÃ©ho rozhranÃ­ na zÃ¡kladÄ› naÅ¡Ã­
+  specifikace, nenÃ­ potÅ™eba to dÄ›lat interaktivnÄ›, informace oÂ struktuÅ™e
+  zkonstruovanÃ©ho uÅ¾ivatelskÃ©ho rozhranÃ­ (tlaÄÃ­tka, nÃ¡pisy na nich, atd.) by
+  mÄ›lo bÃ½t moÅ¾no zjistit prostÅ™edky wxWindows.  Co se stane po stisku
+  tlaÄÃ­tka lze takÃ© zjistit programovÄ›, zavolÃ¡nÃ­m odpovÃ­dajÃ­cÃ­ callbackovÃ©
+  funkce.  VizuÃ¡lnÄ› je pak nutno kontrolovat spÃ­Å¡e jenom celkovÃ½ vzhled
+  (jestli nÄ›kde nenÃ­ nÄ›co rozsypanÃ©ho, apod.) a pÅ™Ã­padnÄ›, Å¾e callbacky jsou
+  navÄ›Å¡eny na sprÃ¡vnÃ© prvky.
 
-- Obecná pravidla pro testy platí beze zmìny i pro interaktivní testy.
-  To zejména znamená, ¾e interaktivní testy vyu¾ívají modul `unittest'
-  (PyUnit) se v¹ím, co s tím souvisí.
+- ObecnÃ¡ pravidla pro testy platÃ­ beze zmÄ›ny iÂ pro interaktivnÃ­ testy.
+  To zejmÃ©na znamenÃ¡, Å¾e interaktivnÃ­ testy vyuÅ¾Ã­vajÃ­ modul `unittest'
+  (PyUnit) se vÅ¡Ã­m, co sÂ tÃ­m souvisÃ­.
 
-- Abychom umo¾nili spou¹tìní testování jak vèetnì interaktivních testù tak
-  i bez nich (dle konfiguraèní volby), metody interaktivních testù budou
-  zaèínají prefixem =check_interactive_=.
+- Abychom umoÅ¾nili spouÅ¡tÄ›nÃ­ testovÃ¡nÃ­ jak vÄetnÄ› interaktivnÃ­ch testÅ¯ tak
+  iÂ bez nich (dle konfiguraÄnÃ­ volby), metody interaktivnÃ­ch testÅ¯ budou
+  zaÄÃ­najÃ­ prefixem =check_interactive_=.
 
-- Tøídy pro interaktivní testy dìdí tøídu
-  =pytis.util.test.InteractiveTestCase=.  Pro interakci s obsluhou slou¾í
-  metoda =ask_user= této tøídy.
+- TÅ™Ã­dy pro interaktivnÃ­ testy dÄ›dÃ­ tÅ™Ã­du
+  =pytis.util.test.InteractiveTestCase=.  Pro interakci sÂ obsluhou slouÅ¾Ã­
+  metoda =ask_user= tÃ©to tÅ™Ã­dy.
 
-- Instrukce pro obsluhu musí bıt naprosto pøesné a na otázku musí bıt
-  schopen odpovìdìt ka¾dı, i kdy¾ spou¹tí test poprvé.
+- Instrukce pro obsluhu musÃ­ bÃ½t naprosto pÅ™esnÃ© a na otÃ¡zku musÃ­ bÃ½t
+  schopen odpovÄ›dÄ›t kaÅ¾dÃ½, iÂ kdyÅ¾ spouÅ¡tÃ­ test poprvÃ©.
 
-Primitivní pøíklad interaktivního testu:
+PrimitivnÃ­ pÅ™Ã­klad interaktivnÃ­ho testu:
 
 <example>
   class PrintTest(pytis.util.test.InteractiveTestCase):
        def check_interactive_print(self):
            print '\nAhoj'
-           self.ask_user('''Na prvním pøedchozím neprázdném øádku by
-  mìlo bıt vypsáno "Ahoj" (bez uvozovek) a nic jiného.  Nápis "Ahoj" je
-  na samostatném øádku.  Nápis musí souhlasit vèetnì velikosti písmen.''',
+           self.ask_user('''Na prvnÃ­m pÅ™edchozÃ­m neprÃ¡zdnÃ©m Å™Ã¡dku by
+  mÄ›lo bÃ½t vypsÃ¡no "Ahoj" (bez uvozovek) a nic jinÃ©ho.  NÃ¡pis "Ahoj" je
+  na samostatnÃ©m Å™Ã¡dku.  NÃ¡pis musÃ­ souhlasit vÄetnÄ› velikosti pÃ­smen.''',
                          'Vypsalo se "Ahoj" dle popisu')
 </example>
 
-Dal¹í pøíklady lze nalézt v souboru =src/lib/form/_test.py=.
+DalÅ¡Ã­ pÅ™Ã­klady lze nalÃ©zt vÂ souboru =src/lib/form/_test.py=.
 
-** Korespondence testù a dokumentaèních øetìzcù
+** Korespondence testÅ¯ a dokumentaÄnÃ­ch Å™etÄ›zcÅ¯
 
-*Tady by mìlo bıt uvedeno, jak v dokumentaèních øetìzcích nebo poblí¾ nich
-vyznaèit, pro které v¹echny jejich èásti (ne)existují testy.  Tato informace by
-mìla bıt dostupná kvùli snadné aktualizaci testù po zmìnì dokumentaèních
-øetìzcù a také jako upozornìní na netestovaná místa.*
+*Tady by mÄ›lo bÃ½t uvedeno, jak vÂ dokumentaÄnÃ­ch Å™etÄ›zcÃ­ch nebo poblÃ­Å¾ nich
+vyznaÄit, pro kterÃ© vÅ¡echny jejich ÄÃ¡sti (ne)existujÃ­ testy.  Tato informace by
+mÄ›la bÃ½t dostupnÃ¡ kvÅ¯li snadnÃ© aktualizaci testÅ¯ po zmÄ›nÄ› dokumentaÄnÃ­ch
+Å™etÄ›zcÅ¯ a takÃ© jako upozornÄ›nÃ­ na netestovanÃ¡ mÃ­sta.*
 
-** Záludnosti PyUnit
+** ZÃ¡ludnosti PyUnit
 
-Pøi pou¾ití PyUnit je mo¾no narazit na následující problémy:
+PÅ™i pouÅ¾itÃ­ PyUnit je moÅ¾no narazit na nÃ¡sledujÃ­cÃ­ problÃ©my:
 
-- Obsahuje-li testovací tøída více testovacích metod, je pøi bìhu testování pro
-  ka¾dou z nich provedena kompletní inicializace tøídy, vèetnì vytvoøení její
-  instance.  Jedinou rozumnou mo¾ností, jak pøedávat data mezi tìmito metodami,
-  tudí¾ je pou¾ívat sdílené atributy tøídy.
+- Obsahuje-li testovacÃ­ tÅ™Ã­da vÃ­ce testovacÃ­ch metod, je pÅ™i bÄ›hu testovÃ¡nÃ­ pro
+  kaÅ¾dou zÂ nich provedena kompletnÃ­ inicializace tÅ™Ã­dy, vÄetnÄ› vytvoÅ™enÃ­ jejÃ­
+  instance.  Jedinou rozumnou moÅ¾nostÃ­, jak pÅ™edÃ¡vat data mezi tÄ›mito metodami,
+  tudÃ­Å¾ je pouÅ¾Ã­vat sdÃ­lenÃ© atributy tÅ™Ã­dy.
 
 
-* Nakládání s chybami
+* NaklÃ¡dÃ¡nÃ­ sÂ chybami
 
-Chyby v softwaru, s jeho¾ pomocí na¹e aplikace pobì¾í (Python, PostgreSQL,
-wxWindows, ..., ne v¹ak tøeba Emacs), se evidují v souboru [[bugs]].  Cílem této
-evidence je mít neustálı pøehled o existujících chybách a vyhnout se tak
-opakovanım pøekvapením zpùsobovanım tımi¾ problémy nebo dokonce
-znovuobjevením se tìchto problémù a¾ za bìhu aplikace u zákazníka.
+Chyby vÂ softwaru, sÂ jehoÅ¾ pomocÃ­ naÅ¡e aplikace pobÄ›Å¾Ã­ (Python, PostgreSQL,
+wxWindows,Â ..., ne vÅ¡ak tÅ™eba Emacs), se evidujÃ­ vÂ souboru [[bugs]].  CÃ­lem tÃ©to
+evidence je mÃ­t neustÃ¡lÃ½ pÅ™ehled oÂ existujÃ­cÃ­ch chybÃ¡ch a vyhnout se tak
+opakovanÃ½m pÅ™ekvapenÃ­m zpÅ¯sobovanÃ½m tÃ½miÅ¾ problÃ©my nebo dokonce
+znovuobjevenÃ­m se tÄ›chto problÃ©mÅ¯ aÅ¾ za bÄ›hu aplikace uÂ zÃ¡kaznÃ­ka.
 
-Pokud nìkdo narazí na nìjakou chybu v tìchto softwarech podstatnou pro bìh
-na¹í aplikace, nech» její popis do [[bugs]] zaøadí.  Popis by mìl obsahovat:
+Pokud nÄ›kdo narazÃ­ na nÄ›jakou chybu vÂ tÄ›chto softwarech podstatnou pro bÄ›h
+naÅ¡Ã­ aplikace, nechÅ¥ jejÃ­ popis do [[bugs]] zaÅ™adÃ­.  Popis by mÄ›l obsahovat:
 
-- V jakém softwaru a verzi se chyba objevila.
+- VÂ jakÃ©m softwaru a verzi se chyba objevila.
 
-- Jaké dùsledky má nebo mù¾e mít na na¹i aplikaci.
+- JakÃ© dÅ¯sledky mÃ¡ nebo mÅ¯Å¾e mÃ­t na naÅ¡i aplikaci.
 
-- Jakım zpùsobem se s chybou vypoøádáme.
+- JakÃ½m zpÅ¯sobem se sÂ chybou vypoÅ™Ã¡dÃ¡me.
 
-- Zda byla chyba oznámena vıvojáøùm daného softwaru a jak na ni reagovali.
+- Zda byla chyba oznÃ¡mena vÃ½vojÃ¡Å™Å¯m danÃ©ho softwaru a jak na ni reagovali.
 
-Tak budeme mít v¹echny problémy tohoto druhu evidované a mù¾eme je v patøiènı
-okam¾ik zrevidovat.
+Tak budeme mÃ­t vÅ¡echny problÃ©my tohoto druhu evidovanÃ© a mÅ¯Å¾eme je vÂ patÅ™iÄnÃ½
+okamÅ¾ik zrevidovat.
 
 
 Footnotes: 
-[1]  pychecker je bohu¾el nemodulární a tím pádem nevhodnı pro pøidávání
-     vlastních testù.  O rozumnìj¹ím nástroji v¹ak nevím, tak¾e se (prozatím?)
-     musíme spokojit s tím, co je.
+[1]  pychecker je bohuÅ¾el nemodulÃ¡rnÃ­ a tÃ­m pÃ¡dem nevhodnÃ½ pro pÅ™idÃ¡vÃ¡nÃ­
+     vlastnÃ­ch testÅ¯.  OÂ rozumnÄ›jÅ¡Ã­m nÃ¡stroji vÅ¡ak nevÃ­m, takÅ¾e se (prozatÃ­m?)
+     musÃ­me spokojit sÂ tÃ­m, co je.
