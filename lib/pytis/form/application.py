@@ -1170,42 +1170,14 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
                               spec_kwargs=spec_kwargs, set_values=set_values)
         return result
 
-    def _can_run_procedure(self, spec_name, proc_name, args=(),
-                           block_refresh=False, enabled=None, **kwargs):
+    def _can_run_procedure(self, spec_name, proc_name, args=None, enabled=None,
+                           block_refresh=False, **kwargs):
         if not self._public_spec(spec_name):
             return False
         return enabled is None and True or enabled(**kwargs)
 
-    def _cmd_run_procedure(self, spec_name, proc_name, args=(),
-                           block_refresh=False, enabled=None, **kwargs):
-        # Dokumentace viz funkce run_procedure().
-        result = None
-        try:
-            self.message(_("Running procedure..."), root=True)
-            log(ACTION, 'Running procedure:',
-                (spec_name, proc_name, args, kwargs))
-            # Kvůli wx.SafeYield() se ztrácí focus, takže
-            # si ho uložíme a pak zase obnovíme.
-            focused = wx_focused_window()
-            wx_yield_()
-            proc = pytis.config.resolver.get_object(spec_name, proc_name)
-            if block_refresh:
-                with pytis.form.Refreshable.block_refresh():
-                    result = proc(*args, **kwargs)
-            else:
-                result = proc(*args, **kwargs)
-            if False:
-                # The return value may contain secret data, so we don't log it.
-                log(ACTION, u"Procedure return value:", result)
-            if focused:
-                focused.SetFocus()
-        except UserBreakException:
-            pass
-        except SystemExit:
-            raise
-        except Exception:
-            top_level_exception()
-        return result
+    def _cmd_run_procedure(self, **kwargs):
+        return self.api_run_procedure(**kwargs)
 
     def _cmd_help(self, topic='pytis'):
         """Zobraz dané téma v prohlížeči nápovědy."""
@@ -1650,10 +1622,32 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
                         begin_search=begin_search, transaction=transaction)
 
     def api_run_procedure(self, spec_name, proc_name, *args, **kwargs):
-        assert 'args' not in kwargs, "The keyword argument 'args' is reserved for internal use!"
-        return Application.COMMAND_RUN_PROCEDURE.invoke(spec_name=spec_name,
-                                                        proc_name=proc_name,
-                                                        args=args, **kwargs)
+        result = None
+        try:
+            self.message(_("Running procedure..."), root=True)
+            log(ACTION, 'Running procedure:', (spec_name, proc_name, args, kwargs))
+            # Kvůli wx.SafeYield() se ztrácí focus, takže
+            # si ho uložíme a pak zase obnovíme.
+            focused = wx_focused_window()
+            wx_yield_()
+            proc = pytis.config.resolver.get_object(spec_name, proc_name)
+            if kwargs.pop('block_refresh', False):
+                with pytis.form.Refreshable.block_refresh():
+                    result = proc(*args, **kwargs)
+            else:
+                result = proc(*args, **kwargs)
+            if False:
+                # The return value may contain secret data, so we don't log it.
+                log(ACTION, u"Procedure return value:", result)
+            if focused:
+                focused.SetFocus()
+        except UserBreakException:
+             pass
+        except SystemExit:
+            raise
+        except Exception:
+            top_level_exception()
+        return result
 
     def api_run(self, function, args=(), kwargs={}, over=None, title=None, message=None,
                 progress=True, maximum=None, elapsed_time=False, estimated_time=False,
