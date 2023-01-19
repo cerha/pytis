@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2020 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2023 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2005-2016 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -35,6 +35,7 @@ import tempfile
 import pytis.data as pd
 import pytis.util
 
+from pytis.api import app
 from pytis.util import log, find, EVENT, ResolverError
 from pytis.presentation import (
     Color, Editable, Field, FormType, PostProcess, Style, TextFilter,
@@ -194,13 +195,8 @@ def rp_handler(spec_name, proc_name, *args, **kwargs):
     Klíčové argumenty jsou předány beze změn.
 
     """
-    import pytis.form
-    if __debug__:
-        for arg in (spec_name, proc_name) + args:
-            assert isinstance(arg, basestring)
-    return lambda row: pytis.form.run_procedure(spec_name, proc_name,
-                                                *[row[key] for key in args],
-                                                **kwargs)
+    assert all(isinstance(x, basestring) for x in (spec_name, proc_name) + args)
+    return lambda row: app.run_procedure(spec_name, proc_name, *[row[k] for k in args], **kwargs)
 
 
 def cb2colvalue(value, column=None, transaction=None):

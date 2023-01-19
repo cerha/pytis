@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2020, 2022 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2023 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2007-2017 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -475,13 +475,13 @@ class Products(Specification):
         else:
             product_id = row["product_id"].value()
             mark = not row["marked"].value()
-        count = pytis.form.run_procedure('misc', 'mark_products', product_id=product_id, mark=mark)
+        count = app.run_procedure('misc', 'mark_products', product_id=product_id, mark=mark)
         app.echo(_("Marked %d rows") % count)
 
     def _mark_selected(self, rows, mark=True):
-        count = pytis.form.run_procedure('misc', 'mark_products',
-                                         product_id=[r['product_id'].value() for r in rows],
-                                         mark=mark)
+        count = app.run_procedure('misc', 'mark_products',
+                                  product_id=[r['product_id'].value() for r in rows],
+                                  mark=mark)
         app.echo(_("Marked %d rows") % count if mark else _("Unmarked %d rows") % count)
 
     def _unmark_selected(self, rows):
@@ -556,12 +556,14 @@ class XProducts(Specification):
 
 """Definition of reusable procedures.
 
-Procedures are independent of the specifications they work on, so they can be called by name
-from anywhere within the application or even externally from standalone python scripts.
+Procedures are independent of the specifications they work on, so they can be
+called by name from anywhere within the application or even externally from
+standalone python scripts.
 
-The pytis built-in function 'run_procedure()' is used to invoke a procedure, pass it arguments
-and retrieve the result (however procedures are typically called for their side effects).  See
-the documentation of 'run_procedure()' for more detail.
+The Pytis API method 'app.run_procedure()' is used to invoke a procedure, pass
+it arguments and retrieve the result (however procedures are typically called
+for their side effects).  See the documentation of 'run_procedure()' for more
+detail.
 
 """
 

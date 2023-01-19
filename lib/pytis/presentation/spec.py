@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2022 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2023 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2017 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -2679,7 +2679,7 @@ def computer(function=None, validate=False, novalidate=(), fallback=UNDEFINED):
 
 
 def procedure(function):
-    """Decorator to mark procedures to be invoked through 'pytis.form.run_procedure()'.
+    """Decorator to mark procedures to be invoked through 'app.run_procedure()'.
 
     Currently only used to mark procedures just for the information that a
     function or method actually is a "pytis procedure".
