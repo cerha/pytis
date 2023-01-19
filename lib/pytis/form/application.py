@@ -1138,37 +1138,8 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
             # The spec is invalid, but we want the crash on attempt to run it.
             return True
 
-    def _cmd_new_record(self, name, prefill=None, inserted_data=None, multi_insert=True,
-                        block_on_new_record=False, transaction=None, spec_kwargs={},
-                        copied_row=None, set_values=None):
-        # See new_record() for documentation.
-        view = pytis.config.resolver.get(name, 'view_spec', **spec_kwargs)
-        kwargs = dict(prefill=prefill)
-        if copied_row and view.on_copy_record():
-            on_new_record = view.on_copy_record()
-            kwargs['row'] = copied_row
-        else:
-            on_new_record = view.on_new_record()
-        if not block_on_new_record and on_new_record is not None:
-            if 'transaction' in argument_names(on_new_record):
-                kwargs['transaction'] = transaction
-            result = on_new_record(**kwargs)
-            if isinstance(result, dict):
-                result = self._cmd_new_record(name, prefill=result, inserted_data=inserted_data,
-                                              multi_insert=multi_insert, block_on_new_record=True,
-                                              transaction=transaction, spec_kwargs=spec_kwargs,
-                                              copied_row=copied_row, set_values=set_values)
-            else:
-                Application.COMMAND_REFRESH.invoke(interactive=False)
-        else:
-            if view.arguments() is not None:
-                message(_("This form doesn't allow insertion."), beep_=True)
-                return None
-            result = run_form(pytis.form.PopupInsertForm, name,
-                              prefill=prefill, inserted_data=inserted_data,
-                              multi_insert=multi_insert, transaction=transaction,
-                              spec_kwargs=spec_kwargs, set_values=set_values)
-        return result
+    def _cmd_new_record(self, **kwargs):
+        return self.api_new_record(**kwargs)
 
     def _can_run_procedure(self, spec_name, proc_name, args=None, enabled=None,
                            block_refresh=False, **kwargs):
@@ -1588,6 +1559,34 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         return run_form(pytis.form.InputForm, title=title, fields=fields,
                         prefill=prefill, layout=layout, check=check or (),
                         avoid_initial_selection=noselect)
+
+    def api_new_record(self, name, prefill=None, inserted_data=None, multi_insert=True,
+                       copied_row=None, set_values=None, block_on_new_record=False,
+                       transaction=None):
+        # See new_record() for documentation.
+        view = pytis.config.resolver.get(name, 'view_spec')
+        kwargs = dict(prefill=prefill)
+        if copied_row and view.on_copy_record():
+            on_new_record = view.on_copy_record()
+            kwargs['row'] = copied_row
+        else:
+            on_new_record = view.on_new_record()
+        if not block_on_new_record and on_new_record is not None:
+            if 'transaction' in argument_names(on_new_record):
+                kwargs['transaction'] = transaction
+            result = on_new_record(**kwargs)
+            if isinstance(result, dict):
+                 prefill = result
+            else:
+                self.api_refresh(interactive=False)
+                return result
+        if view.arguments() is not None:
+            message(_("This form doesn't allow insertion."), beep_=True)
+            return None
+        return run_form(pytis.form.PopupInsertForm, name,
+                        prefill=prefill, inserted_data=inserted_data,
+                        multi_insert=multi_insert, transaction=transaction,
+                        set_values=set_values)
 
     def api_edit_record(self, name, key, set_values=None, transaction=None):
         return run_form(pytis.form.PopupEditForm, name, select_row=key, set_values=set_values,
@@ -2042,38 +2041,6 @@ def run_form(form_class, name=None, **kwargs):
         message(_("Opening form refused."), beep_=True)
         return False
     return cmd.invoke(**kwargs)
-
-
-def new_record(name, prefill=None, inserted_data=None, multi_insert=True,
-               block_on_new_record=False, transaction=None, spec_kwargs={},
-               copied_row=None, set_values=None):
-    """Start an interactive form for new record insertion.
-
-    Arguments:
-
-      name -- specification name for resolver.
-
-      prefill -- A dictionary of values to be prefilled in the form.  Keys are field identifiers
-        and values are either 'pd.Value' instances or the corresponding Python internal
-        values directly.
-
-      inserted_data -- allows to pass a sequence of 'pd.Row' instances to be inserted.  The
-        form is then gradually prefilled by values of these rows and the user can individually
-        accept or skip each row.
-
-      multi_insert -- boolean flag indicating whether inserting multiple values is permitted.
-        False value will disable this feature and the `Next' button will not be present on the
-        form.
-
-      block_on_new_record -- If true, the 'on_new_record' procedure will be blocked.  This makes it
-        possible to call 'new_record' from within the 'on_new_record' procedure without recursion..
-
-      transaction -- transaction for data operations.
-
-      spec_kwargs -- a dictionary of keyword arguments passed to the specification.
-
-    """
-    return Application.COMMAND_NEW_RECORD.invoke(**locals())
 
 
 def delete_record(view, data, transaction, record,
@@ -2571,3 +2538,6 @@ def run_procedure(spec_name, proc_name, *args, **kwargs):
     if 'block_refresh_' in kwargs:
         kwargs['block_refresh'] = kwargs.pop('block_refresh_')
     return app.run_procedure(spec_name, proc_name, *args, **kwargs)
+
+def new_record(name, prefill=None, inserted_data=None, **kwargs):
+    return app.new_record(name, prefill=prefill, inserted_data=inserted_data, **kwargs)

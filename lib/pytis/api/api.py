@@ -375,6 +375,7 @@ class Application(API):
         """Display a form for entering a single textual value and return this value.
 
         Arguments:
+
           title -- input form main title as a string.
           label -- field label as a string.
           default -- initial field value as a string.
@@ -400,6 +401,7 @@ class Application(API):
         """Display a form for entering a date and return this value.
 
         Arguments:
+
           title -- input form main title as a string.
           label -- field label as a string.
           default -- initial field value as 'datetime.date' or None.
@@ -424,6 +426,7 @@ class Application(API):
         """Display a form for entering a single numeric value and return this value.
 
         Arguments:
+
           title -- input form main title as a string.
           label -- field label as a string.
           default -- initial field value as int or float (float when
@@ -452,6 +455,7 @@ class Application(API):
         """Display modal form to collect user input from user defined fields.
 
         Arguments:
+
           title -- window title as a string.
           fields -- sequence of form field specifications as
             'pytis.presentation.Field' instances.
@@ -474,18 +478,56 @@ class Application(API):
         """
         pass
 
-    def edit_record(self, name, key, set_values=None, transaction=None):
-        """Edit record in a modal form.
+    def new_record(self, name, prefill=None, inserted_data=None, multi_insert=True,
+                   copied_row=None, set_values=None, block_on_new_record=False,
+                   transaction=None):
+        """Open a modal form to insert a new record.
 
         Arguments:
-          name -- specification name as a string.
-          key -- record key as a 'pytis.data.Value' instance.
-          set_values -- dictionary of row values to change in openened form (or
-            None).  The dictionary keys are field identifiers and values are
-            either the corresponding internal Python values valid for the
+
+          name -- specification name for resolver.
+          prefill -- a dictionary of values to be prefilled in the form.  Keys
+            are field identifiers and values are either 'pd.Value' instances or
+            the corresponding Python internal values directly.
+          inserted_data -- allows to pass a sequence of 'pd.Row' instances to
+            be inserted.  The form is then gradually prefilled by values of
+            these rows and the user can individually accept or skip each row.
+          multi_insert -- boolean flag indicating whether inserting multiple
+            values is permitted.  False value will disable this feature and the
+            `Next' button will not be present on the form.
+          copied_row -- row to copy as a 'pd.Row' instance.  If not None, the
+            new row will be a copy of given row.  Field values are copied
+            except for fields with 'nocopy' set to True.  Also 'on_copy_record'
+             is used insted of 'on_new_record' if defined.
+          set_values -- dictionary of row values to change in the openened form
+            (or None).  The dictionary keys are field identifiers and values
+            are either the corresponding internal Python values valid for the
             fields's data type or 'pytis.data.Value' instances directly.  These
             values will not affect the initial row state and thus will appear
             as changed to the user.
+          block_on_new_record -- if true, the 'on_new_record' procedure from
+            specification  will be blocked.  This makes it possible to call
+            'new_record' from within the 'on_new_record' procedure without
+            recursion..
+          transaction -- transaction for DB operations.
+
+        """
+        pass
+
+    def edit_record(self, name, key, set_values=None, transaction=None):
+        """Open a modal form to edit an existing record.
+
+        Arguments:
+
+          name -- specification name as a string.
+          key -- record key as a 'pytis.data.Value' instance.
+          set_values -- dictionary of row values to change in the openened form
+            (or None).  The dictionary keys are field identifiers and values
+            are either the corresponding internal Python values valid for the
+            fields's data type or 'pytis.data.Value' instances directly.  These
+            values will not affect the initial row state and thus will appear
+            as changed to the user.
+          transaction -- transaction for DB operations.
 
         Returns a 'pp.PresentedRow' instance of the updated record or None if
         the user cancels the form.
@@ -498,6 +540,7 @@ class Application(API):
         """Display given form in the main application frame.
 
         Arguments:
+
           name -- specification name as a string.
           select_row -- the row to be intially selected within the opened form.
             It may be a 'pytis.data.Value' instance (the row key), their tuple
@@ -541,6 +584,7 @@ class Application(API):
         """Display a modal codebook selection form and return the selected row.
 
         Arguments:
+
           name -- specification name as a string.
           select_row -- the row to be intially selected within the opened form.
             It may be a 'pytis.data.Value' instance (the row key), their tuple
@@ -564,7 +608,7 @@ class Application(API):
             and it is not possible to turn it of from the UI.
           multirow -- allow selection of multiple rows.
           begin_search -- id of the column on which to start incremental seach.
-          transaction -- DB transaction to run in.
+          transaction -- transaction for DB operations.
 
         Returns the selected row as 'pytis.data.Row' instance or a tuple of
         such rows when 'multirow' is True.  Returns None when the user cancels
@@ -578,7 +622,6 @@ class Application(API):
         Arguments:
 
           spec_name -- specification name as a string.
-
           proc_name -- name of the procedure within the specification.
 
         All other arguments, including keyword arguments, are passed on to the
@@ -601,6 +644,7 @@ class Application(API):
         bar) and textually (by a progress message).
 
         Arguments:
+
           function -- the Python function to be executed.
           args -- tuple of arguments to be passed to 'function'.
           kwargs -- dictionary of keyword arguments to be passed to 'function'.
@@ -893,7 +937,6 @@ class Application(API):
 
 @implements(Application, incomplete=True)
 class BaseApplication(object):
-
     """Base class for classes implementing the 'Application' API.
 
     This class only implements access to shared parameters using 'app.param'.
