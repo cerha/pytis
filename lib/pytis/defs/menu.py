@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2019, 2020, 2021, 2022 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2019-2023 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2009-2015 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -831,7 +831,7 @@ class ApplicationMenuRightsFoldable(_ApplicationMenuRightsBase):
             prefill = copy.copy(prefill)
         prefill['shortname'] = shortname
         self._before_edit_checks()
-        new = pytis.form.new_record('menu.ApplicationMenuRights',
+        new = app.new_record('menu.ApplicationMenuRights',
                                     prefill=prefill, transaction=transaction,
                                     block_on_new_record=True, multi_insert=True)
         if new:

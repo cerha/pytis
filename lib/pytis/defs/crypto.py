@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2019-2022 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2019-2023 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2014-2015 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -78,7 +78,7 @@ class CryptoAreas(Specification):
         if not key_id or not key:
             app.error(_(u"Nebyl nalezen klíč administrátora pro tuto oblast"))
             return
-        row = pytis.form.new_record("crypto.NewAdminPasswd", multi_insert=False)
+        row = app.new_record("crypto.NewAdminPasswd", multi_insert=False)
         if not row:
             return
         old_password = row["old_password"].value()

@@ -1563,7 +1563,6 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
     def api_new_record(self, name, prefill=None, inserted_data=None, multi_insert=True,
                        copied_row=None, set_values=None, block_on_new_record=False,
                        transaction=None):
-        # See new_record() for documentation.
         view = pytis.config.resolver.get(name, 'view_spec')
         kwargs = dict(prefill=prefill)
         if copied_row and view.on_copy_record():

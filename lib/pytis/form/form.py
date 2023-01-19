@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2022 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2023 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2018 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -64,7 +64,7 @@ from .screen import (
 from .application import (
     Application, block_yield,
     current_form, db_op, db_operation, decrypted_names,
-    delete_record, form_settings_manager, message, new_record,
+    delete_record, form_settings_manager, message,
     profile_manager, refresh, run_dialog, run_form, top_window,
 )
 from .dialog import (
@@ -2107,7 +2107,7 @@ class RecordForm(LookupForm):
             prefill.update(self._row_copy_prefill(copied_row))
         else:
             copied_row = None
-        result = new_record(self._name, prefill=prefill, copied_row=copied_row)
+        result = app.new_record(self._name, prefill=prefill, copied_row=copied_row)
         if result:
             if not self.select_row(result.row(), quiet=True):
                 app.warning(_(u"The inserted record didn't appear in the current view."))
@@ -2326,7 +2326,7 @@ class RecordForm(LookupForm):
                 inserted_data.append(pytis.data.Row([(cid, record[cid]) for cid in columns]))
         finally:
             fh.close()
-        new_record(self._name, prefill=self._prefill, inserted_data=inserted_data)
+        app.new_record(self._name, prefill=self._prefill, inserted_data=inserted_data)
 
     def _cmd_open_editor(self, field_id):
         run_form(StructuredTextEditor, self.name(),

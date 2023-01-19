@@ -65,7 +65,7 @@ from .screen import (
 )
 from .application import (
     Application, decrypted_names, delete_record,
-    global_keymap, message, new_record, run_dialog, run_form,
+    global_keymap, message, run_dialog, run_form,
 )
 
 
@@ -1497,7 +1497,7 @@ class GenericCodebookField(GenericEnumerationField):
             if not error:
                 prefill[value_column] = value
         spec_name = fspec.codebook_insert_spec() or self._cb_name
-        result = new_record(spec_name, prefill=prefill, transaction=self._row.transaction())
+        result = app.new_record(spec_name, prefill=prefill, transaction=self._row.transaction())
         if result and value_column in result:
             self._set_value(result[value_column].export())
 
