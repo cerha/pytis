@@ -1184,7 +1184,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         tool.Show()
 
     def _cmd_exit(self):
-        self._frame.Close()
+        self.api_exit(self)
 
     def _can_nothing(self, enabled=True):
         return enabled
@@ -1478,10 +1478,10 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         return form.provider() if form else None
 
     def api_refresh(self):
-        Application.COMMAND_REFRESH.invoke(interactive=False)
+        self._cmd_refresh(interactive=False)
 
     def api_exit(self):
-        Application.COMMAND_EXIT.invoke()
+        self._frame.Close()
 
     def api_echo(self, message, kind='info'):
         self.message(message, kind=kind)
@@ -2082,14 +2082,6 @@ def delete_record(view, data, transaction, record,
         return False
 
 
-def refresh():
-    """Aktualizuj zobrazení viditelných oken aplikace, pokud je to třeba."""
-    Application.COMMAND_REFRESH.invoke(interactive=False)
-
-
-def exit():
-    """Ukonči uživatelské rozhraní aplikace."""
-    return Application.COMMAND_EXIT.invoke()
 
 
 def db_operation(operation, *args, **kwargs):
@@ -2480,6 +2472,12 @@ def built_in_status_fields():
     )
 
 # Deprecated backwards compatibility aliases.
+
+def refresh():
+    app.refresh()
+
+def exit():
+    return app.exit()
 
 def _file_selection_kwargs(pattern=None, patterns=(), filetypes=None, **kwargs):
     # Backwards compatibility treatment of pattern/patterns.
