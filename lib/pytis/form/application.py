@@ -1577,7 +1577,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
             if isinstance(result, dict):
                  prefill = result
             else:
-                self.api_refresh(interactive=False)
+                self.api_refresh()
                 return result
         if view.arguments() is not None:
             message(_("This form doesn't allow insertion."), beep_=True)
