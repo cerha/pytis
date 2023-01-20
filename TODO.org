@@ -318,14 +318,21 @@
    řádek jako argument.
 
 ** TODO Callbacky před/po editaci/vložení záznamu
-
+   
    Např. after_new_record, after_edit_record, before_new_record apod.
-
+   
    Nyní je možné přidat kód, který se provede po vložení nového záznamu buďto do
    cleanup, nebo definovat on_new_record, a v něm nejprve zavolat výchozí
    new_record s block_on_new_record.  Jednodušší a přehlednější by bylo mít pro
    tento případ explicitní podporu.
 
+** FEEDBACK Automatické ošetření block_on_new_record
+   
+   Při volání new_record() z on_new_record je nyní nutné nastavit
+   block_on_new_record, aby nedošlo k rekurzi.  To by si ale aplikace mohla
+   pamatovat sama, že je pro určitou specifikaci uvnitř. on_new_record a
+   automaticky již on_new_record nevolat.
+   
 ** TODO Změny ohledně nastavení šířky sloupců/políček
 
    `width = 0' zakázat a všechna taková políčka vyřadit z layoutu (nejprve
