@@ -1184,7 +1184,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         tool.Show()
 
     def _cmd_exit(self):
-        self.api_exit(self)
+        self.api_exit()
 
     def _can_nothing(self, enabled=True):
         return enabled
