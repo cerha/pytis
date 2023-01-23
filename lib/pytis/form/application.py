@@ -1147,7 +1147,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
             return False
         return enabled is None and True or enabled(**kwargs)
 
-    def _cmd_run_procedure(self, **kwargs):
+    def _cmd_run_procedure(self, enabled=None, **kwargs):
         return self.api_run_procedure(**kwargs)
 
     def _cmd_help(self, topic='pytis'):
