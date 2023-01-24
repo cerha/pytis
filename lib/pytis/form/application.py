@@ -1839,8 +1839,8 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
             directory = self._get_recent_directory(cmode, context)
         else:
             context = None  # Prevent storing the explicitly passed directory when dialog closed.
-        if encoding is None and 'b' in mode:
-            # Supply default encoding only for binary modes.
+        if encoding is None and 'b' not in mode:
+            # Supply default encoding only for text modes.
             encoding = 'utf-8'
         if cmode == 'remote':
             f = self._wrap_exposed_file_wrapper(pytis.remote.make_selected_file(
