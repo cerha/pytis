@@ -116,6 +116,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         """
         self._headless = headless
         self._access_rights = None
+        self._access_rights_initialized = False
         self._user_roles = ()
         super(Application, self).__init__()
 
@@ -267,6 +268,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
     def _init_access_rights(self):
         """Read application access rights from the database."""
         # Must be called very early after start of an application.
+        self._access_rights_initialized = True
         if not pytis.config.use_dmp_roles:
             return
         try:
@@ -1941,7 +1943,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
             except ResolverError:
                 rights = None
             if rights:
-                if self._access_rights is None:
+                if not self._access_rights_initialized:
                     self._init_access_rights()
                 groups = pd.default_access_groups(pytis.config.dbconnection)
                 if not rights.permitted(perm, groups, column=column):
