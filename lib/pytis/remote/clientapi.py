@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2022 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2023 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2011-2018 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -27,14 +27,14 @@ to the server.  It simply attempts to transparently provide the functionality
 which is not directly available due to the fact that the application is running
 on a remote server.
 
-This module is actually not part of Pytis.  It is not imported (executed) by
-Pytis on the server.  It is only read as a file and pushed to the Pytis2Go
-client which executes this code.  It comes with Pytis, because it defines the
-functionality consumed by Pytis.  The remote functions defined in remote.py
-rely on the API defined here so it belongs here to keep the API in sync with
-the consumer expectations.  This also means that the dependencies of this
-module don't need to be installed on the application server, but on the client
-machine running Pytis2Go.
+This module is actually not part of the Pytis Python module.  It is not
+imported (executed) by Pytis on the server.  It is only read as a file and
+pushed to the Pytis2Go client which executes this code.  It comes with Pytis,
+because it defines the functionality consumed by Pytis.  The remote functions
+defined in remote.py rely on the API defined here so it belongs here to keep
+the API in sync with the consumer expectations.  This also means that the
+dependencies of this module don't need to be installed on the application
+server, but on the client machine running Pytis2Go.
 
 """
 from __future__ import print_function
