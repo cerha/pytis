@@ -1208,6 +1208,7 @@ def load_module(module_name):
             raise ImportError(module_name)
     return module
 
+# TODO: kwargs -> **kwargs
 
 def data_object(spec, spec_kwargs=None, kwargs=None):
     """Create a data object for given specification.
