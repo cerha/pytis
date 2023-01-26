@@ -738,6 +738,22 @@ class ActionGroup(_TitledGroup):
     _ALLOW_SUBSEQUENCES = True
 
 
+class Folding(object):
+    """Specification of foldable form folding state."""
+
+    def __init__(self, level):
+        """Arguments:
+
+          level -- defines the folding level as integer (0=everything folded,
+            1=single level unfolded, etc.) or None for everything unfolded.
+
+        """
+        self._level = level
+
+    def level(self):
+        return self._level
+
+
 @python_2_unicode_compatible
 class Profile(object):
     """Predefined form profile specification.
@@ -776,9 +792,8 @@ class Profile(object):
           aggregations -- aggregation functions enabled in this profile in the
             same format as accepted by the 'aggregations' argument of
             'ViewSpec'.  If None, 'ViewSpec' aggregations apply.
-          folding -- defines the initial folding level as integer (0=everything
-            folded, 1=single level unfolded, etc.) or None (use the default
-            folding defined at specification level).
+          folding -- initial folding state as a 'Folding' instance.  If None,
+            default 'ViewSpec' folding applies.
           column_widths -- dictionary of table column widths keyed by string
             column identifiers with integer values representing pixel width.
             This is not designed to be used in specifications, but rather for
@@ -808,15 +823,18 @@ class Profile(object):
         self._columns = None if columns is None else tuple(columns)
         self._aggregations = None if aggregations is None else tuple(aggregations)
         if isinstance(folding, int):
-            # Int or None the only officially supported (and documented) way of
-            # defining folding in specifications.  Internally, however, Pytis uses
-            # the format produced by pytis.form.FoldableForm.Folding.folding_state()
-            # so we always convert to this format.
-            # Note, it might make sense to define a class in pytis.presentation module
-            # which would allow more detailed folding state setup and would be used as
-            # the official documented folding state specification instead of the
-            # currently used pytis.form.FoldableForm.Folding.folding_state() format.
+            # Using int directly is now deprecated.
             folding = [folding, []]
+        elif isinstance(folding, Folding):
+            # Folding instances are the only officially supported (and documented)
+            # way of defining folding in specifications.  Internally, however, Pytis
+            # uses the format produced by pytis.form.FoldableForm.Folding.folding_state()
+            # so we always convert to this format.
+            # It would, however, make sense to extend the 'Folding' class to be albe to
+            # express more detailed folding state and use 'Folding' instances instead
+            # of the currently used pytis.form.FoldableForm.Folding.folding_state()
+            # format internally.
+            folding = [folding.level(), []]
         elif hasattr(folding, 'folding_state'):
             # For backwards compatibility only.  Specifications previously contained
             # pytis.form.FoldableForm.Folding instances.  Testing with has_attr instead
@@ -1653,8 +1671,8 @@ class ViewSpec(object):
             'Orientation.VERTICAL', the side forms will be displayed on the
             right side.
 
-          folding -- initial folding level (0=everything folded, 1=single level
-            unfolded, etc.).  'None' means use the standard folding.
+          folding -- initial folding state as a 'Folding' instance.  'None'
+            means use the standard folding.
 
           arguments -- sequence of 'DBBinding' instances defining table
             arguments, when the table is actually a row returning function.
@@ -1908,13 +1926,12 @@ class ViewSpec(object):
             query_fields = QueryFields(query_fields)
         else:
             assert query_fields is None or isinstance(query_fields, QueryFields), query_fields
+        # See the notes in Profile constructor for more details about folding specification.
         if isinstance(folding, int):
-            # See the notes in Profile constructor for more details.
             folding = [folding, []]
+        elif isinstance(folding, Folding):
+            folding = [folding.level(), []]
         elif hasattr(folding, 'folding_state'):
-            # For backwards compatibility only.  Specifications previously contained
-            # pytis.form.FoldableForm.Folding instances.  Testing with has_attr instead
-            # of isinstance to prevent pytis.form dependency here.
             folding = folding.folding_state()
         self._title = title
         self._singular = singular
@@ -5327,7 +5344,7 @@ class Specification(with_metaclass(_SpecificationMetaclass, SpecificationBase)):
     """A sequence of print specifications as pairs (TITLE, NAME)."""
 
     folding = None
-    """'FoldableForm.Folding' instance defining initial folding.
+    """Initial folding state as a 'Folding' instance.
 
     'None' means use the standard folding.
 

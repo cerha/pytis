@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2020 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2020, 2023 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2002-2017 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -31,7 +31,7 @@ checking, dynamic codebook filtering etc.
 from .spec import (  # noqa: F401
     TextFormat, Color, Style, Orientation, Text, Button, ActionContext,
     Action, PrintAction, ActionGroup, Profile, ProfileGroup, AggregatedView,
-    Profiles, Filter, Condition, GroupSpec, HGroup, FieldSet, TabGroup,
+    Folding, Profiles, Filter, Condition, GroupSpec, HGroup, FieldSet, TabGroup,
     ColumnLayout, VGroup, LHGroup, LVGroup, LayoutSpec, QueryFields,
     ViewSpec, BindingSpec, Binding, Editable, SelectionType, PostProcess,
     TextFilter, Computer, computer, procedure, CbComputer, CodebookSpec,
