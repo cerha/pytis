@@ -62,8 +62,7 @@ from .screen import (
     DEFAULT_WINDOW_BACKGROUND_COLOUR,
 )
 from .application import (
-    Application, block_yield,
-    current_form, db_op, db_operation, decrypted_names,
+    Application, block_yield, current_form, db_operation, decrypted_names,
     delete_record, form_settings_manager, message,
     profile_manager, refresh, run_dialog, run_form, top_window,
 )
@@ -2813,8 +2812,7 @@ class EditForm(RecordForm, TitledForm, Refreshable):
 
     def _commit_data(self, op, args):
         if op is not None:
-            success, result = db_op(op, args, dict(transaction=self._open_transaction()),
-                                    in_transaction=(self._transaction is not None))
+            success, result = db_operation(op, *args, **dict(transaction=self._open_transaction()))
         else:
             success, result = True, (None, True)
         return success, result
@@ -2904,8 +2902,8 @@ class EditForm(RecordForm, TitledForm, Refreshable):
         # Perform the DB operation.
         transaction = self._open_transaction()
         if transaction is not None:
-            success, result = db_op(transaction.set_point, ('commitform',),
-                                    in_transaction=True, quiet=True)
+            success, result = db_operation(transaction.set_point, 'commitform',
+                                           allow_retry=False, quiet=True)
         else:
             success = True
         if success:
@@ -2956,7 +2954,7 @@ class EditForm(RecordForm, TitledForm, Refreshable):
                 self._result = self._row
                 self.close()
             if self._governing_transaction is None and self._transaction is not None:
-                db_op(self._transaction.commit, in_transaction=True, quiet=True)
+                db_operation(self._transaction.commit, allow_retry=False, quiet=True)
                 if close:
                     self._transaction = None
                 else:
@@ -2966,8 +2964,8 @@ class EditForm(RecordForm, TitledForm, Refreshable):
             return True
         else:
             if self._transaction is not None:
-                success, __ = db_op(self._transaction.cut, ('commitform',), in_transaction=True,
-                                    quiet=True)
+                success, __ = db_operation(self._transaction.cut, 'commitform',
+                                           allow_retry=False, quiet=True)
             else:
                 success = True
             if success:

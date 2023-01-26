@@ -2084,40 +2084,39 @@ def delete_record(view, data, transaction, record,
         return False
 
 
-
-
 def db_operation(operation, *args, **kwargs):
-    in_transaction = (kwargs.get('transaction') is not None)
-    return db_op(operation, args, kwargs, in_transaction=in_transaction)
+    """Invoke database operation with handling possible DB errors.
 
+    'operation' is called with given arguments.  If 'pd.dbdata.DBException' is
+    raised during the operation, an error dialog is displayed with exception
+    description and a question asking whether the user wishes to re-invoke the
+    operation.  The operation is repeated as long as the user answers the
+    question positively.
 
-def db_op(operation, args=(), kwargs={}, in_transaction=False, quiet=False):
-    """Invoke database operation with handling possible exceptions.
+    The exceptions of type 'DBLoginException' result in displaying a login
+    dialog and the supplied username and password is set before repeating the
+    operation.
 
-    'operation' is called with given arguments.  If 'pd.dbdata.DBException'
-    is raised during the operation, an error dialog is displayed with exception description and
-    a question asking whether the user wishes to re-invoke the operation.  The operation is repeated
-    as long as the user answers the question positively.
-
-    The exceptions of type 'DBLoginException' result in displaying a login dialog and the supplied
-    username and password is set before repeating the operation.
-
-    When the operation is performed successfully (regardles whether on the first try or later), its
-    result is returned.
+    When the operation is performed successfully (regardles whether on the
+    first try or later), its result is returned.
 
     Arguments:
-
-      operation -- function (callable object) performing a database operation and returning its
-        result
-      args, kwargs -- arguments and keyword arguments passed to the function
-      in_transaction -- iff true, don't offer the user a chance for restoring the operation
+      operation -- function (callable object) performing a database operation
+        and returning its result
+      args, kwargs -- arguments and keyword arguments passed to the function,
+        excluding the keyword arguments named below
+      allow_retry -- iff true, offer the user a chance for restoring the
+        operation
       quiet -- iff true, don't report errors to the user
 
-    Returns: Pair (SUCCESS, RESULT), where SUCCESS is a boolean flag indicating success (true) or
-    failure (false) and RESULT is the value returned by 'operation' (if SUCCESS is false, RESULT is
-    not defined).
+    Returns: Pair (SUCCESS, RESULT), where SUCCESS is a boolean flag indicating
+    success (true) or failure (false) and RESULT is the value returned by
+    'operation' (if SUCCESS is false, RESULT is not defined).
 
     """
+    # Don't offer the user a chance for restoring the operation when inside transaction.
+    allow_retry = kwargs.pop('allow_retry', kwargs.get('transaction') is None)
+    quiet = kwargs.pop('quiet', False)
     FAILURE = False, None
     while True:
         try:
@@ -2187,13 +2186,11 @@ def db_op(operation, args=(), kwargs={}, in_transaction=False, quiet=False):
                 message += '\n' + str(e.exception())
             if quiet:
                 return FAILURE
-            if in_transaction:
+            if not allow_retry:
                 app.error(message, title=_("Database error"))
                 return FAILURE
-            else:
-                message += '\n' + _("Try again?")
-                if not app.question(message, title=_("Database error")):
-                    return FAILURE
+            elif not app.question(message + '\n' + _("Try again?"), title=_("Database error")):
+                return FAILURE
 
 
 def delete_record_question(msg=None):

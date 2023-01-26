@@ -86,7 +86,7 @@ from .dualform import (  # noqa: F401
 from .application import (  # noqa: F401
     Application, DbActionLogger, InputDialog, InputNumeric, InputDate,
     run_form, run_dialog, run_procedure,
-    new_record, delete_record, refresh, exit, db_operation, db_op,
+    new_record, delete_record, refresh, exit, db_operation,
     delete_record_question, current_form, top_window,
     recent_forms_menu, wx_frame, profile_manager, form_settings_manager,
     aggregated_views_manager, decrypted_names, log_user_action,
