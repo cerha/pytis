@@ -451,7 +451,7 @@ class Products(Specification):
                    context=pp.ActionContext.SELECTION),
             Action('unmark_selected', _("Unmark selected"), self._unmark_selected,
                    context=pp.ActionContext.SELECTION),
-            Action('prices', _("Update prices"), self._update_prices),
+            Action('edit_marked', _("Edit marked products"), self._edit_marked, hotkey='e'),
             Action('print', _("Print price"), self._print),
         )
 
@@ -487,26 +487,22 @@ class Products(Specification):
     def _unmark_selected(self, rows):
         self._mark_selected(rows, mark=False)
 
-    def _update_prices(self, row):
-        # This serves for testing user transactions.
-        true_value = pd.Value(pd.Boolean(), True)
-        condition = pd.EQ('marked', true_value)
+    def _edit_marked(self, row):
+        # Serves for testing user transactions.
+        data = row.data()
         transaction = pd.transaction()
         try:
-            def process(row):
-                return row['product_id']
-            product_ids = row.data().select_map(process, condition=condition)
-            for product_id in product_ids:
-                if not pytis.form.run_form(pytis.form.PopupEditForm, 'misc.Products',
-                                           select_row=product_id,
-                                           transaction=transaction):
-                    app.error("Transaction aborted")
+            for product_id in data.select_map(lambda r: r['product_id'],
+                                              condition=pd.EQ('marked', pd.bval(True))):
+                if not app.edit_record('misc.Products', product_id, transaction=transaction):
+                    app.warning("Transaction aborted")
                     transaction.rollback()
                     return
         except Exception:
             transaction.rollback()
             raise
-        transaction.commit()
+        else:
+            transaction.commit()
 
     def _print(self, row):
         pytis.form.printout('misc.Products', 'misc.StandalonePrint', row)
