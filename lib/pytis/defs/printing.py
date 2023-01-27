@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2019-2022 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2019-2023 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2010-2015 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -103,7 +103,7 @@ class UserOutputTemplates(pytis.presentation.Specification):
                                    pytis.data.EQ('module', row['module']),
                                    pytis.data.NE('id', row['id']))
         if pytis.extensions.dbselect('printing.UserOutputTemplates', condition=condition):
-            pytis.form.message(_("Tento název šablony již existuje"))
+            app.echo(_("Tento název šablony již existuje"))
             return 'specification'
 
 

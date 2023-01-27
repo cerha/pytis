@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2020, 2022 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2023 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2002-2013 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -28,6 +28,7 @@ from future.utils import python_2_unicode_compatible
 
 from past.builtins import basestring
 import pytis.util
+from pytis.api import app
 
 _ = pytis.util.translations('pytis-wx')
 
@@ -320,8 +321,7 @@ class Command(object):
             pytis.util.log(kind, 'Invoking command:', (self, kwargs))
             return self._handler.invoke_command(self, **kwargs)
         else:
-            from .application import message
-            message(_(u"Command invocation refused: %s") % (self.id(),), beep_=True)
+            app.echo(_(u"Command invocation refused: %s") % (self.id(),), kind='error')
             return False
 
 class UICommand(object):

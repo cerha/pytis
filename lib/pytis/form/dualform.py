@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2020, 2022 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2023 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2018 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -49,7 +49,7 @@ from .screen import (
     popup_menu, wx_focused_window, get_icon,
 )
 from .application import (
-    current_form, message, run_form, top_window
+    current_form, run_form, top_window
 )
 _ = translations('pytis-wx')
 
@@ -1199,7 +1199,7 @@ class MultiSideForm(MultiForm):
         else:
             # Remove form of given 'index'.
             if nb.GetPageCount() <= 1:
-                message(_("Unable to close the last form."), beep_=True)
+                app.echo(_("Unable to close the last form."), kind='error')
                 return
             form = self._subform(index)
             if index != nb.GetPageIndex(form):
@@ -1244,7 +1244,7 @@ class MultiSideForm(MultiForm):
                 self._init_subform(i)
                 self._select_subform(i)
                 return True
-        message(_("The requested side form is not available."), beep_=True)
+        app.echo(_("The requested side form is not available."), kind='error')
         return False
 
 

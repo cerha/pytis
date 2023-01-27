@@ -657,7 +657,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         found = self._search(condition, direction, row_number=row, report_failure=False,
                              initial_shift=newtext)
         if found is None:
-            message(_("No next matching record"), beep_=True)
+            app.echo(_("No next matching record"), kind='error')
         else:
             if direction == pytis.data.FORWARD:
                 new_row = row + found
@@ -914,7 +914,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             # but tooltips are not useful when using keyboard only).
             row, col = self._current_cell()
             if row >= 0 and col >= 0:
-                message(self._table.row(row).display(self._columns[col].id()))
+                app.echo(self._table.row(row).display(self._columns[col].id()))
 
     def _on_select_cell(self, event):
         if not self._in_select_cell and self._grid.GetBatchCount() == 0:
@@ -1740,7 +1740,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             limit = 60
             distinct = self._autofilter_values(cid, limit, condition=cond, arguments=arguments)
             if len(distinct) > limit:
-                message(_("Too many items for autofilter."), beep_=True)
+                app.echo(_("Too many items for autofilter."), kind='error')
                 return
             items = [MItem(v.export(), command=ListForm.COMMAND_FILTER_BY_VALUE,
                            args=dict(column_id=cid, value=v))
@@ -1797,7 +1797,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         col_id = self._columns[col].id()
         if ((not isinstance(self._row.type(col_id), pytis.data.String) or
              not self._data.permitted(col_id, pytis.data.Permission.VIEW))):
-            message(_("Unable to search incrementally in this column."), beep_=True)
+            app.echo(_("Unable to search incrementally in this column."), kind='error')
             return
         if self._search_panel is None:
             self._create_search_panel(full=full, prefill=prefill)
@@ -2588,8 +2588,8 @@ class CodebookForm(PopupForm, FoldableForm, KeyHandler):
                 if cols:
                     col_id = cols[0]
                 else:
-                    message(_("Unable to search incrementally. No sortable column found!"),
-                            beep_=True)
+                    app.echo(_("Unable to search incrementally. No sortable column found!"),
+                             kind='error')
             col = find(col_id, self._columns, key=lambda c: c.id())
             if col is not None:
                 self._select_cell(row=0, col=self._columns.index(col))

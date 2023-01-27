@@ -65,7 +65,7 @@ from .screen import (
 )
 from .application import (
     Application, decrypted_names, delete_record,
-    global_keymap, message, run_dialog, run_form,
+    global_keymap, run_dialog, run_form,
 )
 
 
@@ -397,9 +397,9 @@ class InputField(KeyHandler, CommandHandler):
             self._last_check_result = self._check()
         self._update_field_state()
         if self._last_validation_error:
-            message(self._last_validation_error.message())
+            app.echo(self._last_validation_error.message())
         elif self._last_check_result:
-            message(self._last_check_result)
+            app.echo(self._last_check_result)
 
     def _on_idle(self, event):
         w = wx_focused_window()
@@ -611,7 +611,7 @@ class InputField(KeyHandler, CommandHandler):
             if interactive:
                 app.error(self.spec().label() + ": " + errmsg, title=_("Invalid value"))
             else:
-                message(errmsg, beep_=True)
+                app.echo(errmsg, kind='error')
         return error is None
 
     def valid(self):
@@ -710,7 +710,7 @@ class TextField(InputField):
             if ((self._filter is not None and
                  key >= wx.WXK_SPACE and key != wx.WXK_DELETE and key <= 255 and
                  not self._filter(chr(key)))):
-                message(_("Invalid character!"), beep_=True)
+                app.echo(_("Invalid character!"), kind='error')
                 return True
             else:
                 event.Skip()
@@ -794,7 +794,7 @@ class TextField(InputField):
         if maxlen is not None and len(value) > maxlen:
             # wx 3.x and later does not support wx.EVT_TEXT_MAXLEN on multiline TextCtrl fields.
             # Thus we handle maxlen ourselves here without using wx.EVT_TEXT_MAXLEN altogether.
-            message(_("Maximal length exceeded."), beep_=True)
+            app.echo(_("Maximal length exceeded."), kind='error')
         super(TextField, self)._on_change(event=event)
 
     def _post_process_func(self):
@@ -1996,16 +1996,16 @@ class FileField(Invocable, InputField):
                 try:
                     self._value = self._type.Data(fh, filename=filename)
                 except pytis.data.ValidationError as e:
-                    message(e.message(), beep_=True)
+                    app.echo(e.message(), kind='error')
                 except IOError as e:
-                    message(_("Error reading file:") + ' ' + str(e), beep_=True)
+                    app.echo(_("Error reading file:") + ' ' + str(e), kind='error')
                 else:
                     self._on_change()
-                    message(_("File loaded."))
+                    app.echo(_("File loaded."))
             finally:
                 fh.close()
         else:
-            message(_("Loading file canceled."))
+            app.echo(_("Loading file canceled."))
 
     def _can_save(self):
         return self._value is not None
@@ -2017,7 +2017,7 @@ class FileField(Invocable, InputField):
                                             filename=self._row.filename(self._id),
                                             context='file-field')
         except IOError as e:
-            app.echo(_("Error writing file to disk:") + ' ' + str(e), beep_=True)
+            app.echo(_("Error writing file to disk:") + ' ' + str(e), kind='error')
         else:
             if saved:
                 app.echo(_("File saved."))
@@ -2414,7 +2414,7 @@ class StructuredTextField(TextField):
         try:
             return method(*args, **kwargs)
         except AttachmentStorage.InvalidImageFormat as e:
-            message(_("Invalid image format!"), beep_=True)
+            app.echo(_("Invalid image format!"), kind='error')
         except AttachmentStorage.StorageError as e:
             app.error(title=_("Error accessing attachment storrage"),
                       message=_("Error accessing attachment storrage") + ":\n" + e)

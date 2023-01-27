@@ -963,7 +963,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
     # Zpracování příkazů
 
     def _cmd_break(self):
-        message(_("Stopped..."), beep_=True)
+        app.echo(_("Stopped..."), kind='error')
 
     def _can_handled_action(self, handler=None, enabled=None, **kwargs):
         return enabled is None and True or enabled(**kwargs)
@@ -1049,7 +1049,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
                 if name is None:
                     return None
             log(ACTION, 'Running form:', (form_class, name, kwargs))
-            self.message(_("Opening form..."), root=True)
+            self._echo(_("Opening form..."), root=True)
             assert issubclass(form_class, pytis.form.Form)
             assert name is None or isinstance(name, basestring)  # May be None for InputForm.
             # We indicate busy state here so that the action is not delayed by
@@ -1063,7 +1063,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
             if form is not None:
                 busy_cursor(False)
                 self._raise_form(form)
-                message(_('Form "%s" found between opened windows.', form.title()))
+                app.echo(_('Form "%s" found between open windows.', form.title()))
                 if 'select_row' in kwargs and kwargs['select_row'] is not None:
                     form.select_row(kwargs['select_row'])
                 if 'filter' in kwargs and kwargs['filter'] is not None:
@@ -1094,7 +1094,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
                 if isinstance(form, pytis.form.PopupForm):
                     log(EVENT, "Opening modal form:", form)
                     self._modals.push(form)
-                    self.message('', root=True)
+                    self._echo('', root=True)
                     form.show()
                     busy_cursor(False)
                     try:
@@ -1119,7 +1119,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
                         old.hide()
                     self._windows.push(form)
                     wx_callback(wx.EVT_CLOSE, form, self._on_form_close)
-                    self.message('', root=True)
+                    self._echo('', root=True)
                     form.resize()  # Needed in wx 2.8.x.
                     form.show()
                     self._update_window_menu()
@@ -1353,7 +1353,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         else:
             log(ACTION, "Form action:", (spec_name, form_name, action, info))
 
-    def message(self, message, kind='info', root=False):
+    def _echo(self, message, kind='info', root=False):
         """Display a non-interactive message in the status bar.
 
         Arguments:
@@ -1487,7 +1487,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         self._frame.Close()
 
     def api_echo(self, message, kind='info'):
-        self.message(message, kind=kind)
+        self._echo(message, kind=kind)
 
     def api_message(self, message=None, title=None, content=None):
         return self.run_dialog(dialog.Message, message, title=title or _("Message"),
@@ -1583,7 +1583,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
                 self.api_refresh()
                 return result
         if view.arguments() is not None:
-            message(_("This form doesn't allow insertion."), beep_=True)
+            app.echo(_("This form doesn't allow insertion."), kind='error')
             return None
         return run_form(pytis.form.PopupInsertForm, name,
                         prefill=prefill, inserted_data=inserted_data,
@@ -1625,7 +1625,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
     def api_run_procedure(self, spec_name, proc_name, *args, **kwargs):
         result = None
         try:
-            self.message(_("Running procedure..."), root=True)
+            self._echo(_("Running procedure..."), root=True)
             log(ACTION, 'Running procedure:', (spec_name, proc_name, args, kwargs))
             # Kvůli wx.SafeYield() se ztrácí focus, takže
             # si ho uložíme a pak zase obnovíme.
@@ -2125,7 +2125,7 @@ def run_form(form_class, name=None, **kwargs):
     cmd = Application.COMMAND_RUN_FORM
     kwargs = dict(form_class=form_class, name=name, **kwargs)
     if not cmd.enabled(**kwargs):
-        message(_("Opening form refused."), beep_=True)
+        app.echo(_("Opening form refused."), kind='error')
         return False
     return cmd.invoke(**kwargs)
 
@@ -2156,7 +2156,7 @@ def delete_record(view, data, transaction, record,
             raise ProgramError("Invalid 'on_delete_record' return value.", result)
     else:
         if data.arguments() is not None:
-            message(_("This form doesn't allow deletion."), beep_=True)
+            app.echo(_("This form doesn't allow deletion."), kind='error')
             return False
         op, arg = data.delete, key
     if ask and not app.question(question):
@@ -2497,7 +2497,7 @@ def built_in_status_fields():
 
     The following status bar fields are defined by this method:
       - message: displays various non-interactive messages
-        set by 'pytis.form.message()'.
+        set by 'app.echo()'.
       - list-positin: Displays the current position in the list of
         records (such as 3/168) when a list form is active.
       - remote-status: Displays the current status of remote communication.

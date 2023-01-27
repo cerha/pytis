@@ -63,7 +63,7 @@ from .screen import (
 )
 from .application import (
     Application, block_yield, current_form, db_operation, decrypted_names,
-    delete_record, form_settings_manager, message,
+    delete_record, form_settings_manager,
     profile_manager, refresh, run_dialog, run_form, top_window,
 )
 from .dialog import (
@@ -446,7 +446,7 @@ class Form(wx.Panel, KeyHandler, CallbackHandler, CommandHandler):
                 DELETE: "Nemáte právo smazat existující záznam.",
                 EXPORT: "Nemáte právo k exportu do CSV.",
             }[perm]
-            message(msg, beep_=True)
+            app.echo(msg, kind='error')
         return result
 
     def set_status(self, field, message):
@@ -1221,7 +1221,7 @@ class LookupForm(InnerForm):
         if skip == 0:
             log(EVENT, 'Record not found')
             if report_failure:
-                message(_(u"Record not found"), beep_=True)
+                app.echo(_(u"Record not found"), kind='error')
             result = None
         else:
             if initial_shift:
@@ -1408,14 +1408,14 @@ class LookupForm(InnerForm):
 
     def _cmd_save_new_profile(self, title):
         if title in [profile.title() for profile in self._profiles]:
-            message(_(u"Profile of this name already exists."), beep_=True)
+            app.echo(_(u"Profile of this name already exists."), kind='error')
             return
         profile_id = profile_manager().new_user_profile_id(self._profiles)
         profile = self._create_profile(profile_id, title)
         self._profiles.append(profile)
         self._save_profile(profile)
         self._current_profile = profile
-        message(_(u"Profile saved as '%s'.") % title)
+        app.echo(_(u"Profile saved as '%s'.") % title)
         self.focus()
 
     def _can_rename_profile(self, title):
@@ -1423,13 +1423,13 @@ class LookupForm(InnerForm):
 
     def _cmd_rename_profile(self, title):
         if title in [p.title() for p in self._profiles if p is not self._current_profile]:
-            message(_("Profile of this name already exists."), beep_=True)
+            app.echo(_(u"Profile of this name already exists."), kind='error')
             return
         index = self._profiles.index(self._current_profile)
         profile = self._create_profile(self._current_profile.id(), title)
         self._current_profile = self._profiles[index] = profile
         self._save_profile(self._current_profile)
-        message(_(u"Profile saved as '%s'.") % title)
+        app.echo(_(u"Profile saved as '%s'.") % title)
         self.focus()
 
     def _can_update_profile(self):
@@ -1504,7 +1504,7 @@ class LookupForm(InnerForm):
 
     def _cmd_filter_by_value(self, column_id, value):
         if column_id not in [c.id() for c in self._lf_sfs_columns()]:
-            message(_(u"This column can not be used for filtering."), beep_=True)
+            app.echo(_(u"This column can not be used for filtering."), kind='error')
         self.filter(pytis.data.EQ(column_id, value), append=True)
 
     def _cmd_sort(self, col=None, direction=None, primary=False):
@@ -1572,8 +1572,7 @@ class LookupForm(InnerForm):
         elif col is not None:
             if ((not self._data.find_column(col) or
                  not self._data.permitted(col, pytis.data.Permission.VIEW))):
-                message(_(u"This column can not be used for sorting."),
-                        beep_=True)
+                app.echo(_(u"This column can not be used for sorting."), kind='error')
                 return None
             pos = self._sorting_position(col)
             sorting = xlist(self._lf_sorting)
@@ -1913,7 +1912,7 @@ class RecordForm(LookupForm):
                                        transaction=self._open_transaction())
         if success and locked is not None:
             log(EVENT, 'Record is locked')
-            app.message(_(u"The record is locked."))
+            app.app.echo(_(u"The record is locked."))
             return False
         else:
             return True
@@ -2135,7 +2134,7 @@ class RecordForm(LookupForm):
             name = self._name
             redirect = self._view.redirect()
             if redirect is None and self._data.arguments() is not None:
-                message(_("This form is read-only."), beep_=True)
+                app.echo(_(u"This form is read-only."), kind='error')
                 return
             if redirect is not None:
                 redirected_name = redirect(row)
@@ -2227,8 +2226,8 @@ class RecordForm(LookupForm):
             selection_type = pytis.presentation.SelectionType.RADIO
 
         if not self._data.permitted(None, pytis.data.Permission.INSERT):
-            msg = _(u"Insufficient permissions to insert records to this table.")
-            message(msg, beep_=True)
+            app.echo(_(u"Insufficient permissions to insert records to this table."),
+                     kind='error')
             return False
         order = self._view.layout().order()
         content = lcg.container(
@@ -2270,7 +2269,7 @@ class RecordForm(LookupForm):
             separator = result['custom'].value()
         fh = app.open_selected_file(filetypes=('csv', 'txt'))
         if not fh:
-            message(_(u"No file given. Process terminated."), beep_=True)
+            app.echo(_(u"No file given. Process terminated."), kind='error')
             return False
         try:
             # In case of remote file, make local copy
@@ -3229,9 +3228,9 @@ class PopupEditForm(PopupForm, EditForm):
     def _on_skip_button(self, event):
         i = self._inserted_data_pointer
         if self._inserted_data is None:
-            message(_("No next record"), beep_=True)
+            app.echo(_("No next record"), kind='error')
         else:
-            message(_("Record %d/%d skipped") % (i, len(self._inserted_data)))
+            app.echo(_("Record %d/%d skipped") % (i, len(self._inserted_data)))
             self._load_next_row()
 
     def _buttons(self):
@@ -3278,7 +3277,7 @@ class PopupEditForm(PopupForm, EditForm):
     def _cmd_commit_record(self, close=True, next=False):
         result = super(PopupEditForm, self)._cmd_commit_record(close=close and not next)
         if result and next:
-            message(_("Record saved"))
+            app.echo(_("Record saved"))
             self._load_next_row()
         return result
 
@@ -3761,11 +3760,11 @@ class BrowsableShowForm(ShowForm):
         if not back:
             row_number += 1
             if row_number == self._lf_count(min_value=(row_number + 1)):
-                message(_("Last record"), beep_=True)
+                app.echo(_("Last record"), kind='error')
                 return
         else:
             if row_number == 0:
-                message(_("First record"), beep_=True)
+                app.echo(_("First record"), kind='error')
                 return
             row_number -= 1
         self._select_row(self._find_row_by_number(row_number))

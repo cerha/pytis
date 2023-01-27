@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2022 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2023 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2002-2013 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -63,7 +63,7 @@ class UserBreakException(Exception):
     """
     def __init__(self, *args):
         super(UserBreakException, self).__init__(*args)
-        pytis.form.message(_("Stopped..."), beep_=True)
+        app.message(_("Stopped..."), kind='error')
 
 
 _current_event = None
@@ -235,7 +235,7 @@ def wx_callback(event_kind, handler, callback, **kwargs):
         global _current_event, _interrupted, _last_user_event, _last_user_event_time
         is_user = _is_user_event(event)
         if is_user:
-            pytis.form.message('')
+            app.echo('')
         if not isinstance(event, (wx.IdleEvent, wx.UpdateUIEvent)):
             if __debug__:
                 log(DEBUG, 'Processing event:', (event, event.__class__))

@@ -745,7 +745,7 @@ class KeyHandler(object):
         wk = self._wx_key
         if not wk.is_true_key(event):
             return
-        pytis.form.message(None)
+        app.echo('')
         if __debug__:
             log(DEBUG, 'Událost zpracovává:', str(self))
         guardian = self._key_guardian
@@ -762,8 +762,8 @@ class KeyHandler(object):
             if __debug__:
                 log(DEBUG, 'Prefixová klávesa', keydef)
             self._prefix_key_sequence.append(key)
-            pytis.form.message('Prefixová klávesa: %s (%s)' %
-                               (' '.join(self._prefix_key_sequence), ', '.join(keydef.keys()),))
+            app.echo(_("Prefix key: %s", '%s (%s)' %
+                       (' '.join(self._prefix_key_sequence), ', '.join(keydef.keys()),)))
             self._current_keymap = keydef
             return True
         else:
@@ -940,7 +940,7 @@ class Menu(_TitledMenuObject):
         if event.GetMenuId() != -1:
             item = menu.FindItemById(event.GetMenuId())
             if item:
-                pytis.form.message(item.GetHelp())
+                app.echo(item.GetHelp())
         event.Skip()
 
     def create(self, parent, keymap=None):
@@ -1873,7 +1873,7 @@ class ProfileSelector(wx.ComboCtrl):
         else:
             ctrl.SelectAll()
         ctrl.SetFocus()
-        pytis.form.message(_("Enter the profile name and press ENTER when done."))
+        app.echo(_("Enter the profile name and press ENTER when done."))
         self._on_enter_perform = perform
 
     def _edit_profile_title_enabled(self, cmd, clear=False):
@@ -2286,12 +2286,12 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler, KeyHandler):
 
     def _on_loaded(self, event):
         busy_cursor(False)
-        pytis.form.message(_("Document loaded."))
+        app.echo(_("Document loaded."))
 
     def _on_error(self, event):
         busy_cursor(False)
         log(OPERATIONAL, "Failed loading '%s':" % event.GetURL(), event.GetString())
-        pytis.form.message(_("Loading document failed."))
+        app.echo(_("Loading document failed."))
 
     def _on_title_changed(self, event):
         self._run_callback(self.CALL_TITLE_CHANGED, self._webview.GetCurrentTitle())
@@ -2327,7 +2327,7 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler, KeyHandler):
         if ((self._restricted_navigation_uri is not None and
              not uri.startswith(self._restricted_navigation_uri) and
              not uri.startswith('about:'))):
-            pytis.form.message(_("External URL navigation denied: %s") % uri, beep_=True)
+            app.echo(_("External URL navigation denied: %s") % uri, kind='error')
             log(OPERATIONAL, "Restricted to :", self._restricted_navigation_uri)
             event.Veto()
         event.Skip()
@@ -2701,7 +2701,7 @@ class FileViewer(wx.lib.pdfviewer.viewer.pdfViewer):
                     self.LoadFile(data)
             except Exception as e:
                 self.Show(False)
-                pytis.form.message(_("Loading document failed: %s", e), beep_=True)
+                app.echo(_("Loading document failed: %s", e), kind='error')
 
     def buttons(self):
         buttons = FileViewerButtonPanel(self.GetParent(), wx.ID_ANY,
