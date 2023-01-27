@@ -163,7 +163,7 @@ class ApplicationRoles(_ApplicationRolesSpecification):
         return None
 
     def _copy_roles(self, row):
-        template = pytis.extensions.run_cb('menu.UserApplicationRolesCodebook')
+        template = app.codebook('menu.UserApplicationRolesCodebook')
         if template is None:
             return
         pytis.data.dbfunction(dbdefs.PytisCopyRole, template['name'].value(), row['name'].value())
@@ -475,7 +475,7 @@ class ApplicationMenuM(pytis.presentation.Specification):
     # Form actions
 
     def _copy_rights(self, row):
-        template_row = pytis.extensions.run_cb('menu.ApplicationMenuCodebook')
+        template_row = app.codebook('menu.ApplicationMenuCodebook')
         if template_row is None:
             return
         from_shortname = template_row['shortname'].value()
