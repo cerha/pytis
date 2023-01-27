@@ -2438,12 +2438,6 @@ def refresh_status(id=None):
     return pytis.form.app._statusbar.refresh(id)
 
 
-def message(message, beep_=False):
-    """Deprecated.  Use 'app.echo()'."""
-    if pytis.form.app:
-        pytis.form.app.message(message, kind='error' if beep_ else 'info')
-
-
 def global_keymap():
     """Vrať klávesovou mapu aplikace jako instanci třídy 'Keymap'."""
     try:
@@ -2626,3 +2620,6 @@ def new_record(name, prefill=None, inserted_data=None, **kwargs):
 
 def printout(spec_name, template_id, **kwargs):
     return app.printout(spec_name, template_id, **kwargs)
+
+def message(message, beep_=False):
+    return app.echo(message, kind='error' if beep_ else 'info')
