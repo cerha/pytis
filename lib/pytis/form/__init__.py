@@ -47,7 +47,7 @@ from .screen import (  # noqa: F401
     is_busy_cursor, modal, copy_to_clipboard, paste_from_clipboard,
     hotkey_string, file_menu_items, help_proc, char2px,
     dlg2px, acceskey_prefix, orientation2wx, make_fullname, mitem,
-    popup_menu, printout, get_icon,
+    popup_menu, get_icon,
 )
 
 from .dialog import (  # noqa: F401
@@ -94,7 +94,7 @@ from .application import (  # noqa: F401
     global_keymap, has_access, wx_yield_, block_yield, built_in_status_fields,
     select_file, select_files, select_directory, make_selected_file, write_selected_file,
     open_selected_file, open_file, write_file, launch_file,
-    open_data_as_file, launch_url
+    open_data_as_file, launch_url, printout,
 )
 
 from .configui import (  # noqa: F401

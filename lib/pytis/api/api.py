@@ -926,6 +926,26 @@ class Application(API):
         """
         pass
 
+    def printout(self, spec_name, template_id, row=None,
+                 parameters=None, output_file=None, language=None, form=None):
+        """Print given template to PDF and display the result in a viewer.
+
+        Arguments:
+          spec_name -- name of the specification for print resolver
+          template_id -- id of the output template, string
+          row -- current row data for print resolver as 'pytis.data.Row' instance or None
+          parameters -- dictionary of extra user-defined parameters passed
+            to the print specification (available in the print specification
+            through self._parameter(key))
+          output_file -- file to write output PDF data to, open file-like object; if
+            'None' then show the output in an external PDF viewer
+          language -- language code to pass to the exporter context
+
+          form -- current form; 'Form' instance or None
+
+        """
+        pass
+
     def refresh(self):
         """Refresh visible application components."""
         pass

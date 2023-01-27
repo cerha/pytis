@@ -38,6 +38,7 @@ import os.path
 import string
 import sys
 import _thread
+import threading
 import tempfile
 import time
 import wx
@@ -52,7 +53,7 @@ import pytis.remote
 from pytis.api import app
 from pytis.util import (
     ACTION, DEBUG, EVENT, OPERATIONAL, ProgramError, ResolverError, Stack, XStack,
-    argument_names, find, format_traceback, identity, log, rsa_encrypt, xtuple,
+    argument_names, find, format_traceback, identity, log, rsa_encrypt
 )
 from .command import CommandHandler
 from .event import (
@@ -1985,6 +1986,91 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
                 result = perm in permissions
         return result
 
+    class _PrintResolver(pytis.output.OutputResolver):
+        """Default print resolver used internally by 'api_printout()'."""
+
+        class _Spec(object):
+            # This class has to emulate a specification module as well as a
+            # (new style) specification class.
+
+            def body(self, resolver=None, **kwargs):
+                app.error(_("Print specification not found!"))
+
+            def doc_header(self, resolver=None, **kwargs):
+                return None
+
+            def doc_footer(self, resolver=None, **kwargs):
+                return None
+
+        def _get_module(self, name):
+            # Supply a default specification module (old style spec).
+            try:
+                return super(Application._PrintResolver, self)._get_module(name)
+            except pytis.util.ResolverError:
+                return self._Spec()
+
+        def _get_instance(self, key):
+            # Supply a default specification class (new style spec).
+            try:
+                return super(Application._PrintResolver, self)._get_instance(key)
+            except pytis.util.ResolverError:
+                return self._Spec()
+
+    def api_printout(self, spec_name, template_id, row=None,
+                     parameters=None, output_file=None, language=None, form=None):
+        if parameters is None:
+            parameters = {}
+        parameters[pytis.output.P_NAME] = spec_name
+        parameters[spec_name + '/' + pytis.output.P_ROW] = row
+        resolvers = (
+            pytis.output.DatabaseResolver('ev_pytis_user_output_templates',
+                                          ('template', 'rowtemplate', 'header',
+                                           'first_page_header', 'footer', 'style'),
+                                          ('body', 'row', 'page_header',
+                                           'first_page_header', 'page_footer', 'style')),
+            self._PrintResolver(pytis.config.print_spec_dir, pytis.config.resolver),
+        )
+        try:
+            formatter = pytis.output.Formatter(pytis.config.resolver, resolvers, template_id,
+                                               form=form, parameters=parameters,
+                                               language=language or pytis.util.current_language(),
+                                               translations=pytis.util.translation_path())
+        except pytis.output.AbortOutput as e:
+            log(OPERATIONAL, str(e))
+            return
+
+        def run_viewer(filename):
+            try:
+                app.launch_file(filename)
+            finally:
+                try:
+                    os.remove(filename)
+                except OSError as e:
+                    log(OPERATIONAL, 'Error removing temporary file:', e)
+
+        def do_printout(outfile):
+            try:
+                formatter.printout(outfile)
+            except lcg.SubstitutionIterator.NotStartedError:
+                tbstring = pytis.util.format_traceback()
+                log(OPERATIONAL, 'Print exception caught', tbstring)
+                app.error(_("Invalid use of identifier `data' in print specification.\n"
+                            "Maybe use `current_row' instead?"))
+                raise UserBreakException()
+
+        try:
+            if output_file:
+                do_printout(output_file)
+            else:
+                # TODO: Use app.launch_file() here?
+                with tempfile.NamedTemporaryFile(suffix='.pdf',
+                                                 prefix='tmppytis', delete=False) as f:
+                    do_printout(f)
+                threading.Thread(target=run_viewer, args=(f.name,)).start()
+            formatter.cleanup()
+        except UserBreakException:
+            pass
+
 
 class DbActionLogger(object):
     """Log user actions into the database."""
@@ -2537,3 +2623,6 @@ def run_procedure(spec_name, proc_name, *args, **kwargs):
 
 def new_record(name, prefill=None, inserted_data=None, **kwargs):
     return app.new_record(name, prefill=prefill, inserted_data=inserted_data, **kwargs)
+
+def printout(spec_name, template_id, **kwargs):
+    return app.printout(spec_name, template_id, **kwargs)

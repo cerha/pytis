@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2022 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2023 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2018 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -42,7 +42,6 @@ import wx.html2
 import http.server
 import socketserver
 import io
-import tempfile
 import threading
 import time
 import mimetypes
@@ -61,7 +60,7 @@ import pytis.util
 from pytis.api import app
 from pytis.presentation import Orientation, TextFormat, StatusField
 from pytis.util import find, xtuple, log, DEBUG, EVENT, OPERATIONAL, ProgramError
-from .event import wx_callback, top_level_exception, UserBreakException
+from .event import wx_callback, top_level_exception
 from .command import Command, CommandHandler, UICommand, command_icon
 from .managers import FormProfileManager
 
@@ -3254,108 +3253,3 @@ def wx_text_view(parent, content, format=None, width=None, height=None, resource
         # We can' adjust the default size according to the content size, but since
         browser.SetInitialSize(char2px(browser, width or 90, height or 30))
         return browser
-
-
-class _PrintResolver(pytis.output.OutputResolver):
-    """Default print resolver used internally by 'printout()'."""
-
-    class _Spec(object):
-        # This class has to emulate a specification module as well as a
-        # (new style) specification class.
-
-        def body(self, resolver=None, **kwargs):
-            app.error(_("Print specification not found!"))
-
-        def doc_header(self, resolver=None, **kwargs):
-            return None
-
-        def doc_footer(self, resolver=None, **kwargs):
-            return None
-
-    def _get_module(self, name):
-        # Supply a default specification module (old style spec).
-        try:
-            return super(_PrintResolver, self)._get_module(name)
-        except pytis.util.ResolverError:
-            return self._Spec()
-
-    def _get_instance(self, key):
-        # Supply a default specification class (new style spec).
-        try:
-            return super(_PrintResolver, self)._get_instance(key)
-        except pytis.util.ResolverError:
-            return self._Spec()
-
-
-def printout(spec_name, template_id, parameters=None, output_file=None,
-             form=None, row=None, language=None, spec_kwargs=None):
-    """Print given template to PDF and display the result in a viewer.
-
-    Arguments:
-      spec_name -- name of the specification for print resolver
-      template_id -- id of the output template, string
-      parameters -- dictionary of extra user-defined parameters passed
-        to the print specification (available in the print specification
-        through self._parameter(key))
-      output_file -- file to write output PDF data to, open file-like object; if
-        'None' then show the output in an external PDF viewer
-      form -- current form; 'Form' instance or None
-      row -- current row data for print resolver as 'pytis.data.Row' instance or None
-      language -- language code to pass to the exporter context
-      spec_kwargs -- dictionary of keyword arguments to pass to the print
-        specification constructor (deprecated - use 'parameters' to pass extra
-        parameters).
-
-    """
-    if parameters is None:
-        parameters = {}
-    parameters[pytis.output.P_NAME] = spec_name
-    parameters[spec_name + '/' + pytis.output.P_ROW] = row
-    resolvers = (
-        pytis.output.DatabaseResolver('ev_pytis_user_output_templates',
-                                      ('template', 'rowtemplate', 'header',
-                                       'first_page_header', 'footer', 'style'),
-                                      ('body', 'row', 'page_header',
-                                       'first_page_header', 'page_footer', 'style')),
-        _PrintResolver(pytis.config.print_spec_dir, pytis.config.resolver),
-    )
-    try:
-        formatter = pytis.output.Formatter(pytis.config.resolver, resolvers, template_id,
-                                           form=form, parameters=parameters,
-                                           spec_kwargs=spec_kwargs,
-                                           language=language or pytis.util.current_language(),
-                                           translations=pytis.util.translation_path())
-    except pytis.output.AbortOutput as e:
-        log(OPERATIONAL, str(e))
-        return
-
-    def run_viewer(filename):
-        try:
-            app.launch_file(filename)
-        finally:
-            try:
-                os.remove(filename)
-            except OSError as e:
-                log(OPERATIONAL, 'Error removing temporary file:', e)
-
-    def do_printout(outfile):
-        try:
-            formatter.printout(outfile)
-        except lcg.SubstitutionIterator.NotStartedError:
-            tbstring = pytis.util.format_traceback()
-            log(OPERATIONAL, 'Print exception caught', tbstring)
-            app.error(_("Invalid use of identifier `data' in print specification.\n"
-                        "Maybe use `current_row' instead?"))
-            raise UserBreakException()
-
-    try:
-        if output_file:
-            do_printout(output_file)
-        else:
-            # TODO: Use app.launch_file() here?
-            with tempfile.NamedTemporaryFile(suffix='.pdf', prefix='tmppytis', delete=False) as f:
-                do_printout(f)
-            threading.Thread(target=run_viewer, args=(f.name,)).start()
-        formatter.cleanup()
-    except UserBreakException:
-        pass
