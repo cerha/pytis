@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2022 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2023 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2017 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -2964,11 +2964,11 @@ class BrowseForm(FoldableForm):
             args = self._context_action_args(Action('x', '-', context=spec.context()))
             return handler(*args)
         else:
-            pytis.form.printout(self._name, spec.name(),
-                                parameters=self._formatter_parameters(),
-                                row=copy.copy(self._table.row(self._current_cell()[0])),
-                                form=self,
-                                language=spec.language())
+            app.printout(self._name, spec.name(),
+                         parameters=self._formatter_parameters(),
+                         row=copy.copy(self._table.row(self._current_cell()[0])),
+                         form=self,
+                         language=spec.language())
 
 
 class SideBrowseForm(BrowseForm):

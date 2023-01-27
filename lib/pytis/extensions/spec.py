@@ -338,7 +338,7 @@ def print2mail(resolver, spec_name, template_id, row, to, from_, subject, msg, f
     """
     assert filename, filename
     output = io.BytesIO()
-    pytis.form.printout(spec_name, template_id, output_file=output, parameters=kwargs, row=row)
+    app.printout(spec_name, template_id, output_file=output, parameters=kwargs, row=row)
     document = output.getvalue()
     if document:
         mail = ComplexEmail(to, from_, subject, msg, charset=charset)

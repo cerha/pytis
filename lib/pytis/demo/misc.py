@@ -22,15 +22,12 @@ from __future__ import unicode_literals
 import datetime
 import io
 import os
-import tempfile
-import time
 
 import pytis.data
 import pytis.data as pd
 import pytis.output
 import pytis.presentation as pp
 import pytis.extensions
-import pytis.form
 import lcg
 
 from pytis.api import app
@@ -407,9 +404,10 @@ class Products(Specification):
         merger = PdfFileMerger()
         for lang in ('cs', 'en'):
             output = io.BytesIO()
-            pytis.form.printout(
+            app.printout(
                 'Products', 'Products.ProductPage',
-                parameters=dict([(k, row[k].export()) for k in ('product_id', 'product', 'price')],
+                parameters=dict([(k, row[k].export())
+                                 for k in ('product_id', 'product', 'price')],
                                 language=lang),
                 language=lang, output_file=output,
             )
@@ -505,7 +503,7 @@ class Products(Specification):
             transaction.commit()
 
     def _print(self, row):
-        pytis.form.printout('misc.Products', 'misc.StandalonePrint', row)
+        app.printout('misc.Products', 'misc.StandalonePrint', row=row)
 
 
 class ProductInfo(PrintSpecification):
