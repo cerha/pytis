@@ -549,6 +549,29 @@ class Application(API):
         """
         pass
 
+    def delete_record(self, name, row, question=None, transaction=None):
+        """Delete an existing record after user's confirmation.
+
+        Arguments:
+
+          name -- specification name as a string.
+          row -- deleted record as a 'pytis.data.Row' or
+            'pytis.presentation.PresentedRow' instance or record key as a
+            'pytis.data.Value' instance.
+          question -- user defined deletion confirmation question or None to
+            used the default (generic) question "Are you sure to delete the
+            record permanently?".
+          transaction -- transaction for DB operations.
+
+        Runs 'on_delete_record' instead of the default deletion if the
+        specification defines it.
+
+        Returns True if the record was actually deleted and False if not
+        (the user didn't confirm deletion).
+
+        """
+        pass
+
     def run_form(self, name, select_row=None, multi=True, sorting=None, filter=None,
                  condition=None, profile=None, binding=None):
         """Display given form in the main application frame.

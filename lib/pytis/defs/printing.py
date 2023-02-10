@@ -21,7 +21,6 @@ from __future__ import unicode_literals
 import pytis.util
 import pytis.data
 import pytis.extensions
-import pytis.form
 import pytis.presentation
 from pytis.api import app
 from pytis.presentation import Field, Editable, procedure
@@ -110,17 +109,14 @@ class UserOutputTemplates(pytis.presentation.Specification):
 class DirectUserOutputTemplates(UserOutputTemplates):
 
     def fields(self):
-        overridde = (pytis.presentation.Field('module', editable=Editable.NEVER),
-                     )
+        overridde = (pytis.presentation.Field('module', editable=Editable.NEVER),)
         return self._inherited_fields(DirectUserOutputTemplates, override=overridde)
 
     @procedure
     def delete_template(self, module, specification):
         def s(value):
             return pytis.data.Value(pytis.data.String(), value)
-        data_spec = self.data_spec()
-        view_spec = self.view_spec()
-        data = data_spec.create(dbconnection_spec=pytis.config.dbconnection)
+        data = self.data_spec().create(dbconnection_spec=pytis.config.dbconnection)
         condition = pytis.data.AND(pytis.data.EQ('module', s(module)),
                                    pytis.data.EQ('specification', s(specification)))
         if not data.select(condition):
@@ -130,7 +126,6 @@ class DirectUserOutputTemplates(UserOutputTemplates):
         if data.fetchone() is not None:
             app.error(_("Tisková sestava se vyskytuje ve více exemplářích: ") + specification)
             return
-        record = pytis.presentation.PresentedRow(view_spec.fields(), data, row)
-        if pytis.form.delete_record(view_spec, data, None, record):
-            # To update the printing button of the current form
-            pytis.form.refresh()
+        if app.delete_record('printing.DirectUserOutputTemplates', row):
+            # Update the printing button of the current form
+            app.refresh()

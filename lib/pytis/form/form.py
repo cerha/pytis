@@ -62,12 +62,8 @@ from .screen import (
     DEFAULT_WINDOW_BACKGROUND_COLOUR,
 )
 from .application import (
-    Application, block_yield, current_form, db_operation, decrypted_names,
-    delete_record, form_settings_manager,
+    Application, block_yield, current_form, db_operation, decrypted_names, form_settings_manager,
     profile_manager, refresh, run_dialog, run_form, top_window,
-)
-from .dialog import (
-    Message, Question, Warning, Error, MultiQuestion,
 )
 from .search import (
     SearchDialog, FilterDialog, SortingDialog
@@ -2132,7 +2128,7 @@ class RecordForm(LookupForm):
         # The return value is used in derived classes!
         if not self.check_permission(pytis.data.Permission.DELETE, quiet=False):
             return False
-        if delete_record(self._view, self._data, self._transaction, self.current_row()):
+        if app.delete_record(self._name, self.current_row(), transaction=self._transaction):
             self._signal_update()
             return True
         else:

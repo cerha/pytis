@@ -64,8 +64,7 @@ from .screen import (
     copy_to_clipboard, field_size
 )
 from .application import (
-    Application, decrypted_names, delete_record,
-    global_keymap, run_dialog, run_form,
+    Application, decrypted_names, global_keymap, run_dialog, run_form,
 )
 
 
@@ -1795,13 +1794,6 @@ class ListField(GenericCodebookField, CallbackHandler):
                           _("Open the codebook in a standalone form.")),
                 )
 
-    def _current_row(self):
-        view = pytis.config.resolver.get(self._cb_name, 'view_spec')
-        data = pytis.util.data_object(self._cb_name)
-        row = self._type.enumerator().row(self._row[self._id].value(),
-                                          transaction=self._row.transaction())
-        return PresentedRow(view.fields(), data, row, transaction=self._row.transaction())
-
     def _selected_item_index(self):
         i = self._list.GetNextItem(-1, state=wx.LIST_STATE_FOCUSED)
         if i == -1:
@@ -1845,13 +1837,10 @@ class ListField(GenericCodebookField, CallbackHandler):
         return self.enabled() and self._selected_item is not None
 
     def _cmd_delete_selected(self):
-        view = pytis.config.resolver.get(self._cb_name, 'view_spec')
-        data = pytis.util.data_object(self._cb_name)
-        transaction = self._row.transaction()
-        row = self._current_row()
-        question = _("Really remove the item %s from the codebook permanently?",
-                     self._row[self._id].export())
-        delete_record(view, data, transaction, row, question=question)
+        app.delete_record(self._cb_name, self._row[self._id],
+                          question=_("Really remove the item %s from the codebook permanently?",
+                                     self._row[self._id].export()),
+                          transaction=self._row.transaction())
         self._reload_enumeration()
         self._run_callback(self.CALL_LIST_CHANGE, self._row)
         self.set_focus()

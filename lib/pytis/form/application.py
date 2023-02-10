@@ -1626,6 +1626,51 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
             return run_form(pytis.form.PopupEditForm, name, select_row=row.row(),
                             set_values=set_values, transaction=transaction)
 
+    def api_delete_record(self, name, row, question=None, transaction=None):
+        view = pytis.config.resolver.get(name, 'view_spec')
+        data = pytis.util.data_object(name)
+        if not isinstance(row, PresentedRow):
+            if not isinstance(row, pd.Row):
+                row = data.row(row, transaction=transaction)
+            row = PresentedRow(view.fields(), data, row, transaction=transaction)
+        on_delete_record = view.on_delete_record()
+        ask = True
+        if on_delete_record is not None:
+            kwargs = {}
+            if 'transaction' in argument_names(on_delete_record):
+                kwargs['transaction'] = transaction
+            result = on_delete_record(row, **kwargs)
+            if result is True:
+                op, arg = data.delete, tuple(row[c.id()] for c in data.key())
+
+            elif result is False or result is None:
+                return False
+            elif result == 1:
+                return True
+            elif isinstance(result, basestring):
+                app.error(result)
+                return False
+            elif isinstance(result, pd.Operator):
+                ask = False
+                op, arg = data.delete_many, result
+            else:
+                raise ProgramError("Invalid 'on_delete_record' return value.", result)
+        else:
+            if data.arguments() is not None:
+                app.echo(_("This form doesn't allow deletion."), kind='error')
+                return False
+            op, arg = data.delete, tuple(row[c.id()] for c in data.key())
+        if ask and not app.question(question or
+                                    _("Are you sure to delete the record permanently?")):
+            return False
+        log(EVENT, 'Deleting record:', arg)
+        success, result = db_operation(op, arg, transaction=transaction)
+        if success:
+            log(ACTION, 'Record deleted.')
+            return True
+        else:
+            return False
+
     def api_run_form(self, name, select_row=None, multi=True, sorting=None, filter=None,
                      condition=None, profile=None, binding=None):
         form_class = pytis.form.BrowseForm
@@ -2161,47 +2206,6 @@ def run_form(form_class, name=None, **kwargs):
         return False
     return cmd.invoke(**kwargs)
 
-
-def delete_record(view, data, transaction, record,
-                  question=_("Are you sure to delete the record permanently?")):
-    # This is here only to prevent duplication of code in form.py and inputfield.py.
-    # It Shound not be used as a public API method.
-    ask = True
-    key = record.row().columns([c.id() for c in data.key()])
-    # Ošetření uživatelské funkce pro mazání
-    on_delete_record = view.on_delete_record()
-    if on_delete_record is not None:
-        result = on_delete_record(record)
-        if result is True:
-            op, arg = data.delete, key
-        elif result is False or result is None:
-            return False
-        elif result == 1:
-            return True
-        elif isinstance(result, basestring):
-            app.error(result)
-            return False
-        elif isinstance(result, pd.Operator):
-            ask = False
-            op, arg = data.delete_many, result
-        else:
-            raise ProgramError("Invalid 'on_delete_record' return value.", result)
-    else:
-        if data.arguments() is not None:
-            app.echo(_("This form doesn't allow deletion."), kind='error')
-            return False
-        op, arg = data.delete, key
-    if ask and not app.question(question):
-        return False
-    log(EVENT, 'Deleting record:', arg)
-    success, result = db_operation(op, arg, transaction=transaction)
-    if success:
-        log(ACTION, 'Record deleted.')
-        return True
-    else:
-        return False
-
-
 def db_operation(operation, *args, **kwargs):
     """Invoke database operation with handling possible DB errors.
 
@@ -2649,6 +2653,13 @@ def run_procedure(spec_name, proc_name, *args, **kwargs):
 
 def new_record(name, prefill=None, inserted_data=None, **kwargs):
     return app.new_record(name, prefill=prefill, inserted_data=inserted_data, **kwargs)
+
+def delete_record(view, data, transaction, record,
+                  question=_("Are you sure to delete the record permanently?")):
+    assert pytis.config.resolver.get(view.spec_name(), 'view_spec') is view
+    return app.delete_record(view.spec_name(), tuple(record[k.id()] for k in data.key()),
+                             question=question, transaction=transaction)
+
 
 def printout(spec_name, template_id, **kwargs):
     return app.printout(spec_name, template_id, **kwargs)
