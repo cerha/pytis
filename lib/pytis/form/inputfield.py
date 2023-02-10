@@ -1835,7 +1835,7 @@ class ListField(GenericCodebookField, CallbackHandler):
             set_values = prefill_function(self._row)
         else:
             set_values = None
-        app.edit_record(self._cb_name, self._row[self._id], set_values=set_values,
+        app.edit_record(self._cb_name, self._row, set_values=set_values,
                         transaction=self._row.transaction())
         self._reload_enumeration()
         self._run_callback(self.CALL_LIST_CHANGE, self._row)

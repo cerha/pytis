@@ -517,14 +517,16 @@ class Application(API):
         """
         pass
 
-    def edit_record(self, name, key, set_values=None, block_on_edit_record=False,
+    def edit_record(self, name, row, set_values=None, block_on_edit_record=False,
                     transaction=None):
         """Edit an existing record in a modal form.
 
         Arguments:
 
           name -- specification name as a string.
-          key -- record key as a 'pytis.data.Value' instance.
+          row -- edited record as a 'pytis.data.Row' or
+            'pytis.presentation.PresentedRow' instance or record key as a
+            'pytis.data.Value' instance.
           set_values -- dictionary of row values to change in the openened form
             (or None).  The dictionary keys are field identifiers and values
             are either the corresponding internal Python values valid for the

@@ -2116,8 +2116,8 @@ class RecordForm(LookupForm):
     def _cmd_edit_record(self):
         if not self.check_permission(pytis.data.Permission.UPDATE, quiet=False):
             return
-        app.edit_record(self._name, self.current_key(),
-                        transaction=self.current_row().transaction())
+        row = self.current_row()
+        app.edit_record(self._name, row, transaction=row.transaction())
         # TODO: This is here only for the case, that 'on_edit_record()'
         # was processed without actually opening an edit form.  Maybe we
         # should require 'on_edit_record()' to call 'app.refresh()' manually

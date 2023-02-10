@@ -1592,13 +1592,14 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
                         multi_insert=multi_insert, transaction=transaction,
                         set_values=set_values)
 
-    def api_edit_record(self, name, key, set_values=None, block_on_edit_record=False,
+    def api_edit_record(self, name, row, set_values=None, block_on_edit_record=False,
                         transaction=None):
-        def record():
-            data = pytis.util.data_object(name)
-            row = data.row(key, transaction=transaction)
-            return PresentedRow(view.fields(), data, row, transaction=transaction)
         view = pytis.config.resolver.get(name, 'view_spec')
+        if not isinstance(row, PresentedRow):
+            data = pytis.util.data_object(name)
+            if not isinstance(row, pd.Row):
+                row = data.row(row, transaction=transaction)
+            row = PresentedRow(view.fields(), data, row, transaction=transaction)
         on_edit_record = view.on_edit_record()
         if not block_on_edit_record and on_edit_record is not None:
             kwargs = {}
@@ -1611,19 +1612,19 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
                     kwargs['prefill'] = set_values
                 else:
                     kwargs['set_values'] = set_values
-            return on_edit_record(record(), **kwargs)
+            return on_edit_record(row, **kwargs)
         else:
             redirect = view.redirect()
             if redirect is not None:
-                redirected_name = redirect(record())
+                redirected_name = redirect(row)
                 if redirected_name is not None:
                     assert isinstance(redirected_name, basestring)
                     name = redirected_name
             elif view.arguments() is not None:
                 app.echo(_(u"This form is read-only."), kind='error')
                 return
-            return run_form(pytis.form.PopupEditForm, name, select_row=key, set_values=set_values,
-                            transaction=transaction)
+            return run_form(pytis.form.PopupEditForm, name, select_row=row.row(),
+                            set_values=set_values, transaction=transaction)
 
     def api_run_form(self, name, select_row=None, multi=True, sorting=None, filter=None,
                      condition=None, profile=None, binding=None):
