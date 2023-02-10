@@ -1459,7 +1459,7 @@ class GenericCodebookField(GenericEnumerationField):
         pass
 
     def _cb_key(self):
-        value = self._row[self.id()]
+        value = self._row[self._id]
         if self._valid() and value.value():
             return {self._type.enumerator().value_column(): value}
         else:
@@ -1830,25 +1830,13 @@ class ListField(GenericCodebookField, CallbackHandler):
         return self.enabled() and self._selected_item is not None
 
     def _cmd_edit_selected(self):
-        view = pytis.config.resolver.get(self._cb_name, 'view_spec')
-        on_edit_record = view.on_edit_record()
         prefill_function = self.spec().codebook_update_prefill()
-        transaction = self._row.transaction()
         if prefill_function:
-            prefill = prefill_function(self._row)
+            set_values = prefill_function(self._row)
         else:
-            prefill = None
-        if on_edit_record is not None:
-            if prefill_function:
-                kwargs = dict(prefill=prefill)
-            else:
-                kwargs = dict()
-            if 'transaction' in argument_names(on_edit_record):
-                kwargs['transaction'] = transaction
-            on_edit_record(row=self._current_row(), **kwargs)
-        else:
-            app.edit_record(self._cb_name, self._cb_key(),
-                            set_values=prefill, transaction=transaction)
+            set_values = None
+        app.edit_record(self._cb_name, self._row[self._id], set_values=set_values,
+                        transaction=self._row.transaction())
         self._reload_enumeration()
         self._run_callback(self.CALL_LIST_CHANGE, self._row)
         self.set_focus()

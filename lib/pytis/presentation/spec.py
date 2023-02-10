@@ -3373,8 +3373,8 @@ class Field(object):
             a PresentedRow instance as an argument representing the current
             record.  If the codebook specification defines 'on_edit_record',
             the result is passed to 'on_edit_record' function as a keyword
-            argument 'prefill'.  Otherwise it is directly prefilled within the
-            edit form.
+            argument 'set_values'.  Otherwise it is directly prefilled within
+            the edit form.
           runtime_filter -- provider of enumeration runtime filter as a
             'Computer' instance.  The computer function computes the filtering
             condition based on the current row data.  This condition is used to

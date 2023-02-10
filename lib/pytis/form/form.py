@@ -50,7 +50,7 @@ from pytis.presentation import (
 )
 from pytis.util import (
     ACTION, EVENT, OPERATIONAL, ProgramError, ResolverError, UNDEFINED,
-    find, format_traceback, log, super_, xlist, xtuple, argument_names,
+    find, format_traceback, log, super_, xlist, xtuple,
 )
 
 from .event import UserBreakException, wx_callback
@@ -2116,34 +2116,14 @@ class RecordForm(LookupForm):
     def _cmd_edit_record(self):
         if not self.check_permission(pytis.data.Permission.UPDATE, quiet=False):
             return
-        row = self.current_row()
-        on_edit_record = self._view.on_edit_record()
-        if on_edit_record is not None:
-            if 'transaction' in argument_names(on_edit_record):
-                kwargs = dict(transaction=row.transaction())
-            else:
-                kwargs = dict()
-            on_edit_record(row=row, **kwargs)
-            # TODO: _signal_update vyvolá refresh.  To je tu jen pro případ, že
-            # byla uživatelská procedura ošetřena jinak než vyvoláním
-            # formuláře.  Protože to samo už je hack, tak ať si raději také
-            # tvůrce provádí refresh sám, protože tady je volán ve všech
-            # ostatních případech zbytečně a zdržuje.
-            self._signal_update()
-        else:
-            name = self._name
-            redirect = self._view.redirect()
-            if redirect is None and self._data.arguments() is not None:
-                app.echo(_(u"This form is read-only."), kind='error')
-                return
-            if redirect is not None:
-                redirected_name = redirect(row)
-                if redirected_name is not None:
-                    assert isinstance(redirected_name, basestring)
-                    name = redirected_name
-            kwargs = self._new_form_kwargs()
-            key = self._current_key()
-            run_form(PopupEditForm, name, select_row=key, **kwargs)
+        app.edit_record(self._name, self.current_key(),
+                        transaction=self.current_row().transaction())
+        # TODO: This is here only for the case, that 'on_edit_record()'
+        # was processed without actually opening an edit form.  Maybe we
+        # should require 'on_edit_record()' to call 'app.refresh()' manually
+        # if needed because in most cases it is redundant and it only causes
+        # an unnecessary delay.
+        self._signal_update()
 
     def _can_delete_record(self):
         return self.current_row() is not None

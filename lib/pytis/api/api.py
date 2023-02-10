@@ -481,7 +481,7 @@ class Application(API):
     def new_record(self, name, prefill=None, inserted_data=None, multi_insert=True,
                    copied_row=None, set_values=None, block_on_new_record=False,
                    transaction=None):
-        """Open a modal form to insert a new record.
+        """Insert a new record using a modal form.
 
         Arguments:
 
@@ -511,11 +511,15 @@ class Application(API):
             recursion..
           transaction -- transaction for DB operations.
 
+        Runs 'on_new_record' instead of the default insertion form if the
+        specification defines it.
+
         """
         pass
 
-    def edit_record(self, name, key, set_values=None, transaction=None):
-        """Open a modal form to edit an existing record.
+    def edit_record(self, name, key, set_values=None, block_on_edit_record=False,
+                    transaction=None):
+        """Edit an existing record in a modal form.
 
         Arguments:
 
@@ -527,10 +531,18 @@ class Application(API):
             fields's data type or 'pytis.data.Value' instances directly.  These
             values will not affect the initial row state and thus will appear
             as changed to the user.
+          block_on_edit_record -- if true, the 'on_edit_record' procedure from
+            specification  will be blocked.  This makes it possible to call
+            'edit_record' from within the 'on_new_record' procedure without
+            recursion..
           transaction -- transaction for DB operations.
 
+        Runs 'on_edit_record' instead of the default edit form if the
+        specification defines it.
+
         Returns a 'pp.PresentedRow' instance of the updated record or None if
-        the user cancels the form.
+        the user cancels the form.  If 'on_edit_record' is defined, returns
+        whatever 'on_edit_record()' returned.
 
         """
         pass
