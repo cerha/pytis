@@ -48,7 +48,7 @@ import pytis.api
 import pytis.data as pd
 import pytis.form
 from pytis.presentation import (
-    Field, Specification, StatusField, computer, Text, PresentedRow,
+    Field, Specification, StatusField, computer, Text, TextFormat, PresentedRow,
 )
 import pytis.util
 import pytis.remote
@@ -1455,7 +1455,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         elif isinstance(content, lcg.Content):
             return dict(report=content)
         elif isinstance(content, basestring):
-            return dict(report=content, report_format=pytis.presentation.TextFormat.PLAIN)
+            return dict(report=content, report_format=TextFormat.PLAIN)
         else:
             raise ProgramError("Invalid 'content': {}".format(content))
 
@@ -1697,7 +1697,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
             maximum = 100
             func = function
             def function(update, *args, **kwargs):
-                pass_n = ('n' in pytis.util.argument_names(func) and 'n' not in kwargs)
+                pass_n = ('n' in argument_names(func) and 'n' not in kwargs)
                 for n, arg in enumerate(over):
                     if not update(progress=max(1, min(maximum, n / count * 100))):
                         break
@@ -2005,7 +2005,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
                 # No action rights defined => only system rights apply
                 # (this function is *action* rights check).
                 result = True
-                access_rights = pytis.presentation.Specification.data_access_rights(action)
+                access_rights = Specification.data_access_rights(action)
                 if access_rights is not None:
                     result = access_rights.permitted(perm, self._user_roles, column=column)
             else:
