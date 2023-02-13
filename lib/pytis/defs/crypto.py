@@ -156,7 +156,7 @@ class Users(Specification):
             return not name
         elif col == 'admin_password':
             return name is not None
-        if name and name not in pytis.form.decrypted_names():
+        if name and name not in app.decrypted_areas():
             return False
         else:
             return True
@@ -217,7 +217,7 @@ class Users(Specification):
 
     def check(self, row):
         area = row['name'].value()
-        if not area or area not in pytis.form.decrypted_names():
+        if not area or area not in app.decrypted_areas():
             return
         connection_data = pytis.config.dbconnection
         key_id, key = pytis.extensions.crypto_admin_key(area, pytis.config.dbuser, connection_data)

@@ -62,7 +62,7 @@ from .screen import (
     DEFAULT_WINDOW_BACKGROUND_COLOUR,
 )
 from .application import (
-    Application, block_yield, current_form, db_operation, decrypted_names, form_settings_manager,
+    Application, block_yield, current_form, db_operation, form_settings_manager,
     profile_manager, refresh, run_dialog, run_form, top_window,
 )
 from .search import (
@@ -2086,7 +2086,7 @@ class RecordForm(LookupForm):
                                 _(u"Please contact the access rights administrator."))
             crypto_name = field.crypto_name()
             if ((crypto_name and self._row[fid].type().not_null() and
-                 crypto_name not in decrypted_names())):
+                 crypto_name not in app.decrypted_areas())):
                 app.error(_(u"This form contains the mandatory field %s,\n"
                             u"but this field is encrypted and the encryption "
                             u"area '%s' has not been unlocked.",

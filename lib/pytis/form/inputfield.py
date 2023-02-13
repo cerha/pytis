@@ -64,7 +64,7 @@ from .screen import (
     copy_to_clipboard, field_size
 )
 from .application import (
-    Application, decrypted_names, global_keymap, run_dialog, run_form,
+    Application, global_keymap, run_dialog, run_form,
 )
 
 
@@ -223,7 +223,7 @@ class InputField(KeyHandler, CommandHandler):
             permission = pytis.data.Permission.UPDATE
         self._denied = denied = not row.permitted(id, permission)
         self._hidden = not row.permitted(id, pytis.data.Permission.VIEW)
-        encrypted = (spec.crypto_name() and spec.crypto_name() not in decrypted_names())
+        encrypted = (spec.crypto_name() and spec.crypto_name() not in app.decrypted_areas())
         readonly = readonly or encrypted
         self._readonly = readonly or denied or row.hidden_codebook(id)
         self._enabled = not readonly and row.editable(id)

@@ -246,7 +246,7 @@ def hotkey_string(hotkey):
 
 def file_menu_items(fields, row, select_arguments):
 
-    from .application import Application, decrypted_names
+    from .application import Application
     data = row.data(init_select=False)
 
     def field_not_null(field_id):
@@ -293,7 +293,7 @@ def file_menu_items(fields, row, select_arguments):
         crypto_name = fspec.crypto_name()
 
         def can_open_file(field_id, filename):
-            return crypto_name is None or crypto_name in decrypted_names()
+            return crypto_name is None or crypto_name in app.decrypted_areas()
         return can_open_file
 
     mitems = []

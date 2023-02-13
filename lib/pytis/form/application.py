@@ -663,7 +663,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
             else:
                 return None
 
-        self._decrypted_names = decrypted_names = set()
+        self._decrypted_areas = decrypted_areas = set()
 
         try:
             data = pd.dbtable('ev_pytis_user_crypto_keys', ('key_id', 'name', 'fresh'))
@@ -710,7 +710,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
                 ok_names = set([row[0].value() for row in ok_names])
             else:
                 ok_names = set([ok_names])
-            decrypted_names.update(ok_names)
+            decrypted_areas.update(ok_names)
             bad_names = established_names.difference(ok_names)
             if fresh_names:
                 name = list(fresh_names)[0]
@@ -1344,10 +1344,6 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
 
     def aggregated_views_manager(self):
         return self._aggregated_views_manager
-
-    def decrypted_names(self):
-        """Return set of encryption names the user has access to."""
-        return self._decrypted_names
 
     def log(self, spec_name, form_name, action, info=None):
         if self._logger:
@@ -2063,6 +2059,9 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
                 result = perm in permissions
         return result
 
+    def api_decrypted_areas(self):
+        return self._decrypted_areas
+
     class _PrintResolver(pytis.output.OutputResolver):
         """Default print resolver used internally by 'api_printout()'."""
 
@@ -2438,12 +2437,6 @@ def aggregated_views_manager():
     """Return 'Application.aggregated_views_manager()' of the current application instance."""
     return pytis.form.app.aggregated_views_manager()
 
-
-def decrypted_names():
-    """Return set of encryption names the user has access to."""
-    return pytis.form.app.decrypted_names()
-
-
 def log_user_action(spec_name, form_name, action, info=None):
     """Log user action into the database."""
     return pytis.form.app.log(spec_name, form_name, action, info=info)
@@ -2666,3 +2659,6 @@ def printout(spec_name, template_id, **kwargs):
 
 def message(message, beep_=False):
     return app.echo(message, kind='error' if beep_ else 'info')
+
+def decrypted_names():
+    return app.decrypted_areas()

@@ -963,6 +963,10 @@ class Application(API):
         """
         pass
 
+    def decrypted_areas(self):
+        """Return set of names of encryption areas the user has access to."""
+        pass
+
     def printout(self, spec_name, template_id, row=None,
                  parameters=None, output_file=None, language=None, form=None):
         """Print given template to PDF and display the result in a viewer.
