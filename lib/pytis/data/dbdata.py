@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2021 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2023 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2014 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -492,7 +492,6 @@ class DBConnection(object):
         """
         self._user = user
         self._password = password
-        import pytis.extensions
         # If `password' is wrong then the following dbfunction call will
         # initiate new password dialog and will invoke this method recursively.
         # In such a case we must not set the wrong password here.
