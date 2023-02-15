@@ -2060,12 +2060,14 @@ def db_operation(operation, *args, **kwargs):
 
     Arguments:
       operation -- function (callable object) performing a database operation
-        and returning its result
+        and returning its result.
       args, kwargs -- arguments and keyword arguments passed to the function,
-        excluding the keyword arguments named below
+        excluding the keyword arguments named below.
       allow_retry -- iff true, offer the user a chance for restoring the
-        operation
-      quiet -- iff true, don't report errors to the user
+        operation.  It is on by default when 'kwargs' contain a 'translation'.
+        Off othervise.
+      quiet -- iff true, don't report errors to the user at all (regardless
+        of 'allow_retry').
 
     Returns: Pair (SUCCESS, RESULT), where SUCCESS is a boolean flag indicating
     success (true) or failure (false) and RESULT is the value returned by
