@@ -26,8 +26,8 @@ them.  All managers are similar, but each of them has a slightly different API.
 
 A pytis application instance automatically creates instances of all managers
 needed by a typical pytis application at startup and these managers are then
-accessible from within pytis through functions defined in application.py, such
-as 'profile_manager()', etc.
+accessible from within pytis through its properties, such as
+'Application.profile_manager', etc.
 
 Most of the settings are stored as JSON objects, but the API works with pytis
 classes, such as 'pytis.presentation.Profile()'.  Conversion to/from these

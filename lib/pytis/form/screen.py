@@ -2748,7 +2748,7 @@ def make_in_operator(column_id, spec_name, table_column_id, profile_id,
 
     """
     if profile_id and profile_id.startswith(FormProfileManager.USER_PROFILE_PREFIX):
-        manager = pytis.form.profile_manager()
+        manager = pytis.form.app.profile_manager
         data_object = pytis.util.data_object(spec_name)
         profile_condition, profile_name = manager.load_filter(spec_name, data_object, profile_id)
         if condition:

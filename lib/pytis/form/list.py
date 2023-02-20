@@ -73,8 +73,7 @@ from .screen import (
 )
 from .search import sfs_columns
 from .application import (
-    Application, aggregated_views_manager, current_form,
-    message, refresh, run_dialog, run_form,
+    Application, current_form, message, refresh, run_dialog, run_form,
 )
 from .grid import TableRowIterator, GridTable
 
@@ -995,7 +994,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                                command=ListForm.COMMAND_AGGREGATED_VIEW(aggregated_view_id=v.id()),
                                help=_("Open predefined aggregated view"))
                          for v in predefined_aggregated_views])
-        manager = aggregated_views_manager()
+        manager = pytis.form.app.aggregated_views_manager
         aggregated_views = [manager.load(self._name, aggregated_view_id)
                             for aggregated_view_id in manager.list(self._name)]
         if aggregated_views:
@@ -1661,7 +1660,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                 aggregation_columns = v.aggregation_columns()
                 break
         else:
-            manager = aggregated_views_manager()
+            manager = pytis.form.app.aggregated_views_manager
             if aggregated_view_id:
                 view = manager.load(self._name, aggregated_view_id)
                 name = view.name()
@@ -1711,8 +1710,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                  aggregation_arguments=arguments)
 
     def _cmd_delete_aggregated_view(self, aggregated_view_id):
-        manager = aggregated_views_manager()
-        manager.drop(self._name, aggregated_view_id)
+        pytis.form.app.aggregated_views_manager.drop(self._name, aggregated_view_id)
 
     def _cmd_filter_by_cell(self):
         row, col = self._current_cell()

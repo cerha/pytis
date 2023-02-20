@@ -62,8 +62,8 @@ from .screen import (
     DEFAULT_WINDOW_BACKGROUND_COLOUR,
 )
 from .application import (
-    Application, block_yield, current_form, db_operation, form_settings_manager,
-    profile_manager, refresh, run_dialog, run_form, top_window,
+    Application, block_yield, current_form, db_operation, refresh, run_dialog, run_form,
+    top_window,
 )
 from .search import (
     SearchDialog, FilterDialog, SortingDialog
@@ -267,12 +267,14 @@ class Form(wx.Panel, KeyHandler, CallbackHandler, CommandHandler):
 
     def _get_saved_setting(self, option, default=None):
         """Retrieve form parameter independent on current profile."""
-        return form_settings_manager().get(self._profile_spec_name(), self._form_name(),
-                                           option, default=default)
+        return pytis.form.app.form_settings_manager.get(self._profile_spec_name(),
+                                                        self._form_name(),
+                                                        option, default=default)
 
     def _set_saved_setting(self, option, value):
         """Update saved form parameter independent on current profile."""
-        form_settings_manager().set(self._profile_spec_name(), self._form_name(), option, value)
+        pytis.form.app.form_settings_manager.set(self._profile_spec_name(),
+                                                 self._form_name(), option, value)
 
     def _create_view_spec(self):
         t = time.time()
@@ -1133,8 +1135,10 @@ class LookupForm(InnerForm):
                 self._lf_provider_condition = None
 
     def _load_profiles(self):
-        return profile_manager().load_profiles(self._profile_spec_name(), self._form_name(),
-                                               self._view, self._data, self._default_profile)
+        return pytis.form.app.profile_manager.load_profiles(
+            self._profile_spec_name(), self._form_name(),
+            self._view, self._data, self._default_profile,
+        )
 
     def _on_idle(self, event):
         super(LookupForm, self)._on_idle(event)
@@ -1295,7 +1299,9 @@ class LookupForm(InnerForm):
         self.select_row(self._current_key())
 
     def _save_profile(self, profile):
-        profile_manager().save_profile(self._profile_spec_name(), self._form_name(), profile)
+        pytis.form.app.profile_manager.save_profile(
+            self._profile_spec_name(), self._form_name(), profile,
+        )
 
     def _apply_profile_parameters(self, profile):
         """Set the form state attributes according to given 'Profile' instance.
@@ -1387,8 +1393,8 @@ class LookupForm(InnerForm):
                     profile = find(profile.id(), self._view.profiles().unnest(),
                                    key=lambda p: p.id())
                 self._profiles[index] = profile
-            profile_manager().drop_profile(self._profile_spec_name(), self._form_name(),
-                                           profile.id())
+            pytis.form.app.profile_manager.drop_profile(self._profile_spec_name(),
+                                                        self._form_name(), profile.id())
 
     def _cmd_apply_profile(self, index):
         profile = self._profiles[index]
@@ -1406,7 +1412,7 @@ class LookupForm(InnerForm):
         if title in [profile.title() for profile in self._profiles]:
             app.echo(_(u"Profile of this name already exists."), kind='error')
             return
-        profile_id = profile_manager().new_user_profile_id(self._profiles)
+        profile_id = pytis.form.app.profile_manager.new_user_profile_id(self._profiles)
         profile = self._create_profile(profile_id, title)
         self._profiles.append(profile)
         self._save_profile(profile)
@@ -1444,8 +1450,8 @@ class LookupForm(InnerForm):
         return self._is_user_defined_profile(self._current_profile)
 
     def _cmd_delete_profile(self):
-        profile_manager().drop_profile(self._profile_spec_name(), self._form_name(),
-                                       self._current_profile.id())
+        pytis.form.app.profile_manager.drop_profile(self._profile_spec_name(), self._form_name(),
+                                                    self._current_profile.id())
         self._profiles.remove(self._current_profile)
         profile_id = self._get_saved_setting('initial_profile') or self._view.profiles().default()
         profile = find(profile_id, self._profiles, key=lambda p: p.id()) or self._profiles[0]
@@ -1469,7 +1475,8 @@ class LookupForm(InnerForm):
             profile = self._initial_profile
         else:
             profile = find(profile_id, self._view.profiles().unnest(), key=lambda p: p.id())
-        profile_manager().drop_profile(self._profile_spec_name(), self._form_name(), profile_id)
+        pytis.form.app.profile_manager.drop_profile(self._profile_spec_name(),
+                                                    self._form_name(), profile_id)
         self._profiles[index] = profile
         self._apply_profile(profile)
 
@@ -1614,8 +1621,8 @@ class LookupForm(InnerForm):
             title = _(u"Unnamed profile")
             profile = find(title, self._profiles, key=lambda p: p.title())
             if profile:
-                profile_manager().drop_profile(self._profile_spec_name(), self._form_name(),
-                                               profile.id())
+                pytis.form.app.profile_manager.drop_profile(self._profile_spec_name(),
+                                                            self._form_name(), profile.id())
                 self._profiles.remove(profile)
             self._cmd_save_new_profile(title)
         log(EVENT, "%s filter application in %.3f seconds" %

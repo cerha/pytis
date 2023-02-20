@@ -1231,12 +1231,15 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
             if success:
                 self._login_success = True
 
+    @property
     def profile_manager(self):
         return self._profile_manager
 
+    @property
     def form_settings_manager(self):
         return self._form_settings_manager
 
+    @property
     def aggregated_views_manager(self):
         return self._aggregated_views_manager
 
@@ -2260,21 +2263,6 @@ def recent_forms_menu():
 def wx_frame():
     """Vrať instanci 'wx.Frame' hlavního okna aplikace."""
     return pytis.form.app.wx_frame()
-
-
-def profile_manager():
-    """Return 'Application.profile_manager()' of the current application instance."""
-    return pytis.form.app.profile_manager()
-
-
-def form_settings_manager():
-    """Return 'Application.form_settings_manager()' of the current application instance."""
-    return pytis.form.app.form_settings_manager()
-
-
-def aggregated_views_manager():
-    """Return 'Application.aggregated_views_manager()' of the current application instance."""
-    return pytis.form.app.aggregated_views_manager()
 
 def log_user_action(spec_name, form_name, action, info=None):
     """Log user action into the database."""
