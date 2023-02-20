@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2022 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2023 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2011-2017 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -404,9 +404,8 @@ class FormProfileManager(UserSetttingsManager):
         self._params_manager = self._PARAMS_MANAGER_CLASS(dbconnection, username=username)
 
     def _pack_filter(self, something):
-        if isinstance(something, pytis.form.IN):
-            return (something.name(), (something.column_id(), something.spec_name(),
-                                       something.table_column_id(), something.profile_id()), {})
+        if isinstance(something, pytis.presentation.IN):
+            return (something.name(), something.original_args(), {})
         elif isinstance(something, pytis.data.Operator):
             args = tuple([self._pack_filter(arg) for arg in something.args()])
             return (something.name(), args, something.kwargs())
@@ -446,7 +445,7 @@ class FormProfileManager(UserSetttingsManager):
                                         rename_columns=rename_columns)
                     for arg in packed_args]
         elif name == 'IN':
-            op = pytis.form.IN
+            op = pytis.form.make_in_operator
             args = packed_args
         else:
             if len(packed_args) != 2:
@@ -719,9 +718,8 @@ class LegacyFormProfileManager(LegacyUserSetttingsManager):
         self._params_manager = LegacyFormProfileParamsManager(dbconnection, username=username)
 
     def _pack_filter(self, something):
-        if isinstance(something, pytis.form.IN):
-            return (something.name(), (something.column_id(), something.spec_name(),
-                                       something.table_column_id(), something.profile_id()), {})
+        if isinstance(something, pytis.presentation.IN):
+            return (something.name(), something.original_args(), {})
         elif isinstance(something, pytis.data.Operator):
             args = tuple([self._pack_filter(arg) for arg in something.args()])
             return (something.name(), args, something.kwargs())
@@ -761,7 +759,7 @@ class LegacyFormProfileManager(LegacyUserSetttingsManager):
                                         rename_columns=rename_columns)
                     for arg in packed_args]
         elif name == 'IN':
-            op = pytis.form.IN
+            op = pytis.form.make_in_operator
             args = packed_args
         else:
             if len(packed_args) != 2:

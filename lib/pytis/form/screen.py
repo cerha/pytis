@@ -2735,96 +2735,29 @@ class FileViewerFrame(wx.Frame):
         self.Raise()
 
 
-class IN(pytis.data.Operator):
-    """Symbolic specification of pytis.data.IN operator.
+def make_in_operator(column_id, spec_name, table_column_id, profile_id,
+                     profile_name=None, condition=None, arguments=None):
+    """Return pytis.presentation.IN operator instance for given args.
 
-    This class creates a pytis data operator instance based on symbolic
-    arguments and translates these symbolic arguments into real arguments
-    accepted by pytis.data.IN.  This makes it possible to display this operator
-    in the user interface and save it within user profiles, because the data
-    object and filter condition is defined by name rather than directly.
+    Arguemnts match the arguments of 'pytis.presentation.IN' constructor.
 
-    See constructor arguments for details how they differ from pytis.data.IN
-    arguments.
+    Profiles managed by 'FormProfileManager' (recognized by 'profile_id'
+    prefix) are resolved to 'profile_name' and 'condition' and passed on.
+    Other profiles are left to be resolved by 'pytis.presentation.IN'
+    constructor.
 
     """
-
-    def __init__(self, column_id, spec_name, table_column_id, profile_id,
-                 arguments=None, condition=None):
-        """Arguments:
-
-          column_id -- string identifier of the column which should belong to
-            the set; existence of its value is checked in the other table; same
-            as 'column_id' argument of 'pytis.data.IN'.
-          spec_name -- string name of the specification defining the set; data
-            object of this specification will be created and passed to
-            'pytis.data.IN' as 'data'.
-          table_column_id -- string identifier of the column in 'spec_name' used to
-            search for the value of 'column_id'; same as 'table_column_id'
-            argument of 'pytis.data.IN'.
-          profile_id -- string identifier of an existing profile within
-            'spec_name'.  It can be either one of profiles defined by the
-            specification or a user defined profile saved through the profile
-            manager by the current user.  The profile's filter determines the
-            'condition' passed to 'pytis.data.IN'.  Can be also None if no
-            condition shall be applied.
-          arguments -- arguments passed to the data object (if it is a table
-            function); dictionary or 'None'
-          condition -- additional condition to be applied together with the
-            condition of the current profile (given by 'profile_id') or 'None'
-
-        """
-        self._column_id = column_id
-        self._spec_name = spec_name
-        self._table_column_id = table_column_id
-        self._profile_id = profile_id
-        view_spec = pytis.config.resolver.get(spec_name, 'view_spec')
+    if profile_id and profile_id.startswith(FormProfileManager.USER_PROFILE_PREFIX):
+        manager = pytis.form.profile_manager()
         data_object = pytis.util.data_object(spec_name)
-        if profile_id is not None:
-            if profile_id.startswith(FormProfileManager.USER_PROFILE_PREFIX):
-                manager = pytis.form.profile_manager()
-                profile_condition, profile_name = manager.load_filter(spec_name, data_object,
-                                                                      profile_id)
-            else:
-                profile = find(profile_id, view_spec.profiles().unnest(), lambda p: p.id())
-                if not profile:
-                    raise Exception("Profile %s of %s doesn't exist!" % (profile_id, spec_name))
-                profile_condition = profile.filter()
-                profile_name = profile.title()
-            if condition:
-                condition = pytis.data.AND(condition, profile_condition)
-            else:
-                condition = profile_condition
+        profile_condition, profile_name = manager.load_filter(spec_name, data_object, profile_id)
+        if condition:
+            condition = pytis.data.AND(condition, profile_condition)
         else:
-            profile_name = None
-        self._profile_name = profile_name
-        self._spec_title = view_spec.title()
-        self._table_column_label = view_spec.field(table_column_id).label()
-        if arguments is None:
-            arguments = {}
-        pytis.data.Operator.__init__(self, 'IN', column_id, data_object, table_column_id,
-                                     condition, arguments)
-
-    def column_id(self):
-        return self._column_id
-
-    def spec_name(self):
-        return self._spec_name
-
-    def spec_title(self):
-        return self._spec_title
-
-    def table_column_id(self):
-        return self._table_column_id
-
-    def table_column_label(self):
-        return self._table_column_label
-
-    def profile_id(self):
-        return self._profile_id
-
-    def profile_name(self):
-        return self._profile_name
+            condition = profile_condition
+    return pytis.presentation.IN(column_id, spec_name, table_column_id, profile_id,
+                                 profile_name=profile_name, condition=condition,
+                                 arguments=arguments)
 
 
 # Převodní funkce

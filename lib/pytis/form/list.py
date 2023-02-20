@@ -67,7 +67,7 @@ from .form import (
     InputForm,
 )
 from .screen import (
-    CheckItem, KeyHandler, Menu, MItem, MSeparator, busy_cursor,
+    CheckItem, KeyHandler, Menu, MItem, MSeparator, busy_cursor, make_in_operator,
     copy_to_clipboard, dlg2px, file_menu_items, get_icon, is_busy_cursor,
     microsleep, popup_menu, wx_button, wx_checkbox, wx_choice, wx_text_ctrl,
 )
@@ -2866,7 +2866,7 @@ class BrowseForm(FoldableForm):
                     if app.question(msg, answers=(asave, aquit), default=asave) != asave:
                         return
                     self._cmd_update_profile()
-                filter = pytis.form.IN(column, self.name(), f.id(), profile_id)
+                filter = make_in_operator(column, self.name(), f.id(), profile_id)
                 if not_in:
                     filter = pytis.data.NOT(filter)
                 run_form(form_class, name, select_row=select_row, filter=filter, **kwargs)
@@ -3102,7 +3102,8 @@ class SideBrowseForm(BrowseForm):
                 profile_id = None
             else:
                 profile_id = self._current_profile.id()
-            return pytis.form.IN(bcol, self.name(), sbcol, profile_id, self._arguments)
+            return make_in_operator(bcol, self.name(), sbcol, profile_id,
+                                    arguments=self._arguments)
 
     def _default_columns(self):
         columns = super(SideBrowseForm, self)._default_columns()

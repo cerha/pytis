@@ -64,7 +64,7 @@ from .event import (
 )
 from .screen import (
     Browser, CheckItem, KeyHandler, Keymap, Menu, MenuBar, MItem, MSeparator, StatusBar,
-    acceskey_prefix, beep, busy_cursor, get_icon, mitem, wx_focused_window,
+    acceskey_prefix, beep, busy_cursor, get_icon, mitem, wx_focused_window, make_in_operator,
 )
 from . import dialog
 from pytis.dbdefs.db_pytis_crypto import (
@@ -2501,3 +2501,6 @@ def message(message, beep_=False):
 
 def decrypted_names():
     return app.decrypted_areas()
+
+def IN(*args, **kwargs):
+    return make_in_operator(*args, **kwargs)

@@ -43,7 +43,7 @@ from .screen import (  # noqa: F401
     TextHeadingSelector, FormStateToolbarControl, KeyboardSwitcher,
     DualFormSwitcher, DualFormResplitter, LocationBar, HelpProc,
     Browser, mupdfProcessor, FileViewerButtonPanel, FileViewer,
-    FileViewerFrame, IN, beep, microsleep, busy_cursor,
+    FileViewerFrame, make_in_operator, beep, microsleep, busy_cursor,
     is_busy_cursor, modal, copy_to_clipboard, paste_from_clipboard,
     hotkey_string, file_menu_items, help_proc, char2px,
     dlg2px, acceskey_prefix, orientation2wx, make_fullname, mitem,
@@ -94,7 +94,7 @@ from .application import (  # noqa: F401
     global_keymap, has_access, wx_yield_, block_yield, built_in_status_fields,
     select_file, select_files, select_directory, make_selected_file, write_selected_file,
     open_selected_file, open_file, write_file, launch_file,
-    open_data_as_file, launch_url, printout,
+    open_data_as_file, launch_url, printout, IN,
 )
 
 from .configui import (  # noqa: F401

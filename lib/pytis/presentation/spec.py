@@ -1039,6 +1039,88 @@ Condition = Filter
 """Deprecated: Use 'Profile' instead."""
 
 
+class IN(pytis.data.Operator):
+    """Symbolic specification of pytis.data.IN operator.
+
+    This class creates a pytis data operator instance based on symbolic
+    arguments and resolves these symbolic arguments into real arguments
+    accepted by pytis.data.IN.  This makes it possible to display this operator
+    in the user interface and save it within user profiles, because the data
+    object and filter condition is defined by name rather than directly.
+
+    See constructor arguments for details how they differ from pytis.data.IN
+    arguments.
+
+    """
+    def __init__(self, column_id, spec_name, table_column_id, profile_id,
+                 profile_name=None, condition=None, arguments=None):
+        """Arguments:
+
+          column_id -- string identifier of the column which should belong to
+            the set; existence of its value is checked in the other table; same
+            as 'column_id' argument of 'pytis.data.IN'.
+          spec_name -- string name of the specification defining the set; data
+            object of this specification will be created and passed to
+            'pytis.data.IN' as 'data'.
+          table_column_id -- string identifier of the column in 'spec_name' used to
+            search for the value of 'column_id'; same as 'table_column_id'
+            argument of 'pytis.data.IN'.
+          profile_id -- string identifier of an existing profile within
+            'spec_name'.  It can also be an id of a user defined profile saved
+            through the profile manager by the current user, but in this case
+            the profile name must be passed as 'profile_name' and the
+            corresponding filter condition must be passed as 'condition'.  If
+            None, no additional condition will be applied.
+          profile_name -- user visible profile title.  If given, 'profile_id'
+            is not searched within the specification, but it is supposed, that
+            'profile_id' corresponds to a user defined profile obtained from
+            form profile manager and its condition is passed within
+            'condition'.
+          condition -- additional condition to be applied together with the
+            condition of the current profile (given by 'profile_id') or 'None'
+          arguments -- arguments passed to the data object (if it is a table
+            function); dictionary or 'None'
+
+        """
+        view_spec = pytis.config.resolver.get(spec_name, 'view_spec')
+        data_object = pytis.util.data_object(spec_name)
+        if profile_id is not None and profile_name is None:
+            profile = find(profile_id, view_spec.profiles().unnest(), lambda p: p.id())
+            if not profile:
+                raise Exception("Profile %s of %s doesn't exist!" % (profile_id, spec_name))
+            profile_condition = profile.filter()
+            if condition:
+                condition = pytis.data.AND(condition, profile_condition)
+            else:
+                condition = profile_condition
+            profile_name = profile.title()
+        self._column_id = column_id
+        self._spec_name = spec_name
+        self._table_column_id = table_column_id
+        self._profile_id = profile_id
+        self._profile_name = profile_name
+        self._spec_title = view_spec.title()
+        self._table_column_label = view_spec.field(table_column_id).label()
+        self._condition = condition
+        self._arguments = arguments
+        if arguments is None:
+            arguments = {}
+        pytis.data.Operator.__init__(self, 'IN', column_id, data_object, table_column_id,
+                                     condition, arguments)
+
+    def original_args(self):
+        return (self._column_id, self._spec_name, self._table_column_id, self._profile_id,
+                self._profile_name, self._condition, self._arguments)
+
+    def label(self):
+        """Return a user interface label describing the operator."""
+        label = self._spec_title
+        if self._profile_name:
+            label += ' / ' + self._profile_name
+        label += " (%s)" % self._table_column_label
+        return label
+
+
 class GroupSpec(object):
     """Specification of form field layout in a single record presentation.
 

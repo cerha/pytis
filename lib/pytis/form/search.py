@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2022 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2023 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2018 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -342,10 +342,10 @@ class SFDialog(SFSDialog):
             else:
                 raise Exception("Invalid operand type: " + repr(arg))
             return (op, col1, col2, value),
-        elif name == 'IN' and isinstance(operator, pytis.form.IN):
+        elif name == 'IN' and isinstance(operator, pytis.presentation.IN):
             return ((operator,),)
         elif name == 'NOT' and len(operator.args()) == 1 \
-                and isinstance(operator.args()[0], pytis.form.IN):
+                and isinstance(operator.args()[0], pytis.presentation.IN):
             return ((operator,),)
         else:
             raise Exception("Unsupported operator: " + name)
@@ -389,17 +389,13 @@ class SFDialog(SFSDialog):
 
         def create_in_operator(i, n, operator):
             if operator.name() == 'NOT':
-                op_label = _(u"NOT IN")
-                op_in = operator.args()[0]
+                op = operator.args()[0]
+                op_name = _(u"NOT IN")
             else:
-                op_label = _(u"IN")
-                op_in = operator
-            col = self._find_column(op_in.column_id())
-            spec = op_in.spec_title()
-            if op_in.profile_name():
-                spec += ' / ' + op_in.profile_name()
-            text = "%s %s %s (%s)" % (col.label(), op_label, spec, op_in.table_column_label())
-            ctrl = label(text)
+                op = operator
+                op_name = _(u"IN")
+            col = self._find_column(op.args()[0])
+            ctrl = label(" ".join((col.label(), op_name, op.label())))
             ctrl._pytis_in_operator = operator
             return (ctrl,
                     button(_("Remove"), lambda e: self._on_remove(i),
