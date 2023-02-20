@@ -62,7 +62,7 @@ from .screen import (
     DEFAULT_WINDOW_BACKGROUND_COLOUR,
 )
 from .application import (
-    Application, block_yield, current_form, db_operation, refresh, run_dialog, run_form,
+    Application, block_yield, current_form, db_operation, run_dialog, run_form,
     top_window,
 )
 from .search import (
@@ -2981,7 +2981,7 @@ class EditForm(RecordForm, TitledForm, Refreshable):
     def _cmd_commit_record(self, close=True):
         result = self._commit_form(close=close)
         if result:
-            refresh()
+            app.refresh()
         return result
 
     def _can_navigate(self, back=False):

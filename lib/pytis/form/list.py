@@ -73,7 +73,7 @@ from .screen import (
 )
 from .search import sfs_columns
 from .application import (
-    Application, current_form, message, refresh, run_dialog, run_form,
+    Application, current_form, message, run_dialog, run_form,
 )
 from .grid import TableRowIterator, GridTable
 
@@ -1509,7 +1509,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                 self._select_cell(row=(r - 1))
             # Uděláme raději refresh celé aplikace, protože jinak se
             # nerefreshne horní formulář po vymazání záznamu ze sideformu.
-            refresh()
+            app.refresh()
 
     def _cmd_activate(self, alternate=False):
         self._run_callback(self.CALL_ACTIVATION, alternate=alternate)
