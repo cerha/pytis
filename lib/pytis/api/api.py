@@ -225,6 +225,58 @@ class Form(API):
         pass
 
 
+class StatusField(API):
+    """Public API representation of a status bar field.
+
+    Status bar fields are defined by 'pytis.presentation.StatusField' instances
+    returned by 'pytis.presentation.Application.status_fields()'.
+
+    """
+
+    def update(self, text=None, icon=None, tooltip=None):
+        """Update the text and/or icon displayed in the field.
+
+        Arguments:
+
+          text -- text to be displayed in the field as a string or None to
+            clear the text.
+          icon -- icon to be displayed within the field as an identifier to
+            be passed to 'get_icon()'.  The position of the icon is
+            determined by the field specification ('icon_position' passed
+            to 'StatusField' constructor).
+          tooltip -- string to be displayed as the field's tooltip.  May be
+            also a function with no arguments returning string.  In
+            this case the function is called when the tooltip is really
+            needed at the moment when the user hovers above the field.
+            Note that the function is called only once and its result is
+            cached until the next call to 'set_status'.  Also note that
+            field label is displeyed in field tooltip by default, so you
+            may want to add the label here too to make the meaning of the
+            field clear.
+
+        """
+        pass
+
+    def refresh(self):
+        """Call the field's refresh function manually.
+
+        Makes extra call to the field's refresh function outside its regular
+        refresh interval (defined by field specification).  Mostly useful for
+        fields with refresh interval set to zero (no periodic refresh).
+
+        """
+        pass
+
+    text = property()
+    """Return the current status field text as a string."""
+
+    icon = property()
+    """Return the current status field icon as a string or None."""
+
+    tooltip = property()
+    """Return the current status field tooltip as a string or None."""
+
+
 class Field(API):
     """Public API representation of a form input field."""
 
@@ -277,6 +329,20 @@ class Application(API):
 
     form = property()
     """The current form API as 'pytis.api.Form' instance."""
+
+    status = property()
+    """Access to status bar fields.
+
+    The returned object has one attribute named by field id for each field
+    present in the status bar.  If the field id contains a hyphen, it is
+    replaced by an underscore in the attribute name.  Each field implements the
+    'pytis.api.StatusField' API.
+
+    May also be called passing the field id as a string.  Thus
+    'app.status.field_id' or 'app.status("field_id")' should both give the same
+    result.
+
+    """
 
     def echo(self, message, kind='info'):
         """Display a non-interactive message to the user.

@@ -105,6 +105,20 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
     _STATE_RECENT_DIRECTORIES = 'recent_directories'
     _STATE_FRAME_SIZE = 'frame_size'
 
+    class _StatusFieldAccess(object):
+        def __init__(self, fields):
+            self._fields = fields
+
+        def __getattr__(self, name):
+            f = find(name, self._fields, key=lambda f: f.spec.id().replace('-', '_'))
+            if f:
+                return f.provider()
+            else:
+                raise AttributeError("StatusBar has no field '{}'".format(name))
+
+        def __call__(self, name):
+            return self.__getattr__(name)
+
     @classmethod
     def _get_command_handler_instance(cls):
         return pytis.form.app
@@ -160,6 +174,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         self._windows = XStack()
         self._modals = Stack()
         self._statusbar = None
+        self._status_field_access = None
         self._help_browser = None
         self._login_success = False
         keymap = self.keymap = Keymap()
@@ -189,7 +204,8 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
                          if isinstance(x, tuple) else x
                          for x in self._specification.status_fields()]
         if not self._headless:
-            self._statusbar = StatusBar(frame, status_fields)
+            self._statusbar = sb = StatusBar(frame, status_fields)
+            self._status_field_access = self._StatusFieldAccess(sb.fields)
         self._initial_config = [
             (o, copy.copy(getattr(pytis.config, o)))
             for o in pytis.form.configurable_options() + ('initial_keyboard_layout',)]
@@ -1274,8 +1290,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
             form = self._modals.top()
             if isinstance(form, pytis.form.Form) and form.set_status('message', message):
                 return
-        if self._statusbar:
-            self._statusbar.set_status('message', message)
+        app.status.message.update(message)
 
     def client_mode(self):
         """Return the client operation mode as one of 'remote', 'local' or None.
@@ -1375,6 +1390,10 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
     def api_form(self):
         form = self.current_form(inner=True)
         return form.provider() if form else None
+
+    @property
+    def api_status(self):
+        return self._status_field_access
 
     def api_refresh(self):
         self._cmd_refresh(interactive=False)
@@ -2282,18 +2301,6 @@ def close_forms():
 # Ostatní funkce.
 
 
-def set_status(id, text, **kwargs):
-    """Set status bar field 'id' to display given 'text'."""
-    if __debug__:
-        log(DEBUG, u"Status text updated:", (id, text))
-    return pytis.form.app._statusbar.set_status(id, text, **kwargs)
-
-
-def refresh_status(id=None):
-    """Refresh given status bar field or all fields if 'id' is None."""
-    return pytis.form.app._statusbar.refresh(id)
-
-
 def global_keymap():
     """Vrať klávesovou mapu aplikace jako instanci třídy 'Keymap'."""
     try:
@@ -2399,8 +2406,8 @@ def built_in_status_fields():
         StatusField('list-position', _("List position"),
                     refresh=_refresh_list_position, width=15),
         StatusField('user', _("User and database parameters"),
-                    refresh=_refresh_user_config,
-                    refresh_interval=10000000, width=15),
+                    refresh=_refresh_user_config, refresh_interval=0,
+                    width=15),
         StatusField('remote-status', _("Remote communication status"),
                     refresh=_refresh_remote_status,
                     refresh_interval=10000, width=8),
@@ -2492,3 +2499,11 @@ def decrypted_names():
 
 def IN(*args, **kwargs):
     return make_in_operator(*args, **kwargs)
+
+def refresh_status(id):
+    return app.status(id).refresh()
+
+def set_status(id, text, **kwargs):
+    if __debug__:
+        log(DEBUG, u"StatusBar field updated:", (id, text, kwargs))
+    return  app.status(id).update(text, **kwargs)

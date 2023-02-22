@@ -53,6 +53,7 @@ import wx.lib.pdfviewer
 import wx.lib.agw.supertooltip as supertooltip
 
 import pytis
+import pytis.api
 import pytis.form
 import pytis.output
 import pytis.presentation
@@ -1393,23 +1394,123 @@ class StatusBar(object):
     through the specification method 'Application.status_fields()'.
 
     """
-    class _Timer(wx.Timer):
-
-        def Notify(self):
-            self.Stop()
-
-        def Start(self, timeout):
-            if self.IsRunning():
+    @pytis.api.implements(pytis.api.StatusField)
+    class Field(object):
+        class _Timer(wx.Timer):
+            def Notify(self):
                 self.Stop()
-            super(StatusBar._Timer, self).Start(timeout, True)
+            def Start(self, timeout):
+                if self.IsRunning():
+                    self.Stop()
+                super(StatusBar.Field._Timer, self).Start(timeout, True)
 
-    class State(object):
-        def __init__(self, text=None, icon=None, tooltip=None):
-            self.text = text
-            self.icon = icon
+        def __init__(self, sb, spec, index, count, on_size_change):
+            self._sb = sb
+            self._spec = spec
+            self._index = index
+            self._on_size_change = on_size_change
+            self._timer = self._Timer() if spec.refresh_interval() else None
+            self._text = ''
+            self._icon = None
+            self._tooltip = None
+            self._bitmap = None
+            width = dlg2px(sb, spec.width() * 4) if spec.width() is not None else None
+            if width and index == count - 1:
+                # Wx hack: Extend the last field to fit also the dragging triangle.
+                width += 22
+            self._width = self._min_width = width
+
+        def _on_click(self, event):
+            handler = self._spec.on_click()
+            if handler:
+                handler()
+
+        def update_bitmap_position(self):
+            if self._bitmap:
+                position = self._spec.icon_position()
+                rect = self._sb.GetFieldRect(self._index)
+                if position == StatusField.ICON_LEFT:
+                    x = rect.x + 4
+                else:
+                    x = rect.x + rect.width - 2 - self._bitmap.GetSize().width
+                self._bitmap.SetPosition((x, rect.y + 4))
+
+        @property
+        def spec(self):
+            return self._spec
+
+        @property
+        def width(self):
+            return self._width
+
+        @property
+        def timer(self):
+            return self._timer
+
+        # Implementation of Public API 'pytis.api.StatusField'.
+
+        def api_update(self, text=None, icon=None, tooltip=None):
+            # Prevent status bar blinking by checking against the current value.
+            text = unistr(text or '')
+            if text != self._text:
+                self._text = text
+                if text and icon:
+                    if self._spec.icon_position() == StatusField.ICON_LEFT:
+                        text = '     ' + text
+                    else:
+                        text += '      '
+                if self._width is not None:
+                    # Adjust the field width to fit the new text (for fixed width
+                    # fields only).  The "fixed" fields don't change their width
+                    # as a percentage of the application frame width, but are not
+                    # completely fixed...
+                    width = max(self._sb.GetTextExtent(text)[0] + 8, self._min_width)
+                    if width != self._width:
+                        self._width = width
+                        self._on_size_change()
+                self._sb.SetStatusText(text, self._index)
+            if icon != self._icon:
+                self._icon = icon
+                if self._bitmap is not None:
+                    self._bitmap.Destroy()
+                if icon is not None:
+                    bitmap = get_icon(icon)
+                    if bitmap:
+                        self._bitmap = bmp = wx.StaticBitmap(self._sb, bitmap=bitmap)
+                        wx_callback(wx.EVT_LEFT_DOWN, bmp, self._on_click)
+                        self.update_bitmap_position()
+                    else:
+                        self._bitmap = None
+                else:
+                    self._bitmap = None
             self._tooltip = tooltip
 
-        def tooltip(self):
+        def api_refresh(self):
+            refresh = self._spec.refresh()
+            if refresh:
+                status = refresh()
+                if status is not None:
+                    if not isinstance(status, (tuple, list)):
+                        text, icon, tooltip = status, None, None
+                    elif len(status) == 2:
+                        text, icon, tooltip = status[0], status[1], None
+                    else:
+                        text, icon, tooltip = status
+                    self.api_update(text, icon=icon, tooltip=tooltip)
+                return True
+            else:
+                return False
+
+        @property
+        def api_text(self):
+            return self._text
+
+        @property
+        def api_icon(self):
+            return self._icon
+
+        @property
+        def api_tooltip(self):
             tooltip = self._tooltip
             if callable(tooltip):
                 tooltip = self._tooltip = tooltip()
@@ -1423,80 +1524,48 @@ class StatusBar(object):
 
         """
         self._sb = sb = wx.StatusBar(parent, -1)
-        self._fields = tuple(fields)
-        self._timers = [self._Timer() if f.refresh_interval() else None for f in fields]
-        widths = [dlg2px(sb, f.width() * 4) if f.width() is not None else -1 for f in fields]
-        if widths[-1] > 0:
-            # Wx hack: Extend the last field to fit also the dragging triangle.
-            widths[-1] += 22
-        self._widths = widths
-        self._orig_widths = tuple(widths)
-        self._field_ids = [f.id() for f in fields]
-        self._state = [self.State() for f in fields]
-        self._bitmaps = [None for f in fields]
+        self._fields = [self.Field(sb, f, i, len(fields),
+                                   on_size_change=self._on_field_size_change)
+                        for i, f in enumerate(fields)]
         self._tooltip = ToolTip(sb)
-        self._last_tooltip_index = None
+        self._last_tooltip_field = None
+        self._initial_refresh_called = False
         sb.SetOwnBackgroundColour(DEFAULT_WINDOW_BACKGROUND_COLOUR)
         sb.SetMinHeight(22)
         sb.SetFieldsCount(len(fields))
-        sb.SetStatusWidths(widths)
         SB_SUNKEN = 3  # This wx constant is missing in wx Python???
         sb.SetStatusStyles([SB_SUNKEN for f in fields])
+        self._update_widths()
         parent.SetStatusBar(sb)
         wx_callback(wx.EVT_IDLE, sb, self._on_idle)
-        wx_callback(wx.EVT_MOTION, sb, self._on_motion)
         wx_callback(wx.EVT_LEFT_DOWN, sb, self._on_click)
+        wx_callback(wx.EVT_MOTION, sb, self._on_motion)
         wx_callback(wx.EVT_SIZE, sb, self._on_size)
 
     def _on_idle(self, event):
-        for i, field in enumerate(self._fields):
-            interval = field.refresh_interval()
+        for field in self._fields:
+            interval = field.spec.refresh_interval()
             if interval:
-                timer = self._timers[i]
-                if timer.IsRunning():
+                if field.timer.IsRunning():
                     continue
-                timer.Start(interval)
-            self._refresh(i)
-
-    def _refresh(self, i):
-        refresh = self._fields[i].refresh()
-        if refresh:
-            status = refresh()
-            if status is not None:
-                if not isinstance(status, (tuple, list)):
-                    text, icon, tooltip = status, None, None
-                elif len(status) == 2:
-                    text, icon, tooltip = status[0], status[1], None
-                else:
-                    text, icon, tooltip = status
-                self._set_status(i, text, icon, tooltip)
-            return True
-        return False
-
-    def _field_index_for_position(self, x):
-        for i, field in enumerate(self._fields):
-            rect = self._sb.GetFieldRect(i)
-            if x >= rect.x and x <= rect.x + rect.width:
-                return i
-        return None
+                field.timer.Start(interval)
+            if interval == 0 and self._initial_refresh_called:
+                continue
+            field.api_refresh()
+        self._initial_refresh_called = True
 
     def _on_click(self, event):
-        i = self._field_index_for_position(event.GetX())
-        if i is not None:
-            self._on_field_click(i)
-
-    def _on_field_click(self, i):
-        handler = self._fields[i].on_click()
-        if handler:
-            handler()
+        field = self._field_on_position(event.GetX())
+        if field:
+            field._on_click(event)
 
     def _on_motion(self, event):
-        i = self._field_index_for_position(event.GetX())
-        if i is not None and i != self._last_tooltip_index:
-            self._last_tooltip_index = i
+        field = self._field_on_position(event.GetX())
+        if field and field != self._last_tooltip_field:
+            self._last_tooltip_field = field
             self._tooltip.SetContent(
-                self._fields[i].label(),
-                lambda: self._state[i].tooltip() or self._state[i].text or None
+                field.spec.label(),
+                lambda: field.api_tooltip or field.api_text or None
             )
         event.Skip()
 
@@ -1504,129 +1573,27 @@ class StatusBar(object):
         self._update_bitmap_positions()
         event.Skip()
 
+    def _on_field_size_change(self):
+        self._update_widths()
+        self._update_bitmap_positions()
+
+    def _field_on_position(self, x):
+        for i, field in enumerate(self._fields):
+            rect = self._sb.GetFieldRect(i)
+            if x >= rect.x and x <= rect.x + rect.width:
+                return field
+        return None
+
+    def _update_widths(self):
+        self._sb.SetStatusWidths([-1 if f.width is None else f.width for f in self._fields])
+
     def _update_bitmap_positions(self):
-        for i, bitmap in enumerate(self._bitmaps):
-            if bitmap:
-                self._update_bitmap_position(i)
+        for field in self._fields:
+            field.update_bitmap_position()
 
-    def _update_bitmap_position(self, i):
-        bitmap = self._bitmaps[i]
-        position = self._fields[i].icon_position()
-        rect = self._sb.GetFieldRect(i)
-        if position == StatusField.ICON_LEFT:
-            x = rect.x + 4
-        else:
-            x = rect.x + rect.width - 2 - bitmap.GetSize().width
-        bitmap.SetPosition((x, rect.y + 4))
-
-    def _set_status(self, i, text, icon, tooltip):
-        text = unistr(text or '')
-        current_state = self._state[i]
-        self._state[i] = self.State(text, icon, tooltip)
-        sb = self._sb
-        if icon != current_state.icon:
-            current_bitmap = self._bitmaps[i]
-            if current_bitmap is not None:
-                current_bitmap.Destroy()
-            if icon is not None:
-                bitmap = get_icon(icon)
-                if bitmap:
-                    self._bitmaps[i] = bmp = wx.StaticBitmap(sb, bitmap=bitmap)
-                    wx_callback(wx.EVT_LEFT_DOWN, bmp, lambda e: self._on_field_click(i))
-                    self._update_bitmap_position(i)
-                else:
-                    self._bitmaps[i] = None
-            else:
-                self._bitmaps[i] = None
-        # Prevent status bar blinking by checking against the current value.
-        if text != current_state.text:
-            if text and icon:
-                if self._fields[i].icon_position() == StatusField.ICON_LEFT:
-                    text = '     ' + text
-                else:
-                    text += '      '
-            if self._widths[i] > 0:
-                # Adjust the field width to fit the new text (for fixed width fields only).  The
-                # "fixed" fields don't change their width as a percentage of the application frame
-                # width, but are not completely fixed...
-                # Add 6 pixels below for the borders.
-                width = max(sb.GetTextExtent(text)[0] + 8, self._orig_widths[i])
-                if width != self._widths[i]:
-                    self._widths[i] = width
-                    sb.SetStatusWidths(self._widths)
-                    self._update_bitmap_positions()
-            sb.SetStatusText(text, i)
-
-    def set_status(self, field_id, text, icon=None, tooltip=None):
-        """Set the text and/or icon displayed in the field 'field_id'.
-
-        Arguments:
-
-          field_id -- status field id as basestring
-
-          text -- text to be displayed in the field as basestring or None to
-            clear the text.
-
-          icon -- icon to be displayed within the field as an identifier to be
-            passed to 'get_icon()'.  The position of the icon is determined by
-            the field specification ('icon_position' passed to 'StatusField'
-            constructor).
-
-          tooltip -- basestring to be displayed as the field's tooltip.  May be
-            also a function with no arguments returning basestring.  In this
-            case the function is called when the tooltip is really needed at
-            the moment when the user hovers above the field.  Note that the
-            function is called only once and its result is cached until the
-            next call to 'set_status'.  Also note that field label is displeyed
-            in field tooltip by default, so you may want to add the label here
-            too to make the meaning of the field clear.
-
-        Returns True on success or False when no such field was found in the
-        status bar.
-
-        """
-        try:
-            i = self._field_ids.index(field_id)
-        except ValueError:
-            return False
-        else:
-            self._set_status(i, text, icon, tooltip)
-            return True
-
-    def get_status_text(self, field_id):
-        """Get the text displayed in field 'field_id' or None.
-
-        None is returned if given field does not exists in the status bar.  If
-        the field exists, but displays no text (maybe just an icon), empty
-        string is returned.
-
-        """
-        try:
-            i = self._field_ids.index(field_id)
-        except ValueError:
-            return None
-        else:
-            # Get the original text from self._state as the text returned by
-            # self._sb.GetStatusText() may contain spaces to make room for icons.
-            return self._state[i].text
-
-    def refresh(self, field_id=None):
-        """Refresh the field 'field_id' or all refreshable fields if 'field_id' is None.
-
-        True is returned if at least one field was refreshed (has the 'refresh'
-        function defined).
-
-        """
-        if field_id is not None:
-            try:
-                i = self._field_ids.index(field_id)
-            except ValueError:
-                indexes = ()
-            else:
-                indexes = (i,)
-        else:
-            indexes = range(len(self._fields))
-        return any([self._refresh(id) for id in indexes])
+    @property
+    def fields(self):
+        return self._fields
 
 
 class InfoWindow(object):

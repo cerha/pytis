@@ -5059,13 +5059,16 @@ class StatusField(object):
             which case the function will be called without arguments only when
             the tooltip is needed and should return the tooltip string.  The
             function will be called periodically on user interface refresh
-            events (on idle).  If None the field will not be updated
-            periodically.  Such fields may be updated imperatively by calling
-            'pytis.form.set_status()'.  The function should not perform any
-            demanding processing and should return promptly.
+            events (on idle).  The function should not perform any demanding
+            processing and should return promptly.  If None the field will not
+            be updated periodically.  Such fields may be updated imperatively
+            by calling 'app.statusbar.field.id.update()'.
           refresh_interval -- minimal delay between two successive calls of the
-            'refresh' function in miliseconds.
-          width -- field width as a number of characters.
+            'refresh' function in miliseconds.  If None, refresh is called in
+            repeatedly during UI refreshes.  If zero, refresh will be called
+            just once.
+          width -- field width as a number of characters.  Add 4 characters if
+            the field is using an icon.
           icon_position -- position to be used for placement of an icon
             if the field status is set to contain an icon.  It may be
             one of class constants 'ICON_LEFT' or 'ICON_RIGHT'.
