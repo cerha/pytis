@@ -316,6 +316,8 @@ class Application(API):
     Accessed through 'pytis.api.app'.
 
     """
+    title = property()
+    """Get/set the main application frame title as a string."""
 
     param = property()
     """Access to shared parameters.

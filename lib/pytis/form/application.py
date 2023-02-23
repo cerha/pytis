@@ -146,9 +146,8 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         settings = gtk.Settings.get_default()
         settings.set_property('gtk-menu-images', True)
 
-        # Create the main application frame.
-        frame = self._frame = wx.Frame(None, -1, self._frame_title(pytis.config.application_name),
-                                       pos=(0, 0), style=wx.DEFAULT_FRAME_STYLE)
+        # Create the main application frame (set frame title later on).
+        frame = self._frame = wx.Frame(None, -1, '', pos=(0, 0), style=wx.DEFAULT_FRAME_STYLE)
         wx_callback(wx.EVT_CLOSE, frame, self._on_frame_close)
         # This panel is here just to catch keyboard events (frame doesn't support EVT_KEY_DOWN).
         self._panel = wx.Panel(frame, -1)
@@ -281,14 +280,6 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         wx.CallAfter(init)
         return True
 
-    def _frame_title(self, title):
-        display = pytis.remote.x2go_display()
-        if display:
-            title += ' (:%s)' % display
-        if __debug__:
-            title += ' - wx ' + wx.version() + ', Python %d.%d.%d' % sys.version_info[:3]
-        return title
-
     def _cache_menu_enabled(self, menu):
         # Cache the specification instances needed to compute the availability
         # of menu items.  This reduces the lag during the first user's attempt
@@ -381,7 +372,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
                     title=_("Opening saved forms"), message=_("Opening form") + ' ' * 40)
         else:
             run_startup_forms(lambda *args, **kwargs: True, startup_forms)
-        self._frame.SetTitle(self._frame_title(pytis.config.application_name))
+        app.title = pytis.config.application_name
         # Caching menu availibility must come after calling Application.init()
         # (here self._specification.init()) to allow the application defined
         # enabled() methods to refer things created Application.init().
@@ -1319,6 +1310,8 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
             else:
                 return 'local'
 
+    # Private methods supporting the public API methods (further below)
+
     def _wildcards(self, filetypes):
         if filetypes:
             wildcards = (_("Files of the required type") + ' (' + ', '.join(filetypes) + ')',
@@ -1355,8 +1348,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
     def _set_recent_directory(self, cmode, context, directory):
         self._recent_directories[':'.join((cmode, context))] = directory
 
-    # Public API accessed through 'pytis.api.app' by Pytis applications.
-    # See 'pytis.api.Application' for documentation.
+
 
     def _dialog_content_kwargs(self, content):
         if not content:
@@ -1385,6 +1377,23 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
             # (which don't load remote clientapi.py).
             f = self._ExposedFileWrapper(f)
         return f
+
+    # Public API accessed through 'pytis.api.app' by Pytis applications.
+    # See 'pytis.api.Application' for documentation.
+
+    @property
+    def api_title(self):
+        return self._title
+
+    @api_title.setter
+    def api_title(self, title):
+        self._title = title
+        display = pytis.remote.x2go_display()
+        if display:
+            title += ' (:%s)' % display
+        if __debug__:
+            title += ' - wx ' + wx.version() + ', Python %d.%d.%d' % sys.version_info[:3]
+        self._frame.SetTitle(title)
 
     @property
     def api_form(self):
@@ -2288,11 +2297,6 @@ def log_user_action(spec_name, form_name, action, info=None):
     return pytis.form.app.log(spec_name, form_name, action, info=info)
 
 
-def frame_title(title):
-    """Set title of the main application frame"""
-    pytis.form.app._frame.SetTitle(pytis.form.app._frame_title(title))
-
-
 def close_forms():
     """Close all currently opened forms."""
     return pytis.form.app._close_forms()
@@ -2507,3 +2511,6 @@ def set_status(id, text, **kwargs):
     if __debug__:
         log(DEBUG, u"StatusBar field updated:", (id, text, kwargs))
     return  app.status(id).update(text, **kwargs)
+
+def frame_title(title):
+    app.title = title
