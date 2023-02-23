@@ -108,6 +108,12 @@ class APIProvider(object):
                                  .format(self._instance.__class__.__name__, name))
         return getattr(self._instance, 'api_' + name)
 
+    def __setattr__(self, name, value):
+        if name != '_instance' and name in self._instance._api_attributes:
+            return setattr(self._instance, 'api_' + name, value)
+        else:
+            return super(APIProvider, self).__setattr__(name, value)
+
 
 class ApplicationAPIProvider(APIProvider):
     """Special case of API provider for the top level 'pytis.api.app' instance.
@@ -236,23 +242,7 @@ class StatusField(API):
     def update(self, text=None, icon=None, tooltip=None):
         """Update the text and/or icon displayed in the field.
 
-        Arguments:
-
-          text -- text to be displayed in the field as a string or None to
-            clear the text.
-          icon -- icon to be displayed within the field as an identifier to
-            be passed to 'get_icon()'.  The position of the icon is
-            determined by the field specification ('icon_position' passed
-            to 'StatusField' constructor).
-          tooltip -- string to be displayed as the field's tooltip.  May be
-            also a function with no arguments returning string.  In
-            this case the function is called when the tooltip is really
-            needed at the moment when the user hovers above the field.
-            Note that the function is called only once and its result is
-            cached until the next call to 'set_status'.  Also note that
-            field label is displeyed in field tooltip by default, so you
-            may want to add the label here too to make the meaning of the
-            field clear.
+        Same as setting the corresponding field propertiess separately.
 
         """
         pass
@@ -268,13 +258,28 @@ class StatusField(API):
         pass
 
     text = property()
-    """Return the current status field text as a string."""
+    """Get/set the current status field text as a string."""
 
     icon = property()
-    """Return the current status field icon as a string or None."""
+    """Get/set the current status field icon as a string or None.
+
+    The icon is determined by a string identifier accepted by
+    'pytis.form.get_icon()'.  The position of the icon is determined by the
+    field specification ('icon_position' passed to 'StatusField' constructor).
+
+    """
 
     tooltip = property()
-    """Return the current status field tooltip as a string or None."""
+    """Get/set the current status field tooltip as a string or None.
+
+    May also be a function with no arguments returning a string.  In this case
+    the function is called when the tooltip is really needed at the moment when
+    the user hovers above the field.  Note that the function is called only
+    once and its result is cached until the tooltip is set next time.  Note
+    that field label (defined by field specification) is displeyed in the
+    tooltip by default as a heading above the actual tooltip content.
+
+    """
 
 
 class Field(API):

@@ -1425,6 +1425,24 @@ class StatusBar(object):
             if handler:
                 handler()
 
+        def _update_text(self, text):
+            self._text = text
+            if text and self._icon:
+                if self._spec.icon_position() == StatusField.ICON_LEFT:
+                    text = '     ' + text
+                else:
+                    text += '      '
+            if self._width is not None:
+                # Adjust the field width to fit the new text (for fixed width
+                # fields only).  The "fixed" fields don't change their width
+                # as a percentage of the application frame width, but are not
+                # completely fixed...
+                width = max(self._sb.GetTextExtent(text)[0] + 8, self._min_width)
+                if width != self._width:
+                    self._width = width
+                    self._on_size_change()
+            self._sb.SetStatusText(text, self._index)
+
         def update_bitmap_position(self):
             if self._bitmap:
                 position = self._spec.icon_position()
@@ -1450,40 +1468,9 @@ class StatusBar(object):
         # Implementation of Public API 'pytis.api.StatusField'.
 
         def api_update(self, text=None, icon=None, tooltip=None):
-            # Prevent status bar blinking by checking against the current value.
-            text = unistr(text or '')
-            if text != self._text:
-                self._text = text
-                if text and icon:
-                    if self._spec.icon_position() == StatusField.ICON_LEFT:
-                        text = '     ' + text
-                    else:
-                        text += '      '
-                if self._width is not None:
-                    # Adjust the field width to fit the new text (for fixed width
-                    # fields only).  The "fixed" fields don't change their width
-                    # as a percentage of the application frame width, but are not
-                    # completely fixed...
-                    width = max(self._sb.GetTextExtent(text)[0] + 8, self._min_width)
-                    if width != self._width:
-                        self._width = width
-                        self._on_size_change()
-                self._sb.SetStatusText(text, self._index)
-            if icon != self._icon:
-                self._icon = icon
-                if self._bitmap is not None:
-                    self._bitmap.Destroy()
-                if icon is not None:
-                    bitmap = get_icon(icon)
-                    if bitmap:
-                        self._bitmap = bmp = wx.StaticBitmap(self._sb, bitmap=bitmap)
-                        wx_callback(wx.EVT_LEFT_DOWN, bmp, self._on_click)
-                        self.update_bitmap_position()
-                    else:
-                        self._bitmap = None
-                else:
-                    self._bitmap = None
-            self._tooltip = tooltip
+            self.api_text = text
+            self.api_icon = icon
+            self.api_tooltip = tooltip
 
         def api_refresh(self):
             refresh = self._spec.refresh()
@@ -1505,9 +1492,35 @@ class StatusBar(object):
         def api_text(self):
             return self._text
 
+        @api_text.setter
+        def api_text(self, text):
+            # Prevent status bar blinking by checking against the current value.
+            text = unistr(text or '')
+            if text != self._text:
+                self._update_text(text)
+
         @property
         def api_icon(self):
             return self._icon
+
+        @api_icon.setter
+        def api_icon(self, icon):
+            if icon != self._icon:
+                self._icon = icon
+                if self._bitmap is not None:
+                    self._bitmap.Destroy()
+                if icon is not None:
+                    # Make sure text padding is added to make space for the icon.
+                    self._update_text(self._text)
+                    bitmap = get_icon(icon)
+                    if bitmap:
+                        self._bitmap = bmp = wx.StaticBitmap(self._sb, bitmap=bitmap)
+                        wx_callback(wx.EVT_LEFT_DOWN, bmp, self._on_click)
+                        self.update_bitmap_position()
+                    else:
+                        self._bitmap = None
+                else:
+                    self._bitmap = None
 
         @property
         def api_tooltip(self):
@@ -1515,6 +1528,11 @@ class StatusBar(object):
             if callable(tooltip):
                 tooltip = self._tooltip = tooltip()
             return tooltip
+
+        @api_tooltip.setter
+        def api_tooltip(self, tooltip):
+            self._tooltip = tooltip
+
 
     def __init__(self, parent, fields):
         """Arguments:
