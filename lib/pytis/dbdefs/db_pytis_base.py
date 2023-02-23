@@ -147,6 +147,28 @@ class Base_Py3TriggerFunction(Base_PyTriggerFunction):
     _LANGUAGE = 'plpython3u'
 
 
+class Base_PyKontrolaFunction(sql.SQLPy3Function):
+    _LANGUAGE = 'plpython3u'
+
+    class Util(sql.SQLPy3Function.Util):
+
+        @staticmethod
+        def html_table(keys, rows):
+            if len(keys) == 0 or len(rows) == 0:
+                return None
+            trows = []
+            trows.append("|{}|".format(" | ".join([" *{}* ".format(c[1]) for c in keys])))
+            for row in rows:
+                trow = []
+                for col in keys:
+                    if isinstance(row[col[0]], str):
+                        trow.append(" {}  ".format(row[col[0]]))
+                    else:
+                        trow.append("  {} ".format(row[col[0]]))
+                trows.append("|{}|".format("|".join(trow)))
+            return "\n".join(trows)
+
+
 class XInserts(sql.SQLTable):
     """Tabulka zaznamenávající přidávání záznamů standardních
     tabulek."""
