@@ -1827,8 +1827,9 @@ class ListField(GenericCodebookField, CallbackHandler):
             set_values = prefill_function(self._row)
         else:
             set_values = None
-        app.edit_record(self._cb_name, self._row, set_values=set_values,
-                        transaction=self._row.transaction())
+        transaction = self._row.transaction()
+        row = self._type.enumerator().row(self._row[self._id].value(), transaction=transaction)
+        app.edit_record(self._cb_name, row, set_values=set_values, transaction=transaction)
         self._reload_enumeration()
         self._run_callback(self.CALL_LIST_CHANGE, self._row)
         self.set_focus()
@@ -1837,10 +1838,12 @@ class ListField(GenericCodebookField, CallbackHandler):
         return self.enabled() and self._selected_item is not None
 
     def _cmd_delete_selected(self):
-        app.delete_record(self._cb_name, self._row[self._id],
+        transaction = self._row.transaction()
+        row = self._type.enumerator().row(self._row[self._id].value(), transaction=transaction)
+        app.delete_record(self._cb_name, row,
                           question=_("Really remove the item %s from the codebook permanently?",
                                      self._row[self._id].export()),
-                          transaction=self._row.transaction())
+                          transaction=transaction)
         self._reload_enumeration()
         self._run_callback(self.CALL_LIST_CHANGE, self._row)
         self.set_focus()
