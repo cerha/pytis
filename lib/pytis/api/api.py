@@ -338,7 +338,26 @@ class Application(API):
     """
 
     form = property()
-    """The current form API as 'pytis.api.Form' instance."""
+    """The current form as 'pytis.api.Form' instance or None.
+
+    Returns None if there is no open form in the application.  If the current
+    form is a dual form, returns its current subform.  If there is a modal
+    form (such as a popup edit form), returns the modal form.
+
+    """
+
+    main_form = property()
+    """The main form of the current dual form as 'pytis.api.Form' instance or None.
+
+    Returns None if the current form is not dual form.
+
+    """
+    side_form = property()
+    """The side form of the current dual form as 'pytis.api.Form' instance or None.
+
+    Returns None if the current form is not dual form.
+
+    """
 
     status = property()
     """Access to status bar fields.

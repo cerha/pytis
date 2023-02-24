@@ -1374,6 +1374,22 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         return form.provider() if form else None
 
     @property
+    def api_main_form(self):
+        form = self.current_form(inner=False, allow_modal=False)
+        return form.main_form().provider() if isinstance(form, pytis.form.DualForm) else None
+
+    @property
+    def api_side_form(self):
+        form = self.current_form(inner=False, allow_modal=False)
+        if isinstance(form, pytis.form.DualForm):
+            side_form = form.side_form()
+            if isinstance(side_form, pytis.form.MultiSideForm):
+                side_form = side_form.active_form()
+            if side_form:
+                return side_form.provider()
+        return None
+
+    @property
     def api_status(self):
         return self._status_field_access
 
