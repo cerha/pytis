@@ -88,7 +88,7 @@ from .application import (  # noqa: F401
     run_form, run_dialog, run_procedure,
     new_record, delete_record, refresh, exit, db_operation,
     delete_record_question, current_form, top_window,
-    recent_forms_menu, wx_frame, decrypted_names, log_user_action,
+    recent_forms_menu, wx_frame, decrypted_names,
     frame_title, close_forms, set_status, refresh_status, message,
     global_keymap, has_access, wx_yield_, block_yield, built_in_status_fields,
     select_file, select_files, select_directory, make_selected_file, write_selected_file,

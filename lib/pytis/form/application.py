@@ -2292,11 +2292,6 @@ def wx_frame():
     """Vrať instanci 'wx.Frame' hlavního okna aplikace."""
     return pytis.form.app.wx_frame()
 
-def log_user_action(spec_name, form_name, action, info=None):
-    """Log user action into the database."""
-    return pytis.form.app.log(spec_name, form_name, action, info=info)
-
-
 def close_forms():
     """Close all currently opened forms."""
     return pytis.form.app._close_forms()
