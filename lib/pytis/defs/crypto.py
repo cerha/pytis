@@ -191,21 +191,18 @@ class Users(Specification):
                                 check=self.view_spec().check(), prefill={'name': area})
         if not record:
             return
-        user_password = record['user_password'].value()
-        crypto_password = record['admin_password'].value()
-        username = record['username'].value()
-        admin_address = record['admin_address'].value()
-        transaction = transaction
         if not transaction:
             transaction = pytis.data.DBTransactionDefault(pytis.config.dbconnection)
-        error = pytis.extensions.add_crypto_user(area,
-                                                 username,
-                                                 pytis.config.dbuser,
-                                                 crypto_password,
-                                                 admin_address,
-                                                 pytis.config.dbconnection,
-                                                 transaction=transaction,
-                                                 user_password=user_password)
+        error = pytis.extensions.add_crypto_user(
+            area,
+            record['username'].value(),
+            pytis.config.dbuser,
+            record['admin_password'].value(),
+            record['admin_address'].value(),
+            pytis.config.dbconnection,
+            transaction=transaction,
+            user_password=record['user_password'].value(),
+        )
         if error:
             transaction.rollback()
             app.error("Error: %s" % (error,))
