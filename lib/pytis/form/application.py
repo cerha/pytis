@@ -953,7 +953,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
                 if name is None:
                     return None
             log(ACTION, 'Running form:', (form_class, name, kwargs))
-            self._echo(_("Opening form..."), root=True)
+            app.echo(_("Opening form..."))
             assert issubclass(form_class, pytis.form.Form)
             assert name is None or isinstance(name, basestring)  # May be None for InputForm.
             # We indicate busy state here so that the action is not delayed by
@@ -998,7 +998,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
                 if isinstance(form, pytis.form.PopupForm):
                     log(EVENT, "Opening modal form:", form)
                     self._modals.push(form)
-                    self._echo('', root=True)
+                    app.status.message.text = None
                     form.show()
                     busy_cursor(False)
                     try:
@@ -1023,7 +1023,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
                         old.hide()
                     self._windows.push(form)
                     wx_callback(wx.EVT_CLOSE, form, self._on_form_close)
-                    self._echo('', root=True)
+                    app.status.message.text = None
                     form.resize()  # Needed in wx 2.8.x.
                     form.show()
                     self._update_window_menu()
@@ -1256,33 +1256,6 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         else:
             log(ACTION, "Form action:", (spec_name, form_name, action, info))
 
-    def _echo(self, message, kind='info', root=False):
-        """Display a non-interactive message in the status bar.
-
-        Arguments:
-
-          message -- the text to be displayed.
-          kind -- message kind.  One of 'info', 'warning', 'error'.  If 'error'
-            or 'warning', the message will be accompanied by a beep.  Icons may
-            be used in future to indicate the kind in the UI.
-          root -- iff true, the message is displayed always in the main
-            application frame.  Otherwise (by default), the the current modal
-            form is tried first (if it exists) with the main application frame
-            as a fallback.  This requires a modal form to exist and have a
-            status bar containing the 'message' field.
-
-        """
-        assert kind in ('info', 'warning', 'error')
-        if kind in ('warning', 'error'):
-            beep()
-        if message:
-            log(EVENT, message)
-        if not root:
-            form = self._modals.top()
-            if isinstance(form, pytis.form.Form) and form.set_status('message', message):
-                return
-        app.status.message.update(message)
-
     def client_mode(self):
         """Return the client operation mode as one of 'remote', 'local' or None.
 
@@ -1411,7 +1384,14 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         self._frame.Close()
 
     def api_echo(self, message, kind='info'):
-        self._echo(message, kind=kind)
+        assert kind in ('info', 'warning', 'error')
+        if kind in ('warning', 'error'):
+            beep()
+        if message:
+            log(EVENT, message)
+        form = self._modals.top()
+        if not (isinstance(form, pytis.form.Form) and form.set_status('message', message)):
+            app.status.message.text = message
 
     def api_message(self, message=None, title=None, content=None):
         return self.run_dialog(dialog.Message, message, title=title or _("Message"),
@@ -1633,7 +1613,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
     def api_run_procedure(self, spec_name, proc_name, *args, **kwargs):
         result = None
         try:
-            self._echo(_("Running procedure..."), root=True)
+            app.echo(_("Running procedure..."))
             log(ACTION, 'Running procedure:', (spec_name, proc_name, args, kwargs))
             # Kvůli wx.SafeYield() se ztrácí focus, takže
             # si ho uložíme a pak zase obnovíme.
