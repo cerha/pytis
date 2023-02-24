@@ -186,12 +186,9 @@ class Users(Specification):
         for f in fields:
             if f.virtual():
                 fields.modify(f.id(), virtual=False)
-        title = _(u"Nový uživatel šifrované oblasti")
-        prefill = {'name': area}
-        record = pytis.form.run_form(pytis.form.InputForm, title=title, fields=fields,
-                                     layout=self.view_spec().layout(),
-                                     check=self.view_spec().check(),
-                                     prefill=prefill)
+        record = app.input_form(title=_(u"Nový uživatel šifrované oblasti"),
+                                fields=fields, layout=self.view_spec().layout(),
+                                check=self.view_spec().check(), prefill={'name': area})
         if not record:
             return
         user_password = record['user_password'].value()
