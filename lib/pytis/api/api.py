@@ -180,13 +180,16 @@ class Form(API):
     """
 
     condition = property()
-    """Current filtering condition as a pytis.data.Operator instance or None."""
+    """Current filtering condition as a 'pytis.data.Operator' instance or None."""
 
     arguments = property()
     """Current arguemnts as a dictionary of 'pytis.data.Value' instances or None."""
 
     sorting = property()
-    """Current sorting as in pytis.data.Data.select() or None."""
+    """Current sorting as in 'pytis.data.Data.select()' or None."""
+
+    profile = property()
+    """Current form profile as 'pytis.presentation.Profile' instance or None."""
 
     query_fields = property()
     """The form's query fields panel API as 'pytis.api.QueryFields' instance.

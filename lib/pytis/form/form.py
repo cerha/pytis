@@ -587,6 +587,10 @@ class Form(wx.Panel, KeyHandler, CallbackHandler, CommandHandler):
         return None
 
     @property
+    def api_profile(self):
+        return None
+
+    @property
     def api_query_fields(self):
         return None
 
@@ -1703,6 +1707,10 @@ class LookupForm(InnerForm):
     @property
     def api_sorting(self):
         return self._lf_sorting
+
+    @property
+    def api_profile(self):
+        return self._current_profile
 
     @property
     def api_query_fields(self):
