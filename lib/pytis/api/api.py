@@ -448,6 +448,14 @@ class Application(API):
         """
         pass
 
+    def delete_record_question(self, message=None):
+        """Display 'question()' dialog asking for record deletion.
+
+        Returns True if the user confirms deletion or False otherwise.
+
+        """
+        pass
+
     def input_text(self, title, label, default=None, not_null=False, width=20, height=1,
                    descr=None, noselect=False):
         """Display a form for entering a single textual value and return this value.

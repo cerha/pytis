@@ -1440,6 +1440,14 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
                                    title=title, timeout=timeout,
                                    **self._dialog_content_kwargs(content))
 
+    def api_delete_record_question(self, message=None):
+        log(EVENT, 'Record deletion dialog')
+        if not app.question(message or _("Are you sure to delete the record permanently?")):
+            log(EVENT, 'Record deletion refused by user')
+            return False
+        log(EVENT, u'Record deletion confirmed by user')
+        return True
+
     def _input(self, type, title, label, default=None, width=None, height=None, descr=None,
                noselect=False):
         row = run_form(
@@ -2184,20 +2192,6 @@ def db_operation(operation, *args, **kwargs):
                 return FAILURE
 
 
-def delete_record_question(msg=None):
-    """Zeptej se uživatele, zda má být opravdu smazán záznam.
-
-    Vrať pravdu, právě když uživatel odpoví kladně.
-
-    """
-    log(EVENT, 'Record deletion dialog')
-    if not app.question(msg or _("Are you sure to delete the record permanently?")):
-        log(EVENT, 'Record deletion refused by user')
-        return False
-    log(EVENT, u'Record deletion confirmed by user')
-    return True
-
-
 # Funkce, které jsou obrazem veřejných metod aktuální aplikace.
 
 
@@ -2509,3 +2503,6 @@ def set_status(id, text, **kwargs):
 
 def frame_title(title):
     app.title = title
+
+def delete_record_question(msg=None):
+    return app.delete_record_question(msg)
