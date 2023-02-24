@@ -22,7 +22,6 @@ import copy
 import pytis.data
 import pytis.dbdefs.db_pytis_menu as dbdefs
 import pytis.extensions
-import pytis.form
 import pytis.presentation
 import pytis.util
 from pytis.api import app
@@ -320,7 +319,7 @@ class ApplicationMenu(pytis.presentation.Specification):
     layout = ('title', 't_title', 'position',)
     cb = pytis.presentation.CodebookSpec(display='title')
     access_rights = pytis.data.AccessRights((None, (['admin_menu'], pytis.data.Permission.ALL)),)
-    folding = pytis.form.FoldableForm.Folding(level=2)
+    folding = pytis.presentation.Folding(level=2)
 
     def condition(self):
         return pytis.data.EQ('language', pytis.data.sval(pytis.util.current_language()))
@@ -444,10 +443,8 @@ class ApplicationMenuM(pytis.presentation.Specification):
                                                     pytis.data.Permission.PRINT,
                                                     pytis.data.Permission.UPDATE,)))
 
-    def folding(self):
-        folding = pytis.form.FoldableForm.Folding(level=2)
-        folding.expand('8', level=0)
-        return folding
+    folding = pytis.presentation.Folding(level=2)
+    #folding.expand('8', level=0)
 
     @staticmethod
     def _multiform_row(row):
@@ -531,7 +528,7 @@ class ApplicationMenuCodebook(pytis.presentation.Specification):
     )
     columns = ('title', 'actiontype', 'description',)
     sorting = (('position', pytis.data.ASCENDENT,),)
-    folding = pytis.form.FoldableForm.Folding(level=None)
+    folding = pytis.presentation.Folding(level=None)
     access_rights = pytis.data.AccessRights((None, (['admin_menu'],
                                                     pytis.data.Permission.VIEW,
                                                     pytis.data.Permission.EXPORT,
@@ -1019,7 +1016,7 @@ class ApplicationRoleMenu(pytis.presentation.Specification):
                'rights_delete', 'rights_print', 'rights_export', 'rights_call',)
     layout = ('title', 'roleid', 'rights_view', 'rights_insert', 'rights_update',
               'rights_delete', 'rights_print', 'rights_export', 'rights_call',)
-    folding = pytis.form.FoldableForm.Folding(level=None)
+    folding = pytis.presentation.Folding(level=None)
     access_rights = pytis.data.AccessRights((None, (['admin'], pytis.data.Permission.ALL)),)
 
     def on_new_record(self, *args, **kwargs):
