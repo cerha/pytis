@@ -1714,7 +1714,7 @@ class ProfileSelectorPopup(wx.ComboPopup):
         # Called just prior to displaying the popup.
         # Fill menu items before each popup and delete them on dismiss to
         # avoid having to update the menu during form profile list update.
-        self._current_form = form = pytis.form.current_form()
+        self._current_form = form = pytis.form.app.current_form()
         profiles = form.profiles()
         current = form.current_profile()
 
@@ -1795,8 +1795,7 @@ class ProfileSelector(wx.ComboCtrl):
         ctrl = self.GetTextCtrl()
         if enabled:
             if not ctrl.IsEditable():
-                form = pytis.form.current_form()
-                current_profile = form.current_profile()
+                current_profile = app.form.profile
                 if current_profile and ctrl.GetValue() != current_profile.title():
                     ctrl.SetValue(current_profile.title())
             if pytis.form.LookupForm.COMMAND_UPDATE_PROFILE.enabled():
@@ -1876,7 +1875,7 @@ class ProfileSelector(wx.ComboCtrl):
         event.Skip()
         code = event.GetKeyCode()
         if code in (wx.WXK_ESCAPE, wx.WXK_TAB, wx.WXK_RETURN, wx.WXK_NUMPAD_ENTER):
-            pytis.form.current_form().focus()
+            pytis.form.app.current_form().focus()
 
 
 class TextHeadingSelector(wx.Choice):
@@ -1941,7 +1940,7 @@ class FormStateToolbarControl(wx.BitmapButton):
         enabled = cmd.enabled(**kwargs)
         event.Enable(enabled)
         if enabled:
-            form = pytis.form.current_form(inner=False)
+            form = pytis.form.app.current_form(inner=False)
             new_bitmap = self._bitmaps[self._current_icon_index(form)]
             if self._current_bitmap != new_bitmap:
                 self._current_bitmap = new_bitmap

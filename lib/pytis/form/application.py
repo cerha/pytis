@@ -2257,12 +2257,6 @@ class InputDate(object):
     pass
 
 
-def current_form(**kwargs):
-    """Vrať právě aktivní formulář (viz 'Application.current_form()')."""
-    if pytis.form.app is not None:
-        return pytis.form.app.current_form(**kwargs)
-
-
 def top_window(**kwargs):
     """Vrať aktivní okno aplikace (formulář, nebo dialog)."""
     if pytis.form.app is not None:
@@ -2362,7 +2356,7 @@ def built_in_status_fields():
 
     """
     def _refresh_list_position():
-        form = current_form(allow_modal=False)
+        form = pytis.form.app.current_form(allow_modal=False)
         if hasattr(form, 'list_position'):
             return form.list_position()
         else:
@@ -2502,6 +2496,10 @@ def set_status(id, text, **kwargs):
     if __debug__:
         log(DEBUG, u"StatusBar field updated:", (id, text, kwargs))
     return  app.status(id).update(text, **kwargs)
+
+def current_form(**kwargs):
+    if pytis.form.app is not None:
+        return pytis.form.app.current_form(**kwargs)
 
 def frame_title(title):
     app.title = title

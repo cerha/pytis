@@ -73,7 +73,7 @@ from .screen import (
 )
 from .search import sfs_columns
 from .application import (
-    Application, current_form, message, run_dialog, run_form,
+    Application, message, run_dialog, run_form,
 )
 from .grid import TableRowIterator, GridTable
 
@@ -822,7 +822,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
 
     def _on_idle(self, event):
         super(ListForm, self)._on_idle(event)
-        if is_busy_cursor() or current_form() is not self:
+        if is_busy_cursor() or pytis.form.app.current_form() is not self:
             # Prevent blocking the idle method of a popup form opened on top of the current form,
             # such as PopupEditForm or Codebook.
             return

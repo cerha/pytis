@@ -49,7 +49,7 @@ from .screen import (
     popup_menu, wx_focused_window, get_icon,
 )
 from .application import (
-    current_form, run_form, top_window
+    run_form, top_window
 )
 _ = translations('pytis-wx')
 
@@ -685,7 +685,7 @@ class MultiForm(Form, Refreshable):
     """
     @classmethod
     def _get_command_handler_instance(cls):
-        form = current_form(inner=False)
+        form = pytis.form.app.current_form(inner=False)
         if isinstance(form, DualForm):
             form = form.active_form()
         return form

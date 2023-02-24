@@ -62,7 +62,7 @@ from .screen import (
     DEFAULT_WINDOW_BACKGROUND_COLOUR,
 )
 from .application import (
-    Application, block_yield, current_form, db_operation, run_dialog, run_form,
+    Application, block_yield, db_operation, run_dialog, run_form,
     top_window,
 )
 from .search import (
@@ -126,7 +126,7 @@ class Form(wx.Panel, KeyHandler, CallbackHandler, CommandHandler):
 
     @classmethod
     def _get_command_handler_instance(cls):
-        return current_form(inner=False)
+        return pytis.form.app.current_form(inner=False)
 
     @classmethod
     def descr(cls):
@@ -634,7 +634,7 @@ class InnerForm(Form):
     """
     @classmethod
     def _get_command_handler_instance(cls):
-        return current_form()
+        return pytis.form.app.current_form()
 
     def _init_attributes(self, **kwargs):
         super(InnerForm, self)._init_attributes(**kwargs)
@@ -1157,7 +1157,7 @@ class LookupForm(InnerForm):
     def _init_transaction_timeouts(self, data):
         if self._governing_transaction is None:
             def timeout_callback():
-                f = current_form(inner=False)
+                f = pytis.form.app.current_form(inner=False)
                 if isinstance(f, pytis.form.CodebookForm) and f is not self:
                     f.close()
                 try:
@@ -2791,9 +2791,7 @@ class EditForm(RecordForm, TitledForm, Refreshable):
         return grid
 
     def _signal_update(self):
-        f = current_form()
-        if isinstance(f, Refreshable):
-            f.refresh()
+        app.form.refresh()
 
     def _refresh(self, interactive=False):
         if interactive:
