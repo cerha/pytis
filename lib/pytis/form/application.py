@@ -998,7 +998,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
                 if isinstance(form, pytis.form.PopupForm):
                     log(EVENT, "Opening modal form:", form)
                     self._modals.push(form)
-                    app.status.message.text = None
+                    app.status.message.update(text=None, icon=None)
                     form.show()
                     busy_cursor(False)
                     try:
@@ -1023,7 +1023,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
                         old.hide()
                     self._windows.push(form)
                     wx_callback(wx.EVT_CLOSE, form, self._on_form_close)
-                    app.status.message.text = None
+                    app.status.message.update(text=None, icon=None)
                     form.resize()  # Needed in wx 2.8.x.
                     form.show()
                     self._update_window_menu()
@@ -1391,6 +1391,12 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
             log(EVENT, message)
         form = self._modals.top()
         if not (isinstance(form, pytis.form.Form) and form.set_status('message', message)):
+            if kind == 'warning':
+                app.status.message.icon = wx.ART_WARNING
+            elif kind == 'error':
+                app.status.message.icon = wx.ART_ERROR
+            else:
+                app.status.message.icon = None
             app.status.message.text = message
 
     def api_message(self, message=None, title=None, content=None):
