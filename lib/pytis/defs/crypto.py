@@ -175,7 +175,7 @@ class Users(Specification):
         row['user_password'] = pytis.data.sval(password)
 
     def on_new_record(self, prefill=None, transaction=None):
-        main_form_row = pytis.form.current_form()._main_form.current_row()
+        main_form_row = app.main_form.row
         if not main_form_row:
             return
         area = main_form_row['name'].value()

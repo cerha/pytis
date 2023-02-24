@@ -647,15 +647,15 @@ class _ApplicationMenuRightsBase(pytis.presentation.Specification):
     public = False
 
     def _multiaction_check(self):
-        main_form = pytis.form.current_form().main_form()
-        shortname = main_form.current_row()['shortname']
+        main_form = app.main_form
+        shortname = main_form.row['shortname']
         if not shortname.value():
             return
-        data = main_form.data(init_select=False)
+        data = main_form.row.data()
         items = data.select_map(lambda row: (row['menuid'].value(), row['title'].value()),
                                 condition=pytis.data.EQ('shortname', shortname))
         if len(items) > 1:
-            current_menuid = main_form.current_row()['menuid'].value()
+            current_menuid = main_form.row['menuid'].value()
             message = _(u"Pozor, tato položka se vyskytuje i na jiných místech menu:")
             for menuid, title in items:
                 if menuid != current_menuid:
@@ -663,8 +663,7 @@ class _ApplicationMenuRightsBase(pytis.presentation.Specification):
             app.warning(message)
 
     def _codebook_rights_check(self):
-        main_form = pytis.form.current_form().main_form()
-        shortname = main_form.current_row()['shortname'].value()
+        shortname = app.main_form.row['shortname'].value()
         components = shortname.split('/')
         if components[0] != 'form':
             return
@@ -824,7 +823,7 @@ class ApplicationMenuRightsFoldable(_ApplicationMenuRightsBase):
     access_rights = pytis.data.AccessRights((None, (['admin'], pytis.data.Permission.ALL)),)
 
     def on_new_record(self, prefill=None, transaction=None):
-        shortname = pytis.form.current_form()._main_form.current_row()['shortname']
+        shortname = app.main_form.row['shortname']
         if prefill is None:
             prefill = {}
         else:
