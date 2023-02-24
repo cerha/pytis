@@ -249,7 +249,7 @@ def wx_callback(event_kind, handler, callback, **kwargs):
                     result = True
                 else:
                     result = system_callback()
-            elif is_user and pytis.form.modal(pytis.form.top_window()):
+            elif is_user and pytis.form.modal(pytis.form.app.top_window()):
                 # Událost vyvolaná uživatelským příkazem v modálním okně
                 result = callback(event)
             elif is_user:

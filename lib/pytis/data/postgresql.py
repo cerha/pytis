@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2022 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2023 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2017 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -2104,7 +2104,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                                 except Exception:
                                     raise e
                                 else:
-                                    if pytis.form.top_window() is not None:
+                                    if pytis.form.app.top_window() is not None:
                                         pytis.form.top_level_exception()
                                     else:
                                         raise e

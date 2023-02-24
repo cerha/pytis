@@ -49,7 +49,7 @@ from .screen import (
     popup_menu, wx_focused_window, get_icon,
 )
 from .application import (
-    run_form, top_window
+    run_form,
 )
 _ = translations('pytis-wx')
 
@@ -1027,7 +1027,7 @@ class MultiSideForm(MultiForm):
                 column = self._binding_content
                 value = row[column].value()
                 if value is None:
-                    main_form = top_window().main_form()
+                    main_form = pytis.form.app.top_window().main_form()
                     data = main_form.data()
                     row = data.row(row[data.key()[0].id()],
                                    arguments=main_form._current_arguments())

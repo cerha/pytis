@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2019-2022 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2019-2023 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2018 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -87,7 +87,7 @@ class Dialog(KeyHandler, CommandHandler, object):
     """
     @classmethod
     def _get_command_handler_instance(cls):
-        return pytis.form.top_window()
+        return pytis.form.app.top_window()
 
     def __init__(self, parent):
         self._parent = parent

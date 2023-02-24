@@ -1804,7 +1804,7 @@ class ProfileSelector(wx.ComboCtrl):
             else:
                 color = wx.Colour(0, 0, 0)
             ctrl.SetForegroundColour(color)
-        elif pytis.form.top_window() is None and ctrl.GetValue() != '':
+        elif pytis.form.app.top_window() is None and ctrl.GetValue() != '':
             ctrl.SetValue('')
 
     def _on_context_menu(self, event):

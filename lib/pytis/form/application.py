@@ -665,7 +665,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
             return CheckItem(acceskey_prefix(i) + self._form_menu_item_title(form),
                              help=_("Bring form window to the top (%s)", info),
                              command=Application.COMMAND_RAISE_FORM,
-                             state=lambda: top_window() is form,
+                             state=lambda: self.top_window() is form,
                              args={'form': form})
         menu = self._window_menu
         if menu is not None:
@@ -2257,12 +2257,6 @@ class InputDate(object):
     pass
 
 
-def top_window(**kwargs):
-    """Vrať aktivní okno aplikace (formulář, nebo dialog)."""
-    if pytis.form.app is not None:
-        return pytis.form.app.top_window(**kwargs)
-
-
 def recent_forms_menu():
     """Vrať menu posledně otevřených formulářů jako instanci 'pytis.form.Menu'.
 
@@ -2500,6 +2494,10 @@ def set_status(id, text, **kwargs):
 def current_form(**kwargs):
     if pytis.form.app is not None:
         return pytis.form.app.current_form(**kwargs)
+
+def top_window(**kwargs):
+    if pytis.form.app is not None:
+        return pytis.form.app.top_window(**kwargs)
 
 def frame_title(title):
     app.title = title

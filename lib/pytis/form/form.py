@@ -63,7 +63,6 @@ from .screen import (
 )
 from .application import (
     Application, block_yield, db_operation, run_dialog, run_form,
-    top_window,
 )
 from .search import (
     SearchDialog, FilterDialog, SortingDialog
@@ -1997,7 +1996,7 @@ class RecordForm(LookupForm):
 
     def _dualform(self):
         # Pokud je formulář součástí duálního formuláře, vrať jej, jinak None.
-        top = top_window()
+        top = pytis.form.app.top_window()
         if isinstance(top, pytis.form.DualForm):
             main, side = top.main_form(), top.side_form()
             if self in (main, side):
