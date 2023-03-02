@@ -1619,7 +1619,8 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
             elif view.arguments() is not None:
                 app.echo(_(u"This form is read-only."), kind='error')
                 return
-            return run_form(pytis.form.PopupEditForm, name, select_row=row.row(),
+            key = row.row().columns([c.id() for c in row.data().key()])
+            return run_form(pytis.form.PopupEditForm, name, select_row=key,
                             set_values=set_values, transaction=transaction)
 
     def api_delete_record(self, name, row, question=None, transaction=None):
