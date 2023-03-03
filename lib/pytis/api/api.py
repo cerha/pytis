@@ -233,6 +233,21 @@ class Form(API):
         """Unselect all rows that are currently selected (if any)."""
         pass
 
+    def select_row(self, position):
+        """Make given row the currently selected row of the form.
+
+        Arguments:
+
+          position -- It may be a 'pytis.data.Value' instance representing the
+            value of the key column, a tuple of Value instances representing a
+            multi-column key, a non-negative integer representing the ordinal
+            position of the row to be selected starting from zero, a dictionary
+            of 'pytis.data.Value' instances keyed by column ids to select the
+            first row with matching values or a 'pytis.data.Row' instance to
+            select the row matching the value of the key columns(s).
+
+        """
+
 
 class StatusField(API):
     """Public API representation of a status bar field.
@@ -689,14 +704,10 @@ class Application(API):
         Arguments:
 
           name -- specification name as a string.
-          select_row -- the row to be intially selected within the opened form.
-            It may be a 'pytis.data.Value' instance (the row key), their tuple
-            (a multi-column key), a non-negative integer (the ordinal position
-            of the row to be selected starting from zero), a dictionary of
-            'pytis.data.Value' instances keyed by column ids (to select the
-            first row with matching values), 'pytis.data.Row' instance (its key
-            columns will be used to get the row key) or None to perform no
-            initial row selection.
+          select_row -- the row to be intially selected within the opened form
+            or None to perform no initial row selection.  If not None, has the
+            same meaning as the 'position' argument of
+            'pytis.api.Form.select_row()'
           multi -- iff True, prefer multiform over plain browse form.  This
             means that a multiform (incuding side forms) will be used when the
             specification defines 'bindings'.  If there are no bindings or
@@ -733,14 +744,10 @@ class Application(API):
         Arguments:
 
           name -- specification name as a string.
-          select_row -- the row to be intially selected within the opened form.
-            It may be a 'pytis.data.Value' instance (the row key), their tuple
-            (a multi-column key), a non-negative integer (the ordinal position
-            of the row to be selected starting from zero), a dictionary of
-            'pytis.data.Value' instances keyed by column ids (to select the
-            first row with matching values), 'pytis.data.Row' instance (its key
-            columns will be used to get the row key) or None to perform no
-            initial row selection.
+          select_row -- the row to be intially selected within the opened form
+            or None to perform no initial row selection.  If not None, has the
+            same meaning as the 'position' argument of
+            'pytis.api.Form.select_row()'
           columns -- sequence of column identifiels to override the 'columns'
             defined by specification.
           sorting -- specification of initial form sorting in the same format
