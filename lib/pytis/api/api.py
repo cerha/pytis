@@ -788,6 +788,22 @@ class Application(API):
         """
         pass
 
+    def web_view(self, title, content):
+        """Show given content in a web browser inside the main application frame.
+
+        The browser window behaves as any other form displayed using
+        'run_form()'.
+
+        Arguments:
+
+          title - form title used to identify the window within the application
+            (e.g. when switching windows).
+          content -- the content to be displayed.  May be passed as
+            'lcg.Content' instance or an HTML string.
+
+        """
+        pass
+
     def run(self, function, args=(), kwargs={}, over=None, title=None, message=None,
             progress=True, maximum=None, elapsed_time=False, estimated_time=False,
             remaining_time=False, can_abort=False, new_thread=False):

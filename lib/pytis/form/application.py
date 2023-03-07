@@ -1660,6 +1660,9 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
             top_level_exception()
         return result
 
+    def api_web_view(self, title, content):
+        run_form(pytis.form.WebForm, title=title, content=content)
+
     def api_run(self, function, args=(), kwargs={}, over=None, title=None, message=None,
                 progress=True, maximum=None, elapsed_time=False, estimated_time=False,
                 remaining_time=False, can_abort=False, new_thread=False):
