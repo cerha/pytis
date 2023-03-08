@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2019, 2022 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2019, 2023 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2010-2018 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -19,8 +19,14 @@
 
 from __future__ import print_function
 import argparse
-import sys
 import getopt
+import os
+import sys
+
+pytisdir = os.path.dirname(os.path.dirname(__file__))
+sys.path.append(os.path.join(pytisdir, 'lib'))
+sys.path.append(os.path.join(pytisdir, '..', 'lcg', 'lib'))
+
 import pytis.util
 import pytis.presentation
 import pytis.data as pd
@@ -46,7 +52,10 @@ def run():
     except getopt.GetoptError as e:
         parser.print_help()
         sys.exit(1)
-    # Avoid pytis logging during the update.
+
+    applibdir = os.path.dirname(os.path.dirname(os.path.dirname(pytis.config.print_spec_dir)))
+    if os.path.split(applibdir)[-1] == 'lib':
+        sys.path.append(applibdir)
     pytis.config.log_exclude = [pytis.util.ACTION, pytis.util.EVENT,
                                 pytis.util.DEBUG, pytis.util.OPERATIONAL]
     resolver = pytis.config.resolver
