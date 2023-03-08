@@ -130,10 +130,10 @@ class Application(pytis.presentation.Application):
 
     def status_fields(self):
         self._counter = 0
-        return super(Application, self).status_fields() + (
+        return super(Application, self).status_fields() + [
             StatusField('counter', _("Counter"), refresh=self._refresh_counter,
                         refresh_interval=5000, width=3),
-        )
+        ]
 
     def cmd_dialog_test(self):
         return pytis.form.Application.COMMAND_HANDLED_ACTION(handler=self._dialog_test,)

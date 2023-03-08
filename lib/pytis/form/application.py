@@ -97,6 +97,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
     _menubar_forms = {}
     _log_login = True
     _recent_directories = {}
+    _remote_connection_last_available = None
 
     _WINDOW_MENU_TITLE = _("&Windows")
 
@@ -1283,6 +1284,59 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
             else:
                 return 'local'
 
+    def _refresh_list_position(self):
+        form = pytis.form.app.current_form(allow_modal=False)
+        if hasattr(form, 'list_position'):
+            return form.list_position()
+        else:
+            return ''
+
+    def _refresh_remote_status(self):
+        if not pytis.remote.client_available():
+            status = _("N/A")
+            icon = 'status-offline'
+            tooltip = _("Running locally.")
+        elif pytis.remote.client_connection_ok():
+            version = pytis.remote.RPCInfo.remote_client_version or _("Not available")
+            status = _("Ok")
+            icon = 'status-online'
+            tooltip = _("Connected.") + "\n" + _("Client version: %s", version)
+            self._remote_connection_last_available = time.localtime()
+        else:
+            status = _("Error")
+            icon = 'status-error'
+            if self._remote_connection_last_available:
+                timestamp = time.strftime('%Y-%m-%d %H:%M:%S', self._remote_connection_last_available)
+                tooltip = _("Connection lost.") + '\n' + _("Last available: %s", timestamp)
+            else:
+                tooltip = _("Connection not established.")
+        return (status, icon, tooltip)
+
+    def _refresh_user_config(self):
+        tooltip = "\n".join((_("Username: %s", pytis.config.dbuser),
+                             _("Database name: %s", pytis.config.dbname),
+                             _("Database host: %s", pytis.config.dbhost or 'localhost')))
+        return (pytis.config.dbuser, 'user-icon', tooltip)
+
+    def status_fields(self):
+        """Return default status bar fields as a list of 'StatusField' instances.
+
+        The result is returned by the default implementation of
+        'pytis.presentation.Application.status_fields()'.  The derived
+        application may, however, extend, reorder or redefine the fields as
+        needed.
+
+        """
+        return [
+            StatusField('message', width=None),
+            StatusField('list-position', _("List position"), width=15,
+                        refresh=self._refresh_list_position),
+            StatusField('user', _("User and database parameters"), width=15,
+                        refresh=self._refresh_user_config, refresh_interval=0),
+            StatusField('remote-status', _("Remote communication status"), width=10,
+                        refresh=self._refresh_remote_status, refresh_interval=10000),
+        ]
+
     # Private methods supporting the public API methods (further below)
 
     def _wildcards(self, filetypes):
@@ -2338,67 +2392,6 @@ def block_yield(block=False):
     _yield_blocked = block
 
 
-_remote_connection_last_available = None
-
-
-def built_in_status_fields():
-    """Return the built-in status bar fields as a tuple of 'StatusField' instances.
-
-    The following status bar fields are defined by this method:
-      - message: displays various non-interactive messages
-        set by 'app.echo()'.
-      - list-positin: Displays the current position in the list of
-        records (such as 3/168) when a list form is active.
-      - remote-status: Displays the current status of remote communication.
-
-    """
-    def _refresh_list_position():
-        form = pytis.form.app.current_form(allow_modal=False)
-        if hasattr(form, 'list_position'):
-            return form.list_position()
-        else:
-            return ''
-
-    def _refresh_remote_status():
-        global _remote_connection_last_available
-        if not pytis.remote.client_available():
-            status = _("N/A")
-            icon = 'status-offline'
-            tooltip = _("Running locally.")
-        elif pytis.remote.client_connection_ok():
-            version = pytis.remote.RPCInfo.remote_client_version or _("Not available")
-            status = _("Ok")
-            icon = 'status-online'
-            tooltip = _("Connected.") + "\n" + _("Client version: %s", version)
-            _remote_connection_last_available = time.localtime()
-        else:
-            status = _("Error")
-            icon = 'status-error'
-            if _remote_connection_last_available:
-                timestamp = time.strftime('%Y-%m-%d %H:%M:%S', _remote_connection_last_available)
-                tooltip = _("Connection lost.") + '\n' + _("Last available: %s", timestamp)
-            else:
-                tooltip = _("Connection not established.")
-        return (status, icon, tooltip)
-
-    def _refresh_user_config():
-        tooltip = "\n".join((_("Username: %s", pytis.config.dbuser),
-                             _("Database name: %s", pytis.config.dbname),
-                             _("Database host: %s", pytis.config.dbhost or 'localhost')))
-        return (pytis.config.dbuser, 'user-icon', tooltip)
-
-    return (
-        StatusField('message', width=None),
-        StatusField('list-position', _("List position"),
-                    refresh=_refresh_list_position, width=15),
-        StatusField('user', _("User and database parameters"),
-                    refresh=_refresh_user_config, refresh_interval=0,
-                    width=15),
-        StatusField('remote-status', _("Remote communication status"),
-                    refresh=_refresh_remote_status,
-                    refresh_interval=10000, width=8),
-    )
-
 # Deprecated backwards compatibility aliases.
 
 def refresh():
@@ -2507,3 +2500,6 @@ def frame_title(title):
 
 def delete_record_question(msg=None):
     return app.delete_record_question(msg)
+
+def built_in_status_fields():
+    return pytis.form.app.status_fields()

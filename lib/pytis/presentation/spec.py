@@ -5199,16 +5199,23 @@ class Application(SpecificationBase):
         return ()
 
     def status_fields(self):
-        """Return status bar fields as a sequence of 'StatusField' instances.
+        """Return status bar fields as a list of 'StatusField' instances.
 
         The application's main window status bar will be created according to
-        this specification.  By default, the result of
-        'pytis.form.built_in_status_fields()' is returned.  Derived application
-        can extend, reorder or redefine the fields as needed.
+        this specification.  By default, the following fields are returned:
+
+         - message: Displays various non-interactive messages
+           set by 'app.echo()'.
+         - list-positin: Displays the current position in the list of
+           records (such as 3/168) when a list form is active.
+         - user: Displays the current DB username and DB name and host in the tooltip.
+         - remote-status: Displays the current status of remote communication.
+
+        Derived application can extend, reorder or redefine the fields as needed.
 
         """
         import pytis.form
-        return pytis.form.built_in_status_fields()
+        return pytis.form.app.status_fields()
 
 
 class SharedParams(object):
