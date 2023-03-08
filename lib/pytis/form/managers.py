@@ -65,17 +65,21 @@ class UserSetttingsManager(object):
     _COLUMNS = ()
 
     def __new__(cls, dbconnection, username=None):
-        try:
-            pytis.data.dbtable(cls._TABLE, cls._COLUMNS, dbconnection)
-        except pytis.data.DBException as e:
-            log(OPERATIONAL, "Failed initializing {}: {}".format(cls.__name__, e))
-            cls = globals()['Legacy' + cls.__name__]
-            instance = object.__new__(cls)
-            # When returning another class's instance, we need to call __init__() manually.
-            cls.__init__(instance, dbconnection, username=username)
-            return instance
-        else:
-            return object.__new__(cls)
+        if not cls.__name__.startswith('Legacy'):
+            legacy_class = globals()['Legacy' + cls.__name__]
+            try:
+                pytis.data.dbtable(legacy_class._TABLE, legacy_class._COLUMNS, dbconnection)
+            except pytis.data.DBException:
+                pass
+            else:
+                # If the old columns still exist, use the legacy manager.
+                log(OPERATIONAL, ("{}: Table {} contains original columns - "
+                                  "falling back to legacy mode!").format(cls.__name__, cls._TABLE))
+                legacy_instance = object.__new__(legacy_class)
+                # When returning another class's instance, we need to call __init__() manually.
+                legacy_class.__init__(legacy_instance, dbconnection, username=username)
+                return legacy_instance
+        return object.__new__(cls)
 
     def __init__(self, dbconnection, username=None):
         log(OPERATIONAL, "Initializing on {}({}).".format(self._TABLE, ', '.join(self._COLUMNS)))
