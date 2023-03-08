@@ -88,9 +88,13 @@ def run():
             mgr = LegacyFormProfileManager(pytis.config.dbconnection, username=username)
             newmgr = FormProfileManager(pytis.config.dbconnection, username=username)
             for spec_name in mgr.list_spec_names(transaction=transaction):
-                for form_name in mgr.list_form_names(spec_name, transaction=transaction):
+                try:
                     view_spec = resolver.get(spec_name, 'view_spec')
                     data_spec = resolver.get(spec_name, 'data_spec')
+                except pytis.util.ResolverError as e:
+                    sys.stderr.write("Ignoring specification %s: %s\n" % (spec_name, e))
+                    continue
+                for form_name in mgr.list_form_names(spec_name, transaction=transaction):
                     data_object = data_spec.create(dbconnection_spec=pytis.config.dbconnection)
                     profiles = mgr.load_profiles(spec_name, form_name, view_spec, data_object,
                                                  default_profile, transaction=transaction)
