@@ -45,6 +45,7 @@ def run():
     )
     parser.add_argument('--config', required=True, help="Configuration file path")
     parser.add_argument('--table', help="Process only given table and nothing else.")
+    parser.add_argument('--user', help="Process only given user.")
     parser.add_argument('--log-users', action='store_true', help="Print processed user names.")
     args, argv = parser.parse_known_args()
     try:
@@ -66,8 +67,11 @@ def run():
         if args.table is None or args.table == 'e_pytis_config':
             print("Processing table: e_pytis_config")
             data = pd.dbtable('e_pytis_config', ('id', 'username', 'options'))
-            for v in data.distinct('username', transaction=transaction):
-                username = v.value()
+            if args.user:
+                users = (args.user,)
+            else:
+                users = [v.value() for v in data.distinct('username', transaction=transaction)]
+            for username in users:
                 if args.log_users:
                     print("  Processing user: {}".format(username))
                 mgr = LegacyApplicationConfigManager(pytis.config.dbconnection, username=username)
@@ -80,18 +84,23 @@ def run():
             print("Processing table: e_pytis_form_settings")
             data = pd.dbtable('e_pytis_form_settings',
                               ('id', 'username', 'spec_name', 'form_name', 'settings'))
-            for uname in data.distinct('username', transaction=transaction):
-                username = uname.value()
+            if args.user:
+                users = (args.user,)
+            else:
+                users = [v.value() for v in data.distinct('username', transaction=transaction)]
+            for username in users:
                 if args.log_users:
                     print("  Processing user: {}".format(username))
                 mgr = LegacyFormSettingsManager(pytis.config.dbconnection, username=username)
-                for sname in data.distinct('spec_name', condition=pd.EQ('username', uname),
+                for sname in data.distinct('spec_name',
+                                           condition=pd.EQ('username', pd.sval(username)),
                                            transaction=transaction):
                     spec_name = sname.value()
                     for fname in data.distinct('form_name',
-                                               condition=pd.AND(pd.EQ('username', uname),
-                                                                pd.EQ('spec_name', sname)),
-                                               transaction=transaction):
+                                               condition=pd.AND(
+                                                   pd.EQ('username', pd.sval(username)),
+                                                   pd.EQ('spec_name', sname),
+                                               ), transaction=transaction):
                         form_name = fname.value()
                         row = mgr._row(spec_name=spec_name, form_name=form_name,
                                        transaction=transaction)
@@ -104,8 +113,11 @@ def run():
             print("Processing table: e_pytis_form_profile_base")
             data = pd.dbtable('e_pytis_form_profile_base',
                               ('id', 'username', 'spec_name', 'profile_id', 'title', 'filter'))
-            for uname in data.distinct('username', transaction=transaction):
-                username = uname.value()
+            if args.user:
+                users = (args.user,)
+            else:
+                users = [v.value() for v in data.distinct('username', transaction=transaction)]
+            for username in users:
                 if args.log_users:
                     print("  Processing user: {}".format(username))
                 mgr = LegacyFormProfileManager(pytis.config.dbconnection, username=username)
@@ -129,12 +141,16 @@ def run():
             print("Processing table: e_pytis_aggregated_views")
             data = pd.dbtable('e_pytis_aggregated_views',
                               ('id', 'username', 'spec_name', 'aggregated_view_id', 'params'))
-            for uname in data.distinct('username', transaction=transaction):
-                username = uname.value()
+            if args.user:
+                users = (args.user,)
+            else:
+                users = [v.value() for v in data.distinct('username', transaction=transaction)]
+            for username in users:
                 if args.log_users:
                     print("  Processing user: {}".format(username))
                 mgr = LegacyAggregatedViewsManager(pytis.config.dbconnection, username=username)
-                for sname in data.distinct('spec_name', condition=pd.EQ('username', uname),
+                for sname in data.distinct('spec_name',
+                                           condition=pd.EQ('username', pd.sval(username)),
                                            transaction=transaction):
                     spec_name = sname.value()
                     for aggregated_view_id in mgr.list(spec_name, transaction=transaction):
