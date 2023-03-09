@@ -118,9 +118,6 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
 
         """
         self._headless = headless
-        self._access_rights = None
-        self._access_rights_initialized = False
-        self._user_roles = ()
         super(Application, self).__init__()
 
     def OnInit(self):
@@ -267,108 +264,6 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
 
         wx.CallAfter(init)
         return True
-
-    def _init_access_rights(self):
-        """Read application access rights from the database."""
-        # Must be called very early after start of an application.
-        self._access_rights_initialized = True
-        if not pytis.config.use_dmp_roles:
-            return
-        try:
-            roles_data = pd.dbtable('ev_pytis_user_roles', ('roleid',), pytis.config.dbconnection)
-            roles = [row[0].value() for row in roles_data.select_map(identity)]
-        except pd.DBException:
-            return
-        if not roles:
-            self._access_rights = 'nonuser'
-            return
-        self._user_roles = roles
-        if not pytis.config.use_dmp_rights:
-            return
-        self._access_rights = {}
-        # Prefill self._access_rights so that default access by specification rights in
-        # has_action_access is possible only for shortnames without any rights
-        # defined in DMP.
-        actions_data = pd.dbtable('e_pytis_action_rights', ('shortname', 'status',),
-                                  pytis.config.dbconnection)
-        condition = pd.LE('status', pd.ival(0))
-        for value in actions_data.distinct('shortname', condition=condition):
-            self._access_rights[value.value()] = {}
-        rights_data = pd.dbtable('pytis_view_user_rights', (('shortname', pd.String()),
-                                                            ('rights', pd.String()),
-                                                            ('columns', pd.String())),
-                                 pytis.config.dbconnection, arguments=())
-
-        def process(row):
-            shortname, rights_string, columns_string = row[0].value(), row[1].value(), row[2].value()
-            if columns_string:
-                columns = columns_string.split(' ')
-            else:
-                columns = [None]
-            rights = [r.upper() for r in rights_string.split(' ') if r != 'show']
-            action_rights = self._access_rights[shortname] = self._access_rights.get(shortname, {})
-            relaxed_action_rights = action_rights.get(True)
-            if relaxed_action_rights is None:
-                # Relaxed access rights are access rights to the action as a whole.
-                # The action is accessible if it is accessible itself or if any of
-                # its columns is accessible.
-                action_rights[True] = relaxed_action_rights = []
-            for c in columns:
-                action_rights[c] = rights
-                for r in rights:
-                    if r not in relaxed_action_rights:
-                        relaxed_action_rights.append(r)
-        rights_data.select_map(process)
-        Specification._init_access_rights(pytis.config.dbconnection)
-        pytis.config.resolver.clear()
-        if pytis.config.debug:
-            self._dump_rights()
-
-    def _dump_rights(self):
-        import pytis.extensions
-        registered_shortnames = set()
-        if self._access_rights not in (None, 'nonuser',):
-            registered_shortnames = registered_shortnames.union(self._access_rights.keys())
-        if Specification._access_rights not in (None, 'nonuser'):
-            registered_shortnames = registered_shortnames.union(Specification._access_rights.keys())
-        resolver = pytis.config.resolver
-        output = sys.stderr
-        output.write("--- BEGIN list of registered rights ---\n")
-        output.write("# source shortname right column permitted\n")
-
-        def find_columns(spec_name):
-            try:
-                specification = resolver.specification(spec_name)
-            except ResolverError:
-                specification = None
-            if specification is None:
-                columns = []
-            else:
-                columns = [f.id() for f in specification.view_spec().fields()]
-            return columns
-        all_permissions = pd.Permission.all_permissions()
-        for shortname in registered_shortnames:
-            if shortname.startswith('form/'):
-                columns = find_columns(shortname[5:])
-            else:
-                columns = []
-            for permission in all_permissions:
-                permitted = self.action_has_access(shortname, permission)
-                output.write('actions %s %s None %s\n' % (shortname, permission, permitted,))
-                for c in columns:
-                    permitted = self.action_has_access(shortname, permission, c)
-                    output.write('actions %s %s %s %s\n' % (shortname, permission, c, permitted,))
-        specification_names = pytis.extensions.get_form_defs()
-        for spec_name in specification_names:
-            columns = find_columns(spec_name)
-            for permission in all_permissions:
-                permitted = self.api_has_access(spec_name, permission)
-                output.write('specifications %s %s None %s\n' % (spec_name, permission, permitted,))
-                for c in columns:
-                    permitted = self.api_has_access(spec_name, permission, c)
-                    output.write('specifications %s %s %s %s\n' %
-                                 (spec_name, permission, c, permitted,))
-        output.write("--- END list of registered rights ---\n")
 
     def _frame_title(self, title):
         display = pytis.remote.x2go_display()
@@ -2000,65 +1895,6 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
             f.write(data)
         finally:
             f.close()
-
-    def api_has_access(self, name, perm=pd.Permission.VIEW, column=None):
-        if not self.action_has_access('form/' + name, perm=perm, column=column):
-            return False
-        try:
-            main, side = name.split('::')
-        except ValueError:
-            dual = False
-        else:
-            dual = True
-        if dual:
-            return self.api_has_access(main, perm=perm) and self.api_has_access(side, perm=perm)
-        else:
-            try:
-                rights = pytis.config.resolver.get(name, 'data_spec').access_rights()
-            except ResolverError:
-                rights = None
-            if rights:
-                if not self._access_rights_initialized:
-                    self._init_access_rights()
-                groups = pd.default_access_groups(pytis.config.dbconnection)
-                if not rights.permitted(perm, groups, column=column):
-                    return False
-        result = self.action_has_access('form/' + name, perm=perm, column=column)
-        return result
-
-    def action_has_access(self, action, perm=pd.Permission.CALL, column=None):
-        """Return true iff 'action' has 'perm' permission.
-
-        Arguments:
-
-          action -- action identifier, string
-          perm -- access permission as one of `pd.Permission' constants
-          column -- string identifier of the column to check or 'None' (no specific
-            column checked)
-
-        """
-        if self._access_rights == 'nonuser':
-            return False
-        if self._access_rights is None:
-            result = True
-        else:
-            rights = self._access_rights.get(action)
-            if rights is None:
-                # No action rights defined => only system rights apply
-                # (this function is *action* rights check).
-                result = True
-                access_rights = Specification.data_access_rights(action)
-                if access_rights is not None:
-                    result = access_rights.permitted(perm, self._user_roles, column=column)
-            else:
-                if column is None:
-                    permissions = rights.get(True, ())
-                else:
-                    permissions = rights.get(column, None)
-                    if permissions is None:
-                        permissions = rights.get(None, ())
-                result = perm in permissions
-        return result
 
     def api_decrypted_areas(self):
         return self._decrypted_areas
