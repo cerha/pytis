@@ -47,6 +47,8 @@ def run():
     parser.add_argument('--table', help="Process only given table and nothing else.")
     parser.add_argument('--user', help="Process only given user.")
     parser.add_argument('--log-users', action='store_true', help="Print processed user names.")
+    parser.add_argument('--dry-run', action='store_true',
+                        help="Rollback the transaction at the end.")
     args, argv = parser.parse_known_args()
     try:
         pytis.config.add_command_line_options([sys.argv[0], '--config', args.config] + argv)
@@ -169,7 +171,10 @@ def run():
         transaction.rollback()
         raise
     else:
-        transaction.commit()
+        if args.dry_run:
+            transaction.rollback()
+        else:
+            transaction.commit()
 
 
 if __name__ == '__main__':
