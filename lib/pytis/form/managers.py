@@ -320,6 +320,52 @@ class LegacyFormSettingsManager(LegacyUserSetttingsManager):
         return result
 
 
+class FormProfileParamsManager(UserSetttingsManager):
+    """Accessor of database storage of form profile parameters.
+
+    This manager is only used internally by FormProfileManager to retrieve form
+    specific profile parameters which are then combined with form independent
+    profile parameters (filter).
+
+    """
+    _TABLE = 'e_pytis_form_profile_params'
+    _COLUMNS = ('id', 'username', 'spec_name', 'profile_id', 'form_name', 'params', 'errors')
+
+    def load(self, spec_name, form_name, profile_id, transaction=None):
+        """Return previously stored form profile parameters dictionary."""
+        row = self._row(spec_name=spec_name, form_name=form_name, profile_id=profile_id,
+                        transaction=transaction)
+        if row:
+            return row['params'].value()
+        else:
+            return {}
+
+    def list_form_names(self, spec_name, transaction=None):
+        """Return a sequence of form names for which profiles were saved."""
+        condition = self._condition(spec_name=spec_name)
+        values = self._data.distinct('form_name', condition=condition, transaction=transaction)
+        return [v.value() for v in values]
+
+    def save(self, spec_name, form_name, profile_id, params, errors, transaction=None):
+        """Save form profile parameters dictionary."""
+        assert isinstance(params, dict)
+        self._save(dict(params=params, errors=errors),
+                   spec_name=spec_name, form_name=form_name, profile_id=profile_id,
+                   transaction=transaction)
+
+    def drop(self, spec_name, form_name, profile_id, transaction=None):
+        """Remove the previously saved form parameters.
+
+        Arguments:
+          spec_name, form_name -- unique string identification of a form to which the
+            profile belongs (see 'FormProfileManager' class docuemntation).
+          profile_id -- string identifier of the profile to drop.
+
+        """
+        self._drop(spec_name=spec_name, form_name=form_name, profile_id=profile_id,
+                   transaction=transaction)
+
+
 class FormProfileManager(UserSetttingsManager):
     """Accessor of database storage of form profiles.
 
@@ -657,52 +703,6 @@ class FormProfileManager(UserSetttingsManager):
                                 if (profile.id().startswith(prefix) and
                                     profile.id()[len(prefix):].isdigit())]
         return prefix + str(max(user_profile_numbers + [0]) + 1)
-
-
-class FormProfileParamsManager(UserSetttingsManager):
-    """Accessor of database storage of form profile parameters.
-
-    This manager is only used internally by FormProfileManager to retrieve form
-    specific profile parameters which are then combined with form independent
-    profile parameters (filter).
-
-    """
-    _TABLE = 'e_pytis_form_profile_params'
-    _COLUMNS = ('id', 'username', 'spec_name', 'profile_id', 'form_name', 'params', 'errors')
-
-    def load(self, spec_name, form_name, profile_id, transaction=None):
-        """Return previously stored form profile parameters dictionary."""
-        row = self._row(spec_name=spec_name, form_name=form_name, profile_id=profile_id,
-                        transaction=transaction)
-        if row:
-            return row['params'].value()
-        else:
-            return {}
-
-    def list_form_names(self, spec_name, transaction=None):
-        """Return a sequence of form names for which profiles were saved."""
-        condition = self._condition(spec_name=spec_name)
-        values = self._data.distinct('form_name', condition=condition, transaction=transaction)
-        return [v.value() for v in values]
-
-    def save(self, spec_name, form_name, profile_id, params, errors, transaction=None):
-        """Save form profile parameters dictionary."""
-        assert isinstance(params, dict)
-        self._save(dict(params=params, errors=errors),
-                   spec_name=spec_name, form_name=form_name, profile_id=profile_id,
-                   transaction=transaction)
-
-    def drop(self, spec_name, form_name, profile_id, transaction=None):
-        """Remove the previously saved form parameters.
-
-        Arguments:
-          spec_name, form_name -- unique string identification of a form to which the
-            profile belongs (see 'FormProfileManager' class docuemntation).
-          profile_id -- string identifier of the profile to drop.
-
-        """
-        self._drop(spec_name=spec_name, form_name=form_name, profile_id=profile_id,
-                   transaction=transaction)
 
 
 class LegacyFormProfileManager(LegacyUserSetttingsManager):
