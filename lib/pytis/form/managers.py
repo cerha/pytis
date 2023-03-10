@@ -351,10 +351,11 @@ class FormProfileManager(UserSetttingsManager):
     specifications) by this prefix.
 
     """
+    _PARAMS_MANAGER_CLASS = FormProfileParamsManager
 
     def __init__(self, dbconnection, username=None):
         super(FormProfileManager, self).__init__(dbconnection, username=username)
-        self._params_manager = FormProfileParamsManager(dbconnection, username=username)
+        self._params_manager = self._PARAMS_MANAGER_CLASS(dbconnection, username=username)
 
     def _pack_filter(self, something):
         if isinstance(something, pytis.form.IN):
@@ -656,12 +657,6 @@ class FormProfileManager(UserSetttingsManager):
                                 if (profile.id().startswith(prefix) and
                                     profile.id()[len(prefix):].isdigit())]
         return prefix + str(max(user_profile_numbers + [0]) + 1)
-
-
-class NewFormProfileManager(FormProfileManager):
-    # Hack for config-updater.py avoiding LegacyFormProfileManager usage
-    # even if old columns still exist (see UserSetttingsManager.__new__).
-    pass
 
 
 class FormProfileParamsManager(UserSetttingsManager):

@@ -32,8 +32,17 @@ import pytis.presentation
 import pytis.data as pd
 from pytis.form.managers import (
     LegacyApplicationConfigManager, LegacyFormSettingsManager, LegacyFormProfileManager,
-    NewFormProfileManager, LegacyAggregatedViewsManager,
+    FormProfileManager, FormProfileParamsManager, LegacyAggregatedViewsManager,
 )
+
+class NewFormProfileParamsManager(FormProfileParamsManager):
+    pass
+
+class NewFormProfileManager(FormProfileManager):
+    # Hack for config-updater.py avoiding LegacyFormProfileManager usage
+    # even if old columns still exist (see UserSetttingsManager.__new__).
+    _PARAMS_MANAGER_CLASS = NewFormProfileParamsManager
+
 
 def run():
     # Process command line options and init configuration.
