@@ -38,7 +38,7 @@ from pytis.form.managers import (
 def run():
     # Process command line options and init configuration.
     parser = argparse.ArgumentParser(
-        description="Update saved Pytis user configurations.",
+        description="Convert saved Pytis user configurations from pickled objects to JSON.",
         epilog=("Additionally, you can pass other valid Pytis command line arguments, "
                 "such as --dbhost or --dbname to override certain configuration file "
                 "options."),
