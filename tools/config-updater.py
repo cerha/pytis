@@ -32,7 +32,7 @@ import pytis.presentation
 import pytis.data as pd
 from pytis.form.managers import (
     LegacyApplicationConfigManager, LegacyFormSettingsManager, LegacyFormProfileManager,
-    FormProfileManager, LegacyAggregatedViewsManager,
+    NewFormProfileManager, LegacyAggregatedViewsManager,
 )
 
 def run():
@@ -123,7 +123,7 @@ def run():
                 if args.log_users:
                     print("  Processing user: {}".format(username))
                 mgr = LegacyFormProfileManager(pytis.config.dbconnection, username=username)
-                newmgr = FormProfileManager(pytis.config.dbconnection, username=username)
+                newmgr = NewFormProfileManager(pytis.config.dbconnection, username=username)
                 for spec_name in mgr.list_spec_names(transaction=transaction):
                     try:
                         view_spec = resolver.get(spec_name, 'view_spec')

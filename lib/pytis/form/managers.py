@@ -65,7 +65,7 @@ class UserSetttingsManager(object):
     _COLUMNS = ()
 
     def __new__(cls, dbconnection, username=None):
-        if not cls.__name__.startswith('Legacy'):
+        if not cls.__name__.startswith('Legacy') and not cls.__name__.startswith('New'):
             legacy_class = globals()['Legacy' + cls.__name__]
             try:
                 pytis.data.dbtable(legacy_class._TABLE, legacy_class._COLUMNS, dbconnection)
@@ -656,6 +656,12 @@ class FormProfileManager(UserSetttingsManager):
                                 if (profile.id().startswith(prefix) and
                                     profile.id()[len(prefix):].isdigit())]
         return prefix + str(max(user_profile_numbers + [0]) + 1)
+
+
+class NewFormProfileManager(FormProfileManager):
+    # Hack for config-updater.py avoiding LegacyFormProfileManager usage
+    # even if old columns still exist (see UserSetttingsManager.__new__).
+    pass
 
 
 class FormProfileParamsManager(UserSetttingsManager):
