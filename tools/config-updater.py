@@ -36,10 +36,13 @@ from pytis.form.managers import (
 )
 
 class NewFormProfileParamsManager(FormProfileParamsManager):
-    pass
+    def save(self, spec_name, form_name, profile_id, params, errors, transaction=None):
+        if not all(v is None for v in params.values()):
+            super(NewFormProfileParamsManager, self).save(spec_name, form_name, profile_id,
+                                                          params, errors, transaction=transaction)
 
 class NewFormProfileManager(FormProfileManager):
-    # Hack for config-updater.py avoiding LegacyFormProfileManager usage
+    # Rename the classes with New* prefix to avoid Legacy* class usage
     # even if old columns still exist (see UserSetttingsManager.__new__).
     _PARAMS_MANAGER_CLASS = NewFormProfileParamsManager
 
