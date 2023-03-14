@@ -906,7 +906,7 @@ class LegacyFormProfileManager(LegacyUserSetttingsManager):
             save_params(transaction)
 
     def load_profiles(self, spec_name, form_name, view_spec, data_object, default_profile,
-                      transaction=None, rename_columns={}, delete_columns=()):
+                      transaction=None, rename_columns={}, delete_columns=(), only_saved=False):
         def load_params(profile_id):
             params = self._params_manager.load(spec_name, form_name, profile_id,
                                                transaction=transaction)
@@ -924,6 +924,8 @@ class LegacyFormProfileManager(LegacyUserSetttingsManager):
             # EQ('date', now()) which are destroyed when saved (the saved
             # condition would be EQ('date', '2011-03-01') for example).
             params, errors = load_params(profile.id())
+            if only_saved and not params:
+                continue
             if not errors:
                 for param, value in self._profile_params(profile).items():
                     if params.get(param) is None:

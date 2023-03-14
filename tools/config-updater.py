@@ -143,7 +143,8 @@ def run():
                     for form_name in mgr.list_form_names(spec_name, transaction=transaction):
                         data_object = data_spec.create(dbconnection_spec=pytis.config.dbconnection)
                         profiles = mgr.load_profiles(spec_name, form_name, view_spec, data_object,
-                                                     default_profile, transaction=transaction)
+                                                     default_profile, transaction=transaction,
+                                                     only_saved=True)
                         for profile in profiles:
                             newmgr.save_profile(spec_name, form_name, profile,
                                                 transaction=transaction)
