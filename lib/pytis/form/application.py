@@ -173,7 +173,6 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         self._windows = XStack()
         self._modals = Stack()
         self._statusbar = None
-        self._status_field_access = None
         self._help_browser = None
         self._login_success = False
         keymap = self.keymap = Keymap()
@@ -186,6 +185,9 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
                 args = {}
             keymap.define_key(key, cmd, args)
         pytis.form.app = self
+        if not self._headless:
+            self._statusbar = sb = StatusBar(frame, self._specification.status_fields())
+            self._status_fields = self._StatusFieldAccess(sb.fields)
 
         # Initialize login and password.
         success, result = db_operation(pd.dbtable, 'pg_catalog.pg_tables', ('tablename',))
@@ -194,17 +196,6 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         # Unlock crypto keys
         self._unlock_crypto_keys()
 
-        # Define statusbar
-        # TODO: This is temporary backwards compatible conversion of status_fields()
-        # specifications.  It should be removed when all applications are updated.
-        default_fields = dict([(f.id(), f)
-                               for f in pytis.presentation.Application().status_fields()])
-        status_fields = [default_fields.get(x[0], StatusField(x[0], width=x[1]))
-                         if isinstance(x, tuple) else x
-                         for x in self._specification.status_fields()]
-        if not self._headless:
-            self._statusbar = sb = StatusBar(frame, status_fields)
-            self._status_field_access = self._StatusFieldAccess(sb.fields)
         self._initial_config = [
             (o, copy.copy(getattr(pytis.config, o)))
             for o in pytis.form.configurable_options() + ('initial_keyboard_layout',)]
@@ -1444,7 +1435,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
 
     @property
     def api_status(self):
-        return self._status_field_access
+        return self._status_fields
 
     def api_refresh(self):
         self._cmd_refresh(interactive=False)
