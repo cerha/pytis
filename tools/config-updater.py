@@ -37,7 +37,9 @@ from pytis.form.managers import (
 
 class NewFormProfileParamsManager(FormProfileParamsManager):
     def save(self, spec_name, form_name, profile_id, params, errors, transaction=None):
-        if not all(v is None for v in params.values()):
+        if all(v is None for v in params.values()):
+            self.drop(spec_name, form_name, profile_id, transaction=transaction)
+        else:
             super(NewFormProfileParamsManager, self).save(spec_name, form_name, profile_id,
                                                           params, errors, transaction=transaction)
 
