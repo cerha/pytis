@@ -94,11 +94,6 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
     volání její metody 'run()'.
 
     """
-    _menubar_forms = {}
-    _log_login = True
-    _recent_directories = {}
-    _remote_connection_last_available = None
-
     _WINDOW_MENU_TITLE = _("&Windows")
 
     _STATE_RECENT_FORMS = 'recent_forms'
@@ -133,6 +128,10 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
 
         """
         self._headless = headless
+        self._menubar_forms = {}
+        self._log_login = True
+        self._recent_directories = {}
+        self._remote_connection_last_available = None
         super(Application, self).__init__()
 
     def OnInit(self):
