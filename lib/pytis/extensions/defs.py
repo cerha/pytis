@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2022 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2023 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2006-2015 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -27,7 +27,7 @@ import pytis.util
 import pytis.data as pd
 
 from pytis.api import app
-from pytis.presentation import PresentedRow
+from pytis.presentation import Field, PresentedRow, Menu, MenuItem
 from pytis.util import Resolver, ResolverError, identity, log, EVENT, OPERATIONAL
 
 
@@ -68,8 +68,8 @@ def get_menu_forms():
         if queue:
             head, tail = queue[0], queue[1:]
             found.append(head)
-            if isinstance(head, pytis.form.Menu):
-                flatten_menus(list(head.items()), found, level=level + 1)
+            if isinstance(head, Menu):
+                flatten_menus(list(head.items), found, level=level + 1)
             result = flatten_menus(tail, found, level=level)
         else:
             result = found
@@ -85,11 +85,11 @@ def get_menu_forms():
             menus = pytis.config.resolver.get('application', 'menu')
         else:
             menus = appl.menu()
-        forms = [(item.args()['form_class'], item.args()['name'])
+        forms = [(item.args['form_class'], item.args['name'])
                  for item in flatten_menus(menus, [])
-                 if (isinstance(item, pytis.form.MItem) and
-                     item.command() == pytis.form.Application.COMMAND_RUN_FORM and
-                     not issubclass(item.args()['form_class'], pytis.form.ConfigForm))]
+                 if (isinstance(item, MenuItem) and
+                     item.command == pytis.form.Application.COMMAND_RUN_FORM and
+                     not issubclass(item.args['form_class'], pytis.form.ConfigForm))]
     else:
         forms = []
 
@@ -147,7 +147,7 @@ def check_form():
 
     resolver = pytis.config.resolver
     result = pytis.form.run_form(pytis.form.InputForm, title="Kontrola specifikace", fields=(
-        pytis.presentation.Field('spec', "Specifikace", not_null=True, width=30),
+        Field('spec', "Specifikace", not_null=True, width=30),
     ))
     if result:
         spec = result['spec'].value()

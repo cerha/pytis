@@ -47,7 +47,7 @@ from pytis.api import app
 from pytis.presentation import (
     AttachmentStorage, Button, CodebookSpec, Editable, Enumeration,
     Field, HGroup, Orientation, PostProcess, PresentedRow,
-    SelectionType, TextFilter, TextFormat, computer
+    SelectionType, TextFilter, TextFormat, MenuSeparator, computer
 )
 from pytis.util import (
     ProgramError, ResolverError, find, format_byte_size, argument_names,
@@ -58,9 +58,9 @@ from .dialog import Calendar, ColorSelector, Error
 from .form import RecordForm
 from .event import wx_callback
 from .screen import (
-    CallbackHandler, InfoWindow, KeyHandler, MSeparator, TextHeadingSelector,
-    char2px, dlg2px, file_menu_items, get_icon, mitem,
-    paste_from_clipboard, popup_menu, wx_button, wx_focused_window,
+    CallbackHandler, InfoWindow, KeyHandler, TextHeadingSelector,
+    char2px, dlg2px, file_menu_items, get_icon, uicommand_mitem,
+    paste_from_clipboard, wx_button, wx_focused_window,
     copy_to_clipboard, field_size
 )
 from .application import (
@@ -345,7 +345,7 @@ class InputField(KeyHandler, CommandHandler):
     # Other private methods.
 
     def _menu(self):
-        # Return a tuple of popup menu items ('MItem' instances).
+        # Return a tuple of popup menu items ('MenuItem' instances).
         menu = (UICommand(InputField.COMMAND_RESET(),
                           _("Restore the original value"),
                           _("Discard all changes.")),)
@@ -363,11 +363,12 @@ class InputField(KeyHandler, CommandHandler):
         menu = []
         for item in self._menu():
             if item is None:
-                item = MSeparator()
+                item = MenuSeparator()
             elif isinstance(item, UICommand):
-                item = mitem(item.clone(_command_handler=handler(item)))
+                item = uicommand_mitem(item.clone(_command_handler=handler(item)))
             menu.append(item)
-        popup_menu(self._current_ctrl(), menu, position=position, keymap=global_keymap())
+        pytis.form.app.popup_menu(self._current_ctrl(), menu, position=position,
+                                  keymap=global_keymap())
 
     def _validate(self):
         return self._row.validate(self.id(), self._get_value())

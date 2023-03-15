@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2020 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2023 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2016 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -31,10 +31,9 @@ konfiguračních voleb obsažených v tomto layoutu.
 
 import wx
 
-from pytis.presentation import Field, LayoutSpec, LVGroup, VGroup, ViewSpec
+from pytis.presentation import Field, LayoutSpec, LVGroup, VGroup, ViewSpec, MenuItem
 import pytis.util
 from .form import PopupEditForm
-from .screen import MItem
 
 _ = pytis.util.translations('pytis-wx')
 
@@ -91,21 +90,21 @@ _FIELDSPEC_KWARGS = {
 def config_menu_items(hotkeys={}):
     """Vrať seznam položek menu pro otevření konfiguračních formulářů.
 
-    Vrací tuple instancí 'MItem', z nichž každá otevírá jeden ze standardně
+    Vrací tuple instancí 'MenuItem', z nichž každá otevírá jeden ze standardně
     definovaných formulářů pro editaci konfiguračních voleb.  Použitím této
     funkce v definici menu aplikace budou automaticky do menu přidávány položky
     standardních konfiguračních formulářů bez nutnosti změn v aplikaci při
     aktualizaci systému Pytis.
 
     """
-    items = [MItem(layout.caption(),
-                   command=pytis.form.Application.COMMAND_RUN_FORM,
-                   args=dict(form_class=ConfigForm, name=name),
-                   hotkey=hotkeys.get(name),
-                   help=(_('Open configuration form "%s"') % layout.caption()),
-                   icon=('config-' + name))
-             for name, layout in _LAYOUT]
-    return tuple(items)
+    return tuple(
+        MenuItem(layout.caption(),
+                 command=pytis.form.Application.COMMAND_RUN_FORM(form_class=ConfigForm, name=name),
+                 hotkey=hotkeys.get(name),
+                 help=(_('Open configuration form "%s"') % layout.caption()),
+                 icon=('config-' + name))
+        for name, layout in _LAYOUT
+    )
 
 
 def configurable_options():

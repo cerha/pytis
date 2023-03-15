@@ -49,6 +49,7 @@ import pytis.data as pd
 import pytis.form
 from pytis.presentation import (
     Field, Specification, StatusField, computer, Text, TextFormat, PresentedRow,
+    Menu, MenuItem, MenuSeparator,
 )
 import pytis.util
 import pytis.remote
@@ -57,14 +58,15 @@ from pytis.util import (
     ACTION, DEBUG, EVENT, OPERATIONAL, ProgramError, ResolverError, Stack, XStack,
     argument_names, find, format_traceback, identity, log, rsa_encrypt
 )
-from .command import CommandHandler
+from .command import CommandHandler, command_icon
 from .event import (
     UserBreakException, interrupt_init, interrupt_watcher,
     top_level_exception, unlock_callbacks, wx_callback, yield_,
 )
 from .screen import (
-    Browser, CheckItem, KeyHandler, Keymap, Menu, MenuBar, MItem, MSeparator, StatusBar,
-    acceskey_prefix, beep, busy_cursor, get_icon, mitem, wx_focused_window, make_in_operator,
+    Browser, KeyHandler, Keymap, StatusBar,
+    acceskey_prefix, beep, busy_cursor, get_icon, uicommand_mitem,
+    wx_focused_window, make_in_operator, hotkey_string,
 )
 from . import dialog
 from pytis.dbdefs.db_pytis_crypto import (
@@ -94,12 +96,12 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
     volání její metody 'run()'.
 
     """
-    _WINDOW_MENU_TITLE = _("&Windows")
-
     _STATE_RECENT_FORMS = 'recent_forms'
     _STATE_STARTUP_FORMS = 'saved_startup_forms'  # Avoid name conflict with config.startup_forms!
     _STATE_RECENT_DIRECTORIES = 'recent_directories'
     _STATE_FRAME_SIZE = 'frame_size'
+    _WINDOW_MENU_ID = 'window-menu'
+    _RECENT_FORMS_MENU_ID = 'recent-forms-menu'
 
     class _StatusFieldAccess(object):
         def __init__(self, fields):
@@ -132,6 +134,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         self._log_login = True
         self._recent_directories = {}
         self._remote_connection_last_available = None
+        self._menu_by_id = {}
         super(Application, self).__init__()
 
     def OnInit(self):
@@ -277,12 +280,12 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         # to open a menu.
         for item in menu:
             if isinstance(item, Menu):
-                self._cache_menu_enabled(list(item.items()))
-            elif not isinstance(item, pytis.form.MSeparator):
-                enabled = item.command().enabled(**item.args())
+                self._cache_menu_enabled(list(item.items))
+            elif not isinstance(item, MenuSeparator):
+                enabled = item.command.enabled(**item.args)
                 if __debug__:
                     if pytis.config.debug:
-                        log(DEBUG, 'Menu item:', (item.title(), enabled))
+                        log(DEBUG, 'Menu item:', (item.title, enabled))
 
     def _spec_title(self, name):
         if name.find('::') != -1:
@@ -402,26 +405,38 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         else:
             return spec_class.public
 
-    def _create_command_menu(self, menus):
-        items = []
-        for group in pytis.form.FORM_MENU_COMMANDS:
-            if items:
-                items.append(MSeparator())
-            for uicmd in group:
-                items.append(mitem(uicmd))
-        menus.append(Menu(_("Commands"), items))
-
-    def _create_help_menu(self, menus):
-        if [m for m in menus if m.title() == _("Help")]:
-            log(OPERATIONAL, "Help menu found - not creating one.")
-            return
-        items = [mitem(pytis.form.UICommands.PYTIS_HELP)]
-        items.extend((MSeparator(),
-                      mitem(pytis.form.UICommands.HELP),
-                      mitem(pytis.form.UICommands.DESCRIBE)))
-        menus.append(Menu(_("Help"), items))
-
     def _dynamic_menu(self):
+        def build(template):
+            def add_key(title):
+                # This actually works only for the top menubar, other
+                # accelerators are assigned by wx independently.  But it's OK
+                # as it's consistent with pre-DMP era.
+                for i in range(len(title)):
+                    letter = title[i]
+                    if letter in string.ascii_letters and letter not in used_letters:
+                        used_letters.append(letter)
+                        return title[:i] + '&' + title[i:]
+                return title
+
+            used_letters = []
+            if template is None:
+                result = MenuSeparator()
+            elif isinstance(template, list):
+                heading = template[0]
+                items = [build(i) for i in template[1:]]
+                if heading is None:
+                    result = items
+                else:
+                    title = add_key(heading[1])
+                    result = Menu(title, items)
+            else:
+                name, title, action, help, hotkey = template
+                command = self._parse_action(action)
+                if hotkey:
+                    hotkey = tuple(key.replace('SPC', ' ') for key in hotkey.split(' '))
+                result = MenuItem(add_key(title), command, help=help, hotkey=hotkey)
+            return result
+
         # Check for menu presence, if not available, return None
         language = pytis.util.current_language()
         try:
@@ -470,77 +485,224 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
                     current_template = [(name, title, help, hotkey,)]
                     upper_template.append(current_template)
                     parents.append((position, current_template,))
-        # Done, return the menu structure
-        return menu_template
-
-    def _build_menu(self, menu_prototype):
-        menu_template = self._dynamic_menu()
-        if not menu_template:
-            return list(menu_prototype)
-
-        def build(template):
-            used_letters = []
-
-            def add_key(title):
-                # This actually works only for the top menubar, other
-                # accelerators are assigned by wx independently.  But it's OK
-                # as it's consistent with pre-DMP era.
-                for i in range(len(title)):
-                    letter = title[i]
-                    if letter in string.ascii_letters and letter not in used_letters:
-                        used_letters.append(letter)
-                        return title[:i] + '&' + title[i:]
-                return title
-            if isinstance(template, list):
-                heading = template[0]
-                items = [build(i) for i in template[1:]]
-                if heading is None:
-                    result = items
-                else:
-                    title = add_key(heading[1])
-                    result = Menu(title, items)
-            elif template is None:
-                result = MSeparator()
-            else:
-                name, title, action, help, hotkey = template
-                title = add_key(title)
-                command = MItem.parse_action(action)
-                if hotkey is None:
-                    hotkeys = None
-                else:
-                    hotkeys = [key.replace('SPC', ' ') for key in hotkey.split(' ')]
-                result = MItem(title, command, help=help, hotkey=hotkeys)
-            return result
+        # Done, build the menu structure from the template.
         return [build(t) for t in menu_template]
 
+    def _parse_action(self, action):
+        """Parse action id back to command and its arguments.
+
+        Arguments:
+
+          action -- the action id, string
+          globals -- dictionary of global name space
+          locals -- dictionary of local name space
+
+        Return pair COMMAND, ARGUMENTS corresponding to the given action id.
+        If the action id is invalid, behavior of this method is undefined.
+
+        """
+        components = action.split('/')
+        kind = components[0]
+
+        def find_symbol(symbol):
+            # temporary hack to not crash on special situations to be solved
+            # later
+            try:
+                return eval(symbol)
+            except AttributeError:
+                sys.stderr.write("Can't find object named `%s'\n" % (symbol,))
+                return None
+        if components[-1]:
+            return components[-1]
+        elif kind == 'form':
+            command = pytis.form.Application.COMMAND_RUN_FORM
+            class_name, form_name = components[1], components[2]
+            arguments = dict(form_class=find_symbol(class_name), name=form_name)
+            if components[3]:
+                for extra in components[3].split('&'):
+                    if extra[:len('binding=')] == 'binding=':
+                        arguments['binding'] = extra[len('binding='):]
+                        break
+        elif kind == 'handle':
+            command = pytis.form.Application.COMMAND_HANDLED_ACTION
+            function_name = components[1]
+            arguments = dict(handler=find_symbol(function_name),
+                             enabled=lambda: pytis.form.app.action_has_access(action))
+        elif kind == 'proc':
+            command = pytis.form.Application.COMMAND_RUN_PROCEDURE
+            proc_name, spec_name = components[1], components[2]
+            arguments = dict(proc_name=proc_name, spec_name=spec_name,
+                             enabled=lambda: pytis.form.app.action_has_access(action))
+        elif kind == 'NEW_RECORD':
+            command = pytis.form.Application.COMMAND_NEW_RECORD
+            arguments = dict(name=components[1])
+        else:
+            command = pytis.form.Command.command(kind)
+            arguments = None
+        return command, arguments
+
     def _create_menubar(self):
-        self._recent_forms_menu = None
-        menu = self._menu = self._build_menu(self._specification.menu())
-        menu.append(Menu(self._WINDOW_MENU_TITLE,
-                         (MItem(_("Previous window"), command=Application.COMMAND_RAISE_PREV_FORM,
-                                help=_("Switch to the previous window in the window list order.")),
-                          MItem(_("Next window"), command=Application.COMMAND_RAISE_NEXT_FORM,
-                                help=_("Switch to the next window in the window list order.")),
-                          MItem(_("Most recently active window"),
-                                command=Application.COMMAND_RAISE_RECENT_FORM,
-                                help=_("Allows mutual switching of two most recently active "
-                                       "windows cyclically.")),
-                          MItem(_("Close active window"),
-                                command=pytis.form.Form.COMMAND_LEAVE_FORM,
-                                help=_("Closes the window of the active form.")),
-                          MSeparator(),
-                          ),
-                         allow_autoindex=False))
-        self._create_command_menu(menu)
-        self._create_help_menu(menu)
-        # Determining availability of menu items may invoke database operations...
-        success, mb = db_operation(MenuBar, self._frame, menu, self.keymap)
-        if not success:
-            return None
-        self._menubar = mb
-        self._window_menu = mb.GetMenu(mb.FindMenu(self._WINDOW_MENU_TITLE))
-        assert self._window_menu is not None
-        return mb
+        menu = self._dynamic_menu()
+        if menu is None:
+            menu = list(self._specification.menu())
+        self._menu = menu
+
+        menu.append(Menu(_("&Windows"), (
+            MenuItem(_("Previous window"), command=Application.COMMAND_RAISE_PREV_FORM(),
+                     help=_("Switch to the previous window in the window list order.")),
+            MenuItem(_("Next window"), command=Application.COMMAND_RAISE_NEXT_FORM(),
+                     help=_("Switch to the next window in the window list order.")),
+            MenuItem(_("Most recently active window"),
+                     command=Application.COMMAND_RAISE_RECENT_FORM(),
+                     help=_("Allows mutual switching of two most recently active "
+                            "windows cyclically.")),
+            MenuItem(_("Close active window"), command=pytis.form.Form.COMMAND_LEAVE_FORM(),
+                     help=_("Closes the window of the active form.")),
+            MenuSeparator(),
+        ), name=self._WINDOW_MENU_ID, autoindex=False))
+        command_menu_items = []
+        for group in pytis.form.FORM_MENU_COMMANDS:
+            if command_menu_items:
+                command_menu_items.append(MenuSeparator())
+            for uicmd in group:
+                command_menu_items.append(uicommand_mitem(uicmd))
+        menu.append(Menu(_("Commands"), command_menu_items))
+        if _("Help") in [m.title for m in menu]:
+            log(OPERATIONAL, "Help menu found - not creating one.")
+        else:
+            menu.append(Menu(_("Help"), [
+                uicommand_mitem(pytis.form.UICommands.PYTIS_HELP)
+            ] + [
+                MenuSeparator(),
+                uicommand_mitem(pytis.form.UICommands.HELP),
+                uicommand_mitem(pytis.form.UICommands.DESCRIBE),
+            ]))
+
+        self._menubar = menubar = wx.MenuBar()
+        #print(self.keymap._keymap)
+        for item in menu:
+            # Determining availability of menu items may invoke database operations...
+            success, result = db_operation(self._create_menu, menubar, item, self.keymap)
+            if success:
+                menubar.Append(result, item.title)
+            else:
+                return None
+        self._frame.SetMenuBar(menubar)
+        return menubar
+
+    def _create_menu(self, parent, spec, keymap):
+        def on_highlight_item(event):
+            if event.GetMenuId() != -1:
+                item = menu.FindItemById(event.GetMenuId())
+                if item:
+                    app.echo(item.GetHelp())
+            event.Skip()
+
+        def lookup_key(keymap, hotkey):
+            key, hotkey = hotkey[0], hotkey[1:]
+            keydef = keymap.lookup_key(key)
+            if isinstance(keydef, Keymap) and hotkey:
+                return lookup_key(keydef, hotkey)
+            elif isinstance(keydef, list):
+                return keydef[0]
+            else:
+                return None
+
+        def cmdstr(command, args):
+            return '%s(%s)' % (command.name(), ', '.join('%s=%r' % x for x in args.items()))
+
+        # At first, compute the maximal width of hotkey string in this menu.
+        max_hotkey_width = 0
+        hotkey_strings = {}
+        for item in spec.items:
+            if isinstance(item, MenuItem):
+                hotkey = item.hotkey
+                if hotkey and keymap:
+                    cmd = lookup_key(keymap, hotkey)
+                    if cmd and cmd != (item.command, item.args):
+                        log(OPERATIONAL, "Duplicate hotkey %s on menu item '%s': "
+                            "Command %s collides with command %s defined elsewhere." %
+                            (hotkey, item.title, cmdstr(item.command, item.args), cmdstr(*cmd)))
+                if not hotkey and keymap:
+                    args = dict([(k, v) for k, v in item.args.items()
+                                 if k != '_command_handler'])
+                    hotkey = keymap.lookup_command(item.command, args)
+                elif keymap:
+                    keymap.define_key(hotkey, item.command, item.args)
+                if hotkey:
+                    hotkey_strings[item] = string = '    ' + hotkey_string(hotkey)
+                    hotkey_width = parent.GetTextExtent(string)[0]
+                    max_hotkey_width = max(hotkey_width, max_hotkey_width)
+
+        # Now create the items and remember max. width of whole item label.
+        menu = wx.Menu()
+        wx_callback(wx.EVT_MENU_HIGHLIGHT_ALL, menu, on_highlight_item)
+        if spec.name:
+            self._menu_by_id[spec.name] = menu
+        hotkey_items = []
+        max_label_width = 0
+        i = 0
+
+        for item in spec.items:
+            if isinstance(item, MenuSeparator):
+                menu.AppendSeparator()
+            else:
+                title = item.title
+                if spec.autoindex and pytis.config.auto_menu_accel:
+                    title = acceskey_prefix(i) + title
+                i += 1
+                width = parent.GetTextExtent(title.replace('&', ''))[0] + 20
+                if isinstance(item, Menu):
+                    menu.AppendSubMenu(self._create_menu(parent, item, keymap), title)
+                    max_label_width = max(width + 20, max_label_width)
+                elif isinstance(item, MenuItem):
+                    mitem = self._append_menu_item(menu, item, title)
+                    if item in hotkey_strings:
+                        hotkey_items.append((item, mitem, title, width))
+                    max_label_width = max(width + max_hotkey_width, max_label_width)
+                else:
+                    raise ProgramError('Invalid menu item type', item)
+        # Append hotkey description string to the item labels.
+        # Fill with spaces to justify hotkeys on the right edge.
+        space_width = parent.GetTextExtent(' ')[0]
+        for item, mitem, title, width in hotkey_items:
+            fill_width = max_label_width - width - max_hotkey_width
+            n = round(float(fill_width) / float(space_width))
+            fill = "%%%ds" % n % ''
+            mitem.SetItemLabel(title + fill + hotkey_strings[item])
+        return menu
+
+    def _append_menu_item(self, menu, item, title=None):
+        def on_ui_event(event):
+            event.Enable(item.command.enabled(**item.args))
+            if item.state:
+                state = item.state()
+                print(item.title, state)
+                event.Check(state)
+
+        def on_invoke_command(event):
+            # Invoke the command through CallAfter to finish menu event processing before
+            # command invocation.  Calling dirrectly for example resulted in disfunctional
+            # TAB traversal in a popup form which was opended through a popup menu command
+            # due to FindFocus() returning a wrong window.  Using CallAfter fixes this.
+            wx.CallAfter(item.command.invoke, **item.args)
+
+        if item.state:
+            # kind = wx.ITEM_RADIO
+            # wx.ITEM_RADIO causes SEGFAULT.  wx.ITEM_CHECK, however,
+            # seems to have the same behavior...
+            kind = wx.ITEM_CHECK
+            icon = None
+        else:
+            kind = wx.ITEM_NORMAL
+            icon = get_icon(item.icon or command_icon(item.command, item.args))
+        mitem = wx.MenuItem(menu, -1, title or item.title, item.help or "", kind=kind)
+        wx_callback(wx.EVT_MENU, self._frame, on_invoke_command, source=mitem)
+        wx_callback(wx.EVT_UPDATE_UI, self._frame, on_ui_event, source=mitem)
+        if icon:
+            mitem.SetBitmap(icon)
+        menu.Append(mitem)
+        return mitem
 
     def _unlock_crypto_keys(self):
         def password_dialog(title, message, verify=False, check=()):
@@ -630,7 +792,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         data.close()
         pd.dbfunction(PytisCryptoUnlockCurrentUserPasswords, crypto_password)
 
-# Ostatní metody
+    # Ostatní metody
 
     def _form_menu_item_title(self, form):
         title = form.title()
@@ -649,56 +811,42 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         return parent
 
     def _update_window_menu(self):
-        def wmitem(i, form):
-            info = form.__class__.__name__
-            if form.name():
-                info += '/' + form.name()
-            return CheckItem(acceskey_prefix(i) + self._form_menu_item_title(form),
-                             help=_("Bring form window to the top (%s)", info),
-                             command=Application.COMMAND_RAISE_FORM,
-                             state=lambda: self.top_window() is form,
-                             args={'form': form})
-        menu = self._window_menu
+        menu = self._menu_by_id.get(self._WINDOW_MENU_ID)
         if menu is not None:
             for i, item in enumerate(menu.GetMenuItems()):
                 if i >= 5:
                     menu.Remove(item.GetId())
                     item.Destroy()
             for i, form in enumerate(self._windows.items()):
-                menu.Append(wmitem(i, form).create(self._frame, menu))
+                info = form.__class__.__name__
+                if form.name():
+                    info += '/' + form.name()
+                self._append_menu_item(menu, MenuItem(
+                    acceskey_prefix(i) + self._form_menu_item_title(form),
+                    help=_("Bring form window to the top (%s)", info),
+                    command=Application.COMMAND_RAISE_FORM(form=form),
+                    state=lambda form=form: self.top_window() is form,
+                ))
 
-    def _update_recent_forms(self, item=None):
-        if item is not None:
-            try:
-                self._recent_forms.remove(item)
-            except ValueError:
-                pass
-            self._recent_forms.insert(0, item)
-            if len(self._recent_forms) > 10:
-                self._recent_forms[10:] = []
-        if self._recent_forms_menu and self._recent_forms_menu.wx_menu():
-            menu = self._recent_forms_menu.wx_menu()
-            for wxitem in menu.GetMenuItems():
-                menu.Remove(wxitem.GetId())
-                wxitem.Destroy()
-            for mitem in self._recent_forms_menu_items():
-                if isinstance(mitem, MSeparator):
-                    menu.AppendSeparator()
-                else:
-                    menu.Append(mitem.create(self._frame, menu))
-
-    def _recent_forms_menu_items(self):
-        items = [MItem(acceskey_prefix(i) + title,
-                       help=_("Open the form (%s)", form_name + '/' + spec_name),
-                       command=Application.COMMAND_RUN_FORM,
-                       args=dict(form_class=getattr(pytis.form, form_name),
-                                 name=spec_name))
-                 for i, (title, form_name, spec_name) in enumerate(self._recent_forms)]
-        items.append(MSeparator())
-        items.append(MItem(_("Clear"),
-                           help=_("Clear the menu of recent forms"),
-                           command=Application.COMMAND_CLEAR_RECENT_FORMS))
-        return items
+    def _update_recent_forms_menu(self):
+        menu = self._menu_by_id.get(self._RECENT_FORMS_MENU_ID)
+        if menu:
+            for item in menu.GetMenuItems():
+                menu.Remove(item.GetId())
+                item.Destroy()
+            for i, (title, form_name, spec_name) in enumerate(self._recent_forms):
+                self._append_menu_item(menu, MenuItem(
+                    acceskey_prefix(i) + title,
+                    help=_("Open the form (%s)", form_name + '/' + spec_name),
+                    command=Application.COMMAND_RUN_FORM(form_class=getattr(pytis.form, form_name),
+                                                         name=spec_name),
+                ))
+            menu.AppendSeparator()
+            self._append_menu_item(menu, MenuItem(
+                _("Clear"),
+                help=_("Clear the menu of recent forms"),
+                command=Application.COMMAND_CLEAR_RECENT_FORMS(),
+            ))
 
     def _raise_form(self, form):
         if form is not None:
@@ -892,7 +1040,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
 
     def _cmd_clear_recent_forms(self):
         self._recent_forms[:] = []
-        self._update_recent_forms()
+        self._update_recent_forms_menu()
 
     def _cmd_refresh(self, interactive=True):
         for w in (self._modals.top(), self._windows.active()):
@@ -1019,8 +1167,15 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
                     form.show()
                     self._update_window_menu()
                     if not isinstance(form, pytis.form.WebForm):
-                        title = self._form_menu_item_title(form)
-                        self._update_recent_forms((title, form_class.__name__, name))
+                        item = (self._form_menu_item_title(form), form_class.__name__, name)
+                        try:
+                            self._recent_forms.remove(item)
+                        except ValueError:
+                            pass
+                        self._recent_forms.insert(0, item)
+                        if len(self._recent_forms) > 10:
+                            self._recent_forms[10:] = []
+                        self._update_recent_forms_menu()
         except UserBreakException:
             pass
         except SystemExit:
@@ -1214,10 +1369,8 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
 
     def recent_forms_menu(self):
         """Return the menu of recently opened forms as 'Menu' instance."""
-        menu = Menu(_("Recently opened forms"),
-                    self._recent_forms_menu_items(), allow_autoindex=False)
-        self._recent_forms_menu = menu
-        return menu
+        return Menu(_("Recently opened forms"), (),
+                    name=self._RECENT_FORMS_MENU_ID, autoindex=False)
 
     def wx_frame(self):
         """Return the main application frame as 'wx.Frame' instance."""
@@ -1326,6 +1479,22 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
             StatusField('remote-status', _("Remote communication status"), width=10,
                         refresh=self._refresh_remote_status, refresh_interval=10000),
         ]
+
+    def popup_menu(self, parent, items, keymap=None, position=None):
+        """Pop-up a wx context menu.
+
+        Arguments:
+           parent -- wx parent window of the menu
+           items -- sequence of MenuItem, MenuSeparator or Menu instances
+           keymap -- keymap to use for determination of menu command keyboard shortcuts
+           position -- optional position of the menu as a tuple (x, y).  The menu is normally
+             positioned automatically under the pointer so position may be needed when displaying menu
+             in response to a keyboard command.
+
+        """
+        menu = self._create_menu(parent, Menu('', items), keymap)
+        parent.PopupMenu(menu, position or wx.DefaultPosition)
+        menu.Destroy()
 
     # Private methods supporting the public API methods (further below)
 
@@ -2289,23 +2458,8 @@ def run_dialog(arg1, *args, **kwargs):
         return pytis.form.app.run_dialog(arg1, *args, **kwargs)
 
 
-class InputDialog(object):
-    """Legacy hack for replacing the DEPRECATED InputDialog by InputForm."""
-    pass
-
-
-class InputNumeric(object):
-    """Legacy hack for replacing the DEPRECATED InputNumeric dialog by InputForm."""
-    pass
-
-
-class InputDate(object):
-    """Legacy hack for replacing the DEPRECATED InputDate dialog by InputForm."""
-    pass
-
-
 def recent_forms_menu():
-    """Vrať menu posledně otevřených formulářů jako instanci 'pytis.form.Menu'.
+    """Vrať menu posledně otevřených formulářů jako instanci 'pytis.presentation.Menu'.
 
     Tato funkce je určena pro využití při definici menu aplikace.  Pokud menu posledně otevřených
     formulářů tímto způsobem do hlavního menu aplikace přidáme, bude jej aplikace dále
@@ -2493,3 +2647,17 @@ def delete_record_question(msg=None):
 
 def built_in_status_fields():
     return pytis.form.app.status_fields()
+
+class InputDialog(object):
+    pass
+
+class InputNumeric(object):
+    pass
+
+class InputDate(object):
+    pass
+
+from pytis.presentation import (
+    Menu, MenuItem as MItem, MenuSeparator as MSeparator,
+    MenuItem as CheckItem, MenuItem as RadioItem,
+)

@@ -50,7 +50,7 @@ from pytis.api import app
 from pytis.presentation import (
     Action, ActionGroup, AggregatedView, CodebookSpec, Field, Editable,
     FormType, SelectionType, Link, TextFormat, ViewSpec, ActionContext,
-    PrettyFoldable,
+    PrettyFoldable, Menu, MenuItem, MenuSeparator,
 )
 from pytis.util import (
     ACTION, DEBUG, EVENT, OPERATIONAL, UNDEFINED,
@@ -67,9 +67,9 @@ from .form import (
     InputForm,
 )
 from .screen import (
-    CheckItem, KeyHandler, Menu, MItem, MSeparator, busy_cursor, make_in_operator,
+    KeyHandler, busy_cursor, make_in_operator,
     copy_to_clipboard, dlg2px, file_menu_items, get_icon, is_busy_cursor,
-    microsleep, popup_menu, wx_button, wx_checkbox, wx_choice, wx_text_ctrl,
+    microsleep, wx_button, wx_checkbox, wx_choice, wx_text_ctrl,
 )
 from .search import sfs_columns
 from .application import (
@@ -557,7 +557,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
     def _context_menu(self):
         """Vrať specifikaci \"kontextového\" popup menu vybrané buňky seznamu.
 
-        Vrací: Sekvenci instancí 'MItem'.
+        Vrací: Sekvenci instancí 'MenuItem'.
 
         Tuto metodu nechť odvozené třídy předefinují, pokud chtějí zobrazovat
         kontextové menu.
@@ -958,92 +958,98 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         return columns
 
     def _displayed_columns_menu(self, column_index):
-        menu = [CheckItem(_("Display row headings"), command=ListForm.COMMAND_TOGGLE_ROW_LABELS,
-                          state=lambda: self._grid.GetRowLabelSize() != 0)]
+        menu = [MenuItem(_("Display row headings"), command=ListForm.COMMAND_TOGGLE_ROW_LABELS(),
+                         state=lambda: self._grid.GetRowLabelSize() != 0)]
         if column_index is not None:
             cid = self._columns[column_index].id()
-            menu.append(MItem(_("Hide this column"),
-                              command=ListForm.COMMAND_TOGGLE_COLUMN(column_id=cid,
-                                                                     position=None)))
+            menu.append(
+                MenuItem(_("Hide this column"),
+                         command=ListForm.COMMAND_TOGGLE_COLUMN(column_id=cid, position=None))
+            )
 
         hidden_columns = [c for c in self._available_columns() if c not in self._columns]
         if hidden_columns:
-            position = column_index + 1 if column_index is not None else len(self._columns)
-            menu.append(Menu(_("Add column"),
-                             [MItem(c.column_label() or c.id(),
-                                    command=ListForm.COMMAND_TOGGLE_COLUMN(column_id=c.id(),
-                                                                           position=position))
-                              for c in hidden_columns]))
+            pos = column_index + 1 if column_index is not None else len(self._columns)
+            menu.append(Menu(_("Add column"), [
+                MenuItem(c.column_label() or c.id(),
+                         command=ListForm.COMMAND_TOGGLE_COLUMN(column_id=c.id(), position=pos))
+                for c in hidden_columns
+            ]))
         else:
-            menu.append(MItem(_("Add column"), command=Application.COMMAND_NOTHING(enabled=False)))
-        menu.append(MItem(_("Displayed columns"), command=ListForm.COMMAND_TOGGLE_COLUMNS()))
+            menu.append(MenuItem(_("Add column"),
+                                 command=Application.COMMAND_NOTHING(enabled=False)))
+        menu.append(MenuItem(_("Displayed columns"), command=ListForm.COMMAND_TOGGLE_COLUMNS()))
         return menu
 
     def _aggregation_menu(self):
-        menu = [CheckItem(title, command=ListForm.COMMAND_TOGGLE_AGGREGATION(operation=op),
-                          state=lambda op=op: op in self._aggregations)
+        menu = [MenuItem(title, command=ListForm.COMMAND_TOGGLE_AGGREGATION(operation=op),
+                         state=lambda op=op: op in self._aggregations)
                 for op, title, icon, label in self._AGGREGATIONS]
-        menu.extend((MSeparator(),
-                     MItem(_("Show all"), command=ListForm.COMMAND_AGGREGATE),
-                     MItem(_("Hide all"), command=ListForm.COMMAND_UNAGGREGATE),
+        menu.extend((MenuSeparator(),
+                     MenuItem(_("Show all"), command=ListForm.COMMAND_AGGREGATE()),
+                     MenuItem(_("Hide all"), command=ListForm.COMMAND_UNAGGREGATE()),
                      ))
         predefined_aggregated_views = self._view.aggregated_views()
         if predefined_aggregated_views:
-            menu.append(MSeparator())
-            menu.extend([MItem(v.name(),
-                               command=ListForm.COMMAND_AGGREGATED_VIEW(aggregated_view_id=v.id()),
-                               help=_("Open predefined aggregated view"))
-                         for v in predefined_aggregated_views])
+            menu.append(MenuSeparator())
+            menu.extend([
+                MenuItem(v.name(),
+                         command=ListForm.COMMAND_AGGREGATED_VIEW(aggregated_view_id=v.id()),
+                         help=_("Open predefined aggregated view"))
+                for v in predefined_aggregated_views
+            ])
         manager = pytis.form.app.aggregated_views_manager
         aggregated_views = [manager.load(self._name, aggregated_view_id)
                             for aggregated_view_id in manager.list(self._name)]
         if aggregated_views:
-            menu.append(MSeparator())
-            menu.extend([MItem(v.name(),
-                               command=ListForm.COMMAND_AGGREGATED_VIEW(aggregated_view_id=v.id()),
-                               help=_("Open user defined aggregated view"))
-                         for v in aggregated_views])
-        menu.extend((MSeparator(),
-                     MItem(_("Define new aggregated view"),
-                           command=ListForm.COMMAND_AGGREGATED_VIEW(aggregated_view_id=None))))
+            menu.append(MenuSeparator())
+            menu.extend([
+                MenuItem(v.name(),
+                         command=ListForm.COMMAND_AGGREGATED_VIEW(aggregated_view_id=v.id()),
+                         help=_("Open user defined aggregated view"))
+                for v in aggregated_views
+            ])
+        menu.extend((MenuSeparator(),
+                     MenuItem(_("Define new aggregated view"),
+                              command=ListForm.COMMAND_AGGREGATED_VIEW(aggregated_view_id=None))))
         if aggregated_views:
-            command = ListForm.COMMAND_DELETE_AGGREGATED_VIEW
-            menu.append(Menu(_("Remove agregated view"),
-                             [MItem(v.name(), command=command(aggregated_view_id=v.id()))
-                              for v in aggregated_views]))
+            menu.append(Menu(_("Remove agregated view"), [MenuItem(
+                v.name(),
+                command=ListForm.COMMAND_DELETE_AGGREGATED_VIEW(aggregated_view_id=v.id()),
+            ) for v in aggregated_views]))
         return menu
 
     def _column_context_menu(self, col):
         return (
             Menu(_("Primary Sorting"), (
-                MItem(_("Sort Ascending"),
-                      command=LookupForm.COMMAND_SORT(col=col, primary=True,
-                                                      direction=LookupForm.SORTING_ASCENDENT)),
-                MItem(_("Sort Descending"),
-                      command=LookupForm.COMMAND_SORT(col=col, primary=True,
-                                                      direction=LookupForm.SORTING_DESCENDANT)),
+                MenuItem(_("Sort Ascending"),
+                         command=LookupForm.COMMAND_SORT(col=col, primary=True,
+                                                         direction=LookupForm.SORTING_ASCENDENT)),
+                MenuItem(_("Sort Descending"),
+                         command=LookupForm.COMMAND_SORT(col=col, primary=True,
+                                                         direction=LookupForm.SORTING_DESCENDANT)),
             )),
             Menu(_("Secondary Sorting"), (
-                MItem(_("Sort Ascending"),
-                      command=LookupForm.COMMAND_SORT(col=col,
-                                                      direction=LookupForm.SORTING_ASCENDENT)),
-                MItem(_("Sort Descending"),
-                      command=LookupForm.COMMAND_SORT(col=col,
-                                                      direction=LookupForm.SORTING_DESCENDANT)),
+                MenuItem(_("Sort Ascending"),
+                         command=LookupForm.COMMAND_SORT(col=col,
+                                                         direction=LookupForm.SORTING_ASCENDENT)),
+                MenuItem(_("Sort Descending"),
+                         command=LookupForm.COMMAND_SORT(col=col,
+                                                         direction=LookupForm.SORTING_DESCENDANT)),
             )),
-            MItem(_("Omit this column from sorting"),
-                  command=LookupForm.COMMAND_SORT(direction=LookupForm.SORTING_NONE, col=col)),
-            MItem(_("Cancel sorting completely"),
-                  command=LookupForm.COMMAND_SORT(direction=LookupForm.SORTING_NONE)),
-            MSeparator(),
-            MItem(_("Group up to this column"),
-                  command=ListForm.COMMAND_SET_GROUPING_COLUMN(col=col)),
-            MItem(_("Cancel visual grouping"),
-                  command=ListForm.COMMAND_SET_GROUPING_COLUMN(col=None)),
-            MSeparator(),
-            MItem(_("Autofilter"), command=ListForm.COMMAND_AUTOFILTER(col=col)),
-            MItem(_("Cancel filtering"), command=LookupForm.COMMAND_UNFILTER),
-            MSeparator(),
+            MenuItem(_("Omit this column from sorting"),
+                     command=LookupForm.COMMAND_SORT(direction=LookupForm.SORTING_NONE, col=col)),
+            MenuItem(_("Cancel sorting completely"),
+                     command=LookupForm.COMMAND_SORT(direction=LookupForm.SORTING_NONE)),
+            MenuSeparator(),
+            MenuItem(_("Group up to this column"),
+                     command=ListForm.COMMAND_SET_GROUPING_COLUMN(col=col)),
+            MenuItem(_("Cancel visual grouping"),
+                     command=ListForm.COMMAND_SET_GROUPING_COLUMN(col=None)),
+            MenuSeparator(),
+            MenuItem(_("Autofilter"), command=ListForm.COMMAND_AUTOFILTER(col=col)),
+            MenuItem(_("Cancel filtering"), command=LookupForm.COMMAND_UNFILTER()),
+            MenuSeparator(),
         ) + tuple(self._displayed_columns_menu(col))
 
     def _aggregation_info_by_position(self, y):
@@ -1064,7 +1070,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             if col != -1:
                 cmd = self.COMMAND_COPY_AGGREGATION_RESULT(cid=self._columns[col].id(),
                                                            operation=aggregation[0])
-                menu[0:0] = (MItem(_("Copy the Result"), command=cmd), MSeparator())
+                menu[0:0] = (MenuItem(_("Copy the Result"), command=cmd), MenuSeparator())
         elif col == -1:
             menu = self._displayed_columns_menu(None)
         else:
@@ -1336,7 +1342,9 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         if event.GetY() > self._label_height:
             menu = self._aggregation_menu()
         else:
-            menu = (MItem(_("Hide row headings"), command=ListForm.COMMAND_TOGGLE_ROW_LABELS),)
+            menu = (
+                MenuItem(_("Hide row headings"), command=ListForm.COMMAND_TOGGLE_ROW_LABELS()),
+            )
         self._popup_menu(menu)
         event.Skip()
 
@@ -1740,8 +1748,8 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             if len(distinct) > limit:
                 app.echo(_("Too many items for autofilter."), kind='error')
                 return
-            items = [MItem(v.export(), command=ListForm.COMMAND_FILTER_BY_VALUE,
-                           args=dict(column_id=cid, value=v))
+            items = [MenuItem(v.export(),
+                              command=ListForm.COMMAND_FILTER_BY_VALUE(column_id=cid, value=v))
                      for v in distinct]
         finally:
             busy_cursor(False)
@@ -1768,7 +1776,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             self._popup_menu(menu, position=position)
 
     def _popup_menu(self, items, position=None):
-        popup_menu(self._grid, items, keymap=self._get_keymap(), position=position)
+        pytis.form.app.popup_menu(self._grid, items, keymap=self._get_keymap(), position=position)
 
     def _can_set_grouping_column(self, col=None):
         if col is not None:
@@ -2609,7 +2617,7 @@ class CodebookForm(PopupForm, FoldableForm, KeyHandler):
             return super(CodebookForm, self)._default_sorting()
 
     def _context_menu(self):
-        return (MItem(_("Select"), command=ListForm.COMMAND_ACTIVATE),)
+        return (MenuItem(_("Select"), command=ListForm.COMMAND_ACTIVATE()),)
 
     def _on_activation(self, alternate=False):
         """Nastav návratovou hodnotu a ukonči modální dialog."""
@@ -2638,46 +2646,46 @@ class BrowseForm(FoldableForm):
     def _init_attributes(self, **kwargs):
         super(BrowseForm, self)._init_attributes(**kwargs)
         menu = (
-            MItem(_("Filter by cell"),
-                  command=ListForm.COMMAND_FILTER_BY_CELL,
-                  help=_("Filter the rows containing the same value in this column.")),
-            MItem(_("Copy cell value"),
-                  command=ListForm.COMMAND_COPY_CELL,
-                  help=_("Copy the contents of the cell into the clipboard.")),
-            MSeparator(),
-            MItem(_("Edit record"),
-                  command=BrowseForm.COMMAND_EDIT_RECORD,
-                  help=_("Open a separate edit form for this record.")),
-            MItem(_("Copy record"),
-                  command=BrowseForm.COMMAND_NEW_RECORD(copy=True),
-                  help=_("Open a separate insert form with a copy of this record.")),
-            MItem(_("Delete record"),
-                  command=RecordForm.COMMAND_DELETE_RECORD,
-                  help=_("Delete the record parmanently from the database.")),
-            MItem(_("Preview form"),
-                  command=ListForm.COMMAND_ACTIVATE,
-                  help=_("Open the preview form for browsing all records."),
-                  icon='show-record'),
-            MItem(_("Dual preview"),
-                  command=ListForm.COMMAND_ACTIVATE(alternate=True),
-                  help=_("Open a dual form with a table up and preview at the bottom."),
-                  icon='show-record'),
+            MenuItem(_("Filter by cell"),
+                     command=ListForm.COMMAND_FILTER_BY_CELL(),
+                     help=_("Filter the rows containing the same value in this column.")),
+            MenuItem(_("Copy cell value"),
+                     command=ListForm.COMMAND_COPY_CELL(),
+                     help=_("Copy the contents of the cell into the clipboard.")),
+            MenuSeparator(),
+            MenuItem(_("Edit record"),
+                     command=BrowseForm.COMMAND_EDIT_RECORD(),
+                     help=_("Open a separate edit form for this record.")),
+            MenuItem(_("Copy record"),
+                     command=BrowseForm.COMMAND_NEW_RECORD(copy=True),
+                     help=_("Open a separate insert form with a copy of this record.")),
+            MenuItem(_("Delete record"),
+                     command=RecordForm.COMMAND_DELETE_RECORD(),
+                     help=_("Delete the record parmanently from the database.")),
+            MenuItem(_("Preview form"),
+                     command=ListForm.COMMAND_ACTIVATE(),
+                     help=_("Open the preview form for browsing all records."),
+                     icon='show-record'),
+            MenuItem(_("Dual preview"),
+                     command=ListForm.COMMAND_ACTIVATE(alternate=True),
+                     help=_("Open a dual form with a table up and preview at the bottom."),
+                     icon='show-record'),
         )
         structured_text_fields = [f for f in self._fields if f.text_format() == TextFormat.LCG]
         if structured_text_fields:
-            menu += (MSeparator(),)
+            menu += (MenuSeparator(),)
         for f in structured_text_fields:
             menu += (
-                MItem(_("Text editor for field %s") % f.label(),
-                      command=ListForm.COMMAND_OPEN_EDITOR(field_id=f.id()),
-                      help=_("Open a structured text editor.")),
-                MItem(_("PDF preview of %s") % f.label(),
-                      command=ListForm.COMMAND_VIEW_FIELD_PDF(field_id=f.id()),
-                      help=_("Open PDF preview of field contents.")),
+                MenuItem(_("Text editor for field %s") % f.label(),
+                         command=ListForm.COMMAND_OPEN_EDITOR(field_id=f.id()),
+                         help=_("Open a structured text editor.")),
+                MenuItem(_("PDF preview of %s") % f.label(),
+                         command=ListForm.COMMAND_VIEW_FIELD_PDF(field_id=f.id()),
+                         help=_("Open PDF preview of field contents.")),
             )
         action_items = self._action_mitems(self._view.actions())
         if action_items:
-            menu += (MSeparator(),) + tuple(action_items)
+            menu += (MenuSeparator(),) + tuple(action_items)
         self._context_menu_static_part = menu
 
         # The dynamic part of the menu is created based on the links.
@@ -2763,8 +2771,9 @@ class BrowseForm(FoldableForm):
             if isinstance(x, Action):
                 if context and x.context() != context:
                     continue
-                cmd = self.COMMAND_CONTEXT_ACTION(action=x)
-                items.append(MItem(x.title(raw=True), command=cmd, help=x.descr()))
+                items.append(MenuItem(x.title(raw=True),
+                                      command=self.COMMAND_CONTEXT_ACTION(action=x),
+                                      help=x.descr()))
             elif isinstance(x, ActionGroup):
                 group_actions = self._action_mitems(x.items(), context=context)
                 if group_actions:
@@ -2772,7 +2781,7 @@ class BrowseForm(FoldableForm):
             elif isinstance(x, (tuple, list)):
                 separated_items = self._action_mitems(x, context=context)
                 if items and separated_items:
-                    items.append(MSeparator())
+                    items.append(MenuSeparator())
                 items.extend(separated_items)
             else:
                 raise ProgramError("Invalid action specification: %s" % x)
@@ -2823,10 +2832,10 @@ class BrowseForm(FoldableForm):
                 enabled = enabled(row)
             if not enabled:
                 cmd = Application.COMMAND_NOTHING(enabled=False)
-            return MItem(force_title or title, command=cmd,
-                         help=hlp % dict(value=row.format(f.id(), secure=''),
-                                         column=f.column_label()),
-                         icon=icon)
+            return MenuItem(force_title or title, command=cmd,
+                            help=hlp % dict(value=row.format(f.id(), secure=''),
+                                            column=f.column_label()),
+                            icon=icon)
         items = []
         for title, links in linkspec:
             links = [(f, link) for f, link in links if row[f.id()].value() is not None]
@@ -2877,47 +2886,47 @@ class BrowseForm(FoldableForm):
             cmd = Application.COMMAND_HANDLED_ACTION(handler=handler,
                                                      enabled=Application.COMMAND_RUN_FORM.enabled,
                                                      form_class=form_class, name=name, **kwargs)
-            return MItem(ititle % dict(view_title=title, column=column_label), command=cmd)
+            return MenuItem(ititle % dict(view_title=title, column=column_label), command=cmd)
         return [mitem(*args) for args in linkspec]
 
     def _context_menu(self):
         if self._grid.IsSelection():
             menu = (
-                MItem(_("Cancel selection"),
-                      command=ListForm.COMMAND_CLEAR_SELECTION(),
-                      icon='selection-cancel',
-                      help=_("Cancel the selection of rows for bulk operations.")),
-                MItem(_("Add row to selection"),
-                      command=ListForm.COMMAND_ADD_ROW_TO_SELECTION(),
-                      icon='selection-add',
-                      help=_("Add this row to the current selection of rows for "
-                             "bulk operations.")),
-                MItem(_("Remove row from selection"),
-                      icon='selection-remove',
-                      command=ListForm.COMMAND_REMOVE_ROW_FROM_SELECTION(),
-                      help=_("Remove this row from the current selection of rows "
-                             "for bulk operations.")),
+                MenuItem(_("Cancel selection"),
+                         command=ListForm.COMMAND_CLEAR_SELECTION(),
+                         icon='selection-cancel',
+                         help=_("Cancel the selection of rows for bulk operations.")),
+                MenuItem(_("Add row to selection"),
+                         command=ListForm.COMMAND_ADD_ROW_TO_SELECTION(),
+                         icon='selection-add',
+                         help=_("Add this row to the current selection of rows for "
+                                "bulk operations.")),
+                MenuItem(_("Remove row from selection"),
+                         icon='selection-remove',
+                         command=ListForm.COMMAND_REMOVE_ROW_FROM_SELECTION(),
+                         help=_("Remove this row from the current selection of rows "
+                                "for bulk operations.")),
             )
             actions = self._action_mitems(self._view.actions(), context=ActionContext.SELECTION)
             if actions:
-                menu += (MSeparator(),) + tuple(actions)
+                menu += (MenuSeparator(),) + tuple(actions)
         else:
             menu = self._context_menu_static_part
             row = self.current_row()
             select_arguments = self._current_arguments()
             file_open_mitems = file_menu_items(self._fields, row, select_arguments)
             if file_open_mitems:
-                menu += (MSeparator(),) + tuple(file_open_mitems)
+                menu += (MenuSeparator(),) + tuple(file_open_mitems)
             if self._explicit_links or self._automatic_links or self._explicit_in_operator_links \
                or self._automatic_in_operator_links:
-                menu += (MSeparator(),)
+                menu += (MenuSeparator(),)
             if self._explicit_links:
                 menu += tuple(self._link_mitems(row, self._explicit_links))
             if self._automatic_links:
                 menu += (Menu(_("Links"), self._link_mitems(row, self._automatic_links)),)
             if self._explicit_in_operator_links or self._automatic_in_operator_links:
                 if self._explicit_in_operator_links and self._automatic_in_operator_links:
-                    separator = [MSeparator()]
+                    separator = [MenuSeparator()]
                 else:
                     separator = []
                 menu += (
@@ -2933,15 +2942,16 @@ class BrowseForm(FoldableForm):
             dual = self._dualform()
             if self._view.bindings() and not (isinstance(dual, pytis.form.MultiBrowseDualForm) and
                                               dual.main_form() == self):
-                menu += (MSeparator(),
-                         MItem(_("Open with side forms"),
-                               command=Application.COMMAND_RUN_FORM(
-                                   name=self._name,
-                                   form_class=pytis.form.MultiBrowseDualForm,
-                                   select_row=self._current_key(),),
-                               help=_("Open the current record in a main form with "
-                                      "related data in side forms."),
-                               icon='link'))
+                menu += (MenuSeparator(),
+                         MenuItem(_("Open with side forms"),
+                                  command=Application.COMMAND_RUN_FORM(
+                                      name=self._name,
+                                      form_class=pytis.form.MultiBrowseDualForm,
+                                      select_row=self._current_key(),
+                                  ),
+                                  help=_("Open the current record in a main form with "
+                                         "related data in side forms."),
+                                  icon='link'))
         return menu
 
     def _cmd_print(self, spec=None):

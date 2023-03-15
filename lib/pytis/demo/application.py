@@ -31,11 +31,9 @@ import pytis.util
 import pytis.data as pd
 
 from pytis.api import app
-from pytis.presentation import StatusField, SharedParams
+from pytis.presentation import StatusField, SharedParams, Menu, MenuItem, MenuSeparator
 from pytis.extensions import mf, bf, nr
-from pytis.form import Menu, MItem
 _ = pytis.util.translations('pytis-demo')
-____ = pytis.form.MSeparator()
 
 
 class Application(pytis.presentation.Application):
@@ -54,10 +52,10 @@ class Application(pytis.presentation.Application):
     def menu(self):
         return (
             Menu(_("&System"), pytis.form.config_menu_items() +
-                 (MItem(_("&Run form"), hotkey=('Alt-a', 'a'),
-                        command=pytis.extensions.cmd_run_any_form()),
-                  MItem(_("&Check specification files"),
-                        command=pytis.extensions.cmd_check_menus_defs()),
+                 (MenuItem(_("&Run form"), hotkey=('Alt-a', 'a'),
+                           command=pytis.extensions.cmd_run_any_form()),
+                  MenuItem(_("&Check specification files"),
+                           command=pytis.extensions.cmd_check_menus_defs()),
                   Menu(_("Management of menus and user roles"),
                        (mf(_("Roles"), 'menu.ApplicationRoles'),
                         bf(_("Menu"), 'menu.ApplicationMenu'),
@@ -71,10 +69,11 @@ class Application(pytis.presentation.Application):
                   bf(_("User printing templates"), 'printing.UserOutputTemplates'),
                   bf(_("Global printing templates"), 'printing.GlobalOutputTemplates'),
                   mf(_("Crypto users"), 'crypto.CryptoAreas'),
-                  ____,
+                  MenuSeparator(),
                   pytis.form.recent_forms_menu(),
-                  ____,
-                  MItem(_("E&xit"), hotkey='Alt-x', command=pytis.form.Application.COMMAND_EXIT),
+                  MenuSeparator(),
+                  MenuItem(_("E&xit"), hotkey='Alt-x',
+                           command=pytis.form.Application.COMMAND_EXIT()),
                   )),
             Menu(_("&Misc"),
                  (nr(_("&Input fields"), 'misc.InputFields'),
@@ -88,7 +87,7 @@ class Application(pytis.presentation.Application):
                        (mf(_("Continents"), 'cb.Continents', binding='islands'),
                         mf(_("Countries"), 'cb.Countries'),
                         )),
-                  MItem(_("Dialog test"), command='dialog_test', hotkey='Alt-d'),
+                  MenuItem(_("Dialog test"), command='dialog_test', hotkey='Alt-d'),
                   bf(_("Password fields"), 'misc.Passwords'),
                   mf(_('Products'), 'misc.Products'),
                   bf(_('Tree Order'), 'misc.ObsoleteTree'),
@@ -136,7 +135,7 @@ class Application(pytis.presentation.Application):
         ]
 
     def cmd_dialog_test(self):
-        return pytis.form.Application.COMMAND_HANDLED_ACTION(handler=self._dialog_test,)
+        return pytis.form.Application.COMMAND_HANDLED_ACTION(handler=self._dialog_test)
 
     def _dialog_test(self):
         app.message("A series of dialogs will follow.\nAnswer the questions as they come.")

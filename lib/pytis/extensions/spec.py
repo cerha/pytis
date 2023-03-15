@@ -39,7 +39,7 @@ from pytis.api import app
 from pytis.util import log, find, EVENT, ResolverError
 from pytis.presentation import (
     Color, Editable, Field, FormType, PostProcess, Style, TextFilter,
-    Computer, SelectionType, PresentedRow, specification_path,
+    Computer, SelectionType, PresentedRow, Menu, MenuItem, specification_path,
 )
 
 from .email_ import ComplexEmail
@@ -82,26 +82,29 @@ FieldStyle = Style
 
 
 def run_form_mitem(title, name, form_class, hotkey=None, **kwargs):
-    import pytis.form
-    cmd = pytis.form.Application.COMMAND_RUN_FORM
-    args = dict(form_class=form_class, name=name, **kwargs)
-    help = _('Open %s "%s"', form_class.DESCR or _("form"), title.replace('&', ''))
-    return pytis.form.MItem(title, command=cmd, args=args, hotkey=hotkey, help=help)
+    from pytis.form import Application
+    return MenuItem(title,
+                    command=Application.COMMAND_RUN_FORM(
+                        form_class=form_class,
+                        name=name,
+                        **kwargs
+                    ),
+                    help=_('Open %s "%s"', form_class.DESCR or _("form"), title.replace('&', '')),
+                    hotkey=hotkey)
 
 
 def new_record_mitem(title, name, hotkey=None, **kwargs):
-    import pytis.form
-    cmd = pytis.form.Application.COMMAND_NEW_RECORD
-    args = dict(kwargs, name=name)
-    help = _('Open insertion form "%s"', title)
-    return pytis.form.MItem(title, command=cmd, args=args, hotkey=hotkey, help=help)
-
+    from pytis.form import Application
+    return MenuItem(title,
+                    command=Application.COMMAND_NEW_RECORD(name=name, **kwargs),
+                    help=_('Open insertion form "%s"', title),
+                    hotkey=hotkey)
 
 nr = new_record_mitem
 
 
 def run_procedure_mitem(title, name, proc_name, hotkey=None, groups=None, enabled=None, **kwargs):
-    import pytis.form
+    from pytis.form import Application
     if groups is not None:
         assert isinstance(groups, (tuple, list))
         assert enabled is None or callable(enabled)
@@ -113,12 +116,15 @@ def run_procedure_mitem(title, name, proc_name, hotkey=None, groups=None, enable
             if enabled_ is not None:
                 return enabled_(**kwargs_)
             return True
-    return pytis.form.MItem(title,
-                            command=pytis.form.Application.COMMAND_RUN_PROCEDURE,
-                            args=dict(spec_name=name, proc_name=proc_name,
-                                      enabled=enabled, **kwargs),
-                            hotkey=hotkey,
-                            help=_('Spustit proceduru "%s"', title))
+    return MenuItem(title,
+                    command=Application.COMMAND_RUN_PROCEDURE(
+                        spec_name=name,
+                        proc_name=proc_name,
+                        enabled=enabled,
+                        **kwargs
+                    ),
+                    hotkey=hotkey,
+                    help=_('Spustit proceduru "%s"', title))
 
 
 rp = run_procedure_mitem
@@ -266,7 +272,6 @@ def run_cb(spec, begin_search=None, condition=None, sort=(),
 
 
 def make_presented_row(specname, prefill={}):
-    import pytis.form
     data = pytis.util.data_object(specname)
     resolver = pytis.config.resolver
     spec = resolver.get(specname, 'view_spec')
@@ -314,8 +319,8 @@ def run_any_form():
 
 
 def cmd_run_any_form():
-    import pytis.form
-    return pytis.form.Application.COMMAND_HANDLED_ACTION(handler=run_any_form)
+    from pytis.form import Application
+    return Application.COMMAND_HANDLED_ACTION(handler=run_any_form)
 
 
 def print2mail(resolver, spec_name, template_id, row, to, from_, subject, msg, filename=None,

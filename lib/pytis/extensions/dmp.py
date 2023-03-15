@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2020 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2023 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2009-2015 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -89,7 +89,7 @@ from pytis.util import (
     Attribute, Counter, is_sequence, remove_duplicates, ResolverError, Structure,
     set_configuration_file,
 )
-from pytis.presentation import Binding, specification_path
+from pytis.presentation import Binding, specification_path, Menu, MenuItem, MenuSeparator
 
 from pytis.extensions import run_form_mitem, run_procedure_mitem, get_form_defs
 
@@ -620,32 +620,79 @@ class DMPMenu(DMPObject):
             add_message(messages, DMPMessage.WARNING_MESSAGE,
                         "No application menu in specifications")
             return messages
-        menu[0]._items = (
-            (pytis.form.Menu(
-                u"Správa menu a uživatelských rolí",
-                (run_form_mitem(u"Menu", 'menu.ApplicationMenu',
-                                pytis.form.BrowseForm),
-                 run_form_mitem(u"Práva menu", 'menu.ApplicationMenuM',
-                                pytis.form.MultiBrowseDualForm),
-                 run_form_mitem(u"Uživatelské role", 'menu.ApplicationRoles',
-                                pytis.form.MultiBrowseDualForm),
-                 run_procedure_mitem(u"Aplikace změn práv",
-                                     'menu.ApplicationMenuRights',
-                                     'commit_changes'),
-                 pytis.form.MItem(u"Přenačtení menu a práv",
-                                  command=pytis.form.Application.COMMAND_RELOAD_RIGHTS),)),
-             ) + menu[0]._items)
+        menu[0]._items = (Menu(
+            u"Správa menu a uživatelských rolí",
+            (run_form_mitem(u"Menu", 'menu.ApplicationMenu',
+                            pytis.form.BrowseForm),
+             run_form_mitem(u"Práva menu", 'menu.ApplicationMenuM',
+                            pytis.form.MultiBrowseDualForm),
+             run_form_mitem(u"Uživatelské role", 'menu.ApplicationRoles',
+                            pytis.form.MultiBrowseDualForm),
+             run_procedure_mitem(u"Aplikace změn práv",
+                                 'menu.ApplicationMenuRights',
+                                 'commit_changes'),
+             MenuItem(u"Přenačtení menu a práv",
+                      command=pytis.form.Application.COMMAND_RELOAD_RIGHTS()),
+             ),
+        ),) + menu[0]._items
+
+        def make_action_id(command, args):
+            def modulify(obj, name):
+                module_name = str(obj.__module__)
+                if module_name == 'pytis.form.list':
+                    # Well, not a very good idea to name a Python file `list'
+                    module_name = 'pytis.form'
+                name = '%s.%s' % (module_name, name,)
+                return name
+            command_name = command.name()
+            #if isinstance(command, basestring):
+            #    command_proc = command
+            #    command = self._command
+            #else:
+            #    command_proc = ''
+            command_proc = ''
+            appstring = 'Application.'
+            if command_name[:len(appstring)] == appstring:
+                command_name = command_name[len(appstring):]
+            if command_name == 'RUN_FORM':
+                form_class = args.pop('form_class', None)
+                form_name = args.pop('name', None)
+                extra = []
+                if 'binding' in args:
+                    extra.append('binding=%s' % (args['binding'],))
+                    del args['binding']
+                if not args:
+                    class_name = modulify(form_class, form_class.__name__)
+                    return 'form/%s/%s/%s/%s' % (class_name, form_name,
+                                                 '&'.join(extra), command_proc,)
+            elif command_name == 'NEW_RECORD' and args:
+                form_name = args.pop('name', '')
+                if form_name is not None and not args:
+                    return '%s/%s/%s' % (command_name, form_name, command_proc,)
+            elif command_name == 'HANDLED_ACTION':
+                handler = args.pop('handler', None)
+                if not args and isinstance(handler, types.FunctionType):
+                    name = modulify(handler, handler.__name__)
+                    return 'handle/%s/%s' % (name, command_proc,)
+            elif command_name == 'RUN_PROCEDURE':
+                proc_name = args.pop('proc_name')
+                spec_name = args.pop('spec_name')
+                if not args or (len(args) == 1 and 'enabled' in args and not callable(args['enabled'])):
+                    return 'proc/%s/%s/%s' % (proc_name, spec_name, command_proc,)
+            if args and not command_proc:
+                return None
+            return ('%s/%s' % (command_name, command_proc,))
 
         # Load menu
         def load(menu, parent):
-            if isinstance(menu, pytis.form.Menu):
+            if isinstance(menu, Menu):
                 item = self.add_item(kind=self.MenuItem.MENU_ITEM, parent=parent,
                                      title=menu.title())
                 load(tuple(menu.items()), item)
-            elif isinstance(menu, pytis.form.MSeparator):
+            elif isinstance(menu, MenuSeparator):
                 self.add_item(kind=self.MenuItem.SEPARATOR_ITEM, parent=parent)
-            elif isinstance(menu, pytis.form.MItem):
-                action_id = menu.action_id()
+            elif isinstance(menu, MenuItem):
+                action_id = make_action_id(menu.command, copy.copy(menu.args))
                 if action_id is None:
                     add_message(messages, DMPMessage.ERROR_MESSAGE,
                                 "Special menu item action, define command specification",
@@ -659,6 +706,7 @@ class DMPMenu(DMPObject):
                     load(m, parent)
             else:
                 add_message(messages, DMPMessage.ERROR_MESSAGE, "Unknown menu item", (menu,))
+
         load(menu, self._top_item)
         # Lock first submenu
         if self._top_item is not None:

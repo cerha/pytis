@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2022 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2023 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2012-2017 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -45,6 +45,7 @@ import pytis
 import pytis.data as pd
 import pytis.form
 import pytis.util
+import pytis.presentation
 from pytis.api import app
 
 from pytis.util import log, OPERATIONAL, translations, ProgramError
@@ -501,10 +502,10 @@ class SpecHelpGenerator(HelpGenerator):
         app = pytis.config.resolver.specification('Application')
 
         def node(item):
-            if isinstance(item, pytis.form.Menu):
+            if isinstance(item, pytis.presentation.Menu):
                 content = lcg.NodeIndex()
                 children = [node(i) for i in item.items()
-                            if not isinstance(i, pytis.form.MSeparator)]
+                            if not isinstance(i, pytis.presentation.MenuSeparator)]
                 globs = {}
             else:
                 content = self.EmptyContent()

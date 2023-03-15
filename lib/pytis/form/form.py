@@ -46,7 +46,7 @@ from pytis.api import app
 from pytis.presentation import (
     ActionContext, Button, Computer, Editable, Field, GroupSpec,
     Orientation, PresentedRow, PrintAction, Profile, Specification,
-    TabGroup, Text, TextFormat, ViewSpec,
+    TabGroup, Text, TextFormat, ViewSpec, Menu, MenuItem, MenuSeparator,
 )
 from pytis.util import (
     ACTION, EVENT, OPERATIONAL, ProgramError, ResolverError, UNDEFINED,
@@ -56,9 +56,9 @@ from pytis.util import (
 from .event import UserBreakException, wx_callback
 from .command import CommandHandler
 from .screen import (
-    Browser, CallbackHandler, InfoWindow, KeyHandler, Menu, MItem,
-    MSeparator, FileViewer, busy_cursor, dlg2px, char2px, orientation2wx,
-    popup_menu, wx_button, wx_focused_window,
+    Browser, CallbackHandler, InfoWindow, KeyHandler,
+    FileViewer, busy_cursor, dlg2px, char2px, orientation2wx,
+    wx_button, wx_focused_window,
     DEFAULT_WINDOW_BACKGROUND_COLOUR,
 )
 from .application import (
@@ -650,7 +650,7 @@ class InnerForm(Form):
         self._run_callback(self.CALL_USER_INTERACTION)
         parent = wx_focused_window()
         if parent:
-            popup_menu(parent, items, self._get_keymap())
+            pytis.form.app.popup_menu(parent, items, keymap=self._get_keymap())
 
     def _print_menu(self):
         # Vrať seznam položek tiskového menu.
@@ -674,12 +674,12 @@ class InnerForm(Form):
             db_print_spec.append((name, template_name,))
             i += 1
         printing_form = 'printing.DirectUserOutputTemplates'
-        menu = [MItem(p.title(), command=pytis.form.BrowseForm.COMMAND_PRINT(spec=p))
+        menu = [MenuItem(p.title(), command=pytis.form.BrowseForm.COMMAND_PRINT(spec=p))
                 for p in print_spec
                 if pytis.form.app.action_has_access('print/%s' % (p.dmp_name(),),
                                                     perm=pytis.data.Permission.PRINT)]
         if app.has_access(self.name(), perm=pytis.data.Permission.PRINT):
-            menu.append(MSeparator())
+            menu.append(MenuSeparator())
             prefill = dict(module=pytis.data.sval(name))
             menu.append(pytis.extensions.new_record_mitem(_("New report"), printing_form,
                                                           prefill=prefill))

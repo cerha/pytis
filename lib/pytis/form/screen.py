@@ -59,10 +59,10 @@ import pytis.output
 import pytis.presentation
 import pytis.util
 from pytis.api import app
-from pytis.presentation import Orientation, TextFormat, StatusField
+from pytis.presentation import Orientation, TextFormat, StatusField, MenuItem, MenuSeparator
 from pytis.util import find, xtuple, log, DEBUG, EVENT, OPERATIONAL, ProgramError
 from .event import wx_callback, top_level_exception
-from .command import Command, CommandHandler, UICommand, command_icon
+from .command import Command, CommandHandler, UICommand
 from .managers import FormProfileManager
 
 
@@ -246,7 +246,6 @@ def hotkey_string(hotkey):
 
 
 def file_menu_items(fields, row, select_arguments):
-
     from .application import Application
     data = row.data(init_select=False)
 
@@ -306,8 +305,8 @@ def file_menu_items(fields, row, select_arguments):
                                                          field_id=fid,
                                                          filename=filename,
                                                          enabled=can_open(f))
-            mitems.append(MItem(_('Open file "%s"', filename), command=command,
-                                help=_('Open the value of field "%s" as a file.', f.label())))
+            mitems.append(MenuItem(_('Open file "%s"', filename), command=command,
+                                   help=_('Open the value of field "%s" as a file.', f.label())))
     return mitems
 
 
@@ -857,470 +856,6 @@ class CallbackHandler(object):
             callback(*args, **kwargs)
             return True
 
-# Specialized gadgets
-
-
-# Menu
-
-
-class _MenuObject(object):
-    """Společný předek všech tříd specifikujících strukturu menu."""
-
-
-class MSeparator(_MenuObject):
-    """Oddělovač položek menu.
-
-    Pokud se mezi položkami menu vyskytne instance této třídy, bude na jejím
-    místě vytvořen vizuální oddělovač.
-
-    """
-
-
-class _TitledMenuObject(_MenuObject):
-
-    def __init__(self, title):
-        """Initializuj instanci.
-
-        Argumenty:
-
-          title -- název menu, string
-
-        'title' je vždy považován za jazykově závislý text a tudíž automaticky
-        podléhá jazykové konverzi.
-
-        """
-        assert isinstance(title, basestring)
-        self._title = title
-
-    def title(self, raw=False):
-        """Vrať titulek menu zadaný v konstruktoru jako string."""
-        if raw:
-            return self._title
-        else:
-            return self._title.replace('&', '')
-
-
-class Menu(_TitledMenuObject):
-    """Specifikace menu.
-
-    Menu je dáno svým popisem a položkami.  Položky mohou být buď vlastní
-    aktivační položky (instance třídy 'MItem'), oddělovače (instance třídy
-    'MSeparator') nebo vnořená menu (instance třídy 'Menu').  U této třídy
-    nerozlišujeme, zda se jedná o pull-down menu, pop-up menu nebo vnořené
-    menu, specifikace je stejná pro všechny typy menu.
-
-    Z vytvořené instance této třídy lze potom vytvořit instanci wxMenu pomocí
-    metody 'create()'.
-
-    """
-    def __init__(self, title, items, allow_autoindex=True):
-        """Initialize menu specification.
-
-        Arguments:
-
-          title -- menu title as a string
-          items -- sequence of menu items as 'Menu', 'MItem' and 'MSeparator' instances
-          allow_autoindex -- allow automatic keyboard access index numbers on this menu
-
-        """
-        assert isinstance(items, (tuple, list))
-        if __debug__:
-            for i in items:
-                # Empty tuple is possible for items like 'recent_forms_menu' by generating help
-                assert isinstance(i, _MenuObject) or i == ()
-        self._items = tuple(items)
-        self._allow_autoindex = allow_autoindex
-        self._wx_menu = None
-        super(Menu, self).__init__(title)
-
-    def items(self):
-        """Vrať sekvenci položek menu zadanou v konstruktoru."""
-        return self._items
-
-    def _on_highlight_item(self, menu, event):
-        if event.GetMenuId() != -1:
-            item = menu.FindItemById(event.GetMenuId())
-            if item:
-                app.echo(item.GetHelp())
-        event.Skip()
-
-    def create(self, parent, keymap=None):
-        """Vytvoř menu dle specifikace a vrať instanci 'wx.Menu'.
-
-        Tato metoda zkonstruuje menu včetně všech vnořených podmenu, přičemž
-        zabezpečí veškeré navázání událostí apod.
-
-        Argumenty:
-
-          parent -- wx rodič vytvářené instance 'wx.Menu'
-          keymap -- klávesová mapa (instance 'Keymap'), která má být
-             synchronizována s klávesovými zkratkami položek menu.
-
-        """
-        self._wx_menu = menu = wx.Menu()
-        wx_callback(wx.EVT_MENU_HIGHLIGHT_ALL, menu,
-                    lambda event: self._on_highlight_item(menu, event))
-        # At first, compute the maximal width of hotkey string in this menu.
-        max_hotkey_width = 0
-        hotkey_str = {}
-        for i in self._items:
-            if isinstance(i, MItem):
-                hotkey, command, args = i.hotkey(), i.command(), i.args()
-                if hotkey == (None,) and keymap is not None:
-                    real_args = dict([(k, v) for k, v in args.items()
-                                      if k != '_command_handler'])
-                    hotkey = xtuple(keymap.lookup_command(command, real_args))
-                elif keymap is not None:
-                    keymap.define_key(hotkey, command, args)
-                if hotkey != (None,):
-                    s = hotkey_str[i] = '    ' + hotkey_string(hotkey)
-                    hotkey_width = parent.GetTextExtent(s)[0]
-                    max_hotkey_width = max(hotkey_width, max_hotkey_width)
-        # Now create the items and remember max. width of whole item label
-        hotkey_items = []
-        max_label_width = 0
-        i = 0
-        for item in self._items:
-            if isinstance(item, MSeparator):
-                menu.AppendSeparator()
-            else:
-                title, wx_title = item.title(), item.title(raw=True)
-                if self._allow_autoindex and pytis.config.auto_menu_accel:
-                    prefix = acceskey_prefix(i)
-                    wx_title = prefix + title
-                    title = prefix[1:] + title
-                i += 1
-                width = parent.GetTextExtent(title)[0] + 20
-                if isinstance(item, MItem):
-                    wxitem = item.create(parent, menu)
-                    wxitem.SetItemLabel(wx_title)
-                    menu.Append(wxitem)
-                    if isinstance(item, (RadioItem, CheckItem)):
-                        wxitem.Check(item.state())
-                    if item in hotkey_str:
-                        hotkey_items.append((item, wxitem, wx_title, width))
-                    max_label_width = max(width + max_hotkey_width, max_label_width)
-                elif isinstance(item, Menu):
-                    menu.AppendSubMenu(item.create(parent, keymap), wx_title)
-                    max_label_width = max(width + 20, max_label_width)
-                else:
-                    raise ProgramError('Invalid menu item type', item)
-        # Append hotkey description string to the item labels.
-        # Fill with spaces to justify hotkeys on the right edge.
-        space_width = parent.GetTextExtent(' ')[0]
-        for i, wxitem, wx_title, width in hotkey_items:
-            fill_width = max_label_width - width - max_hotkey_width
-            n = round(float(fill_width) / float(space_width))
-            fill = "%%%ds" % n % ''
-            wxitem.SetItemLabel(wx_title + fill + hotkey_str[i])
-        return menu
-
-    def wx_menu(self):
-        """Return the most recently created 'wxMenu' instance or None if create() was not called."""
-        return self._wx_menu
-
-
-class MItem(_TitledMenuObject):
-    """Menu item specification.
-
-    The class is only for specification purposes, it has no connection to any
-    UI elements.
-
-    """
-    _WX_KIND = wx.ITEM_NORMAL
-    _used_titles = {}
-
-    def __init__(self, title, command, args=None, help=None, hotkey=None, icon=None):
-        """Arguments:
-
-          title -- menu item title, non-empty basestring
-
-          command -- defines the command invoked when this menu item is
-            activated as a 'pytis.form.Command' instance.  It can be also
-            defined as a pair of (COMMAND, ARGS), where the first item is the
-            command itself and the later item replaces the argument 'args'
-            described below (in this case, the argument 'args' must be None).
-            Finally, this argument may be passed as a string, in which case
-            this string, together with a 'cmd_' prefix, denotes the name of a
-            method in the application specification and this method is called
-            to retrieve the pair (COMMANDS, ARGS).  For example when command is
-            'my_form', the application specification must define a method named
-            'cmd_my_form' (with no arguments) which returns the command
-            specification.
-
-          args -- dictionary of 'command' arguemnts.
-
-          help -- basestring describing the menu item's action in more detail,
-             but still not longer than one line.  May be displayed for example
-             in status line or as a tooltip.
-
-          hotkey -- string or a sequence of strings defining the shortcut to
-            invoke this menu item from keyboard.  The form of the specification
-            is described in the module 'command'.
-
-          icon -- explicit icon for this menu item.  Must be a valid argument
-            of function 'get_icon()'.  If not defined, default command icon may
-            be used if defined by pytis.
-
-        """
-        if isinstance(command, basestring):
-            application = pytis.config.resolver.specification('Application')
-            method = getattr(application, 'cmd_' + command)
-            command, args = method()
-        elif isinstance(command, (tuple, list)):
-            assert len(command) == 2, command
-            assert args is None, args
-            command, args = command
-        assert isinstance(command, Command), command
-        assert args is None or isinstance(args, dict)
-        assert help is None or isinstance(help, basestring)
-        assert hotkey is None or isinstance(hotkey, (basestring, tuple, list))
-        assert icon is None or isinstance(icon, basestring)
-        self._command = command
-        self._args = args or {}
-        self._help = help
-        self._hotkey = xtuple(hotkey)
-        self._icon = icon
-        self._action_id = self._make_action_id(command)
-        super(MItem, self).__init__(title)
-
-    def _on_ui_event(self, event):
-        event.Enable(self._command.enabled(**self._args))
-
-    def _make_action_id(self, command_spec):
-        def modulify(obj, name):
-            module_name = str(obj.__module__)
-            if module_name == 'pytis.form.list':
-                # Well, not a very good idea to name a Python file `list'
-                module_name = 'pytis.form'
-            name = '%s.%s' % (module_name, name,)
-            return name
-        args = copy.copy(self.args())
-        if isinstance(command_spec, basestring):
-            command_proc = command_spec
-            command_spec = self._command
-        else:
-            command_proc = ''
-        command = command_spec.name()
-        appstring = 'Application.'
-        if command[:len(appstring)] == appstring:
-            command = command[len(appstring):]
-        if command == 'RUN_FORM':
-            form_class = args.pop('form_class', None)
-            form_name = args.pop('name', None)
-            extra = []
-            if 'binding' in args:
-                extra.append('binding=%s' % (args['binding'],))
-                del args['binding']
-            if not args:
-                class_name = modulify(form_class, form_class.__name__)
-                return ('form/%s/%s/%s/%s' %
-                        (class_name, form_name, '&'.join(extra), command_proc,))
-        elif command == 'NEW_RECORD' and args:
-            form_name = args.pop('name', '')
-            if form_name is not None and not args:
-                return ('%s/%s/%s' % (command, form_name, command_proc,))
-        elif command == 'HANDLED_ACTION':
-            handler = args.pop('handler', None)
-            if not args and isinstance(handler, types.FunctionType):
-                name = modulify(handler, handler.__name__)
-                return ('handle/%s/%s' % (name, command_proc,))
-        elif command == 'RUN_PROCEDURE':
-            proc_name = args.pop('proc_name')
-            spec_name = args.pop('spec_name')
-            if not args or (len(args) == 1 and 'enabled' in args and not callable(args['enabled'])):
-                return ('proc/%s/%s/%s' % (proc_name, spec_name, command_proc,))
-        if args and not command_proc:
-            return None
-        return ('%s/%s' % (command, command_proc,))
-
-    @classmethod
-    def parse_action(class_, action):
-        """Parse action id back to command and its arguments.
-
-        Arguments:
-
-          action -- the action id, string
-          globals -- dictionary of global name space
-          locals -- dictionary of local name space
-
-        Return pair COMMAND, ARGUMENTS corresponding to the given action id.
-        If the action id is invalid, behavior of this method is undefined.
-
-        """
-        components = action.split('/')
-        kind = components[0]
-
-        def find_symbol(symbol):
-            # temporary hack to not crash on special situations to be solved
-            # later
-            try:
-                return eval(symbol)
-            except AttributeError:
-                sys.stderr.write("Can't find object named `%s'\n" % (symbol,))
-                return None
-        if components[-1]:
-            return components[-1]
-        elif kind == 'form':
-            command = pytis.form.Application.COMMAND_RUN_FORM
-            class_name, form_name = components[1], components[2]
-            arguments = dict(form_class=find_symbol(class_name), name=form_name)
-            if components[3]:
-                for extra in components[3].split('&'):
-                    if extra[:len('binding=')] == 'binding=':
-                        arguments['binding'] = extra[len('binding='):]
-                        break
-        elif kind == 'handle':
-            command = pytis.form.Application.COMMAND_HANDLED_ACTION
-            function_name = components[1]
-            arguments = dict(handler=find_symbol(function_name),
-                             enabled=lambda: pytis.form.app.action_has_access(action))
-        elif kind == 'proc':
-            command = pytis.form.Application.COMMAND_RUN_PROCEDURE
-            proc_name, spec_name = components[1], components[2]
-            arguments = dict(proc_name=proc_name, spec_name=spec_name,
-                             enabled=lambda: pytis.form.app.action_has_access(action))
-        elif kind == 'NEW_RECORD':
-            command = pytis.form.Application.COMMAND_NEW_RECORD
-            arguments = dict(name=components[1])
-        else:
-            command = pytis.form.Command.command(kind)
-            arguments = None
-        return command, arguments
-
-    def _create_icon(self, item):
-        icon = get_icon(self._icon or command_icon(self._command, self._args))
-        if icon:
-            item.SetBitmap(icon)
-
-    def _on_invoke_command(self, event):
-        # Invoke the command through CallAfter to finish menu event processing before
-        # command invocation.  Calling dirrectly for example resulted in disfunctional
-        # TAB traversal in a popup form which was opended through a popup menu command
-        # due to FindFocus() returning a wrong window.  Using CallAfter fixes this.
-        wx.CallAfter(self._command.invoke, **self._args)
-
-    def create(self, parent, parent_menu):
-        item = wx.MenuItem(parent_menu, -1, self._title, self._help or "", kind=self._WX_KIND)
-        wx_callback(wx.EVT_MENU, parent, self._on_invoke_command, source=item)
-        wx_callback(wx.EVT_UPDATE_UI, parent, self._on_ui_event, source=item)
-        self._create_icon(item)
-        return item
-
-    def command(self):
-        """Vrať command zadaný v konstruktoru."""
-        return self._command
-
-    def args(self):
-        """Vrať argumenty command zadané v konstruktoru."""
-        return self._args
-
-    def hotkey(self):
-        """Vrať horkou klávesu položky jako tuple řetězců.
-
-        Pokud nemá položka přiřazenu horkou klávesu, vrať tuple '(None,)'.
-
-        """
-        return self._hotkey
-
-    def help(self):
-        """Vrať text nápovědy položky zadaný v konstruktoru."""
-        return self._help
-
-    def icon(self):
-        """Return icon given in the constructor."""
-        return self._icon
-
-    def action_id(self):
-        """Return action id string of the menu item or 'None' if it is unavailable."""
-        return self._action_id
-
-
-class CheckItem(MItem):
-    """Položka menu, která může být ve stavu ON/OFF."""
-    _WX_KIND = wx.ITEM_CHECK
-
-    def __init__(self, title, command, state=None, **kwargs):
-        """Inicializuj instanci.
-
-        Arguemnty:
-
-          state -- funkce (volaná bez argumentů), která vrací True/False podle
-            toho, zda je stav této položky 'zapnuto', nebo 'vypnuto'.
-
-          Všechny ostatní arguemnty jsou sthodné jako v konstruktoru předka.
-
-        """
-        assert callable(state)
-        self._state = state
-        super(CheckItem, self).__init__(title, command, **kwargs)
-
-    def _create_icon(self, item):
-        pass
-
-    def _on_ui_event(self, event):
-        event.Check(self.state())
-        super(CheckItem, self)._on_ui_event(event)
-
-    def state(self):
-        return self._state()
-
-
-class RadioItem(CheckItem):
-    """Položka menu tvořící přepínatelnou skupinu."""
-    # wx.ITEM_RADIO způsobuje SEGFAULT.  CheckItem se však, zdá se, chová úplně
-    # stejně, takže to vlastně vůbec nevadí...
-    # _WX_KIND = wx.ITEM_RADIO
-
-
-class MenuBar(wx.MenuBar):
-    """Wx implementace pull-down menu hlavního aplikačního okna.
-
-    Třída zkonstruuje menubar a vloží jej do zadaného framu.  Menubar je
-    zkonstruován na základě specifikace, která se skládá z instancí 'Menu'
-    určujících jednotlivé položky menubaru.
-
-    Menubar je jednotný pro celou aplikaci.
-
-    """
-
-    def __init__(self, parent, menus, keymap=None):
-        """Vytvoř menubar na základě sekvence 'menus' a vlož do 'parent'.
-
-        Argumenty:
-
-          parent -- instance třídy 'wxFrame', do které má být menubar vložen
-          menus -- sekvence instancí třídy 'Menu' definující jednotlivá
-            menu v menu baru; menu se v menu baru vytvoří ve stejném pořadí,
-            v jakém jsou v této sekvenci uvedena
-          keymap -- klávesová mapa (instance 'Keymap'), která má být
-            synchronizována s klávesovými zkratkami položek menu.
-
-        """
-        wx.MenuBar.__init__(self)
-        self._parent = parent
-        if __debug__:
-            self._keys = {}
-            for m in menus:
-                self._check_duplicate_keys(m)
-        for menu in menus:
-            self.Append(menu.create(self._parent, keymap), menu.title(raw=True))
-        parent.SetMenuBar(self)
-
-    def _check_duplicate_keys(self, menu):
-        if isinstance(menu, Menu):
-            for m in menu.items():
-                self._check_duplicate_keys(m)
-        elif isinstance(menu, MItem):
-            k = xtuple(menu.hotkey())
-            if k != (None,) and k != (u'',):
-                cmd = (menu.command(), menu.args())
-                if k in self._keys and self._keys[k] != cmd:
-                    log(OPERATIONAL, "Duplicate menu shortcut:", (k, menu.title(), cmd))
-                    log(OPERATIONAL, "Colliding command:", self._keys[k])
-                else:
-                    self._keys[k] = cmd
-
 
 # StatusBar tooltips use the SuperToolTip class, but it is not very
 # customizable, thus the hacks below.
@@ -1809,40 +1344,40 @@ class ProfileSelector(wx.ComboCtrl):
 
     def _on_context_menu(self, event):
         menu = (
-            MItem(_("Save"),
-                  pytis.form.LookupForm.COMMAND_UPDATE_PROFILE(),
-                  help=_("Update the saved profile according to the current form setup.")),
-            MItem(_("Save as new"),
-                  pytis.form.Application.COMMAND_HANDLED_ACTION(
-                      # Name must be edited first and 'cmd' will be invoked after confirmation.
-                      handler=self._edit_profile_title,
-                      enabled=self._edit_profile_title_enabled,
-                      cmd=pytis.form.LookupForm.COMMAND_SAVE_NEW_PROFILE,
-                      clear=True),
-                  help=_("Create a new profile according to the current form setup.")),
-            MItem(_("Rename"),
-                  pytis.form.Application.COMMAND_HANDLED_ACTION(
-                      # Name must be edited first and 'cmd' will be invoked after confirmation.
-                      handler=self._edit_profile_title,
-                      enabled=self._edit_profile_title_enabled,
-                      cmd=pytis.form.LookupForm.COMMAND_RENAME_PROFILE),
-                  help=_("Change the name of the current profile and save it.")),
-            MItem(_("Delete"),
-                  pytis.form.LookupForm.COMMAND_DELETE_PROFILE(),
-                  help=_("Delete the selected saved profile.")),
-            MItem(("Use automatically on form startup"),
-                  pytis.form.LookupForm.COMMAND_SET_INITIAL_PROFILE(),
-                  help=_("Automatically switch to this profile "
-                         "when this form is opened next time.")),
-            MSeparator(),
-            MItem(_("Restore to previously saved form settings"),
-                  pytis.form.LookupForm.COMMAND_RELOAD_PROFILE,
-                  help=_("Discard changes in form settings since the profile was last saved.")),
-            MItem(_("Restore to default form settings"),
-                  command=pytis.form.LookupForm.COMMAND_RESET_PROFILE,
-                  help=_("Discard all user changes in form settings.")),
+            MenuItem(_("Save"),
+                     command=pytis.form.LookupForm.COMMAND_UPDATE_PROFILE(),
+                     help=_("Update the saved profile according to the current form setup.")),
+            MenuItem(_("Save as new"),
+                     command=pytis.form.Application.COMMAND_HANDLED_ACTION(
+                         # Name must be edited first and 'cmd' will be invoked after confirmation.
+                         handler=self._edit_profile_title,
+                         enabled=self._edit_profile_title_enabled,
+                         cmd=pytis.form.LookupForm.COMMAND_SAVE_NEW_PROFILE,
+                         clear=True),
+                     help=_("Create a new profile according to the current form setup.")),
+            MenuItem(_("Rename"),
+                     command=pytis.form.Application.COMMAND_HANDLED_ACTION(
+                         # Name must be edited first and 'cmd' will be invoked after confirmation.
+                         handler=self._edit_profile_title,
+                         enabled=self._edit_profile_title_enabled,
+                         cmd=pytis.form.LookupForm.COMMAND_RENAME_PROFILE),
+                     help=_("Change the name of the current profile and save it.")),
+            MenuItem(_("Delete"),
+                     command=pytis.form.LookupForm.COMMAND_DELETE_PROFILE(),
+                     help=_("Delete the selected saved profile.")),
+            MenuItem(("Use automatically on form startup"),
+                     command=pytis.form.LookupForm.COMMAND_SET_INITIAL_PROFILE(),
+                     help=_("Automatically switch to this profile "
+                            "when this form is opened next time.")),
+            MenuSeparator(),
+            MenuItem(_("Restore to previously saved form settings"),
+                     command=pytis.form.LookupForm.COMMAND_RELOAD_PROFILE(),
+                     help=_("Discard changes in form settings since the profile was last saved.")),
+            MenuItem(_("Restore to default form settings"),
+                     command=pytis.form.LookupForm.COMMAND_RESET_PROFILE(),
+                     help=_("Discard all user changes in form settings.")),
         )
-        popup_menu(self, menu)
+        pytis.form.app.popup_menu(self, menu)
 
     def _edit_profile_title(self, cmd, clear=False):
         ctrl = self.GetTextCtrl()
@@ -1965,12 +1500,12 @@ class KeyboardSwitcher(wx.BitmapButton):
         self._bitmaps = dict([(icon, get_icon(icon, type=wx.ART_TOOLBAR) or
                                get_icon(wx.ART_ERROR, type=wx.ART_TOOLBAR))
                               for title, icon, command in layouts])
-        self._menu = [MItem(title,
-                            command=pytis.form.Application.COMMAND_HANDLED_ACTION(
-                                handler=self._switch_layout,
-                                system_command=system_command,
-                                icon=icon,
-                            ))
+        self._menu = [MenuItem(title,
+                               command=pytis.form.Application.COMMAND_HANDLED_ACTION(
+                                   handler=self._switch_layout,
+                                   system_command=system_command,
+                                   icon=icon,
+                               ))
                       for title, icon, system_command in layouts]
         layout = find(pytis.config.initial_keyboard_layout, layouts, lambda x: x[2]) or layouts[0]
         icon, system_command = layout[1:]
@@ -1980,7 +1515,7 @@ class KeyboardSwitcher(wx.BitmapButton):
         wx_callback(wx.EVT_BUTTON, self, self._on_click)
 
     def _on_click(self, event):
-        popup_menu(self._toolbar, self._menu)
+        pytis.form.app.popup_menu(self._toolbar, self._menu)
 
     def _switch_layout(self, system_command, icon):
         os.system(system_command)
@@ -2836,26 +2371,9 @@ def make_fullname(form_class, spec_name):
     return 'form/%s.%s/%s//' % (module_name, form_class.__name__, spec_name)
 
 
-def mitem(uicmd):
-    """Return a 'MItem' instance for given 'UICommand' instance."""
-    return MItem(uicmd.title(), command=uicmd.command(), args=uicmd.args(), help=uicmd.descr())
-
-
-def popup_menu(parent, items, keymap=None, position=None):
-    """Pop-up a wx context menu.
-
-    Arguments:
-       parent -- wx parent window of the menu
-       items -- sequence of MItem, MSeparator or Menu instances
-       keymap -- keymap to use for determination of menu command keyboard shortcuts
-       position -- optional position of the menu as a tuple (x, y).  The menu is normally
-         positioned automatically under the pointer so position may be needed when displaying menu
-         in response to a keyboard command.
-
-    """
-    menu = Menu('', items).create(parent, keymap)
-    parent.PopupMenu(menu, position or wx.DefaultPosition)
-    menu.Destroy()
+def uicommand_mitem(uicmd):
+    """Return a 'MenuItem' instance for given 'UICommand' instance."""
+    return MenuItem(uicmd.title(), command=uicmd.command(), args=uicmd.args(), help=uicmd.descr())
 
 
 def get_icon(icon_id, type=wx.ART_MENU, size=(16, 16)):

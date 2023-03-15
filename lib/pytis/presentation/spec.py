@@ -5272,6 +5272,145 @@ class SharedParams(object):
         return self._condition
 
 
+class Menu(object):
+    """Menu specification."""
+
+    def __init__(self, title, items, name=None, autoindex=True):
+        """Arguments:
+
+          title -- menu title as a string.
+          items -- sequence of menu items as 'Menu', 'MenuItem' and
+            'MenuSeparator' instances.
+          name -- menu identification string.  Specific menu names are used
+            internally by the application to recognize menus with specific
+            dynamic behavior, such as menu of active windows or menu o recent
+            forms.
+          autoindex -- allow automatic keyboard access index numbers on this
+            menu.
+
+        """
+        assert isinstance(title, basestring), title
+        assert isinstance(items, (tuple, list)), items
+        assert name is None or isinstance(name, basestring), name
+        assert isinstance(autoindex, bool), autoindex
+        if __debug__:
+            for item in items:
+                # Empty tuple is possible for items like 'recent_forms_menu' by generating help
+                assert isinstance(item, (Menu, MenuItem, MenuSeparator)) or item == (), item
+        self._title = title
+        self._items = tuple(items)
+        self._name = name
+        self._autoindex = autoindex
+
+    @property
+    def title(self):
+        return self._title
+
+    @property
+    def items(self):
+        return self._items
+
+    @property
+    def name(self):
+        return self._name
+
+    @property
+    def autoindex(self):
+        return self._autoindex
+
+
+class MenuItem(object):
+    """Menu item specification."""
+
+    def __init__(self, title, command, args=None, state=None, help=None, hotkey=None, icon=None):
+        """Arguments:
+
+          title -- menu item title, non-empty string
+          command -- defines the command invoked when this menu item is
+            activated as a 'pytis.form.Command' instance.  It can be also
+            defined as a pair of (COMMAND, ARGS), where the first item is the
+            command itself and the later item replaces the argument 'args'
+            described below (in this case, the argument 'args' must be None).
+            Finally, this argument may be passed as a string, in which case
+            this string, together with a 'cmd_' prefix, denotes the name of a
+            method in the application specification and this method is called
+            to retrieve the pair (COMMANDS, ARGS).  For example when command is
+            'my_form', the application specification must define a method named
+            'cmd_my_form' (with no arguments) which returns the command
+            specification.
+          args -- dictionary of 'command' arguemnts.
+          state -- funkce (volaná bez argumentů), která vrací True/False podle
+            toho, zda je stav této položky 'zapnuto', nebo 'vypnuto'.
+          help -- string describing the menu item's action in more detail,
+             but still not longer than one line.  May be displayed for example
+             in status line or as a tooltip.
+          hotkey -- string or a sequence of strings defining the shortcut to
+            invoke this menu item from keyboard.  The form of the specification
+            is described in the module 'command'.
+          icon -- explicit icon for this menu item.  Must be a valid argument
+            of function 'get_icon()'.  If not defined, default command icon may
+            be used if defined by pytis.
+
+        """
+        if isinstance(command, basestring):
+            application = pytis.config.resolver.specification('Application')
+            command, args = getattr(application, 'cmd_' + command)()
+        elif isinstance(command, (tuple, list)):
+            assert len(command) == 2, command
+            assert args is None, args
+            command, args = command
+        assert isinstance(title, basestring), title
+        #assert isinstance(command, Command), command
+        assert args is None or isinstance(args, dict), args
+        assert help is None or isinstance(help, basestring), help
+        assert hotkey is None or isinstance(hotkey, (basestring, tuple, list)), hotkey
+        assert icon is None or isinstance(icon, basestring), icon
+        assert state is None or callable(state), state
+        if isinstance(hotkey, basestring):
+            hotkey = (hotkey,)
+        elif isinstance(hotkey, list):
+            hotkey = tuple(hotkey)
+        self._title = title
+        self._command = command
+        self._args = args or {}
+        self._help = help
+        self._hotkey = hotkey
+        self._icon = icon
+        self._state = state
+
+    @property
+    def title(self):
+        return self._title
+
+    @property
+    def command(self):
+        return self._command
+
+    @property
+    def args(self):
+        return self._args
+
+    @property
+    def state(self):
+        return self._state
+
+    @property
+    def help(self):
+        return self._help
+
+    @property
+    def hotkey(self):
+        return self._hotkey
+
+    @property
+    def icon(self):
+        return self._icon
+
+
+class MenuSeparator(object):
+    pass
+
+
 class _SpecificationMetaclass(type):
 
     def __init__(cls, clsname, bases, clsdict):

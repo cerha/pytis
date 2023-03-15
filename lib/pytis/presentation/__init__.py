@@ -37,8 +37,8 @@ from .spec import (  # noqa: F401
     TextFilter, Computer, computer, procedure, CbComputer, CodebookSpec,
     FormType, Link, ListLayout, Enumeration, Field, Fields, AttachmentStorage,
     FileAttachmentStorage, HttpAttachmentStorage, DbAttachmentStorage,
-    SharedParams, StatusField, SpecificationBase, Application, Specification,
-    specification_path, IN,
+    SharedParams, Menu, MenuItem, MenuSeparator, StatusField,
+    SpecificationBase, Application, Specification, specification_path, IN,
 )
 
 from .field import PresentedRow  # noqa: F401

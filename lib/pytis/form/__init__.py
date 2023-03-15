@@ -37,17 +37,16 @@ from .command import (  # noqa: F401
 )
 
 from .screen import (  # noqa: F401
-    WxKey, Keymap, KeyHandler, CallbackHandler, MSeparator,
-    Menu, MItem, CheckItem, RadioItem, MenuBar, ToolTipWindow, ToolTip,
+    WxKey, Keymap, KeyHandler, CallbackHandler, ToolTipWindow, ToolTip,
     StatusBar, InfoWindow, ProfileSelectorPopup, ProfileSelector,
     TextHeadingSelector, FormStateToolbarControl, KeyboardSwitcher,
     DualFormSwitcher, DualFormResplitter, LocationBar, HelpProc,
     Browser, mupdfProcessor, FileViewerButtonPanel, FileViewer,
     FileViewerFrame, make_in_operator, beep, microsleep, busy_cursor,
     is_busy_cursor, modal, copy_to_clipboard, paste_from_clipboard,
-    hotkey_string, file_menu_items, help_proc, char2px,
-    dlg2px, acceskey_prefix, orientation2wx, make_fullname, mitem,
-    popup_menu, get_icon,
+    hotkey_string, help_proc, char2px, dlg2px,
+    acceskey_prefix, orientation2wx, make_fullname, uicommand_mitem,
+    get_icon,
 )
 
 from .dialog import (  # noqa: F401
@@ -84,16 +83,19 @@ from .dualform import (  # noqa: F401
 )
 
 from .application import (  # noqa: F401
-    Application, DbActionLogger, InputDialog, InputNumeric, InputDate,
-    run_form, run_dialog, run_procedure,
-    new_record, delete_record, refresh, exit, db_operation,
-    delete_record_question, current_form, top_window,
-    recent_forms_menu, wx_frame, decrypted_names,
-    frame_title, close_forms, set_status, refresh_status, message,
-    global_keymap, has_access, wx_yield_, block_yield, built_in_status_fields,
-    select_file, select_files, select_directory, make_selected_file, write_selected_file,
-    open_selected_file, open_file, write_file, launch_file,
-    open_data_as_file, launch_url, printout, IN,
+    Application, DbActionLogger, run_form, run_dialog, db_operation,
+    recent_forms_menu, wx_frame, close_forms, global_keymap, wx_yield_,
+    block_yield,
+    # Backwards compatibility aliases.
+    refresh, exit, launch_url, select_file, select_files, select_directory,
+    make_selected_file, write_selected_file, open_selected_file, open_file,
+    write_file, launch_file, open_data_as_file, has_access, run_procedure,
+    new_record, delete_record, printout, message, decrypted_names, IN,
+    refresh_status, set_status, current_form, top_window, frame_title,
+    delete_record_question, built_in_status_fields,
+    InputDialog, InputNumeric, InputDate,
+    MSeparator, Menu, MItem, CheckItem, RadioItem,
+
 )
 
 from .configui import (  # noqa: F401

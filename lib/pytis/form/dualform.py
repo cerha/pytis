@@ -35,7 +35,7 @@ import fitz
 
 import pytis.data
 from pytis.api import app
-from pytis.presentation import Orientation
+from pytis.presentation import Orientation, Menu, MenuItem
 from pytis.util import EVENT, log, translations, ProgramError
 
 from .event import wx_callback
@@ -45,8 +45,7 @@ from .form import (
 )
 from .list import AggregationForm, BrowseForm, ListForm, SideBrowseForm
 from .screen import (
-    CheckItem, Menu, MItem, busy_cursor, is_busy_cursor, microsleep,
-    popup_menu, wx_focused_window, get_icon,
+    busy_cursor, is_busy_cursor, microsleep, wx_focused_window, get_icon,
 )
 from .application import (
     run_form,
@@ -1126,35 +1125,37 @@ class MultiSideForm(MultiForm):
     def _displayed_forms_menu(self):
         bindings = [f.binding().id() for f in self._subforms()]
         return Menu(_("Available forms"),
-                    [CheckItem(b.title(), help='',
-                               command=self.COMMAND_TOGGLE_SIDEFORM(binding=b,
-                                                                    _command_handler=self),
-                               state=lambda b=b: b.id() in bindings)
+                    [MenuItem(b.title(), help='',
+                              command=self.COMMAND_TOGGLE_SIDEFORM(binding=b,
+                                                                   _command_handler=self),
+                              state=lambda b=b: b.id() in bindings)
                      for b in sorted(self._subform_bindings(), key=lambda b: b.title())
                      if b.name() is None or app.has_access(b.name())])
 
     def _on_tab_mouse_right(self, event):
         selection = event.GetSelection()
-        menu = (MItem(_("Close this form"), help=_("Close this form"),
-                      command=self.COMMAND_TOGGLE_SIDEFORM(
-                          binding=self._subform(selection).binding(), _command_handler=self,
-                      )),
-                MItem(_("Filter the main form for non-empty side form"),
-                      help=_("Show only those rows of the main form, which have "
-                             "at least one row in this side form in its current profile."),
-                      command=self.COMMAND_FILTER_BY_SIDEFORM(index=selection,
-                                                              _command_handler=self)),
-                MItem(_("Filter the main form for empty side form"),
-                      help=_("Show only those rows of the main form, which have "
-                             "no rows in this side form in its current profile."),
-                      command=self.COMMAND_FILTER_BY_SIDEFORM(index=selection, not_in=True,
-                                                              _command_handler=self)),
-                self._displayed_forms_menu(),
-                )
-        popup_menu(self._notebook, menu, self._get_keymap())
+        menu = (
+            MenuItem(_("Close this form"), help=_("Close this form"),
+                     command=self.COMMAND_TOGGLE_SIDEFORM(
+                         binding=self._subform(selection).binding(), _command_handler=self,
+                     )),
+            MenuItem(_("Filter the main form for non-empty side form"),
+                     help=_("Show only those rows of the main form, which have "
+                            "at least one row in this side form in its current profile."),
+                     command=self.COMMAND_FILTER_BY_SIDEFORM(index=selection,
+                                                             _command_handler=self)),
+            MenuItem(_("Filter the main form for empty side form"),
+                     help=_("Show only those rows of the main form, which have "
+                            "no rows in this side form in its current profile."),
+                     command=self.COMMAND_FILTER_BY_SIDEFORM(index=selection, not_in=True,
+                                                             _command_handler=self)),
+            self._displayed_forms_menu(),
+        )
+        pytis.form.app.popup_menu(self._notebook, menu, keymap=self._get_keymap())
 
     def _on_notebook_mouse_right(self, event):
-        popup_menu(self._notebook, (self._displayed_forms_menu(),), self._get_keymap())
+        pytis.form.app.popup_menu(self._notebook, (self._displayed_forms_menu(),),
+                                  keymap=self._get_keymap())
         event.Skip()
 
     def _on_page_change(self, event=None):
