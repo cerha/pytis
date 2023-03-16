@@ -1038,7 +1038,7 @@ class Application(API):
 
         The file is selected by the user using a GUI dialog.  Returns None if
         the user cancels the dialog.  If remote client connection exists, the
-        returned file is created in the client's filesystem (the returned
+        returned file is opened in the client's filesystem (the returned
         object is an 'ExposedFileWrapper' instance).
 
         The file is always open in binary mode. (TODO: add 'mode' argument)
