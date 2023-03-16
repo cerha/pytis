@@ -191,6 +191,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         if not self._headless:
             self._statusbar = sb = StatusBar(frame, self._specification.status_fields())
             self._status_fields = self._StatusFieldAccess(sb.fields)
+        app.title = pytis.config.application_name
 
         # Initialize login and password.
         success, result = db_operation(pd.dbtable, 'pg_catalog.pg_tables', ('tablename',))
@@ -366,7 +367,6 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
                     title=_("Opening saved forms"), message=_("Opening form") + ' ' * 40)
         else:
             run_startup_forms(lambda *args, **kwargs: True, startup_forms)
-        app.title = pytis.config.application_name
         # Caching menu availibility must come after calling Application.init()
         # (here self._specification.init()) to allow the application defined
         # enabled() methods to refer things created Application.init().
