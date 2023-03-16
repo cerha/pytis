@@ -647,6 +647,9 @@ class ProgressDialog(OperationDialog):
         else:
             if progress is None:
                 progress = self._dialog.Value
+            if progress > self._maximum:
+                # Prevent wxAssertionError: C++ assertion ""pos <= m_rangeMax"" failed.
+                progress = self._maximum
             for i in range(10):
                 # HACK: Calling Update just once (without even calling Refresh)
                 # should be enough, but it doesn't reliably update the gauge.
