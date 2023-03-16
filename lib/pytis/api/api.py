@@ -878,8 +878,8 @@ class Application(API):
 
         Arguments:
 
-          path -- full path to the file in the local (server side) filesystem.
-            If not None, 'data' and 'suffix' must be None.
+          path -- full path to the file in the local (server side) file system.
+             If not None, 'data' and 'suffix' must be None.
           data -- the file data as 'bytes' or a file like object.  This is the
             contents of the file to be viewed.  If not None, 'path' must be
             None.
@@ -920,7 +920,7 @@ class Application(API):
         """Split the path obtained from 'Application.select_file()' and similar methods.
 
         'Application.select_file()' returns a path name, but the caller doesn't
-        know whether it comes from a local filesystem or a remote (client)
+        know whether it comes from a local file system or a remote (client)
         machine.  The same applies for 'f.name' of a file object returned by
         'Application.open_selected_file()'.  It is not clear which path
         separator applies for such paths.  This method should be used to split
@@ -940,7 +940,7 @@ class Application(API):
         """Return a filename selected by the user in a GUI dialog.
 
         Returns None if the user cancels the dialog.  If remote client connection
-        exists, the returned filename belongs to the client's filesystem.
+        exists, the returned filename belongs to the client's file system.
 
         Arguments:
 
@@ -966,7 +966,7 @@ class Application(API):
 
         Returns empty tuple if the user cancels the dialog.  If remote client
         connection exists, the returned filenames belong to the client's
-        filesystem.
+        file system.
 
         Arguments:
 
@@ -986,7 +986,7 @@ class Application(API):
           context -- see 'Application.select_file()'
 
         Returns None if the user cancels the dialog.  If remote client connection
-        exists, the returned directory belongs to the client's filesystem.
+        exists, the returned directory belongs to the client's file system.
 
         """
         pass
@@ -997,7 +997,7 @@ class Application(API):
 
         The file is selected by the user using a GUI dialog.  Returns None if
         the user cancels the dialog.  If remote client connection exists, the
-        returned file is created in the client's filesystem (the returned
+        returned file is created in the client's file system (the returned
         object is an 'ExposedFileWrapper' instance).
 
         Arguments:
@@ -1016,10 +1016,10 @@ class Application(API):
                             context='default'):
         """Write 'data' to a file selected by the user using a GUI dialog.
 
-        The file is selected by the user using a GUI dialog.  Returns 'True' if the
-        file was created and written succesfully or 'False' if the user cancels the
-        dialog.  If remote client connection exists, the file is created in the
-        client's filesystem.
+        Returns the file path if the file was created and written succesfully
+        or 'None' if the user cancels the dialog.  If remote client connection
+        exists, the file is created in the client's file system (the returned
+        path refers to the remote file system).
 
         Arguments:
 
@@ -1038,7 +1038,7 @@ class Application(API):
 
         The file is selected by the user using a GUI dialog.  Returns None if
         the user cancels the dialog.  If remote client connection exists, the
-        returned file is opened in the client's filesystem (the returned
+        returned file is opened in the client's file system (the returned
         object is an 'ExposedFileWrapper' instance).
 
         The file is always open in binary mode. (TODO: add 'mode' argument)

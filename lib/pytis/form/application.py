@@ -2104,9 +2104,9 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
                 f.write(data)
             finally:
                 f.close()
-            return True
+            return f.name
         else:
-            return False
+            return None
 
     def api_open_selected_file(self, directory=None, filetypes=None, encrypt=None,
                                context='default'):

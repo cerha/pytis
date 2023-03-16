@@ -1994,13 +1994,13 @@ class FileField(Invocable, InputField):
     def _cmd_save(self):
         # msg = _("Save value of %s") % self.spec().label()
         try:
-            saved = app.write_selected_file(self._value, mode='wb',
-                                            filename=self._row.filename(self._id),
-                                            context='file-field')
+            path = app.write_selected_file(self._value, mode='wb',
+                                           filename=self._row.filename(self._id),
+                                           context='file-field')
         except IOError as e:
             app.echo(_("Error writing file to disk:") + ' ' + str(e), kind='error')
         else:
-            if saved:
+            if path:
                 app.echo(_("File saved."))
             else:
                 app.echo(_("Saving file canceled."))
