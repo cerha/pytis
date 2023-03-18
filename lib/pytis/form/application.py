@@ -455,8 +455,6 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
                                              sort=(('position', pd.ASCENDENT,),))
         except pd.DBException:
             return None
-        if not menu_rows:
-            return None
         # Build visible menu items
         menu_template = []
         parents = []
@@ -543,7 +541,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
 
     def _create_menubar(self):
         menu = self._dynamic_menu()
-        if menu is None:
+        if menu:
             menu = list(self._specification.menu())
         self._menu = menu
 
