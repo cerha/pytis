@@ -405,10 +405,18 @@ class FormProfileManager(UserSetttingsManager):
 
     def _pack_filter(self, something):
         if isinstance(something, pytis.presentation.IN):
-            return (something.name(), something.original_args(), {})
+            args = list(something.original_args())
+            # Pack the additonal condition of pytis.presentation.IN.
+            if args[-2]:
+                args[-2] = self._pack_filter(args[-2])
+            # DB function arguments passed of pytis.presentation.IN.
+            if args[-1]:
+                log(OPERATIONAL, "Ignoring arguments passed to pytis.presentation.IN:", args[-1])
+                args[-1] = {}
+            return [something.name(), args, {}]
         elif isinstance(something, pytis.data.Operator):
-            args = tuple([self._pack_filter(arg) for arg in something.args()])
-            return (something.name(), args, something.kwargs())
+            args = [self._pack_filter(arg) for arg in something.args()]
+            return [something.name(), args, something.kwargs()]
         elif isinstance(something, pytis.data.Value):
             t = something.type()
             export_kwargs = {}
@@ -447,6 +455,11 @@ class FormProfileManager(UserSetttingsManager):
         elif name == 'IN':
             op = pytis.form.make_in_operator
             args = packed_args
+            # Unpack the additonal condition of pytis.presentation.IN.
+            if args[-2]:
+                args[-2] = self._unpack_filter(args[-2], data_object,
+                                               delete_columns=delete_columns,
+                                               rename_columns=rename_columns)
         else:
             if len(packed_args) != 2:
                 raise Exception("Invalid number of filter operator arguments: %s" %
