@@ -541,7 +541,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
 
     def _create_menubar(self):
         menu = self._dynamic_menu()
-        if menu:
+        if not menu:
             menu = list(self._specification.menu())
         self._menu = menu
 
