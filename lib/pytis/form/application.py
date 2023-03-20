@@ -175,7 +175,6 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         frame.SetIcons(icons)
         self._windows = XStack()
         self._modals = Stack()
-        self._statusbar = None
         self._help_browser = None
         self._login_success = False
         keymap = self.keymap = Keymap()
@@ -188,17 +187,19 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
                 args = {}
             keymap.define_key(key, cmd, args)
         pytis.form.app = self
-        if not self._headless:
-            self._statusbar = sb = StatusBar(frame, self._specification.status_fields())
-            self._status_fields = self._StatusFieldAccess(sb.fields)
         app.title = pytis.config.application_name
 
         # Initialize login and password.
         success, result = db_operation(pd.dbtable, 'pg_catalog.pg_tables', ('tablename',))
         if not success:
             return False
-        # Unlock crypto keys
+        # Unlock crypto keys.
         self._unlock_crypto_keys()
+
+        # Build up the status bar.
+        if not self._headless:
+            sb = StatusBar(frame, self._specification.status_fields())
+            self._status_fields = self._StatusFieldAccess(sb.fields)
 
         self._initial_config = [
             (o, copy.copy(getattr(pytis.config, o)))
@@ -1135,7 +1136,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
                 if isinstance(form, pytis.form.PopupForm):
                     log(EVENT, "Opening modal form:", form)
                     self._modals.push(form)
-                    app.status.message.update(text=None, icon=None)
+                    app.echo(None)
                     form.show()
                     busy_cursor(False)
                     try:
@@ -1160,7 +1161,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
                         old.hide()
                     self._windows.push(form)
                     wx_callback(wx.EVT_CLOSE, form, self._on_form_close)
-                    app.status.message.update(text=None, icon=None)
+                    app.echo(None)
                     form.resize()  # Needed in wx 2.8.x.
                     form.show()
                     self._update_window_menu()
@@ -1617,14 +1618,19 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         if message:
             log(EVENT, message)
         form = self._modals.top()
-        if not (isinstance(form, pytis.form.Form) and form.set_status('message', message)):
-            if kind == 'warning':
-                app.status.message.icon = wx.ART_WARNING
-            elif kind == 'error':
-                app.status.message.icon = wx.ART_ERROR
-            else:
-                app.status.message.icon = None
-            app.status.message.text = message
+        if isinstance(form, pytis.form.Form) and form.set_status('message', message):
+            return
+        if not hasattr(self, '_status_fields'):
+            # Suppress errors during opening DB login input form, which needs
+            # to come up sooner than the status bar is initialized.
+            return
+        if kind == 'warning':
+            app.status.message.icon = wx.ART_WARNING
+        elif kind == 'error':
+            app.status.message.icon = wx.ART_ERROR
+        else:
+            app.status.message.icon = None
+        app.status.message.text = message
 
     def api_message(self, message=None, title=None, content=None):
         return self.run_dialog(dialog.Message, message, title=title or _("Message"),
