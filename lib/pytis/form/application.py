@@ -676,7 +676,6 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
             event.Enable(item.command.enabled(**item.args))
             if item.state:
                 state = item.state()
-                print(item.title, state)
                 event.Check(state)
 
         def on_invoke_command(event):
