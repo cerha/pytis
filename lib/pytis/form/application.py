@@ -115,7 +115,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
                 raise AttributeError("StatusBar has no field '{}'".format(name))
 
         def __call__(self, name):
-            return self.__getattr__(name)
+            return self.__getattr__(name.replace('-', '_'))
 
     @classmethod
     def _get_command_handler_instance(cls):
