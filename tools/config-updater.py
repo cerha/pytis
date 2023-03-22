@@ -154,6 +154,7 @@ def run():
             print("Processing table: e_pytis_form_profile_base")
             data = pd.dbtable('e_pytis_form_profile_base',
                               ('id', 'username', 'spec_name', 'profile_id', 'title', 'filter'))
+            ignored = set()
             if args.user:
                 users = (args.user,)
             else:
@@ -168,6 +169,7 @@ def run():
                         view_spec = resolver.get(spec_name, 'view_spec')
                         data_spec = resolver.get(spec_name, 'data_spec')
                     except pytis.util.ResolverError as e:
+                        ignored.add(spec_name)
                         sys.stderr.write("Ignoring specification %s: %s\n" % (spec_name, e))
                         continue
                     for form_name in mgr.list_form_names(spec_name, transaction=transaction):
@@ -178,6 +180,8 @@ def run():
                         for profile in profiles:
                             newmgr.save_profile(spec_name, form_name, profile,
                                                 transaction=transaction)
+            if ignored:
+                print("Invalid specifications: {}".format(tuple(ignored)))
 
         if args.table is None or args.table == 'e_pytis_aggregated_views':
             print("Processing table: e_pytis_aggregated_views")
