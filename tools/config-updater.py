@@ -23,9 +23,9 @@ import getopt
 import os
 import sys
 
-pytisdir = os.path.dirname(os.path.dirname(__file__))
+pytisdir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(os.path.join(pytisdir, 'lib'))
-sys.path.append(os.path.join(pytisdir, '..', 'lcg', 'lib'))
+sys.path.append(os.path.normpath(os.path.join(pytisdir, '..', 'lcg', 'lib')))
 
 import pytis.util
 import pytis.presentation
@@ -49,6 +49,15 @@ class NewFormProfileManager(FormProfileManager):
     _PARAMS_MANAGER_CLASS = NewFormProfileParamsManager
 
 
+def check_modules():
+    for modname in pytis.config.search_modules:
+        try:
+            __import__(modname)
+        except ImportError as e:
+            print("Module {} not found: {}".format(modname, e), file=sys.stderr)
+            return False
+    return True
+
 def run():
     # Process command line options and init configuration.
     parser = argparse.ArgumentParser(
@@ -70,9 +79,25 @@ def run():
         parser.print_help()
         sys.exit(1)
 
-    applibdir = os.path.dirname(os.path.dirname(os.path.dirname(pytis.config.print_spec_dir)))
-    if os.path.split(applibdir)[-1] == 'lib':
-        sys.path.append(applibdir)
+    if not check_modules():
+        print_spec_dir = pytis.config.print_spec_dir
+        if print_spec_dir and os.path.exists(print_spec_dir):
+            print("Extending sys.path using pytis.config.print_spec_dir ({})."
+                  .format(print_spec_dir), file=sys.stderr)
+            from os.path import dirname, normpath
+            path = dirname(dirname(dirname(normpath(print_spec_dir))))
+            sys.path.append(path)
+            if check_modules():
+                print("{} added to sys.path.".format(path), file=sys.stderr)
+            else:
+                print("Adding {} to sys path did not help. Exiting.".format(path), file=sys.stderr)
+                sys.exit()
+    try:
+        pytis.config.resolver.specification('Application')
+    except (pytis.util.ResolverError, ImportError) as e:
+        print("Application specification not found: {}".format(e), file=sys.stderr)
+        sys.exit()
+
     pytis.config.log_exclude = [pytis.util.ACTION, pytis.util.EVENT,
                                 pytis.util.DEBUG, pytis.util.OPERATIONAL]
     resolver = pytis.config.resolver
