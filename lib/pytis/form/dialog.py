@@ -609,7 +609,7 @@ class ProgressDialog(OperationDialog):
         super_(ProgressDialog).__init__(self, parent, function, args=args,
                                         kwargs=kwargs, message=message,
                                         title=title)
-        style = wx.PD_APP_MODAL
+        style = wx.PD_APP_MODAL | wx.PD_AUTO_HIDE
         if elapsed_time:
             style = style | wx.PD_ELAPSED_TIME
         if estimated_time:
