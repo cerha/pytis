@@ -21,6 +21,7 @@ from __future__ import unicode_literals
 import pytis.util
 import pytis.data
 import pytis.extensions
+import pytis.output
 import pytis.presentation
 from pytis.api import app
 from pytis.presentation import Field, Editable, procedure
