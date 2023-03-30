@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2019-2022 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2019-2023 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2010-2018 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -18,6 +18,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from __future__ import print_function
+from __future__ import unicode_literals
 import sys
 import getopt
 import argparse
@@ -118,13 +119,11 @@ def run():
                         else:
                             total_valid += 1
                         total_processed += 1
-    print((u"Total %d profiles processed:\n"
-           u"  %d valid\n"
-           u"  %d invalid") % (total_processed, total_valid, total_invalid))
-    if skipped == 1:
-        print(u"  1 specification skipped due to errors")
-    elif skipped > 1:
-        print(u"  %d specifications skipped due to errors" % skipped)
+    print(("Total %d profiles processed:\n"
+           "  %d valid\n"
+           "  %d invalid") % (total_processed, total_valid, total_invalid))
+    if skipped:
+        print("  %d specification%s skipped due to errors" % (skipped, 's' if skipped > 1 else ''))
 
 
 if __name__ == '__main__':
