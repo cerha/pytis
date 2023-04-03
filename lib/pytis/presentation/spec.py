@@ -5411,6 +5411,41 @@ class MenuSeparator(object):
     pass
 
 
+class HelpProc(object):
+    """Special class to mark procedures allowed to be called from pytis help.
+
+    Don't use directly, just mark the procedure using the 'help_proc' decorator.
+
+    """
+    def __init__(self, func):
+        self._func = func
+
+    def __call__(self, **kwargs):
+        action = 'proc/%s/%s/' % (self._func.__name__, self._func.__module__)
+        if not pytis.form.app.action_has_access(action):
+            app.error(_(u"You don't have priviledges to invoke the action '%s'.\n"
+                        u"Please contact the access rights administrator.") % (action,))
+        else:
+            self._func(**kwargs)
+
+
+def help_proc(func):
+    """Decorator to mark functions allowed to be run from Pytis help.
+
+    Use this decorator on Python functions which are allowed to be called from
+    within the Pytis help content using the link in the form:
+
+    [call:module_name.procedure_name?argument=value Link label]
+
+    Note that module_name is a full Python module name and not a specification
+    name and thus it is not limited to Pytis resolver modules.  Thus help
+    procedures can be located in any Python module, they just must be marked by
+    this decorator.
+
+    """
+    return HelpProc(func)
+
+
 class _SpecificationMetaclass(type):
 
     def __init__(cls, clsname, bases, clsdict):

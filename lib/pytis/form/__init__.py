@@ -40,11 +40,11 @@ from .screen import (  # noqa: F401
     WxKey, Keymap, KeyHandler, CallbackHandler, ToolTipWindow, ToolTip,
     StatusBar, InfoWindow, ProfileSelectorPopup, ProfileSelector,
     TextHeadingSelector, FormStateToolbarControl, KeyboardSwitcher,
-    DualFormSwitcher, DualFormResplitter, LocationBar, HelpProc,
+    DualFormSwitcher, DualFormResplitter, LocationBar,
     Browser, mupdfProcessor, FileViewerButtonPanel, FileViewer,
     FileViewerFrame, make_in_operator, beep, microsleep, busy_cursor,
     is_busy_cursor, modal, copy_to_clipboard, paste_from_clipboard,
-    hotkey_string, help_proc, char2px, dlg2px,
+    hotkey_string, char2px, dlg2px,
     acceskey_prefix, orientation2wx, make_fullname, uicommand_mitem,
     get_icon,
 )
@@ -95,7 +95,7 @@ from .application import (  # noqa: F401
     delete_record_question, built_in_status_fields,
     InputDialog, InputNumeric, InputDate,
     MSeparator, Menu, MItem, CheckItem, RadioItem,
-
+    help_proc,
 )
 
 from .configui import (  # noqa: F401

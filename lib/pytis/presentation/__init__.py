@@ -38,7 +38,8 @@ from .spec import (  # noqa: F401
     FormType, Link, ListLayout, Enumeration, Field, Fields, AttachmentStorage,
     FileAttachmentStorage, HttpAttachmentStorage, DbAttachmentStorage,
     SharedParams, Menu, MenuItem, MenuSeparator, StatusField,
-    SpecificationBase, Application, Specification, specification_path, IN,
+    SpecificationBase, Application, HelpProc, help_proc,
+    Specification, specification_path, IN,
 )
 
 from .field import PresentedRow  # noqa: F401

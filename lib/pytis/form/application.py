@@ -2662,5 +2662,5 @@ class InputDate(object):
 
 from pytis.presentation import (
     Menu, MenuItem as MItem, MenuSeparator as MSeparator,
-    MenuItem as CheckItem, MenuItem as RadioItem,
+    MenuItem as CheckItem, MenuItem as RadioItem, help_proc,
 )
