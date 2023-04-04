@@ -340,6 +340,12 @@ class FormProfileParamsManager(UserSetttingsManager):
         else:
             return {}
 
+    def list_spec_names(self, transaction=None):
+        """Return a sequence of distinct specification names for which profiles were saved."""
+        values = self._data.distinct('spec_name', condition=self._condition(),
+                                     transaction=transaction)
+        return set(v.value() for v in values)
+
     def list_form_names(self, spec_name, transaction=None):
         """Return a sequence of form names for which profiles were saved."""
         condition = self._condition(spec_name=spec_name)
@@ -702,7 +708,8 @@ class FormProfileManager(UserSetttingsManager):
         """Return a sequence of distinct specification names for which profiles were saved."""
         values = self._data.distinct('spec_name', condition=self._condition(),
                                      transaction=transaction)
-        return [v.value() for v in values]
+        return (set(v.value() for v in values) +
+                self._params_manager.list_spec_names(transaction=transaction))
 
     def list_form_names(self, spec_name, transaction=None):
         """Return a sequence of distinct form names for which profiles were saved."""
@@ -982,7 +989,8 @@ class LegacyFormProfileManager(LegacyUserSetttingsManager):
     def list_spec_names(self, transaction=None):
         values = self._data.distinct('spec_name', condition=self._condition(),
                                      transaction=transaction)
-        return [v.value() for v in values]
+        return (set(v.value() for v in values) +
+                self._params_manager.list_spec_names(transaction=transaction))
 
     def list_form_names(self, spec_name, transaction=None):
         return self._params_manager.list_form_names(spec_name, transaction=transaction)
@@ -1003,6 +1011,12 @@ class LegacyFormProfileParamsManager(LegacyUserSetttingsManager):
     def load(self, spec_name, form_name, profile_id, transaction=None):
         return self._load(spec_name=spec_name, form_name=form_name, profile_id=profile_id,
                           transaction=transaction) or {}
+
+    def list_spec_names(self, transaction=None):
+        """Return a sequence of distinct specification names for which profiles were saved."""
+        values = self._data.distinct('spec_name', condition=self._condition(),
+                                     transaction=transaction)
+        return set(v.value() for v in values)
 
     def list_form_names(self, spec_name, transaction=None):
         condition = self._condition(spec_name=spec_name)
