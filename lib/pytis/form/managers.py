@@ -708,8 +708,9 @@ class FormProfileManager(UserSetttingsManager):
         """Return a sequence of distinct specification names for which profiles were saved."""
         values = self._data.distinct('spec_name', condition=self._condition(),
                                      transaction=transaction)
-        return (set(v.value() for v in values) +
-                self._params_manager.list_spec_names(transaction=transaction))
+        return set(v.value() for v in values).union(
+            self._params_manager.list_spec_names(transaction=transaction)
+        )
 
     def list_form_names(self, spec_name, transaction=None):
         """Return a sequence of distinct form names for which profiles were saved."""
@@ -989,8 +990,9 @@ class LegacyFormProfileManager(LegacyUserSetttingsManager):
     def list_spec_names(self, transaction=None):
         values = self._data.distinct('spec_name', condition=self._condition(),
                                      transaction=transaction)
-        return (set(v.value() for v in values) +
-                self._params_manager.list_spec_names(transaction=transaction))
+        return set(v.value() for v in values).union(
+            self._params_manager.list_spec_names(transaction=transaction)
+        )
 
     def list_form_names(self, spec_name, transaction=None):
         return self._params_manager.list_form_names(spec_name, transaction=transaction)
