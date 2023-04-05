@@ -610,9 +610,11 @@ class Application(API):
         Arguments:
 
           name -- specification name for resolver.
-          prefill -- a dictionary of values to be prefilled in the form.  Keys
-            are field identifiers and values are either 'pytis.data.Value'
-            instances or the corresponding Python internal values directly.
+          prefill -- a dictionary of initial field values.  Keys are field
+            identifiers and values are either 'pytis.data.Value' instances or
+            the corresponding Python internal values directly.  These values
+            actually override the default (or computed) values defined in field
+            specifications.
           inserted_data -- allows to pass a sequence of 'pytis.data.Row'
             instances to be inserted.  The form is then gradually prefilled by
             values of these rows and the user can individually accept or skip
@@ -629,7 +631,7 @@ class Application(API):
             are either the corresponding internal Python values valid for the
             fields's data type or 'pytis.data.Value' instances directly.  These
             values will not affect the initial row state and thus will appear
-            as changed to the user.
+            as changed to the user (as opposed to 'prefill').
           block_on_new_record -- if true, the 'on_new_record' procedure from
             specification  will be blocked.  This makes it possible to call
             'new_record' from within the 'on_new_record' procedure without
