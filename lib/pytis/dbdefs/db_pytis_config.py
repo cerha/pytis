@@ -48,7 +48,7 @@ class EPytisFormProfileBase(sql.SQLTable):
               sql.Column('spec_name', pytis.data.String(not_null=True)),
               sql.Column('profile_id', pytis.data.String(not_null=True)),
               sql.Column('title', pytis.data.String(not_null=True)),
-              sql.Column('filter', pytis.data.JSON(not_null=True)),
+              sql.Column('filter', pytis.data.JSON()),
               sql.Column('errors', pytis.data.String(not_null=False)),
               )
     inherits = (XChanges,)
