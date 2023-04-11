@@ -87,21 +87,26 @@ class EvPytisFormProfiles(sql.SQLView):
         return sqlalchemy.select(
             cls._exclude(profile, 'id', 'username', 'spec_name', 'profile_id', 'errors') +
             cls._exclude(params, 'id', 'errors') +
-            [sql.gL("profile.id||'.'||params.id").label('id'),
-             sql.gL("'form/'|| params.form_name ||'/'|| profile.spec_name ||'//'")
-             .label('fullname'),
-             sql.gL("case when profile.errors is not null and params.errors is not null "
-                    "then profile.errors ||'\n'||params.errors "
-                    "else coalesce(profile.errors, params.errors) end").label('errors')],
-            from_obj=[
-                profile.join(
-                    params, and_(
-                        profile.c.username == params.c.username,
-                        profile.c.spec_name == params.c.spec_name,
-                        profile.c.profile_id == params.c.profile_id
-                    )
+            [
+             (profile.c.id + "'.'" + params.c.id).label('id'),
+             ("'form/'" + params.c.form_name + "'/'" + profile.c.spec_name +
+              "'//'").label('fullname'),
+             sqlalchemy.case(
+                 [(sqlalchemy.and_(profile.c.errors.is_not(None),
+                                  params.c.errors.is_not(None),
+                                  ), profile.c.errors + "'\\n'" + params.c.errors)
+                  ],
+                 else_=(sqlalchemy.func.coalesce(profile.c.errors, params.c.errors))
+             ).label('errors')
+            ],
+        ).select_from(
+            profile.join(
+                params, and_(
+                    profile.c.username == params.c.username,
+                    profile.c.spec_name == params.c.spec_name,
+                    profile.c.profile_id == params.c.profile_id
                 )
-            ]
+            )
         )
 
     def on_delete(self):
