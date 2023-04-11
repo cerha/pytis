@@ -49,7 +49,7 @@ class EPytisFormProfileBase(sql.SQLTable):
               sql.Column('profile_id', pytis.data.String(not_null=True)),
               sql.Column('title', pytis.data.String(not_null=True)),
               sql.Column('filter', pytis.data.JSON()),
-              sql.Column('errors', pytis.data.String(not_null=False)),
+              sql.Column('errors', pytis.data.String()),
               )
     inherits = (XChanges,)
     unique = (('username', 'spec_name', 'profile_id',),)
@@ -67,7 +67,7 @@ class EPytisFormProfileParams(sql.SQLTable):
               sql.Column('form_name', pytis.data.String(not_null=True)),
               sql.Column('profile_id', pytis.data.String(not_null=True)),
               sql.Column('params', pytis.data.JSON(not_null=True)),
-              sql.Column('errors', pytis.data.String(not_null=False)),
+              sql.Column('errors', pytis.data.String()),
               )
     inherits = (XChanges,)
     unique = (('username', 'spec_name', 'form_name', 'profile_id',),)
