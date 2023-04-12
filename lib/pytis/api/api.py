@@ -520,13 +520,13 @@ class Application(API):
         """
         pass
 
-    def input_date(self, title, label, default=None, not_null=True, descr=None, noselect=False):
+    def input_date(self, title, label=None, default=None, not_null=True, descr=None, noselect=False):
         """Display a form for entering a date and return this value.
 
         Arguments:
 
           title -- input form main title as a string.
-          label -- field label as a string.
+          label -- field label as a string.  If None, "Date" is used as the default.
           default -- initial field value as 'datetime.date' or None.
           not_null -- iff True, it will not be possible to submit the form without
             entering a value.
