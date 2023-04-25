@@ -700,7 +700,7 @@ class Application(API):
         pass
 
     def run_form(self, name, select_row=None, multi=True, sorting=None, filter=None,
-                 condition=None, profile=None, binding=None):
+                 condition=None, profile=None, binding=None, transaction=None):
         """Display given form in the main application frame.
 
         Arguments:
@@ -730,6 +730,7 @@ class Application(API):
             specification) and the arguments 'filter' and 'sorting' must be
             None (they are determined by the profile).
           binding -- id of the side form binding to be initially selected.
+          transaction -- transaction for DB operations.
 
         The form type is selected automatically.  If name contains '::' (the
         legacy dual form separator), the form is a dual form.  If the form

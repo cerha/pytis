@@ -1821,7 +1821,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
             return False
 
     def api_run_form(self, name, select_row=None, multi=True, sorting=None, filter=None,
-                     condition=None, profile=None, binding=None):
+                     condition=None, profile=None, binding=None, transaction=None):
         form_class = pytis.form.BrowseForm
         kwargs = {}
         if '::' in name:
@@ -1836,7 +1836,8 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
                     form_class = pytis.form.MultiBrowseDualForm
                     kwargs = dict(binding=binding)
         return run_form(form_class, name, select_row=select_row, sorting=sorting,
-                        filter=filter, condition=condition, profile_id=profile, **kwargs)
+                        filter=filter, condition=condition, profile_id=profile,
+                        transaction=transaction, **kwargs)
 
     def api_codebook(self, name, select_row=0, columns=None, sorting=None, filter=None,
                      condition=None, multirow=False, begin_search=None, transaction=None):
