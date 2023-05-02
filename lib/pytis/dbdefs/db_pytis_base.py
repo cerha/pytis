@@ -287,10 +287,9 @@ class XLogUpdateTrigger(Base_PyFunction):
         return None
 
 
-class LogTrigger(sql.SQLPlFunction):
+class LogTrigger(sql.SQLPlFunction, sql.SQLTrigger):
     name = 'log_trigger'
     arguments = ()
-    result_type = sql.G_CONVERT_THIS_FUNCTION_TO_TRIGGER
     multirow = False
     security_definer = True
     stability = 'VOLATILE'
@@ -310,3 +309,47 @@ class Base_LogSQLTable(sql.SQLTable):
     def triggers(self):
         keys = ','.join([f.id() for f in self.fields if f.primary_key()])
         return ((Base_LogTrigger, keys,),)
+
+
+class LogStatTrigger(sql.SQLPlFunction, sql.SQLTrigger):
+    name = 'log_stat_trigger'
+    arguments = ()
+    multirow = False
+    security_definer = True
+    stability = 'VOLATILE'
+    depends_on = ()
+    access_rights = ()
+
+
+class Base_LogStatTriggerAfterIns(sql.SQLTrigger):
+    name = "log_ins"
+    each_row = False
+    events = ('insert',)
+    referencing = (('NEW', 'new_table'),)
+    body = LogStatTrigger
+
+
+class Base_LogStatTriggerAfterUpd(sql.SQLTrigger):
+    name = 'log_upd'
+    each_row = False
+    events = ('update',)
+    referencing = (('NEW', 'new_table'), ('OLD', 'old_table'))
+    body = LogStatTrigger
+
+
+class Base_LogStatTriggerAfterDel(sql.SQLTrigger):
+    name = 'log_del'
+    each_row = False
+    events = ('delete',)
+    referencing = (('OLD', 'old_table'),)
+    body = LogStatTrigger
+
+
+class Base_LogStatSQLTable(sql.SQLTable):
+
+    @property
+    def triggers(self):
+        keys = ','.join([f.id() for f in self.fields if f.primary_key()])
+        return ((Base_LogStatTriggerAfterIns, keys),
+                (Base_LogStatTriggerAfterUpd, keys),
+                (Base_LogStatTriggerAfterDel, keys))
