@@ -1087,8 +1087,8 @@ class AggregatedViewsManager(UserSetttingsManager):
             return pytis.presentation.AggregatedView(
                 id=aggregated_view_id,
                 name=params['name'],
-                group_by_columns=tuple(params['group_by_columns']),
-                aggregation_columns=tuple(params['aggregation_columns']),
+                group_by_columns=tuple(tuple(x) for x in params['group_by_columns']),
+                aggregation_columns=tuple(tuple(x) for x in params['aggregation_columns']),
             )
         else:
             return None
