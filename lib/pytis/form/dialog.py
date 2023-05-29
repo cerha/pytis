@@ -554,7 +554,7 @@ class OperationDialog(Message):
 
     def _on_show(self):
         self._result = self._function(*self._args, **self._kwargs)
-        pytis.form.wx_yield_(full=True)
+        pytis.form.app.wx_yield(full=True)
         if self._dialog.IsShown():
             self._end_modal(wx.ID_OK)
 
@@ -679,7 +679,7 @@ class ProgressDialog(OperationDialog):
                 try:
                     return self._queue.get(block=False)
                 except queue.Empty:
-                    pytis.form.wx_yield_(full=True)
+                    pytis.form.app.wx_yield(full=True)
                     #time.sleep(0.01)
 
     def _run_dialog(self):
@@ -695,7 +695,7 @@ class ProgressDialog(OperationDialog):
             thread.start()
             return function.result()
         else:
-            pytis.form.wx_yield_(full=True)
+            pytis.form.app.wx_yield(full=True)
             return self._function(self._update, *self._args, **self._kwargs)
 
     def _customize_result(self, result):

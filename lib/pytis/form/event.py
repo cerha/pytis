@@ -399,7 +399,7 @@ def interrupt_watcher():
         while pytis.form and pytis.form.app is not None:
             time.sleep(0.1)
             if _current_event is not None and _current_event is last_event:
-                pytis.form.wx_yield_(full=True)
+                pytis.form.app.wx_yield(full=True)
             else:
                 last_event = _current_event
     _thread.start_new_thread(watcher, ())

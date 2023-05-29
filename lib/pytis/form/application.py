@@ -135,6 +135,8 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         self._recent_directories = {}
         self._remote_connection_last_available = None
         self._menu_by_id = {}
+        self._yield_lock = None
+        self._yield_blocked = False
         super(Application, self).__init__()
 
     def OnInit(self):
@@ -1096,7 +1098,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
             # We indicate busy state here so that the action is not delayed by
             # some time consuming _on_idle methods.
             busy_cursor(True)
-            wx_yield_()
+            self.wx_yield()
             result = None
             self.save()
             form = find((form_class, name), self._windows.items(),
@@ -1284,7 +1286,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
             self._modals.pop()
             busy_cursor(False)
         # Tento yield zaručí správné předání focusu oken.
-        wx_yield_()
+        self.wx_yield()
         top = self.top_window()
         if top is not None:
             top.focus()
@@ -1373,6 +1375,38 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
     def wx_frame(self):
         """Return the main application frame as 'wx.Frame' instance."""
         return self._frame
+
+    def wx_yield(self, full=False):
+        """Process wx events in the queue.
+
+        Arguments:
+
+          full -- iff true, process also user events.
+
+        """
+        if self._yield_blocked:
+            return
+        if self._yield_lock is None:
+            self._yield_lock = _thread.allocate_lock()
+        if not self._yield_lock.acquire(0):
+            return
+        try:
+            if full:
+                self.Yield()
+            else:
+                wx.SafeYield()
+        finally:
+            self._yield_lock.release()
+
+    def block_yield(self, block=False):
+        """Block or unblock processing of application events.
+
+        Arguments:
+
+          block -- if true, block processing of application events, otherwise unblock it
+
+        """
+        self._yield_blocked = block
 
     def login_hook(self, success):
         if not self._login_success:
@@ -1857,7 +1891,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
             # Kvůli wx.SafeYield() se ztrácí focus, takže
             # si ho uložíme a pak zase obnovíme.
             focused = wx_focused_window()
-            wx_yield_()
+            self.wx_yield()
             proc = pytis.config.resolver.get_object(spec_name, proc_name)
             if kwargs.pop('block_refresh', False):
                 with pytis.form.Refreshable.block_refresh():
@@ -2495,49 +2529,6 @@ def global_keymap():
         return pytis.form.app.keymap
     except AttributeError:
         return Keymap()
-
-
-_yield_lock = None
-
-
-def wx_yield_(full=False):
-    """Zpracuj wx messages ve frontě.
-
-    Argumenty:
-
-      full -- právě když je pravdivé, zpracuj i uživatelské události
-
-    """
-    if _yield_blocked:
-        return
-    global _yield_lock
-    if _yield_lock is None:
-        _yield_lock = _thread.allocate_lock()
-    if not _yield_lock.acquire(0):
-        return
-    try:
-        if full:
-            if pytis.form.app is not None:
-                pytis.form.app.Yield()
-        else:
-            wx.SafeYield()
-    finally:
-        _yield_lock.release()
-
-
-_yield_blocked = False
-
-
-def block_yield(block=False):
-    """Block or unblock processing of application events.
-
-    Arguments:
-
-      block -- if true, block processing of application events, otherwise unblock it
-
-    """
-    global _yield_blocked
-    _yield_blocked = block
 
 
 # Deprecated backwards compatibility aliases.

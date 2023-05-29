@@ -62,7 +62,7 @@ from .screen import (
     DEFAULT_WINDOW_BACKGROUND_COLOUR,
 )
 from .application import (
-    Application, block_yield, db_operation, run_dialog, run_form,
+    Application, db_operation, run_dialog, run_form,
 )
 from .search import (
     SearchDialog, FilterDialog, SortingDialog
@@ -384,11 +384,11 @@ class Form(wx.Panel, KeyHandler, CallbackHandler, CommandHandler):
 
     def _cmd_leave_form(self):
         def leave():
-            block_yield(True)
+            pytis.form.app.block_yield(True)
             try:
                 return self.close()
             finally:
-                block_yield(False)
+                pytis.form.app.block_yield(False)
         # We noticed segmentation faults inside wx key event processing
         # when the form had been closed using the Escape key.  Previously,
         # we worked around the problem by executing the leave form command
@@ -3268,11 +3268,11 @@ class PopupEditForm(PopupForm, EditForm):
         # recursion in popup forms. Closing the form immediately seems to
         # work fine, on the other hand.
         self.Unbind(wx.EVT_IDLE)
-        block_yield(True)
+        pytis.form.app.block_yield(True)
         try:
             return self.close()
         finally:
-            block_yield(False)
+            pytis.form.app.block_yield(False)
 
     def can_command(self, command, **kwargs):
         if ((command.handler() in (LookupForm, RecordForm) and
@@ -3542,7 +3542,7 @@ class QueryFieldsForm(_VirtualEditForm):
     def _refresh_materialized_view(self, row):
         busy_cursor(True)
         self._query_fields_refresh_button.Enable(False)
-        pytis.form.wx_yield_(full=True)
+        pytis.form.wx_yield(full=True)
         try:
             self._materialized_view.refresh()
             if self._on_refresh:
