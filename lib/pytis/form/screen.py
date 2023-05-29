@@ -199,7 +199,7 @@ def copy_to_clipboard(text):
     #     clipboard.Flush()
     #     clipboard.Close()
     # The following solution is is quite a hack, but it works consistently...
-    ctrl = wx.TextCtrl(pytis.form.wx_frame(), -1, text)
+    ctrl = wx.TextCtrl(pytis.form.app.GetTopWindow(), -1, text)
     ctrl.SetSelection(0, len(text))
     ctrl.Copy()
     ctrl.Destroy()
@@ -1162,7 +1162,7 @@ class InfoWindow(object):
           text, format, **kwargs -- passed to 'wx_text_view()' ('text' as 'content').
 
         """
-        frame = wx.Dialog(parent or pytis.form.wx_frame(), title=title, name=_name,
+        frame = wx.Dialog(parent or pytis.form.app.GetTopWindow(), title=title, name=_name,
                           style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER)
         # Temporarily use a modal dialog instead an ordinary frame to work
         # around the problem of closing a frame whose parent is a modal dialog

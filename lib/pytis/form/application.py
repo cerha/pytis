@@ -1369,10 +1369,6 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         return Menu(_("Recently opened forms"), (),
                     name=self._RECENT_FORMS_MENU_ID, autoindex=False)
 
-    def wx_frame(self):
-        """Return the main application frame as 'wx.Frame' instance."""
-        return self._frame
-
     def wx_yield(self, full=False):
         """Process wx events in the queue.
 
@@ -2506,11 +2502,6 @@ def recent_forms_menu():
     else:
         # This may happen when generating help.
         return Menu(_("Recently opened forms"), ())
-
-
-def wx_frame():
-    """Vrať instanci 'wx.Frame' hlavního okna aplikace."""
-    return pytis.form.app.wx_frame()
 
 def close_forms():
     """Close all currently opened forms."""
