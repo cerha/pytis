@@ -2542,6 +2542,10 @@ def block_yield(block=False):
 
 # Deprecated backwards compatibility aliases.
 
+# TODO: When cleaning this up, remove also:
+# pytis.form.LookupForm.SORTING_ASCENDENT
+# pytis.form.LookupForm.SORTING_DESCENDANT
+
 def refresh():
     app.refresh()
 

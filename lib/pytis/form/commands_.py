@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2022 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2023 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2002-2016 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -41,6 +41,7 @@ definujeme na jediném místě v tomto modulu.
 
 import wx
 
+import pytis.data
 import pytis.util
 from .command import Command, UICommand
 from .dialog import Dialog
@@ -418,10 +419,6 @@ if __debug__:
          ('Ctrl-i', Application.COMMAND_INSPECT),)
 
 
-_ASC = LookupForm.SORTING_ASCENDENT
-_DESC = LookupForm.SORTING_DESCENDANT
-_NONE = LookupForm.SORTING_NONE
-
 COMMAND_ICONS = (
     (Application.COMMAND_HELP, wx.ART_HELP),
     (Application.COMMAND_EXIT, wx.ART_QUIT),
@@ -479,10 +476,10 @@ COMMAND_ICONS = (
     (RecordForm.COMMAND_NEW_RECORD, 'new-record'),
     (RecordForm.COMMAND_DELETE_RECORD, 'delete-record'),
     (EditForm.COMMAND_COMMIT_RECORD, wx.ART_FILE_SAVE),
-    (LookupForm.COMMAND_SORT(direction=_ASC), 'sort-asc'),
-    (LookupForm.COMMAND_SORT(direction=_DESC), 'sort-desc'),
-    (LookupForm.COMMAND_SORT(direction=_NONE), 'unsort'),
-    (LookupForm.COMMAND_SORT, 'sort'),
+    (LookupForm.COMMAND_SORT(direction=pytis.data.ASCENDENT), 'sort-asc'),
+    (LookupForm.COMMAND_SORT(direction=pytis.data.DESCENDANT), 'sort-desc'),
+    (LookupForm.COMMAND_SORT(direction=LookupForm.UNSORT), 'unsort'),
+    (LookupForm.COMMAND_SORT(), 'sort'),
     (LookupForm.COMMAND_FILTER_BY_VALUE, 'filter-by-cell'),
     (LookupForm.COMMAND_FILTER, 'filter-form'),
     (LookupForm.COMMAND_UNFILTER, 'unfilter'),

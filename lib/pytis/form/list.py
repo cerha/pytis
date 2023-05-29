@@ -1024,23 +1024,23 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             Menu(_("Primary Sorting"), (
                 MenuItem(_("Sort Ascending"),
                          command=LookupForm.COMMAND_SORT(col=col, primary=True,
-                                                         direction=LookupForm.SORTING_ASCENDENT)),
+                                                         direction=pytis.data.ASCENDENT)),
                 MenuItem(_("Sort Descending"),
                          command=LookupForm.COMMAND_SORT(col=col, primary=True,
-                                                         direction=LookupForm.SORTING_DESCENDANT)),
+                                                         direction=pytis.data.DESCENDANT)),
             )),
             Menu(_("Secondary Sorting"), (
                 MenuItem(_("Sort Ascending"),
                          command=LookupForm.COMMAND_SORT(col=col,
-                                                         direction=LookupForm.SORTING_ASCENDENT)),
+                                                         direction=pytis.data.ASCENDENT)),
                 MenuItem(_("Sort Descending"),
                          command=LookupForm.COMMAND_SORT(col=col,
-                                                         direction=LookupForm.SORTING_DESCENDANT)),
+                                                         direction=pytis.data.DESCENDANT)),
             )),
             MenuItem(_("Omit this column from sorting"),
-                     command=LookupForm.COMMAND_SORT(direction=LookupForm.SORTING_NONE, col=col)),
+                     command=LookupForm.COMMAND_SORT(col=col, direction=self.UNSORT)),
             MenuItem(_("Cancel sorting completely"),
-                     command=LookupForm.COMMAND_SORT(direction=LookupForm.SORTING_NONE)),
+                     command=LookupForm.COMMAND_SORT(direction=self.UNSORT)),
             MenuSeparator(),
             MenuItem(_("Group up to this column"),
                      command=ListForm.COMMAND_SET_GROUPING_COLUMN(col=col)),
@@ -1109,15 +1109,13 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                 self._run_callback(self.CALL_USER_INTERACTION)
                 cid = self._columns[col].id()
                 primary = not event.ShiftDown()
-                pos = self._sorting_position(cid)
-                if primary and pos != 0:
-                    direction = self.SORTING_ASCENDENT
+                position = self._sorting_position(cid)
+                if primary and position != 0:
+                    direction = pytis.data.ASCENDENT
                 else:
-                    dir = self._sorting_direction(cid) or self.SORTING_NONE
-                    cycle = [self.SORTING_ASCENDENT,
-                             self.SORTING_DESCENDANT,
-                             self.SORTING_NONE]
-                    direction = cycle[(cycle.index(dir) + 1) % 3]
+                    current_direction = self._sorting_direction(cid) or self.UNSORT
+                    cycle = [pytis.data.ASCENDENT, pytis.data.DESCENDANT, self.UNSORT]
+                    direction = cycle[(cycle.index(current_direction) + 1) % 3]
                 LookupForm.COMMAND_SORT.invoke(col=col, primary=primary,
                                                direction=direction)
         self._column_move_target = None
@@ -1278,7 +1276,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             if pos is not None:
                 left = x + width - 12
                 top = y + 3
-                r = self._sorting_direction(cid) == LookupForm.SORTING_ASCENDENT
+                r = self._sorting_direction(cid) == pytis.data.ASCENDENT
                 if cid in self._grouping:
                     color = 'GREEN'
                 else:

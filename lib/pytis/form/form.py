@@ -908,7 +908,7 @@ class TitledForm(object):
 class LookupForm(InnerForm):
     """Formulář s vyhledáváním a tříděním."""
 
-    SORTING_NONE = 'NONE'
+    UNSORT = 'UNSORT'
     """Constant for 'COMMAND_SORT' 'direction' argument indicationg unsorting."""
     SORTING_ASCENDENT = pytis.data.ASCENDENT
     """Backwards compatibility alias for 'pytis.data.ASCENDENT'.
@@ -1517,26 +1517,22 @@ class LookupForm(InnerForm):
         self.filter(pytis.data.EQ(column_id, value), append=True)
 
     def _cmd_sort(self, col=None, direction=None, primary=False):
-        """Změň třídění.
+        """Change sorting.
 
-        Argumenty:
+        Arguments:
 
-          col -- id sloupce, podle kterého má být seznam setříděn, nebo
-            'None' pro globální změny (například vypnutí veškerého třídění)
-          direction -- směr třídění (sestupně/vzestupně/vůbec).  Hodnota daná
-            konstantou 'LookupForm.SORTING_NONE' značí požadavek na zrušení
-            třídění.  Jinak je očekávána jedna z konstant
-            'LookupForm.SORTING_ASCENDENT' (pro sestupné třídění), nebo
-            'LookupForm.SORTING_DESCENDANT' (pro vzestupné třídění).
-          primary -- právě když je pravdivé, bude daný sloupec zvolen jako
-            primární a *jediný* třídící sloupec.  V opačném případě bude pouze
-            přidán na konec stávajícího seznamu třídících sloupců.
-
-        Při nejednoznačné kombinaci argumentů 'col' a 'direction' je
-        automaticky vyvolán dialog pro výběr třídících kritérií.
+          col -- column id to add/remove from current sorting or 'None' for
+            global changes such as switching sorting completely.
+          direction -- sorting direction as one of constants
+            'pytis.data.ASCENDENT', 'pytis.data.DESCENDANT' or
+            'pytis.form.LookupForm.UNSORT' (remove given column from sorting) .
+            If None, a dialog is displayed to select sorting interactively.
+          primary -- iff true, given column will be selected as the primary
+            (and the only) sorting column.  Otherwise it will be just added to
+            the end of current sorting specification.
 
         """
-        sorting = self._determine_sorting(col=col, direction=direction, primary=primary)
+        sorting = self._determine_sorting(col, direction, primary)
         if sorting is not None and sorting != self._lf_sorting:
             self._lf_sorting = sorting
             self.select_row(self._current_key())
@@ -1545,58 +1541,49 @@ class LookupForm(InnerForm):
     def _can_sort(self, col=None, direction=None, primary=False):
         # `col' je zde identifikátor sloupce.
         sorting_columns = tuple(self._sorting_columns())
-        if direction == self.SORTING_NONE:
+        if direction == self.UNSORT:
             return sorting_columns and (col is None or col in sorting_columns)
         elif direction is not None and col is not None:
-            pos = self._sorting_position(col)
-            dir = self._sorting_direction(col)
+            position = self._sorting_position(col)
+            current_direction = self._sorting_direction(col)
             if primary:
-                return pos != 0 or direction != dir
+                return position != 0 or direction != current_direction
             else:
-                return pos != 0 and direction != dir and sorting_columns
+                return position != 0 and direction != current_direction and sorting_columns
         else:
             return True
 
     def _determine_sorting(self, col, direction, primary):
-        if col is None and direction == self.SORTING_NONE:
+        if col is None and direction == self.UNSORT:
             sorting = ()
         elif col is None or direction is None:
             columns = self._lf_sfs_columns()
             if col is None and self._lf_sorting:
                 col = self._sorting_columns()[0]
-            if direction is not None:
-                mapping = {self.SORTING_ASCENDENT: pytis.data.ASCENDENT,
-                           self.SORTING_DESCENDANT: pytis.data.DESCENDANT}
-                direction = mapping[direction]
             sorting = run_dialog(SortingDialog, columns, self._lf_sorting,
                                  col=col, direction=direction)
             if sorting is None:
                 return None
             elif sorting == ():
                 sorting = self._lf_initial_sorting
-            else:
-                mapping = {pytis.data.ASCENDENT: self.SORTING_ASCENDENT,
-                           pytis.data.DESCENDANT: self.SORTING_DESCENDANT}
-                sorting = tuple([(cid, mapping[dir]) for cid, dir in sorting])
         elif col is not None:
             if ((not self._data.find_column(col) or
                  not self._data.permitted(col, pytis.data.Permission.VIEW))):
                 app.echo(_(u"This column can not be used for sorting."), kind='error')
                 return None
-            pos = self._sorting_position(col)
+            position = self._sorting_position(col)
             sorting = xlist(self._lf_sorting)
-            if direction == self.SORTING_NONE:
-                del sorting[pos]
+            if direction == self.UNSORT:
+                del sorting[position]
             else:
-                assert direction in (self.SORTING_ASCENDENT,
-                                     self.SORTING_DESCENDANT)
+                assert direction in (pytis.data.ASCENDENT, pytis.data.DESCENDANT)
                 new_sort_spec = (col, direction)
-                if primary and pos != 0:
+                if primary and position != 0:
                     sorting = (new_sort_spec,)
-                elif pos is None:
+                elif position is None:
                     sorting.append(new_sort_spec)
                 else:
-                    sorting[pos] = new_sort_spec
+                    sorting[position] = new_sort_spec
             sorting = tuple(sorting)
         else:
             raise ProgramError("Invalid sorting arguments:", (col, direction))
