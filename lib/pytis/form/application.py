@@ -137,6 +137,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         self._menu_by_id = {}
         self._yield_lock = None
         self._yield_blocked = False
+        self.keymap = Keymap()
         super(Application, self).__init__()
 
     def OnInit(self):
@@ -179,15 +180,12 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         self._modals = Stack()
         self._help_browser = None
         self._login_success = False
-        keymap = self.keymap = Keymap()
-        custom_keymap = self._specification.keymap()
-        assert isinstance(custom_keymap, (tuple, list)), custom_keymap
-        for key, cmd in pytis.form.DEFAULT_KEYMAP + custom_keymap:
+        for key, cmd in pytis.form.DEFAULT_KEYMAP + self._specification.keymap():
             if isinstance(cmd, (list, tuple)):
                 cmd, args = cmd
             else:
                 args = {}
-            keymap.define_key(key, cmd, args)
+            self.keymap.define_key(key, cmd, args)
         pytis.form.app = self
         app.title = pytis.config.application_name
 
@@ -580,7 +578,6 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
             ]))
 
         self._menubar = menubar = wx.MenuBar()
-        #print(self.keymap._keymap)
         for item in menu:
             # Determining availability of menu items may invoke database operations...
             success, result = db_operation(self._create_menu, menubar, item, self.keymap)
@@ -2518,17 +2515,6 @@ def wx_frame():
 def close_forms():
     """Close all currently opened forms."""
     return pytis.form.app._close_forms()
-
-
-# Ostatní funkce.
-
-
-def global_keymap():
-    """Vrať klávesovou mapu aplikace jako instanci třídy 'Keymap'."""
-    try:
-        return pytis.form.app.keymap
-    except AttributeError:
-        return Keymap()
 
 
 # Deprecated backwards compatibility aliases.

@@ -64,7 +64,7 @@ from .screen import (
     copy_to_clipboard, field_size
 )
 from .application import (
-    Application, global_keymap, run_dialog, run_form,
+    Application, run_dialog, run_form,
 )
 
 
@@ -368,7 +368,7 @@ class InputField(KeyHandler, CommandHandler):
                 item = uicommand_mitem(item.clone(_command_handler=handler(item)))
             menu.append(item)
         pytis.form.app.popup_menu(self._current_ctrl(), menu, position=position,
-                                  keymap=global_keymap())
+                                  keymap=pytis.form.app.keymap)
 
     def _validate(self):
         return self._row.validate(self.id(), self._get_value())

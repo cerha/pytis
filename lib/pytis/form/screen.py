@@ -702,7 +702,7 @@ class KeyHandler(object):
         if self.keymap is None:
             guardian = self._key_guardian
             if guardian is None:
-                gkeymap = pytis.form.global_keymap()
+                gkeymap = pytis.form.app.keymap
             else:
                 gkeymap = guardian._get_keymap()
             self.keymap = Keymap(gkeymap)
@@ -2484,7 +2484,7 @@ def wx_button(parent, label=None, icon=None, bitmap=None, id=-1, noborder=False,
                 finally:
                     button._pytis_in_button_handler = False
         if tooltip:
-            hotkey = pytis.form.global_keymap().lookup_command(cmd, args)
+            hotkey = pytis.form.app.keymap.lookup_command(cmd, args)
             if hotkey:
                 tooltip += ' (' + hotkey_string(hotkey) + ')'
         # TODO: This causes the whole application to freeze when a dialog is closed.
