@@ -31,11 +31,8 @@ automatically created for all defined commands.  For example the definition:
 will automatically create a constant 'Application.COMMAND_EXIT' and this
 constant may be further used to invoke the command, etc.
 
-Přiřazení kláves příkazům:
-
-V aplikaci nikde nepoužíváme přímý zápis kláves, nýbrž pouze jim odpovídající
-příkazy.  To nám umožňuje nestarat se v aplikačním kódu o přiřazení kláves.  To
-definujeme na jediném místě v tomto modulu.
+This module also defines global keyboard shortcuts for selected commands (and
+their arguments) in the constant 'DEFAULT_KEYMAP'.
 
 """
 
