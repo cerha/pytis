@@ -1767,6 +1767,15 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
                         multi_insert=multi_insert, transaction=transaction,
                         set_values=set_values, spec_kwargs=spec_kwargs)
 
+    def api_show_record(self, name, row):
+        assert isinstance(row, (PresentedRow, pytis.data.Row, pytis.data.Value)), row
+        if isinstance(row, PresentedRow):
+            row = row.row()
+        # TODO: show_record() doesn't support redirect() (see api_edit_record()
+        # below), but redirect is nearly unused and should be removed so it is
+        # not worth the complication here....
+        return run_form(pytis.form.BrowsableShowForm, name, select_row=row)
+
     def api_edit_record(self, name, row, set_values=None, block_on_edit_record=False,
                         transaction=None):
         view = pytis.config.resolver.get(name, 'view_spec')

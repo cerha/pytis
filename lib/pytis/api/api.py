@@ -644,6 +644,22 @@ class Application(API):
         """
         pass
 
+    def show_record(self, name, row):
+        """Show existing record details in a separate form.
+
+        Arguments:
+
+          name -- specification name as a string.
+          row -- edited record as a 'pytis.data.Row' or
+            'pytis.presentation.PresentedRow' instance or record key as a
+            'pytis.data.Value' instance.
+
+        Opens the new form on the "stack" (inside the main application frame).
+        The form contains fields in edit form layout, but they are read only.
+
+        """
+        pass
+
     def edit_record(self, name, row, set_values=None, block_on_edit_record=False,
                     transaction=None):
         """Edit an existing record in a modal form.
