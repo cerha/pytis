@@ -74,7 +74,7 @@ from .screen import (
 )
 from .search import sfs_columns
 from .application import (
-    Application, message, run_dialog, run_form,
+    Application, run_dialog, run_form,
 )
 from .grid import TableRowIterator, GridTable
 
