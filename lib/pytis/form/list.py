@@ -45,6 +45,7 @@ import wx.grid
 import pytis.data
 import pytis.form
 import pytis.output
+import pytis.util
 
 from pytis.api import app
 from pytis.presentation import (
