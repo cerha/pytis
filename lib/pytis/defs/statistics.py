@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2019, 2021 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2019, 2021, 2023 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2010-2014 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -17,11 +17,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import pytis.data
-import pytis.extensions
-import pytis.form
-import pytis.presentation
-from pytis.presentation import Binding, Field, Specification
 import pytis.util
+from pytis.presentation import Binding, Field, Specification
 
 _ = pytis.util.translations('pytis-defs')
 
