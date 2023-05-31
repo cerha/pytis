@@ -152,13 +152,13 @@ _system_callback_access_lock = _thread.allocate_lock()
 
 
 def wx_callback(event_kind, handler, callback, **kwargs):
-    """Obal wx callback hlídacím kódem.
+    """Wrap wx callback by a guard code.
 
-    Funkce zavolá handler.Bind(event_kind, callback, **kwargs).  Callback je obalen
-    kódem, který zajišťuje ošetření události i v případě, kdy právě probíhá
-    zpracování jiné události.
+    The function calls handler.Bind(event_kind, callback, **kwargs).  The
+    callback is wrapped by a code which ensures event handling even in case
+    that the event ocures during processing another event.
 
-    Příklad typického volání funkce:
+    Typical usage:
 
       wx_callback(EVT_BUTTON, button, self.on_button)
 
