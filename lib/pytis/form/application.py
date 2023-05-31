@@ -48,7 +48,7 @@ import pytis.api
 import pytis.data as pd
 import pytis.form
 from pytis.presentation import (
-    Field, Specification, StatusField, computer, Text, TextFormat, PresentedRow,
+    Field, StatusField, computer, Text, TextFormat, PresentedRow,
     Menu, MenuItem, MenuSeparator,
 )
 import pytis.util
