@@ -654,7 +654,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
                     menu.AppendSubMenu(self._create_menu(parent, item, keymap), title)
                     max_label_width = max(width + 20, max_label_width)
                 elif isinstance(item, MenuItem):
-                    mitem = self._append_menu_item(menu, item, title)
+                    mitem = self._append_menu_item(parent, menu, item, title)
                     if item in hotkey_strings:
                         hotkey_items.append((item, mitem, title, width))
                     max_label_width = max(width + max_hotkey_width, max_label_width)
@@ -670,7 +670,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
             mitem.SetItemLabel(title + fill + hotkey_strings[item])
         return menu
 
-    def _append_menu_item(self, menu, item, title=None):
+    def _append_menu_item(self, parent, menu, item, title=None):
         def on_ui_event(event):
             event.Enable(item.command.enabled(**item.args))
             if item.state:
@@ -694,8 +694,8 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
             kind = wx.ITEM_NORMAL
             icon = get_icon(item.icon or command_icon(item.command, item.args))
         mitem = wx.MenuItem(menu, -1, title or item.title, item.help or "", kind=kind)
-        wx_callback(wx.EVT_MENU, self._frame, on_invoke_command, source=mitem)
-        wx_callback(wx.EVT_UPDATE_UI, self._frame, on_ui_event, source=mitem)
+        wx_callback(wx.EVT_MENU, parent, on_invoke_command, source=mitem)
+        wx_callback(wx.EVT_UPDATE_UI, parent, on_ui_event, source=mitem)
         if icon:
             mitem.SetBitmap(icon)
         menu.Append(mitem)
@@ -818,7 +818,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
                 info = form.__class__.__name__
                 if form.name():
                     info += '/' + form.name()
-                self._append_menu_item(menu, MenuItem(
+                self._append_menu_item(self._frame, menu, MenuItem(
                     acceskey_prefix(i) + self._form_menu_item_title(form),
                     help=_("Bring form window to the top (%s)", info),
                     command=Application.COMMAND_RAISE_FORM(form=form),
@@ -832,14 +832,14 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
                 menu.Remove(item.GetId())
                 item.Destroy()
             for i, (title, form_name, spec_name) in enumerate(self._recent_forms):
-                self._append_menu_item(menu, MenuItem(
+                self._append_menu_item(self._frame, menu, MenuItem(
                     acceskey_prefix(i) + title,
                     help=_("Open the form (%s)", form_name + '/' + spec_name),
                     command=Application.COMMAND_RUN_FORM(form_class=getattr(pytis.form, form_name),
                                                          name=spec_name),
                 ))
             menu.AppendSeparator()
-            self._append_menu_item(menu, MenuItem(
+            self._append_menu_item(self._frame, menu, MenuItem(
                 _("Clear"),
                 help=_("Clear the menu of recent forms"),
                 command=Application.COMMAND_CLEAR_RECENT_FORMS(),
