@@ -44,16 +44,18 @@ import time
 import wx
 import wx.html
 
+import pytis
 import pytis.api
 import pytis.data as pd
 import pytis.form
+import pytis.remote
+import pytis.util
+
+from pytis.api import app
 from pytis.presentation import (
     Field, StatusField, computer, Text, TextFormat, PresentedRow,
     Menu, MenuItem, MenuSeparator,
 )
-import pytis.util
-import pytis.remote
-from pytis.api import app
 from pytis.util import (
     ACTION, DEBUG, EVENT, OPERATIONAL, ProgramError, ResolverError, Stack, XStack,
     argument_names, find, format_traceback, identity, log, rsa_encrypt
