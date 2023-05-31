@@ -5421,6 +5421,7 @@ class HelpProc(object):
         self._func = func
 
     def __call__(self, **kwargs):
+        import pytis.form
         action = 'proc/%s/%s/' % (self._func.__name__, self._func.__module__)
         if not pytis.form.app.action_has_access(action):
             app.error(_(u"You don't have priviledges to invoke the action '%s'.\n"
