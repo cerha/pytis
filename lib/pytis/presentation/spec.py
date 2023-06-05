@@ -3223,8 +3223,9 @@ class Enumeration(object):
     'pytis.data.FixedEnumerator' with these values.
 
     Labels are user interface strings representing the corresponding inner
-    value.  The default 'display' of a Field using this enumeration will return these
-    labels.
+    value.  The default 'display' of a Field using this enumeration will return
+    these labels.
+
     """
 
     default = None
@@ -3250,6 +3251,11 @@ class Enumeration(object):
     always show labels instead of enumeration inner values.
 
     """
+
+    @classmethod
+    def label(cls, value):
+        """Return the label of the enumeration item with given value."""
+        return dict(cls.enumeration).get(value)
 
 
 @python_2_unicode_compatible
@@ -3721,20 +3727,18 @@ class Field(object):
             enumerator = pytis.data.FixedEnumerator(enumerator)
         elif isinstance(enumerator, __builtins__['type']) and issubclass(enumerator, Enumeration):
             e = enumerator
-            enumerator = pytis.data.FixedEnumerator([v for v, l in e.enumeration])
+            values = [v for v, l in e.enumeration]
+            enumerator = pytis.data.FixedEnumerator(values)
             assert e.selection_type in public_attributes(SelectionType), e.selection_type
             if selection_type is None:
                 selection_type = e.selection_type
             if orientation is None:
                 orientation = e.orientation
             if default is None and e.default is not None:
-                assert e.default in [v for v, l in e.enumeration], (e.default, e.enumeration,)
+                assert e.default in values, (e.default, e.enumeration,)
                 default = e.default
             if display is None:
-                labels = dict(e.enumeration)
-
-                def display(value):
-                    return labels.get(value, value)
+                display = e.label
             if prefer_display is None:
                 assert isinstance(e.prefer_display, bool)
                 prefer_display = e.prefer_display
