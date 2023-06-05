@@ -582,7 +582,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         self._menubar = menubar = wx.MenuBar()
         for item in menu:
             # Determining availability of menu items may invoke database operations...
-            success, result = db_operation(self._create_menu, menubar, item, self.keymap)
+            success, result = db_operation(self._create_menu, self._frame, item, self.keymap)
             if success:
                 menubar.Append(result, item.title)
             else:
