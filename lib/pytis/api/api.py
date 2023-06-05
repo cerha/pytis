@@ -1314,8 +1314,6 @@ class BaseApplication(object):
                     return False
         return self.action_has_access('form/' + name, perm=perm, column=column)
 
-        return True
-
     def action_has_access(self, action, perm=pd.Permission.CALL, column=None):
         """Return true iff 'action' has 'perm' permission.
 
