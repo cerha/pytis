@@ -1377,6 +1377,10 @@ def test_api_definition():
             return None
 
         @property
+        def api_profile(self):
+            return None
+
+        @property
         def api_query_fields(self):
             return 'the query fields'
 
@@ -1395,6 +1399,9 @@ def test_api_definition():
         @property
         def api_side_form(self):
             return MyForm().provider()
+
+        def api_select_row(self, position):
+            pass
 
         def api_clear_selection(self):
             return 'rows unselected'
