@@ -44,6 +44,9 @@ class _TestBase:
     _BACKUP_TABLES = ('c_pytis_menu_actions', 'e_pytis_action_rights', 'e_pytis_menu',)
 
     def setup(self):
+        # When pytis.demo test runs in one pytest session after pytis.data
+        # test, the DB connection must be reset to reflect the changed dbname.
+        pytis.config.option('dbconnection').reset()
         self._resolver = _resolver
         self._orig_rights = self._read_rights()
         self._orig_menu = self._read_menu()
