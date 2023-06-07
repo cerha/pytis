@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2019-2022 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2019-2023 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2012 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -28,9 +28,9 @@ import psycopg2 as dbapi
 import pytis
 import pytis.data
 import pytis.extensions
-import pytis.form
 import pytis.presentation
 import pytis.util
+from pytis.api import app
 
 _configuration_file = 'pytis-demo-config.py'
 _connection_data = {'database': 'pytis-demo'}
@@ -91,15 +91,15 @@ class _TestBase:
 
     def _check_rights(self, expected_rights):
         for shortname, permission, column, permitted in expected_rights:
-            assert pytis.form.app.action_has_access(shortname, permission, column) == permitted
+            assert app._instance.action_has_access(shortname, permission, column) == permitted
             if shortname[:5] == 'form/':
                 rights = self._resolver.specification(shortname[5:]).data_spec().access_rights()
                 assert rights.permitted(permission, (pytis.config.dbuser,), column=column) == permitted
 
     def _read_rights(self):
-        import pytis.form
-        pytis.form.app._init_access_rights()
-        access_rights = pytis.form.app._access_rights
+        app.has_access('x')
+        app._instance._init_access_rights()
+        access_rights = app._instance._access_rights
         spec_rights = pytis.presentation.Specification._access_rights
         return access_rights, spec_rights
 
