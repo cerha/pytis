@@ -2279,7 +2279,7 @@ class DBDataDefault(_DBTest):
             self.assertEqual(row['dttz'], dttz_val)
             self.assertEqual(row['t'], t_val)
             self.assertIsNone(row['ttz'].value())
-        self.assertRaises(pd.DBUserException,
+        self.assertRaises(ValueError,
                           data.insert, pd.Row((('id', key_val),
                                                ('dt', dttz_val), ('dttz', dt_val),
                                                ('t', ttz_val), ('ttz', t_val),)))
@@ -2287,7 +2287,7 @@ class DBDataDefault(_DBTest):
                             ('dt', dttz_val), ('dttz', dt_val),
                             ('t', ttz_val), ('ttz', pd.tval(None)),)))
         check_row()
-        self.assertRaises(pd.DBUserException,
+        self.assertRaises(ValueError,
                           data.update, key_val, pd.Row((('dt', dttz_val), ('dttz', dt_val),
                                                         ('t', ttz_val), ('ttz', t_val),)))
         data.update(key_val, pd.Row((('dt', dttz_val), ('dttz', dt_val),

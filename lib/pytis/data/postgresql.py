@@ -2092,23 +2092,10 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                 else:
                     if t.without_timezone():
                         # There's no way to convert time without date to local time zone
-                        if isinstance(t, DateTime):
-                            tz_value = value.value().replace(tzinfo=DateTime.LOCAL_TZINFO)
-                        else:
-                            try:
-                                raise DBUserException("Time value without time zone", None,
-                                                      (value.value(), b.table(), colid,))
-                            except DBUserException as e:
-                                try:
-                                    import pytis.form
-                                except Exception:
-                                    raise e
-                                else:
-                                    if pytis.form.app.top_window() is not None:
-                                        pytis.form.top_level_exception()
-                                    else:
-                                        raise e
-                        value = Value(ctype, tz_value)
+                        if not isinstance(t, DateTime):
+                            raise ValueError("Time value without time zone", None,
+                                             (value.value(), b.table(), colid,))
+                        value = Value(ctype, value.value().replace(tzinfo=DateTime.LOCAL_TZINFO))
             if crypto_name is not None:
                 if isinstance(ctype, String):
                     encryption_function = 'pytis_encrypt_text'
