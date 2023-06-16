@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2019-2022 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2019-2023 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2002-2015 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -567,7 +567,7 @@ class LCGFormatter(object):
             app.error(_("Invalid use of iterator.\n"
                         "Maybe you refer to an non-existent or "
                         "inaccessible object in the table?") + "\n" + unistr(e))
-            return ''
+            return b''
         show_time = pytis.data.DateTime.now()
         log(EVENT, ('Output formatting took %.3fs (PDF export %.3fs)' %
                     (pytis.data.DateTime.diff_seconds(start_time, show_time),
