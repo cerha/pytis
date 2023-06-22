@@ -3542,7 +3542,7 @@ class QueryFieldsForm(_VirtualEditForm):
     def _refresh_materialized_view(self, row):
         busy_cursor(True)
         self._query_fields_refresh_button.Enable(False)
-        pytis.form.wx_yield(full=True)
+        pytis.form.app.wx_yield(full=True)
         try:
             self._materialized_view.refresh()
             if self._on_refresh:
