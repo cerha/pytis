@@ -425,13 +425,13 @@ class VChanges(sql.SQLView):
 
     insert_order = ()
     def on_insert(self):
-        return """(INSERT INTO t_changes (id, "timestamp", username, schemaname,
+        return ("""(INSERT INTO t_changes (id, "timestamp", username, schemaname,
                                          tablename, operation, key_column, key_value)
                        VALUES (nextval('t_changes_id_seq'::regclass), new."timestamp",
                                new.username, new.schemaname, new.tablename, new.operation,
                                new.key_column, new.key_value);
                    INSERT INTO t_changes_detail (id, detail)
-                        VALUES (currval('t_changes_id_seq'::regclass), new.detail))"""
+                        VALUES (currval('t_changes_id_seq'::regclass), new.detail))""",)
     update_order = ()
     delete_order = ()
     depends_on = (TChanges, TChangesDetail,)

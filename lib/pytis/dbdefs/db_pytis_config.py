@@ -7,7 +7,7 @@ import pytis.data.gensqlalchemy as sql
 import pytis.data
 from pytis.dbdefs.db_pytis_base import default_access_rights, pytis_schemas
 from pytis.dbdefs.db_pytis_common import XChanges
-from pytis.data.dbdefs import and_
+from pytis.data.dbdefs import and_, stype
 
 class EPytisConfig(sql.SQLTable):
     """Pytis application configuration storage."""
@@ -88,7 +88,7 @@ class EvPytisFormProfiles(sql.SQLView):
             cls._exclude(profile, 'id', 'username', 'spec_name', 'profile_id', 'errors') +
             cls._exclude(params, 'id', 'errors') +
             [
-             (profile.c.id + "'.'" + params.c.id).label('id'),
+             (stype(profile.c.id) + "'.'" + stype(params.c.id)).label('id'),
              ("'form/'" + params.c.form_name + "'/'" + profile.c.spec_name +
               "'//'").label('fullname'),
              sqlalchemy.case(
