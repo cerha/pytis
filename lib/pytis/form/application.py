@@ -2198,8 +2198,8 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
     def api_decrypted_areas(self):
         return self._decrypted_areas
 
-    class _PrintResolver(pytis.output.OutputResolver):
-        """Default print resolver used internally by 'api_printout()'."""
+    class _OutputResolver(pytis.output.OutputResolver):
+        """Default print resolver used by 'app.printout()'."""
 
         class _Spec(object):
             # This class has to emulate a specification module as well as a
@@ -2217,71 +2217,55 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         def _get_module(self, name):
             # Supply a default specification module (old style spec).
             try:
-                return super(Application._PrintResolver, self)._get_module(name)
+                return super(Application._OutputResolver, self)._get_module(name)
             except pytis.util.ResolverError:
                 return self._Spec()
 
         def _get_instance(self, key):
             # Supply a default specification class (new style spec).
             try:
-                return super(Application._PrintResolver, self)._get_instance(key)
+                return super(Application._OutputResolver, self)._get_instance(key)
             except pytis.util.ResolverError:
                 return self._Spec()
 
-    def api_printout(self, spec_name, template_id, row=None,
-                     parameters=None, output_file=None, language=None, form=None):
-        if parameters is None:
-            parameters = {}
-        parameters[pytis.output.P_NAME] = spec_name
-        parameters[spec_name + '/' + pytis.output.P_ROW] = row
-        resolvers = (
+    class _OutputFormatter(pytis.output.Formatter):
+
+        def printout(self, output_file):
+            def do_printout(outfile):
+                try:
+                    super(Application._OutputFormatter, self).printout(outfile)
+                except lcg.SubstitutionIterator.NotStartedError:
+                    tbstring = pytis.util.format_traceback()
+                    log(OPERATIONAL, 'Print exception caught', tbstring)
+                    app.error(_("Invalid use of identifier `data' in print specification.\n"
+                                "Maybe use `current_row' instead?"))
+            try:
+                if output_file:
+                    do_printout(output_file)
+                else:
+                    # TODO: Use app.launch_file() here?
+                    with tempfile.NamedTemporaryFile(suffix='.pdf',
+                                                     prefix='tmppytis', delete=False) as f:
+                        de_printout(f)
+                    threading.Thread(target=run_viewer, args=(f.name,)).start()
+            except UserBreakException:
+                pass
+
+
+    def _output_formatter(self, template_id, **kwargs):
+        # api_printout() is implemented by BaseApplication, but we want to customize
+        # the reaction to some errors in the wx application and launch a PDF viewer
+        # automatically when output_file is not specified, so we use a customized
+        # self._OutputResolver and self._OutputFormatter.
+        output_resovers = (
             pytis.output.DatabaseResolver('ev_pytis_user_output_templates',
                                           ('template', 'rowtemplate', 'header',
                                            'first_page_header', 'footer', 'style'),
                                           ('body', 'row', 'page_header',
                                            'first_page_header', 'page_footer', 'style')),
-            self._PrintResolver(pytis.config.print_spec_dir, pytis.config.resolver),
+            self._OutputResolver(pytis.config.print_spec_dir, pytis.config.resolver),
         )
-        try:
-            formatter = pytis.output.Formatter(pytis.config.resolver, resolvers, template_id,
-                                               form=form, parameters=parameters,
-                                               language=language or pytis.util.current_language(),
-                                               translations=pytis.util.translation_path())
-        except pytis.output.AbortOutput as e:
-            log(OPERATIONAL, str(e))
-            return
-
-        def run_viewer(filename):
-            try:
-                app.launch_file(filename)
-            finally:
-                try:
-                    os.remove(filename)
-                except OSError as e:
-                    log(OPERATIONAL, 'Error removing temporary file:', e)
-
-        def do_printout(outfile):
-            try:
-                formatter.printout(outfile)
-            except lcg.SubstitutionIterator.NotStartedError:
-                tbstring = pytis.util.format_traceback()
-                log(OPERATIONAL, 'Print exception caught', tbstring)
-                app.error(_("Invalid use of identifier `data' in print specification.\n"
-                            "Maybe use `current_row' instead?"))
-                raise UserBreakException()
-
-        try:
-            if output_file:
-                do_printout(output_file)
-            else:
-                # TODO: Use app.launch_file() here?
-                with tempfile.NamedTemporaryFile(suffix='.pdf',
-                                                 prefix='tmppytis', delete=False) as f:
-                    do_printout(f)
-                threading.Thread(target=run_viewer, args=(f.name,)).start()
-            formatter.cleanup()
-        except UserBreakException:
-            pass
+        return self._OutputFormatter(pytis.config.resolver, output_resovers, template_id, **kwargs)
 
 
 class DbActionLogger(object):

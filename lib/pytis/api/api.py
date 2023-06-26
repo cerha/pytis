@@ -30,6 +30,8 @@ import pytis.data as pd
 import pytis.presentation
 import pytis.util
 
+from pytis.util import log, OPERATIONAL
+
 
 def implements(api_class, incomplete=False):
     """Decorator for marking a class which implements a particular API.
@@ -133,7 +135,10 @@ class ApplicationAPIProvider(APIProvider):
         self._instance = None
 
     def __getattr__(self, name):
-        if name in ('param', 'has_access') and self._instance is None:
+        if self._instance is None:
+            # This typically happens in scripts where no actuall application is
+            # running.  Thus initialize BaseApplication to get at least itself
+            # basic set of app methods (such as app.param, app.has_access, ...).
             BaseApplication()  # Will call app.init() automatically.
         return super(ApplicationAPIProvider, self).__getattr__(name)
 
@@ -1152,15 +1157,15 @@ class Application(API):
 class BaseApplication(object):
     """Base class for classes implementing the 'Application' API.
 
-    This class only implements access to shared parameters using 'app.param'
-    and access checking using 'app.has_access()'.
+    This class only implements a few basic API points, such as 'app.param',
+    'app.has_access()' and 'app.printout()'.  It may be used as a base class for
+    other classes implementing the full 'Application' API and its instance is
+    available as a fallback 'app' instance in scripts.
 
-    It may be used as a base class for other classes implementing the
-    'Application' API or directly in scripts which don't need anything else
-    than 'app.param' and 'app.has_access()'.  Without them specifications
-    simply can't be instantiated and loaded through the resolver because
-    'app.param' and 'app.has_access()' are often used in specification
-    construction methods.
+    Without the fallback instance, it would simply not be possible to even load
+    specifications through the resolver in scripts (when the wx app is not
+    running) because 'app.param' and 'app.has_access()' are often used in
+    specification construction methods.
 
     """
     class _Param:  # Access items as attributes.
@@ -1289,6 +1294,30 @@ class BaseApplication(object):
     @property
     def api_param(self):
         return self._param
+
+    def _output_formatter(self, template_id, **kwargs):
+        import pytis.output
+        output_resover = pytis.output.OutputResolver(pytis.config.print_spec_dir,
+                                                     pytis.config.resolver)
+        return pytis.output.Formatter(pytis.config.resolver, (output_resover,),
+                                      template_id, **kwargs)
+
+    def api_printout(self, spec_name, template_id, row=None,
+                     parameters=None, output_file=None, language=None, form=None):
+        import pytis.output
+        if parameters is None:
+            parameters = {}
+        parameters[pytis.output.P_NAME] = spec_name
+        parameters[spec_name + '/' + pytis.output.P_ROW] = row
+        try:
+            formatter = self._output_formatter(template_id, form=form, parameters=parameters,
+                                               language=language or pytis.util.current_language(),
+                                               translations=pytis.util.translation_path())
+        except pytis.output.AbortOutput as e:
+            log(OPERATIONAL, str(e))
+        else:
+            formatter.printout(output_file)
+            formatter.cleanup()
 
     def api_has_access(self, name, perm=pd.Permission.VIEW, column=None):
         if not self.action_has_access('form/' + name, perm=perm, column=column):
