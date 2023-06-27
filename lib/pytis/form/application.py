@@ -2246,7 +2246,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
                     # TODO: Use app.launch_file() here?
                     with tempfile.NamedTemporaryFile(suffix='.pdf',
                                                      prefix='tmppytis', delete=False) as f:
-                        de_printout(f)
+                        do_printout(f)
                     threading.Thread(target=run_viewer, args=(f.name,)).start()
             except UserBreakException:
                 pass
