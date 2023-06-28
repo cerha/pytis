@@ -2239,6 +2239,14 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
                     log(OPERATIONAL, 'Print exception caught', tbstring)
                     app.error(_("Invalid use of identifier `data' in print specification.\n"
                                 "Maybe use `current_row' instead?"))
+            def run_viewer(filename):
+                try:
+                    app.launch_file(filename)
+                finally:
+                    try:
+                        os.remove(filename)
+                    except OSError as e:
+                        log(OPERATIONAL, 'Error removing temporary file:', e)
             try:
                 if output_file:
                     do_printout(output_file)
