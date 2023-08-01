@@ -1774,6 +1774,9 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                 position = self._grid.CalcScrolledPosition(pos)
             self._popup_menu(menu, position=position)
 
+    def _can_context_menu(self, position=None):
+        return self._grid.IsSelection() or self._table.current_row() is not None
+
     def _popup_menu(self, items, position=None):
         pytis.form.app.popup_menu(self._grid, items, keymap=self._get_keymap(), position=position)
 
