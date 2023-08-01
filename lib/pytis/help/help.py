@@ -504,15 +504,15 @@ class SpecHelpGenerator(HelpGenerator):
         def node(item):
             if isinstance(item, pytis.presentation.Menu):
                 content = lcg.NodeIndex()
-                children = [node(i) for i in item.items()
+                children = [node(i) for i in item.items
                             if not isinstance(i, pytis.presentation.MenuSeparator)]
                 globs = {}
             else:
                 content = self.EmptyContent()
                 children = ()
-                globs = dict(command=item.command(), args=item.args())
+                globs = dict(command=item.command, args=item.args)
             return self.ContentNode(
-                'help:application/%d' % counter.next(), title=item.title(),
+                'help:application/%d' % counter.next(), title=item.title,
                 content=content, children=children, foldable=True, globals=globs,
                 resource_provider=self._resource_provider,
             )
