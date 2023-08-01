@@ -1,6 +1,6 @@
 # -*- coding: utf-8; mode: structured-text -*-
-# Copyright (c) 2019, 2024 Tomáš Cerha <t.cerha@gmail.com>
-# Copyright (c) 2006, 2012, 2017 OUI Technology Ltd.
+# Copyright (c) 2018-2024 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (c) 2006-2017 OUI Technology Ltd.
 # This is part of the Pytis User Manual.
 # See the file pytis.cs.txt for copying conditions.
 
@@ -147,6 +147,6 @@ Pro políčka s výběrem (např. datumová nebo [help:pytis/codebook-field
 | =F2=         | Vyvolání výběru (kalendáře, číselníku, ...) |
 | =Ctrl-F2=    | Vyvolání číselníku s [help:pytis/searching-incremental inkrementálním hledáním] |
 
-#   | =Backspace= |  ListField.COMMAND_SHOW_SELECTED |
+#   | =Backspace= |  ListField.show_selected |
 
 

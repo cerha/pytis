@@ -38,6 +38,7 @@ from future.utils import with_metaclass, python_2_unicode_compatible
 
 import http.server
 import copy
+import inspect
 import os
 import re
 import string
@@ -53,7 +54,7 @@ import pytis.presentation
 from pytis.util import (
     argument_names, camel_case_to_lower, find, is_sequence, sameclass,
     public_attributes, public_attr_values, split_camel_case, xtuple, nextval,
-    log, OPERATIONAL, ProgramError, UNDEFINED,
+    log, EVENT, OPERATIONAL, ProgramError, UNDEFINED,
 )
 
 # Needed for urllib.request, urllib.error (urllib2 in Python 2).
@@ -3600,9 +3601,9 @@ class Field(object):
             return "Field '%s': " % id + msg % args
 
         def log_(msg, *args):
-            import inspect
             filename, line = inspect.stack()[3][1:3]
             log(OPERATIONAL, "%s, line %s: %s" % (filename, line, msg % args))
+
         assert isinstance(id, basestring)
         assert dbcolumn is None or isinstance(dbcolumn, basestring), dbcolumn
         assert label is None or isinstance(label, basestring), label
@@ -5068,103 +5069,6 @@ class SpecificationBase(object):
         pass
 
 
-class Application(SpecificationBase):
-    """Specification of a Pytis application.
-
-    Derive this class within your application's specification modules under the
-    name 'Application' and override its methods and attributes described below
-    to customize the application's look and behaviour.
-
-    Custom commands may be used in menu items using string identifiers.  For
-    all such identifiers, the derived class must also define a method named as
-    this identider with a prefix 'cmd_'.  This method, when called with no
-    arguments, must return the specification of the command to invoke as a pair
-    (COMMAND, ARGUMENTS), where the first item is a 'pytis.form.Command'
-    instance and the later item is a dictionary of arguments to passed to the
-    command when invoked.  For example when command identifier is 'my_form',
-    the application must define a method named 'cmd_my_form'.
-
-    """
-
-    def init(self):
-        """Run custom application initialization code before startup forms are opened.
-
-        This code is run before any forms are opened.  Use 'post_init()' for
-        initialization after all automatically started forms are opened.
-
-        """
-        pass
-
-    def post_init(self):
-        """Run custom application initialization code after startup forms are opened.
-
-        This code is run after all startup forms are opened.  Use 'init()' for
-        initialization before any automatically started forms are opened.
-
-        """
-        pass
-
-    def login_hook(self, success):
-        """Run custom code after login attempt.
-
-        The boolean argument indicates login success (True when login was
-        successful, False otherwise).
-
-        The method may be called several times during application startup as
-        long as the login attempts are unsuccessful (with one or none final
-        successful call).
-
-        """
-
-    def params(self):
-        """Return a sequence 'pytis.presentation.SharedParams' instances.
-
-        Shared parameters provide a way to share global and user specific
-        values between the database and the application code.  Once defined
-        here, they may be accessed through
-        'pytis.form.app.param.namespace.parameter'.
-
-        Each 'pytis.presentation.SharedParams' instance defines one namespace
-        of application specific shared parameters.  See its docstring for more
-        info.
-
-        """
-        return ()
-
-    def menu(self):
-        """Return the application's main menu as a sequence of 'pytis.form.Menu' instances."""
-        return ()
-
-    def keymap(self):
-        """Return the sequence of custom keyboard shortcuts as (KEY, COMMAND) pairs.
-
-        See the docstring of 'pytis.form.Keymap.define_key()' for description of
-        the items of the squence.  COMMAND may be a tuple (COMMAND, ARGS) when
-        arguments need to be passed.
-
-        """
-        return ()
-
-    def status_fields(self):
-        """Return status bar fields as a list of 'StatusField' instances.
-
-        The application's main window status bar will be created according to
-        this specification.  By default, the following fields are returned:
-
-         - message: Displays various non-interactive messages
-           set by 'app.echo()'.
-         - list-positin: Displays the current position in the list of
-           records (such as 3/168) when a list form is active.
-         - user: Displays the current DB username and DB name and host in the tooltip.
-         - remote-status: Displays the current status of remote communication.
-
-        Derived application can extend, reorder or redefine the fields as needed.
-
-        """
-        import pytis.form
-        return pytis.form.app.status_fields()
-
-
 class SharedParams(object):
     """Specification of a set of shared parameters accessed through a data object.
 
@@ -5266,26 +5170,340 @@ class Menu(object):
         return self._autoindex
 
 
+class Command(object):
+    """Generic support for definition and handling of user interface commands.
+
+    Commands are defined by classes.  A class derived form 'CommandHandler' can
+    define its own commands as instance methods decorated by '@Command.define'.
+    Such method may be used in 'Command' instances.
+
+    Example:
+
+    >>> class Form(CommandHandler):
+    ...
+    ...     @Command.define
+    ...     def select_row(self, position):
+    ...         # Do something...
+    ...         return position
+    ...
+    >>> command = Command(Form.select_row, 3)
+    >>> assert command.definer == Form
+    >>> assert command.method == Form.select_row
+    >>> assert command.name == 'Form.select_row'
+    >>> assert command.args == {'position': 3}
+    >>> assert str(command) == '<Command Form.select_row(3)>'
+
+    Command instances created on unbound methods (class methods) are unbound
+    commands, command instances created on bound methods (instance methods) are
+    bound methods.  The command in the previous example was unbound.
+
+    Bound command example:
+
+    >>> form = Form()
+    >>> command = Command(form.select_row, position=5)
+    >>> assert command.definer == Form
+    >>> assert command.name == 'Form.select_row'
+    >>> assert command.args == {'position': 5}
+    >>> assert str(command) == ('<Command Form.select_row(position=5) bound to '
+    ...                         '<pytis.presentation.spec.Form object at 0x{:x}>>'
+    ...                         .format(id(form)))
+
+    Bound commands know the 'CommandHandler' instance on which they are to be
+    invoked.
+
+    >>> assert command.handler == form
+    >>> assert command.invoke() == 5
+
+    Bound commands can be created from unbound commands using 'bind()':
+
+    >>> command = Command(Form.select_row, 7).bind(form)
+    >>> assert command.handler == form
+    >>> assert command.invoke() == 7
+
+    Unbound commands need cooperation of their 'CommandHandler' in order to
+    find their handling instance by implementing the method
+    'command_handler_instance()'.  In the application this is typically the
+    currently active component, which handles all compatible unbound commands.
+    The example below tracks the active instances and uses them in
+    'command_handler_instance()'
+
+    >>> class Form(CommandHandler):
+    ...     _active_instance = None
+    ...
+    ...     def activate(self):
+    ...         Form._active_instance = self
+    ...
+    ...     @classmethod
+    ...     def command_handler_instance(cls):
+    ...         return Form._active_instance
+    ...
+    ...     @Command.define
+    ...     def select_row(self, position):
+    ...         # Do something...
+    ...         return position
+
+    >>> f1 = Form()
+    >>> f2 = Form()
+    >>> command = Command(Form.select_row, 15)
+    >>> f1.activate()
+    >>> assert command.handler == f1
+    >>> f2.activate()
+    >>> assert command.handler == f2
+    >>> assert command.enabled
+    >>> assert command.invoke() == 15
+
+    Command availability can be defined by defining the instance method
+    '_can_<name>', where '<name>' is the command method name, which accepts the
+    same arguemnts as the command method.
+
+    >>> class LimitedForm(Form):
+    ...     def _can_select_row(self, position):
+    ...         return position >= 0 and position <= 12
+
+    >>> f3 = LimitedForm()
+    >>> f3.activate()
+    >>> assert not command.enabled
+    >>> assert command.invoke() is None
+
+    """
+    def __init__(self, method, *args, **kwargs):
+        """Arguments:
+
+        method -- command method callable as an unbound class method (to create
+          an unbound command) or instance method (to create a bound command).
+          In any case the method must be defined by a class derived from
+          'CommandHandler' and must be decorated by 'Command.define'.  See the
+          class docstring for more information.
+        args, kwargs -- positional and keyword arguments to pass to the method
+          on command invocation.
+
+        """
+        assert callable(method), method
+        self._method = method
+        self._args = args
+        self._kwargs = kwargs or {}
+        # Beware: In Py3, __self__ is not present for unbound methods, in Py2 it is None.
+        self._handler = getattr(method, '__self__', None)
+
+    def __str__(self):
+        args = ([repr(a) for a in self._args] +
+                ['{}={}'.format(k, v) for k, v in self._kwargs.items()])
+        return "<{} {}({}){}>".format(
+            self.__class__.__name__,
+            self.name,
+            ', '.join(args),
+            ' bound to {}'.format(self._handler) if self._handler else '',
+        )
+
+    def __repr__(self):
+        return str(self)
+
+    def __eq__(self, other):
+        return (isinstance(other, self.__class__) and
+                self.definer == other.definer and
+                self.method.__name__ == other.method.__name__ and
+                self.args == other.args)
+
+    @classmethod
+    def define(cls, method):
+        """Define given method as a command handling method.
+
+        Methods passed to the 'Command' constructor must belong to a class
+        derived from 'CommandHandler' and must be decorated by this decorator.
+        See 'Command' docstring for more details.
+
+        """
+        # This attribute will be asigned a real value automatically in
+        # CommandHandlerMetaClass.__init__().  Here we just mark the methods
+        # which need to be assigned.
+        method.command_defining_class = None
+        return method
+
+    @property
+    def definer(self):
+        """Return the class defining the command."""
+        return self._method.command_defining_class
+
+    @property
+    def name(self):
+        """Return the command name as a string."""
+        return '{}.{}'.format(self.definer.__name__, self._method.__name__)
+
+    @property
+    def method(self):
+        """Return the command method as passed to the constructor."""
+        return self._method
+
+    @property
+    def args(self):
+        """Return all aruments of this command as a dictionary.
+
+        Arguments passed to the constructor as positional are mapped to
+        corresponding argument names by inspecting the command method
+        definition, so positional and keyword arguments can't be distinguished.
+
+        """
+        return dict([(k, v) for k, v in zip(argument_names(self._method),
+                                            self._args)], **self._kwargs)
+
+    def bind(self, handler):
+        """Return a new instance of this command bound to given 'CommandHandler' instance.
+
+        Unless the command is bound to a particular handler instance, the
+        instance will be obtained from the defining class of the handler method
+        (passed to the constructor) using its 'command_handler_instance()'
+        class method.
+
+        """
+        assert isinstance(handler, CommandHandler), handler
+        assert isinstance(handler, self.definer), (handler, self.definer)
+        return self.__class__(getattr(handler, self._method.__name__),
+                              *self._args, **self._kwargs)
+
+    @property
+    def handler(self):
+        """Return the corresponding command handler instance.
+
+        The command is either statically bound to a particular 'CommandHandler'
+        instance (if the method passed to the constructor was a bound instance
+        method) or the instance is determined in runtime (if the method passed
+        to the constructor was unbound).
+
+        """
+        if self._handler:
+            handler = self._handler
+        else:
+            handler = self.definer.command_handler_instance()
+        return handler
+
+    @property
+    def enabled(self):
+        """Return True if the command is enabled with its arguemnts."""
+        handler = self.handler
+        if handler and handler.command_enabled(self):
+            return True
+        else:
+            return False
+
+    def invoke(self):
+        """Invoke the command if enabled.
+
+        Invokes the command method on command handler instance, passing it all
+        positional and keyword arguemnts from the constructor.
+
+        Availability of the command is first checked using the 'enabled'
+        property and if it returns True, the method is invoked and its return
+        value is returned.  If the command is not enabled, None is returned.
+
+        """
+        handler = self.handler
+        cmdstr = str(self)
+        if not self._handler:
+            # Bound commands (self._handler defined) already contain
+            # handler info in their str representation.
+            cmdstr += ' on ' + str(handler)
+        if self.enabled:
+            log(EVENT, "Invoking command:", cmdstr)
+            return handler.invoke_command(self)
+        else:
+            log(EVENT, "Command disabled:", cmdstr)
+            return None
+
+
+class CommandHandlerMetaClass(type):
+    """Metaclass assigning the defining class to each command handling method."""
+    def __init__(cls, name, bases, dict):
+        for name, attr in cls.__dict__.items():
+            if hasattr(attr, 'command_defining_class'):
+                attr.command_defining_class = cls
+
+
+class CommandHandler(with_metaclass(CommandHandlerMetaClass, object)):
+    """Mix-in class for objects capable of handling user commands.
+
+    This class adds the ability to define user commands and process them.
+
+    Classes derived from this class are capable of handling user commands
+    defined using the 'Command' class.  Commands are defined by command handler
+    classes (classes derived from 'CommandHandler') and handled by their
+    instances.  To locate the handler instance, the derived classes must
+    implement the method 'command_handler_instance()'.  The handler instance is
+    then queried for availability of the particular command using the
+    'command_enabled()' instance method and if the command is available, it is
+    invoked on the instance using the 'invoke_command()' instance method.
+
+    """
+
+    @classmethod
+    def command_handler_instance(cls):
+        """Find the CommandHandler instance capable of handling commands.
+
+        Commands are either bound to a particular command handler instance or
+        the instance must be looked up.  The lookup is performed by calling
+        this mehod on the class that defines given command.
+
+        Each class derived from 'CommandHandler' must define this method and
+        return an instance of itself which is currently active to process its
+        commands or None if no such instance is active in the application.
+
+        """
+        raise pytis.util.ProgramError("This method must be overriden in a derived class.")
+
+    def command_enabled(self, command):
+        """Return true if given command is enabled (can be invoked).
+
+        The commands which are not compatible with this 'CommandHandler'
+        instance are automatically inactive (compatible handler is of the same
+        class or its descendant as the command defining class).  For compatible
+        handlers, command availability is further determined by calling the
+        heandler's method '_can_<command-name>()' matching the command name.
+        If that method returns True or if no such method is defined, True is
+        returned.
+
+        """
+        if isinstance(self, command.definer):
+            method = getattr(self, '_can_' + command.method.__name__, None)
+            if method:
+                enabled = self._call_command_method(command, method)
+                assert isinstance(enabled, bool), '{} returned {}'.format(method, enabled)
+                return enabled
+            else:
+                return True
+        else:
+            return False
+
+    def invoke_command(self, command):
+        """Invoke given comand.
+
+        Returns: The return value of the command handler method.
+
+        """
+        # Note, we need the corresponding instance method of the
+        # handler instance, not the class method of the command
+        # definer class.  The handler may also be a derived class
+        # which overrides the method!
+        method = getattr(self, command.method.__name__)
+        return self._call_command_method(command, method)
+
+    def _call_command_method(self, command, method):
+        return method(*command._args, **command._kwargs)
+
+
 class MenuItem(object):
     """Menu item specification."""
 
-    def __init__(self, title, command, args=None, state=None, help=None, hotkey=None, icon=None):
+    def __init__(self, title, command, state=None, help=None, hotkey=None, icon=None):
         """Arguments:
 
           title -- menu item title, non-empty string
           command -- defines the command invoked when this menu item is
-            activated as a 'pytis.form.Command' instance.  It can be also
-            defined as a pair of (COMMAND, ARGS), where the first item is the
-            command itself and the later item replaces the argument 'args'
-            described below (in this case, the argument 'args' must be None).
-            Finally, this argument may be passed as a string, in which case
-            this string, together with a 'cmd_' prefix, denotes the name of a
-            method in the application specification and this method is called
-            to retrieve the pair (COMMANDS, ARGS).  For example when command is
-            'my_form', the application specification must define a method named
-            'cmd_my_form' (with no arguments) which returns the command
-            specification.
-          args -- dictionary of 'command' arguemnts.
+            activated as a 'Command' instance.  Alternatively, this argument
+            may be passed as a string, in which case this string, together with
+            a 'cmd_' prefix, denotes the name of a method in the application
+            specification and this method is called to retrieve the 'Command'
+            instance.  For example when command is 'my_form', the application
+            specification must define a method named 'cmd_my_form' (with no
+            arguments) which returns the 'Command' instance.
           state -- funkce (volaná bez argumentů), která vrací True/False podle
             toho, zda je stav této položky 'zapnuto', nebo 'vypnuto'.
           help -- string describing the menu item's action in more detail,
@@ -5301,14 +5519,9 @@ class MenuItem(object):
         """
         if isinstance(command, basestring):
             application = pytis.config.resolver.specification('Application')
-            command, args = getattr(application, 'cmd_' + command)()
-        elif isinstance(command, (tuple, list)):
-            assert len(command) == 2, command
-            assert args is None, args
-            command, args = command
+            command = getattr(application, 'cmd_' + command)()
+        assert isinstance(command, Command), command
         assert isinstance(title, basestring), title
-        #assert isinstance(command, Command), command
-        assert args is None or isinstance(args, dict), args
         assert help is None or isinstance(help, basestring), help
         assert hotkey is None or isinstance(hotkey, (basestring, tuple, list)), hotkey
         assert icon is None or isinstance(icon, basestring), icon
@@ -5319,7 +5532,6 @@ class MenuItem(object):
             hotkey = tuple(hotkey)
         self._title = title
         self._command = command
-        self._args = args or {}
         self._help = help
         self._hotkey = hotkey
         self._icon = icon
@@ -5332,10 +5544,6 @@ class MenuItem(object):
     @property
     def command(self):
         return self._command
-
-    @property
-    def args(self):
-        return self._args
 
     @property
     def state(self):
@@ -5356,6 +5564,103 @@ class MenuItem(object):
 
 class MenuSeparator(object):
     pass
+
+
+class Application(SpecificationBase, CommandHandler):
+    """Specification of a Pytis application.
+
+    Derive this class within your application's specification modules under the
+    name 'Application' and override its methods and attributes described below
+    to customize the application's look and behaviour.
+
+    Custom commands may be used in menu items using string identifiers.  For
+    all such identifiers, the derived class must also define a method named as
+    this identider with a prefix 'cmd_'.  This method, when called with no
+    arguments, must return the specification of the command to invoke as a pair
+    (COMMAND, ARGUMENTS), where the first item is a 'pytis.form.Command'
+    instance and the later item is a dictionary of arguments to passed to the
+    command when invoked.  For example when command identifier is 'my_form',
+    the application must define a method named 'cmd_my_form'.
+
+    """
+
+    def init(self):
+        """Run custom application initialization code before startup forms are opened.
+
+        This code is run before any forms are opened.  Use 'post_init()' for
+        initialization after all automatically started forms are opened.
+
+        """
+        pass
+
+    def post_init(self):
+        """Run custom application initialization code after startup forms are opened.
+
+        This code is run after all startup forms are opened.  Use 'init()' for
+        initialization before any automatically started forms are opened.
+
+        """
+        pass
+
+    def login_hook(self, success):
+        """Run custom code after login attempt.
+
+        The boolean argument indicates login success (True when login was
+        successful, False otherwise).
+
+        The method may be called several times during application startup as
+        long as the login attempts are unsuccessful (with one or none final
+        successful call).
+
+        """
+
+    def params(self):
+        """Return a sequence 'pytis.presentation.SharedParams' instances.
+
+        Shared parameters provide a way to share global and user specific
+        values between the database and the application code.  Once defined
+        here, they may be accessed through
+        'pytis.form.app.param.namespace.parameter'.
+
+        Each 'pytis.presentation.SharedParams' instance defines one namespace
+        of application specific shared parameters.  See its docstring for more
+        info.
+
+        """
+        return ()
+
+    def menu(self):
+        """Return the application's main menu as a sequence of 'pytis.form.Menu' instances."""
+        return ()
+
+    def keymap(self):
+        """Return the sequence of custom keyboard shortcuts as (KEY, COMMAND) pairs.
+
+        See the docstring of 'pytis.form.Keymap.define_key()' for description of
+        the items of the squence.  COMMAND may be a tuple (COMMAND, ARGS) when
+        arguments need to be passed.
+
+        """
+        return ()
+
+    def status_fields(self):
+        """Return status bar fields as a list of 'StatusField' instances.
+
+        The application's main window status bar will be created according to
+        this specification.  By default, the following fields are returned:
+
+         - message: Displays various non-interactive messages
+           set by 'app.echo()'.
+         - list-positin: Displays the current position in the list of
+           records (such as 3/168) when a list form is active.
+         - user: Displays the current DB username and DB name and host in the tooltip.
+         - remote-status: Displays the current status of remote communication.
+
+        Derived application can extend, reorder or redefine the fields as needed.
+
+        """
+        import pytis.form
+        return pytis.form.app.status_fields()
 
 
 class HelpProc(object):

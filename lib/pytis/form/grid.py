@@ -358,7 +358,7 @@ class GridTable(wx.grid.GridTableBase, DataTable):
 
     def _panic(self):
         DataTable._panic(self)
-        Form.COMMAND_LEAVE_FORM.invoke()
+        Command(Form.leave_form).invoke()
 
     def _format(self, the_row, cid):
         return the_row.format(cid, pretty=True, form=self._form, secure=True)

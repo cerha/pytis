@@ -34,7 +34,7 @@ from .event import (  # noqa: F401
 )
 
 from .command import (  # noqa: F401
-    CommandHandler, Command, UICommand,
+    CommandHandler, UICommand,
 )
 
 from .screen import (  # noqa: F401
@@ -92,9 +92,8 @@ from .configui import (  # noqa: F401
     ConfigForm, config_menu_items, configurable_options,
 )
 
-from .commands_ import (  # noqa: F401
-    UICommands, DEFAULT_KEYMAP, COMMAND_ICONS, TOOLBAR_COMMANDS,
-    FORM_MENU_COMMANDS,
+from .defaults import (  # noqa: F401
+    DEFAULT_KEYMAP, COMMAND_ICONS, TOOLBAR_COMMANDS, FORM_MENU_COMMANDS, UICommands,
 )
 
 from .managers import (  # noqa: F401

@@ -91,7 +91,7 @@ from pytis.util import (
     Attribute, Counter, is_sequence, remove_duplicates, ResolverError, Structure,
     set_configuration_file, identity,
 )
-from pytis.presentation import Binding, specification_path, Menu, MenuItem, MenuSeparator
+from pytis.presentation import Binding, specification_path, Menu, MenuItem, MenuSeparator, Command
 
 from pytis.extensions import run_form_mitem, run_procedure_mitem, get_form_defs
 
@@ -129,7 +129,7 @@ def dmp_menu():
         if components[-1]:
             return components[-1]
         elif kind == 'form':
-            command = pytis.form.Application.COMMAND_RUN_FORM
+            command = pytis.form.Application.run_form
             class_name, form_name = components[1], components[2]
             arguments = dict(form_class=find_symbol(class_name), name=form_name)
             if components[3]:
@@ -138,24 +138,24 @@ def dmp_menu():
                         arguments['binding'] = extra[len('binding='):]
                         break
         elif kind == 'handle':
-            command = pytis.form.Application.COMMAND_HANDLED_ACTION
+            command = pytis.form.Application.handled_action
             function_name = components[1]
             arguments = dict(handler=find_symbol(function_name),
                              enabled=lambda: pytis.form.app.action_has_access(action))
         elif kind == 'proc':
-            command = pytis.form.Application.COMMAND_RUN_PROCEDURE
+            command = pytis.form.Application.run_procedure
             proc_name, spec_name = components[1], components[2]
             arguments = dict(proc_name=proc_name, spec_name=spec_name,
                              enabled=lambda: pytis.form.app.action_has_access(action))
         elif kind == 'NEW_RECORD':
-            command = pytis.form.Application.COMMAND_NEW_RECORD
+            command = pytis.form.Application.new_record
             arguments = dict(name=components[1])
         elif kind.upper() in ('RELOAD_RIGHTS', 'EXIT'):
-            command = getattr(pytis.form.app, 'COMMAND_' + kind)
+            command = getattr(pytis.form.app, kind.lower())
             arguments = {}
         else:
             raise ValueError("Invalid command kind: {}.".format(kind))
-        return command, arguments
+        return Command(command, **arguments)
 
     def build(template):
         def add_key(title):
@@ -771,11 +771,11 @@ class DMPMenu(DMPObject):
                                  'menu.ApplicationMenuRights',
                                  'commit_changes'),
              MenuItem(u"Přenačtení menu a práv",
-                      command=pytis.form.Application.COMMAND_RELOAD_RIGHTS()),
+                      command=Command(pytis.form.Application.reload_rights)),
              ),
         ),) + menu[0]._items
 
-        def make_action_id(command, args):
+        def make_action_id(command):
             def modulify(obj, name):
                 module_name = unistr(obj.__module__)
                 if module_name == 'pytis.form.list':
@@ -783,63 +783,60 @@ class DMPMenu(DMPObject):
                     module_name = 'pytis.form'
                 name = '%s.%s' % (module_name, name,)
                 return name
-            command_name = command.name()
             #if isinstance(command, basestring):
             #    command_proc = command
             #    command = self._command
             #else:
             #    command_proc = ''
             command_proc = ''
-            appstring = 'Application.'
-            if command_name[:len(appstring)] == appstring:
-                command_name = command_name[len(appstring):]
-            if command_name == 'RUN_FORM':
-                form_class = args.pop('form_class', None)
-                form_name = args.pop('name', None)
+            if command.name == 'Application.run_form':
+                form_class = command.args.pop('form_class', None)
+                form_name = command.args.pop('name', None)
                 extra = []
-                if 'binding' in args:
-                    extra.append('binding=%s' % (args['binding'],))
-                    del args['binding']
-                if not args:
+                if 'binding' in command.args:
+                    extra.append('binding=%s' % (command.args['binding'],))
+                    del command.args['binding']
+                if not command.args:
                     class_name = modulify(form_class, form_class.__name__)
                     return 'form/%s/%s/%s/%s' % (class_name, form_name,
                                                  '&'.join(extra), command_proc,)
-            elif command_name == 'NEW_RECORD' and args:
-                form_name = args.pop('name', '')
-                if form_name is not None and not args:
-                    return '%s/%s/%s' % (command_name, form_name, command_proc,)
-            elif command_name == 'HANDLED_ACTION':
-                handler = args.pop('handler', None)
-                if not args and isinstance(handler, types.FunctionType):
+            elif command.name == 'Application.new_record' and command.args:
+                form_name = command.args.pop('name', '')
+                if form_name is not None and not command.args:
+                    return '%s/%s/%s' % (command.method.__name__.upper(), form_name, command_proc,)
+            elif command.name == 'Application.handled_action':
+                handler = command.args.pop('handler', None)
+                if not command.args and isinstance(handler, types.FunctionType):
                     name = modulify(handler, handler.__name__)
                     return 'handle/%s/%s' % (name, command_proc,)
-            elif command_name == 'RUN_PROCEDURE':
-                proc_name = args.pop('proc_name')
-                spec_name = args.pop('spec_name')
-                if not args or (len(args) == 1 and 'enabled' in args and not callable(args['enabled'])):
+            elif command.name == 'Application.run_procedure':
+                proc_name = command.args.pop('proc_name')
+                spec_name = command.args.pop('spec_name')
+                if not command.args or (len(command.args) == 1 and 'enabled' in command.args and not callable(command.args['enabled'])):
                     return 'proc/%s/%s/%s' % (proc_name, spec_name, command_proc,)
-            if args and not command_proc:
+            if command.args and not command_proc:
                 return None
-            return ('%s/%s' % (command_name, command_proc,))
+            return ('%s/%s' % (command.method.__name__.upper(), command_proc,))
 
         # Load menu
         def load(menu, parent):
             if isinstance(menu, Menu):
                 item = self.add_item(kind=self.MenuItem.MENU_ITEM, parent=parent,
-                                     title=menu.title())
-                load(tuple(menu.items()), item)
+                                     title=menu.title)
+                load(tuple(menu.items), item)
             elif isinstance(menu, MenuSeparator):
                 self.add_item(kind=self.MenuItem.SEPARATOR_ITEM, parent=parent)
             elif isinstance(menu, MenuItem):
-                action_id = make_action_id(menu.command, copy.copy(menu.args))
+                action_id = make_action_id(menu.command)
                 if action_id is None:
                     add_message(messages, DMPMessage.ERROR_MESSAGE,
                                 "Special menu item action, define command specification",
-                                (menu.title(),))
+                                (menu.title,))
                     return
-                hotkey_spec = ' '.join([(key or '').replace(' ', 'SPC') for key in menu.hotkey()])
-                self.add_item(self.MenuItem.ACTION_ITEM, parent, title=menu.title(),
-                              action=action_id, help=menu.help(), hotkey=hotkey_spec)
+                hotkey_spec = ' '.join([(key or '').replace(' ', 'SPC') for key in menu.hotkey])
+                self.add_item(self.MenuItem.ACTION_ITEM, parent, title=menu.title,
+                              action=action_id, help=menu.help, hotkey=hotkey_spec)
+                pass
             elif isinstance(menu, tuple):
                 for m in menu:
                     load(m, parent)
@@ -1502,11 +1499,11 @@ class DMPActions(DMPObject):
                 try:
                     application = resolver.specification('Application')
                     method = getattr(application, 'cmd_' + form_string)
-                    command, args = method()
-                    form_class = args['form_class']
+                    command = method()
+                    form_class = command.args['form_class']
                     if not issubclass(form_class, pytis.form.Form):
                         raise Exception()
-                    form_name = args['name']
+                    form_name = command.args['name']
                 except Exception:
                     if messages is not None:
                         add_message(messages, DMPMessage.WARNING_MESSAGE,

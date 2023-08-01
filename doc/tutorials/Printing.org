@@ -46,10 +46,9 @@ sestava.  Základním aplikovaným principem je, že tisknout lze zhruba to, co
 uživatel vidí na obrazovce v aktuálním formuláři, ať už jednoduchém nebo
 složeném (například duálním).
 
-Pro uživatele je definován příkaz =Form.COMMAND_PRINT=, dostupný ze všech
-formulářů.  Každý formulář může a nemusí na tento příkaz reagovat.
-Reaguje-li, zobrazí se tiskový náhled.  Z něj pak lze stejným příkazem
-spustit tisk na tiskárnu.
+Pro uživatele je definován příkaz =BrowseForm.printout=, dostupný ze všech
+tabulkových formulářů.  Každý formulář může a nemusí na tento příkaz reagovat.
+Reaguje-li, zobrazí se tiskový náhled.  Z něj pak lze spustit tisk na tiskárnu.
 
 Pro zobrazení tiskového náhledu slouží formulář =pytis.form.PrintForm=, který
 je podobně jako ostatní formuláře potomkem =pytis.form.Form= a ukládá se na

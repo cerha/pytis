@@ -48,7 +48,7 @@ import pytis.util
 from pytis.api import app
 from pytis.presentation import (
     AttachmentStorage, Button, CodebookSpec, Editable, Enumeration,
-    Field, HGroup, Orientation, PostProcess, PresentedRow,
+    Field, HGroup, Orientation, PostProcess, PresentedRow, Command,
     SelectionType, TextFilter, TextFormat, MenuSeparator, computer
 )
 from pytis.util import (
@@ -115,7 +115,7 @@ class InputField(KeyHandler, CommandHandler):
     _icon_cache = {}
 
     @classmethod
-    def _get_command_handler_instance(cls):
+    def command_handler_instance(cls):
         return InputField.last_focused_field()
 
     @classmethod
@@ -359,7 +359,7 @@ class InputField(KeyHandler, CommandHandler):
 
     def _menu(self):
         # Return a tuple of popup menu items ('MenuItem' instances).
-        menu = (UICommand(InputField.COMMAND_RESET(),
+        menu = (UICommand(Command(InputField.reset),
                           _("Restore the original value"),
                           _("Discard all changes.")),)
         file_open_mitems = file_menu_items([self._spec], self._row, {})
@@ -368,17 +368,17 @@ class InputField(KeyHandler, CommandHandler):
         return menu
 
     def _on_context_menu(self, ctrl, position=None):
-        def handler(uicmd):
-            if issubclass(uicmd.command().handler(), (InputField, Invocable)):
-                return self
-            else:
-                return None
         menu = []
         for item in self._menu():
             if item is None:
                 item = MenuSeparator()
             elif isinstance(item, UICommand):
-                item = uicommand_mitem(item.clone(_command_handler=handler(item)))
+                if issubclass(item.command().definer, (InputField, Invocable)):
+                    item = MenuItem(item.title(),
+                                    command=item.command().bind(self),
+                                    help=item.descr())
+                else:
+                    item = uicommand_mitem(item)
             menu.append(item)
         pytis.form.app.popup_menu(self._current_ctrl(), menu, position=position,
                                   keymap=pytis.form.app.keymap)
@@ -559,15 +559,18 @@ class InputField(KeyHandler, CommandHandler):
         except RuntimeError:
             return False
 
-    # Command processing
+    # Commands
 
     def _can_reset(self):
         return self._modified() and self._enabled
 
-    def _cmd_reset(self):
-        self.reset()
+    @Command.define
+    def reset(self):
+        """Reset the field to its original value."""
+        self._row[self._id] = self._row.original_row()[self._id]
 
-    def _cmd_context_menu(self):
+    @Command.define
+    def context_menu(self):
         for ctrl, set_editable in self._controls:
             size = ctrl.GetSize()
             self._on_context_menu(ctrl, position=(size.x // 3, size.y // 2))
@@ -663,10 +666,6 @@ class InputField(KeyHandler, CommandHandler):
 
         """
         return self._enabled
-
-    def reset(self):
-        """Reset the field to its original value."""
-        self._row[self._id] = self._row.original_row()[self._id]
 
     def insert_text(self, text):
         """Insert given text into the field in the current place of the cursor."""
@@ -865,25 +864,26 @@ class TextField(InputField):
     def _menu(self):
         return super(TextField, self)._menu() + \
             (None,
-             UICommand(TextField.COMMAND_CUT(), _("Cut"),
+             UICommand(Command(TextField.cut), _("Cut"),
                        _("Cut the selected text to clipboard.")),
-             UICommand(TextField.COMMAND_COPY(), _("Copy"),
+             UICommand(Command(TextField.copy), _("Copy"),
                        _("Copy the selected text to clipboard.")),
-             UICommand(TextField.COMMAND_PASTE(), _("Paste"),
+             UICommand(Command(TextField.paste), _("Paste"),
                        _("Paste text from clipboard.")),
-             UICommand(TextField.COMMAND_SELECT_ALL(), _("Select All"),
+             UICommand(Command(TextField.select_all), _("Select All"),
                        _("Select entire field value.")))
 
-    # Zpracování příkazů
+    # Commands
 
     def _can_cut(self):
         ctrl = self._current_ctrl()
         return hasattr(ctrl, 'CanCut') and ctrl.CanCut()
 
-    def _cmd_cut(self):
+    @Command.define
+    def cut(self):
         ctrl = self._current_ctrl()
         selection = ctrl.GetSelection()
-        self._cmd_copy()
+        self.copy()
         ctrl.Remove(*selection)
         self._on_change()
 
@@ -891,7 +891,8 @@ class TextField(InputField):
         ctrl = self._current_ctrl()
         return hasattr(ctrl, 'CanCopy') and ctrl.CanCopy()
 
-    def _cmd_copy(self):
+    @Command.define
+    def copy(self):
         ctrl = self._current_ctrl()
         if self.height() and self.height() > 1:
             # Calling Copy on a multiline field raises: "wxAssertionError:
@@ -915,7 +916,8 @@ class TextField(InputField):
                     raise
         return False
 
-    def _cmd_paste(self):
+    @Command.define
+    def paste(self):
         paste_from_clipboard(self._current_ctrl())
         self._on_change()
 
@@ -923,7 +925,8 @@ class TextField(InputField):
         ctrl = self._current_ctrl()
         return hasattr(ctrl, 'SetSelection') and ctrl.GetValue()
 
-    def _cmd_select_all(self):
+    @Command.define
+    def select_all(self):
         return self._current_ctrl().SetSelection(-1, -1)
 
 
@@ -1019,7 +1022,8 @@ class SpinnableField(InputField):
             value -= self._SPIN_STEP
         return value
 
-    def _cmd_spin(self, up=True):
+    @Command.define
+    def spin(self, up=True):
         value = self._row[self._id].value()
         new_value = self._spin(value, up=up)
         ctrl = self._ctrl
@@ -1326,8 +1330,8 @@ class Invocable(CommandHandler):
     _INVOKE_ICON = 'invoke-selection'
 
     @classmethod
-    def _get_command_handler_instance(cls):
-        return InputField._get_command_handler_instance()
+    def command_handler_instance(cls):
+        return InputField.command_handler_instance()
 
     def _create_widget(self, parent, ctrl):
         widget = super(Invocable, self)._create_widget(parent, ctrl)
@@ -1351,12 +1355,13 @@ class Invocable(CommandHandler):
     def _menu(self):
         return super(Invocable, self)._menu() + \
             (None,
-             UICommand(self.COMMAND_INVOKE_SELECTION(), self._INVOKE_TITLE, self._INVOKE_HELP))
+             UICommand(Command(self.invoke_selection), self._INVOKE_TITLE, self._INVOKE_HELP))
 
     def _on_invoke_selection(self, ctrl, alternate=False):
         raise ProgramError("This method must be overriden!")
 
-    def _cmd_invoke_selection(self, **kwargs):
+    @Command.define
+    def invoke_selection(self, **kwargs):
         self._on_invoke_selection(self._ctrl, **kwargs)
 
     def _can_invoke_selection(self, **kwargs):
@@ -1511,7 +1516,8 @@ class GenericCodebookField(GenericEnumerationField):
         if result and value_column in result:
             self._set_value(result[value_column].export())
 
-    def _cmd_invoke_codebook_form(self):
+    @Command.define
+    def invoke_codebook_form(self):
         self._run_codebook_form()
 
 
@@ -1572,7 +1578,7 @@ class CodebookField(Invocable, GenericCodebookField, TextField):
 
     def _menu(self):
         return super(CodebookField, self)._menu() + \
-            (UICommand(self.COMMAND_INVOKE_SELECTION(alternate=True),
+            (UICommand(Command(self.invoke_selection, alternate=True),
                        _("Search in codebook"),
                        _("Show the codebook and start incremental search.")),)
 
@@ -1785,22 +1791,23 @@ class ListField(GenericCodebookField, CallbackHandler):
             return ''
 
     def _menu(self):
-        return (UICommand(self.COMMAND_SELECT(), _("Select"),
+        return (UICommand(Command(self.select), _("Select"),
                           _("Select this item as active.")),
-                UICommand(self.COMMAND_SHOW_SELECTED(), _("Show selected item"),
+                UICommand(Command(self.show_selected), _("Show selected item"),
                           _("Locate the currently selected item.")),
                 None,
-                UICommand(self.COMMAND_INVOKE_CODEBOOK_FORM(), _("Show codebook"),
+                UICommand(Command(self.invoke_codebook_form), _("Show codebook"),
                           _("Open the codebook form.")),
-                UICommand(self.COMMAND_EDIT_SELECTED(), _("Edit selected item"),
+                UICommand(Command(self.edit_selected), _("Edit selected item"),
                           _("Open the selected item in edit form.")),
-                UICommand(self.COMMAND_DELETE_SELECTED(), _("Remove selected item"),
+                UICommand(Command(self.delete_selected), _("Remove selected item"),
                           _("Remove the selected item from the codebook.")),
-                UICommand(self.COMMAND_NEW_CODEBOOK_RECORD(), _("Insert new item"),
+                UICommand(Command(self.new_codebook_record), _("Insert new item"),
                           _("Open form for new codebook record insertion.")),
-                UICommand(Application.COMMAND_RUN_FORM(form_class=pytis.form.BrowseForm,
-                                                       name=self._cb_name,
-                                                       select_row=self._cb_key()),
+                UICommand(Command(Application.run_form,
+                                  form_class=pytis.form.BrowseForm,
+                                  name=self._cb_name,
+                                  select_row=self._cb_key()),
                           _("Show the entire table"),
                           _("Open the codebook in a standalone form.")),
                 )
@@ -1820,19 +1827,22 @@ class ListField(GenericCodebookField, CallbackHandler):
         else:
             return self._selected_item_index() is not None
 
-    def _cmd_select(self):
+    @Command.define
+    def select(self):
         self._set_selection(self._selected_item_index())
 
     def _can_show_selected(self):
         return self._selected_item is not None
 
-    def _cmd_show_selected(self):
+    @Command.define
+    def show_selected(self):
         self._set_selection(self._selected_item)
 
     def _can_edit_selected(self, **kwargs):
         return self.enabled() and self._selected_item is not None
 
-    def _cmd_edit_selected(self):
+    @Command.define
+    def edit_selected(self):
         prefill_function = self.spec().codebook_update_prefill()
         if prefill_function:
             set_values = prefill_function(self._row)
@@ -1848,7 +1858,8 @@ class ListField(GenericCodebookField, CallbackHandler):
     def _can_delete_selected(self):
         return self.enabled() and self._selected_item is not None
 
-    def _cmd_delete_selected(self):
+    @Command.define
+    def delete_selected(self):
         transaction = self._row.transaction()
         row = self._type.enumerator().row(self._row[self._id].value(), transaction=transaction)
         app.delete_record(self._cb_name, row,
@@ -1862,7 +1873,8 @@ class ListField(GenericCodebookField, CallbackHandler):
     def _can_new_codebook_record(self):
         return self.enabled()
 
-    def _cmd_new_codebook_record(self):
+    @Command.define
+    def new_codebook_record(self):
         self._codebook_insert()
         self._reload_enumeration()
         self._run_callback(self.CALL_LIST_CHANGE, self._row)
@@ -1871,8 +1883,9 @@ class ListField(GenericCodebookField, CallbackHandler):
     def _can_invoke_codebook_form(self):
         return self.enabled()
 
-    def _cmd_invoke_codebook_form(self):
-        super(ListField, self)._cmd_invoke_codebook_form()
+    @Command.define
+    def invoke_codebook_form(self):
+        super(ListField, self).invoke_codebook_form()
         self._reload_enumeration()
         self._run_callback(self.CALL_LIST_CHANGE, self._row)
         self.set_focus()
@@ -1938,10 +1951,10 @@ class FileField(Invocable, InputField):
         self._ctrl.SetValue(display)
 
     def _on_filename_dclick(self, event):
-        FileField.COMMAND_OPEN.invoke(_command_handler=self)
+        Command(self.open).invoke()
 
     def _on_invoke_selection(self, ctrl, alternate=False):
-        FileField.COMMAND_LOAD.invoke(_command_handler=self)
+        Command(self.load).invoke()
 
     def _filename_extension(self):
         if self._value:
@@ -1958,26 +1971,28 @@ class FileField(Invocable, InputField):
         # want the Invocable menu items.
         return super(Invocable, self)._menu() + \
             (None,
-             UICommand(FileField.COMMAND_OPEN(), _("Open"),
+             UICommand(Command(FileField.open), _("Open"),
                        _("Open the file in a preferred application.")),
-             UICommand(FileField.COMMAND_LOAD(), _("Load from file"),
+             UICommand(Command(FileField.load), _("Load from file"),
                        _("Set the field value from a file.")),
-             UICommand(FileField.COMMAND_SAVE(), _("Save to file"),
+             UICommand(Command(FileField.save), _("Save to file"),
                        _("Save the current field value as file.")),
-             UICommand(FileField.COMMAND_CLEAR(), _("Clear value"),
+             UICommand(Command(FileField.clear), _("Clear value"),
                        _("Set the field to an ampty value.")),
              )
 
     def _can_open(self):
         return self._enabled and self._value is not None and self._filename_extension()
 
-    def _cmd_open(self):
+    @Command.define
+    def open(self):
         app.launch_file(data=self._value, suffix=self._filename_extension())
 
     def _can_load(self):
         return self._enabled
 
-    def _cmd_load(self):
+    @Command.define
+    def load(self):
         # title = _("Select the file for field '%s'", self.spec().label())
         fh = app.open_selected_file(mode='rb', filetypes=self._spec.filename_extensions(),
                                     context='file-field')
@@ -1999,7 +2014,8 @@ class FileField(Invocable, InputField):
     def _can_save(self):
         return self._value is not None
 
-    def _cmd_save(self):
+    @Command.define
+    def save(self):
         # msg = _("Save value of %s") % self.spec().label()
         try:
             path = app.write_selected_file(self._value, mode='wb',
@@ -2016,7 +2032,8 @@ class FileField(Invocable, InputField):
     def _can_clear(self):
         return self._enabled and self._value is not None
 
-    def _cmd_clear(self):
+    @Command.define
+    def clear(self):
         self._set_value(None)
 
 
@@ -2056,8 +2073,7 @@ class ImageField(FileField):
         return wx.Bitmap(1, 1)
 
     def _on_button(self):
-        if self.COMMAND_OPEN.enabled():
-            self.COMMAND_OPEN.invoke()
+        Command(self.open).invoke()
 
     def _filename_extension(self):
         if self._value:
@@ -2221,88 +2237,90 @@ class StructuredTextField(TextField):
         if isinstance(self._guardian, pytis.form.StructuredTextEditor):
             # Add form commands only in a standalone editor, not in ordinary forms.
             commands += (
-                (UICommand(pytis.form.EditForm.COMMAND_COMMIT_RECORD(close=False),
+                (UICommand(Command(pytis.form.EditForm.commit_record, close=False),
                            _("Save"),
                            _("Save the record without closing the form.")),
                  ),
             )
         if isinstance(self._guardian, pytis.form.ResizableInputForm):
-            # ResizableInputForm is used within _cmd_open_in_editor().  Commit
+            # ResizableInputForm is used within open_in_editor().  Commit
             # will only return the current value (it is a virtual form), not
             # save anything to the database.
             commands += (
-                (UICommand(pytis.form.EditForm.COMMAND_COMMIT_RECORD(),
+                (UICommand(Command(pytis.form.EditForm.commit_record),
                            _("Confirm and leave"),
                            _("Confirm the changes and leave editation.")),
                  ),
             )
         commands += (
-            # (UICommand(self.COMMAND_UNDO(),
+            # (UICommand(Command(self.undo),
             #            _(u"Zpět"),
             #            _(u"Vrátit zpět poslední akci.")),
-            #  UICommand(self.COMMAND_REDO(),
+            #  UICommand(Command(self.redo),
             #            _(u"Znovu"),
             #            _(u"Provést znovu poslední akci vzatou zpět.")),
             # ),
 
-            (UICommand(self.COMMAND_CUT(),
+            (UICommand(Command(self.cut),
                        _("Cut"),
                        _("Cut the selected text to clipboard.")),
-             UICommand(self.COMMAND_COPY(),
+             UICommand(Command(self.copy),
                        _("Copy"),
                        _("Copy the selected text to clipboard.")),
-             UICommand(self.COMMAND_PASTE(),
+             UICommand(Command(self.paste),
                        _("Paste"),
                        _("Paste text from clipboard.")),
              ),
-            # (UICommand(self.COMMAND_SEARCH(),
+            # (UICommand(Command(self.search),
             #            _(u"Hledat"),
             #            _(u"Vyhledat řetězec v textu políčka.")),
-            #  UICommand(self.COMMAND_SEARCH_AND_REPLACE(),
+            #  UICommand(Command(self.search_and_replace),
             #            _(u"Hledat a nahradit"),
             #            _(u"Vyhledat na nahradit řetězec v textu políčka.")),
             # ),
-            (UICommand(self.COMMAND_HEADING(_command_handler=self),
+            (UICommand(Command(self.heading),
                        _("Heading level"),
                        _("Insert markup for heading of given level."),
                        ctrl=(TextHeadingSelector, dict(size=(150, None)))),
              ),
-            (UICommand(self.COMMAND_STRONG(),
+            (UICommand(Command(self.strong),
                        _("Bold text"),
                        _("Insert markup for bold text.")),
-             UICommand(self.COMMAND_EMPHASIZED(),
+             UICommand(Command(self.emphasized),
                        _("Slanted"),
                        _("Insert markup for text emphasized by slanted font.")),
-             UICommand(self.COMMAND_UNDERLINED(),
+             UICommand(Command(self.underlined),
                        _("Underlined text"),
                        _("Insert markup for underlined text.")),
              ),
-            (UICommand(self.COMMAND_LINK(),
+            (UICommand(Command(self.link),
                        _("Hypertext link"),
                        _("Insert markup hypertext link.")),
-             ) + (self._storage and (UICommand(self.COMMAND_IMAGE(),
-                                               _("Image"),
-                                               _("Insert image.")),
-                                     UICommand(self.COMMAND_ATTACHMENT(),
-                                               _("Attachment"),
-                                               _("Attach file.")),) or ()) +
-            (UICommand(self.COMMAND_ITEMIZE(style='bullet'),
+             ) +
+            (UICommand(Command(self.image),
+                       _("Image"),
+                       _("Insert image.")),
+             UICommand(Command(self.attachment),
+                       _("Attachment"),
+                       _("Attach file.")),
+             ) if self._storage else () +
+            (UICommand(Command(self.itemize, style='bullet'),
                        _("Itemized list"),
-                       _("Create a bullet list item.")),
-             UICommand(self.COMMAND_ITEMIZE(style='numbered'),
+                    _("Create a bullet list item.")),
+             UICommand(Command(self.itemize, style='numbered'),
                        _("Numbered list"),
                        _("Create a numbered list item.")),
-             UICommand(self.COMMAND_VERBATIM(),
+             UICommand(Command(self.verbatim),
                        _("Preformatted text"),
                        _("Insert markup for preformatted text.")),
-             UICommand(self.COMMAND_LINEBREAK(),
+             UICommand(Command(self.linebreak),
                        _("Line break"),
                        _("Insert markup for explicit line break.")),
              ),
-            (UICommand(self.COMMAND_PREVIEW(),
+            (UICommand(Command(self.preview),
                        _("Show HTML preview"),
                        _("Show preview of the text formatted as HTML.")),
-             UICommand(self.COMMAND_EXPORT_PDF(),
+             UICommand(Command(self.export_pdf),
                        _("Show PDF preview"),
                        _("Show preview of the text formatted as PDF.")),
              ),
@@ -2314,7 +2332,7 @@ class StructuredTextField(TextField):
         if not isinstance(self._guardian,
                           (pytis.form.StructuredTextEditor, pytis.form.ResizableInputForm)):
             menu += (None,
-                     UICommand(self.COMMAND_OPEN_IN_EDITOR(),
+                     UICommand(Command(self.open_in_editor),
                                _("Edit in a standalone window"),
                                ""),
                      )
@@ -2402,25 +2420,30 @@ class StructuredTextField(TextField):
             app.error(title=_("Error accessing attachment storrage"),
                       message=_("Error accessing attachment storrage") + ":\n" + e)
 
-    def _cmd_search(self):
+    @Command.define
+    def search(self):
         pass
 
-    def _cmd_search_and_replace(self):
+    @Command.define
+    def search_and_replace(self):
         pass
 
     def _can_undo(self):
         return self._ctrl.CanUndo()
 
-    def _cmd_undo(self):
+    @Command.define
+    def undo(self):
         self._ctrl.Undo()
 
     def _can_redo(self):
         return self._ctrl.CanRedo()
 
-    def _cmd_redo(self):
+    @Command.define
+    def redo(self):
         self._ctrl.Redo()
 
-    def _cmd_preview(self):
+    @Command.define
+    def preview(self):
         text = self._get_value()
         if self._storage:
             resources = self._storage_op('resources', transaction=self._row.transaction()) or ()
@@ -2428,22 +2451,27 @@ class StructuredTextField(TextField):
             resources = ()
         InfoWindow(_(u"Preview"), text=text, format=TextFormat.LCG, resources=resources)
 
-    def _cmd_export_pdf(self):
-        RecordForm.COMMAND_VIEW_FIELD_PDF.invoke(field_id=self._id)
+    @Command.define
+    def export_pdf(self):
+        Command(RecordForm.view_field_pdf, field_id=self._id).invoke()
 
-    def _cmd_strong(self):
+    @Command.define
+    def strong(self):
         self._insert_markup('*')
         self.set_focus()
 
-    def _cmd_emphasized(self):
+    @Command.define
+    def emphasized(self):
         self._insert_markup('/')
         self.set_focus()
 
-    def _cmd_underlined(self):
+    @Command.define
+    def underlined(self):
         self._insert_markup('_')
         self.set_focus()
 
-    def _cmd_itemize(self, style='bullet'):
+    @Command.define
+    def itemize(self, style='bullet'):
         if style == 'bullet':
             markup = '*'
         elif style == 'numbered':
@@ -2464,7 +2492,8 @@ class StructuredTextField(TextField):
         ctrl.WriteText(new_text)
         self.set_focus()
 
-    def _cmd_verbatim(self):
+    @Command.define
+    def verbatim(self):
         ctrl = self._ctrl
         start, end = ctrl.GetSelection()
         selection = ctrl.GetRange(start, end)
@@ -2563,7 +2592,8 @@ class StructuredTextField(TextField):
             return thumbnail
         return None
 
-    def _cmd_image(self):
+    @Command.define
+    def image(self):
         if not self._storage:
             return
         link = self.LCGLink(self._ctrl)
@@ -2630,7 +2660,8 @@ class StructuredTextField(TextField):
                         align=row['align'].value())
         self.set_focus()
 
-    def _cmd_attachment(self):
+    @Command.define
+    def attachment(self):
         if not self._storage:
             return
         link = self.LCGLink(self._ctrl)
@@ -2664,7 +2695,8 @@ class StructuredTextField(TextField):
                         tooltip=row['tooltip'].value())
         self.set_focus()
 
-    def _cmd_link(self):
+    @Command.define
+    def link(self):
         link = self.LCGLink(self._ctrl)
         prefill=dict(
             target=link.target(),
@@ -2689,11 +2721,13 @@ class StructuredTextField(TextField):
                         tooltip=row['tooltip'].value())
         self.set_focus()
 
-    def _cmd_linebreak(self):
+    @Command.define
+    def linebreak(self):
         self._ctrl.WriteText('//\n')
         self.set_focus()
 
-    def _cmd_heading(self, level):
+    @Command.define
+    def heading(self, level):
         ctrl = self._ctrl
         position = ctrl.GetInsertionPoint()
         success, column_number, line_number = ctrl.PositionToXY(position)
@@ -2718,7 +2752,8 @@ class StructuredTextField(TextField):
         ctrl.WriteText(new_text)
         self.set_focus()
 
-    def _cmd_open_in_editor(self):
+    @Command.define
+    def open_in_editor(self):
         result = run_form(pytis.form.ResizableInputForm, name='x', title=self._spec.label(),
                           fields=(self._spec,),
                           prefill={self._id: self._ctrl.GetValue()})

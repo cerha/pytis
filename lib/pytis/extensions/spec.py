@@ -39,7 +39,7 @@ import pytis.util
 from pytis.api import app
 from pytis.util import log, find, EVENT, ResolverError
 from pytis.presentation import (
-    Color, Editable, Field, FormType, PostProcess, Style, TextFilter,
+    Color, Editable, Field, FormType, PostProcess, Style, TextFilter, Command,
     Computer, SelectionType, PresentedRow, Menu, MenuItem, specification_path,
 )
 
@@ -85,11 +85,10 @@ FieldStyle = Style
 def run_form_mitem(title, name, form_class, hotkey=None, **kwargs):
     from pytis.form import Application
     return MenuItem(title,
-                    command=Application.COMMAND_RUN_FORM(
-                        form_class=form_class,
-                        name=name,
-                        **kwargs
-                    ),
+                    command=Command(Application.run_form,
+                                    form_class=form_class,
+                                    name=name,
+                                    **kwargs),
                     help=_('Open %s "%s"', form_class.DESCR or _("form"), title.replace('&', '')),
                     hotkey=hotkey)
 
@@ -108,12 +107,11 @@ def run_procedure_mitem(title, name, proc_name, hotkey=None, groups=None, enable
                 return enabled_(**kwargs_)
             return True
     return MenuItem(title,
-                    command=Application.COMMAND_RUN_PROCEDURE(
-                        spec_name=name,
-                        proc_name=proc_name,
-                        enabled=enabled,
-                        **kwargs
-                    ),
+                    command=Command(Application.run_procedure,
+                                    spec_name=name,
+                                    proc_name=proc_name,
+                                    enabled=enabled,
+                                    **kwargs),
                     hotkey=hotkey,
                     help=_('Spustit proceduru "%s"', title))
 
@@ -294,7 +292,7 @@ def run_any_form():
 
 def cmd_run_any_form():
     from pytis.form import Application
-    return Application.COMMAND_HANDLED_ACTION(handler=run_any_form)
+    return Command(Application.handled_action, handler=run_any_form)
 
 
 def print2mail(resolver, spec_name, template_id, row, to, from_, subject, msg, filename=None,

@@ -36,7 +36,8 @@ from .spec import (  # noqa: F401
     TextFilter, Computer, computer, procedure, CbComputer, CodebookSpec,
     FormType, Link, ListLayout, Enumeration, Field, Fields, AttachmentStorage,
     FileAttachmentStorage, HttpAttachmentStorage, DbAttachmentStorage,
-    SharedParams, Menu, MenuItem, MenuSeparator, StatusField,
+    SharedParams, Menu, MenuItem, MenuSeparator, Command, CommandHandler,
+    CommandHandlerMetaClass, StatusField,
     SpecificationBase, Application, HelpProc, help_proc,
     Specification, specification_path, IN,
     # Deprecated:

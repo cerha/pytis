@@ -36,7 +36,7 @@ import fitz
 
 import pytis.data
 from pytis.api import app
-from pytis.presentation import Orientation, Menu, MenuItem
+from pytis.presentation import Orientation, Menu, MenuItem, Command
 from pytis.util import EVENT, log, translations, ProgramError
 
 from .event import wx_callback
@@ -203,16 +203,21 @@ class DualForm(Form, Refreshable):
         else:
             log(EVENT, "Main form doesn't support `select_row()'!")
 
+    @Command.define
     def apply_profile(self, *args, **kwargs):
         if hasattr(self._main_form, 'apply_profile'):
             return self._main_form.apply_profile(*args, **kwargs)
         else:
             log(EVENT, "Main form doesn't support `apply_profile()'!")
 
-    def _cmd_other_form(self):
+    @Command.define
+    def other_form(self):
+        """Přechod mezi podformuláři duálního formuláře"""
         self._select_form(self._other_form(self._active_form))
 
-    def _cmd_resplit(self):
+    @Command.define
+    def resplit(self):
+        """Toggle the splitter orientation between vertical/horizontal."""
         is_vertical = self.is_vertical()
         self._splitter.Unsplit()
         if is_vertical:
@@ -684,7 +689,7 @@ class MultiForm(Form, Refreshable):
 
     """
     @classmethod
-    def _get_command_handler_instance(cls):
+    def command_handler_instance(cls):
         form = pytis.form.app.current_form(inner=False)
         if isinstance(form, DualForm):
             form = form.active_form()
@@ -880,7 +885,9 @@ class MultiForm(Form, Refreshable):
         self.active_form()
         self._notebook.SetSize(size)
 
-    def _cmd_next_form(self, back=False):
+    @Command.define
+    def next_form(self, back=False):
+        """Advance to next/previous tab in a multi-form."""
         self._notebook.AdvanceSelection(forward=not back)
         i = self._notebook.GetSelection()
         self._init_subform(i)
@@ -1134,8 +1141,7 @@ class MultiSideForm(MultiForm):
         bindings = [f.binding().id() for f in self._subforms()]
         return Menu(_("Available forms"),
                     [MenuItem(b.title(), help='',
-                              command=self.COMMAND_TOGGLE_SIDEFORM(binding=b,
-                                                                   _command_handler=self),
+                              command=Command(self.toggle_sideform, binding=b),
                               state=lambda b=b: b.id() in bindings)
                      for b in sorted(self._subform_bindings(), key=lambda b: b.title())
                      if b.name() is None or app.has_access(b.name())])
@@ -1144,19 +1150,18 @@ class MultiSideForm(MultiForm):
         selection = event.GetSelection()
         menu = (
             MenuItem(_("Close this form"), help=_("Close this form"),
-                     command=self.COMMAND_TOGGLE_SIDEFORM(
-                         binding=self._subform(selection).binding(), _command_handler=self,
+                     command=Command(
+                         self.toggle_sideform,
+                         binding=self._subform(selection).binding(),
                      )),
             MenuItem(_("Filter the main form for non-empty side form"),
                      help=_("Show only those rows of the main form, which have "
                             "at least one row in this side form in its current profile."),
-                     command=self.COMMAND_FILTER_BY_SIDEFORM(index=selection,
-                                                             _command_handler=self)),
+                     command=Command(self.filter_by_sideform, index=selection)),
             MenuItem(_("Filter the main form for empty side form"),
                      help=_("Show only those rows of the main form, which have "
                             "no rows in this side form in its current profile."),
-                     command=self.COMMAND_FILTER_BY_SIDEFORM(index=selection, not_in=True,
-                                                             _command_handler=self)),
+                     command=Command(self.filter_by_sideform, index=selection, not_in=True)),
             self._displayed_forms_menu(),
         )
         pytis.form.app.popup_menu(self._notebook, menu, keymap=self._get_keymap())
@@ -1189,7 +1194,9 @@ class MultiSideForm(MultiForm):
         self._notebook.SetPageBitmap(new_position, wx.NullBitmap)
         self._notebook.SetPageToolTip(new_position, '')
 
-    def _cmd_toggle_sideform(self, binding):
+    @Command.define
+    def toggle_sideform(self, binding):
+        """Show/hide given side form tab."""
         nb = self._notebook
         try:
             index = [f.binding().id() for f in self._subforms()].index(binding.id())
@@ -1214,7 +1221,7 @@ class MultiSideForm(MultiForm):
             if index != nb.GetPageIndex(form):
                 return
             if index == nb.GetSelection():
-                self._cmd_next_form(back=(index != 0))
+                self.next_form(back=(index != 0))
             if form.initialized():
                 form.hide()
                 form._release_data()
@@ -1225,18 +1232,20 @@ class MultiSideForm(MultiForm):
         form = self._subform(index)
         return isinstance(form, SideBrowseForm) and form.side_form_in_condition() is not None
 
-    def _cmd_filter_by_sideform(self, index, not_in=False):
+    @Command.define
+    def filter_by_sideform(self, index, not_in=False):
+        """Filter main form rows having non-zero side form rows."""
         form = self._subform(index)
-        if form.COMMAND_UPDATE_PROFILE.enabled():
+        if Command(form.update_profile).enabled:
             msg = _("Can't filter when the current profile is not saved!")
             bsave, bquit = _("Save"), _("Cancel")
             if app.question(msg, answers=(bsave, bquit), default=bsave) != bsave:
                 return
-            form.COMMAND_UPDATE_PROFILE.invoke()
+            form.update_profile()
         condition = form.side_form_in_condition()
         if not_in:
             condition = pytis.data.NOT(condition)
-        self._main_form.filter(condition, append=True)
+        self._main_form.apply_filter(condition, append=True)
 
     def select_binding(self, id):
         """Raise the side form tab corresponfing to the binding of given identifier.
@@ -1281,15 +1290,16 @@ class MultiBrowseDualForm(BrowseDualForm):
             else:
                 self._guardian._do_selection(row)
 
-        def _cmd_edit_record(self):
-            BrowseForm._cmd_edit_record(self)
+        @Command.define
+        def edit_record(self):
+            BrowseForm.edit_record(self)
             # This will update the side form prefill after main form editation.  Without it, the
             # prefill would use the original row values until the main form row selection is
             # changed.
             self._update_selection()
 
-        def filter(self, *args, **kwargs):
-            BrowseForm.filter(self, *args, **kwargs)
+        def apply_filter(self, *args, **kwargs):
+            BrowseForm.apply_filter(self, *args, **kwargs)
             self._update_selection()
 
         def bindings(self):
@@ -1343,5 +1353,5 @@ class MultiBrowseDualForm(BrowseDualForm):
     def select_binding(self, id):
         return self._side_form.select_binding(id)
 
-    def filter(self, condition):
-        return self._main_form.filter(condition)
+    def apply_filter(self, condition):
+        return self._main_form.apply_filter(condition)

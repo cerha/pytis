@@ -20,12 +20,14 @@
 from __future__ import print_function
 from __future__ import unicode_literals
 
+from past.builtins import basestring
+
 import pytis
 import pytis.util
 import pytis.data as pd
 
 from pytis.api import app
-from pytis.presentation import Field, PresentedRow, Menu, MenuItem, MenuSeparator
+from pytis.presentation import Field, PresentedRow, Menu, MenuItem, MenuSeparator, Command
 from pytis.util import Resolver, ResolverError, identity, log, EVENT, OPERATIONAL
 
 
@@ -68,9 +70,12 @@ def get_menu_defs():
                 result.extend(menu_names(item.items))
             elif not isinstance(item, MenuSeparator):
                 assert isinstance(item, MenuItem), item
-                if ((item.command == pytis.form.Application.COMMAND_RUN_FORM and
-                     not issubclass(item.args['form_class'], pytis.form.ConfigForm))):
-                    result.append(item.args['name'])
+                if item.command.method == app.run_form:
+                    specification = item.command.args['specification']
+                    if isinstance(specification, basestring):
+                        result.append(specification)
+                    else:
+                        result.append(specification._spec_name())
         return result
 
     return pytis.util.remove_duplicates(menu_names(pytis.form.app.menu))
@@ -148,7 +153,7 @@ def check_form():
 
 def cmd_check_form():
     import pytis.form
-    return pytis.form.Application.COMMAND_HANDLED_ACTION(handler=check_form)
+    return Command(pytis.form.Application.handled_action, handler=check_form)
 
 
 class CheckReporter(object):
@@ -453,7 +458,7 @@ def check_menus_defs():
 
 def cmd_check_menus_defs():
     import pytis.form
-    return pytis.form.Application.COMMAND_HANDLED_ACTION(handler=check_menus_defs)
+    return Command(pytis.form.Application.handled_action, handler=check_menus_defs)
 
 
 def check_access_rights():
@@ -463,4 +468,4 @@ def check_access_rights():
 
 def cmd_check_access_rights():
     import pytis.form
-    return pytis.form.Application.COMMAND_HANDLED_ACTION(handler=check_access_rights)
+    return Command(pytis.form.Application.handled_action, handler=check_access_rights)

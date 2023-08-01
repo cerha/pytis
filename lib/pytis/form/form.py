@@ -49,6 +49,7 @@ from pytis.presentation import (
     ActionContext, Button, Computer, Editable, Field, GroupSpec,
     Orientation, PresentedRow, PrintAction, Profile, Specification,
     TabGroup, Text, TextFormat, ViewSpec, Menu, MenuItem, MenuSeparator,
+    Command,
 )
 from pytis.util import (
     ACTION, EVENT, OPERATIONAL, ProgramError, ResolverError, UNDEFINED,
@@ -86,6 +87,7 @@ class FormProfile(object):
 
 class FormSettings(FormProfile):
     pass
+
 
 @pytis.api.implements(pytis.api.Form)
 @python_2_unicode_compatible
@@ -170,7 +172,7 @@ class Form(wx.Panel, KeyHandler, CallbackHandler, CommandHandler):
 
 
     @classmethod
-    def _get_command_handler_instance(cls):
+    def command_handler_instance(cls):
         return pytis.form.app.current_form(inner=False)
 
     @classmethod
@@ -355,8 +357,7 @@ class Form(wx.Panel, KeyHandler, CallbackHandler, CommandHandler):
         # which belong to this form class.
         groups = []
         for group in pytis.form.TOOLBAR_COMMANDS:
-            group = [uicmd for uicmd in group
-                     if isinstance(self, uicmd.command().handler())]
+            group = [uicmd for uicmd in group if isinstance(self, uicmd.command().definer)]
             if group:
                 groups.append(group)
         return groups
@@ -397,12 +398,16 @@ class Form(wx.Panel, KeyHandler, CallbackHandler, CommandHandler):
             except Exception:
                 pass
 
-    # Zpracování příkazů
+    # Commands
 
-    def _cmd_help(self):
-        Application.COMMAND_HELP.invoke(topic=('spec/' + self._name))
+    @Command.define
+    def help(self):
+        """Show the form help in the help browser."""
+        pytis.form.app.help('spec/' + self._name)
 
-    def _cmd_leave_form(self):
+    @Command.define
+    def leave_form(self):
+        """Close the form."""
         def leave():
             pytis.form.app.block_yield(True)
             try:
@@ -503,13 +508,11 @@ class Form(wx.Panel, KeyHandler, CallbackHandler, CommandHandler):
         """
         return self._full_init_started
 
-    def can_command(self, command, **kwargs):
-        # This was introduced to prevent tracebacks on Update UI events in uninitialized
-        # side forms.  It seems, however, to make sense generally so it hopefuly is not
-        # such a big hack...
+    def command_enabled(self, command):
+        # Prevent tracebacks on Update UI events in uninitialized side forms.
         if not self._full_init_finished:
             return False
-        return super(Form, self).can_command(command, **kwargs)
+        return super(Form, self).command_enabled(command)
 
     def save(self):
         """Save form state to be able to restore it later when 'restore()' is called."""
@@ -640,7 +643,7 @@ class Form(wx.Panel, KeyHandler, CallbackHandler, CommandHandler):
 
     def api_close(self, force=False):
         if self is not pytis.form.app.top_window():
-            pytis.form.Application.COMMAND_RAISE_FORM.invoke(form=self)
+            pytis.form.app.raise_form(self)
         return self.close(force=force)
 
 
@@ -660,7 +663,7 @@ class InnerForm(Form):
 
     """
     @classmethod
-    def _get_command_handler_instance(cls):
+    def command_handler_instance(cls):
         return pytis.form.app.current_form()
 
     def _init_attributes(self, **kwargs):
@@ -699,17 +702,16 @@ class InnerForm(Form):
             db_print_spec.append((name, template_name,))
             i += 1
         printing_form = 'printing.DirectUserOutputTemplates'
-        menu = [MenuItem(p.title(), command=pytis.form.BrowseForm.COMMAND_PRINT(spec=p))
+        menu = [MenuItem(p.title(), command=Command(pytis.form.BrowseForm.printout, spec=p))
                 for p in print_spec
                 if pytis.form.app.action_has_access('print/%s' % (p.dmp_name(),),
                                                     perm=pytis.data.Permission.PRINT)]
         if app.has_access(self.name(), perm=pytis.data.Permission.PRINT):
             menu.append(MenuSeparator())
             menu.append(MenuItem(_("New report"),
-                                 command=pytis.form.Application.COMMAND_NEW_RECORD(
-                                     name=printing_form,
-                                     prefill=dict(module=pytis.data.sval(name))
-                                 )))
+                                 command=Command(pytis.form.Application.new_record,
+                                                 name=printing_form,
+                                                 prefill=dict(module=pytis.data.sval(name)))))
             if db_print_spec:
                 mitem = pytis.extensions.run_form_mitem
                 edit_submenu = [mitem(label, printing_form, PopupEditForm,
@@ -750,7 +752,9 @@ class InnerForm(Form):
             self._cached_spec_description = description
         return description
 
-    def _cmd_describe(self):
+    @Command.define
+    def describe(self):
+        """Show form description in a separate window."""
         title = self._view.title()
         description = self._spec_description()
         text = "= " + title + " =\n\n" + description
@@ -759,7 +763,9 @@ class InnerForm(Form):
     def _can_describe(self):
         return self._spec_description() is not None
 
-    def _cmd_aggregation_menu(self):
+    @Command.define
+    def aggregation_menu(self):
+        """Show aggregation menu for the current form."""
         self._on_menu_button(self._aggregation_menu())
 
     def _can_aggregation_menu(self):
@@ -768,7 +774,9 @@ class InnerForm(Form):
     def _can_print_menu(self):
         return bool(self._get_print_menu())
 
-    def _cmd_print_menu(self):
+    @Command.define
+    def print_menu(self):
+        """Show print menu for the current form."""
         self._on_menu_button(self._get_print_menu())
 
 
@@ -936,7 +944,6 @@ class LookupForm(InnerForm):
     """Formulář s vyhledáváním a tříděním."""
 
     UNSORT = 'UNSORT'
-    """Constant for 'COMMAND_SORT' 'direction' argument indicationg unsorting."""
 
     def _init_attributes(self, filter=None, sorting=None, columns=None, grouping=None,
                          profile_id=None, condition=None, arguments=None,
@@ -1260,7 +1267,9 @@ class LookupForm(InnerForm):
         row = data.fetch(direction)
         self._select_row(row)
 
-    def _cmd_jump(self):
+    @Command.define
+    def jump(self):
+        """Jump to record."""
         max_value = self._lf_count()
         if max_value > 0:
             result = app.input_form(title=_(u"Jump to record"), fields=(
@@ -1271,13 +1280,19 @@ class LookupForm(InnerForm):
             if result:
                 self.select_row(result['row'].value() - 1)
 
-    def _cmd_first_record(self):
+    @Command.define
+    def first_record(self):
+        """Jump to the first record."""
         self.select_row(0)
 
-    def _cmd_last_record(self):
+    @Command.define
+    def last_record(self):
+        """Jump to the last record."""
         self.select_row(self._lf_count() - 1)
 
-    def _cmd_search(self, next=False, back=False):
+    @Command.define
+    def search(self, next=False, back=False):
+        """Search record."""
         condition = self._lf_search_condition
         if condition is not None and next:
             direction = back and pytis.data.BACKWARD or pytis.data.FORWARD
@@ -1407,9 +1422,21 @@ class LookupForm(InnerForm):
                 self._profiles[index] = profile
             self._saved_settings.drop_profile(profile.id())
 
-    def _cmd_apply_profile(self, index):
-        profile = self._profiles[index]
-        if profile.errors():
+    @Command.define
+    def apply_profile(self, profile_id):
+        """Apply the profile given by profile_id.
+
+        Arguments:
+
+          profile_id -- id of the profile to be loaded.  It must be one of the
+            available profiles (defined in specification or user defined
+            profiles).
+
+        """
+        profile = find(profile_id, self._profiles, key=lambda p: p.id())
+        if not profile:
+            raise ProgramError("Unknown profile '%s'" % profile_id)
+        elif profile.errors():
             self._handle_invalid_profile(profile)
         else:
             orig_profile = self._current_profile
@@ -1419,7 +1446,9 @@ class LookupForm(InnerForm):
                 self._apply_profile(orig_profile)
         self.focus()
 
-    def _cmd_save_new_profile(self, title):
+    @Command.define
+    def save_new_profile(self, title):
+        """Save the current form state as a new profile."""
         if title in [profile.title() for profile in self._profiles]:
             app.echo(_(u"Profile of this name already exists."), kind='error')
             return
@@ -1434,7 +1463,8 @@ class LookupForm(InnerForm):
     def _can_rename_profile(self, title):
         return self._is_user_defined_profile(self._current_profile)
 
-    def _cmd_rename_profile(self, title):
+    @Command.define
+    def rename_profile(self, title):
         if title in [p.title() for p in self._profiles if p is not self._current_profile]:
             app.echo(_(u"Profile of this name already exists."), kind='error')
             return
@@ -1449,7 +1479,9 @@ class LookupForm(InnerForm):
         return (self._current_profile.id() != '__constructor_profile__' and
                 self._current_profile_changed())
 
-    def _cmd_update_profile(self):
+    @Command.define
+    def update_profile(self):
+        """Update the existing profile according to the current form state."""
         current = self._current_profile
         index = self._profiles.index(current)
         profile = self._create_profile(current.id(), current.title())
@@ -1460,7 +1492,9 @@ class LookupForm(InnerForm):
     def _can_delete_profile(self):
         return self._is_user_defined_profile(self._current_profile)
 
-    def _cmd_delete_profile(self):
+    @Command.define
+    def delete_profile(self):
+        """Delete the current saved profile (only for user profiles)."""
         self._saved_settings.drop_profile(self._current_profile.id())
         self._profiles.remove(self._current_profile)
         self._apply_profile(self.initial_profile())
@@ -1468,13 +1502,21 @@ class LookupForm(InnerForm):
     def _can_reload_profile(self):
         return self._current_profile_changed()
 
-    def _cmd_reload_profile(self):
+    @Command.define
+    def reload_profile(self):
+        """Reinitialize the form to the last saved state of the current profile."""
         self._apply_profile(self._current_profile)
 
     def _can_reset_profile(self):
         return not self._is_user_defined_profile(self._current_profile)
 
-    def _cmd_reset_profile(self):
+    @Command.define
+    def reset_profile(self):
+        """Discard all saved profile changes and load the original settings.
+
+        Only for predefined profiles (defined in specifications).
+
+        """
         index = self._profiles.index(self._current_profile)
         profile_id = self._current_profile.id()
         if profile_id == self._default_profile.id():
@@ -1491,13 +1533,16 @@ class LookupForm(InnerForm):
         return self._current_profile.id() not in (self._saved_settings.get('initial_profile'),
                                                   '__constructor_profile__')
 
-    def _cmd_set_initial_profile(self):
+    @Command.define
+    def set_initial_profile(self):
+        """Use the current profile as the initial profile on next form startup."""
         self._saved_settings.set('initial_profile', self._current_profile.id())
 
     def _can_export_profiles(self):
         return any(self._is_user_defined_profile(p) for p in self._profiles)
 
-    def _cmd_export_profiles(self):
+    @Command.define
+    def export_profiles(self):
         user_profiles = [p for p in self._profiles if self._is_user_defined_profile(p)]
         result = pytis.form.app.run_dialog(
             CheckListDialog, title=_("Export profiles"),
@@ -1510,7 +1555,8 @@ class LookupForm(InnerForm):
             filename = self._name.replace('.', '-') + '-profiles.json'
             app.write_selected_file(data.encode('ascii'), filename, mode='wb')
 
-    def _cmd_import_profiles(self):
+    @Command.define
+    def import_profiles(self):
         f = app.open_selected_file(mode='rb')
         if f:
             with f:
@@ -1534,32 +1580,36 @@ class LookupForm(InnerForm):
                             self._saved_settings.save_profile(profile)
                             self._profiles.append(profile)
 
-    def _cmd_filter(self, condition=None):
-        if condition:
-            perform = True
-        else:
-            perform, condition = pytis.form.app.run_dialog(
-                FilterDialog, self._lf_sfs_columns(),
-                self.current_row(), self._compute_aggregate,
-                col=self._current_column_id(),
-                condition=self._lf_filter,
-            )
+    @Command.define
+    def select_filter(self):
+        """Open the filtering dialog."""
+        perform, condition = pytis.form.app.run_dialog(
+            FilterDialog, self._lf_sfs_columns(),
+            self.current_row(), self._compute_aggregate,
+            col=self._current_column_id(),
+            condition=self._lf_filter,
+        )
         if perform and condition != self._lf_filter:
-            self.filter(condition)
+            self.apply_filter(condition)
 
     def _can_unfilter(self):
         return self._lf_filter is not None
 
-    def _cmd_unfilter(self):
-        self.filter(None)
+    @Command.define
+    def unfilter(self):
+        """Discard the active filtering condition."""
+        self.apply_filter(None)
 
-    def _cmd_filter_by_value(self, column_id, value):
+    @Command.define
+    def filter_by_value(self, column_id, value):
+        """Filter the form by value of given column on the current row."""
         if column_id not in [c.id() for c in self._lf_sfs_columns()]:
             app.echo(_(u"This column can not be used for filtering."), kind='error')
         else:
-            self.filter(pytis.data.EQ(column_id, value), append=True)
+            self.apply_filter(pytis.data.EQ(column_id, value), append=True)
 
-    def _cmd_sort(self, col=None, direction=None, primary=False):
+    @Command.define
+    def sort(self, col=None, direction=None, primary=False):
         """Change sorting.
 
         Arguments:
@@ -1632,13 +1682,13 @@ class LookupForm(InnerForm):
             raise ProgramError("Invalid sorting arguments:", (col, direction))
         return sorting
 
-    # Veřejné metody
+    # Regular public methods
 
-    def filter(self, condition, append=False):
+    def apply_filter(self, condition, append=False):
         """Apply given filtering condition.
 
-        Iff 'append' is True, add the condition to the current filter,
-        otherwise replace the current filter by given condition.
+        If 'append' is True, add the condition to the current filter, otherwise
+        replace the current filter by given condition.
 
         """
         if append and self._lf_filter:
@@ -1659,24 +1709,9 @@ class LookupForm(InnerForm):
             if profile:
                 self._saved_settings.drop_profile(profile.id())
                 self._profiles.remove(profile)
-            self._cmd_save_new_profile(title)
+            self.save_new_profile(title)
         log(EVENT, "%s filter application in %.3f seconds" %
             ("Successful" if success else "Unsuccessful", time.time() - start_time,))
-
-    def apply_profile(self, profile_id):
-        """Apply the profile given by profile_id.
-
-        Arguments:
-
-          profile_id -- id of the profile to be loaded.  It must be one of the
-            available profiles (defined in specification or user defined
-            profiles).
-
-        """
-        profile = find(profile_id, self._profiles, key=lambda p: p.id())
-        if not profile:
-            raise ProgramError("Unknown profile '%s'" % profile_id)
-        self._apply_profile(profile)
 
     def data(self, init_select=True):
         """Return a new instance of the data object used by the form.
@@ -2118,9 +2153,11 @@ class RecordForm(LookupForm):
         # PresentedRow may contain references to data objects
         self._row = None
 
-    # Command handling
+    # Commands
 
-    def _cmd_new_record(self, copy=False, prefill=None):
+    @Command.define
+    def new_record(self, copy=False, prefill=None):
+        """Insert a new record using a popup form."""
         if not self.check_permission(pytis.data.Permission.INSERT, quiet=False):
             return False
         layout_field_ids = self._view.layout().order()
@@ -2173,7 +2210,9 @@ class RecordForm(LookupForm):
     def _can_edit_record(self):
         return self.current_row() is not None
 
-    def _cmd_edit_record(self):
+    @Command.define
+    def edit_record(self):
+        """Edit the current record in a popup form."""
         if not self.check_permission(pytis.data.Permission.UPDATE, quiet=False):
             return
         row = self.current_row()
@@ -2188,7 +2227,9 @@ class RecordForm(LookupForm):
     def _can_delete_record(self):
         return self.current_row() is not None
 
-    def _cmd_delete_record(self):
+    @Command.define
+    def delete_record(self):
+        """Delete the current record from the database."""
         # The return value is used in derived classes!
         if not self.check_permission(pytis.data.Permission.DELETE, quiet=False):
             return False
@@ -2198,7 +2239,9 @@ class RecordForm(LookupForm):
         else:
             return False
 
-    def _cmd_refresh_db(self):
+    @Command.define
+    def refresh_db(self):
+        """Refresh the underlying database object."""
         self._data.refresh()
         self.refresh()
 
@@ -2228,7 +2271,9 @@ class RecordForm(LookupForm):
         else:
             return enabled
 
-    def _cmd_context_action(self, action):
+    @Command.define
+    def context_action(self, action):
+        """Invoke a context menu action on the current form record."""
         args = self._context_action_args(action)
         kwargs = action.kwargs()
         log(EVENT, 'Calling context action handler:', (args, kwargs))
@@ -2248,7 +2293,9 @@ class RecordForm(LookupForm):
             self.refresh()
         return True
 
-    def _cmd_import_interactive(self):
+    @Command.define
+    def import_interactive(self):
+        """Interactively import data from a CSV file (confirm each record in an edit form)."""
         class Separators(pytis.presentation.Enumeration):
             enumeration = (
                 ('|', _("Pipe '|'")),
@@ -2348,7 +2395,9 @@ class RecordForm(LookupForm):
                         continue
             app.new_record(self._name, prefill=self._prefill, inserted_data=inserted_data())
 
-    def _cmd_open_editor(self, field_id):
+    @Command.define
+    def open_editor(self, field_id):
+        """Open StructuredTextEditor form for given field."""
         run_form(StructuredTextEditor, self.name(),
                  field_id=field_id, select_row=self.current_key())
 
@@ -2356,7 +2405,9 @@ class RecordForm(LookupForm):
         field = find(field_id, self._row.fields(), key=lambda f: f.id())
         return field and field.text_format() == TextFormat.LCG
 
-    def _cmd_view_field_pdf(self, field_id):
+    @Command.define
+    def view_field_pdf(self, field_id):
+        """Open PDF viewer with current exported content of given field."""
         import lcg.export.pdf
         row = self.current_row()
         storage = row.attachment_storage(field_id)
@@ -2379,7 +2430,7 @@ class RecordForm(LookupForm):
         pdf = exporter.export(context)
         app.launch_file(data=pdf, suffix='.pdf')
 
-    # Public methods
+    # Regular public methods
 
     def record(self, row, **kwargs):
         """Create a new `RecordForm.Record' instance bound to this form."""
@@ -2723,19 +2774,22 @@ class EditForm(RecordForm, TitledForm, Refreshable):
                 busy_cursor(False)
             label = button.label()
             tooltip = button.tooltip()
-            cmd, args = Application.COMMAND_HANDLED_ACTION(handler=handler, row=self._row,
-                                                           enabled=button.enabled())
+            command = Command(Application.handled_action,
+                              handler=handler, row=self._row,
+                              enabled=button.enabled())
         else:
             action = find(button.action(), self._view.actions(unnest=True), key=lambda a: a.name())
             label = button.label() or action.title()
             tooltip = button.tooltip() or action.descr()
-            cmd, args = self.COMMAND_CONTEXT_ACTION(action=action)
-        return wx_button(parent, label, command=(cmd, args), tooltip=tooltip,
-                         enabled=(button.active_in_popup_form() or not
-                                  isinstance(self, PopupForm)) and
-                         (button.active_in_readonly_form() or not self.readonly()) and
-                         cmd.enabled(**args),
-                         width=button.width() and dlg2px(parent, 4 * button.width()))
+            command = Command(self.context_action, action=action)
+        return wx_button(
+            parent, label, command=command, tooltip=tooltip,
+            enabled=(
+                (button.active_in_popup_form() or not isinstance(self, PopupForm)) and
+                (button.active_in_readonly_form() or not self.readonly()) and
+                command.enabled
+            ),
+            width=button.width() and dlg2px(parent, 4 * button.width()))
 
     def _create_text(self, parent, text):
         return wx.StaticText(parent, -1, text.text(), style=wx.ALIGN_LEFT)
@@ -2858,7 +2912,7 @@ class EditForm(RecordForm, TitledForm, Refreshable):
         return grid
 
     def _signal_update(self):
-        app.form.refresh()
+        app.refresh()
 
     def _refresh(self, interactive=False):
         if interactive:
@@ -3134,12 +3188,13 @@ class EditForm(RecordForm, TitledForm, Refreshable):
                 return result
         return True
 
-    # Command handling
+    # Commands
 
     def _can_commit_record(self, close=True):
         return self._mode != self.MODE_VIEW
 
-    def _cmd_commit_record(self, close=True):
+    @Command.define
+    def commit_record(self, close=True):
         try:
             # TODO: Busy cursor doesn't work over X2Go!
             busy_cursor(True)
@@ -3155,7 +3210,8 @@ class EditForm(RecordForm, TitledForm, Refreshable):
     def _can_navigate(self, back=False):
         return self._mode != self.MODE_VIEW
 
-    def _cmd_navigate(self, back=False):
+    @Command.define
+    def navigate(self, back=False):
         widgets = (
             functools.reduce(lambda w, f: w + (f.tab_navigated_widgets() if f.enabled() else ()),
                              self._fields, ()) +
@@ -3168,7 +3224,7 @@ class EditForm(RecordForm, TitledForm, Refreshable):
             target = order[i]
             target.SetFocus()
 
-    # Public methods
+    # Regular public methods
 
     def title(self):
         """Return the form title as a string."""
@@ -3343,17 +3399,17 @@ class PopupEditForm(PopupForm, EditForm):
                  tooltip=(_("Save the current record and advance to the next one.")
                           if self._inserted_data else
                           _("Save the record and close the form.")),
-                 command=self.COMMAND_COMMIT_RECORD(close=not self._inserted_data)),
+                 command=Command(self.commit_record, close=not self._inserted_data)),
             dict(label=_("Cancel"), icon='cancel', id=wx.ID_CANCEL,
                  tooltip=_("Close the form without saving"),
-                 command=self.COMMAND_LEAVE_FORM()),
+                 command=Command(self.leave_form)),
         )
         if self._mode == self.MODE_INSERT and self._multi_insert and not self._inserted_data:
             buttons += (
-                dict(id=wx.ID_FORWARD, label=_("Next"), icon='forward',
+                dict(label=_("Next"), icon='forward', id=wx.ID_FORWARD,
                      tooltip=_("Save the current record without closing the form "
                                "to allow next record insertion."),
-                     command=self.COMMAND_COMMIT_RECORD(close=False)),
+                     command=Command(self.commit_record, close=False)),
             )
         return buttons
 
@@ -3375,7 +3431,21 @@ class PopupEditForm(PopupForm, EditForm):
         # inherit profiles at all but that's a little too complicated for now.
         pass
 
-    def _cmd_leave_form(self):
+    def _can_commit_record(self, close=True, next=False):
+        if next and (self._mode != self.MODE_INSERT or not self._multi_insert):
+            return False
+        return super(PopupEditForm, self)._can_commit_record()
+
+    @Command.define
+    def commit_record(self, close=True, next=False):
+        result = super(PopupEditForm, self).commit_record(close=close and not next)
+        if result and next:
+            app.echo(_("Record saved"))
+            self._load_next_row()
+        return result
+
+    @Command.define
+    def leave_form(self):
         # Leaving the form in wx.CallAfter (as in the parent method) causes
         # recursion in popup forms. Closing the form immediately seems to
         # work fine, on the other hand.
@@ -3386,12 +3456,12 @@ class PopupEditForm(PopupForm, EditForm):
         finally:
             pytis.form.app.block_yield(False)
 
-    def can_command(self, command, **kwargs):
-        if ((command.handler() in (LookupForm, RecordForm) and
-             command not in (RecordForm.COMMAND_CONTEXT_ACTION,
-                             RecordForm.COMMAND_VIEW_FIELD_PDF))):
+    def command_enabled(self, command):
+        if ((command.definer in (LookupForm, RecordForm) and
+             command.name not in ('RecordForm.context_action',
+                                  'RecordForm.view_field_pdf'))):
             return False
-        return super(PopupEditForm, self).can_command(command, **kwargs)
+        return super(PopupEditForm, self).command_enabled(command)
 
     def run(self):
         if self._mode == self.MODE_EDIT:
@@ -3725,7 +3795,7 @@ class ResizableEditForm(object):
 
 class ResizableInputForm(ResizableEditForm, InputForm):
     """Resizable InputForm with fields expanded to the whole window."""
-    # Used within StructuredTextField._cmd_open_in_editor().
+    # Used within StructuredTextField.open_in_editor().
     pass
 
 
@@ -3862,7 +3932,8 @@ class BrowsableShowForm(ShowForm):
 
     """
 
-    def _cmd_next_record(self, back=False):
+    @Command.define
+    def next_record(self, back=False):
         current_row = self.current_row()
         if current_row:
             row_number = self._get_row_number(current_row.row())

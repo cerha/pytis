@@ -271,7 +271,7 @@
    - Enter v přihlašovacím dialogu
    - Enter ve formulářích (odeslat celý formulář)?
    - Tab v tabulce (pohybuje kurzorem, ale to dělají i šipky) -- mohl vyvolat
-     COMMAND_OTHER_FORM
+     DualForm.other_form
 
 ** FEEDBACK Možnost omezit počet vrácených záznamů ve funkci dbselect
 

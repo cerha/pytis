@@ -53,13 +53,13 @@ import pytis.util
 from pytis.api import app
 from pytis.presentation import (
     Field, StatusField, computer, Text, TextFormat, PresentedRow,
-    Menu, MenuItem, MenuSeparator,
+    Menu, MenuItem, MenuSeparator, Command
 )
 from pytis.util import (
     ACTION, DEBUG, EVENT, OPERATIONAL, ProgramError, ResolverError, XStack,
     argument_names, find, format_traceback, identity, log, rsa_encrypt
 )
-from .command import CommandHandler, command_icon
+from .command import CommandHandler
 from .event import (
     UserBreakException, interrupt_init, interrupt_watcher,
     top_level_exception, unlock_callbacks, wx_callback, yield_,
@@ -67,7 +67,7 @@ from .event import (
 from .screen import (
     Browser, KeyHandler, Keymap, StatusBar,
     acceskey_prefix, beep, busy_cursor, get_icon, uicommand_mitem,
-    wx_focused_window, hotkey_string, wx_toolbar
+    wx_focused_window, hotkey_string, wx_toolbar, command_icon,
 )
 from . import dialog
 from pytis.dbdefs.db_pytis_crypto import (
@@ -122,7 +122,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
             return self.__getattr__(name.replace('-', '_'))
 
     @classmethod
-    def _get_command_handler_instance(cls):
+    def command_handler_instance(cls):
         return pytis.form.app
 
     def __init__(self, headless=False):
@@ -187,12 +187,8 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         self._modals = []
         self._help_browser = None
         self._login_success = False
-        for key, cmd in pytis.form.DEFAULT_KEYMAP + self._specification.keymap():
-            if isinstance(cmd, (list, tuple)):
-                cmd, args = cmd
-            else:
-                args = {}
-            self.keymap.define_key(key, cmd, args)
+        for key, command in pytis.form.DEFAULT_KEYMAP + self._specification.keymap():
+            self.keymap.define_key(key, command)
         pytis.form.app = self
         app.title = pytis.config.application_name
 
@@ -289,7 +285,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
             if isinstance(item, Menu):
                 self._cache_menu_enabled(list(item.items))
             elif not isinstance(item, MenuSeparator):
-                enabled = item.command.enabled(**item.args)
+                enabled = item.command.enabled
                 if __debug__:
                     if pytis.config.debug:
                         log(DEBUG, 'Menu item:', (item.title, enabled))
@@ -429,15 +425,18 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         self._menu = menu
 
         menu.append(Menu(_("&Windows"), (
-            MenuItem(_("Previous window"), command=Application.COMMAND_RAISE_PREV_FORM(),
+            MenuItem(_("Previous window"),
+                     command=Command(Application.raise_prev_form),
                      help=_("Switch to the previous window in the window list order.")),
-            MenuItem(_("Next window"), command=Application.COMMAND_RAISE_NEXT_FORM(),
+            MenuItem(_("Next window"),
+                     command=Command(Application.raise_next_form),
                      help=_("Switch to the next window in the window list order.")),
             MenuItem(_("Most recently active window"),
-                     command=Application.COMMAND_RAISE_RECENT_FORM(),
+                     command=Command(Application.raise_recent_form),
                      help=_("Allows mutual switching of two most recently active "
                             "windows cyclically.")),
-            MenuItem(_("Close active window"), command=pytis.form.Form.COMMAND_LEAVE_FORM(),
+            MenuItem(_("Close active window"),
+                     command=Command(pytis.form.Form.leave_form),
                      help=_("Closes the window of the active form.")),
             MenuSeparator(),
         ), name=self._WINDOW_MENU_ID, autoindex=False))
@@ -488,9 +487,6 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
             else:
                 return None
 
-        def cmdstr(command, args):
-            return '%s(%s)' % (command.name(), ', '.join('%s=%r' % x for x in args.items()))
-
         # At first, compute the maximal width of hotkey string in this menu.
         max_hotkey_width = 0
         hotkey_strings = {}
@@ -498,17 +494,15 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
             if isinstance(item, MenuItem):
                 hotkey = item.hotkey
                 if hotkey and keymap:
-                    cmd = lookup_key(keymap, hotkey)
-                    if cmd and cmd != (item.command, item.args):
+                    command = lookup_key(keymap, hotkey)
+                    if command and command != item.command:
                         log(OPERATIONAL, "Duplicate hotkey %s on menu item '%s': "
                             "Command %s collides with command %s defined elsewhere." %
-                            (hotkey, item.title, cmdstr(item.command, item.args), cmdstr(*cmd)))
+                            (hotkey, item.title, item.command, command))
                 if not hotkey and keymap:
-                    args = dict([(k, v) for k, v in item.args.items()
-                                 if k != '_command_handler'])
-                    hotkey = keymap.lookup_command(item.command, args)
+                    hotkey = keymap.lookup_command(item.command)
                 elif keymap:
-                    keymap.define_key(hotkey, item.command, item.args)
+                    keymap.define_key(hotkey, item.command)
                 if hotkey:
                     hotkey_strings[item] = string = '    ' + hotkey_string(hotkey)
                     hotkey_width = parent.GetTextExtent(string)[0]
@@ -554,7 +548,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
 
     def _append_menu_item(self, parent, menu, item, title=None):
         def on_ui_event(event):
-            event.Enable(item.command.enabled(**item.args))
+            event.Enable(item.command.enabled)
             if item.state:
                 state = item.state()
                 event.Check(state)
@@ -564,7 +558,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
             # command invocation.  Calling dirrectly for example resulted in disfunctional
             # TAB traversal in a popup form which was opended through a popup menu command
             # due to FindFocus() returning a wrong window.  Using CallAfter fixes this.
-            wx.CallAfter(item.command.invoke, **item.args)
+            wx.CallAfter(item.command.invoke)
 
         if item.state:
             # kind = wx.ITEM_RADIO
@@ -574,7 +568,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
             icon = None
         else:
             kind = wx.ITEM_NORMAL
-            icon = get_icon(item.icon or command_icon(item.command, item.args))
+            icon = get_icon(item.icon or command_icon(item.command))
         mitem = wx.MenuItem(menu, -1, title or item.title, item.help or "", kind=kind)
         wx_callback(wx.EVT_MENU, parent, on_invoke_command, source=mitem)
         wx_callback(wx.EVT_UPDATE_UI, parent, on_ui_event, source=mitem)
@@ -709,7 +703,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
                 self._append_menu_item(self._frame, menu, MenuItem(
                     acceskey_prefix(i) + self._form_menu_item_title(form),
                     help=_("Bring form window to the top (%s)", info),
-                    command=Application.COMMAND_RAISE_FORM(form=form),
+                    command=Command(Application.raise_form, form=form),
                     state=lambda form=form: self.top_window() is form,
                 ))
 
@@ -723,14 +717,15 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
                 self._append_menu_item(self._frame, menu, MenuItem(
                     acceskey_prefix(i) + title,
                     help=_("Open the form (%s)", form_name + '/' + spec_name),
-                    command=Application.COMMAND_RUN_FORM(form_class=getattr(pytis.form, form_name),
-                                                         name=spec_name),
+                    command=Command(Application.run_form,
+                                    form_class=getattr(pytis.form, form_name),
+                                    name=spec_name),
                 ))
             menu.AppendSeparator()
             self._append_menu_item(self._frame, menu, MenuItem(
                 _("Clear"),
                 help=_("Clear the menu of recent forms"),
-                command=Application.COMMAND_CLEAR_RECENT_FORMS(),
+                command=Command(Application.clear_recent_forms),
             ))
 
     def _raise_form(self, form):
@@ -884,49 +879,62 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
 
     # Zpracování příkazů
 
-    def _cmd_break(self):
+    @Command.define
+    def stop(self):
+        """Interrupt the currently running operation."""
         app.echo(_("Stopped..."), kind='error')
 
     def _can_handled_action(self, handler=None, enabled=None, **kwargs):
         return enabled is None and True or enabled(**kwargs)
 
-    def _cmd_handled_action(self, handler=None, enabled=None, **kwargs):
+    @Command.define
+    def handled_action(self, handler=None, enabled=None, **kwargs):
+        """Perform application defined action."""
         return handler(**kwargs)
 
-    def _cmd_raise_form(self, form):
+    @Command.define
+    def raise_form(self, form):
         self._raise_form(form)
 
     def _can_raise_recent_form(self):
         return len(self._windows) > 1
 
-    def _cmd_raise_recent_form(self):
+    @Command.define
+    def raise_recent_form(self):
         self._raise_form(self._windows.mru()[1])
 
     def _can_raise_next_form(self):
         return len(self._windows) > 1
 
-    def _cmd_raise_next_form(self):
+    @Command.define
+    def raise_next_form(self):
         self._raise_form(self._windows.next())
 
     def _can_raise_prev_form(self):
         return len(self._windows) > 1
 
-    def _cmd_raise_prev_form(self):
+    @Command.define
+    def raise_prev_form(self):
         self._raise_form(self._windows.prev())
 
     def _can_clear_recent_forms(self):
         return len(self._recent_forms) > 0
 
-    def _cmd_clear_recent_forms(self):
+    @Command.define
+    def clear_recent_forms(self):
         self._recent_forms[:] = []
         self._update_recent_forms_menu()
 
-    def _cmd_refresh(self, interactive=True):
+    @Command.define
+    def refresh(self, interactive=True):
+        """Request refresh of currently visible form(s)."""
         for w in (self._top_modal(), self._windows.active()):
             if isinstance(w, pytis.form.Refreshable):
                 w.refresh(interactive=interactive)
 
-    def _cmd_reload_specifications(self):
+    @Command.define
+    def reload_specifications(self):
+        """Request reload of specification files (development/tuning)."""
         pytis.config.resolver.reload()
         self._cache_menu_enabled(self._menu)
 
@@ -962,7 +970,8 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
             # The spec is invalid, but we want the crash on attempt to run it.
             return True
 
-    def _cmd_run_form(self, form_class, name, **kwargs):
+    @Command.define
+    def run_form(self, form_class, name, **kwargs):
         # Dokumentace viz funkce run_form().
         result = None
         try:
@@ -989,7 +998,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
                 if 'select_row' in kwargs and kwargs['select_row'] is not None:
                     form.select_row(kwargs['select_row'])
                 if 'filter' in kwargs and kwargs['filter'] is not None:
-                    form.filter(kwargs['filter'])
+                    form.apply_filter(kwargs['filter'])
                 if 'binding' in kwargs and kwargs['binding'] is not None:
                     form.select_binding(kwargs['binding'])
                 if 'profile_id' in kwargs and kwargs['profile_id'] is not None:
@@ -1073,17 +1082,27 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
     def _cmd_new_record(self, name, **kwargs):
         return self.api_new_record(name, **kwargs)
 
+    @Command.define
+    def new_record(self, **kwargs):
+        """Insert new record into the data object of given specification name."""
+        return self.api_new_record(**kwargs)
+
+    def _can_new_record(self, name, **kwargs):
+        return self._can_api_new_record(name, **kwargs)
+
     def _can_run_procedure(self, spec_name, proc_name, args=None, enabled=None,
                            block_refresh=False, **kwargs):
         if not self._public_spec(spec_name):
             return False
         return enabled is None and True or enabled(**kwargs)
 
-    def _cmd_run_procedure(self, enabled=None, **kwargs):
+    @Command.define
+    def run_procedure(self, enabled=None, **kwargs):
         return self.api_run_procedure(**kwargs)
 
-    def _cmd_help(self, topic='pytis'):
-        """Zobraz dané téma v prohlížeči nápovědy."""
+    @Command.define
+    def help(self, topic='pytis'):
+        """Open given help topic in help browser."""
         browser = self._help_browser
         if not browser:
             frame = wx.Frame(None)
@@ -1099,29 +1118,37 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         browser.GetParent().Raise()
         browser.load_uri('help:' + topic)
 
-    def _cmd_reload_rights(self):
+    @Command.define
+    def reload_rights(self):
+        """Reload application rights and menu from the database."""
         self._init_access_rights()
         self._create_menubar()
         self._update_window_menu()
         self._cache_menu_enabled(self._menu)
 
-    def _cmd_custom_debug(self):
+    @Command.define
+    def custom_debug(self):
         if __debug__:
             pytis.config.custom_debug()
 
-    def _cmd_inspect(self):
+    @Command.define
+    def inspect(self):
         import wx.lib.inspection
         tool = wx.lib.inspection.InspectionTool()
         tool.Init(app=self)
         tool.Show()
 
-    def _cmd_exit(self):
+    @Command.define
+    def exit(self):
+        """Exit the application."""
         self.api_exit()
 
     def _can_nothing(self, enabled=True):
         return enabled
 
-    def _cmd_nothing(self, enabled=True):
+    @Command.define
+    def nothing(self, enabled=True):
+        """Fake command which does nothing."""
         pass
 
     # Veřejné atributy a metody
@@ -1656,8 +1683,9 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         return self._status_fields
 
     def api_refresh(self):
-        self._cmd_refresh(interactive=False)
+        self.refresh(interactive=False)
 
+    @Command.define
     def api_exit(self, force=False):
         self._frame.Close(force=force)
 
@@ -1761,6 +1789,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         else:
             return specification._spec_name()
 
+    @Command.define
     def api_new_record(self, specification, prefill=None, inserted_data=None, multi_insert=True,
                        copied_row=None, set_values=None, block_on_new_record=False,
                        transaction=None):
@@ -1788,6 +1817,13 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
                         prefill=prefill, inserted_data=inserted_data,
                         multi_insert=multi_insert, transaction=transaction,
                         set_values=set_values)
+
+    def _can_api_new_record(self, name, **kwargs):
+        try:
+            return self.api_has_access(name, perm=pd.Permission.INSERT)
+        except ResolverError:
+            # The spec is invalid, but we want the crash on attempt to run it.
+            return True
 
     def api_show_record(self, specification, row):
         assert isinstance(row, (PresentedRow, pytis.data.Row, pytis.data.Value)), row
@@ -1886,6 +1922,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         else:
             return False
 
+    @Command.define
     def api_run_form(self, specification, select_row=None, multi=True, preview=False, sorting=None,
                      filter=None, condition=None, profile=None, binding=None, transaction=None):
         name = self._spec_name(specification)
@@ -1902,6 +1939,9 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         return run_form(form_class, name, select_row=select_row, sorting=sorting,
                         filter=filter, condition=condition, profile_id=profile,
                         transaction=transaction, **kwargs)
+
+    def _can_api_run_form(self, name, *args, **kwargs):
+        return app.has_access(name)
 
     def api_codebook(self, specification, select_row=0, columns=None, sorting=None, filter=None,
                      condition=None, multirow=False, begin_search=None, transaction=None):
@@ -1941,6 +1981,9 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         except Exception:
             top_level_exception()
         return result
+
+    def _can_api_run_procedure(self, spec_name, proc_name, *args, **kwargs):
+        return self._public_spec(spec_name)
 
     def api_web_view(self, title, content):
         run_form(pytis.form.WebForm, title=title, content=content)
@@ -2347,7 +2390,7 @@ def run_form(form_class, name=None, **kwargs):
     Vytvořený formulář bude zobrazen v okně aplikace, nebo v novém modálním
     okně (pokud jde o modální formulář odvozený od třídy 'PopupForm').  Okno
     nemodálního formuláře zůstává po návratu této funkce v aplikaci otevřeno
-    (lze jej odstranit příkazem 'Form.COMMAND_LEAVE_FORM').  V případě
+    (lze jej odstranit příkazem 'Form.leave_form').  V případě
     modálního formuláře se funkce vrací až po jeho uzavření.
 
     Vrací: Návratovou hodnotu metody 'run()' v případě modálního formuláře,
@@ -2355,12 +2398,11 @@ def run_form(form_class, name=None, **kwargs):
     (např. nedostatečná přístupová práva) , vrací False.
 
     """
-    cmd = Application.COMMAND_RUN_FORM
-    kwargs = dict(form_class=form_class, name=name, **kwargs)
-    if not cmd.enabled(**kwargs):
+    command = Command(Application.run_form, form_class=form_class, name=name, **kwargs)
+    if not command.enabled:
         app.echo(_("Opening form refused."), kind='error')
         return False
-    return cmd.invoke(**kwargs)
+    return command.invoke()
 
 def db_operation(operation, *args, **kwargs):
     """Invoke database operation with handling possible DB errors.

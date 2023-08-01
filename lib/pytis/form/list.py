@@ -52,7 +52,7 @@ from pytis.api import app
 from pytis.presentation import (
     Action, ActionGroup, AggregatedView, CodebookSpec, Field, Editable,
     FormType, SelectionType, Link, TextFormat, ViewSpec, ActionContext,
-    PrettyFoldable, Menu, MenuItem, MenuSeparator,
+    PrettyFoldable, Menu, MenuItem, MenuSeparator, Command
 )
 from pytis.util import (
     ACTION, DEBUG, EVENT, OPERATIONAL, UNDEFINED,
@@ -124,7 +124,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         # Nastav klávesové zkratky z kontextových menu.
         for action in self._view.actions(unnest=True):
             if action.hotkey():
-                self.define_key(action.hotkey(), self.COMMAND_CONTEXT_ACTION, dict(action=action))
+                self.define_key(action.hotkey(), Command(self.context_action, action=action))
         # Závěrečné akce
         self._data.add_callback_on_change(self.on_data_change)
         wx_callback(wx.EVT_SIZE, self, self._on_size)
@@ -586,9 +586,9 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                          on_text=lambda e: self._incremental_search(newtext=True),
                          on_key_down=self._on_incremental_search_key_down, height=HEIGHT),
             wx_button(panel, icon=wx.ART_GO_BACK, height=HEIGHT, tooltip=_("Find previous"),
-                      command=self.COMMAND_SEARCH(next=True, back=True)),
+                      command=Command(self.search, next=True, back=True)),
             wx_button(panel, icon=wx.ART_GO_FORWARD, height=HEIGHT, tooltip=_("Find next"),
-                      command=self.COMMAND_SEARCH(next=True)),
+                      command=Command(self.search, next=True)),
             wx_checkbox(panel, label=_("search also inside values"),
                         tooltip=_("Check if you want to search anywhere inside the value. "
                                   "Otherwise the substring is only searched at the start "
@@ -953,13 +953,13 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                       key=lambda col: pytis.util.strxfrm(col.column_label()))
 
     def _displayed_columns_menu(self, column_index):
-        menu = [MenuItem(_("Display row headings"), command=ListForm.COMMAND_TOGGLE_ROW_LABELS(),
+        menu = [MenuItem(_("Display row headings"), command=Command(ListForm.toggle_row_labels),
                          state=lambda: self._grid.GetRowLabelSize() != 0)]
         if column_index is not None:
             cid = self._columns[column_index].id()
             menu.append(
                 MenuItem(_("Hide this column"),
-                         command=ListForm.COMMAND_TOGGLE_COLUMN(column_id=cid, position=None))
+                         command=Command(ListForm.toggle_column, column_id=cid, position=None))
             )
 
         hidden_columns = [c for c in self._available_columns() if c not in self._columns]
@@ -967,29 +967,29 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             pos = column_index + 1 if column_index is not None else len(self._columns)
             menu.append(Menu(_("Add column"), [
                 MenuItem(c.column_label() or c.id(), help=c.descr(),
-                         command=ListForm.COMMAND_TOGGLE_COLUMN(column_id=c.id(), position=pos))
+                         command=Command(ListForm.toggle_column, column_id=c.id(), position=pos))
                 for c in hidden_columns
             ]))
         else:
             menu.append(MenuItem(_("Add column"),
-                                 command=Application.COMMAND_NOTHING(enabled=False)))
-        menu.append(MenuItem(_("Displayed columns"), command=ListForm.COMMAND_TOGGLE_COLUMNS()))
+                                 command=Command(Application.nothing, enabled=False)))
+        menu.append(MenuItem(_("Displayed columns"), command=Command(ListForm.toggle_columns)))
         return menu
 
     def _aggregation_menu(self):
-        menu = [MenuItem(title, command=ListForm.COMMAND_TOGGLE_AGGREGATION(operation=op),
+        menu = [MenuItem(title, command=Command(ListForm.toggle_aggregation, operation=op),
                          state=lambda op=op: op in self._aggregations)
                 for op, title, icon, label in self._AGGREGATIONS]
         menu.extend((MenuSeparator(),
-                     MenuItem(_("Show all"), command=ListForm.COMMAND_AGGREGATE()),
-                     MenuItem(_("Hide all"), command=ListForm.COMMAND_UNAGGREGATE()),
+                     MenuItem(_("Show all"), command=Command(ListForm.aggregate)),
+                     MenuItem(_("Hide all"), command=Command(ListForm.unaggregate)),
                      ))
         predefined_aggregated_views = self._view.aggregated_views()
         if predefined_aggregated_views:
             menu.append(MenuSeparator())
             menu.extend([
                 MenuItem(v.name(),
-                         command=ListForm.COMMAND_AGGREGATED_VIEW(aggregated_view_id=v.id()),
+                         command=Command(ListForm.aggregated_view, aggregated_view_id=v.id()),
                          help=_("Open predefined aggregated view"))
                 for v in predefined_aggregated_views
             ])
@@ -1000,17 +1000,17 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             menu.append(MenuSeparator())
             menu.extend([
                 MenuItem(v.name(),
-                         command=ListForm.COMMAND_AGGREGATED_VIEW(aggregated_view_id=v.id()),
+                         command=Command(ListForm.aggregated_view, aggregated_view_id=v.id()),
                          help=_("Open user defined aggregated view"))
                 for v in aggregated_views
             ])
         menu.extend((MenuSeparator(),
                      MenuItem(_("Define new aggregated view"),
-                              command=ListForm.COMMAND_AGGREGATED_VIEW(aggregated_view_id=None))))
+                              command=Command(ListForm.aggregated_view, aggregated_view_id=None))))
         if aggregated_views:
             menu.append(Menu(_("Remove agregated view"), [MenuItem(
                 v.name(),
-                command=ListForm.COMMAND_DELETE_AGGREGATED_VIEW(aggregated_view_id=v.id()),
+                command=Command(ListForm.delete_aggregated_view, aggregated_view_id=v.id()),
             ) for v in aggregated_views]))
         return menu
 
@@ -1018,32 +1018,32 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         return (
             Menu(_("Primary Sorting"), (
                 MenuItem(_("Sort Ascending"),
-                         command=LookupForm.COMMAND_SORT(col=col, primary=True,
-                                                         direction=pytis.data.ASCENDENT)),
+                         command=Command(LookupForm.sort, col=col, primary=True,
+                                         direction=pytis.data.ASCENDENT)),
                 MenuItem(_("Sort Descending"),
-                         command=LookupForm.COMMAND_SORT(col=col, primary=True,
-                                                         direction=pytis.data.DESCENDANT)),
+                         command=Command(LookupForm.sort, col=col, primary=True,
+                                         direction=pytis.data.DESCENDANT)),
             )),
             Menu(_("Secondary Sorting"), (
                 MenuItem(_("Sort Ascending"),
-                         command=LookupForm.COMMAND_SORT(col=col,
-                                                         direction=pytis.data.ASCENDENT)),
+                         command=Command(LookupForm.sort, col=col,
+                                         direction=pytis.data.ASCENDENT)),
                 MenuItem(_("Sort Descending"),
-                         command=LookupForm.COMMAND_SORT(col=col,
-                                                         direction=pytis.data.DESCENDANT)),
+                         command=Command(LookupForm.sort, col=col,
+                                         direction=pytis.data.DESCENDANT)),
             )),
             MenuItem(_("Omit this column from sorting"),
-                     command=LookupForm.COMMAND_SORT(col=col, direction=self.UNSORT)),
+                     command=Command(LookupForm.sort, col=col, direction=self.UNSORT)),
             MenuItem(_("Cancel sorting completely"),
-                     command=LookupForm.COMMAND_SORT(direction=self.UNSORT)),
+                     command=Command(LookupForm.sort, direction=self.UNSORT)),
             MenuSeparator(),
             MenuItem(_("Group up to this column"),
-                     command=ListForm.COMMAND_SET_GROUPING_COLUMN(col=col)),
+                     command=Command(ListForm.set_grouping_column, col=col)),
             MenuItem(_("Cancel visual grouping"),
-                     command=ListForm.COMMAND_SET_GROUPING_COLUMN(col=None)),
+                     command=Command(ListForm.set_grouping_column, col=None)),
             MenuSeparator(),
-            MenuItem(_("Autofilter"), command=ListForm.COMMAND_AUTOFILTER(col=col)),
-            MenuItem(_("Cancel filtering"), command=LookupForm.COMMAND_UNFILTER()),
+            MenuItem(_("Autofilter"), command=Command(ListForm.autofilter, col=col)),
+            MenuItem(_("Cancel filtering"), command=Command(LookupForm.unfilter)),
             MenuSeparator(),
         ) + tuple(self._displayed_columns_menu(col))
 
@@ -1063,9 +1063,13 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         if aggregation is not None:
             menu = self._aggregation_menu()
             if col != -1:
-                cmd = self.COMMAND_COPY_AGGREGATION_RESULT(cid=self._columns[col].id(),
-                                                           operation=aggregation[0])
-                menu[0:0] = (MenuItem(_("Copy the Result"), command=cmd), MenuSeparator())
+                menu[0:0] = (
+                    MenuItem(_("Copy the Result"),
+                             command=Command(self.copy_aggregation_result,
+                                             cid=self._columns[col].id(),
+                                             operation=aggregation[0])),
+                    MenuSeparator(),
+                )
         elif col == -1:
             menu = self._displayed_columns_menu(None)
         else:
@@ -1111,8 +1115,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                     current_direction = self._sorting_direction(cid) or self.UNSORT
                     cycle = [pytis.data.ASCENDENT, pytis.data.DESCENDANT, self.UNSORT]
                     direction = cycle[(cycle.index(current_direction) + 1) % 3]
-                LookupForm.COMMAND_SORT.invoke(col=col, primary=primary,
-                                               direction=direction)
+                self.sort(col=col, primary=primary, direction=direction)
         self._column_move_target = None
         self._column_to_move = None
         event.GetEventObject().Refresh()
@@ -1336,7 +1339,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             menu = self._aggregation_menu()
         else:
             menu = (
-                MenuItem(_("Hide row headings"), command=ListForm.COMMAND_TOGGLE_ROW_LABELS()),
+                MenuItem(_("Hide row headings"), command=Command(ListForm.toggle_row_labels)),
             )
         self._popup_menu(menu)
         event.Skip()
@@ -1346,7 +1349,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         row, col = event.GetRow(), event.GetCol()
         self._select_cell(row, col)
         self._grid.Refresh()
-        self.COMMAND_CONTEXT_MENU.invoke(position=event.GetPosition())
+        self.context_menu(position=event.GetPosition())
 
     def _on_left_click(self, event):
         self._run_callback(self.CALL_USER_INTERACTION)
@@ -1497,11 +1500,12 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         self._data.remove_callback_on_change(self.on_data_change)
         super(ListForm, self)._cleanup_data()
 
-    # Zpracování příkazů
+    # Commands
 
-    def _cmd_delete_record(self):
+    @Command.define
+    def delete_record(self):
         with Refreshable.block_refresh():
-            result = super(ListForm, self)._cmd_delete_record()
+            result = super(ListForm, self).delete_record()
         if result:
             r = self._current_cell()[0]
             if r < self._table.number_of_rows(min_value=(r + 2)) - 1:
@@ -1512,20 +1516,24 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             # nerefreshne horní formulář po vymazání záznamu ze sideformu.
             app.refresh()
 
-    def _cmd_activate(self, alternate=False):
+    @Command.define
+    def activate(self, alternate=False):
         self._run_callback(self.CALL_ACTIVATION, alternate=alternate)
 
-    def _cmd_first_column(self):
+    @Command.define
+    def first_column(self):
         self._select_cell(col=0)
 
-    def _cmd_last_column(self):
+    @Command.define
+    def last_column(self):
         self._select_cell(col=(len(self._columns) - 1))
 
     def _can_move_column(self, diff=1):
         col = self._grid.GetGridCursorCol()
         return 0 <= col + diff < len(self._columns)
 
-    def _cmd_move_column(self, diff=1):
+    @Command.define
+    def move_column(self, diff=1):
         col = self._grid.GetGridCursorCol()
         newcol = col + diff
         if 0 <= newcol < len(self._columns):
@@ -1536,7 +1544,8 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         else:
             log(OPERATIONAL, "Invalid column move command:", (col, newcol))
 
-    def _cmd_toggle_column(self, column_id, position=None):
+    @Command.define
+    def toggle_column(self, column_id, position=None):
         c = find(column_id, self._columns, key=lambda c: c.id())
         if c:
             self._update_grid(delete_column=c)
@@ -1544,7 +1553,8 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             self._update_grid(insert_column=self._view.field(column_id),
                               inserted_column_index=position)
 
-    def _cmd_toggle_columns(self):
+    @Command.define
+    def toggle_columns(self):
         columns = self._available_columns()
         result = pytis.form.app.run_dialog(
             CheckListDialog, title=_("Displayed columns"),
@@ -1560,7 +1570,8 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                     self._update_grid(insert_column=self._view.field(c.id()),
                                       inserted_column_index=result[:i].count(True))
 
-    def _cmd_toggle_row_labels(self):
+    @Command.define
+    def toggle_row_labels(self):
         g = self._grid
         if g.GetRowLabelSize() == 0:
             widht = self._ROW_LABEL_WIDTH
@@ -1570,7 +1581,8 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         g.FitInside()
         self.refresh()
 
-    def _cmd_resize_column(self, diff=5):
+    @Command.define
+    def resize_column(self, diff=5):
         # diff can be positive or negative integer in pixels.
         g = self._grid
         col = g.GetGridCursorCol()
@@ -1587,11 +1599,12 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             kwargs['col'] = self._columns[col].id()
         return super(ListForm, self)._can_sort(**kwargs)
 
-    def _cmd_sort(self, col=None, direction=None, primary=False):
+    @Command.define
+    def sort(self, col=None, direction=None, primary=False):
         if col is not None:
             col = self._columns[col].id()
         old_sorting = self._lf_sorting
-        sorting = super(ListForm, self)._cmd_sort(col=col, direction=direction, primary=primary)
+        sorting = super(ListForm, self).sort(col=col, direction=direction, primary=primary)
         if sorting is not None and sorting != old_sorting:
             try:
                 # Update grouping first.
@@ -1615,12 +1628,13 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                 self._refresh()
         return sorting
 
-    def _cmd_toggle_aggregation(self, operation):
+    @Command.define
+    def toggle_aggregation(self, operation):
         if operation in self._aggregations:
-            command = self.COMMAND_UNAGGREGATE
+            command = self.unaggregate
         else:
-            command = self.COMMAND_AGGREGATE
-        command.invoke(operation=operation)
+            command = self.aggregate
+        command(operation=operation)
 
     def _can_aggregate(self, operation=None):
         if operation is None:
@@ -1628,7 +1642,8 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         else:
             return operation not in self._aggregations
 
-    def _cmd_aggregate(self, operation=None):
+    @Command.define
+    def aggregate(self, operation=None):
         if operation is None:
             self._aggregations = [op for op, title, icon, label in self._AGGREGATIONS]
         else:
@@ -1642,7 +1657,8 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         else:
             return operation in self._aggregations
 
-    def _cmd_unaggregate(self, operation=None):
+    @Command.define
+    def unaggregate(self, operation=None):
         if operation is None:
             self._aggregations = []
         else:
@@ -1654,7 +1670,8 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         return ([(op, title) for op, title, icon, label in self._AGGREGATIONS] +
                 [(pytis.data.Data.AGG_COUNT, _("Count"))])
 
-    def _cmd_aggregated_view(self, aggregated_view_id):
+    @Command.define
+    def aggregated_view(self, aggregated_view_id):
         grouping_functions = self._view.grouping_functions()
         for v in self._view.aggregated_views():
             if v.id() == aggregated_view_id:
@@ -1714,20 +1731,23 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                  aggregation_condition=condition,
                  aggregation_arguments=arguments)
 
-    def _cmd_delete_aggregated_view(self, aggregated_view_id):
+    @Command.define
+    def delete_aggregated_view(self, aggregated_view_id):
         pytis.form.app.aggregated_views_manager.drop(self._name, aggregated_view_id)
 
-    def _cmd_filter_by_cell(self):
+    @Command.define
+    def filter_by_cell(self):
         row, col = self._current_cell()
         id = self._columns[col].id()
         value = self._table.row(row)[id]
-        self.COMMAND_FILTER_BY_VALUE.invoke(column_id=id, value=value)
+        self.filter_by_value(column_id=id, value=value)
 
     def _can_filter_by_cell(self):
         row, col = self._current_cell()
         return self._data.find_column(self._columns[col].id()) is not None
 
-    def _cmd_autofilter(self, col=None, position=None):
+    @Command.define
+    def autofilter(self, col=None, position=None):
         busy_cursor(True)
         try:
             if col is None:
@@ -1746,7 +1766,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                 app.echo(_("Too many items for autofilter."), kind='error')
                 return
             items = [MenuItem(v.export(),
-                              command=ListForm.COMMAND_FILTER_BY_VALUE(column_id=cid, value=v))
+                              command=Command(ListForm.filter_by_value, column_id=cid, value=v))
                      for v in distinct]
         finally:
             busy_cursor(False)
@@ -1760,7 +1780,8 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             col = self._current_cell()[1]
         return self._data.find_column(self._columns[col].id()) is not None
 
-    def _cmd_context_menu(self, position=None):
+    @Command.define
+    def context_menu(self, position=None):
         menu = self._context_menu()
         if menu:
             if position is None:
@@ -1784,7 +1805,8 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         else:
             return bool(self._grouping)
 
-    def _cmd_set_grouping_column(self, col=None):
+    @Command.define
+    def set_grouping_column(self, col=None):
         if col is not None:
             cid = self._columns[col].id()
             pos = self._sorting_position(cid)
@@ -1798,7 +1820,8 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             self._grouping = ()
         self._update_grid()
 
-    def _cmd_incremental_search(self, full=False, prefill=None):
+    @Command.define
+    def incremental_search(self, full=False, prefill=None):
         row, col = self._current_cell()
         col_id = self._columns[col].id()
         if ((not isinstance(self._row.type(col_id), pytis.data.String) or
@@ -1812,26 +1835,31 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         # self._selection_callback = self.get_callback(self.CALL_SELECTION)
         # self.set_callback(self.CALL_SELECTION, None)
 
-    def _cmd_search(self, next=False, back=False):
+    @Command.define
+    def search(self, next=False, back=False):
         if next and self._search_panel is not None:
-            self._incremental_search(direction=back and pytis.data.BACKWARD or pytis.data.FORWARD)
+            self._incremental_search(direction=pytis.data.BACKWARD
+                                     if back else pytis.data.FORWARD)
         else:
-            return super(ListForm, self)._cmd_search(next=next, back=back)
+            return super(ListForm, self).search(next=next, back=back)
 
-    def _cmd_copy_cell(self):
+    @Command.define
+    def copy_cell(self):
         row, col = self._current_cell()
         presented_row = self._table.row(row)
         if presented_row:
             cid = self._columns[col].id()
             copy_to_clipboard(presented_row.format(cid, secure=True))
 
-    def _cmd_copy_aggregation_result(self, operation, cid):
+    @Command.define
+    def copy_aggregation_result(self, operation, cid):
         copy_to_clipboard(self._aggregation_results[(cid, operation)].export())
 
     def _can_copy_aggregation_result(self, operation, cid):
         return self._aggregation_results[(cid, operation)] is not None
 
-    def _cmd_export_file(self):
+    @Command.define
+    def export_file(self):
         log(EVENT, 'Called export to file')
         if not all(self._data.permitted(c.id(), pytis.data.Permission.EXPORT)
                    for c in self._columns):
@@ -2038,19 +2066,22 @@ class ListForm(RecordForm, TitledForm, Refreshable):
     def _can_clear_selection(self):
         return self._grid.IsSelection()
 
-    def _cmd_clear_selection(self):
+    @Command.define
+    def clear_selection(self):
         self.unselect_selected_rows()
 
     def _can_add_row_to_selection(self):
         return not self._grid.IsInSelection(self._grid.GetGridCursorRow(), 0)
 
-    def _cmd_add_row_to_selection(self):
+    @Command.define
+    def add_row_to_selection(self):
         self._grid.SelectRow(self._grid.GetGridCursorRow(), True)
 
     def _can_remove_row_from_selection(self):
         return self._grid.IsInSelection(self._grid.GetGridCursorRow(), 0)
 
-    def _cmd_remove_row_from_selection(self):
+    @Command.define
+    def remove_row_from_selection(self):
         self._grid.DeselectRow(self._grid.GetGridCursorRow())
 
     # Public methods
@@ -2342,7 +2373,7 @@ class FoldableForm(ListForm):
                                   "operation by turning the folding off (sorting by\n"
                                   "another column).\n"
                                   "Really continue?"), default=True):
-                # This should abort profile selection in _cmd_apply_profile and
+                # This should abort profile selection in apply_profile() and
                 # return the previously selected profile.
                 raise UserBreakException()
         if condition is not None and condition != self._lf_filter:
@@ -2448,26 +2479,31 @@ class FoldableForm(ListForm):
     def _can_expand_or_collapse_subtree(self, level=None):
         return self._folding_enabled()
 
-    def _cmd_expand_or_collapse_subtree(self, level=None):
+    @Command.define
+    def expand_or_collapse_subtree(self, level=None):
         row = self._current_cell()[0]
         self._expand_or_collapse(row, level=level)
 
     def _can_expand_or_collapse(self):
         return self._folding_enabled()
 
-    def _cmd_expand_or_collapse(self):
+    @Command.define
+    def expand_or_collapse(self):
         row = self._current_cell()[0]
         self._expand_or_collapse(row, level=1)
 
-    def _cmd_expand_all(self):
+    @Command.define
+    def expand_all(self):
         self._folding = self.Folding(level=None)
         self._refresh_folding()
 
-    def _cmd_collapse_all(self):
+    @Command.define
+    def collapse_all(self):
         self._folding = self.Folding()
         self._refresh_folding()
 
-    def _cmd_folding_level(self):
+    @Command.define
+    def select_folding_level(self):
         if self._folding_enabled():
             result = app.input_form(title=_("Select folding level"), fields=(
                 Field('level', _("Folding level"), width=2,
@@ -2599,7 +2635,7 @@ class CodebookForm(PopupForm, FoldableForm, KeyHandler):
             col = find(col_id, self._columns, key=lambda c: c.id())
             if col is not None:
                 self._select_cell(row=0, col=self._columns.index(col))
-                self.COMMAND_INCREMENTAL_SEARCH.invoke(prefill=prefill)
+                self.incremental_search(prefill=prefill)
                 self._set_real_size()
                 self.GetParent().SetSize(self.GetSize())
             else:
@@ -2617,7 +2653,7 @@ class CodebookForm(PopupForm, FoldableForm, KeyHandler):
             return super(CodebookForm, self)._default_sorting()
 
     def _context_menu(self):
-        return (MenuItem(_("Select"), command=ListForm.COMMAND_ACTIVATE()),)
+        return (MenuItem(_("Select"), command=Command(ListForm.activate)),)
 
     def _on_activation(self, alternate=False):
         """Nastav návratovou hodnotu a ukonči modální dialog."""
@@ -2626,7 +2662,7 @@ class CodebookForm(PopupForm, FoldableForm, KeyHandler):
         return True
 
     def _on_dclick(self, event):
-        return self.COMMAND_ACTIVATE.invoke()
+        return self.activate()
 
 
 class SelectRowsForm(CodebookForm):
@@ -2647,27 +2683,27 @@ class BrowseForm(FoldableForm):
         super(BrowseForm, self)._init_attributes(**kwargs)
         menu = (
             MenuItem(_("Filter by cell"),
-                     command=ListForm.COMMAND_FILTER_BY_CELL(),
+                     command=Command(ListForm.filter_by_cell),
                      help=_("Filter the rows containing the same value in this column.")),
             MenuItem(_("Copy cell value"),
-                     command=ListForm.COMMAND_COPY_CELL(),
+                     command=Command(ListForm.copy_cell),
                      help=_("Copy the contents of the cell into the clipboard.")),
             MenuSeparator(),
             MenuItem(_("Edit record"),
-                     command=BrowseForm.COMMAND_EDIT_RECORD(),
+                     command=Command(BrowseForm.edit_record),
                      help=_("Open a separate edit form for this record.")),
             MenuItem(_("Copy record"),
-                     command=BrowseForm.COMMAND_NEW_RECORD(copy=True),
+                     command=Command(BrowseForm.new_record, copy=True),
                      help=_("Open a separate insert form with a copy of this record.")),
             MenuItem(_("Delete record"),
-                     command=RecordForm.COMMAND_DELETE_RECORD(),
+                     command=Command(RecordForm.delete_record),
                      help=_("Delete the record parmanently from the database.")),
             MenuItem(_("Preview form"),
-                     command=ListForm.COMMAND_ACTIVATE(),
+                     command=Command(ListForm.activate),
                      help=_("Open the preview form for browsing all records."),
                      icon='show-record'),
             MenuItem(_("Dual preview"),
-                     command=ListForm.COMMAND_ACTIVATE(alternate=True),
+                     command=Command(ListForm.activate, alternate=True),
                      help=_("Open a dual form with a table up and preview at the bottom."),
                      icon='show-record'),
         )
@@ -2677,10 +2713,10 @@ class BrowseForm(FoldableForm):
         for f in structured_text_fields:
             menu += (
                 MenuItem(_("Text editor for field %s") % f.label(),
-                         command=ListForm.COMMAND_OPEN_EDITOR(field_id=f.id()),
+                         command=Command(ListForm.open_editor, field_id=f.id()),
                          help=_("Open a structured text editor.")),
                 MenuItem(_("PDF preview of %s") % f.label(),
-                         command=ListForm.COMMAND_VIEW_FIELD_PDF(field_id=f.id()),
+                         command=Command(ListForm.view_field_pdf, field_id=f.id()),
                          help=_("Open PDF preview of field contents.")),
             )
         action_items = self._action_mitems(self._view.actions())
@@ -2772,7 +2808,7 @@ class BrowseForm(FoldableForm):
                 if context and x.context() != context:
                     continue
                 items.append(MenuItem(x.title(raw=True),
-                                      command=self.COMMAND_CONTEXT_ACTION(action=x),
+                                      command=Command(self.context_action, action=x),
                                       help=x.descr()))
             elif isinstance(x, ActionGroup):
                 group_actions = self._action_mitems(x.items(), context=context)
@@ -2791,8 +2827,9 @@ class BrowseForm(FoldableForm):
         def mitem(f, link, row, force_title=None):
             type, name, enabled = link.type(), link.name(), link.enabled()
             if type == FormType.INSERT:
-                cmd = Application.COMMAND_NEW_RECORD(name=name,
-                                                     prefill={link.column(): row[f.id()]})
+                cmd = Command(Application.new_record,
+                              name=name,
+                              prefill={link.column(): row[f.id()]})
                 hlp = _("Insert a new record for value '%(value)s' of column %(column)s.")
                 icon = 'link-new-record'
             else:
@@ -2824,15 +2861,17 @@ class BrowseForm(FoldableForm):
                         cls = ShowForm
                     title = _("Show the record of column %s") % f.label()
                     hlp = _("Show the record for value '%(value)s' of column %(column)s.")
-                cmd = Application.COMMAND_RUN_FORM(name=name, form_class=cls,
-                                                   select_row={link.column(): row[f.id()]},
-                                                   **kwargs)
+                cmd = Command(Application.run_form,
+                              name=name, form_class=cls,
+                              select_row={link.column(): row[f.id()]},
+                              **kwargs)
                 icon = 'link'
             if callable(enabled):
                 enabled = enabled(row)
             if not enabled:
-                cmd = Application.COMMAND_NOTHING(enabled=False)
-            return MenuItem(force_title or title, command=cmd,
+                cmd = Command(Application.nothing, enabled=False)
+            return MenuItem(force_title or title,
+                            command=cmd,
                             help=hlp % dict(value=row.format(f.id(), secure=''),
                                             column=f.column_label()),
                             icon=icon)
@@ -2863,8 +2902,8 @@ class BrowseForm(FoldableForm):
                            'column "%(column)s" of the current form.')
 
             def handler(form_class, name, **kwargs):
-                # The main reason for wrapping COMMAND_RUN_FORM in a function
-                # run through COMMAND_HANDLED_ACTION here is to postpone the
+                # The main reason for wrapping run_form in a function
+                # run through handled_action here is to postpone the
                 # time consuming IN operator construction until the menu item
                 # is actually selected.
                 if self._current_profile_changed():
@@ -2872,7 +2911,7 @@ class BrowseForm(FoldableForm):
                     asave, aquit = _("Save"), _("Cancel")
                     if app.question(msg, answers=(asave, aquit), default=asave) != asave:
                         return
-                    self._cmd_update_profile()
+                    self.update_profile()
                 filter = make_in_operator(column, self.name(), f.id(), profile_id)
                 if not_in:
                     filter = pytis.data.NOT(filter)
@@ -2883,27 +2922,30 @@ class BrowseForm(FoldableForm):
             else:
                 form_class = BrowseForm
                 kwargs = {}
-            cmd = Application.COMMAND_HANDLED_ACTION(handler=handler,
-                                                     enabled=Application.COMMAND_RUN_FORM.enabled,
-                                                     form_class=form_class, name=name, **kwargs)
-            return MenuItem(ititle % dict(view_title=title, column=column_label), command=cmd)
+            return MenuItem(ititle % dict(view_title=title, column=column_label),
+                            command=Command(Application.handled_action,
+                                            handler=handler,
+                                            enabled=app.has_access(name),
+                                            form_class=form_class,
+                                            name=name,
+                                            **kwargs))
         return [mitem(*args) for args in linkspec]
 
     def _context_menu(self):
         if self._grid.IsSelection():
             menu = (
                 MenuItem(_("Cancel selection"),
-                         command=ListForm.COMMAND_CLEAR_SELECTION(),
+                         command=Command(ListForm.clear_selection),
                          icon='selection-cancel',
                          help=_("Cancel the selection of rows for bulk operations.")),
                 MenuItem(_("Add row to selection"),
-                         command=ListForm.COMMAND_ADD_ROW_TO_SELECTION(),
+                         command=Command(ListForm.add_row_to_selection),
                          icon='selection-add',
                          help=_("Add this row to the current selection of rows for "
                                 "bulk operations.")),
                 MenuItem(_("Remove row from selection"),
                          icon='selection-remove',
-                         command=ListForm.COMMAND_REMOVE_ROW_FROM_SELECTION(),
+                         command=Command(ListForm.remove_row_from_selection),
                          help=_("Remove this row from the current selection of rows "
                                 "for bulk operations.")),
             )
@@ -2944,7 +2986,8 @@ class BrowseForm(FoldableForm):
                                               dual.main_form() == self):
                 menu += (MenuSeparator(),
                          MenuItem(_("Open with side forms"),
-                                  command=Application.COMMAND_RUN_FORM(
+                                  command=Command(
+                                      Application.run_form,
                                       name=self._name,
                                       form_class=pytis.form.MultiBrowseDualForm,
                                       select_row=self._current_key(),
@@ -2954,10 +2997,10 @@ class BrowseForm(FoldableForm):
                                   icon='link'))
         return menu
 
-    def _cmd_print(self, spec=None):
-        log(EVENT, 'Print invocation:', spec and spec.name())
+    @Command.define
+    def printout(self, spec=None):
         if not spec:
-            # Handle Ctrl-p which invokes COMMAND_PRINT without arguments for
+            # Handle Ctrl-p which invokes print without arguments for
             # the default print (the first print specification) if defined.
             try:
                 prints = self._resolver.get(self._name, 'print_spec')

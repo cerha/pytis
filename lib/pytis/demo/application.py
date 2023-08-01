@@ -21,25 +21,20 @@ from __future__ import unicode_literals
 
 import lcg
 import os
+import string
 import sys
 import time
-import wx
 
 import pytis.presentation
+import pytis.extensions
 import pytis.form
 import pytis.util
 import pytis.data as pd
 
 from pytis.api import app
-from pytis.presentation import StatusField, SharedParams, Menu, MenuItem, MenuSeparator, TextFormat
-from pytis.extensions import mf, bf
+from pytis.presentation import Command, Menu, MenuItem, MenuSeparator, StatusField, TextFormat
 from pytis.util import log, OPERATIONAL, public_attr_values
 _ = pytis.util.translations('pytis-demo')
-
-
-def nr(title, name):
-    return MenuItem(title, command=pytis.form.Application.COMMAND_NEW_RECORD(name=name),
-                    help=_('Open insertion form "%s"', title))
 
 
 class Application(pytis.presentation.Application):
@@ -51,68 +46,88 @@ class Application(pytis.presentation.Application):
     def menu(self):
         return (
             Menu(_("&System"), pytis.form.config_menu_items() + (
-                MenuItem(_("&Run form"), hotkey=('Alt-a', 'a'),
-                         command=pytis.extensions.cmd_run_any_form()),
-                MenuItem(_("&Check specification files"),
-                         command=pytis.extensions.cmd_check_menus_defs()),
+                MenuItem(_("&Run form"), pytis.extensions.cmd_run_any_form(),
+                         hotkey=('Alt-a', 'a')),
+                MenuItem(_("&Check specification files"), pytis.extensions.cmd_check_menus_defs()),
                 Menu(_("Management of menus and user roles"), (
-                    mf(_("Roles"), 'menu.ApplicationRoles'),
-                    bf(_("Menu"), 'menu.ApplicationMenu'),
-                    mf(_("Menu Rights"), 'menu.ApplicationMenuM'),
+                    MenuItem(_("Roles"), Command(app.run_form, 'menu.ApplicationRoles')),
+                    MenuItem(_("Menu"), Command(app.run_form, 'menu.ApplicationMenu')),
+                    MenuItem(_("Menu Rights"), Command(app.run_form, 'menu.ApplicationMenuM')),
                 )),
                 Menu(_("Form statistics"), (
-                    mf(_("Short statistics"), 'statistics.FormShortStatistics'),
-                    mf(_("Full statistics"), 'statistics.FormStatistics'),
-                    mf(_("Users"), 'statistics.FormUserList'),
+                    MenuItem(_("Short statistics"),
+                             Command(app.run_form, 'statistics.FormShortStatistics')),
+                    MenuItem(_("Full statistics"),
+                             Command(app.run_form, 'statistics.FormStatistics')),
+                    MenuItem(_("Users"),
+                             Command(app.run_form, 'statistics.FormUserList')),
                 )),
-                bf(_("User printing templates"), 'printing.UserOutputTemplates'),
-                bf(_("Global printing templates"), 'printing.GlobalOutputTemplates'),
-                mf(_("Crypto users"), 'crypto.CryptoAreas'),
+                MenuItem(_("User printing templates"),
+                         Command(app.run_form, 'printing.UserOutputTemplates')),
+                MenuItem(_("Global printing templates"),
+                         Command(app.run_form, 'printing.GlobalOutputTemplates')),
+                MenuItem(_("Crypto users"),
+                         Command(app.run_form, 'crypto.CryptoAreas')),
                 MenuSeparator(),
                 pytis.form.recent_forms_menu(),
                 MenuSeparator(),
-                MenuItem(_("E&xit"), hotkey='Alt-x',
-                         command=pytis.form.Application.COMMAND_EXIT()),
+                MenuItem(_("E&xit"), Command(app.exit), hotkey='Alt-x'),
             )),
             Menu(_("&Demo"), (
-                nr(_("&Input fields"), 'misc.InputFields'),
+                MenuItem(_("&Input fields"),
+                         Command(app.new_record, 'misc.InputFields')),
                 MenuItem(_("&Dialogs"),
-                    command=pytis.form.Application.COMMAND_HANDLED_ACTION(
-                        handler=self._dialog_test,
-                    ),
-                    hotkey=('Alt-d', 'd')),
-                mf(_("Continents"), 'cb.Continents', binding='islands'),
-                mf(_("Countries"), 'cb.Countries'),
-                mf(_('Products'), 'misc.Products'),
+                         Command(self.dialog_test), hotkey=('Alt-d', 'd')),
+                MenuItem(_("Runtime &filters"),
+                         Command(app.new_record, 'misc.RuntimeFilter')),
+                MenuItem(_('&Query Fields'),
+                         Command(app.run_form, 'misc.RandomNumbers')),
+                MenuItem(_("Continents"),
+                         Command(app.run_form, 'cb.Continents', binding='islands')),
+                MenuItem(_("Countries"),
+                         Command(app.run_form, 'cb.Countries')),
+                MenuItem(_('Products'),
+                         Command(app.run_form, 'misc.Products')),
+                MenuItem(_('Insurance (table function)'),
+                         Command(app.run_form, 'cb.Insurance')),
                 Menu(_("Working with files"), (
-                    mf(_("Storing &binary data"), 'binary.BinaryData'),
-                    bf(_("Storing binary &images"), 'binary.Images'),
-                    bf(_('&File names and URLs'), 'misc.Files'),
+                    MenuItem(_("Storing &binary data"),
+                             Command(app.run_form, 'binary.BinaryData')),
+                    MenuItem(_("Storing &images"),
+                             Command(app.run_form, 'binary.Images')),
+                    MenuItem(_('Opening &file names and URLs'),
+                             Command(app.run_form, 'misc.Files')),
                 )),
-                nr(_("Runtime &filters"), 'misc.RuntimeFilter'),
-                bf(_('&Query Fields'), 'misc.RandomNumbers'),
-                bf(_("Password fields"), 'misc.Passwords'),
-                bf(_('Insurance (table function)'), 'cb.Insurance'),
-                bf(_('Tree Order'), 'misc.ObsoleteTree'),
-                bf(_('Foldable Tree'), 'misc.Tree'),
-                bf(_('Long Table'), 'misc.LongTable'),
-                bf(_('Slow Long Table'), 'misc.SlowLongTable'),
-                bf(_('Fast Long Table'), 'misc.FastLongTable'),
-                bf(_('Range Types'), 'misc.RangeTypes'),
+                MenuItem(_("Password fields"),
+                         Command(app.run_form, 'misc.Passwords')),
+                MenuItem(_('Tree Order'),
+                         Command(app.run_form, 'misc.ObsoleteTree')),
+                MenuItem(_('Foldable Tree'),
+                         Command(app.run_form, 'misc.Tree')),
+                MenuItem(_('Long Table'),
+                         Command(app.run_form, 'misc.LongTable')),
+                MenuItem(_('Slow Long Table'),
+                         Command(app.run_form, 'misc.SlowLongTable')),
+                MenuItem(_('Fast Long Table'),
+                         Command(app.run_form, 'misc.FastLongTable')),
+                MenuItem(_('Range Types'),
+                         Command(app.run_form, 'misc.RangeTypes')),
                 MenuSeparator(),
-                bf(_("Insufficient access rights"), 'cb.DisabledCountries'),
-                bf(_("Inexistent specification"), 'cb.Something'),
+                MenuItem(_("Insufficient access rights"),
+                         Command(app.run_form, 'cb.DisabledCountries')),
+                MenuItem(_("Inexistent specification"),
+                         Command(app.run_form, 'cb.Something')),
             )),
             Menu(_("&CMS"), (
-                mf(_("Menu"), 'cms.Menu'),
-                bf(_("Languages"), 'cms.Languages'),
-                mf(_("Modules"), 'cms.Modules'),
-                bf(_("Generic actions"), 'cms.GenericActions'),
-                mf(_("Users"), 'cms.Users'),
-                mf(_("User Roles"), 'cms.Roles'),
-                bf(_("Session Log"), 'cms.SessionLog'),
-                bf(_("Access Log"), 'cms.AccessLog'),
-                bf(_("Color themes"), 'cms.Themes'),
+                MenuItem(_("Menu"), Command(app.run_form, 'cms.Menu')),
+                MenuItem(_("Languages"), Command(app.run_form, 'cms.Languages')),
+                MenuItem(_("Modules"), Command(app.run_form, 'cms.Modules')),
+                MenuItem(_("Generic actions"), Command(app.run_form, 'cms.GenericActions')),
+                MenuItem(_("Users"), Command(app.run_form, 'cms.Users')),
+                MenuItem(_("User Roles"), Command(app.run_form, 'cms.Roles')),
+                MenuItem(_("Session Log"), Command(app.run_form, 'cms.SessionLog')),
+                MenuItem(_("Access Log"), Command(app.run_form, 'cms.AccessLog')),
+                MenuItem(_("Color themes"), Command(app.run_form, 'cms.Themes')),
             )),
         )
 
@@ -122,9 +137,9 @@ class Application(pytis.presentation.Application):
         if self._counter > 30:
             self._counter = 0
         if self._counter > 20:
-            return (None, wx.ART_TIP, _("Counter value: %d", self._counter))
+            return (None, 'status-offline', _("Counter value: %d", self._counter))
         else:
-            return (None, wx.ART_EXECUTABLE_FILE, _("Counter value: %d", self._counter))
+            return (None, 'status-online', _("Counter value: %d", self._counter))
 
     def status_fields(self):
         self._counter = 0
@@ -133,7 +148,8 @@ class Application(pytis.presentation.Application):
                         refresh_interval=5000, width=3),
         ]
 
-    def _dialog_test(self):
+    @Command.define
+    def dialog_test(self):
         # This test uses some Pytis internals which should not be used by standard
         # Pytis applications as the APIs are not guaranted to stay.
         from pytis.presentation import Button, Field, FieldSet, HGroup

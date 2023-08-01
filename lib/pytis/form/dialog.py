@@ -40,7 +40,7 @@ import pytis.form
 import pytis.util
 
 from pytis.api import app
-from pytis.presentation import TextFormat
+from pytis.presentation import TextFormat, Command
 from pytis.util import ProgramError, send_mail, public_attr_values
 
 from .command import CommandHandler
@@ -67,7 +67,7 @@ class Dialog(KeyHandler, CommandHandler, object):
 
     """
     @classmethod
-    def _get_command_handler_instance(cls):
+    def command_handler_instance(cls):
         return pytis.form.app.top_window()
 
     def __init__(self, parent):
@@ -85,6 +85,14 @@ class Dialog(KeyHandler, CommandHandler, object):
 
         """
         return True
+
+    @Command.define
+    def close_dialog(self):
+        pass
+
+    @Command.define
+    def commit_dialog(self, force=False):
+        pass
 
 
 class GenericDialog(Dialog):
@@ -312,7 +320,8 @@ class GenericDialog(Dialog):
         # COMMIT_DIALOG command is invoked (from the keyboard).
         return False
 
-    def _cmd_commit_dialog(self, force=False):
+    @Command.define
+    def commit_dialog(self, force=False):
         widget = wx_focused_window()
         if force and (not widget or widget.Id not in self._buttons_map):
             widget = self._default_button_instance
@@ -324,11 +333,13 @@ class GenericDialog(Dialog):
         else:
             self._navigate()
 
-    def _cmd_close_dialog(self):
+    @Command.define
+    def close_dialog(self):
         self._end_modal(wx.ID_CANCEL)
 
-    def _cmd_help(self):
-        pytis.form.Application.COMMAND_HELP.invoke(topic='pytis/' + self._HELP_TOPIC)
+    @Command.define
+    def help(self):
+        pytis.form.app.help('pytis/' + self._HELP_TOPIC)
 
     def _run_dialog(self):
         return self._customize_result(self._dialog.ShowModal())

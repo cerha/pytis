@@ -52,10 +52,10 @@ import pytis.output
 import pytis.presentation
 import pytis.util
 from pytis.api import app
-from pytis.presentation import Orientation, TextFormat, StatusField, MenuItem, MenuSeparator
+from pytis.presentation import Orientation, TextFormat, StatusField, MenuItem, MenuSeparator, Command
 from pytis.util import find, xtuple, log, DEBUG, EVENT, OPERATIONAL, ProgramError
 from .event import wx_callback, top_level_exception
-from .command import Command, CommandHandler, UICommand, command_icon
+from .command import CommandHandler, UICommand
 from .managers import FormProfileManager
 
 try:
@@ -299,11 +299,12 @@ def file_menu_items(fields, row, select_arguments):
         fid = f.id()
         filename = row.filename(fid)
         if filename is not None and field_not_null(fid):
-            command = Application.COMMAND_HANDLED_ACTION(handler=open_file,
-                                                         field_id=fid,
-                                                         filename=filename,
-                                                         enabled=can_open(f))
-            mitems.append(MenuItem(_('Open file "%s"', filename), command=command,
+            mitems.append(MenuItem(_('Open file "%s"', filename),
+                                   command=Command(Application.handled_action,
+                                                   handler=open_file,
+                                                   field_id=fid,
+                                                   filename=filename,
+                                                   enabled=can_open(f)),
                                    help=_('Open the value of field "%s" as a file.', f.label())))
     return mitems
 
@@ -480,21 +481,14 @@ class WxKey(object):
 
 @python_2_unicode_compatible
 class Keymap(object):
-    """Klávesová mapa.
+    """Assignment of keyboard shortcuts to commands."""
 
-    Klávesová mapa umožňuje definovat přiřazení příkazů a případně jejich
-    argumentů klávesám.
-
-    """
     def __init__(self, parent=None):
-        """Inicializuj instanci.
+        """Arguments:
 
-        Argumenty:
-
-          parent -- rodičovská klávesová mapa; buď 'None' (pak klávesová mapa
-            je čistá), nebo instance 'Keymap' (pak se podědí všechny klávesy
-            z dané klávesové mapy, pokud nejsou předefinovány).  Argument není
-            nutno klíčovat.
+          parent -- parent key map as a 'Keymap' instance or None.  If not
+            None, all assignments from the parent map are inherited if not
+            overriden.
 
         """
         if parent is None:
@@ -507,7 +501,7 @@ class Keymap(object):
     def __str__(self):
         return '<Keymap: %s>' % (self._keymap,)
 
-    def _define_key(self, key, command, args):
+    def _define_key(self, key, command):
         prefix, rest = key[0], key[1:]
         try:
             keydef = self._keymap[prefix]
@@ -520,67 +514,61 @@ class Keymap(object):
             keydef = Keymap(None)
         self._keymap[prefix] = keydef
         if isinstance(keydef, list):
-            keydef[0:0] = [(command, args)]
+            keydef[0:0] = [command]
         elif rest:
-            keydef._define_key(rest, command, args)
+            keydef._define_key(rest, command)
         else:
             log(OPERATIONAL, "Key '%s' is already used as a prefix key." % (prefix,))
 
-    def define_key(self, key, command, args={}):
-        """Přiřaď klávese 'key' příkaz 'command' s argumenty '**kwargs'.
+    def define_key(self, key, command):
+        """Assign given 'command' to given 'key'.
 
-        Argumenty:
+        Arguments:
 
-          key -- řetězec, resp. sekvence řetězců, definující klávesu,
-            resp. sekvenci kláves; popis viz níže
+          key -- string or a sequence of strings defining the keyboard shortcut
+            or a sequence of keyboard shortcuts (see below).
+          command -- the assigned command as a 'Command' instance.
 
-          command -- přiřazený příkaz, instance třídy 'Command'
+        Keyboard shortcut strings are constructed as follows:
 
-          args -- parametry příkazu, předané při jeho vyvolání obslužné metodě
+        - Keys corresponding to the characters of English alphabet are
+          represented by strings of that character.  Characters are case
+          sensitive (see also the Shift modifier below).
 
-        Přiřazované klávesy jsou řetězce sestavené dle následujících pravidel:
+        - Function keys F1 to F12 are represented by strings 'F1' to 'F12'.
 
-        - Klávesa odpovídající znaku anglické abecedy je reprezentována
-          řetězcem rovným tomuto znaku.  Velikost písmen je brána v potaz (viz.
-          také dále modifikátor Shift).
+        - Arrow keys are represented by strings 'Up', 'Down', 'Left', 'Right'.
 
-        - Funkční klávesy F1 až F12 se zapisují řetězci 'F1' až 'F12'.
+        - Keys 'Escape', 'Enter', 'Tab', 'Insert', 'Delete', 'Backspace',
+          'Home', 'End', 'Prior' and 'Next' are represented by these strings.
 
-        - Šipky se zapisují řetězci 'Up', 'Down', 'Left', 'Right'.
+        - Key with the Control modifier is written as 'Ctrl-<KEY>', where
+          '<KEY>' is the representation of the key without this modifier.
 
-        - Klávesy 'Escape', 'Enter', 'Tab', 'Insert', 'Delete', 'Backspace',
-          'Home', 'End', 'Prior' a 'Next' se zapisují stejnojmennými řetězci.
+        - Key with the Alt modifier is written as 'Alt-<KEY>'.
 
-        - Klávesa s modifikátorem Control je zapsána ve formátu 'Ctrl-<KEY>',
-          kde '<KEY>' je zápis klávesy bez tohoto modifikátoru.
+        - Key with the Shift modifier is written as 'Shift-<KEY>'.
 
-        - Klávesa s modifikátorem Alt je zapsána ve formátu 'Alt-<KEY>', kde
-          '<KEY>' je zápis klávesy bez tohoto modifikátoru.
-
-        - Klávesa s modifikátorem Shift je zapsána ve formátu 'Shift-<KEY>'.
-
-        - Lze používat více modifikátorů současně.  Potom jsou modifikátory
-          zapisovány vždy v pořadí Ctrl, Alt, Shift (např. tedy Ctrl-Alt-s nebo
-          Alt-Shift-Tab, nikoliv potom Alt-Ctrl-x).
+        - Modifiers can be combined.  In this case they are always written in
+          the order Ctrl, Alt, Shift (for example 'Ctrl-Alt-s' or 'Alt-Shift-Tab',
+          not 'Alt-Ctrl-x').
 
         """
         key = xtuple(key)
         if key != (None,):
-            self._define_key(key, command, args)
+            self._define_key(key, command)
 
     def lookup_key(self, key):
-        """Vrať definici asociovanou s klávesou 'key'.
+        """Return the command associated with given 'key'.
 
-        Argumenty:
+        Arguments:
 
-          key -- string popisující klávesu v notaci uvedené v docstringu třídy
+          key -- key string representation in notation described by
+          'define_key()' docstring.
 
-        Vrací: Je-li na klávesu napojen příkaz, vrať dvojici (COMMAND, ARGS),
-          kde COMMAND je instance třídy 'Command' a ARGS jsou jeho argumenty
-          jako dictionary pro předání obslužné metodě.  Je-li na klávesu
-          připojena klávesová mapa (v případě víceklávesových definic), je
-          vrácena tato mapa jako instance třídy 'Keymap'.  Není-li klávesa
-          definována, vrať 'None'.
+        Returns the 'Command' instance if key defines a command or a 'Keymap'
+        instance in case of a multi-key definition or 'None' if given key
+        doesn't define anything.
 
         """
         try:
@@ -588,32 +576,32 @@ class Keymap(object):
         except KeyError:
             return None
 
-    def lookup_command(self, command, args={}):
-        """Vrať klávesovou zkratku asociovanou s daným příkazem a argumenty.
+    def lookup_command(self, command):
+        """Return the kyeboard shortcut associated with given 'command'.
 
-        Argumenty:
+        Arguments:
 
-          command -- příkaz, instance třídy 'Command'
-          args -- argumenty příkazu jako dictionary.
+          command -- the 'Command' instance
 
-        Vrací: Je-li příkaz s danými argumenty napojen na nějakou klávesu, vrať
-          definici klávesové zkratky jako tuple (vždy, byť jednoprvkový).
-          Není-li pro příkaz s danými argumenty klávesa definována (předchozím
-          voláním metody 'define_key()'), vrať 'None'.
+        Returns a keyboard shortcut definition if given command with its
+        arguments is bound to a keyboard shortcut.  The returned keyboard
+        shortcut definition is always returned as a tuple (even if it contains
+        just a single key).  Returns none if there is no key defined for given
+        command (after previously calling the 'define_key()').
 
         """
         for key, keydef in self._keymap.items():
             if isinstance(keydef, Keymap):
-                k = keydef.lookup_command(command, args)
+                k = keydef.lookup_command(command)
                 if k is not None:
                     return (key,) + k
             else:
-                if (command, args) in keydef:
+                if command in keydef:
                     return (key,)
         return None
 
     def keys(self):
-        """Vrať seznam všech platných kláves jako řetězců."""
+        """Return the sequence of all valid keys."""
         return self._keymap.keys()
 
 
@@ -632,13 +620,10 @@ class KeyHandler(object):
     """
 
     def __init__(self, widgets=None):
-        """Inicializuj instanci.
+        """Arguments:
 
-        Argumenty:
-
-          widgets -- wx widget, nebo jejich sekvence, pro který má být
-            definován handler klávesy; může být i 'None', v kterémžto případě
-            bude oním widgetem 'self'
+          widgets -- wx widget, or their sequence, for which key handling
+            should be initialized.  If None, 'self' is used as the widget.
 
         """
         if widgets is None:
@@ -646,7 +631,6 @@ class KeyHandler(object):
         self._handle_keys(*xtuple(widgets))
         self._wx_key = WxKey()
         self._prefix_key_sequence = []
-        self._commands = None
         if not hasattr(self, 'keymap'):
             self.keymap = None
         self._current_keymap = self.keymap
@@ -659,41 +643,27 @@ class KeyHandler(object):
         self._key_guardian = key_guardian
 
     def _handle_keys(self, *widgets):
-        """Registruj se pro ošetření klávesových událostí daných UI prvků."""
+        """Register 'self.on_key_down' as key event handler for given 'wx.Window' instances."""
         for widget in widgets:
             wx_callback(wx.EVT_KEY_DOWN, widget, self.on_key_down)
 
-    def _init_commands(self):
-        # Nemůžeme `_commands' inicializovat hned v konstruktoru, protože
-        # tou dobou ještě nemusí být všechny příkazy ve třídě definovány.
-        commands = []
-        for attrname in pytis.util.public_attributes(self.__class__):
-            if attrname.startswith('COMMAND_'):
-                command = getattr(self.__class__, attrname)
-                if isinstance(command, Command):
-                    commands.append(command)
-        # Do atributu přiřazujeme až nyní, aby to bylo odolnější vláknům
-        self._commands = commands
-
     def _maybe_invoke_command(self, key_commands):
-        for command, kwargs in key_commands:
-            if self._commands is None:
-                self._init_commands()
-            if command in self._commands and command.enabled(**kwargs):
+        for command in key_commands:
+            if command.handler is self and command.enabled:
                 if __debug__:
-                    log(DEBUG, 'Nalezen příkaz klávesy', (command, kwargs))
-                command.invoke(**kwargs)
+                    log(DEBUG, 'Found command for the key:', command)
+                command.invoke()
                 return True
 
         else:
             guardian = self._key_guardian
             if guardian is None:
                 if __debug__:
-                    log(DEBUG, 'Žádný další poručník')
+                    log(DEBUG, 'No guardian remaining.')
                 return False
             else:
                 if __debug__:
-                    log(DEBUG, 'Předání poručníkovi:', guardian)
+                    log(DEBUG, 'Passing on to guardian:', guardian)
                 return guardian._maybe_invoke_command(key_commands)
 
     def _get_keymap(self):
@@ -705,10 +675,10 @@ class KeyHandler(object):
                 gkeymap = guardian._get_keymap()
             self.keymap = Keymap(gkeymap)
             if __debug__:
-                log(DEBUG, 'Vytvořena klávesová mapa', (self, self.keymap))
+                log(DEBUG, 'Keymap created:', (self, self.keymap))
         return self.keymap
 
-    def define_key(self, key, command, args):
+    def define_key(self, key, command):
         """Definuj klávesovou zkratku v klávesové mapě této instance.
 
         Klávesová mapa nemusí být dostupná v době inicializace instance, takže
@@ -719,7 +689,7 @@ class KeyHandler(object):
 
         """
         keymap = self._get_keymap()
-        keymap.define_key(key, command, args)
+        keymap.define_key(key, command)
 
     def on_key_down(self, event, dont_skip=False):
         """Zpracuj klávesovou událost 'event'.
@@ -739,26 +709,24 @@ class KeyHandler(object):
 
         """
         if __debug__:
-            log(DEBUG, 'Stisk klávesy:', event)
+            log(DEBUG, 'Key event:', event)
         wk = self._wx_key
         if not wk.is_true_key(event):
             return
         app.echo('')
         if __debug__:
-            log(DEBUG, 'Událost zpracovává:', str(self))
+            log(DEBUG, 'Key event processed by:', str(self))
         guardian = self._key_guardian
-        if self._commands is None:
-            self._init_commands()
         if ((self._current_keymap is None or
              not isinstance(pytis.form.last_user_event(), wx.KeyEvent))):
             self._current_keymap = self._get_keymap()
         if __debug__:
-            log(DEBUG, 'Aktuální klávesová mapa:', str(self._current_keymap))
+            log(DEBUG, 'Current keymap:', str(self._current_keymap))
         key = wk.event_key(event)
         keydef = self._current_keymap.lookup_key(key)
         if isinstance(keydef, Keymap):
             if __debug__:
-                log(DEBUG, 'Prefixová klávesa', keydef)
+                log(DEBUG, 'Prefix key:', keydef)
             self._prefix_key_sequence.append(key)
             app.echo(_("Prefix key: %s", '%s (%s)' %
                        (' '.join(self._prefix_key_sequence), ', '.join(keydef.keys()),)))
@@ -774,14 +742,14 @@ class KeyHandler(object):
                     return result
             if guardian:
                 if __debug__:
-                    log(DEBUG, 'Klávesa předána výše')
+                    log(DEBUG, 'Keypress passed on to guardian:', guardian)
                 return guardian.on_key_down(event, dont_skip)
             if dont_skip:
                 if __debug__:
-                    log(DEBUG, 'Klávesa ignorována')
+                    log(DEBUG, 'Keypress ignored')
             else:
                 if __debug__:
-                    log(DEBUG, 'Klávesová událost přeskočena')
+                    log(DEBUG, 'Key event skipped')
                 event.Skip()
         return False
 
@@ -1168,7 +1136,7 @@ class InfoWindow(object):
                           style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER)
         # Temporarily use a modal dialog instead an ordinary frame to work
         # around the problem of closing a frame whose parent is a modal dialog
-        # in StructuredTextField._cmd_preview().  Once that is sorted out, a
+        # in StructuredTextField.preview().  Once that is sorted out, a
         # non-modal frame would be better.
         view = wx_text_view(frame, text, format, **kwargs)
         frame.SetSize(view.GetSize())
@@ -1185,7 +1153,7 @@ class ProfileSelectorPopup(wx.ComboPopup):
     """
     def __init__(self):
         wx.ComboPopup.__init__(self)
-        self._selected_profile_index = None
+        self._selected_profile_id = None
         self._listctrl = None
 
     def _on_motion(self, event):
@@ -1200,15 +1168,8 @@ class ProfileSelectorPopup(wx.ComboPopup):
     def _on_left_down(self, event):
         self.Dismiss()
         if self._selected_profile_index is not None:
-            # We explicitly pass _command_handler to ensure that the
-            # command is handled by the form for which the profile
-            # selection menu was constructed.  This is because we've
-            # seen tracebacks indicating that handliong gets to a
-            # form with fewer profiles than _selected_profile_index.
-            # Probably the current form may change for some reason
-            # between the popup invocation and the click?
-            pytis.form.LookupForm.COMMAND_APPLY_PROFILE.invoke(index=self._selected_profile_index,
-                                                               _command_handler=self._current_form)
+            profile = self._current_form.profiles()[self._selected_profile_index]
+            self._current_form.apply_profile(profile_id=profile.id())
 
     def _append_label(self, label, toplevel=True):
         ctrl = self._listctrl
@@ -1336,73 +1297,74 @@ class ProfileSelector(wx.ComboCtrl):
         # TODO: Add button for context menu invocation.
 
     def _on_ui_event(self, event):
-        enabled = pytis.form.LookupForm.COMMAND_PROFILE_MENU.enabled()
-        event.Enable(enabled)
         ctrl = self.GetTextCtrl()
-        if enabled:
-            if not ctrl.IsEditable():
+        if pytis.form.app.top_window() is None:
+            event.Enable(False)
+            if ctrl.GetValue() != '':
+                ctrl.SetValue('')
+        else:
+            event.Enable(True)
+            if not ctrl.IsEditable() and app.form:
                 current_profile = app.form.profile
                 if current_profile and ctrl.GetValue() != current_profile.title():
                     ctrl.SetValue(current_profile.title())
-            if pytis.form.LookupForm.COMMAND_UPDATE_PROFILE.enabled():
+            if Command(pytis.form.LookupForm.update_profile).enabled:
                 # Indicate changed profile by color (update is enabled for changed profiles).
                 color = wx.Colour(255 if darkmode else 200, 0, 0)
             else:
                 color = wx.Colour(255, 255, 255) if darkmode else wx.Colour(0, 0, 0)
             ctrl.SetForegroundColour(color)
-        elif pytis.form.app.top_window() is None and ctrl.GetValue() != '':
-            ctrl.SetValue('')
 
     def _on_context_menu(self, event):
         menu = (
             MenuItem(_("Save current profile settings"),
-                     command=pytis.form.LookupForm.COMMAND_UPDATE_PROFILE(),
+                     command=Command(pytis.form.LookupForm.update_profile),
                      help=_("Update the saved profile according to the current form setup.")),
             MenuItem(_("Duplicate current profile"),
-                     command=pytis.form.Application.COMMAND_HANDLED_ACTION(
+                     command=Command(
+                         pytis.form.Application.handled_action,
                          # Name must be edited first and 'cmd' will be invoked after confirmation.
                          handler=self._edit_profile_title,
                          enabled=self._edit_profile_title_enabled,
-                         cmd=pytis.form.LookupForm.COMMAND_SAVE_NEW_PROFILE,
+                         cmd=pytis.form.LookupForm.save_new_profile,
                          clear=True),
                      help=_("Create a new profile according to the current form setup.")),
             MenuItem(_("Rename current profile"),
-                     command=pytis.form.Application.COMMAND_HANDLED_ACTION(
+                     command=Command(
+                         pytis.form.Application.handled_action,
                          # Name must be edited first and 'cmd' will be invoked after confirmation.
                          handler=self._edit_profile_title,
                          enabled=self._edit_profile_title_enabled,
-                         cmd=pytis.form.LookupForm.COMMAND_RENAME_PROFILE),
+                         cmd=pytis.form.LookupForm.rename_profile),
                      help=_("Change the name of the current profile and save it.")),
             MenuItem(_("Delete current profile"),
-                     command=pytis.form.LookupForm.COMMAND_DELETE_PROFILE(),
+                     command=Command(pytis.form.LookupForm.delete_profile),
                      help=_("Delete the selected saved profile.")),
             MenuItem(_("Use this profile automatically on form starup"),
-                     command=pytis.form.LookupForm.COMMAND_SET_INITIAL_PROFILE(),
+                     command=Command(pytis.form.LookupForm.set_initial_profile),
                      help=_("Automatically switch to this profile "
                             "when this form is opened next time.")),
             MenuSeparator(),
             MenuItem(_("Restore to previously saved form settings"),
-                     command=pytis.form.LookupForm.COMMAND_RELOAD_PROFILE(),
+                     command=Command(pytis.form.LookupForm.reload_profile),
                      help=_("Discard changes in form settings since the profile was last saved.")),
             MenuItem(_("Restore to default form settings"),
-                     command=pytis.form.LookupForm.COMMAND_RESET_PROFILE(),
+                     command=Command(pytis.form.LookupForm.reset_profile),
                      help=_("Discard all user changes in form settings.")),
             MenuItem(_("Export user profiles to file"),
-                     command=pytis.form.LookupForm.COMMAND_EXPORT_PROFILES(),
+                     command=Command(pytis.form.LookupForm.export_profiles),
                      help=_("Export user defined form profiles to a file.")),
             MenuItem(_("Import profiles from file"),
-                     command=pytis.form.LookupForm.COMMAND_IMPORT_PROFILES(),
+                     command=Command(pytis.form.LookupForm.import_profiles),
                      help=_("Import form profiles from a file.")),
         )
         pytis.form.app.popup_menu(self, menu)
 
     def _edit_profile_title(self, cmd, clear=False):
-        ctrl = self.GetTextCtrl()
-
-        def perform():
-            title = self.GetValue()
+        def callback():
             ctrl.SetEditable(False)
-            cmd.invoke(title=title)
+            Command(cmd, title=self.GetValue()).invoke()
+        ctrl = self.GetTextCtrl()
         ctrl.SetEditable(True)
         if clear:
             ctrl.SetValue('')
@@ -1410,16 +1372,16 @@ class ProfileSelector(wx.ComboCtrl):
             ctrl.SelectAll()
         ctrl.SetFocus()
         app.echo(_("Enter the profile name and press ENTER when done."))
-        self._on_enter_perform = perform
+        self._on_enter_perform = callback
 
     def _edit_profile_title_enabled(self, cmd, clear=False):
-        return cmd.enabled(title=self.GetValue())
+        return Command(cmd, title=self.GetValue()).enabled
 
     def _on_enter(self, event):
-        func = self._on_enter_perform
-        if func:
+        callback = self._on_enter_perform
+        if callback:
             self._on_enter_perform = None
-            func()
+            callback()
         else:
             event.Skip()
 
@@ -1448,16 +1410,14 @@ class TextHeadingSelector(wx.Choice):
         wx_callback(wx.EVT_CHOICE, self, self._on_selection)
 
     def _on_ui_event(self, event):
-        cmd, kwargs = self._command
-        enabled = cmd.enabled(**kwargs)
-        event.Enable(enabled)
-        if enabled:
-            ctrl = kwargs['_command_handler']
-            self.SetSelection(ctrl.current_heading_level())
+        if self._command.enabled:
+            event.Enable(True)
+            self.SetSelection(self._command.handler.current_heading_level())
+        else:
+            event.Enable(False)
 
     def _on_selection(self, event):
-        cmd, kwargs = self._command
-        cmd.invoke(level=event.GetSelection(), **kwargs)
+        self._command.handler.heading(level=event.GetSelection())
 
 
 class FormStateToolbarControl(wx.BitmapButton):
@@ -1485,23 +1445,23 @@ class FormStateToolbarControl(wx.BitmapButton):
         wx_callback(wx.EVT_UPDATE_UI, self, self._on_update_ui)
 
     def _on_click(self, event):
-        cmd, kwargs = self._command
-        cmd.invoke(**kwargs)
+        self._command.invoke()
 
     def _on_update_ui(self, event):
-        cmd, kwargs = self._command
-        enabled = cmd.enabled(**kwargs)
-        event.Enable(enabled)
-        if enabled:
+        if self._command.enabled:
+            event.Enable(True)
             form = pytis.form.app.current_form(inner=False)
             new_bitmap = self._bitmaps[self._current_icon_index(form)]
             if self._current_bitmap != new_bitmap:
                 self._current_bitmap = new_bitmap
                 self.SetBitmapLabel(new_bitmap)
                 self._toolbar.Realize()
+        else:
+            event.Enable(False)
 
     def _current_icon_index(self, form):
         """Implement this method to return the index of the active icon in _ICONS."""
+        pass
 
 
 class KeyboardSwitcher(wx.BitmapButton):
@@ -1518,10 +1478,10 @@ class KeyboardSwitcher(wx.BitmapButton):
                                get_icon(wx.ART_ERROR, type=wx.ART_TOOLBAR))
                               for title, icon, command in layouts])
         self._menu = [MenuItem(title,
-                               command=pytis.form.Application.COMMAND_HANDLED_ACTION(
-                                   handler=self._switch_layout,
-                                   system_command=system_command,
-                                   icon=icon,
+                               command=Command(pytis.form.Application.handled_action,
+                                               handler=self._switch_layout,
+                                               system_command=system_command,
+                                               icon=icon,
                                ))
                       for title, icon, system_command in layouts]
         layout = find(pytis.config.initial_keyboard_layout, layouts, lambda x: x[2]) or layouts[0]
@@ -1543,7 +1503,7 @@ class KeyboardSwitcher(wx.BitmapButton):
 
 
 class DualFormSwitcher(FormStateToolbarControl):
-    """Special toolbar control for DualForm.COMMAND_OTHER_FORM.
+    """Special toolbar control for DualForm.other_form.
 
     The current icon indicates whether the current form is the main form or the
     side form and takes the dual form split mode into account.
@@ -1565,7 +1525,7 @@ class DualFormSwitcher(FormStateToolbarControl):
 
 
 class DualFormResplitter(FormStateToolbarControl):
-    """Special toolbar control for DualForm.COMMAND_RESPLIT.
+    """Special toolbar control for DualForm.resplit.
 
     The current icon indicates whether the form is currently split vertically or horizontally.
 
@@ -1597,23 +1557,19 @@ class LocationBar(wx.TextCtrl):
             from .inputfield import InputField
             self.SetOwnBackgroundColour(InputField.DISABLED_FIELD_BACKGROUND_COLOR)
             self.Refresh()
-        browser = command[1]['_command_handler']
+        browser = command.handler
         browser.set_callback(browser.CALL_URI_CHANGED, self.SetValue)
         self._want_focus = 0
 
     def _on_update_ui(self, event):
-        cmd, kwargs = self._command
-        enabled = cmd.enabled(**kwargs)
-        event.Enable(enabled)
+        event.Enable(self._command.enabled)
         if self._want_focus:
             self.SetFocus()
             # Nasty hack - see set_focus for explanation.
             self._want_focus -= 1
 
     def _on_enter(self, event):
-        cmd, kwargs = self._command
-        uri = self.GetValue()
-        cmd.invoke(uri=uri, **kwargs)
+        self._command.handler.load_uri(self.GetValue())
 
     def set_focus(self):
         # This is a total hack - calling SetFocus() is ignored at form startup, but
@@ -1878,28 +1834,49 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler, KeyHandler):
             kwargs = {}
         return scheme, path, kwargs
 
+    @Command.define
+    def go_forward(self):
+        """Go to the next page in browser history"""
+        self._webview.GoForward()
+
     def _can_go_forward(self):
         return self._webview.CanGoForward()
 
-    def _cmd_go_forward(self):
-        self._webview.GoForward()
+    @Command.define
+    def go_back(self):
+        """Go to the previous page in browser history"""
+        self._webview.GoBack()
 
     def _can_go_back(self):
         return self._webview.CanGoBack()
 
-    def _cmd_go_back(self):
-        self._webview.GoBack()
-
-    def _can_stop_loading(self):
-        self._webview.IsBusy()
-
-    def _cmd_stop_loading(self):
+    @Command.define
+    def stop_loading(self):
+        """Stop loading"""
         self._webview.Stop()
 
-    def _cmd_reload(self):
-        self.reload()
+    def _can_stop_loading(self):
+        return self._webview.IsBusy()
 
-    def _cmd_load_uri(self, uri):
+    @Command.define
+    def reload(self):
+        """Reload the current browser document from its original source."""
+        self._webview.Reload(wx.html2.WEBVIEW_RELOAD_NO_CACHE)
+
+    @Command.define
+    def load_uri(self, uri, restrict_navigation=None):
+        """Load browser content from given URL.
+
+        Arguments:
+          uri -- URI of the document to load.
+          restrict_navigation -- URI prefix (string) to restrict further
+            navigation.  None means no restriction.  If a string is passed, the
+            user will not be able to navigate to URIs not matching given
+            prefix.
+
+        """
+        self._resource_server.load_resources(None)
+        self._restricted_navigation_uri = restrict_navigation
         self._webview.LoadURL(uri)
 
     def guardian(self):
@@ -1915,45 +1892,23 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler, KeyHandler):
 
         """
         return wx_toolbar(parent, (
-            UICommand(Browser.COMMAND_GO_BACK(_command_handler=self),
+            UICommand(Command(self.go_back),
                       _("Back"),
                       _("Go back to the previous location in browser history.")),
-            UICommand(Browser.COMMAND_GO_FORWARD(_command_handler=self),
+            UICommand(Command(self.go_forward),
                       _("Forward"),
                       _("Go forward to the following location in browser history.")),
-            UICommand(Browser.COMMAND_RELOAD(_command_handler=self),
+            UICommand(Command(self.reload),
                       _("Reload"),
                       _("Reload the current document.")),
-            UICommand(Browser.COMMAND_STOP_LOADING(_command_handler=self),
+            UICommand(Command(self.stop_loading),
                       _("Stop"),
                       _("Stop loading the document.")),
-            UICommand(Browser.COMMAND_LOAD_URI(_command_handler=self),
+            UICommand(Command(self.load_uri),
                       _("Location"),
                       _("Current browser URI."),
                       ctrl=(LocationBar, dict(size=(600, None), editable=False))),
         ))
-
-    def reload(self):
-        """Reload the current browser document from its original source."""
-        if self._reload is not None:
-            self._reload()
-        else:
-            self._webview.Reload(wx.html2.WEBVIEW_RELOAD_NO_CACHE)
-
-    def load_uri(self, uri, restrict_navigation=None):
-        """Load browser content from given URL.
-
-        Arguments:
-          uri -- URI of the document to load.
-          restrict_navigation -- URI prefix (string) to restrict further
-            navigation.  None means no restriction.  If a string is passed, the
-            user will not be able to navigate to URIs not matching given
-            prefix.
-
-        """
-        self._resource_server.load_resources(None)
-        self._restricted_navigation_uri = restrict_navigation
-        self._webview.LoadURL(uri)
 
     def load_html(self, html, base_uri='', restrict_navigation=None, resource_provider=None):
         """Load browser content from given HTML string.
@@ -2384,7 +2339,86 @@ def make_fullname(form_class, spec_name):
 
 def uicommand_mitem(uicmd):
     """Return a 'MenuItem' instance for given 'UICommand' instance."""
-    return MenuItem(uicmd.title(), command=uicmd.command(), args=uicmd.args(), help=uicmd.descr())
+    return MenuItem(uicmd.title(), command=uicmd.command(), help=uicmd.descr())
+
+
+def uicommand_toolbar_ctrl(toolbar, uicmd):
+    """Add a toolbar control for given UICommand into given wx 'toolbar'.
+
+    This method adds command control into the toolbar.  The default control
+    is a simple button which invokes the command on click.  More
+    sophisticated controls may be specified using the 'ctrl' constructor
+    argument.
+
+    """
+    title = uicmd.title()
+    descr = uicmd.descr()
+    ctrl_cls = uicmd.ctrl()
+    if ctrl_cls:
+        if isinstance(ctrl_cls, tuple):
+            ctrl_cls, kwargs = ctrl_cls
+        else:
+            kwargs = {}
+        ctrl = ctrl_cls(toolbar, uicmd, **kwargs)
+        ctrl.SetToolTip(title)
+        tool = toolbar.AddControl(ctrl)
+        toolbar.SetToolLongHelp(tool.GetId(), descr)  # Doesn't work...
+    else:
+        command = uicmd.command()
+        assigned_icon = command_icon(command)
+        if assigned_icon is None:
+            raise Exception("No icon assigned for command: {}".format(command))
+        icon = get_icon(assigned_icon, type=wx.ART_TOOLBAR)
+        if icon is None:
+            icon = get_icon(wx.ART_ERROR, type=wx.ART_TOOLBAR)
+        tool = toolbar.AddTool(-1, title, icon, wx.NullBitmap, shortHelp=title, longHelp=descr)
+        parent = toolbar.GetParent()
+        wx_callback(wx.EVT_TOOL, parent, lambda event: command.invoke(), source=tool)
+        wx_callback(wx.EVT_UPDATE_UI, parent,
+                    lambda event: event.Enable(command.enabled), source=tool)
+
+
+_command_icons = None
+
+def command_icon(command):
+    """Return the icon identifier for given command and its arguments.
+
+    Arguments:
+
+      command -- 'Command' instance.
+
+    The icon which best matches with given command with its arguments is searched
+    within 'COMMAND_ICONS' specification.
+
+    The returned value is the icon identifier as accepted by 'get_icon()'.
+
+    """
+    global _command_icons
+    if _command_icons is None:
+        _command_icons = {}
+        from .defaults import COMMAND_ICONS
+        for cmd, icon in COMMAND_ICONS:
+            icons = _command_icons.setdefault(cmd.name, [])
+            icons.append((cmd.args, icon))
+    try:
+        icons = _command_icons[command.name]
+    except KeyError:
+        pass
+    else:
+        for iargs, icon in icons:
+            for k, v in iargs.items():
+                if k not in command.args or command.args[k] != v:
+                    break
+            else:
+                return icon
+    if ((command.name == 'RecordForm.context_action'
+         and command.args['action'].context() == 'SELECTION')):
+        # Use 'selection' icon as the default for actions which operate on selection
+        # in order to distingush these actions for the user.  This is not perfect, as
+        # the distinction will disapear for actions which define their icons, but
+        # icons are actually asigned quite rarely so it mostly works in practice.
+        return 'selection'
+    return None
 
 
 def get_icon(icon_id, type=wx.ART_MENU, size=(16, 16)):
@@ -2530,13 +2564,11 @@ def wx_button(parent, label=None, icon=None, bitmap=None, id=-1, noborder=False,
         button = wx.BitmapButton(parent, id, bitmap, **kwargs)
     else:
         button = wx.Button(parent, id, label=label or '', **kwargs)
-    button._pytis_in_button_handler = False
     if command:
         assert callback is None
-        cmd, args = command
-
-        def callback(e, args=args, button=button):
-            if button._pytis_in_button_handler:
+        button._pytis_in_button_callback = False
+        def callback(e, button=button):
+            if button._pytis_in_button_callback:
                 # The handler may get invoked recursively and break things,
                 # e.g. prevent a PopupEditForm from closing.
                 # The recursive invocation may happen at least in wx 2.9 on OS X:
@@ -2545,22 +2577,22 @@ def wx_button(parent, label=None, icon=None, bitmap=None, id=-1, noborder=False,
                 # (for unknown reasons) generates this button event again.
                 e.Skip()
             else:
-                button._pytis_in_button_handler = True
+                button._pytis_in_button_callback = True
                 try:
-                    if cmd.invoke(**args):
+                    if command.invoke():
                         if wx.VERSION >= (2, 9):
                             # I don't know whether it behaves well in 2.8,
                             # so let's be on the safe side.
                             e.Skip()
                 finally:
-                    button._pytis_in_button_handler = False
+                    button._pytis_in_button_callback = False
         if tooltip:
-            hotkey = pytis.form.app.keymap.lookup_command(cmd, args)
+            hotkey = pytis.form.app.keymap.lookup_command(command)
             if hotkey:
                 tooltip += ' (' + hotkey_string(hotkey) + ')'
         # TODO: This causes the whole application to freeze when a dialog is closed.
         # if update:
-        #     wx_callback(wx.EVT_UPDATE_UI, button, lambda e: e.Enable(cmd.enabled(**args)))
+        #     wx_callback(wx.EVT_UPDATE_UI, button, lambda e: e.Enable(command.enabled))
     if callback:
         wx_callback(wx.EVT_BUTTON, button, callback)
     _init_wx_ctrl(button, tooltip=tooltip, enabled=enabled, width=width, height=height)
@@ -2731,9 +2763,8 @@ def wx_toolbar(parent, items):
 
     Arguments:
       parent -- parent wx.Window instance
-      items -- Sequence of toolbar items.  Sequence of UICommand' instances or
-        a sequence of such sequences (representing groups to be delimited by a
-        separator).
+      items -- sequence of toolbar items as 'UICommand' instances or such
+        sequences (representing groups to be delimited by a separator).
 
     """
     if isinstance(parent, wx.Frame):
@@ -2746,18 +2777,21 @@ def wx_toolbar(parent, items):
         if i != 0:
             toolbar.AddSeparator()
         for item in group:
-            cmd, args = item.command(), item.args()
-            icon = command_icon(cmd, args)
-            if item.ctrl():
-                ctrl, kwargs = item.ctrl()[0], copy.copy(item.ctrl()[1])
+            command = item.command()
+            icon = command_icon(command)
+            ctrl = item.ctrl()
+            if isinstance(ctrl, tuple):
+                ctrl, kwargs = (ctrl[0], copy.copy(ctrl[1]))
+            elif ctrl:
+                kwargs = {}
             else:
-                assert icon is not None, (cmd, args)
+                assert icon is not None, command
                 ctrl, kwargs = wx_button, dict(icon=icon, noborder=True)
             size = tuple(x or 32 for x in kwargs.pop('size', (None, None)))
-            tool = toolbar.AddControl(ctrl(toolbar, command=(cmd, args), size=size, **kwargs))
+            tool = toolbar.AddControl(ctrl(toolbar, command=command, size=size, **kwargs))
             toolbar.SetToolShortHelp(tool.GetId(), item.title())
             toolbar.SetToolLongHelp(tool.GetId(), item.descr())  # Doesn't seem to have effect...
             wx_callback(wx.EVT_UPDATE_UI, toolbar.Parent,
-                        lambda e, cmd=cmd, args=args: e.Enable(cmd.enabled(**args)), source=tool)
+                        lambda e, command=command: e.Enable(command.enabled), source=tool)
     toolbar.Realize()
     return toolbar

@@ -508,7 +508,7 @@ class SpecHelpGenerator(HelpGenerator):
             else:
                 content = self.EmptyContent()
                 children = ()
-                globs = dict(command=item.command, args=item.args)
+                globs = dict(command=item.command)
             return self.ContentNode(
                 'help:application/%d' % counter.next(), title=item.title.replace('&', ''),
                 content=content, children=children, foldable=True, globals=globs,
@@ -523,21 +523,19 @@ class SpecHelpGenerator(HelpGenerator):
         ]
 
     def _application_help_page_content(self, node, uri):
-        globs = node.globals()
-        command, args = globs['command'], globs['args']
-        if command in (pytis.form.Application.COMMAND_RUN_FORM,
-                       pytis.form.Application.COMMAND_NEW_RECORD):
-            content = self._spec_help_content(args['name'])[1]
+        command = node.globals()['command']
+        if command.name in ('Application.run_form', 'Application.new_record'):
+            content = self._spec_help_content(command.args['name'])[1]
             if not content:
-                if command == pytis.form.Application.COMMAND_RUN_FORM:
-                    text = _("Opens the %s on specification", args['form_class'].descr())
+                if command.name == 'Application.run_form':
+                    text = _("Opens the %s on specification",
+                             command.args['form_class'].descr())
                 else:
                     text = _("Inserts a new record into")
-                content = lcg.p(text, ' ', self._spec_link(args['name']), '.')
+                content = lcg.p(text, ' ', self._spec_link(command.args['name']), '.')
             return content
         return lcg.Container((
-            lcg.p(_("Runs the command %s with the following arguments:", command.id())),
-            lcg.fieldset([(k, unistr(v)) for k, v in args.items()])
+            lcg.p(_("Runs the command: %s", command)),
         ))
 
     def _access_rights(self, spec_name, view_spec):

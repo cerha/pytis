@@ -31,7 +31,7 @@ konfiguračních voleb obsažených v tomto layoutu.
 from __future__ import print_function
 import wx
 
-from pytis.presentation import Field, LVGroup, VGroup, ViewSpec, MenuItem
+from pytis.presentation import Field, LVGroup, VGroup, ViewSpec, MenuItem, Command
 import pytis.util
 from .form import PopupEditForm
 
@@ -95,8 +95,8 @@ def config_menu_items(hotkeys={}):
 
     """
     return tuple(
-        MenuItem(title,
-                 command=pytis.form.Application.COMMAND_RUN_FORM(form_class=ConfigForm, name=name),
+        MenuItem(title, command=Command(pytis.form.Application.run_form,
+                                        form_class=ConfigForm, name=name),
                  hotkey=hotkeys.get(name),
                  help=(_('Open configuration form "%s"') % title),
                  icon=('config-' + name))
@@ -198,6 +198,6 @@ class ConfigForm(PopupEditForm):
     def _buttons(self):
         button = dict(id=wx.ID_APPLY,
                       tooltip=_("Apply changes without closing the form"),
-                      command=self.COMMAND_COMMIT_RECORD(close=False))
+                      command=Command(self.commit_record, close=False))
         buttons = super(ConfigForm, self)._buttons()
         return (buttons[0], button) + buttons[1:]
