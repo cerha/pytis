@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2022 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2023 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2017 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -1180,7 +1180,7 @@ def rsa_encrypt(key, text):
     """
     if key:
         if isinstance(text, unistr):
-            text = text.encode('ascii')
+            text = text.encode('utf-8')
         import Crypto.PublicKey.RSA
         rsa = Crypto.PublicKey.RSA.importKey(key)
         encrypted = rsa.encrypt(text, None)[0]
