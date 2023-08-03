@@ -461,11 +461,10 @@ class FormProfileManager(UserSetttingsManager):
         elif name == 'IN':
             op = pytis.form.make_in_operator
             args = packed_args
+            spec_name, condition = args[1], args[-2]
             # Unpack the additonal condition of pytis.presentation.IN.
-            if args[-2]:
-                args[-2] = self._unpack_filter(args[-2], data_object,
-                                               delete_columns=delete_columns,
-                                               rename_columns=rename_columns)
+            if condition:
+                args[-2] = self._unpack_filter(condition, pytis.util.data_object(spec_name))
         else:
             if len(packed_args) != 2:
                 raise Exception("Invalid number of filter operator arguments: %s" %
