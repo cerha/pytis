@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2019, 2021 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2023 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2014 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -88,18 +88,18 @@ class Logger(object):
         self._database = pytis.config.dbname
         self._module_filter = pytis.config.log_module_filter
         try:
-            class_ = list(pytis.config.log_class_filter)
-            for i in range(len(class_)):
-                c = class_[i]
-                if isinstance(c, basestring):
-                    pos = c.rfind('.')
+            self._class_filter = []
+            for cls in pytis.config.log_class_filter:
+                if isinstance(cls, basestring):
+                    pos = cls.rfind('.')
                     if pos:
-                        mod, cls = c[:pos], c[pos + 1:]
+                        mod, cls = cls[:pos], cls[pos + 1:]
                         imp = __import__(mod, None, None, [cls])
-                        class_[i] = imp.__dict__[cls]
+                        cls = imp.__dict__[cls]
                     else:
-                        class_[i] = eval(c)
-            self._class_filter = class_
+                        cls = eval(cls)
+            self._class_filter.append(cls)
+
         except Exception:
             self._class_filter = ()
 
