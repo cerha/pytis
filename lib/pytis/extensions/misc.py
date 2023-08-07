@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2022 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2023 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2002-2014 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -176,11 +176,6 @@ def set_default_printer():
     if result:
         user_default.set(result['printer'].value())
     return None
-
-
-def cmd_set_default_printer():
-    import pytis.form
-    pytis.form.Application.COMMAND_HANDLED_ACTION(handler=set_default_printer)
 
 
 # Additional constraints

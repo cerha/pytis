@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2021 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2023 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2005-2013 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -25,7 +25,7 @@ from .dbutils import (  # noqa: F401
 
 from .misc import (  # noqa: F401
     send_mail, UserDefaultPrinter, set_default_printer,
-    cmd_set_default_printer, constraints_email, constraints_email_many,
+    constraints_email, constraints_email_many,
     crypto_key_table, crypto_admin_key, check_crypto_password, add_crypto_user,
 )
 
