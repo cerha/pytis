@@ -307,7 +307,7 @@ class GenericDialog(Dialog):
         """Return the GenericDialog.Button instance for given wx button id or None."""
         return self._buttons_map.get(wxid)
 
-    def _can_commit(self, widget):
+    def _is_committable_widget(self, widget):
         # Override to allow certain widgets to commit the whole dialog, when
         # COMMIT_DIALOG command is invoked (from the keyboard).
         return False
@@ -319,7 +319,7 @@ class GenericDialog(Dialog):
         if isinstance(widget, wx.Button):
             # Simulate a click on the button.
             widget.Command(wx.CommandEvent(wx.wxEVT_COMMAND_BUTTON_CLICKED, widget.Id))
-        elif widget and self._can_commit(widget):
+        elif widget and self._is_committable_widget(widget):
             self._end_modal(widget.Id)
         else:
             self._navigate()
@@ -767,8 +767,8 @@ class Calendar(GenericDialog):
         self._want_focus = cal
         sizer.Add(cal, 0, wx.ALL | wx.CENTER, 5)
 
-    def _can_commit(self, widget):
-        return super(Calendar, self)._can_commit(widget) or widget == self._cal
+    def _is_committable_widget(self, widget):
+        return super(Calendar, self)._is_committable_widget(widget) or widget == self._cal
 
     def _customize_result(self, wxid):
         if wxid == self._cal.Id or self._button(wxid) == self.BUTTON_OK:
