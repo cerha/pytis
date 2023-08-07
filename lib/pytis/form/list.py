@@ -1528,10 +1528,6 @@ class ListForm(RecordForm, TitledForm, Refreshable):
     def last_column(self):
         self._select_cell(col=(len(self._columns) - 1))
 
-    def _can_move_column(self, diff=1):
-        col = self._grid.GetGridCursorCol()
-        return 0 <= col + diff < len(self._columns)
-
     @Command.define
     def move_column(self, diff=1):
         col = self._grid.GetGridCursorCol()
@@ -1543,6 +1539,10 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             self._select_cell(col=newcol)
         else:
             log(OPERATIONAL, "Invalid column move command:", (col, newcol))
+
+    def _can_move_column(self, diff=1):
+        col = self._grid.GetGridCursorCol()
+        return 0 <= col + diff < len(self._columns)
 
     @Command.define
     def toggle_column(self, column_id, position=None):
@@ -1593,12 +1593,6 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             g.Refresh()
             self._remember_column_width(col)
 
-    def _can_sort(self, **kwargs):
-        col = kwargs.get('col')
-        if col is not None:
-            kwargs['col'] = self._columns[col].id()
-        return super(ListForm, self)._can_sort(**kwargs)
-
     @Command.define
     def sort(self, col=None, direction=None, primary=False):
         if col is not None:
@@ -1628,6 +1622,12 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                 self._refresh()
         return sorting
 
+    def _can_sort(self, **kwargs):
+        col = kwargs.get('col')
+        if col is not None:
+            kwargs['col'] = self._columns[col].id()
+        return super(ListForm, self)._can_sort(**kwargs)
+
     @Command.define
     def toggle_aggregation(self, operation):
         if operation in self._aggregations:
@@ -1635,12 +1635,6 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         else:
             command = self.aggregate
         command(operation=operation)
-
-    def _can_aggregate(self, operation=None):
-        if operation is None:
-            return len(self._aggregations) != len(self._AGGREGATIONS)
-        else:
-            return operation not in self._aggregations
 
     @Command.define
     def aggregate(self, operation=None):
@@ -1651,11 +1645,11 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         self._update_label_height()
         self.refresh()
 
-    def _can_unaggregate(self, operation=None):
+    def _can_aggregate(self, operation=None):
         if operation is None:
-            return bool(self._aggregations)
+            return len(self._aggregations) != len(self._AGGREGATIONS)
         else:
-            return operation in self._aggregations
+            return operation not in self._aggregations
 
     @Command.define
     def unaggregate(self, operation=None):
@@ -1665,6 +1659,12 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             self._aggregations.remove(operation)
         self._update_label_height()
         self.refresh()
+
+    def _can_unaggregate(self, operation=None):
+        if operation is None:
+            return bool(self._aggregations)
+        else:
+            return operation in self._aggregations
 
     def _available_aggregations(self):
         return ([(op, title) for op, title, icon, label in self._AGGREGATIONS] +
@@ -1799,12 +1799,6 @@ class ListForm(RecordForm, TitledForm, Refreshable):
     def _popup_menu(self, items, position=None):
         pytis.form.app.popup_menu(self._grid, items, keymap=self._get_keymap(), position=position)
 
-    def _can_set_grouping_column(self, col=None):
-        if col is not None:
-            return self._columns[col].id() in self._sorting_columns()
-        else:
-            return bool(self._grouping)
-
     @Command.define
     def set_grouping_column(self, col=None):
         if col is not None:
@@ -1819,6 +1813,12 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         else:
             self._grouping = ()
         self._update_grid()
+
+    def _can_set_grouping_column(self, col=None):
+        if col is not None:
+            return self._columns[col].id() in self._sorting_columns()
+        else:
+            return bool(self._grouping)
 
     @Command.define
     def incremental_search(self, full=False, prefill=None):
@@ -2063,26 +2063,26 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         writer.close()
         return output.getvalue()
 
-    def _can_clear_selection(self):
-        return self._grid.IsSelection()
-
     @Command.define
     def clear_selection(self):
         self.unselect_selected_rows()
 
-    def _can_add_row_to_selection(self):
-        return not self._grid.IsInSelection(self._grid.GetGridCursorRow(), 0)
+    def _can_clear_selection(self):
+        return self._grid.IsSelection()
 
     @Command.define
     def add_row_to_selection(self):
         self._grid.SelectRow(self._grid.GetGridCursorRow(), True)
 
-    def _can_remove_row_from_selection(self):
-        return self._grid.IsInSelection(self._grid.GetGridCursorRow(), 0)
+    def _can_add_row_to_selection(self):
+        return not self._grid.IsInSelection(self._grid.GetGridCursorRow(), 0)
 
     @Command.define
     def remove_row_from_selection(self):
         self._grid.DeselectRow(self._grid.GetGridCursorRow())
+
+    def _can_remove_row_from_selection(self):
+        return self._grid.IsInSelection(self._grid.GetGridCursorRow(), 0)
 
     # Public methods
 
@@ -2476,21 +2476,21 @@ class FoldableForm(ListForm):
             return
         self.refresh()
 
-    def _can_expand_or_collapse_subtree(self, level=None):
-        return self._folding_enabled()
-
     @Command.define
     def expand_or_collapse_subtree(self, level=None):
         row = self._current_cell()[0]
         self._expand_or_collapse(row, level=level)
 
-    def _can_expand_or_collapse(self):
+    def _can_expand_or_collapse_subtree(self, level=None):
         return self._folding_enabled()
 
     @Command.define
     def expand_or_collapse(self):
         row = self._current_cell()[0]
         self._expand_or_collapse(row, level=1)
+
+    def _can_expand_or_collapse(self):
+        return self._folding_enabled()
 
     @Command.define
     def expand_all(self):

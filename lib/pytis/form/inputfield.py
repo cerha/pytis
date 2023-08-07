@@ -561,13 +561,13 @@ class InputField(KeyHandler, CommandHandler):
 
     # Commands
 
-    def _can_reset(self):
-        return self._modified() and self._enabled
-
     @Command.define
     def reset(self):
         """Reset the field to its original value."""
         self._row[self._id] = self._row.original_row()[self._id]
+
+    def _can_reset(self):
+        return self._modified() and self._enabled
 
     @Command.define
     def context_menu(self):
@@ -875,10 +875,6 @@ class TextField(InputField):
 
     # Commands
 
-    def _can_cut(self):
-        ctrl = self._current_ctrl()
-        return hasattr(ctrl, 'CanCut') and ctrl.CanCut()
-
     @Command.define
     def cut(self):
         ctrl = self._current_ctrl()
@@ -887,9 +883,9 @@ class TextField(InputField):
         ctrl.Remove(*selection)
         self._on_change()
 
-    def _can_copy(self):
+    def _can_cut(self):
         ctrl = self._current_ctrl()
-        return hasattr(ctrl, 'CanCopy') and ctrl.CanCopy()
+        return hasattr(ctrl, 'CanCut') and ctrl.CanCut()
 
     @Command.define
     def copy(self):
@@ -904,6 +900,15 @@ class TextField(InputField):
         else:
             ctrl.Copy()
 
+    def _can_copy(self):
+        ctrl = self._current_ctrl()
+        return hasattr(ctrl, 'CanCopy') and ctrl.CanCopy()
+
+    @Command.define
+    def paste(self):
+        paste_from_clipboard(self._current_ctrl())
+        self._on_change()
+
     def _can_paste(self):
         ctrl = self._current_ctrl()
         if hasattr(ctrl, 'CanPaste'):
@@ -917,17 +922,12 @@ class TextField(InputField):
         return False
 
     @Command.define
-    def paste(self):
-        paste_from_clipboard(self._current_ctrl())
-        self._on_change()
+    def select_all(self):
+        return self._current_ctrl().SetSelection(-1, -1)
 
     def _can_select_all(self):
         ctrl = self._current_ctrl()
         return hasattr(ctrl, 'SetSelection') and ctrl.GetValue()
-
-    @Command.define
-    def select_all(self):
-        return self._current_ctrl().SetSelection(-1, -1)
 
 
 class StringField(TextField):
@@ -1821,6 +1821,10 @@ class ListField(GenericCodebookField, CallbackHandler):
 
     # Command handling
 
+    @Command.define
+    def select(self):
+        self._set_selection(self._selected_item_index())
+
     def _can_select(self):
         if not self.enabled():
             return False
@@ -1828,18 +1832,11 @@ class ListField(GenericCodebookField, CallbackHandler):
             return self._selected_item_index() is not None
 
     @Command.define
-    def select(self):
-        self._set_selection(self._selected_item_index())
-
-    def _can_show_selected(self):
-        return self._selected_item is not None
-
-    @Command.define
     def show_selected(self):
         self._set_selection(self._selected_item)
 
-    def _can_edit_selected(self, **kwargs):
-        return self.enabled() and self._selected_item is not None
+    def _can_show_selected(self):
+        return self._selected_item is not None
 
     @Command.define
     def edit_selected(self):
@@ -1855,7 +1852,7 @@ class ListField(GenericCodebookField, CallbackHandler):
         self._run_callback(self.CALL_LIST_CHANGE, self._row)
         self.set_focus()
 
-    def _can_delete_selected(self):
+    def _can_edit_selected(self, **kwargs):
         return self.enabled() and self._selected_item is not None
 
     @Command.define
@@ -1870,8 +1867,8 @@ class ListField(GenericCodebookField, CallbackHandler):
         self._run_callback(self.CALL_LIST_CHANGE, self._row)
         self.set_focus()
 
-    def _can_new_codebook_record(self):
-        return self.enabled()
+    def _can_delete_selected(self):
+        return self.enabled() and self._selected_item is not None
 
     @Command.define
     def new_codebook_record(self):
@@ -1880,7 +1877,7 @@ class ListField(GenericCodebookField, CallbackHandler):
         self._run_callback(self.CALL_LIST_CHANGE, self._row)
         self.set_focus()
 
-    def _can_invoke_codebook_form(self):
+    def _can_new_codebook_record(self):
         return self.enabled()
 
     @Command.define
@@ -1889,6 +1886,9 @@ class ListField(GenericCodebookField, CallbackHandler):
         self._reload_enumeration()
         self._run_callback(self.CALL_LIST_CHANGE, self._row)
         self.set_focus()
+
+    def _can_invoke_codebook_form(self):
+        return self.enabled()
 
     def api_on_list_change(self, callback):
         self.set_callback(self.CALL_LIST_CHANGE, callback)
@@ -1981,15 +1981,12 @@ class FileField(Invocable, InputField):
                        _("Set the field to an ampty value.")),
              )
 
-    def _can_open(self):
-        return self._enabled and self._value is not None and self._filename_extension()
-
     @Command.define
     def open(self):
         app.launch_file(data=self._value, suffix=self._filename_extension())
 
-    def _can_load(self):
-        return self._enabled
+    def _can_open(self):
+        return self._enabled and self._value is not None and self._filename_extension()
 
     @Command.define
     def load(self):
@@ -2011,8 +2008,8 @@ class FileField(Invocable, InputField):
         else:
             app.echo(_("Loading file canceled."))
 
-    def _can_save(self):
-        return self._value is not None
+    def _can_load(self):
+        return self._enabled
 
     @Command.define
     def save(self):
@@ -2029,12 +2026,15 @@ class FileField(Invocable, InputField):
             else:
                 app.echo(_("Saving file canceled."))
 
-    def _can_clear(self):
-        return self._enabled and self._value is not None
+    def _can_save(self):
+        return self._value is not None
 
     @Command.define
     def clear(self):
         self._set_value(None)
+
+    def _can_clear(self):
+        return self._enabled and self._value is not None
 
 
 class ImageField(FileField):
@@ -2428,19 +2428,19 @@ class StructuredTextField(TextField):
     def search_and_replace(self):
         pass
 
-    def _can_undo(self):
-        return self._ctrl.CanUndo()
-
     @Command.define
     def undo(self):
         self._ctrl.Undo()
 
-    def _can_redo(self):
-        return self._ctrl.CanRedo()
+    def _can_undo(self):
+        return self._ctrl.CanUndo()
 
     @Command.define
     def redo(self):
         self._ctrl.Redo()
+
+    def _can_redo(self):
+        return self._ctrl.CanRedo()
 
     @Command.define
     def preview(self):

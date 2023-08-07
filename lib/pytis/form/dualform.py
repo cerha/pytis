@@ -1228,10 +1228,6 @@ class MultiSideForm(MultiForm):
             nb.DeletePage(index)
         self._save_tab_order()
 
-    def _can_filter_by_sideform(self, index, not_in=False):
-        form = self._subform(index)
-        return isinstance(form, SideBrowseForm) and form.side_form_in_condition() is not None
-
     @Command.define
     def filter_by_sideform(self, index, not_in=False):
         """Filter main form rows having non-zero side form rows."""
@@ -1246,6 +1242,10 @@ class MultiSideForm(MultiForm):
         if not_in:
             condition = pytis.data.NOT(condition)
         self._main_form.apply_filter(condition, append=True)
+
+    def _can_filter_by_sideform(self, index, not_in=False):
+        form = self._subform(index)
+        return isinstance(form, SideBrowseForm) and form.side_form_in_condition() is not None
 
     def select_binding(self, id):
         """Raise the side form tab corresponfing to the binding of given identifier.

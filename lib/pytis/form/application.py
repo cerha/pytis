@@ -884,46 +884,46 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         """Interrupt the currently running operation."""
         app.echo(_("Stopped..."), kind='error')
 
-    def _can_handled_action(self, handler=None, enabled=None, **kwargs):
-        return enabled is None and True or enabled(**kwargs)
-
     @Command.define
     def handled_action(self, handler=None, enabled=None, **kwargs):
         """Perform application defined action."""
         return handler(**kwargs)
 
+    def _can_handled_action(self, handler=None, enabled=None, **kwargs):
+        return enabled is None and True or enabled(**kwargs)
+
     @Command.define
     def raise_form(self, form):
         self._raise_form(form)
-
-    def _can_raise_recent_form(self):
-        return len(self._windows) > 1
 
     @Command.define
     def raise_recent_form(self):
         self._raise_form(self._windows.mru()[1])
 
-    def _can_raise_next_form(self):
+    def _can_raise_recent_form(self):
         return len(self._windows) > 1
 
     @Command.define
     def raise_next_form(self):
         self._raise_form(self._windows.next())
 
-    def _can_raise_prev_form(self):
+    def _can_raise_next_form(self):
         return len(self._windows) > 1
 
     @Command.define
     def raise_prev_form(self):
         self._raise_form(self._windows.prev())
 
-    def _can_clear_recent_forms(self):
-        return len(self._recent_forms) > 0
+    def _can_raise_prev_form(self):
+        return len(self._windows) > 1
 
     @Command.define
     def clear_recent_forms(self):
         self._recent_forms[:] = []
         self._update_recent_forms_menu()
+
+    def _can_clear_recent_forms(self):
+        return len(self._recent_forms) > 0
 
     @Command.define
     def refresh(self, interactive=True):
@@ -937,38 +937,6 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         """Request reload of specification files (development/tuning)."""
         pytis.config.resolver.reload()
         self._cache_menu_enabled(self._menu)
-
-    def _can_run_form(self, form_class, name, binding=None, **kwargs):
-        if form_class in (pytis.form.InputForm, pytis.form.WebForm) and name is None:
-            return True
-        if ((isinstance(self.current_form(), pytis.form.PopupForm) and
-             not issubclass(form_class, pytis.form.PopupForm))):
-            return False
-        if not self._public_spec(name):
-            return False
-        try:
-            if self.api_has_access(name):
-                if binding is not None or issubclass(form_class, pytis.form.MultiBrowseDualForm):
-                    spec = pytis.config.resolver.get(name, 'view_spec')
-                    if binding is None:
-                        for b in spec.bindings():
-                            binding_name = b.name()
-                            if binding_name is None or self.api_has_access(binding_name):
-                                return True
-                        return False
-                    else:
-                        b = find(binding, spec.bindings(), key=lambda b: b.id())
-                        assert b is not None, "Unknown binding for %s: %s" % (name, binding)
-                        if b.name():
-                            return self.api_has_access(b.name())
-                        else:
-                            return True
-                return True
-            else:
-                return False
-        except ResolverError:
-            # The spec is invalid, but we want the crash on attempt to run it.
-            return True
 
     @Command.define
     def run_form(self, form_class, name, **kwargs):
@@ -1072,33 +1040,23 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
             top_level_exception()
         return result
 
-    def _can_new_record(self, name, **kwargs):
-        try:
-            return self.api_has_access(name, perm=pd.Permission.INSERT)
-        except ResolverError:
-            # The spec is invalid, but we want the crash on attempt to run it.
-            return True
-
-    def _cmd_new_record(self, name, **kwargs):
-        return self.api_new_record(name, **kwargs)
-
     @Command.define
-    def new_record(self, **kwargs):
+    def new_record(self, name, **kwargs):
         """Insert new record into the data object of given specification name."""
-        return self.api_new_record(**kwargs)
+        return self.api_new_record(name, **kwargs)
 
     def _can_new_record(self, name, **kwargs):
         return self._can_api_new_record(name, **kwargs)
+
+    @Command.define
+    def run_procedure(self, enabled=None, **kwargs):
+        return self.api_run_procedure(**kwargs)
 
     def _can_run_procedure(self, spec_name, proc_name, args=None, enabled=None,
                            block_refresh=False, **kwargs):
         if not self._public_spec(spec_name):
             return False
         return enabled is None and True or enabled(**kwargs)
-
-    @Command.define
-    def run_procedure(self, enabled=None, **kwargs):
-        return self.api_run_procedure(**kwargs)
 
     @Command.define
     def help(self, topic='pytis'):
@@ -1143,13 +1101,13 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         """Exit the application."""
         self.api_exit()
 
-    def _can_nothing(self, enabled=True):
-        return enabled
-
     @Command.define
     def nothing(self, enabled=True):
         """Fake command which does nothing."""
         pass
+
+    def _can_nothing(self, enabled=True):
+        return enabled
 
     # Veřejné atributy a metody
 

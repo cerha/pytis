@@ -771,13 +771,13 @@ class InnerForm(Form):
     def _can_aggregation_menu(self):
         return self._has_aggregation_menu
 
-    def _can_print_menu(self):
-        return bool(self._get_print_menu())
-
     @Command.define
     def print_menu(self):
         """Show print menu for the current form."""
         self._on_menu_button(self._get_print_menu())
+
+    def _can_print_menu(self):
+        return bool(self._get_print_menu())
 
 
 class Refreshable(object):
@@ -1460,9 +1460,6 @@ class LookupForm(InnerForm):
         app.echo(_(u"Profile saved as '%s'.") % title)
         self.focus()
 
-    def _can_rename_profile(self, title):
-        return self._is_user_defined_profile(self._current_profile)
-
     @Command.define
     def rename_profile(self, title):
         if title in [p.title() for p in self._profiles if p is not self._current_profile]:
@@ -1475,9 +1472,8 @@ class LookupForm(InnerForm):
         app.echo(_(u"Profile saved as '%s'.") % title)
         self.focus()
 
-    def _can_update_profile(self):
-        return (self._current_profile.id() != '__constructor_profile__' and
-                self._current_profile_changed())
+    def _can_rename_profile(self, title):
+        return self._is_user_defined_profile(self._current_profile)
 
     @Command.define
     def update_profile(self):
@@ -1489,8 +1485,9 @@ class LookupForm(InnerForm):
         self._saved_settings.save_profile(profile)
         self._current_profile = profile
 
-    def _can_delete_profile(self):
-        return self._is_user_defined_profile(self._current_profile)
+    def _can_update_profile(self):
+        return (self._current_profile.id() != '__constructor_profile__' and
+                self._current_profile_changed())
 
     @Command.define
     def delete_profile(self):
@@ -1499,16 +1496,16 @@ class LookupForm(InnerForm):
         self._profiles.remove(self._current_profile)
         self._apply_profile(self.initial_profile())
 
-    def _can_reload_profile(self):
-        return self._current_profile_changed()
+    def _can_delete_profile(self):
+        return self._is_user_defined_profile(self._current_profile)
 
     @Command.define
     def reload_profile(self):
         """Reinitialize the form to the last saved state of the current profile."""
         self._apply_profile(self._current_profile)
 
-    def _can_reset_profile(self):
-        return not self._is_user_defined_profile(self._current_profile)
+    def _can_reload_profile(self):
+        return self._current_profile_changed()
 
     @Command.define
     def reset_profile(self):
@@ -1529,17 +1526,17 @@ class LookupForm(InnerForm):
         self._profiles[index] = profile
         self._apply_profile(profile)
 
-    def _can_set_initial_profile(self):
-        return self._current_profile.id() not in (self._saved_settings.get('initial_profile'),
-                                                  '__constructor_profile__')
+    def _can_reset_profile(self):
+        return not self._is_user_defined_profile(self._current_profile)
 
     @Command.define
     def set_initial_profile(self):
         """Use the current profile as the initial profile on next form startup."""
         self._saved_settings.set('initial_profile', self._current_profile.id())
 
-    def _can_export_profiles(self):
-        return any(self._is_user_defined_profile(p) for p in self._profiles)
+    def _can_set_initial_profile(self):
+        return self._current_profile.id() not in (self._saved_settings.get('initial_profile'),
+                                                  '__constructor_profile__')
 
     @Command.define
     def export_profiles(self):
@@ -1554,6 +1551,9 @@ class LookupForm(InnerForm):
             data = self._saved_settings.export_profiles(selected_profiles)
             filename = self._name.replace('.', '-') + '-profiles.json'
             app.write_selected_file(data.encode('ascii'), filename, mode='wb')
+
+    def _can_export_profiles(self):
+        return any(self._is_user_defined_profile(p) for p in self._profiles)
 
     @Command.define
     def import_profiles(self):
@@ -1592,13 +1592,13 @@ class LookupForm(InnerForm):
         if perform and condition != self._lf_filter:
             self.apply_filter(condition)
 
-    def _can_unfilter(self):
-        return self._lf_filter is not None
-
     @Command.define
     def unfilter(self):
         """Discard the active filtering condition."""
         self.apply_filter(None)
+
+    def _can_unfilter(self):
+        return self._lf_filter is not None
 
     @Command.define
     def filter_by_value(self, column_id, value):
@@ -2207,9 +2207,6 @@ class RecordForm(LookupForm):
             if not self.select_row(result.row(), quiet=True):
                 app.warning(_(u"The inserted record didn't appear in the current view."))
 
-    def _can_edit_record(self):
-        return self.current_row() is not None
-
     @Command.define
     def edit_record(self):
         """Edit the current record in a popup form."""
@@ -2224,7 +2221,7 @@ class RecordForm(LookupForm):
         # an unnecessary delay.
         self._signal_update()
 
-    def _can_delete_record(self):
+    def _can_edit_record(self):
         return self.current_row() is not None
 
     @Command.define
@@ -2239,11 +2236,36 @@ class RecordForm(LookupForm):
         else:
             return False
 
+    def _can_delete_record(self):
+        return self.current_row() is not None
+
     @Command.define
     def refresh_db(self):
         """Refresh the underlying database object."""
         self._data.refresh()
         self.refresh()
+
+    @Command.define
+    def context_action(self, action):
+        """Invoke a context menu action on the current form record."""
+        args = self._context_action_args(action)
+        kwargs = action.kwargs()
+        log(EVENT, 'Calling context action handler:', (args, kwargs))
+        action.handler()(*args, **kwargs)
+        if action.context() == ActionContext.SELECTION:
+            # Clear rows selection to avoid problems when the context action modifies
+            # the selected rows and some of these rows dismiss from the form because
+            # they no longer match the current filter.  In this case the grid behaves
+            # inconsistently - the selection sometimes moves to other rows and
+            # sometimes it contains invalid row numbers.
+            self.unselect_selected_rows()
+        dual = self._dualform()
+        if dual:
+            # If we are a part of a dual form, refresh the whole form (feels little hacky).
+            dual.refresh()
+        else:
+            self.refresh()
+        return True
 
     def _can_context_action(self, action):
         if pytis.config.use_dmp_rights:
@@ -2270,28 +2292,6 @@ class RecordForm(LookupForm):
             return enabled(*args, **kwargs)
         else:
             return enabled
-
-    @Command.define
-    def context_action(self, action):
-        """Invoke a context menu action on the current form record."""
-        args = self._context_action_args(action)
-        kwargs = action.kwargs()
-        log(EVENT, 'Calling context action handler:', (args, kwargs))
-        action.handler()(*args, **kwargs)
-        if action.context() == ActionContext.SELECTION:
-            # Clear rows selection to avoid problems when the context action modifies
-            # the selected rows and some of these rows dismiss from the form because
-            # they no longer match the current filter.  In this case the grid behaves
-            # inconsistently - the selection sometimes moves to other rows and
-            # sometimes it contains invalid row numbers.
-            self.unselect_selected_rows()
-        dual = self._dualform()
-        if dual:
-            # If we are a part of a dual form, refresh the whole form (feels little hacky).
-            dual.refresh()
-        else:
-            self.refresh()
-        return True
 
     @Command.define
     def import_interactive(self):
@@ -2401,10 +2401,6 @@ class RecordForm(LookupForm):
         run_form(StructuredTextEditor, self.name(),
                  field_id=field_id, select_row=self.current_key())
 
-    def _can_view_field_pdf(self, field_id):
-        field = find(field_id, self._row.fields(), key=lambda f: f.id())
-        return field and field.text_format() == TextFormat.LCG
-
     @Command.define
     def view_field_pdf(self, field_id):
         """Open PDF viewer with current exported content of given field."""
@@ -2429,6 +2425,10 @@ class RecordForm(LookupForm):
         context = exporter.context(node, 'cs')
         pdf = exporter.export(context)
         app.launch_file(data=pdf, suffix='.pdf')
+
+    def _can_view_field_pdf(self, field_id):
+        field = find(field_id, self._row.fields(), key=lambda f: f.id())
+        return field and field.text_format() == TextFormat.LCG
 
     # Regular public methods
 
@@ -3190,9 +3190,6 @@ class EditForm(RecordForm, TitledForm, Refreshable):
 
     # Commands
 
-    def _can_commit_record(self, close=True):
-        return self._mode != self.MODE_VIEW
-
     @Command.define
     def commit_record(self, close=True):
         try:
@@ -3207,7 +3204,7 @@ class EditForm(RecordForm, TitledForm, Refreshable):
         finally:
             busy_cursor(False)
 
-    def _can_navigate(self, back=False):
+    def _can_commit_record(self, close=True):
         return self._mode != self.MODE_VIEW
 
     @Command.define
@@ -3223,6 +3220,9 @@ class EditForm(RecordForm, TitledForm, Refreshable):
             i = (order.index(current) + (-1 if back else 1)) % len(order)
             target = order[i]
             target.SetFocus()
+
+    def _can_navigate(self, back=False):
+        return self._mode != self.MODE_VIEW
 
     # Regular public methods
 
@@ -3431,11 +3431,6 @@ class PopupEditForm(PopupForm, EditForm):
         # inherit profiles at all but that's a little too complicated for now.
         pass
 
-    def _can_commit_record(self, close=True, next=False):
-        if next and (self._mode != self.MODE_INSERT or not self._multi_insert):
-            return False
-        return super(PopupEditForm, self)._can_commit_record()
-
     @Command.define
     def commit_record(self, close=True, next=False):
         result = super(PopupEditForm, self).commit_record(close=close and not next)
@@ -3443,6 +3438,11 @@ class PopupEditForm(PopupForm, EditForm):
             app.echo(_("Record saved"))
             self._load_next_row()
         return result
+
+    def _can_commit_record(self, close=True, next=False):
+        if next and (self._mode != self.MODE_INSERT or not self._multi_insert):
+            return False
+        return super(PopupEditForm, self)._can_commit_record()
 
     @Command.define
     def leave_form(self):
