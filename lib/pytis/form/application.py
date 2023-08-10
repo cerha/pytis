@@ -2542,3 +2542,21 @@ def close_forms():
         if not form.close():
             return False
     return not app.forms
+
+class LegacyCommand(Command):
+
+    def __call__(self, **kwargs):
+        return Command(self._method, **kwargs)
+
+class HandledAction(LegacyCommand):
+
+    def __call__(self, handler, **kwargs):
+        return Command(self._method, handler, **kwargs)
+
+Application.COMMAND_NEW_RECORD = LegacyCommand(Application.new_record)
+Application.COMMAND_RUN_FORM = LegacyCommand(Application.run_form)
+Application.COMMAND_RUN_PROCEDURE = LegacyCommand(Application.run_procedure)
+Application.COMMAND_EXIT = LegacyCommand(Application.exit)
+Application.COMMAND_HANDLED_ACTION = HandledAction(Application.handled_action)
+Application.COMMAND_RELOAD_RIGHTS = LegacyCommand(Application.reload_rights)
+Application.COMMAND_CLEAR_RECENT_FORMS = LegacyCommand(Application.clear_recent_forms)
