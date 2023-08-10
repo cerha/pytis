@@ -1818,7 +1818,8 @@ def content(content, format=None, resources=()):
         'TextFormat.HTML' for HTML source fragment (excluding <html>, <head>
         and <body> tags) or 'TextFormat.LCG' for LCG structured text source to
         be processed by LCG Parser.  This argument is irrelevant if content is
-        not given as a string.
+        not given as a string.  If None, the default format is
+        'TextFormat.LCG'.
       resources -- list of 'lcg.Resource' instances or string resource file
         names.  The 'lcg.Resource' instances will be passed to the resource
         provider as statically defined resources.  The string names will be
