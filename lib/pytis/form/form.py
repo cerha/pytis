@@ -1912,7 +1912,7 @@ class RecordForm(LookupForm):
                                        transaction=self._open_transaction())
         if success and locked is not None:
             log(EVENT, 'Record is locked')
-            app.app.echo(_(u"The record is locked."))
+            app.echo(_(u"The record is locked."))
             return False
         else:
             return True
