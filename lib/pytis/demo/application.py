@@ -102,6 +102,8 @@ class Application(pytis.presentation.Application):
             Menu(_("&Codebooks"),
                  (bf(_("Con&tinents"), 'cb.Continents'),
                   bf(_("&Countries"), 'cb.Countries'),
+                  bf(_("Countries (insufficient access rights)"), 'cb.DisabledCountries'),
+                  bf(_("Inexistent specification"), 'cb.Something'),
                   bf(_('Insurance'), 'cb.Insurance'),
                   )),
             Menu(_("&CMS"),
