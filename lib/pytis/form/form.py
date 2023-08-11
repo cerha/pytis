@@ -1766,7 +1766,18 @@ class RecordForm(LookupForm):
         self._initial_select_row_called = False
         self._action_access_groups_cache = {}
         super_(RecordForm)._init_attributes(self, **kwargs)
-        self._row = self.record(self._find_row(select_row), prefill=prefill, new=_new)
+        if select_row is not None:
+            row = self._find_row(select_row)
+            # assert row is not None, select_row
+            if not row:
+                # TODO: This has not been caught in the past, but it may lead to some
+                # non-trivial debugging when select_row is invalid for some reason.
+                # It seems an assertion would be appropriate here, but that might also
+                # break things.  So for now we at least log the problem.
+                log(OPERATIONAL, "Record referenced by select_row not found:", select_row)
+        else:
+            row = None
+        self._row = self.record(row, prefill=prefill, new=_new)
 
     def _on_idle(self, event):
         super(RecordForm, self)._on_idle(event)
