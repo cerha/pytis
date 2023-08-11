@@ -1781,6 +1781,36 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         return self._data.find_column(self._columns[col].id()) is not None
 
     @Command.define
+    def filter_contained(self, name, column_id, my_column_id, binding=None, not_in=False):
+        if self._current_profile_changed():
+            asave, aquit = _("Save"), _("Cancel")
+            if app.question(_("Can not filter as long as the current profile is unsaved!"),
+                            answers=(asave, aquit), default=asave) != asave:
+                return
+            self.update_profile()
+        if self._current_profile.id() == self._default_profile.id():
+            profile_id = None
+        else:
+            profile_id = self._current_profile.id()
+        condition = make_in_operator(column_id, self.name(), my_column_id, profile_id)
+        if not_in:
+            select_row = None
+            condition = pytis.data.NOT(condition)
+        else:
+            row = self.current_row()
+            select_row = {column_id: row[my_column_id]}
+        if binding:
+            form_class = pytis.form.MultiBrowseDualForm
+            kwargs = dict(binding=binding)
+        else:
+            form_class = BrowseForm
+            kwargs = {}
+        run_form(form_class, name, select_row=select_row, filter=condition, **kwargs)
+
+    def _can_filter_contained(self, name, *args, **kwargs):
+        return app.has_access(name) and self._current_profile.id() != '__constructor_profile__'
+
+    @Command.define
     def context_menu(self, position=None):
         menu = self._context_menu()
         if menu:
@@ -2885,51 +2915,16 @@ class BrowseForm(FoldableForm):
                 items.append(Menu(title, [mitem(f, link, row) for f, link in links]))
         return items
 
-    def _in_operator_mitems(self, row, linkspec, not_in=False):
-        def mitem(name, column, f, title, binding):
-            if self._current_profile.id() == self._default_profile.id():
-                profile_id = None
-            else:
-                profile_id = self._current_profile.id()
-            column_label = f.column_label()
-            if not_in:
-                select_row = None
-                ititle = _('Filter "%(view_title)s" for rows not contained in '
-                           'column "%(column)s" of the current form.')
-            else:
-                select_row = {column: row[f.id()]}
-                ititle = _('Filter "%(view_title)s" for rows contained in '
-                           'column "%(column)s" of the current form.')
-
-            def handler(form_class, name, **kwargs):
-                # The main reason for wrapping run_form in a function
-                # run through handled_action here is to postpone the
-                # time consuming IN operator construction until the menu item
-                # is actually selected.
-                if self._current_profile_changed():
-                    msg = _("Can not filter as long as the current profile is unsaved!")
-                    asave, aquit = _("Save"), _("Cancel")
-                    if app.question(msg, answers=(asave, aquit), default=asave) != asave:
-                        return
-                    self.update_profile()
-                filter = make_in_operator(column, self.name(), f.id(), profile_id)
-                if not_in:
-                    filter = pytis.data.NOT(filter)
-                run_form(form_class, name, select_row=select_row, filter=filter, **kwargs)
-            if binding:
-                form_class = pytis.form.MultiBrowseDualForm
-                kwargs = dict(binding=binding)
-            else:
-                form_class = BrowseForm
-                kwargs = {}
-            return MenuItem(ititle % dict(view_title=title, column=column_label),
-                            command=Command(Application.handled_action,
-                                            handler=handler,
-                                            enabled=app.has_access(name),
-                                            form_class=form_class,
-                                            name=name,
-                                            **kwargs))
-        return [mitem(*args) for args in linkspec]
+    def _in_operator_mitems(self, linkspec, not_in=False):
+        return [MenuItem((_('Filter "%(view_title)s" for rows not contained in '
+                            'column "%(column)s" of the current form.')
+                          if not_in else
+                          _('Filter "%(view_title)s" for rows contained in '
+                            'column "%(column)s" of the current form.')
+                          ) % dict(view_title=title, column=field.column_label()),
+                         command=Command(self.filter_contained, name, column_id, field.id(),
+                                         binding=binding, not_in=not_in))
+                for name, column_id, field, title, binding in linkspec]
 
     def _context_menu(self):
         if self._grid.IsSelection():
@@ -2973,13 +2968,13 @@ class BrowseForm(FoldableForm):
                     separator = []
                 menu += (
                     Menu(_("Filter existing values (operator IN)"),
-                         (self._in_operator_mitems(row, self._explicit_in_operator_links) +
+                         (self._in_operator_mitems(self._explicit_in_operator_links) +
                           separator +
-                          self._in_operator_mitems(row, self._automatic_in_operator_links))),
+                          self._in_operator_mitems(self._automatic_in_operator_links))),
                     Menu(_("Filter missing values (operator NOT IN)"),
-                         (self._in_operator_mitems(row, self._explicit_in_operator_links, True) +
+                         (self._in_operator_mitems(self._explicit_in_operator_links, True) +
                           separator +
-                          self._in_operator_mitems(row, self._automatic_in_operator_links, True))),
+                          self._in_operator_mitems(self._automatic_in_operator_links, True))),
                 )
             dual = self._dualform()
             if self._view.bindings() and not (isinstance(dual, pytis.form.MultiBrowseDualForm) and
