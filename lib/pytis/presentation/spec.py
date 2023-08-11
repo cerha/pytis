@@ -1057,15 +1057,15 @@ class IN(pytis.data.Operator):
                  profile_name=None, condition=None, arguments=None):
         """Arguments:
 
-          column_id -- string identifier of the column which should belong to
-            the set; existence of its value is checked in the other table; same
-            as 'column_id' argument of 'pytis.data.IN'.
-          spec_name -- string name of the specification defining the set; data
-            object of this specification will be created and passed to
+          column_id -- string identifier of the column, the value of which is
+            tested for presence in the subquery; same as 'column_id' argument
+            of 'pytis.data.IN'.
+          spec_name -- string name of the specification defining the subquery;
+            data object of this specification will be created and passed to
             'pytis.data.IN' as 'data'.
-          table_column_id -- string identifier of the column in 'spec_name' used to
-            search for the value of 'column_id'; same as 'table_column_id'
-            argument of 'pytis.data.IN'.
+          table_column_id -- string identifier of the column in 'spec_name'
+            used to search for the value of 'column_id'; same as
+            'table_column_id' argument of 'pytis.data.IN'.
           profile_id -- string identifier of an existing profile within
             'spec_name'.  It can also be an id of a user defined profile saved
             through the profile manager by the current user, but in this case
