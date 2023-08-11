@@ -1784,7 +1784,12 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         if not isinstance(row, PresentedRow):
             data = pytis.util.data_object(name)
             if not isinstance(row, pd.Row):
+                key = row
                 row = data.row(row, transaction=transaction)
+                if not row:
+                    log(OPERATIONAL, "Invalid row reference:", key)
+                    app.error(_("Record not found"))
+                    return
             row = PresentedRow(view.fields(), data, row, transaction=transaction)
         on_edit_record = view.on_edit_record()
         if not block_on_edit_record and on_edit_record is not None:
