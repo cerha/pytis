@@ -52,7 +52,9 @@ import pytis.output
 import pytis.presentation
 import pytis.util
 from pytis.api import app
-from pytis.presentation import Orientation, TextFormat, StatusField, MenuItem, MenuSeparator, Command
+from pytis.presentation import (
+    Orientation, TextFormat, StatusField, MenuItem, MenuSeparator, Command,
+)
 from pytis.util import find, xtuple, log, DEBUG, EVENT, OPERATIONAL, ProgramError
 from .event import wx_callback, top_level_exception
 from .command import CommandHandler, UICommand
@@ -1274,14 +1276,14 @@ class ProfileSelectorPopup(wx.ComboPopup):
         ctrl.DeleteAllItems()
 
 
-class ProfileSelector(wx.ComboCtrl):
+class ProfileSelector(wx.ComboCtrl, CommandHandler):
     """Toolbar control for form profile selection and management."""
 
     def __init__(self, parent, command, size):
         wx.ComboCtrl.__init__(self, parent, style=wx.TE_PROCESS_ENTER, size=size)
         self._popup = ProfileSelectorPopup()
         self.SetPopupControl(self._popup)
-        self._on_enter_perform = None
+        self._on_enter_invoke = None
         # SetButtonPosition works around incorrect initial text control sizing in
         # codebook form, which starts with size 10x35 and resizes to the correct
         # size only after resizing the parent Dialog manually.
@@ -1321,21 +1323,10 @@ class ProfileSelector(wx.ComboCtrl):
                      command=Command(pytis.form.LookupForm.update_profile),
                      help=_("Update the saved profile according to the current form setup.")),
             MenuItem(_("Duplicate current profile"),
-                     command=Command(
-                         pytis.form.Application.handled_action,
-                         # Name must be edited first and 'cmd' will be invoked after confirmation.
-                         handler=self._edit_profile_title,
-                         enabled=self._edit_profile_title_enabled,
-                         cmd=pytis.form.LookupForm.save_new_profile,
-                         clear=True),
+                     command=Command(self.edit_profile_title, new=True),
                      help=_("Create a new profile according to the current form setup.")),
             MenuItem(_("Rename current profile"),
-                     command=Command(
-                         pytis.form.Application.handled_action,
-                         # Name must be edited first and 'cmd' will be invoked after confirmation.
-                         handler=self._edit_profile_title,
-                         enabled=self._edit_profile_title_enabled,
-                         cmd=pytis.form.LookupForm.rename_profile),
+                     command=Command(self.edit_profile_title),
                      help=_("Change the name of the current profile and save it.")),
             MenuItem(_("Delete current profile"),
                      command=Command(pytis.form.LookupForm.delete_profile),
@@ -1360,28 +1351,29 @@ class ProfileSelector(wx.ComboCtrl):
         )
         pytis.form.app.popup_menu(self, menu)
 
-    def _edit_profile_title(self, cmd, clear=False):
-        def callback():
-            ctrl.SetEditable(False)
-            Command(cmd, title=self.GetValue()).invoke()
+    @Command.define
+    def edit_profile_title(self, new=True):
         ctrl = self.GetTextCtrl()
-        ctrl.SetEditable(True)
-        if clear:
+        if new:
             ctrl.SetValue('')
+            self._on_enter_invoke = pytis.form.LookupForm.save_new_profile
         else:
             ctrl.SelectAll()
+            self._on_enter_invoke = pytis.form.LookupForm.rename_profile
         ctrl.SetFocus()
         app.echo(_("Enter the profile name and press ENTER when done."))
-        self._on_enter_perform = callback
 
-    def _edit_profile_title_enabled(self, cmd, clear=False):
-        return Command(cmd, title=self.GetValue()).enabled
+    def _can_edit_profile_title(self, new=True):
+        return (self._on_enter_invoke is None or
+                Command(self._on_enter_invoke, title=self.GetValue()).enabled)
 
     def _on_enter(self, event):
-        callback = self._on_enter_perform
-        if callback:
-            self._on_enter_perform = None
-            callback()
+        command_method = self._on_enter_invoke
+        if command_method:
+            self._on_enter_invoke = None
+            self.GetTextCtrl().SetEditable(False)
+            command = Command(command_method, title=self.GetValue())
+            command.invoke()
         else:
             event.Skip()
 
