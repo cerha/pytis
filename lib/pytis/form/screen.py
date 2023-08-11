@@ -1456,36 +1456,6 @@ class FormStateToolbarControl(wx.BitmapButton):
         pass
 
 
-class KeyboardSwitcher(wx.BitmapButton, CommandHandler):
-    """Special toolbar control for keyboard layout switching and indication."""
-
-    def __init__(self, parent, command, size=None):
-        self._toolbar = parent
-        layouts = pytis.config.keyboard_layouts
-        self._bitmaps = dict([(icon, get_icon(icon, type=wx.ART_TOOLBAR) or
-                               get_icon(wx.ART_ERROR, type=wx.ART_TOOLBAR))
-                              for title, icon, command in layouts])
-        self._menu = [MenuItem(title, command=Command(self.switch_layout, system_command, icon))
-                      for title, icon, system_command in layouts]
-        layout = find(pytis.config.initial_keyboard_layout, layouts, lambda x: x[2]) or layouts[0]
-        icon, system_command = layout[1:]
-        os.system(system_command)
-        wx.BitmapButton.__init__(self, parent, -1, self._bitmaps[icon],
-                                 size=size or wx.DefaultSize,
-                                 style=wx.BU_EXACTFIT | wx.NO_BORDER)
-        wx_callback(wx.EVT_BUTTON, self, self._on_click)
-
-    def _on_click(self, event):
-        pytis.form.app.popup_menu(self._toolbar, self._menu)
-
-    @Command.define
-    def switch_layout(self, system_command, icon):
-        os.system(system_command)
-        pytis.config.initial_keyboard_layout = system_command
-        self.SetBitmapLabel(self._bitmaps[icon])
-        self._toolbar.Realize()
-
-
 class DualFormSwitcher(FormStateToolbarControl):
     """Special toolbar control for DualForm.other_form.
 
@@ -1523,6 +1493,36 @@ class DualFormResplitter(FormStateToolbarControl):
             return 0
         else:
             return 1
+
+
+class KeyboardSwitcher(wx.BitmapButton, CommandHandler):
+    """Special toolbar control for keyboard layout switching and indication."""
+
+    def __init__(self, parent, command, size=None):
+        self._toolbar = parent
+        layouts = pytis.config.keyboard_layouts
+        self._bitmaps = dict([(icon, get_icon(icon, type=wx.ART_TOOLBAR) or
+                               get_icon(wx.ART_ERROR, type=wx.ART_TOOLBAR))
+                              for title, icon, command in layouts])
+        self._menu = [MenuItem(title, command=Command(self.switch_layout, system_command, icon))
+                      for title, icon, system_command in layouts]
+        layout = find(pytis.config.initial_keyboard_layout, layouts, lambda x: x[2]) or layouts[0]
+        icon, system_command = layout[1:]
+        os.system(system_command)
+        wx.BitmapButton.__init__(self, parent, -1, self._bitmaps[icon],
+                                 size=size or wx.DefaultSize,
+                                 style=wx.BU_EXACTFIT | wx.NO_BORDER)
+        wx_callback(wx.EVT_BUTTON, self, self._on_click)
+
+    def _on_click(self, event):
+        pytis.form.app.popup_menu(self._toolbar, self._menu)
+
+    @Command.define
+    def switch_layout(self, system_command, icon):
+        os.system(system_command)
+        pytis.config.initial_keyboard_layout = system_command
+        self.SetBitmapLabel(self._bitmaps[icon])
+        self._toolbar.Realize()
 
 
 class LocationBar(wx.TextCtrl):
