@@ -5576,11 +5576,9 @@ class Application(SpecificationBase, CommandHandler):
     Custom commands may be used in menu items using string identifiers.  For
     all such identifiers, the derived class must also define a method named as
     this identider with a prefix 'cmd_'.  This method, when called with no
-    arguments, must return the specification of the command to invoke as a pair
-    (COMMAND, ARGUMENTS), where the first item is a 'pytis.form.Command'
-    instance and the later item is a dictionary of arguments to passed to the
-    command when invoked.  For example when command identifier is 'my_form',
-    the application must define a method named 'cmd_my_form'.
+    arguments, must return the 'pytis.presentation.Command' instance.  For
+    example when command identifier is 'my_form', the application must define a
+    method named 'cmd_my_form'.
 
     """
 
