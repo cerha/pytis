@@ -638,7 +638,7 @@ class DMPMenu(DMPObject):
 
         def make_action_id(command, args):
             def modulify(obj, name):
-                module_name = str(obj.__module__)
+                module_name = unistr(obj.__module__)
                 if module_name == 'pytis.form.list':
                     # Well, not a very good idea to name a Python file `list'
                     module_name = 'pytis.form'
@@ -739,7 +739,7 @@ class DMPMenu(DMPObject):
         children_by_position = {}
 
         def process(row):
-            position = str(row['position'].value())
+            position = unistr(row['position'].value())
             if row['name'].value():
                 kind = self.MenuItem.ACTION_ITEM
             elif row['title'].value():
@@ -747,14 +747,14 @@ class DMPMenu(DMPObject):
             else:
                 kind = self.MenuItem.SEPARATOR_ITEM
             item = self.MenuItem(id=row['menuid'].value(),
-                                 name=str(row['name'].value()),
+                                 name=unistr(row['name'].value()),
                                  kind=kind,
                                  title=row['title'].value(),
-                                 action=str(row['fullname'].value()),
+                                 action=unistr(row['fullname'].value()),
                                  position=position,
-                                 next_position=str(row['next_position'].value()),
+                                 next_position=unistr(row['next_position'].value()),
                                  help=row['help'].value(),
-                                 hotkey=str(row['hotkey'].value()),
+                                 hotkey=unistr(row['hotkey'].value()),
                                  locked=row['locked'].value(),
                                  )
             items_by_position[position] = item
@@ -1254,7 +1254,7 @@ class DMPRoles(DMPObject):
 
         def process(row):
             oid = row['oid'].value()
-            role = str(row['rolname'].value())
+            role = unistr(row['rolname'].value())
             login = row['rolcanlogin'].value()
             role_oids[oid] = role
             if role not in semi_excluded_roles:
@@ -1602,8 +1602,8 @@ class DMPActions(DMPObject):
 
         def process(row):
             action = self.Action(self._resolver(), None,
-                                 fullname=str(row['fullname'].value()),
-                                 special_shortname=str(row['shortname'].value()),
+                                 fullname=unistr(row['fullname'].value()),
+                                 special_shortname=unistr(row['shortname'].value()),
                                  title=row['action_title'].value(),
                                  description=row['description'].value())
             self._add_action(action)
