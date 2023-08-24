@@ -5465,7 +5465,9 @@ class CommandHandler(with_metaclass(CommandHandlerMetaClass, object)):
             method = getattr(self, '_can_' + command.method.__name__, None)
             if method:
                 enabled = self._call_command_method(command, method)
-                assert isinstance(enabled, bool), '{} returned {}'.format(method, enabled)
+                if not isinstance(enabled, bool):
+                    log(OPERATIONAL, "Invalid return value:", (method, enabled))
+                    enabled = bool(enabled)
                 return enabled
             else:
                 return True
