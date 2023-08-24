@@ -1632,17 +1632,17 @@ class LookupForm(InnerForm):
         return sorting
 
     def _can_sort(self, col=None, direction=None, primary=False):
-        # `col' je zde identifikátor sloupce.
+        # `col' is column identifier.
         sorting_columns = tuple(self._sorting_columns())
         if direction == self.UNSORT:
-            return sorting_columns and (col is None or col in sorting_columns)
+            return bool(sorting_columns) and (col is None or col in sorting_columns)
         elif direction is not None and col is not None:
             position = self._sorting_position(col)
             current_direction = self._sorting_direction(col)
             if primary:
                 return position != 0 or direction != current_direction
             else:
-                return position != 0 and direction != current_direction and sorting_columns
+                return position != 0 and direction != current_direction and bool(sorting_columns)
         else:
             return True
 
