@@ -2352,7 +2352,8 @@ def get_icon(icon_id, type=wx.ART_MENU, size=(16, 16)):
         Identifiers not corresponding to wx constants are used as icon file
         names within the 'pytis.config.icon_dir'.  The '.png' suffix is added
         automatically, so the identifier consists just of a base name.
-      type, size -- only relevant when icon_id as a 'wx.ART_*' constant.
+      type, size -- only relevant when icon_id as a 'wx.ART_*' constant.  Size
+        is also used when icon is an SVG file.
 
     If an icon for given identifier is not found, returns None.
 
