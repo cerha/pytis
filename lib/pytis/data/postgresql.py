@@ -129,6 +129,13 @@ class _Query(object):
             args.update(other._args)
         return _Query(template, args)
 
+    def __str__(self):
+        return '<{} template={!r} args={!r}>'.format(self.__class__.__name__,
+                                                     self._template, self._args)
+
+    def __repr__(self):
+        return str(self)
+
     def __mod__(self, args):
         new_args = copy.copy(self._args)
         new_args.update(args)
