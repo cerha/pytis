@@ -2587,7 +2587,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         function_list = [_QFunction(function, (cname,)) for cname in colnames]
         function_string = _Query.join(function_list)
         args = dict(columns=function_string, condition=cond_string)
-        if arguments:
+        if self._arguments is not None:
             self._pg_make_arguments(args, arguments)
         query = self._pdbb_command_select_agg.update(args)
         if transaction is None:
