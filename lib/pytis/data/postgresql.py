@@ -72,6 +72,12 @@ class _PgValue(object):
         self._value = value
         self._pg_value = self._convert_value(value)
 
+    def __str__(self):
+        return '<{} value={}>'.format(self.__class__.__name__, self._value)
+
+    def __repr__(self):
+        return str(self)
+
     def _convert_value(self, value):
         v = value.value()
         t = value.type()
