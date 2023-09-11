@@ -932,6 +932,23 @@ class Configuration(object):
         _DOC = _("Must be one of Pyhon supported encodings.")
         _DEFAULT = 'utf-8'
 
+    class _Option_xlsx_export_author(StringOption):
+        """Author of the XLSX export file .
+
+        XLSX format allows setting meta information about the document.  This
+        option may be used to set the "author" property of all XLSX export
+        files.  If None, the meta properties are unset.
+
+        Note, that when the author is unset (this option is None) and the
+        exported file is opened from a Pytis app in MS Office, MS Office will
+        automatically set author the the current user when the file is saved
+        using "Save as".  So setting this option to arbitrary string may avoid
+        leaking this information through export files.
+
+        """
+        _DESCR = _("Value of the 'author' property in XLSX meta information of export files")
+        _DEFAULT = None
+
     class _Option_cache_size(NumericOption):
         """Maximal total number of rows cached for a data object selection."""
         _DEFAULT = 20000

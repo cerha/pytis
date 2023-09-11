@@ -2000,6 +2000,8 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         columns = []
         output = io.BytesIO()
         writer = xlsxwriter.Workbook(output, {'remove_timezone': True})
+        if pytis.config.xlsx_export_author:
+            writer.set_properties({"author": pytis.config.xlsx_export_author})
         worksheet = writer.add_worksheet('Export')
         # Setup columns
         bold = writer.add_format({'bold': True})
