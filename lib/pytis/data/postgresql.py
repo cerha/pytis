@@ -3339,7 +3339,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
     def insert(self, row, after=None, before=None, transaction=None):
         rows, success = self.insert_many((row,), after, before, transaction)
         if success:
-            if len(rows)==0:
+            if len(rows) == 0:
                 row = None
             else:
                 row = rows[0]
@@ -3358,8 +3358,8 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         try:
             # Jestliže je definováno ordering, které je součástí klíče, bude
             # nově vložený řádek nutně unikátní.
-            if (((not self._ordering or (self._ordering[0] not in [c.id() for c in self.key()])) and
-                 self._pg_already_present_any(rows, transaction=transaction))):
+            if (((not self._ordering or (self._ordering[0] not in [c.id() for c in self.key()]))
+                 and self._pg_already_present_any(rows, transaction=transaction))):
                 msg = 'Row with this key already exists'
                 result = msg, False
                 log(ACTION, msg)
