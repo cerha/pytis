@@ -908,7 +908,7 @@ class PostgreSQLNotifier(PostgreSQLConnector):
 
         def _notif_listen(self):
             if __debug__:
-                log(DEBUG, 'Nový listener')
+                log(DEBUG, 'New listener')
             error_pause = 1
             self._notif_init_connection()
             while True:

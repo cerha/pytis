@@ -100,7 +100,7 @@ class InvalidAccessError(Exception):
 
     def __init__(self, *args):
         import pytis.util
-        pytis.util.log(pytis.util.OPERATIONAL, 'Neoprávněný přístup', args)
+        pytis.util.log(pytis.util.OPERATIONAL, 'Invalid access:', args)
         super_(InvalidAccessError).__init__(self, *args)
 
 

@@ -802,7 +802,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         dobu.  K přímým updatům slouží metody 'reset()' a 'refresh()'.
 
         """
-        log(EVENT, 'Notifikace o změně dat řádkového seznamu')
+        log(EVENT, 'List data change notification')
         now = time.time()
         maybe_future = self._last_reshuffle_request + self._REFRESH_PERIOD
         self._reshuffle_request = max(now, maybe_future)

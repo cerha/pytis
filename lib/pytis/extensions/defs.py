@@ -120,19 +120,19 @@ def _get_default_select(spec):
                              if view.field(k.id()) is not None])
         success, select_count = pytis.form.db_operation(data.select, sort=sorting, reuse=False)
         if not success:
-            log(EVENT, 'Selhání databázové operace')
+            log(EVENT, 'Database operation failed')
             return None
         return select_count
     resolver = pytis.config.resolver
     try:
         view = resolver.get(spec, 'view_spec')
     except Exception:
-        log(OPERATIONAL, "Nepodařilo se vytvořit view_spec")
+        log(OPERATIONAL, "Failed creating view_spec")
         return None
     try:
         data = pytis.util.data_object(spec)
     except Exception:
-        log(OPERATIONAL, "Nepodařilo se vytvořit datový objekt")
+        log(OPERATIONAL, "Failed creating data object")
         return None
     data = pytis.util.data_object(spec)
     select_count = init_select(view, data)
