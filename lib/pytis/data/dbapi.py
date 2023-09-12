@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2022 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2023 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2015 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -451,7 +451,7 @@ class DBAPIData(_DBAPIAccessor, DBDataPostgreSQL):
                     select.select([fileno], [], [], None)
                 except Exception as e:
                     if __debug__:
-                        log(DEBUG, 'Socket error', e.args)
+                        log(DEBUG, 'Socket error:', e.args)
                     break
                 if __debug__:
                     log(DEBUG, 'Input received')

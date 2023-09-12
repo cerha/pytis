@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2019 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2019, 2023 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2002-2017 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -427,7 +427,7 @@ class DataAccessException(Exception):
             'None'
 
         """
-        log(EVENT, 'Access violation attempt',
+        log(EVENT, 'Access violation attempt:',
             (pytis.config.dbconnection.user(), permission, table, column))
         Exception.__init__(self, _(u"Access denied"), permission, table, column)
 

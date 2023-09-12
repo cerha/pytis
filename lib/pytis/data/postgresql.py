@@ -695,7 +695,7 @@ class PostgreSQLConnector(PostgreSQLAccessor):
             self._pg_query_counter += 1
             # Proveď dotaz
             if __debug__:
-                log(DEBUG, 'SQL query', query.format())
+                log(DEBUG, 'SQL query:', query.format())
             with Locked(self._pg_query_lock):
                 try:
                     try:
@@ -731,7 +731,7 @@ class PostgreSQLConnector(PostgreSQLAccessor):
                 data = self._postgresql_transform_query_result(result)
                 break
         if __debug__:
-            log(DEBUG, 'SQL query result', data)
+            log(DEBUG, 'SQL query result:', data)
         return data
 
     def _pg_flush_connections(self):

@@ -720,9 +720,9 @@ class DBException(Exception):
         if message is None:
             message = _(u"Database error")
         super_(DBException).__init__(self, message, exception, *args)
-        log(OPERATIONAL, 'Database exception', (message,) + args)
+        log(OPERATIONAL, 'Database exception:', (message,) + args)
         if exception:
-            log(OPERATIONAL, 'Wrapped database exception', (exception,) + exception.args)
+            log(OPERATIONAL, 'Wrapped database exception:', (exception,) + exception.args)
         self._message = message
         self._exception = exception
 
