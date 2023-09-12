@@ -322,6 +322,12 @@ class PostgreSQLResult(object):
         """
         return len(self._data)
 
+    def __str__(self):
+        return '<{} {!r}>'.format(self.__class__.__name__, self._data)
+
+    def __repr__(self):
+        return str(self)
+
 
 class PostgreSQLAccessor(object_2_5):
     """Třída pro low-level přístup k PostgreSQL.
