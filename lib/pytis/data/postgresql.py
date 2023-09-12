@@ -3196,7 +3196,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
                 if pos > last:
                     buf.skip(pos - last, BACKWARD)
         if __debug__:
-            log(DEBUG, 'Returned row', str(row))
+            log(DEBUG, 'Returned row:', row)
         if self._pg_select_set_read_only:
             self._pg_select_transaction.set_read_only()
             self._pg_select_set_read_only = False
@@ -3336,23 +3336,11 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
     def select_active(self):
         return self._pg_select_transaction is not None
 
-    def insert(self, row, after=None, before=None, transaction=None):
-        rows, success = self.insert_many((row,), after, before, transaction)
-        if success:
-            if len(rows) == 0:
-                row = None
-            else:
-                row = rows[0]
-        else:
-            row = rows
-        return row, success
-
-    def insert_many(self, rows, after=None, before=None, transaction=None):
+    def _insert_many(self, rows, after=None, before=None, transaction=None):
         assert after is None or before is None, 'Both after and before specified'
         rows = tuple(rows)
         if not rows:
             return (), True
-        log(ACTION, 'Insert rows:', (rows, after, before))
         if transaction is None:
             self._pg_begin_transaction()
         try:
@@ -3361,8 +3349,8 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
             if (((not self._ordering or (self._ordering[0] not in [c.id() for c in self.key()]))
                  and self._pg_already_present_any(rows, transaction=transaction))):
                 msg = 'Row with this key already exists'
-                result = msg, False
                 log(ACTION, msg)
+                result = msg, False
             else:
                 positioned = after or before
                 if after:
@@ -3389,14 +3377,40 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
             self._pg_send_notifications()
         else:
             transaction._trans_notify(self)
-        if result[1]:
-            log(ACTION, 'Rows inserted:', result)
         return result
+
+    def insert(self, row, after=None, before=None, transaction=None):
+        log(ACTION, 'Insert row:', (after, before))
+        if __debug__:
+            log(DEBUG, 'Inserted row:', row)
+        rows, success = self._insert_many((row,), after, before, transaction)
+        if success:
+            if len(rows) == 0:
+                row = None
+            else:
+                row = rows[0]
+            if __debug__:
+                log(DEBUG, 'Row inserted:', row)
+        else:
+            row = rows
+        return row, success
+
+    def insert_many(self, rows, after=None, before=None, transaction=None):
+        log(ACTION, 'Insert rows:', (len(rows), after, before))
+        if __debug__:
+            log(DEBUG, 'Inserted rows:', rows)
+        rows, success = self._insert_many(rows, after, before, transaction)
+        if success:
+            if __debug__:
+                log(DEBUG, 'Rows inserted:', rows)
+        return rows, success
+
 
     def update(self, key, row, transaction=None):
         key = xtuple(key)
         log(ACTION, 'Update row:', key)
-        log(ACTION, 'New data:', str(row))
+        if __debug__:
+            log(DEBUG, 'New Data:', row)
         if transaction is None:
             self._pg_begin_transaction()
         try:
@@ -3421,8 +3435,8 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
                 new_key = tuple(new_key)
                 if new_key != key and self._pg_already_present(row):
                     msg = 'Row with given key already exists'
-                    result = msg, False
                     log(ACTION, msg, key)
+                    result = msg, False
                 else:
                     n = self._pg_update(self._pg_key_condition(key), row,
                                         transaction=transaction)
@@ -3433,8 +3447,8 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
                         result = new_row, True
             else:  # not origrow
                 msg = 'Row with given key does not exist'
-                result = msg, False
                 log(ACTION, msg, key)
+                result = msg, False
         except Exception:
             cls, e, tb = sys.exc_info()
             try:
@@ -3449,12 +3463,14 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         else:
             transaction._trans_notify(self)
         if result[1]:
-            log(ACTION, 'Row updated:', result)
+            if __debug__:
+                log(DEBUG, 'Row updated:', result)
         return result
 
     def update_many(self, condition, row, transaction=None):
         log(ACTION, 'Update rows:', condition)
-        log(ACTION, 'New data:', str(row))
+        if __debug__:
+            log(DEBUG, 'New data:', str(row))
         if transaction is None:
             self._pg_begin_transaction()
         try:
@@ -3480,7 +3496,8 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         else:
             transaction._trans_notify(self)
         if result:
-            log(ACTION, 'Rows updated:', result)
+            if __debug__:
+                log(DEBUG, 'Rows updated:', result)
         return result
 
     def delete(self, key, transaction=None):
@@ -3503,7 +3520,8 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
             self._pg_send_notifications()
         else:
             transaction._trans_notify(self)
-        log(ACTION, 'Row deleted:', result)
+        if __debug__:
+            log(DEBUG, 'Row deleted:', result)
         return result
 
     def delete_many(self, condition, transaction=None):
@@ -3525,7 +3543,8 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
             self._pg_send_notifications()
         else:
             transaction._trans_notify(self)
-        log(ACTION, 'Rows deleted:', result)
+        if __debug__:
+            log(DEBUG, 'Rows deleted:', result)
         return result
 
     def refresh(self, concurrently=True):
