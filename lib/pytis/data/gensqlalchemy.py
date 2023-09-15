@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2022 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2023 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2012-2016 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -3166,10 +3166,25 @@ class SQLView(_SQLBaseView):
         a part of another view which defines update or delete rules modifying
         the view.  The primary column is the view column uniquely identifying
         the view rows.
+      lock_tables -- sequence of table aliases to be locked on update as
+        strings.  The names must refer to the aliases used in view definition.
+        Left joined tables can not be present, because an attempt to lock them
+        would cause a database error.
+      lock_key -- reference to the key column in the view definition.  As in
+        'lock_tables', we need to refer to the columns in view definition, not
+        to the resulting view columns.  Typically it will be a fully qualified
+        column name consisting of table name (or its alias in view definition),
+        a dot and a column name.  SQL expressions are also allowed, for example
+        if the view key is constructed from multiple columns (something like
+        "table1.id || '.' || table2.id").
 
     """
     _DB_OBJECT = 'VIEW'
     _REPLACE_ON_CREATE = True
+
+    lock_tables = None
+    lock_key = None
+
 
     @classmethod
     def join_columns(class_):
