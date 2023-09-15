@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2020 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2023 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2013-2015 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -50,6 +50,17 @@ def dval(date):
     return sqlalchemy.literal_column("'%s'" % (date,), type_=sqlalchemy.Date())
 
 
+def dtval(date):
+    """Return literal date value.
+
+    Arguments:
+
+      date -- ISO date string, e.g. "2012-12-31"
+
+    """
+    return sqlalchemy.literal_column("'%s'" % (date,), type_=sqlalchemy.DateTime())
+
+
 def ival(number):
     """Return literal integer value.
 
@@ -95,6 +106,16 @@ def sval(text, length=None):
         "'%s'" % (text.replace("'", "''"),), type_=sqlalchemy.String(length=length)
     )
 
+
+def bval(expression):
+    """Return literal boolean value.
+
+    Arguments:
+
+      expression --  value
+
+    """
+    return sqlalchemy.literal_column(str(expression), type_=sqlalchemy.Boolean())
 
 
 def dtype(expr):

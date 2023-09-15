@@ -5,7 +5,7 @@ from __future__ import unicode_literals
 import sqlalchemy
 import pytis.data.gensqlalchemy as sql
 import pytis.data
-from pytis.data.dbdefs import and_
+from pytis.data.dbdefs import and_, ival, sval, bval, dtval
 
 cms_users_table = sql.SQLFlexibleValue('app_cms_users_table',
                                        default='cms_users_table')
@@ -146,7 +146,6 @@ class CmsMenuStructure(sql.SQLTable, CmsExtensible):
                       unique=True),
         ('parent', 'ord',),
     )
-
     depends_on = (CmsModules,)
     access_rights = cms_rights.value(globals())
 
@@ -191,32 +190,28 @@ class CmsMenu(sql.SQLView, CmsExtensible):
 
     @classmethod
     def query(cls):
-        struc = sql.t.CmsMenuStructure.alias('s')
+        structure = sql.t.CmsMenuStructure.alias('s')
         lang = sql.t.CmsLanguages.alias('l')
         texts = sql.t.CmsMenuTexts.alias('t')
         mod = sql.t.CmsModules.alias('m')
         return sqlalchemy.select(
-            cls._exclude(struc) +
+            [sval("s.menu_item_id ||'.'|| l.lang").label('menu_id')] +
+            cls._exclude(structure) +
             cls._exclude(lang, 'lang_id') +
             cls._exclude(texts, 'menu_item_id', 'lang', 'published') +
             cls._exclude(mod, 'mod_id') +
-            [sql.gL("s.menu_item_id ||'.'|| l.lang").label('menu_id'),
-             sql.gL("coalesce(t.published, 'FALSE')").label('published'),
-             sql.gL("coalesce(t.title, s.identifier)").label('title_or_identifier'),
-             sql.gL("(select count(*)-1 from cms_menu_structure "
-                    "where tree_order <@ s.tree_order)").label('tree_order_nsub')],
-            from_obj=[
-                struc.join(
-                    lang, sqlalchemy.sql.true()).
-                outerjoin(
-                    texts, and_(
-                        texts.c.menu_item_id == struc.c.menu_item_id,
-                        texts.c.lang == lang.c.lang
-                    )
-                ).outerjoin(
-                    mod, mod.c.mod_id == struc.c.mod_id
-                )
-            ]
+            [bval("coalesce(t.published, 'FALSE')").label('published'),
+             sval("coalesce(t.title, s.identifier)").label('title_or_identifier'),
+             ival("(select count(*)-1 from cms_menu_structure "
+                  "where tree_order <@ s.tree_order)").label('tree_order_nsub')],
+        ).select_from(
+            structure
+            .join(lang, sqlalchemy.sql.true())
+            .outerjoin(texts, and_(
+                texts.c.menu_item_id == structure.c.menu_item_id,
+                texts.c.lang == lang.c.lang
+            ))
+            .outerjoin(mod, mod.c.mod_id == structure.c.mod_id)
         )
 
     def on_insert(self):
@@ -262,6 +257,7 @@ class CmsMenu(sql.SQLView, CmsExtensible):
 
     def on_delete(self):
         return ("(DELETE FROM cms_menu_structure WHERE menu_item_id = old.menu_item_id;)",)
+
     depends_on = (CmsMenuStructure, CmsLanguages, CmsMenuTexts, CmsModules,)
     access_rights = cms_rights.value(globals())
 
@@ -568,8 +564,8 @@ class CmsSessionLog(sql.SQLView, CmsExtensible):
         return sqlalchemy.select(
             cls._exclude(log, 'end_time') +
             [users.c.fullname.label('fullname'),
-             sql.gL("coalesce(l.end_time, s.last_access) - l.start_time").label('duration'),
-             sql.gL("s.session_id IS NOT NULL AND age(s.last_access)<'1 hour'").label('active')],
+             dtval("coalesce(l.end_time, s.last_access) - l.start_time").label('duration'),
+             bval("s.session_id IS NOT NULL AND age(s.last_access)<'1 hour'").label('active')],
             from_obj=[
                 log.outerjoin(
                     session, log.c.session_id == session.c.session_id
