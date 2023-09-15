@@ -213,6 +213,8 @@ class CmsMenu(sql.SQLView, CmsExtensible):
             ))
             .outerjoin(mod, mod.c.mod_id == structure.c.mod_id)
         )
+    lock_tables = ('s',)
+    lock_key = "s.menu_item_id || '.' || l.lang"
 
     def on_insert(self):
         return ("""(
