@@ -1641,10 +1641,9 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
 
     def api_echo(self, message, kind='info'):
         assert kind in ('info', 'warning', 'error')
+        log(EVENT, 'Echo [%s]:' % kind, message)
         if kind in ('warning', 'error'):
             beep()
-        if message:
-            log(EVENT, message)
         form = self._modals.top()
         if isinstance(form, pytis.form.Form) and form.set_status('message', message):
             return
