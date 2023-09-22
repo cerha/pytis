@@ -1114,7 +1114,8 @@ class GenericEnumerationField(InputField):
 
     def _on_idle(self, event):
         super(GenericEnumerationField, self)._on_idle(event)
-        if self._enumeration_changed:
+        transaction = self._row.transaction()
+        if self._enumeration_changed and (not transaction or transaction.open()):
             self._enumeration_changed = False
             self._reload_enumeration()
 
