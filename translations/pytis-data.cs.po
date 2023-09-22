@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pytis 0.1\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2022-09-07 11:50+0200\n"
+"POT-Creation-Date: 2023-09-22 18:07+0200\n"
 "PO-Revision-Date: 2022-05-13 14:08+0200\n"
 "Last-Translator: Hynek Hanke <hanke@brailcom.org>\n"
 "Language-Team: Czech <wiking@lists.freebsoft.org>\n"
@@ -57,20 +57,20 @@ msgstr "Porušení integrity dat v databázi"
 msgid "Too many database connections"
 msgstr "Příliš mnoho databázových spojení"
 
-#: ../lib/pytis/data/dbdata.py:722
+#: ../lib/pytis/data/dbdata.py:721
 msgid "Database error"
 msgstr "Databázová chyba"
 
-#: ../lib/pytis/data/dbdata.py:791
+#: ../lib/pytis/data/dbdata.py:790
 msgid "Invalid user name or password"
 msgstr "Chybné uživatelské jméno nebo heslo"
 
-#: ../lib/pytis/data/postgresql.py:426 ../lib/pytis/data/postgresql.py:536
-#: ../lib/pytis/data/postgresql.py:548
+#: ../lib/pytis/data/postgresql.py:442 ../lib/pytis/data/postgresql.py:552
+#: ../lib/pytis/data/postgresql.py:564
 msgid "Method not implemented"
 msgstr "Volána neimplementovaná metoda"
 
-#: ../lib/pytis/data/postgresql.py:3556
+#: ../lib/pytis/data/postgresql.py:3637
 msgid "Invalid database counter value"
 msgstr "Chybná hodnota čítače z databáze"
 
@@ -254,25 +254,34 @@ msgid "One of hierarchical value items contains invalid characters"
 msgstr "Jedna z položek hierarchické hodnoty obsahuje neplatné znaky"
 
 #. User input validation error message.
-#: ../lib/pytis/data/types_.py:2754
+#: ../lib/pytis/data/types_.py:2755
 msgid "Not a JSON string"
-msgstr ""
+msgstr "Není JSON řetězec"
 
-#: ../lib/pytis/data/types_.py:2756
+#: ../lib/pytis/data/types_.py:2759
 msgid "Unsupported JSON value"
-msgstr ""
+msgstr "Nepodporovaná JSON hodnota"
 
-#: ../lib/pytis/data/types_.py:2762
+#: ../lib/pytis/data/types_.py:2765
 msgid "JSON value doesn't match schema definition"
-msgstr ""
+msgstr "JSON hodnota neodpovídá definici schematu"
 
-#: ../lib/pytis/presentation/field.py:482
+#: ../lib/pytis/presentation/field.py:483
 msgid "Such value already exists."
 msgstr "Taková hodnota již existuje"
 
-#: ../lib/pytis/presentation/field.py:745
+#: ../lib/pytis/presentation/field.py:746
 msgid "unlimited"
 msgstr "neomezeno"
+
+#: ../lib/pytis/presentation/spec.py:5431
+#, python-format
+msgid ""
+"You don't have priviledges to invoke the action '%s'.\n"
+"Please contact the access rights administrator."
+msgstr ""
+"Nemáte oprávnění pro vyvolání akce '%s'.\n"
+"Kontaktujte prosím správce přístupových práv."
 
 #~ msgid "Invalid date or time"
 #~ msgstr "Chybné datum nebo čas"

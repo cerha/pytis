@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pytis 0.1\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2022-09-07 11:50+0200\n"
+"POT-Creation-Date: 2023-09-22 18:07+0200\n"
 "PO-Revision-Date: 2014-01-14 16:54+0100\n"
 "Last-Translator: Hynek Hanke <hanke@brailcom.org>\n"
 "Language-Team: Czech <wiking@lists.freebsoft.org>\n"
@@ -17,48 +17,48 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=((n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2);\n"
 
-#: ../lib/pytis/cms/cms.py:75
+#: ../lib/pytis/cms/cms.py:78
 msgid "Jazyky"
 msgstr ""
 
-#: ../lib/pytis/cms/cms.py:76
+#: ../lib/pytis/cms/cms.py:79
 msgid "Správa jazyků dostupných v CMS."
 msgstr ""
 
-#: ../lib/pytis/cms/cms.py:82
+#: ../lib/pytis/cms/cms.py:84
 msgid "Kód"
 msgstr ""
 
-#: ../lib/pytis/cms/cms.py:84 ../lib/pytis/cms/cms.py:111
-#: ../lib/pytis/cms/cms.py:248 ../lib/pytis/cms/cms.py:281
-#: ../lib/pytis/cms/cms.py:282 ../lib/pytis/cms/cms.py:441
-#: ../lib/pytis/cms/cms.py:512 ../lib/pytis/cms/cms.py:657
-#: ../lib/pytis/defs/help.py:45 ../lib/pytis/defs/help.py:69
-#: ../lib/pytis/defs/help.py:173 ../lib/pytis/defs/menu.py:95
+#: ../lib/pytis/cms/cms.py:86 ../lib/pytis/cms/cms.py:112
+#: ../lib/pytis/cms/cms.py:243 ../lib/pytis/cms/cms.py:271
+#: ../lib/pytis/cms/cms.py:272 ../lib/pytis/cms/cms.py:429
+#: ../lib/pytis/cms/cms.py:498 ../lib/pytis/cms/cms.py:635
+#: ../lib/pytis/defs/help.py:46 ../lib/pytis/defs/help.py:70
+#: ../lib/pytis/defs/help.py:174 ../lib/pytis/defs/menu.py:93
 #: ../lib/pytis/defs/profiles.py:35
 msgid "Title"
 msgstr "Název"
 
-#: ../lib/pytis/cms/cms.py:102
+#: ../lib/pytis/cms/cms.py:104
 msgid "Moduly"
 msgstr ""
 
-#: ../lib/pytis/cms/cms.py:103
+#: ../lib/pytis/cms/cms.py:105
 msgid "Správa rozšiřujících modulů použitelných ve stránkách."
 msgstr ""
 
-#: ../lib/pytis/cms/cms.py:112 ../lib/pytis/cms/cms.py:203
-#: ../lib/pytis/cms/cms.py:288 ../lib/pytis/cms/cms.py:443
-#: ../lib/pytis/cms/cms.py:489 ../lib/pytis/cms/cms.py:513
-#: ../lib/pytis/cms/cms.py:546 ../lib/pytis/defs/help.py:73
-#: ../lib/pytis/defs/help.py:171 ../lib/pytis/defs/menu.py:43
-#: ../lib/pytis/defs/menu.py:212 ../lib/pytis/defs/menu.py:214
-#: ../lib/pytis/defs/menu.py:252 ../lib/pytis/defs/menu.py:647
+#: ../lib/pytis/cms/cms.py:113 ../lib/pytis/cms/cms.py:203
+#: ../lib/pytis/cms/cms.py:278 ../lib/pytis/cms/cms.py:431
+#: ../lib/pytis/cms/cms.py:476 ../lib/pytis/cms/cms.py:499
+#: ../lib/pytis/cms/cms.py:531 ../lib/pytis/defs/help.py:74
+#: ../lib/pytis/defs/help.py:172 ../lib/pytis/defs/menu.py:43
+#: ../lib/pytis/defs/menu.py:209 ../lib/pytis/defs/menu.py:211
+#: ../lib/pytis/defs/menu.py:248 ../lib/pytis/defs/menu.py:637
 msgid "Description"
 msgstr "Popis"
 
 #: ../lib/pytis/cms/cms.py:142
-msgid "Dostupné akce tohoto modul"
+msgid "Dostupné akce tohoto modulu"
 msgstr ""
 
 #: ../lib/pytis/cms/cms.py:146
@@ -83,12 +83,12 @@ msgstr ""
 msgid "Zaškrtněte akce, které chcete zpřístupnit webovým uživatelům:"
 msgstr ""
 
-#: ../lib/pytis/cms/cms.py:203 ../lib/pytis/cms/cms.py:543
-#: ../lib/pytis/cms/cms.py:636 ../lib/pytis/defs/logging.py:48
-#: ../lib/pytis/defs/menu.py:251 ../lib/pytis/defs/menu.py:266
-#: ../lib/pytis/defs/menu.py:367 ../lib/pytis/defs/menu.py:531
-#: ../lib/pytis/defs/menu.py:705 ../lib/pytis/defs/menu.py:811
-#: ../lib/pytis/defs/menu.py:896 ../lib/pytis/defs/statistics.py:118
+#: ../lib/pytis/cms/cms.py:203 ../lib/pytis/cms/cms.py:528
+#: ../lib/pytis/cms/cms.py:618 ../lib/pytis/defs/logging.py:48
+#: ../lib/pytis/defs/menu.py:247 ../lib/pytis/defs/menu.py:262
+#: ../lib/pytis/defs/menu.py:361 ../lib/pytis/defs/menu.py:521
+#: ../lib/pytis/defs/menu.py:693 ../lib/pytis/defs/menu.py:797
+#: ../lib/pytis/defs/menu.py:880 ../lib/pytis/defs/statistics.py:115
 msgid "Action"
 msgstr "Akce"
 
@@ -124,35 +124,31 @@ msgstr ""
 msgid "Export tisknutelných políček do PDF"
 msgstr ""
 
-#: ../lib/pytis/cms/cms.py:239
-msgid "Men"
+#: ../lib/pytis/cms/cms.py:239 ../lib/pytis/cms/cms.py:253
+#: ../lib/pytis/defs/menu.py:290 ../lib/pytis/defs/menu.py:356
+#: ../lib/pytis/defs/menu.py:511 ../lib/pytis/defs/menu.py:542
+#: ../lib/pytis/defs/menu.py:925 ../lib/pytis/defs/menu.py:998
+msgid "Menu"
 msgstr ""
 
-#: ../lib/pytis/cms/cms.py:249 ../lib/pytis/cms/cms.py:272
-#: ../lib/pytis/defs/help.py:170 ../lib/pytis/defs/menu.py:42
-#: ../lib/pytis/defs/menu.py:645 ../lib/pytis/defs/profiles.py:34
+#: ../lib/pytis/cms/cms.py:244 ../lib/pytis/cms/cms.py:261
+#: ../lib/pytis/defs/help.py:171 ../lib/pytis/defs/menu.py:42
+#: ../lib/pytis/defs/menu.py:635 ../lib/pytis/defs/profiles.py:34
 #: ../lib/pytis/defs/profiles.py:70
 msgid "Identifier"
 msgstr "Identifikátor"
 
-#: ../lib/pytis/cms/cms.py:250 ../lib/pytis/cms/cms.py:293
-#: ../lib/pytis/cms/cms.py:297 ../lib/pytis/cms/cms.py:511
-#: ../lib/pytis/cms/cms.py:635
+#: ../lib/pytis/cms/cms.py:245 ../lib/pytis/cms/cms.py:283
+#: ../lib/pytis/cms/cms.py:287 ../lib/pytis/cms/cms.py:497
+#: ../lib/pytis/cms/cms.py:617
 msgid "Modul"
 msgstr ""
 
-#: ../lib/pytis/cms/cms.py:259 ../lib/pytis/defs/menu.py:294
-#: ../lib/pytis/defs/menu.py:362 ../lib/pytis/defs/menu.py:521
-#: ../lib/pytis/defs/menu.py:552 ../lib/pytis/defs/menu.py:941
-#: ../lib/pytis/defs/menu.py:1014
-msgid "Menu"
-msgstr ""
-
-#: ../lib/pytis/cms/cms.py:260
+#: ../lib/pytis/cms/cms.py:254
 msgid "Správa položek hlavního menu, jejich hierarchie a obsahu."
 msgstr ""
 
-#: ../lib/pytis/cms/cms.py:274
+#: ../lib/pytis/cms/cms.py:264
 msgid ""
 "Identifikátor bude vystupovat jako vnější adresa stránky.  Může být použit v "
 "odkazech na tuto stránku v rámci textu jiných stránek. Platný identifikátor "
@@ -160,70 +156,70 @@ msgid ""
 "musí začínat písmenem."
 msgstr ""
 
-#: ../lib/pytis/cms/cms.py:279 ../lib/pytis/defs/menu.py:306
+#: ../lib/pytis/cms/cms.py:269 ../lib/pytis/defs/menu.py:302
 msgid "Jazyk"
 msgstr ""
 
-#: ../lib/pytis/cms/cms.py:283
+#: ../lib/pytis/cms/cms.py:273
 msgid "Název položky menu - krátký a výstižný."
 msgstr ""
 
-#: ../lib/pytis/cms/cms.py:284
+#: ../lib/pytis/cms/cms.py:274
 msgid "Nadpis"
 msgstr ""
 
-#: ../lib/pytis/cms/cms.py:285
+#: ../lib/pytis/cms/cms.py:275
 msgid ""
 "Hlavní nadpis při zobrazení stránky.  Pokud ponecháte nevyplněné, použije se "
 "název položky.  Ten je ale někdy kvůli použití v menu příliš krátký, takže "
 "zde je možné určit jeho delší variantu."
 msgstr ""
 
-#: ../lib/pytis/cms/cms.py:289
+#: ../lib/pytis/cms/cms.py:279
 msgid "Stručný popis stránky (zobrazen v menu jako tooltip)."
 msgstr ""
 
-#: ../lib/pytis/cms/cms.py:290 ../lib/pytis/cms/cms.py:387
-#: ../lib/pytis/defs/help.py:74 ../lib/pytis/defs/help.py:128
+#: ../lib/pytis/cms/cms.py:280 ../lib/pytis/cms/cms.py:378
+#: ../lib/pytis/defs/help.py:75 ../lib/pytis/defs/help.py:129
 #: ../lib/pytis/defs/profiles.py:47 ../lib/pytis/defs/profiles.py:76
 msgid "Content"
 msgstr "Obsah"
 
-#: ../lib/pytis/cms/cms.py:292
+#: ../lib/pytis/cms/cms.py:282
 msgid "Text stránky formátovaný jako LCG strukturovaný text (wiki)"
 msgstr ""
 
-#: ../lib/pytis/cms/cms.py:295
+#: ../lib/pytis/cms/cms.py:285
 msgid ""
 "Vyberte rozšiřující modul zobrazený uvnitř stránky.  Ponechte prázdné pro "
 "prostou textovou stránku."
 msgstr ""
 
-#: ../lib/pytis/cms/cms.py:298 ../lib/pytis/defs/help.py:38
-#: ../lib/pytis/defs/help.py:82
+#: ../lib/pytis/cms/cms.py:288 ../lib/pytis/defs/help.py:39
+#: ../lib/pytis/defs/help.py:83
 msgid "Parent item"
 msgstr "Nadřízená položka"
 
-#: ../lib/pytis/cms/cms.py:301
+#: ../lib/pytis/cms/cms.py:291
 msgid ""
 "Vyberte bezprostředně nadřízenou položku v hierarchii menu.  Ponechte "
 "prázdné pro stránky na nejvyšší úrovni menu."
 msgstr ""
 
-#: ../lib/pytis/cms/cms.py:303
+#: ../lib/pytis/cms/cms.py:293
 msgid "Zveřejněno"
 msgstr ""
 
-#: ../lib/pytis/cms/cms.py:304
+#: ../lib/pytis/cms/cms.py:294
 msgid ""
 "Umožňuje řídit dostupnost dané položky nezávisle pro kažou jazykovou verzi."
 msgstr ""
 
-#: ../lib/pytis/cms/cms.py:306 ../lib/pytis/defs/help.py:88
+#: ../lib/pytis/cms/cms.py:296 ../lib/pytis/defs/help.py:89
 msgid "Ordering"
 msgstr "Pořadí"
 
-#: ../lib/pytis/cms/cms.py:307 ../lib/pytis/defs/help.py:90
+#: ../lib/pytis/cms/cms.py:297 ../lib/pytis/defs/help.py:91
 msgid ""
 "Enter a number denoting the order of the item in menu between pages of the "
 "same hierarchy level.  Leave empty to put the item automatically to bottom."
@@ -232,301 +228,305 @@ msgstr ""
 "úrovni hierarchie).  Pokud nevyplníte, stránka bude automaticky zařazena na "
 "konec."
 
-#: ../lib/pytis/cms/cms.py:344
+#: ../lib/pytis/cms/cms.py:300
+msgid "Languages"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:335
 msgid "Položka nemůže být nadřízená sama sobě."
 msgstr ""
 
-#: ../lib/pytis/cms/cms.py:352
+#: ../lib/pytis/cms/cms.py:343
 msgid ""
 "Nelze přiřadit podřízenou položku jako nadřízenou (cyklus v hierarchii)."
 msgstr ""
 
-#: ../lib/pytis/cms/cms.py:357
+#: ../lib/pytis/cms/cms.py:348
 msgid "Stejné pořadové číslo už má jiná položka na této úrovni menu."
 msgstr ""
 
-#: ../lib/pytis/cms/cms.py:364
+#: ../lib/pytis/cms/cms.py:355
 msgid ""
 "Položka má podřízené položky.\n"
 "Pokud ji chcete vymazat, vymažte nejprve všechny podpoložky."
 msgstr ""
 
-#: ../lib/pytis/cms/cms.py:376
+#: ../lib/pytis/cms/cms.py:367
 msgid "Globální vlastnosti (společné pro všechny jazyky)"
 msgstr ""
 
-#: ../lib/pytis/cms/cms.py:378
+#: ../lib/pytis/cms/cms.py:369
 msgid "Text stránky (pro aktuální jazykovou verzi)"
 msgstr ""
 
-#: ../lib/pytis/cms/cms.py:383 ../lib/pytis/cms/cms.py:530
+#: ../lib/pytis/cms/cms.py:374 ../lib/pytis/cms/cms.py:516
 msgid "Přístupová práva"
 msgstr ""
 
-#: ../lib/pytis/cms/cms.py:399
+#: ../lib/pytis/cms/cms.py:389
 #, python-format
 msgid "Chyba přísutu k úložišti příloh: %s"
 msgstr ""
 
-#: ../lib/pytis/cms/cms.py:409 ../lib/pytis/defs/crypto.py:64
-#: ../lib/pytis/defs/crypto.py:112 ../lib/pytis/defs/menu.py:424
-#: ../lib/pytis/defs/statistics.py:42 ../lib/pytis/defs/statistics.py:63
-#: ../lib/pytis/defs/statistics.py:88
+#: ../lib/pytis/cms/cms.py:399 ../lib/pytis/defs/crypto.py:65
+#: ../lib/pytis/defs/crypto.py:112 ../lib/pytis/defs/menu.py:418
+#: ../lib/pytis/defs/statistics.py:39 ../lib/pytis/defs/statistics.py:60
+#: ../lib/pytis/defs/statistics.py:85
 msgid "Uživatelé"
 msgstr ""
 
-#: ../lib/pytis/cms/cms.py:410
+#: ../lib/pytis/cms/cms.py:400
 msgid "Správa uživatelských účtů, které je poté možno zařazovat do rolí."
 msgstr ""
 
-#: ../lib/pytis/cms/cms.py:415 ../lib/pytis/cms/cms.py:484
+#: ../lib/pytis/cms/cms.py:404 ../lib/pytis/cms/cms.py:471
 msgid "UID"
 msgstr ""
 
-#: ../lib/pytis/cms/cms.py:416 ../lib/pytis/cms/cms.py:486
+#: ../lib/pytis/cms/cms.py:405 ../lib/pytis/cms/cms.py:473
 msgid "Přihlašovací jméno"
 msgstr ""
 
-#: ../lib/pytis/cms/cms.py:417 ../lib/pytis/cms/cms.py:487
+#: ../lib/pytis/cms/cms.py:406 ../lib/pytis/cms/cms.py:474
 msgid "Celé jméno"
 msgstr ""
 
-#: ../lib/pytis/cms/cms.py:418
+#: ../lib/pytis/cms/cms.py:407
 msgid "Heslo"
 msgstr ""
 
-#: ../lib/pytis/cms/cms.py:427 ../lib/pytis/cms/cms.py:434
+#: ../lib/pytis/cms/cms.py:416 ../lib/pytis/cms/cms.py:423
 msgid "Uživatelské role"
 msgstr ""
 
-#: ../lib/pytis/cms/cms.py:428
+#: ../lib/pytis/cms/cms.py:417
 msgid "Historie přihlášení"
 msgstr ""
 
-#: ../lib/pytis/cms/cms.py:435
+#: ../lib/pytis/cms/cms.py:424
 msgid ""
 "Správa dostupných uživatelských rolí, které je možné přiřazovat uživatelům."
 msgstr ""
 
-#: ../lib/pytis/cms/cms.py:442
+#: ../lib/pytis/cms/cms.py:430
 msgid "Systémová role"
 msgstr ""
 
-#: ../lib/pytis/cms/cms.py:451
+#: ../lib/pytis/cms/cms.py:439
 msgid "Uživatelé zařazení do této role"
 msgstr ""
 
-#: ../lib/pytis/cms/cms.py:458
+#: ../lib/pytis/cms/cms.py:446
 msgid "Systémové role"
 msgstr ""
 
-#: ../lib/pytis/cms/cms.py:459
+#: ../lib/pytis/cms/cms.py:447
 msgid "Systémové role jsou uživatelům přiřazeny automaticky."
 msgstr ""
 
-#: ../lib/pytis/cms/cms.py:468 ../lib/pytis/cms/cms.py:482
-#: ../lib/pytis/cms/cms.py:539 ../lib/pytis/cms/cms.py:540
-#: ../lib/pytis/defs/menu.py:87 ../lib/pytis/defs/menu.py:701
-#: ../lib/pytis/defs/menu.py:807 ../lib/pytis/defs/menu.py:892
-#: ../lib/pytis/defs/menu.py:933 ../lib/pytis/defs/menu.py:1008
+#: ../lib/pytis/cms/cms.py:456 ../lib/pytis/cms/cms.py:469
+#: ../lib/pytis/cms/cms.py:524 ../lib/pytis/cms/cms.py:525
+#: ../lib/pytis/defs/menu.py:85 ../lib/pytis/defs/menu.py:689
+#: ../lib/pytis/defs/menu.py:793 ../lib/pytis/defs/menu.py:876
+#: ../lib/pytis/defs/menu.py:917 ../lib/pytis/defs/menu.py:992
 msgid "Role"
 msgstr ""
 
-#: ../lib/pytis/cms/cms.py:469
+#: ../lib/pytis/cms/cms.py:457
 msgid ""
 "Role dostupné pro přiřazování práv akcím (obsahuje systémové i uživatelsky "
 "definované role)."
 msgstr ""
 
-#: ../lib/pytis/cms/cms.py:475
+#: ../lib/pytis/cms/cms.py:463
 #, fuzzy
 msgid "Přiřazení uživatelských rolí"
 msgstr "User Actions Log"
 
-#: ../lib/pytis/cms/cms.py:476
+#: ../lib/pytis/cms/cms.py:464
 msgid "Správa přiřazení uživatelských rolí jednotlivým uživatelům."
 msgstr ""
 
-#: ../lib/pytis/cms/cms.py:488
+#: ../lib/pytis/cms/cms.py:475
 msgid "Název role"
 msgstr ""
 
-#: ../lib/pytis/cms/cms.py:496
+#: ../lib/pytis/cms/cms.py:483
 msgid "Správa přiřazení uživatelů jednotlivým uživatelským rolím."
 msgstr ""
 
-#: ../lib/pytis/cms/cms.py:502
+#: ../lib/pytis/cms/cms.py:489
 msgid "Dostupné akce"
 msgstr ""
 
-#: ../lib/pytis/cms/cms.py:503
+#: ../lib/pytis/cms/cms.py:490
 msgid "Výčet podporovaných akcí pro jednotlivé moduly."
 msgstr ""
 
-#: ../lib/pytis/cms/cms.py:522
+#: ../lib/pytis/cms/cms.py:508
 msgid "Akce společné pro všechny položky men"
 msgstr ""
 
-#: ../lib/pytis/cms/cms.py:523
+#: ../lib/pytis/cms/cms.py:509
 msgid "Výčet podporovaných akcí společných pro všechny položky menu."
 msgstr ""
 
-#: ../lib/pytis/cms/cms.py:531
+#: ../lib/pytis/cms/cms.py:517
 msgid "Přiřazení práv k akcím modulů pro jednotlivé uživatelské role."
 msgstr ""
 
-#: ../lib/pytis/cms/cms.py:545
+#: ../lib/pytis/cms/cms.py:530
 #, fuzzy
 msgid "Action Name"
 msgstr "Akce"
 
-#: ../lib/pytis/cms/cms.py:569
+#: ../lib/pytis/cms/cms.py:553
 msgid "IP adresa"
 msgstr ""
 
-#: ../lib/pytis/cms/cms.py:570
-msgid "Hostname"
-msgstr ""
-
-#: ../lib/pytis/cms/cms.py:572
+#: ../lib/pytis/cms/cms.py:554
 msgid "User agent"
 msgstr ""
 
-#: ../lib/pytis/cms/cms.py:573
+#: ../lib/pytis/cms/cms.py:555
 msgid "Referer"
 msgstr ""
 
-#: ../lib/pytis/cms/cms.py:580
+#: ../lib/pytis/cms/cms.py:556
+msgid "Hostname"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:563
 msgid "Neznámý"
 msgstr ""
 
-#: ../lib/pytis/cms/cms.py:585
+#: ../lib/pytis/cms/cms.py:568
 msgid "Log přihlášení"
 msgstr ""
 
-#: ../lib/pytis/cms/cms.py:586
+#: ../lib/pytis/cms/cms.py:569
 msgid "Záznam informací o přihlášení uživatelů k webu."
 msgstr ""
 
-#: ../lib/pytis/cms/cms.py:595 ../lib/pytis/defs/statistics.py:75
-#: ../lib/pytis/defs/statistics.py:90 ../lib/pytis/defs/statistics.py:103
-#: ../lib/pytis/defs/statistics.py:119
+#: ../lib/pytis/cms/cms.py:578 ../lib/pytis/defs/statistics.py:72
+#: ../lib/pytis/defs/statistics.py:87 ../lib/pytis/defs/statistics.py:100
+#: ../lib/pytis/defs/statistics.py:116
 msgid "Login"
 msgstr ""
 
-#: ../lib/pytis/cms/cms.py:596
+#: ../lib/pytis/cms/cms.py:579
 msgid "Jméno"
 msgstr ""
 
-#: ../lib/pytis/cms/cms.py:597
+#: ../lib/pytis/cms/cms.py:580
 msgid "Úspěch"
 msgstr ""
 
-#: ../lib/pytis/cms/cms.py:598
+#: ../lib/pytis/cms/cms.py:581
 msgid "Začátek"
 msgstr ""
 
-#: ../lib/pytis/cms/cms.py:599
+#: ../lib/pytis/cms/cms.py:582
 msgid "Trvání"
 msgstr ""
 
-#: ../lib/pytis/cms/cms.py:600 ../lib/pytis/defs/help.py:139
-#: ../lib/pytis/defs/help.py:212
+#: ../lib/pytis/cms/cms.py:583 ../lib/pytis/defs/help.py:140
+#: ../lib/pytis/defs/help.py:213
 msgid "Active"
 msgstr "Aktivní"
 
-#: ../lib/pytis/cms/cms.py:624
+#: ../lib/pytis/cms/cms.py:606
 msgid "Log přístupů"
 msgstr ""
 
-#: ../lib/pytis/cms/cms.py:625
+#: ../lib/pytis/cms/cms.py:607
 msgid ""
 "Záznam informací o přístupu uživatelů k jednotlivým stránkám/modulům webu."
 msgstr ""
 
-#: ../lib/pytis/cms/cms.py:632 ../lib/pytis/defs/logging.py:91
+#: ../lib/pytis/cms/cms.py:614 ../lib/pytis/defs/logging.py:91
 msgid "Datum a čas"
 msgstr ""
 
-#: ../lib/pytis/cms/cms.py:633
+#: ../lib/pytis/cms/cms.py:615
 msgid "Cesta"
 msgstr ""
 
-#: ../lib/pytis/cms/cms.py:634 ../lib/pytis/defs/logging.py:42
+#: ../lib/pytis/cms/cms.py:616 ../lib/pytis/defs/logging.py:42
 #: ../lib/pytis/defs/logging.py:80 ../lib/pytis/defs/logging.py:92
-#: ../lib/pytis/defs/printing.py:78 ../lib/pytis/defs/profiles.py:36
+#: ../lib/pytis/defs/printing.py:79 ../lib/pytis/defs/profiles.py:36
 #: ../lib/pytis/defs/profiles.py:71
 msgid "User"
 msgstr "Uživatel"
 
-#: ../lib/pytis/cms/cms.py:652
+#: ../lib/pytis/cms/cms.py:629
 msgid "Barevné Motivy"
 msgstr ""
 
-#: ../lib/pytis/cms/cms.py:653
+#: ../lib/pytis/cms/cms.py:630
 msgid "Správa barevných motivů."
 msgstr ""
 
-#: ../lib/pytis/cms/cms.py:658 ../lib/pytis/cms/cms.py:675
-#: ../lib/pytis/cms/cms.py:688 ../lib/pytis/cms/cms.py:700
-#: ../lib/pytis/cms/cms.py:708 ../lib/pytis/cms/cms.py:711
-#: ../lib/pytis/cms/cms.py:714
+#: ../lib/pytis/cms/cms.py:640 ../lib/pytis/cms/cms.py:657
+#: ../lib/pytis/cms/cms.py:670 ../lib/pytis/cms/cms.py:682
+#: ../lib/pytis/cms/cms.py:690 ../lib/pytis/cms/cms.py:693
+#: ../lib/pytis/cms/cms.py:696
 msgid "Text"
 msgstr ""
 
-#: ../lib/pytis/cms/cms.py:660 ../lib/pytis/cms/cms.py:681
-#: ../lib/pytis/cms/cms.py:694 ../lib/pytis/cms/cms.py:703
-#: ../lib/pytis/cms/cms.py:709 ../lib/pytis/cms/cms.py:712
-#: ../lib/pytis/cms/cms.py:715
+#: ../lib/pytis/cms/cms.py:642 ../lib/pytis/cms/cms.py:663
+#: ../lib/pytis/cms/cms.py:676 ../lib/pytis/cms/cms.py:685
+#: ../lib/pytis/cms/cms.py:691 ../lib/pytis/cms/cms.py:694
+#: ../lib/pytis/cms/cms.py:697
 msgid "Pozadí"
 msgstr ""
 
-#: ../lib/pytis/cms/cms.py:662
+#: ../lib/pytis/cms/cms.py:644
 msgid "Zvýrazněné pozadí"
 msgstr ""
 
-#: ../lib/pytis/cms/cms.py:663
+#: ../lib/pytis/cms/cms.py:645
 msgid ""
 "Zvýraznění pomocí barvy pozadí může být použito na různých místech, např. "
 "pro odlišení aktuální položky menu, aktuálního jazyka, nalezeného záznamu ve "
 "formuláři apod."
 msgstr ""
 
-#: ../lib/pytis/cms/cms.py:666
+#: ../lib/pytis/cms/cms.py:648
 msgid "Odkaz"
 msgstr ""
 
-#: ../lib/pytis/cms/cms.py:667
+#: ../lib/pytis/cms/cms.py:649
 msgid "Barva textu nenavštíveného odkazu."
 msgstr ""
 
-#: ../lib/pytis/cms/cms.py:668
+#: ../lib/pytis/cms/cms.py:650
 msgid "Navštívený odkaz"
 msgstr ""
 
-#: ../lib/pytis/cms/cms.py:669
+#: ../lib/pytis/cms/cms.py:651
 msgid ""
 "Barva textu navštíveného odkazu.  Pokud ponecháte prázdné, bude použita "
 "stejná barva jako u nenavštíveného odkazu."
 msgstr ""
 
-#: ../lib/pytis/cms/cms.py:671
+#: ../lib/pytis/cms/cms.py:653
 msgid "Aktivní odkaz"
 msgstr ""
 
-#: ../lib/pytis/cms/cms.py:672
+#: ../lib/pytis/cms/cms.py:654
 msgid ""
 "Obarvení odkazu při při pohybu myší nad ním.  Pokud ponecháte prázdné, "
 "nebude odkaz na pohyb myši reagovat."
 msgstr ""
 
-#: ../lib/pytis/cms/cms.py:674 ../lib/pytis/cms/cms.py:697
-#: ../lib/pytis/cms/cms.py:705 ../lib/pytis/cms/cms.py:710
-#: ../lib/pytis/cms/cms.py:713
+#: ../lib/pytis/cms/cms.py:656 ../lib/pytis/cms/cms.py:679
+#: ../lib/pytis/cms/cms.py:687 ../lib/pytis/cms/cms.py:692
+#: ../lib/pytis/cms/cms.py:695
 msgid "Orámování"
 msgstr ""
 
-#: ../lib/pytis/cms/cms.py:676
+#: ../lib/pytis/cms/cms.py:658
 msgid ""
 "Barvy nadpisů jsou používány pro zvýrazenění názvů kapitol, panelů a jiných "
 "elementů majících povahu nadpisu či záhlaví.  V závislosti na použitých "
@@ -535,23 +535,23 @@ msgid ""
 "typy nadpisů."
 msgstr ""
 
-#: ../lib/pytis/cms/cms.py:682
+#: ../lib/pytis/cms/cms.py:664
 msgid ""
 "Barva pozadí pro nadpisy, které používají zvýraznění barvou pozadí.Typicky "
 "jsou to záhlaví částí stránky (menu, panely apod.) a nadpisy vyšších úrovní."
 msgstr ""
 
-#: ../lib/pytis/cms/cms.py:685
+#: ../lib/pytis/cms/cms.py:667
 msgid "Podtržení"
 msgstr ""
 
-#: ../lib/pytis/cms/cms.py:686
+#: ../lib/pytis/cms/cms.py:668
 msgid ""
 "Barva podtržení pro nadpisy, které používají zvýraznění podtržením.Typicky "
 "jsou to nadpisy nižších úrovní."
 msgstr ""
 
-#: ../lib/pytis/cms/cms.py:689
+#: ../lib/pytis/cms/cms.py:671
 msgid ""
 "Rámy jsou obecně využívány pro odlišení samostatných prvků stránky, jako "
 "jsou například formuláře, nástrojové lišty, rejstříky apod. Rámy v tomto "
@@ -560,112 +560,112 @@ msgid ""
 "nastavit pouze barvu pozadí a orámování)."
 msgstr ""
 
-#: ../lib/pytis/cms/cms.py:695
+#: ../lib/pytis/cms/cms.py:677
 msgid ""
 "Barva pozadí rámů pro jejich vizuální odlišení od ostatního obsahu stránky."
 msgstr ""
 
-#: ../lib/pytis/cms/cms.py:698
+#: ../lib/pytis/cms/cms.py:680
 msgid ""
 "Barva orámování okrajů plochy rámu na přechodu mezi barvou pozadí rámu a "
 "jeho podkladem."
 msgstr ""
 
-#: ../lib/pytis/cms/cms.py:701
+#: ../lib/pytis/cms/cms.py:683
 msgid ""
 "Na podkladových plochách se většinou text přímo nevyskytuje, ale některé "
 "styly to mohou předepisovat."
 msgstr ""
 
-#: ../lib/pytis/cms/cms.py:704
+#: ../lib/pytis/cms/cms.py:686
 msgid "Podkladové plochy tvoří okolí hlavního obsahu stránky a panelů."
 msgstr ""
 
-#: ../lib/pytis/cms/cms.py:706
+#: ../lib/pytis/cms/cms.py:688
 msgid ""
 "Určuje barvu rámečku na přechodu mezi podkladovou plochou a obsahovými "
 "částmi stránky"
 msgstr ""
 
-#: ../lib/pytis/cms/cms.py:716
+#: ../lib/pytis/cms/cms.py:698
 msgid ""
 "Odlišení informačního řádku v detailních výpisech, jako např. informace o "
 "datu a autorovi v seznamu článků"
 msgstr ""
 
-#: ../lib/pytis/cms/cms.py:718
+#: ../lib/pytis/cms/cms.py:700
 msgid "Standardní pozadí buňky"
 msgstr ""
 
-#: ../lib/pytis/cms/cms.py:719
+#: ../lib/pytis/cms/cms.py:701
 msgid "Stínované pozadí buňky"
 msgstr ""
 
-#: ../lib/pytis/cms/cms.py:720
+#: ../lib/pytis/cms/cms.py:702
 msgid "Nápověda formuláře"
 msgstr ""
 
-#: ../lib/pytis/cms/cms.py:721
+#: ../lib/pytis/cms/cms.py:703
 msgid "Neaktivní záložka"
 msgstr ""
 
-#: ../lib/pytis/cms/cms.py:725
+#: ../lib/pytis/cms/cms.py:707
 msgid "Standardní barvy stránky"
 msgstr ""
 
-#: ../lib/pytis/cms/cms.py:728
+#: ../lib/pytis/cms/cms.py:710
 msgid "Tabulky"
 msgstr ""
 
-#: ../lib/pytis/cms/cms.py:730
+#: ../lib/pytis/cms/cms.py:712
 msgid "Různé"
 msgstr ""
 
-#: ../lib/pytis/cms/cms.py:733
+#: ../lib/pytis/cms/cms.py:715
 msgid "Barvy nadpisů"
 msgstr ""
 
-#: ../lib/pytis/cms/cms.py:735
+#: ../lib/pytis/cms/cms.py:717
 msgid "Rámy"
 msgstr ""
 
-#: ../lib/pytis/cms/cms.py:737
+#: ../lib/pytis/cms/cms.py:719
 msgid "Meta data záznam"
 msgstr ""
 
-#: ../lib/pytis/cms/cms.py:739
+#: ../lib/pytis/cms/cms.py:721
 msgid "Barvy podkladových ploch"
 msgstr ""
 
-#: ../lib/pytis/cms/cms.py:742
+#: ../lib/pytis/cms/cms.py:724
 msgid "Chybové zprávy"
 msgstr ""
 
-#: ../lib/pytis/cms/cms.py:744
+#: ../lib/pytis/cms/cms.py:726
 msgid "Informační zprávy"
 msgstr ""
 
-#: ../lib/pytis/defs/crypto.py:35
+#: ../lib/pytis/defs/crypto.py:36
 msgid "Změna administrátorského hesla"
 msgstr ""
 
-#: ../lib/pytis/defs/crypto.py:39
+#: ../lib/pytis/defs/crypto.py:40
 msgid "Stávající heslo"
 msgstr ""
 
-#: ../lib/pytis/defs/crypto.py:41
+#: ../lib/pytis/defs/crypto.py:42
 msgid "Nové heslo"
 msgstr ""
 
-#: ../lib/pytis/defs/crypto.py:56
+#: ../lib/pytis/defs/crypto.py:57
 msgid "Použijte, prosím, kombinaci malých a velkých znaků a číslic."
 msgstr ""
 
-#: ../lib/pytis/defs/crypto.py:62
+#: ../lib/pytis/defs/crypto.py:63
 msgid "Šifrovací oblasti"
 msgstr ""
 
-#: ../lib/pytis/defs/crypto.py:67
+#: ../lib/pytis/defs/crypto.py:68
 msgid "Změnit heslo administrátora"
 msgstr ""
 
@@ -673,7 +673,7 @@ msgstr ""
 msgid "Nebyl nalezen klíč administrátora pro tuto oblast"
 msgstr ""
 
-#: ../lib/pytis/defs/crypto.py:86 ../lib/pytis/defs/crypto.py:230
+#: ../lib/pytis/defs/crypto.py:86 ../lib/pytis/defs/crypto.py:223
 msgid "Chybné heslo"
 msgstr ""
 
@@ -709,45 +709,45 @@ msgstr ""
 msgid "Nový uživatel šifrované oblasti"
 msgstr ""
 
-#: ../lib/pytis/defs/crypto.py:226
+#: ../lib/pytis/defs/crypto.py:219
 msgid "Nebyl nalezen klíč pro tuto oblast"
 msgstr ""
 
-#: ../lib/pytis/defs/crypto.py:234
+#: ../lib/pytis/defs/crypto.py:227
 msgid "Uživatele lze jen přidávat a odebírat"
 msgstr ""
 
-#: ../lib/pytis/defs/crypto.py:239
+#: ../lib/pytis/defs/crypto.py:232
 msgid "Administrátory mazat nelze"
 msgstr ""
 
-#: ../lib/pytis/defs/help.py:55 ../lib/pytis/defs/printing.py:45
-#: ../lib/pytis/defs/printing.py:79 ../lib/pytis/defs/printing.py:89
+#: ../lib/pytis/defs/help.py:56 ../lib/pytis/defs/printing.py:46
+#: ../lib/pytis/defs/printing.py:80 ../lib/pytis/defs/printing.py:90
 msgid "Help"
 msgstr "Nápověda"
 
-#: ../lib/pytis/defs/help.py:64 ../lib/pytis/defs/profiles.py:38
+#: ../lib/pytis/defs/help.py:65 ../lib/pytis/defs/profiles.py:38
 msgid "Fullname"
 msgstr "Fullname"
 
-#: ../lib/pytis/defs/help.py:65 ../lib/pytis/defs/logging.py:44
+#: ../lib/pytis/defs/help.py:66 ../lib/pytis/defs/logging.py:44
 #: ../lib/pytis/defs/profiles.py:40 ../lib/pytis/defs/profiles.py:73
 msgid "Specification Name"
 msgstr "Název specifikace"
 
-#: ../lib/pytis/defs/help.py:76
+#: ../lib/pytis/defs/help.py:77
 msgid "Menu item description"
 msgstr "Popis položky menu"
 
-#: ../lib/pytis/defs/help.py:78
+#: ../lib/pytis/defs/help.py:79
 msgid "Brief form description"
 msgstr "Stručný popis náhledu"
 
-#: ../lib/pytis/defs/help.py:80
+#: ../lib/pytis/defs/help.py:81
 msgid "Detailed form help"
 msgstr "Podrobná nápověda náhledu"
 
-#: ../lib/pytis/defs/help.py:86
+#: ../lib/pytis/defs/help.py:87
 msgid ""
 "Choose the directly superordinate item in menu hierarchy. Leave empty for "
 "pages at the top level menu."
@@ -755,32 +755,32 @@ msgstr ""
 "Vyberte bezprostředně nadřízenou položku v hierarchii menu.  Ponechte "
 "prázdné pro stránky na nejvyšší úrovni menu."
 
-#: ../lib/pytis/defs/help.py:93 ../lib/pytis/defs/help.py:175
+#: ../lib/pytis/defs/help.py:94 ../lib/pytis/defs/help.py:176
 msgid "Removed"
 msgstr "Zrušeno"
 
-#: ../lib/pytis/defs/help.py:94 ../lib/pytis/defs/help.py:176
+#: ../lib/pytis/defs/help.py:95 ../lib/pytis/defs/help.py:177
 msgid "Changed"
 msgstr "Změněno"
 
-#: ../lib/pytis/defs/help.py:129
+#: ../lib/pytis/defs/help.py:130
 msgid "Fields"
 msgstr "Políčka"
 
-#: ../lib/pytis/defs/help.py:130 ../lib/pytis/defs/menu.py:429
-#: ../lib/pytis/defs/statistics.py:94
+#: ../lib/pytis/defs/help.py:131 ../lib/pytis/defs/menu.py:423
+#: ../lib/pytis/defs/statistics.py:91
 msgid "Profiles"
 msgstr "Profily"
 
-#: ../lib/pytis/defs/help.py:131
+#: ../lib/pytis/defs/help.py:132
 msgid "Actions"
 msgstr "Akce"
 
-#: ../lib/pytis/defs/help.py:132
+#: ../lib/pytis/defs/help.py:133
 msgid "Side Forms"
 msgstr "Vedlejší formuláře"
 
-#: ../lib/pytis/defs/help.py:157
+#: ../lib/pytis/defs/help.py:158
 msgid "This item has no editable help."
 msgstr "Tato položka nemá editovatelnou nápovědu."
 
@@ -794,9 +794,9 @@ msgid "Time"
 msgstr "Čas"
 
 #: ../lib/pytis/defs/logging.py:46 ../lib/pytis/defs/profiles.py:42
-#: ../lib/pytis/defs/statistics.py:35 ../lib/pytis/defs/statistics.py:56
-#: ../lib/pytis/defs/statistics.py:77 ../lib/pytis/defs/statistics.py:105
-#: ../lib/pytis/defs/statistics.py:121
+#: ../lib/pytis/defs/statistics.py:32 ../lib/pytis/defs/statistics.py:53
+#: ../lib/pytis/defs/statistics.py:74 ../lib/pytis/defs/statistics.py:102
+#: ../lib/pytis/defs/statistics.py:118
 msgid "Form Class"
 msgstr "Třída formuláře"
 
@@ -856,514 +856,514 @@ msgstr ""
 msgid "Správcovské role nelze editovat"
 msgstr ""
 
-#: ../lib/pytis/defs/menu.py:71
+#: ../lib/pytis/defs/menu.py:70
 msgid "Správcovské role nelze mazat"
 msgstr ""
 
-#: ../lib/pytis/defs/menu.py:79 ../lib/pytis/defs/menu.py:354
-#: ../lib/pytis/defs/menu.py:770 ../lib/pytis/defs/menu.py:874
+#: ../lib/pytis/defs/menu.py:77 ../lib/pytis/defs/menu.py:348
+#: ../lib/pytis/defs/menu.py:756 ../lib/pytis/defs/menu.py:858
 msgid "Opravdu chcete záznam zcela vymazat?"
 msgstr ""
 
-#: ../lib/pytis/defs/menu.py:89 ../lib/pytis/defs/menu.py:198
+#: ../lib/pytis/defs/menu.py:87 ../lib/pytis/defs/menu.py:195
 msgid "Skupina"
 msgstr ""
 
-#: ../lib/pytis/defs/menu.py:92 ../lib/pytis/defs/menu.py:201
+#: ../lib/pytis/defs/menu.py:90 ../lib/pytis/defs/menu.py:198
 msgid "Obsažená role"
 msgstr ""
 
-#: ../lib/pytis/defs/menu.py:97
+#: ../lib/pytis/defs/menu.py:95
 msgid "Stručný název role nebo uživatelské jméno v databázi."
 msgstr ""
 
-#: ../lib/pytis/defs/menu.py:99 ../lib/pytis/defs/menu.py:213
-#: ../lib/pytis/defs/menu.py:215
+#: ../lib/pytis/defs/menu.py:97 ../lib/pytis/defs/menu.py:210
+#: ../lib/pytis/defs/menu.py:212
 msgid "Popis určení role."
 msgstr ""
 
-#: ../lib/pytis/defs/menu.py:100 ../lib/pytis/defs/menu.py:103
+#: ../lib/pytis/defs/menu.py:98 ../lib/pytis/defs/menu.py:101
 msgid "Účel"
 msgstr ""
 
-#: ../lib/pytis/defs/menu.py:102
+#: ../lib/pytis/defs/menu.py:100
 msgid "Účel role: normální, uživatelský účet, správcovská."
 msgstr ""
 
-#: ../lib/pytis/defs/menu.py:105
+#: ../lib/pytis/defs/menu.py:103
 msgid "Význam role: normální, uživatelský účet, správcovská."
 msgstr ""
 
-#: ../lib/pytis/defs/menu.py:106
+#: ../lib/pytis/defs/menu.py:104
 msgid "Datum zrušení"
 msgstr ""
 
-#: ../lib/pytis/defs/menu.py:108
+#: ../lib/pytis/defs/menu.py:106
 msgid "Je-li nastaveno, role je od daného data neaktivní."
 msgstr ""
 
-#: ../lib/pytis/defs/menu.py:117
+#: ../lib/pytis/defs/menu.py:115
 msgid "Nezrušené role"
 msgstr ""
 
-#: ../lib/pytis/defs/menu.py:129
+#: ../lib/pytis/defs/menu.py:127
 msgid "Zkopírovat role od..."
 msgstr ""
 
-#: ../lib/pytis/defs/menu.py:132
+#: ../lib/pytis/defs/menu.py:130
 msgid "Obsahuje role"
 msgstr ""
 
-#: ../lib/pytis/defs/menu.py:135
+#: ../lib/pytis/defs/menu.py:133
 msgid "Patří do rolí"
 msgstr ""
 
-#: ../lib/pytis/defs/menu.py:138
+#: ../lib/pytis/defs/menu.py:136
 msgid "Náhled menu"
 msgstr ""
 
-#: ../lib/pytis/defs/menu.py:142
+#: ../lib/pytis/defs/menu.py:140
 msgid "Náhled chystaného menu"
 msgstr ""
 
-#: ../lib/pytis/defs/menu.py:147
+#: ../lib/pytis/defs/menu.py:145
 msgid "Rozšířený náhled menu"
 msgstr ""
 
-#: ../lib/pytis/defs/menu.py:150
+#: ../lib/pytis/defs/menu.py:148
 msgid "Rozšířený náhled chystaného menu"
 msgstr ""
 
-#: ../lib/pytis/defs/menu.py:155 ../lib/pytis/defs/menu.py:433
+#: ../lib/pytis/defs/menu.py:153 ../lib/pytis/defs/menu.py:427
 msgid "Log Akcí"
 msgstr ""
 
-#: ../lib/pytis/defs/menu.py:163
+#: ../lib/pytis/defs/menu.py:160
 msgid "Role nelze mazat, nastavte datum zrušení"
 msgstr ""
 
-#: ../lib/pytis/defs/menu.py:197 ../lib/pytis/defs/menu.py:296
-#: ../lib/pytis/defs/menu.py:371 ../lib/pytis/defs/menu.py:700
-#: ../lib/pytis/defs/menu.py:804 ../lib/pytis/defs/menu.py:889
+#: ../lib/pytis/defs/menu.py:194 ../lib/pytis/defs/menu.py:292
+#: ../lib/pytis/defs/menu.py:365 ../lib/pytis/defs/menu.py:688
+#: ../lib/pytis/defs/menu.py:790 ../lib/pytis/defs/menu.py:873
 msgid "Id"
 msgstr ""
 
-#: ../lib/pytis/defs/menu.py:200
+#: ../lib/pytis/defs/menu.py:197
 msgid "Role, do níž jsou zahrnuty jiné role."
 msgstr ""
 
-#: ../lib/pytis/defs/menu.py:203
+#: ../lib/pytis/defs/menu.py:200
 msgid "Role, která je členem skupinové role."
 msgstr ""
 
-#: ../lib/pytis/defs/menu.py:204 ../lib/pytis/defs/menu.py:208
+#: ../lib/pytis/defs/menu.py:201 ../lib/pytis/defs/menu.py:205
 msgid "Identifikátor účelu role"
 msgstr ""
 
-#: ../lib/pytis/defs/menu.py:206 ../lib/pytis/defs/menu.py:210
-#: ../lib/pytis/defs/menu.py:703 ../lib/pytis/defs/menu.py:809
-#: ../lib/pytis/defs/menu.py:894 ../lib/pytis/defs/menu.py:935
+#: ../lib/pytis/defs/menu.py:203 ../lib/pytis/defs/menu.py:207
+#: ../lib/pytis/defs/menu.py:691 ../lib/pytis/defs/menu.py:795
+#: ../lib/pytis/defs/menu.py:878 ../lib/pytis/defs/menu.py:919
 msgid "Účel role"
 msgstr ""
 
-#: ../lib/pytis/defs/menu.py:227
+#: ../lib/pytis/defs/menu.py:223
 msgid "Přiřazení rolí nelze editovat, jen přidávat a mazat"
 msgstr ""
 
-#: ../lib/pytis/defs/menu.py:233
+#: ../lib/pytis/defs/menu.py:229
 msgid "Zařazení do skupiny"
 msgstr ""
 
-#: ../lib/pytis/defs/menu.py:239
+#: ../lib/pytis/defs/menu.py:235
 msgid "Přiřazení role"
 msgstr ""
 
-#: ../lib/pytis/defs/menu.py:248 ../lib/pytis/defs/menu.py:264
+#: ../lib/pytis/defs/menu.py:244 ../lib/pytis/defs/menu.py:260
 #, fuzzy
 msgid "Uživatelské akce"
 msgstr "User Actions Log"
 
-#: ../lib/pytis/defs/menu.py:250 ../lib/pytis/defs/menu.py:311
-#: ../lib/pytis/defs/menu.py:313 ../lib/pytis/defs/menu.py:364
-#: ../lib/pytis/defs/menu.py:381 ../lib/pytis/defs/menu.py:528
+#: ../lib/pytis/defs/menu.py:246 ../lib/pytis/defs/menu.py:307
+#: ../lib/pytis/defs/menu.py:309 ../lib/pytis/defs/menu.py:358
+#: ../lib/pytis/defs/menu.py:375 ../lib/pytis/defs/menu.py:518
 msgid "Navěšená akce"
 msgstr ""
 
-#: ../lib/pytis/defs/menu.py:299
+#: ../lib/pytis/defs/menu.py:295
 msgid "MenuId"
 msgstr ""
 
-#: ../lib/pytis/defs/menu.py:300
+#: ../lib/pytis/defs/menu.py:296
 msgid "Id obsahující role"
 msgstr ""
 
-#: ../lib/pytis/defs/menu.py:301
+#: ../lib/pytis/defs/menu.py:297
 msgid "Základní titulek položky menu"
 msgstr ""
 
-#: ../lib/pytis/defs/menu.py:302
+#: ../lib/pytis/defs/menu.py:298
 msgid "Odvozený titulek položky menu"
 msgstr ""
 
-#: ../lib/pytis/defs/menu.py:303
+#: ../lib/pytis/defs/menu.py:299
 msgid "Přeložený titulek položky menu"
 msgstr ""
 
-#: ../lib/pytis/defs/menu.py:305 ../lib/pytis/defs/menu.py:373
-#: ../lib/pytis/defs/menu.py:535 ../lib/pytis/defs/menu.py:555
-#: ../lib/pytis/defs/menu.py:556 ../lib/pytis/defs/menu.py:1010
+#: ../lib/pytis/defs/menu.py:301 ../lib/pytis/defs/menu.py:367
+#: ../lib/pytis/defs/menu.py:525 ../lib/pytis/defs/menu.py:545
+#: ../lib/pytis/defs/menu.py:546 ../lib/pytis/defs/menu.py:994
 msgid "Titulek položky menu"
 msgstr ""
 
-#: ../lib/pytis/defs/menu.py:307 ../lib/pytis/defs/menu.py:375
-#: ../lib/pytis/defs/menu.py:523 ../lib/pytis/defs/menu.py:554
-#: ../lib/pytis/defs/menu.py:1011
+#: ../lib/pytis/defs/menu.py:303 ../lib/pytis/defs/menu.py:369
+#: ../lib/pytis/defs/menu.py:513 ../lib/pytis/defs/menu.py:544
+#: ../lib/pytis/defs/menu.py:995
 msgid "Pozice v menu"
 msgstr ""
 
-#: ../lib/pytis/defs/menu.py:309
+#: ../lib/pytis/defs/menu.py:305
 msgid "Následující pozice v menu"
 msgstr ""
 
-#: ../lib/pytis/defs/menu.py:310 ../lib/pytis/defs/menu.py:379
-#: ../lib/pytis/defs/menu.py:526 ../lib/pytis/defs/menu.py:806
-#: ../lib/pytis/defs/menu.py:891 ../lib/pytis/defs/menu.py:1012
+#: ../lib/pytis/defs/menu.py:306 ../lib/pytis/defs/menu.py:373
+#: ../lib/pytis/defs/menu.py:516 ../lib/pytis/defs/menu.py:792
+#: ../lib/pytis/defs/menu.py:875 ../lib/pytis/defs/menu.py:996
 msgid "Počet poduzlů"
 msgstr ""
 
-#: ../lib/pytis/defs/menu.py:312 ../lib/pytis/defs/menu.py:316
-#: ../lib/pytis/defs/menu.py:366 ../lib/pytis/defs/menu.py:384
-#: ../lib/pytis/defs/menu.py:530
+#: ../lib/pytis/defs/menu.py:308 ../lib/pytis/defs/menu.py:312
+#: ../lib/pytis/defs/menu.py:360 ../lib/pytis/defs/menu.py:378
+#: ../lib/pytis/defs/menu.py:520
 msgid "Akce aplikace vyvolaná položkou menu"
 msgstr ""
 
-#: ../lib/pytis/defs/menu.py:317 ../lib/pytis/defs/menu.py:385
+#: ../lib/pytis/defs/menu.py:313 ../lib/pytis/defs/menu.py:379
 msgid "Zákaz editace"
 msgstr ""
 
-#: ../lib/pytis/defs/menu.py:319
+#: ../lib/pytis/defs/menu.py:315
 msgid "Neaktuální překlad"
 msgstr ""
 
-#: ../lib/pytis/defs/menu.py:333
+#: ../lib/pytis/defs/menu.py:329
 msgid "Tuto položku menu nelze editovat"
 msgstr ""
 
-#: ../lib/pytis/defs/menu.py:340
+#: ../lib/pytis/defs/menu.py:336
 msgid "Tuto položku menu nelze smazat"
 msgstr ""
 
-#: ../lib/pytis/defs/menu.py:343
+#: ../lib/pytis/defs/menu.py:339
 msgid "Koncové položky menu nelze mazat"
 msgstr ""
 
-#: ../lib/pytis/defs/menu.py:351
+#: ../lib/pytis/defs/menu.py:346
 msgid "Nelze mazat položky obsahující jiné položky"
 msgstr ""
 
-#: ../lib/pytis/defs/menu.py:369 ../lib/pytis/defs/menu.py:533
-#: ../lib/pytis/defs/menu.py:1062
+#: ../lib/pytis/defs/menu.py:363 ../lib/pytis/defs/menu.py:523
+#: ../lib/pytis/defs/menu.py:1046
 msgid "Typ položky"
 msgstr ""
 
-#: ../lib/pytis/defs/menu.py:387 ../lib/pytis/defs/menu.py:537
+#: ../lib/pytis/defs/menu.py:381 ../lib/pytis/defs/menu.py:527
 msgid "Poznámka"
 msgstr ""
 
-#: ../lib/pytis/defs/menu.py:394
+#: ../lib/pytis/defs/menu.py:388
 msgid "Rozpis práv podle rolí"
 msgstr ""
 
-#: ../lib/pytis/defs/menu.py:399
+#: ../lib/pytis/defs/menu.py:393
 msgid "Rozpis práv podle sloupců"
 msgstr ""
 
-#: ../lib/pytis/defs/menu.py:404
+#: ../lib/pytis/defs/menu.py:398
 msgid "Práva položky menu"
 msgstr ""
 
-#: ../lib/pytis/defs/menu.py:411
+#: ../lib/pytis/defs/menu.py:405
 msgid "Chystaná práva položky"
 msgstr ""
 
-#: ../lib/pytis/defs/menu.py:418
+#: ../lib/pytis/defs/menu.py:412
 msgid "Chystané změny"
 msgstr ""
 
-#: ../lib/pytis/defs/menu.py:431
+#: ../lib/pytis/defs/menu.py:425
 msgid "Nastavení"
 msgstr ""
 
-#: ../lib/pytis/defs/menu.py:439
+#: ../lib/pytis/defs/menu.py:433
 msgid "Zkopírovat práva z..."
 msgstr ""
 
-#: ../lib/pytis/defs/menu.py:442
+#: ../lib/pytis/defs/menu.py:436
 msgid "Odstranit nadbytečná práva"
 msgstr ""
 
-#: ../lib/pytis/defs/menu.py:502
+#: ../lib/pytis/defs/menu.py:494
 #, python-format
 msgid ""
 "Ve specifikaci chybí tyto sloupce práv: %s.\n"
 "Chcete práva přesto zkopírovat?"
 msgstr ""
 
-#: ../lib/pytis/defs/menu.py:511
+#: ../lib/pytis/defs/menu.py:501
 #, python-format
 msgid "Opravdu chcete odstranit nadbytečná práva položky \"%s\"?"
 msgstr ""
 
-#: ../lib/pytis/defs/menu.py:639 ../lib/pytis/defs/menu.py:937
+#: ../lib/pytis/defs/menu.py:629 ../lib/pytis/defs/menu.py:921
 msgid "Sloupce"
 msgstr ""
 
-#: ../lib/pytis/defs/menu.py:665
+#: ../lib/pytis/defs/menu.py:655
 msgid "Pozor, tato položka se vyskytuje i na jiných místech menu:"
 msgstr ""
 
-#: ../lib/pytis/defs/menu.py:668
+#: ../lib/pytis/defs/menu.py:658
 msgid "[bez titulku]"
 msgstr ""
 
-#: ../lib/pytis/defs/menu.py:696 ../lib/pytis/defs/menu.py:802
-#: ../lib/pytis/defs/menu.py:940 ../lib/pytis/defs/menu.py:1013
+#: ../lib/pytis/defs/menu.py:684 ../lib/pytis/defs/menu.py:788
+#: ../lib/pytis/defs/menu.py:924 ../lib/pytis/defs/menu.py:997
 msgid "Práva"
 msgstr ""
 
-#: ../lib/pytis/defs/menu.py:707 ../lib/pytis/defs/menu.py:812
-#: ../lib/pytis/defs/menu.py:897
+#: ../lib/pytis/defs/menu.py:695 ../lib/pytis/defs/menu.py:798
+#: ../lib/pytis/defs/menu.py:881
 msgid "Identifikátor akce související s danou položkou menu"
 msgstr ""
 
-#: ../lib/pytis/defs/menu.py:708 ../lib/pytis/defs/menu.py:813
-#: ../lib/pytis/defs/menu.py:898
+#: ../lib/pytis/defs/menu.py:696 ../lib/pytis/defs/menu.py:799
+#: ../lib/pytis/defs/menu.py:882
 msgid "Sloupec"
 msgstr ""
 
-#: ../lib/pytis/defs/menu.py:711 ../lib/pytis/defs/menu.py:815
-#: ../lib/pytis/defs/menu.py:900
+#: ../lib/pytis/defs/menu.py:699 ../lib/pytis/defs/menu.py:801
+#: ../lib/pytis/defs/menu.py:884
 msgid "Sloupec, na který se právo vztahuje"
 msgstr ""
 
-#: ../lib/pytis/defs/menu.py:712 ../lib/pytis/defs/menu.py:816
-#: ../lib/pytis/defs/menu.py:901
+#: ../lib/pytis/defs/menu.py:700 ../lib/pytis/defs/menu.py:802
+#: ../lib/pytis/defs/menu.py:885
 msgid "Právo"
 msgstr ""
 
-#: ../lib/pytis/defs/menu.py:714 ../lib/pytis/defs/menu.py:818
-#: ../lib/pytis/defs/menu.py:903
+#: ../lib/pytis/defs/menu.py:702 ../lib/pytis/defs/menu.py:804
+#: ../lib/pytis/defs/menu.py:887
 msgid "Přidělené nebo odebrané právo"
 msgstr ""
 
-#: ../lib/pytis/defs/menu.py:715 ../lib/pytis/defs/menu.py:819
-#: ../lib/pytis/defs/menu.py:904
+#: ../lib/pytis/defs/menu.py:703 ../lib/pytis/defs/menu.py:805
+#: ../lib/pytis/defs/menu.py:888
 msgid "Systémové"
 msgstr ""
 
-#: ../lib/pytis/defs/menu.py:716 ../lib/pytis/defs/menu.py:821
-#: ../lib/pytis/defs/menu.py:906
+#: ../lib/pytis/defs/menu.py:704 ../lib/pytis/defs/menu.py:807
+#: ../lib/pytis/defs/menu.py:890
 msgid "Jde o neměnné právo definováno tvůrcem aplikace?"
 msgstr ""
 
-#: ../lib/pytis/defs/menu.py:717 ../lib/pytis/defs/menu.py:822
-#: ../lib/pytis/defs/menu.py:907
+#: ../lib/pytis/defs/menu.py:705 ../lib/pytis/defs/menu.py:808
+#: ../lib/pytis/defs/menu.py:891
 msgid "Ano/Ne"
 msgstr ""
 
-#: ../lib/pytis/defs/menu.py:718 ../lib/pytis/defs/menu.py:824
-#: ../lib/pytis/defs/menu.py:909
+#: ../lib/pytis/defs/menu.py:706 ../lib/pytis/defs/menu.py:810
+#: ../lib/pytis/defs/menu.py:893
 msgid "Je právo povoleno (ano) nebo zakázáno (ne)?"
 msgstr ""
 
-#: ../lib/pytis/defs/menu.py:719 ../lib/pytis/defs/menu.py:825
-#: ../lib/pytis/defs/menu.py:910
+#: ../lib/pytis/defs/menu.py:707 ../lib/pytis/defs/menu.py:811
+#: ../lib/pytis/defs/menu.py:894
 msgid "Nadbytečné"
 msgstr ""
 
-#: ../lib/pytis/defs/menu.py:721 ../lib/pytis/defs/menu.py:827
-#: ../lib/pytis/defs/menu.py:912
+#: ../lib/pytis/defs/menu.py:709 ../lib/pytis/defs/menu.py:813
+#: ../lib/pytis/defs/menu.py:896
 msgid "Je toto právo nadbytečné, bez vlivu na výsledná práva?"
 msgstr ""
 
-#: ../lib/pytis/defs/menu.py:750 ../lib/pytis/defs/menu.py:854
+#: ../lib/pytis/defs/menu.py:737 ../lib/pytis/defs/menu.py:840
 msgid "Systémová práva nelze editovat"
 msgstr ""
 
-#: ../lib/pytis/defs/menu.py:761 ../lib/pytis/defs/menu.py:865
+#: ../lib/pytis/defs/menu.py:748 ../lib/pytis/defs/menu.py:850
 msgid "Systémová práva nelze mazat"
 msgstr ""
 
-#: ../lib/pytis/defs/menu.py:782
+#: ../lib/pytis/defs/menu.py:768
 msgid "Změny aplikovány"
 msgstr ""
 
-#: ../lib/pytis/defs/menu.py:784
+#: ../lib/pytis/defs/menu.py:770
 msgid "Provádění změn uzamčeno, změny nebyly aplikovány"
 msgstr ""
 
-#: ../lib/pytis/defs/menu.py:805 ../lib/pytis/defs/menu.py:890
+#: ../lib/pytis/defs/menu.py:791 ../lib/pytis/defs/menu.py:874
 msgid "Stromový identifikátor"
 msgstr ""
 
-#: ../lib/pytis/defs/menu.py:926
+#: ../lib/pytis/defs/menu.py:910
 msgid "Souhrnná práva"
 msgstr ""
 
-#: ../lib/pytis/defs/menu.py:939
+#: ../lib/pytis/defs/menu.py:923
 msgid "Sloupce, na které je právo aplikováno; není-li uvedeno, tak všechny."
 msgstr ""
 
-#: ../lib/pytis/defs/menu.py:942 ../lib/pytis/defs/menu.py:1015
+#: ../lib/pytis/defs/menu.py:926 ../lib/pytis/defs/menu.py:999
 msgid "Zobrazení v menu"
 msgstr ""
 
-#: ../lib/pytis/defs/menu.py:943 ../lib/pytis/defs/menu.py:1016
+#: ../lib/pytis/defs/menu.py:927 ../lib/pytis/defs/menu.py:1000
 msgid "Náhled"
 msgstr ""
 
-#: ../lib/pytis/defs/menu.py:944 ../lib/pytis/defs/menu.py:1017
+#: ../lib/pytis/defs/menu.py:928 ../lib/pytis/defs/menu.py:1001
 msgid "Zobrazení formuláře"
 msgstr ""
 
-#: ../lib/pytis/defs/menu.py:945 ../lib/pytis/defs/menu.py:1018
+#: ../lib/pytis/defs/menu.py:929 ../lib/pytis/defs/menu.py:1002
 msgid "Vložení"
 msgstr ""
 
-#: ../lib/pytis/defs/menu.py:946 ../lib/pytis/defs/menu.py:1019
+#: ../lib/pytis/defs/menu.py:930 ../lib/pytis/defs/menu.py:1003
 msgid "Vložení nového záznamu"
 msgstr ""
 
-#: ../lib/pytis/defs/menu.py:947 ../lib/pytis/defs/menu.py:1020
+#: ../lib/pytis/defs/menu.py:931 ../lib/pytis/defs/menu.py:1004
 msgid "Editace"
 msgstr ""
 
-#: ../lib/pytis/defs/menu.py:948 ../lib/pytis/defs/menu.py:1021
+#: ../lib/pytis/defs/menu.py:932 ../lib/pytis/defs/menu.py:1005
 msgid "Změna hodnot existujícího záznamu"
 msgstr ""
 
-#: ../lib/pytis/defs/menu.py:949 ../lib/pytis/defs/menu.py:1022
+#: ../lib/pytis/defs/menu.py:933 ../lib/pytis/defs/menu.py:1006
 msgid "Smazání"
 msgstr ""
 
-#: ../lib/pytis/defs/menu.py:950 ../lib/pytis/defs/menu.py:1023
+#: ../lib/pytis/defs/menu.py:934 ../lib/pytis/defs/menu.py:1007
 msgid "Smazání existujícího záznamu"
 msgstr ""
 
-#: ../lib/pytis/defs/menu.py:951 ../lib/pytis/defs/menu.py:1024
+#: ../lib/pytis/defs/menu.py:935 ../lib/pytis/defs/menu.py:1008
 msgid "Tisk"
 msgstr ""
 
-#: ../lib/pytis/defs/menu.py:952 ../lib/pytis/defs/menu.py:1025
+#: ../lib/pytis/defs/menu.py:936 ../lib/pytis/defs/menu.py:1009
 msgid "Tisk formuláře"
 msgstr ""
 
-#: ../lib/pytis/defs/menu.py:953 ../lib/pytis/defs/menu.py:1026
+#: ../lib/pytis/defs/menu.py:937 ../lib/pytis/defs/menu.py:1010
 msgid "Export"
 msgstr ""
 
-#: ../lib/pytis/defs/menu.py:954 ../lib/pytis/defs/menu.py:1027
+#: ../lib/pytis/defs/menu.py:938 ../lib/pytis/defs/menu.py:1011
 msgid "Export formuláře do souboru"
 msgstr ""
 
-#: ../lib/pytis/defs/menu.py:955 ../lib/pytis/defs/menu.py:1028
+#: ../lib/pytis/defs/menu.py:939 ../lib/pytis/defs/menu.py:1012
 msgid "Spuštění"
 msgstr ""
 
-#: ../lib/pytis/defs/menu.py:956 ../lib/pytis/defs/menu.py:1029
+#: ../lib/pytis/defs/menu.py:940 ../lib/pytis/defs/menu.py:1013
 msgid "Spuštění funkce (netýká se formulářů)"
 msgstr ""
 
-#: ../lib/pytis/defs/menu.py:978
+#: ../lib/pytis/defs/menu.py:962
 msgid "Chystaná práva"
 msgstr ""
 
-#: ../lib/pytis/defs/menu.py:984
+#: ../lib/pytis/defs/menu.py:968
 msgid "Chystané změny práv"
 msgstr ""
 
-#: ../lib/pytis/defs/menu.py:990
+#: ../lib/pytis/defs/menu.py:974
 msgid "Nové"
 msgstr ""
 
-#: ../lib/pytis/defs/menu.py:1002
+#: ../lib/pytis/defs/menu.py:986
 msgid "Menu uživatele"
 msgstr ""
 
-#: ../lib/pytis/defs/menu.py:1007
+#: ../lib/pytis/defs/menu.py:991
 msgid "Identifikátor položky menu"
 msgstr ""
 
-#: ../lib/pytis/defs/menu.py:1051
+#: ../lib/pytis/defs/menu.py:1035
 msgid "Chystané menu uživatele"
 msgstr ""
 
-#: ../lib/pytis/defs/menu.py:1057
+#: ../lib/pytis/defs/menu.py:1041
 msgid "Rozšířené menu uživatele"
 msgstr ""
 
-#: ../lib/pytis/defs/menu.py:1074
+#: ../lib/pytis/defs/menu.py:1058
 msgid "Chystané rozšířené menu uživatele"
 msgstr ""
 
-#: ../lib/pytis/defs/printing.py:35
+#: ../lib/pytis/defs/printing.py:36
 msgid "Předdefinované tiskové šablony"
 msgstr ""
 
-#: ../lib/pytis/defs/printing.py:37 ../lib/pytis/defs/printing.py:58
+#: ../lib/pytis/defs/printing.py:38 ../lib/pytis/defs/printing.py:59
 msgid "Identifikátor řádku"
 msgstr ""
 
-#: ../lib/pytis/defs/printing.py:38 ../lib/pytis/defs/printing.py:60
+#: ../lib/pytis/defs/printing.py:39 ../lib/pytis/defs/printing.py:61
 msgid "Formulář"
 msgstr ""
 
-#: ../lib/pytis/defs/printing.py:39 ../lib/pytis/defs/printing.py:61
+#: ../lib/pytis/defs/printing.py:40 ../lib/pytis/defs/printing.py:62
 msgid "Název šablony"
 msgstr ""
 
-#: ../lib/pytis/defs/printing.py:40 ../lib/pytis/defs/printing.py:62
-#: ../lib/pytis/defs/printing.py:84
+#: ../lib/pytis/defs/printing.py:41 ../lib/pytis/defs/printing.py:63
+#: ../lib/pytis/defs/printing.py:85
 msgid "Šablona"
 msgstr ""
 
-#: ../lib/pytis/defs/printing.py:42 ../lib/pytis/defs/printing.py:64
+#: ../lib/pytis/defs/printing.py:43 ../lib/pytis/defs/printing.py:65
 msgid "Šablona pro jednotlivé řádky"
 msgstr ""
 
-#: ../lib/pytis/defs/printing.py:56
+#: ../lib/pytis/defs/printing.py:57
 msgid "Uživatelské tiskové šablony"
 msgstr ""
 
-#: ../lib/pytis/defs/printing.py:67
+#: ../lib/pytis/defs/printing.py:68
 msgid "Hlavička"
 msgstr ""
 
-#: ../lib/pytis/defs/printing.py:70
+#: ../lib/pytis/defs/printing.py:71
 msgid "Odlišná hlavička první stránky"
 msgstr ""
 
-#: ../lib/pytis/defs/printing.py:73
+#: ../lib/pytis/defs/printing.py:74
 msgid "Patička"
 msgstr ""
 
-#: ../lib/pytis/defs/printing.py:76 ../lib/pytis/defs/printing.py:88
+#: ../lib/pytis/defs/printing.py:77 ../lib/pytis/defs/printing.py:89
 msgid "Styl"
 msgstr ""
 
-#: ../lib/pytis/defs/printing.py:85
+#: ../lib/pytis/defs/printing.py:86
 msgid "Řádková šablona"
 msgstr ""
 
-#: ../lib/pytis/defs/printing.py:86
+#: ../lib/pytis/defs/printing.py:87
 msgid "Hlavičky a patičky"
 msgstr ""
 
-#: ../lib/pytis/defs/printing.py:93
+#: ../lib/pytis/defs/printing.py:94
 msgid "Můžete mazat pouze své vlastní záznamy."
 msgstr ""
 
-#: ../lib/pytis/defs/printing.py:96
+#: ../lib/pytis/defs/printing.py:97
 #, python-format
 msgid "Opravdu chcete vymazat tiskovou sestavu %s?"
 msgstr ""
@@ -1372,11 +1372,11 @@ msgstr ""
 msgid "Tento název šablony již existuje"
 msgstr ""
 
-#: ../lib/pytis/defs/printing.py:127
+#: ../lib/pytis/defs/printing.py:124
 msgid "Tisková sestava neexistuje: "
 msgstr ""
 
-#: ../lib/pytis/defs/printing.py:132
+#: ../lib/pytis/defs/printing.py:128
 msgid "Tisková sestava se vyskytuje ve více exemplářích: "
 msgstr ""
 
@@ -1416,54 +1416,54 @@ msgstr ""
 msgid "Typ formuláře"
 msgstr ""
 
-#: ../lib/pytis/defs/statistics.py:32
+#: ../lib/pytis/defs/statistics.py:29
 msgid "Přehled používaných formulářů"
 msgstr ""
 
-#: ../lib/pytis/defs/statistics.py:34 ../lib/pytis/defs/statistics.py:55
-#: ../lib/pytis/defs/statistics.py:76 ../lib/pytis/defs/statistics.py:104
-#: ../lib/pytis/defs/statistics.py:120
+#: ../lib/pytis/defs/statistics.py:31 ../lib/pytis/defs/statistics.py:52
+#: ../lib/pytis/defs/statistics.py:73 ../lib/pytis/defs/statistics.py:101
+#: ../lib/pytis/defs/statistics.py:117
 msgid "Jméno formuláře"
 msgstr ""
 
-#: ../lib/pytis/defs/statistics.py:36 ../lib/pytis/defs/statistics.py:58
+#: ../lib/pytis/defs/statistics.py:33 ../lib/pytis/defs/statistics.py:55
 msgid "Počet uživatelů"
 msgstr ""
 
-#: ../lib/pytis/defs/statistics.py:37 ../lib/pytis/defs/statistics.py:59
-#: ../lib/pytis/defs/statistics.py:79 ../lib/pytis/defs/statistics.py:107
-#: ../lib/pytis/defs/statistics.py:122
+#: ../lib/pytis/defs/statistics.py:34 ../lib/pytis/defs/statistics.py:56
+#: ../lib/pytis/defs/statistics.py:76 ../lib/pytis/defs/statistics.py:104
+#: ../lib/pytis/defs/statistics.py:119
 msgid "Počet otevření"
 msgstr ""
 
-#: ../lib/pytis/defs/statistics.py:38 ../lib/pytis/defs/statistics.py:60
+#: ../lib/pytis/defs/statistics.py:35 ../lib/pytis/defs/statistics.py:57
 msgid "Průměrná doba startu"
 msgstr ""
 
-#: ../lib/pytis/defs/statistics.py:39 ../lib/pytis/defs/statistics.py:61
-#: ../lib/pytis/defs/statistics.py:80 ../lib/pytis/defs/statistics.py:108
-#: ../lib/pytis/defs/statistics.py:123
+#: ../lib/pytis/defs/statistics.py:36 ../lib/pytis/defs/statistics.py:58
+#: ../lib/pytis/defs/statistics.py:77 ../lib/pytis/defs/statistics.py:105
+#: ../lib/pytis/defs/statistics.py:120
 msgid "Poslední spuštění"
 msgstr ""
 
-#: ../lib/pytis/defs/statistics.py:53
+#: ../lib/pytis/defs/statistics.py:50
 msgid "Podrobný přehled používaných formulářů"
 msgstr ""
 
-#: ../lib/pytis/defs/statistics.py:57 ../lib/pytis/defs/statistics.py:78
-#: ../lib/pytis/defs/statistics.py:106
+#: ../lib/pytis/defs/statistics.py:54 ../lib/pytis/defs/statistics.py:75
+#: ../lib/pytis/defs/statistics.py:103
 msgid "Parametry formuláře"
 msgstr ""
 
-#: ../lib/pytis/defs/statistics.py:73
+#: ../lib/pytis/defs/statistics.py:70
 msgid "Uživatelé formuláře"
 msgstr ""
 
-#: ../lib/pytis/defs/statistics.py:92
+#: ../lib/pytis/defs/statistics.py:89
 msgid "Formuláře"
 msgstr ""
 
-#: ../lib/pytis/defs/statistics.py:101 ../lib/pytis/defs/statistics.py:116
+#: ../lib/pytis/defs/statistics.py:98 ../lib/pytis/defs/statistics.py:113
 msgid "Formuláře uživatele"
 msgstr ""
 
