@@ -1637,6 +1637,15 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                     outside_transaction=True)
                 if qresult[0][0] == 'r':
                     return ''
+            qresult = self._pg_query(_Query("select definition from pg_views "
+                                            "where schemaname = '%s' and viewname = '%s'" %
+                                            (schema, main_table_name)),
+                                     outside_transaction=True)
+            assert len(qresult) == 1, (schema, main_table_name,)
+            lock_query = qresult[0][0]
+            if lock_query[-1] == ';':
+                lock_query = lock_query[:-1]
+            lock_query = _Query(lock_query.replace('%', '%%'))
             # There are some issues with locking views:
             # - There is a PostgreSQL bug preventing locking views which are
             #   built on top of other views.
@@ -1646,15 +1655,6 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             # the locking clause.  But first we need to know what may be put
             # after OF without causing a database error.
             if db_spec and issubclass(db_spec, SQLView) and db_spec.lock_tables:
-                qresult = self._pg_query(_Query("select definition from pg_views "
-                                                "where schemaname = '%s' and viewname = '%s'" %
-                                                (schema, main_table_name)),
-                                         outside_transaction=True)
-                assert len(qresult) == 1, (schema, main_table_name,)
-                lock_query = qresult[0][0]
-                if lock_query[-1] == ';':
-                    lock_query = lock_query[:-1]
-                lock_query = _Query(lock_query.replace('%', '%%'))
                 limit_clause = '({}=%(key)s)'.format(db_spec.lock_key)
                 # Stupid and incorrect, but how to make it better?
                 t = lock_query.template()
