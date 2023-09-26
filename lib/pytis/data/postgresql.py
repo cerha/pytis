@@ -55,7 +55,6 @@ from pytis.util import (
     log, object_2_5, OPERATIONAL, ProgramError, remove_duplicates,
     UNDEFINED, Locked, xtuple,
 )
-from . import evaction
 
 _ = pytis.util.translations('pytis-data')
 
@@ -1638,15 +1637,6 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                     outside_transaction=True)
                 if qresult[0][0] == 'r':
                     return ''
-            qresult = self._pg_query(_Query(
-                ("select definition from pg_views where schemaname = '%s' and viewname = '%s'" %
-                 (schema, main_table_name,))),
-                outside_transaction=True)
-            assert len(qresult) == 1, (schema, main_table_name,)
-            lock_query = qresult[0][0]
-            if lock_query[-1] == ';':
-                lock_query = lock_query[:-1]
-            lock_query = _Query(lock_query.replace('%', '%%'))
             # There are some issues with locking views:
             # - There is a PostgreSQL bug preventing locking views which are
             #   built on top of other views.
@@ -1656,64 +1646,16 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             # the locking clause.  But first we need to know what may be put
             # after OF without causing a database error.
             if db_spec and issubclass(db_spec, SQLView) and db_spec.lock_tables:
-                lock_tables = db_spec.lock_tables
-                lock_key = db_spec.lock_key
-            else:
-                # If there is no explicit lock_tables specification, we try to
-                # find out the tables and the key to lock by parsing the query tree.
-                qresult = self._pg_query(
-                    _Query("select ev_action from "
-                           "pg_rewrite join pg_class on (pg_rewrite.ev_class = pg_class.oid) "
-                           "join pg_namespace on (pg_class.relnamespace = pg_namespace.oid) "
-                           "where nspname=%(schema)s and relname=%(main_table)s",
-                           dict(schema=sval(schema), main_table=sval(main_table))),
-                    outside_transaction=True)
-                ev_action_string = qresult[0][0]
-                ev_action = evaction.pg_parse_ev_action(ev_action_string)
-                ev_rtable = ev_action[0]['rtable']
-                lock_candidates = [table['eref']['aliasname']
-                                   for table in ev_rtable if table['inFromCl']]
-
-                def check_candidate(candidate_table):
-                    try:
-                        self._pg_query(lock_query + (" for update of %s nowait limit 1" %
-                                                     (candidate_table,)),
-                                       outside_transaction=True)
-                        return True
-                    except DBLockException:
-                        return True
-                    except DBUserException:
-                        return False
-
-                lock_tables = [c for c in lock_candidates if check_candidate(c)]
-
-                def find_real_key():
-                    keyname = first_key_column.template().split('.')[-1]
-                    for colspec in ev_action[0]['targetList']:
-                        if colspec['resname'] == keyname:
-                            break
-                    else:
-                        return None
-                    table = colspec['resorigtbl']
-                    column = colspec['resorigcol']
-                    qresult = self._pg_query(_Query(("select relname, attname from pg_class join "
-                                                     "pg_attribute on (attrelid=pg_class.oid) "
-                                                     "where pg_class.oid=%s and "
-                                                     "pg_attribute.attnum=%s") % (table, column,)),
-                                             outside_transaction=True)
-                    if qresult:
-                        relname, attname = qresult[0]
-                        if relname not in lock_tables:
-                            return None
-                    else:
-                        return None
-                    return relname + '.' + attname
-                if lock_tables:
-                    lock_key = find_real_key()
-                else:
-                    lock_key = None
-            if lock_tables and lock_key:
-                limit_clause = '(%s=%%(key)s)' % (lock_key,)
+                qresult = self._pg_query(_Query("select definition from pg_views "
+                                                "where schemaname = '%s' and viewname = '%s'" %
+                                                (schema, main_table_name)),
+                                         outside_transaction=True)
+                assert len(qresult) == 1, (schema, main_table_name,)
+                lock_query = qresult[0][0]
+                if lock_query[-1] == ';':
+                    lock_query = lock_query[:-1]
+                lock_query = _Query(lock_query.replace('%', '%%'))
+                limit_clause = '({}=%(key)s)'.format(db_spec.lock_key)
                 # Stupid and incorrect, but how to make it better?
                 t = lock_query.template()
                 matches = [m for m in re.finditer(' where ', t, re.I)]
@@ -1735,7 +1677,9 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                     lock_query = _Query(t[:beg] + ' where ' + limit_clause + ' and ' + t[end:])
                 else:
                     lock_query = lock_query + ' where ' + limit_clause
-                result = lock_query + " for update of %s nowait" % (', '.join(lock_tables),)
+                result = lock_query + " for update of {} nowait".format(
+                    ', '.join(db_spec.lock_tables)
+                )
             else:
                 log(EVENT, "Unlockable view, won't be locked:", main_table)
                 result = lock_query + ' limit 1'
