@@ -1627,7 +1627,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             from pytis.data.gensqlalchemy import SQLTable, SQLView
             db_spec = self._pdbb_db_spec
             if db_spec and issubclass(db_spec, SQLTable):
-                return ''
+                return True, None
             if db_spec is None:
                 qresult = self._pg_query(_Query(
                     (("select relkind from pg_class join pg_namespace "
@@ -1636,7 +1636,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                      (schema, main_table_name,))),
                     outside_transaction=True)
                 if qresult[0][0] == 'r':
-                    return ''
+                    return True, None
             qresult = self._pg_query(_Query("select definition from pg_views "
                                             "where schemaname = '%s' and viewname = '%s'" %
                                             (schema, main_table_name)),
@@ -1677,13 +1677,13 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                     lock_query = _Query(t[:beg] + ' where ' + limit_clause + ' and ' + t[end:])
                 else:
                     lock_query = lock_query + ' where ' + limit_clause
-                result = lock_query + " for update of {} nowait".format(
-                    ', '.join(db_spec.lock_tables)
-                )
+                lockable = True
+                lock_query += " for update of {} nowait".format(', '.join(db_spec.lock_tables))
             else:
+                lockable = False
+                lock_query += ' limit 1'
                 log(EVENT, "Unlockable view, won't be locked:", main_table)
-                result = lock_query + ' limit 1'
-            return result
+            return lockable, lock_query
 
         self._pdbb_command_lock = make_lock_command
         # We make all cursors names unique to avoid conflicts with codebooks
@@ -3535,11 +3535,10 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
             key = key[0]
         log(EVENT, 'Locking row:', str(key))
         self._pg_query(_Query('savepoint _lock'), transaction=transaction)
+        lockable, lock_query = self._pdbb_command_lock()
         try:
-            command = self._pdbb_command_lock()
-            if command:         # special locking command necessary
-                command = command.update(dict(key=key))
-                result = self._pg_query(command, transaction=transaction)
+            if lock_query:    # special locking query is necessary
+                result = self._pg_query(lock_query.update(dict(key=key)), transaction=transaction)
             else:
                 result = self._pg_row(key, None, transaction=transaction,
                                       supplement='for update nowait')
@@ -3550,7 +3549,8 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
             log(EVENT, 'Row already locked by another process')
             self._pg_query(_Query('rollback to _lock'), transaction=transaction)
             return "Record locked by another process"
-        log(EVENT, 'Row locked')
+        if lockable:
+            log(EVENT, 'Row locked')
         return None
 
 
