@@ -1979,7 +1979,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                         num_format = 'General'
                 fmt = writer.add_format({'num_format': num_format})
                 return lambda x, y, r, v: worksheet.write_number(x, y, vfunc(v), fmt)
-            elif isinstance(ctype, pytis.data.DateTime):
+            elif isinstance(ctype, pytis.data.DateTime) and not isinstance(ctype, pytis.data.Range):
                 if isinstance(ctype, pytis.data.Date):
                     num_format = 'dd/mm/yyyy'
                 elif isinstance(ctype, pytis.data.Time):
@@ -2012,16 +2012,9 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             ctype = self._row.type(cid)
             label = unistr(col.column_label() or col.label())
             width = max(col.width(), len(label), MINIMAL_COLUMN_WIDTH)
-            if isinstance(ctype, pytis.data.Range):
-                ctype = ctype.base_type()
-                columns.append((position, cid, writefunc(cid, ctype, lambda v: v.lower())))
-                columns.append((position + 1, cid, writefunc(cid, ctype, lambda v: v.upper())))
-                worksheet.merge_range(0, position, 0, position + 1, label, bold_centered)
-                worksheet.set_column(position, position + 1, width)
-            else:
-                columns.append((position, cid, writefunc(cid, ctype)))
-                worksheet.write(0, position, label, bold)
-                worksheet.set_column(position, position, width)
+            columns.append((position, cid, writefunc(cid, ctype)))
+            worksheet.write(0, position, label, bold)
+            worksheet.set_column(position, position, width)
         # Process rows
         number_of_rows = self._table.number_of_rows()
         output_row_number = 2  # Actually start at third row (one for headings, one empty).
