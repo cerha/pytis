@@ -692,7 +692,9 @@ def visit_create_table(element, compiler, **kwargs):
     if table.inherits:
         inherited = [table._table_name(t) for t in table.inherits]
         result = '%s\nINHERITS (%s)\n\n' % (result.rstrip(), ', '.join(inherited),)
-    return result
+    # Replace double percent sign produced from the compiler
+    # when using %s e.g. in sql "format"" function in check constraints
+    return result.replace('%%', '%')
 
 
 _ANY_REGEXP = re.compile('.*')
