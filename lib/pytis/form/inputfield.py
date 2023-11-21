@@ -609,7 +609,8 @@ class InputField(KeyHandler, CommandHandler):
             errmsg = self._check()
         if errmsg:
             if interactive:
-                app.error(self.spec().label() + ": " + errmsg, title=_("Invalid value"))
+                colname = self.spec().label() or self.spec().column_label() or self.spec().id()
+                app.error(colname + ": " + errmsg, title=_("Invalid value"))
             else:
                 app.echo(errmsg, kind='error')
         return error is None
