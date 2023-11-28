@@ -5,7 +5,7 @@ from __future__ import unicode_literals
 import sqlalchemy
 import pytis.data.gensqlalchemy as sql
 import pytis.data
-from pytis.data.dbdefs import and_, ival, sval, bval, dtval
+from pytis.data.dbdefs import and_, ival, sval, bval, dtval, stype, func, itype, null
 
 cms_users_table = sql.SQLFlexibleValue('app_cms_users_table',
                                        default='cms_users_table')
@@ -195,15 +195,15 @@ class CmsMenu(sql.SQLView, CmsExtensible):
         texts = sql.t.CmsMenuTexts.alias('t')
         mod = sql.t.CmsModules.alias('m')
         return sqlalchemy.select(
-            [sval("s.menu_item_id ||'.'|| l.lang").label('menu_id')] +
+            [(stype(structure.c.menu_item_id) + sval('.') + texts.c.lang).label('menu_id')] +
             cls._exclude(structure) +
             cls._exclude(lang, 'lang_id') +
             cls._exclude(texts, 'menu_item_id', 'lang', 'published') +
             cls._exclude(mod, 'mod_id') +
-            [bval("coalesce(t.published, 'FALSE')").label('published'),
-             sval("coalesce(t.title, s.identifier)").label('title_or_identifier'),
-             ival("(select count(*)-1 from cms_menu_structure "
-                  "where tree_order <@ s.tree_order)").label('tree_order_nsub')],
+            [func.coalesce(texts.c.published, bval(False)).label('published'),
+             func.coalesce(texts.c.title, structure.c.identifier).label('title_or_identifier'),
+             itype(sql.gL("(select count(*)-1 from cms_menu_structure "
+                          "where tree_order <@ s.tree_order)")).label('tree_order_nsub')]
         ).select_from(
             structure
             .join(lang, sqlalchemy.sql.true())
@@ -335,25 +335,21 @@ class CmsRights(sql.SQLView, CmsExtensible):
     def query(cls):
         x = sql.t.CmsRightsAssignment.alias('x')
         s = sql.t.CmsMenuStructure.alias('s')
-        r_ = sql.t.CmsRoles.alias('r')
-        a_ = sql.t.CmsActions.alias('a')
+        r = sql.t.CmsRoles.alias('r')
+        a = sql.t.CmsActions.alias('a')
         return sqlalchemy.select(
             cls._exclude(x) +
-            [r_.c.name.label('role_name'),
+            [r.c.name.label('role_name'),
              s.c.mod_id.label('mod_id'),
-             r_.c.description.label('role_description'),
-             r_.c.system_role.label('system_role'),
-             a_.c.name.label('action_name'),
-             a_.c.description.label('action_description')],
-            from_obj=[
-                x.join(
-                    s, s.c.menu_item_id == x.c.menu_item_id
-                ).join(
-                    r_, r_.c.role_id == x.c.role_id
-                ).join(
-                    a_, a_.c.action_id == x.c.action_id
-                )
-            ]
+             r.c.description.label('role_description'),
+             r.c.system_role.label('system_role'),
+             a.c.name.label('action_name'),
+             a.c.description.label('action_description')],
+        ).select_from(
+            x
+            .join(s, s.c.menu_item_id == x.c.menu_item_id)
+            .join(r, r.c.role_id == x.c.role_id)
+            .join(a, a.c.action_id == x.c.action_id)
         )
 
     insert_order = (CmsRightsAssignment,)
@@ -519,21 +515,18 @@ class CmsUserRoles(sql.SQLView, CmsExtensible):
 
     @classmethod
     def query(cls):
-        a_ = sql.t.CmsUserRoleAssignment.alias('a')
+        a = sql.t.CmsUserRoleAssignment.alias('a')
         u = sql.t.CmsUsers.alias('u')
-        r_ = sql.t.CmsRoles.alias('r')
+        r = sql.t.CmsRoles.alias('r')
         return sqlalchemy.select(
-            cls._exclude(a_) +
-            cls._exclude(r_, 'role_id') +
+            cls._exclude(a) +
+            cls._exclude(r, 'role_id') +
             [u.c.login.label('login'),
              u.c.fullname.label('fullname')],
-            from_obj=[
-                a_.join(
-                    u, a_.c.uid == u.c.uid
-                ).join(
-                    r_, a_.c.role_id == r_.c.role_id
-                ),
-            ]
+        ).select_from(
+            a
+            .join(u, a.c.uid == u.c.uid)
+            .join(r, a.c.role_id == r.c.role_id)
         )
 
     def on_insert(self):
@@ -566,15 +559,15 @@ class CmsSessionLog(sql.SQLView, CmsExtensible):
         return sqlalchemy.select(
             cls._exclude(log, 'end_time') +
             [users.c.fullname.label('fullname'),
-             dtval("coalesce(l.end_time, s.last_access) - l.start_time").label('duration'),
-             bval("s.session_id IS NOT NULL AND age(s.last_access)<'1 hour'").label('active')],
-            from_obj=[
-                log.outerjoin(
-                    session, log.c.session_id == session.c.session_id
-                ).join(
-                    users, log.c.uid == users.c.uid
-                )
-            ]
+             (func.coalesce(log.c.end_time,
+                            session.c.last_access) - log.c.start_time).label('duration'),
+             and_(session.c.session_id != null,
+                  func.age(session.c.last_access) < dtval('1 hour')).label('active')
+             ],
+        ).select_from(
+            log
+            .outerjoin(session, log.c.session_id == session.c.session_id)
+            .join(users, log.c.uid == users.c.uid)
         )
 
     def on_insert(self):
