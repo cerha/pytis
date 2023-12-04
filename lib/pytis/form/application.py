@@ -1607,6 +1607,19 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         def __exit__(self, exc_type, exc_value, exc_tb):
             self._instance.close()
 
+        def __iter__(self):
+            return self
+
+        def __next__(self):
+            line = self.readline()
+            log(EVENT, "Read line:", line)
+            if line:
+                return line
+            else:
+                raise StopIteration()
+
+        next = __next__  # Py 2/3 compatibility.
+
         def _decode(self, data):
             # TODO: Remove when Python 2 support not needed and pass encoding to open().
             if self._encoding is not None:
