@@ -1011,8 +1011,8 @@ class PytisClientAPIService(rpyc.Service):
         else:
             return None
 
-    def _open_file(self, filename, encoding, mode, encrypt=None, decrypt=False):
-        return ExposedFileWrapper(filename, encoding=encoding, mode=mode,
+    def _open_file(self, filename, mode, encoding, encrypt=None, decrypt=False):
+        return ExposedFileWrapper(filename, mode=mode, encoding=encoding,
                                   encrypt=self._encrypt(encrypt),
                                   decrypt=self._decrypt(decrypt))
 
@@ -1090,7 +1090,7 @@ class PytisClientAPIService(rpyc.Service):
             for output modes
 
         """
-        return self._open_file(filename, encoding, mode, encrypt=encrypt, decrypt=decrypt)
+        return self._open_file(filename, mode, encoding, encrypt=encrypt, decrypt=decrypt)
 
     def exposed_open_selected_file(self, directory=None, patterns=(), pattern=None, encrypt=None):
         """Return a read-only 'file' like object of a user selected file.
@@ -1143,7 +1143,7 @@ class PytisClientAPIService(rpyc.Service):
         if filename is None:
             return None
         else:
-            return self._open_file(filename, encoding, mode, decrypt=decrypt)
+            return self._open_file(filename, mode, encoding, decrypt=decrypt)
 
     def exposed_make_temporary_file(self, suffix='', encoding=None, mode='wb', decrypt=False):
         """Create a temporary file and return its instance.
