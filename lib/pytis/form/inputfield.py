@@ -1971,7 +1971,7 @@ class FileField(Invocable, InputField):
 
     def _cmd_load(self):
         # title = _("Select the file for field '%s'", self.spec().label())
-        fh = app.open_selected_file(filetypes=self._spec.filename_extensions(),
+        fh = app.open_selected_file(mode='rb', filetypes=self._spec.filename_extensions(),
                                     context='file-field')
         if fh:
             try:
@@ -2486,7 +2486,7 @@ class StructuredTextField(TextField):
         self.set_focus()
 
     def _load_new_file(self, row):
-        fh = app.open_selected_file(context='attachments')
+        fh = app.open_selected_file(mode='rb', context='attachments')
         if fh:
             try:
                 filename = app.splitpath(fh.name)[1]

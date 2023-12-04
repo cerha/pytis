@@ -1057,7 +1057,8 @@ class Application(API):
         """
         pass
 
-    def open_selected_file(self, directory=None, filetypes=None, encrypt=None, context='default'):
+    def open_selected_file(self, directory=None, mode='rb', encoding=None, encrypt=None,
+                           filetypes=None, context='default'):
         """Return a read-only 'file' like object of a user selected file.
 
         The file is selected by the user using a GUI dialog.  Returns None if
@@ -1065,16 +1066,23 @@ class Application(API):
         returned file is opened in the client's file system (the returned
         object is an 'ExposedFileWrapper' instance).
 
-        The file is always open in binary mode. (TODO: add 'mode' argument)
-
         Arguments:
 
           directory -- the initial directory or None
+          mode -- mode for opening the file
+          encoding -- the name of the encoding used to decode or encode the
+            file. This should only be used in text mode. The default encoding
+            is 'utf-8'.  Any text encoding supported by Python can be used.
           filetypes -- see 'Application.select_file()'
           encrypt -- list of encryption keys to use to encrypt the file; if the
             list is empty then let the user select the keys; if 'None' then
             don't encrypt the file
           context -- see 'Application.select_file()'
+
+        Beware: The default mode is historically 'rb'.  It will change to 'r'
+        in the future to correspond with the expected default mode of Python
+        built-in function 'open()'.  Please always pass the mode explicitly, to
+        avoid future regression.
 
         """
         pass

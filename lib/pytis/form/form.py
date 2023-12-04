@@ -2261,7 +2261,7 @@ class RecordForm(LookupForm):
         separator = result['separator'].value()
         if separator == 'other':
             separator = result['custom'].value()
-        fh = app.open_selected_file(filetypes=('csv', 'txt'))
+        fh = app.open_selected_file(mode='rb', filetypes=('csv', 'txt'))
         if not fh:
             app.echo(_(u"No file given. Process terminated."), kind='error')
             return False

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2020, 2022 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2023 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2007-2016 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -108,7 +108,7 @@ class BinaryData(Specification):
         if keys is None:
             app.error(_("No key selected."))
             return
-        f = app.open_selected_file(encrypt=keys)
+        f = app.open_selected_file(mode='rb', encrypt=keys)
         if f is None:
             app.error(_("No file selected."))
             return

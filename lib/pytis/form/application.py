@@ -1574,21 +1574,62 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
             raise ProgramError("Invalid 'content': {}".format(content))
 
     class _ExposedFileWrapper(object):
-        def __init__(self, instance):
+        """Wrapper over wrapper to hide difficiencies of legacy ExposedFileWrapper.
+
+        ExposedFileWrapper implementations from older Pytis2Go versions (which
+        don't load remote clientapi.py) don't support some features (context
+        manager protocol and iterator protocol) we want in Pytis API, so this
+        wrapper implements them on top of the legacy wrapper.
+
+        """
+        def __init__(self, instance, mode=None, encoding=None):
             self._instance = instance
+            if mode:
+                # Text mode emulation is implemented here because older Pytis2Go clients
+                # only support binary mode in 'open_file()' and 'open_selected_file()'.
+                # In contrary 'write_selected_file()' did support passing mode explicitly
+                # even with old clients, so we only need to support the emulation
+                # for 'r' modes.
+                assert mode in ('r', 'rb')
+                if encoding is None and 'b' not in mode:
+                    # Supply default encoding only for text modes.
+                    encoding = 'utf-8'
+            else:
+                assert encoding is None, encoding
+            self._encoding = encoding
+
         def __getattr__(self, name):
             return getattr(self._instance, name)
+
         def __enter__(self):
             return self
+
         def __exit__(self, exc_type, exc_value, exc_tb):
             self._instance.close()
 
-    def _wrap_exposed_file_wrapper(self, f):
+        def _decode(self, data):
+            # TODO: Remove when Python 2 support not needed and pass encoding to open().
+            if self._encoding is not None:
+                data = data.decode(self._encoding)
+            return data
+
+        def read(self, *args, **kwargs):
+            return self._decode(self._instance.read(*args, **kwargs))
+
+        def readline(self):
+            return self._decode(self._instance.readline())
+
+        def readlines(self):
+            for line in self._instance.readlines():
+                yield self._decode(line)
+
+    def _wrap_exposed_file_wrapper(self, f, mode=None, encoding=None):
         if f:
-            # Further wrap the ExposedFileWrapper instance to add context manager
-            # support to legacy ExposedFileWrapper from older Pytis2Go versions
-            # (which don't load remote clientapi.py).
-            f = self._ExposedFileWrapper(f)
+            # Further wrap the ExposedFileWrapper instance to provide
+            # compatibility layer which can nov be implemented in
+            # ExposedFileWrapper itself as long as we have old Pytis2go
+            # clients which don't load clientapi.py
+            f = self._ExposedFileWrapper(f, mode=mode, encoding=encoding)
         return f
 
     # Public API accessed through 'pytis.api.app' by Pytis applications.
@@ -2154,8 +2195,8 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         else:
             return None
 
-    def api_open_selected_file(self, directory=None, filetypes=None, encrypt=None,
-                               context='default'):
+    def api_open_selected_file(self, directory=None, mode='rb', encoding=None, encrypt=None,
+                               filetypes=None, context='default'):
         # TODO: Encryption not supported for the local variant.
         cmode = self.client_mode()
         if directory is None:
@@ -2164,14 +2205,15 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
             context = None  # Prevent storing the explicitly passed directory when dialog closed.
         if cmode == 'remote':
             f = self._wrap_exposed_file_wrapper(pytis.remote.open_selected_file(
-                directory=directory, encrypt=encrypt,
+                directory=directory,
+                encrypt=encrypt,
                 filetypes=filetypes
-            ))
+            ), mode=mode, encoding=encoding)
         elif cmode == 'local':
             path = self.run_dialog(dialog.FileDialog, dir=directory,
                                    mode=dialog.FileDialog.OPEN,
                                    wildcards=self._wildcards(filetypes))
-            f = open(path, 'rb') if path else None
+            f = io.open(path, mode, encoding=encoding) if path else None
         else:
             f = None
         if f and context:
