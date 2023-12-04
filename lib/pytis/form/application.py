@@ -2233,7 +2233,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
             self._set_recent_directory(cmode, context, self._dirname(cmode, f.name))
         return f
 
-    def api_open_file(self, filename, mode='w', encoding=None):
+    def api_open_file(self, filename, mode='r', encoding=None):
         cmode = self.client_mode()
         if cmode == 'remote':
             remote_mode = mode + 'b' if 'b' not in mode else mode

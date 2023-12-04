@@ -1087,8 +1087,12 @@ class Application(API):
         """
         pass
 
-    def open_file(self, filename, mode='w', encoding=None):
-        """Return a read-only 'file' like object of the given file.
+    def open_file(self, filename, mode='r', encoding=None):
+        """Return a 'file' like object for given file.
+
+        If remote client connection exists, the returned file is opened in the
+        client's file system (the returned object is an 'ExposedFileWrapper'
+        instance).
 
         Arguments:
 
@@ -1103,6 +1107,9 @@ class Application(API):
 
     def write_file(self, data, filename, mode='w'):
         """Write given 'data' to given file.
+
+        If remote client connection exists, the file is created in the
+        client's file system.
 
         Arguments:
 
