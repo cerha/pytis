@@ -1115,7 +1115,7 @@ class PytisClientAPIService(rpyc.Service):
                                             patterns=patterns, pattern=pattern)
         if filename is None:
             return None
-        return ExposedFileWrapper(filename, mode='rb', encrypt=self._encrypt(encrypt))
+        return self._open_file(filename, mode='rb', encoding=None, encrypt=encrypt)
 
     def exposed_make_selected_file(self, directory=None, filename=None, patterns=(), pattern=None,
                                    encoding=None, mode='wb', decrypt=False):
