@@ -1080,14 +1080,14 @@ class PytisClientAPIService(rpyc.Service):
 
         Arguments:
 
-          filename -- name of the file to open, basestring
+          filename -- name of the file to open in the remote file system as a basestring
           mode -- mode for opening the file
           encoding -- file content output encoding, string or None
           encrypt -- list of encryption keys to use to encrypt the file; if the
             list is empty then let the user select the keys; if 'None' then
-            don't encrypt the file; applicable only for input modes
+            don't encrypt the file; applicable only for input modes ('r')
           decrypt -- if true then decrypt the file contents; applicable only
-            for output modes
+            for output modes ('w')
 
         """
         return self._open_file(filename, mode, encoding, encrypt=encrypt, decrypt=decrypt)
