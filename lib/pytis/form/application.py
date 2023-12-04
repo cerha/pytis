@@ -1577,25 +1577,20 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         """Wrapper over wrapper to hide difficiencies of legacy ExposedFileWrapper.
 
         ExposedFileWrapper implementations from older Pytis2Go versions (which
-        don't load remote clientapi.py) don't support some features (context
-        manager protocol and iterator protocol) we want in Pytis API, so this
-        wrapper implements them on top of the legacy wrapper.
+        don't load remote clientapi.py) don't support some features we want in
+        Pytis API (context manager protocol, iterator protocol, text mode
+        encoding), so this wrapper implements them on top of the
+        ExposedFileWrapper instance.
 
         """
         def __init__(self, instance, mode=None, encoding=None):
+            assert mode is not None or encoding is None, (mode, encoding)
             self._instance = instance
-            if mode:
-                # Text mode emulation is implemented here because older Pytis2Go clients
-                # only support binary mode in 'open_file()' and 'open_selected_file()'.
-                # In contrary 'write_selected_file()' did support passing mode explicitly
-                # even with old clients, so we only need to support the emulation
-                # for 'r' modes.
-                assert mode in ('r', 'rb')
-                if encoding is None and 'b' not in mode:
-                    # Supply default encoding only for text modes.
-                    encoding = 'utf-8'
-            else:
-                assert encoding is None, encoding
+            # Text mode emulation is implemented here because older Pytis2Go clients
+            # only support binary mode in 'open_file()' and 'open_selected_file()'.
+            if mode is not None and encoding is None and 'b' not in mode:
+                # Supply default encoding only for text modes.
+                encoding = 'utf-8'
             self._encoding = encoding
 
         def __getattr__(self, name):
@@ -1628,6 +1623,11 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
 
         def read(self, *args, **kwargs):
             return self._decode(self._instance.read(*args, **kwargs))
+
+        def write(self, data):
+            if self._encoding is not None:
+                data = data.encode(self._encoding)
+            return self._instance.write(data)
 
         def readline(self):
             return self._decode(self._instance.readline())
@@ -2233,12 +2233,21 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
             self._set_recent_directory(cmode, context, self._dirname(cmode, f.name))
         return f
 
-    def api_open_file(self, filename, mode='w'):
+    def api_open_file(self, filename, mode='w', encoding=None):
         cmode = self.client_mode()
         if cmode == 'remote':
-            f = pytis.remote.open_file(filename, mode=mode)
+            remote_mode = mode + 'b' if 'b' not in mode else mode
+            f = self._wrap_exposed_file_wrapper(
+                pytis.remote.open_file(filename, mode=remote_mode),
+                # Use _ExposedFileWrapper text mode emulation, because older clients
+                # don't support 'encoding' in pytis.remote.open_file().
+                mode=mode, encoding=encoding,
+            )
         elif cmode == 'local':
-            f = open(filename, mode)
+            if 'b' not in mode and encoding is None:
+                # Make sure encoding defaults to 'utf-8', not sys.getdefaultencoding()
+                encoding = 'utf-8'
+            f = io.open(filename, mode, encoding=encoding)
         return f
 
     def api_write_file(self, data, filename, mode='w'):

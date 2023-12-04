@@ -1087,13 +1087,16 @@ class Application(API):
         """
         pass
 
-    def open_file(self, filename, mode='w'):
+    def open_file(self, filename, mode='w', encoding=None):
         """Return a read-only 'file' like object of the given file.
 
         Arguments:
 
           filename -- name of the file to open, basestring
           mode -- mode for opening the file
+          encoding -- the name of the encoding used to decode or encode the
+            file. This should only be used in text mode. The default encoding
+            is 'utf-8'.  Any text encoding supported by Python can be used.
 
         """
         pass
