@@ -1101,6 +1101,9 @@ class PytisClientAPIService(rpyc.Service):
         Arguments:
 
           directory -- initial directory of the GUI dialog
+          mode, encoding -- currently unsupported. Once we don't need to keep
+            compatibility with old Pytis2go clients, the arguments can be added
+            here.
           patterns -- a sequence of pairs (label, pattern) for file filtering
             as described in 'pytis.remote.ClientUIBackend.select_file()'.
           pattern -- a string defining the required file name pattern, or 'None'
