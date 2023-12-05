@@ -1561,8 +1561,6 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
     def _set_recent_directory(self, cmode, context, directory):
         self._recent_directories[':'.join((cmode, context))] = directory
 
-
-
     def _dialog_content_kwargs(self, content):
         if not content:
             return dict()
@@ -1582,16 +1580,70 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         encoding), so this wrapper implements them on top of the
         ExposedFileWrapper instance.
 
+        Older Pytis2Go clients only support binary mode in 'open_file()' and
+        'open_selected_file()', so we actually always open remote files in
+        binary mode and encode/decode the data in this class.
+
+        Also, because reading and writing data in small chunks (such as using
+        readline()) over a remote connection is really slow, we implement
+        buffering through 'io.BufferedReader'/'io.BufferedWriter' which
+        significantly improves performance.
+
         """
+        _BUFFER_SIZE = 512 * 1024
+
+        class BufferingWrapper(object):
+            """Wrap ExposedFileWrapper instance to serve buffered data.
+
+            Implements the API expected by 'io.BufferedReader' and
+            'io.BufferedWriter'.
+
+            """
+            def __init__(self, instance):
+                self._instance = instance
+                self.closed = False
+
+            def readable(self):
+                return True
+
+            def readinto(self, b):
+                data = self._instance.read(len(b))
+                size = len(data)
+                log(EVENT, "Buffer read:", size)
+                b[:size] = data
+                return size
+
+            def writable(self):
+                return True
+
+            def write(self, b):
+                size = self._instance.write(b)
+                log(EVENT, "Buffer write:", size)
+                return size
+
+            def close(self):
+                self.closed = True
+
         def __init__(self, instance, mode=None, encoding=None):
             assert mode is not None or encoding is None, (mode, encoding)
             self._instance = instance
-            # Text mode emulation is implemented here because older Pytis2Go clients
-            # only support binary mode in 'open_file()' and 'open_selected_file()'.
-            if mode is not None and encoding is None and 'b' not in mode:
-                # Supply default encoding only for text modes.
-                encoding = 'utf-8'
-            self._encoding = encoding
+            if mode is not None:
+                if 'b' in mode:
+                    encoding = None
+                else:
+                    # Supply default encoding in text modes.
+                    encoding = encoding or 'utf-8'
+                if 'r' in mode:
+                    buffer_class = io.BufferedReader
+                else:
+                    buffer_class = io.BufferedWriter
+                self._buffer = buffer_class(self.BufferingWrapper(instance), self._BUFFER_SIZE)
+            else:
+                # TODO: Apply buffering in all situations (also for app.make_selected_file(),
+                # which doesn't pass mode here?
+                self._buffer = instance
+            self._encoding = None
+            log(OPERATIONAL, "Wrapper:", (self._encoding, self._buffer))
 
         def __getattr__(self, name):
             return getattr(self._instance, name)
@@ -1621,18 +1673,18 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
             return data
 
         def read(self, *args, **kwargs):
-            return self._decode(self._instance.read(*args, **kwargs))
+            return self._decode(self._buffer.read(*args, **kwargs))
+
+        def readline(self):
+            return self._decode(self._buffer.readline())
+
+        def readlines(self):
+            return [self._decode(line) for line in self]
 
         def write(self, data):
             if self._encoding is not None:
                 data = data.encode(self._encoding)
-            return self._instance.write(data)
-
-        def readline(self):
-            return self._decode(self._instance.readline())
-
-        def readlines(self):
-            return [self._decode(line) for line in self]
+            return self._buffer.write(data)
 
     def _wrap_exposed_file_wrapper(self, f, mode=None, encoding=None):
         if f:
