@@ -2265,7 +2265,7 @@ class RecordForm(LookupForm):
         if not fh:
             app.echo(_(u"No file given. Process terminated."), kind='error')
             return False
-        try:
+        with fh:
             # In case of remote file, make local copy
             if pytis.remote.client_connection_ok():
                 import tempfile
@@ -2316,8 +2316,6 @@ class RecordForm(LookupForm):
                                      error.message(), line_number=line_number)
                         return False
                 inserted_data.append(pytis.data.Row([(cid, record[cid]) for cid in columns]))
-        finally:
-            fh.close()
         app.new_record(self._name, prefill=self._prefill, inserted_data=inserted_data)
 
     def _cmd_open_editor(self, field_id):
