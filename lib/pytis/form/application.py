@@ -1633,8 +1633,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
             return self._decode(self._instance.readline())
 
         def readlines(self):
-            for line in self._instance.readlines():
-                yield self._decode(line)
+            return [self._decode(line) for line in self]
 
     def _wrap_exposed_file_wrapper(self, f, mode=None, encoding=None):
         if f:
