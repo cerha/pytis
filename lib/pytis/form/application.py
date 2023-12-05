@@ -1616,7 +1616,6 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         next = __next__  # Py 2/3 compatibility.
 
         def _decode(self, data):
-            # TODO: Remove when Python 2 support not needed and pass encoding to open().
             if self._encoding is not None:
                 data = data.decode(self._encoding)
             return data
