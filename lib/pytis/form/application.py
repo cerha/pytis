@@ -1639,7 +1639,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
     def _wrap_exposed_file_wrapper(self, f, mode=None, encoding=None):
         if f:
             # Further wrap the ExposedFileWrapper instance to provide
-            # compatibility layer which can nov be implemented in
+            # compatibility layer which can not be implemented in
             # ExposedFileWrapper itself as long as we have old Pytis2go
             # clients which don't load clientapi.py
             f = self._ExposedFileWrapper(f, mode=mode, encoding=encoding)
@@ -2180,7 +2180,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
             path = self.run_dialog(dialog.FileDialog, file=filename, dir=directory,
                                    mode=dialog.FileDialog.SAVE,
                                    wildcards=self._wildcards(filetypes))
-            f = open(path, mode) if path else None
+            f = io.open(path, mode, encoding=encoding) if path else None
         else:
             f = None
         if f and context:
