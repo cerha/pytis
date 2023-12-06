@@ -2261,7 +2261,7 @@ class RecordForm(LookupForm):
         separator = result['separator'].value()
         if separator == 'other':
             separator = result['custom'].value()
-        fh = app.open_selected_file(mode='rb', filetypes=('csv', 'txt'))
+        fh = app.open_selected_file(mode='r', filetypes=('csv', 'txt'))
         if not fh:
             app.echo(_(u"No file given. Process terminated."), kind='error')
             return False
@@ -2278,7 +2278,7 @@ class RecordForm(LookupForm):
             record = self.Record(self, self._view.fields(), self._data, None,
                                  transaction=self._open_transaction(),
                                  singleline=self._SINGLE_LINE, new=True)
-            columns = [str(cid.strip()) for cid in fh.readline().split(separator)]
+            columns = [cid.strip() for cid in fh.readline().split(separator)]
             for cid in columns:
                 field = self._view.field(cid)
                 if not field:

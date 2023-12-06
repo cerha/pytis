@@ -1609,7 +1609,6 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
             def readinto(self, b):
                 data = self._instance.read(len(b))
                 size = len(data)
-                log(EVENT, "Buffer read:", size)
                 b[:size] = data
                 return size
 
@@ -1618,7 +1617,6 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
 
             def write(self, b):
                 size = self._instance.write(b)
-                log(EVENT, "Buffer write:", size)
                 return size
 
             def close(self):
@@ -1643,7 +1641,6 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
                 # which doesn't pass mode here?
                 self._buffer = instance
             self._encoding = None
-            log(OPERATIONAL, "Wrapper:", (self._encoding, self._buffer))
 
         def __getattr__(self, name):
             return getattr(self._instance, name)
@@ -1659,7 +1656,6 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
 
         def __next__(self):
             line = self.readline()
-            log(EVENT, "Read line:", line)
             if line:
                 return line
             else:
@@ -1685,6 +1681,11 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
             if self._encoding is not None:
                 data = data.encode(self._encoding)
             return self._buffer.write(data)
+
+        def close(self):
+            if self._buffer is not self._instance:
+                self._buffer.close()
+            self._instance.close()
 
     def _wrap_exposed_file_wrapper(self, f, mode=None, encoding=None):
         if f:
