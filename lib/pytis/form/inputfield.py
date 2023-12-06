@@ -1974,7 +1974,7 @@ class FileField(Invocable, InputField):
         fh = app.open_selected_file(mode='rb', filetypes=self._spec.filename_extensions(),
                                     context='file-field')
         if fh:
-            try:
+            with fh:
                 filename = app.splitpath(fh.name)[1]
                 try:
                     self._value = self._type.Data(fh, filename=filename)
@@ -1985,8 +1985,6 @@ class FileField(Invocable, InputField):
                 else:
                     self._on_change()
                     app.echo(_("File loaded."))
-            finally:
-                fh.close()
         else:
             app.echo(_("Loading file canceled."))
 
@@ -2488,7 +2486,7 @@ class StructuredTextField(TextField):
     def _load_new_file(self, row):
         fh = app.open_selected_file(mode='rb', context='attachments')
         if fh:
-            try:
+            with fh:
                 filename = app.splitpath(fh.name)[1]
                 if ' ' in filename or any(ord(c) > 127 for c in filename):
                     app.error(
@@ -2503,8 +2501,6 @@ class StructuredTextField(TextField):
                     values = dict()
                 self._storage_op('insert', filename, fh, values,
                                  transaction=self._row.transaction())
-            finally:
-                fh.close()
             row.form.field.filename.refresh()
             row['filename'] = pytis.data.Value(row.type('filename'), filename)
 
