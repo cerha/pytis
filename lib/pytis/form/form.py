@@ -2263,7 +2263,7 @@ class RecordForm(LookupForm):
             separator = result['custom'].value()
         fh = app.open_selected_file(mode='r', filetypes=('csv', 'txt'))
         if not fh:
-            app.echo(_(u"No file given. Process terminated."), kind='error')
+            app.echo(_(u"No file given. Import aborted."), kind='warning')
             return False
         with fh:
             record = self.Record(self, self._view.fields(), self._data, None,
