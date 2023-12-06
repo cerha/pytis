@@ -618,7 +618,7 @@ class Application(API):
           prefill -- a dictionary of initial field values.  Keys are field
             identifiers and values are either 'pytis.data.Value' instances or
             the corresponding Python internal values directly.  These values
-            actually override the default (or computed) values defined in field
+            will override the default (or computed) values defined in field
             specifications.
           inserted_data -- allows to pass a sequence of 'pytis.data.Row'
             instances to be inserted.  The form is then gradually prefilled by
