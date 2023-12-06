@@ -2287,16 +2287,17 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
     def api_open_file(self, filename, mode='r', encoding=None):
         cmode = self.client_mode()
         if cmode == 'remote':
+            # Open remote file in binary mode and rely on text mode emulation
+            # in self._ExposedFileWrapper, because older clients don't support
+            # 'encoding' in pytis.remote.open_file().
             remote_mode = mode + 'b' if 'b' not in mode else mode
             f = self._wrap_exposed_file_wrapper(
                 pytis.remote.open_file(filename, mode=remote_mode),
-                # Use _ExposedFileWrapper text mode emulation, because older clients
-                # don't support 'encoding' in pytis.remote.open_file().
                 mode=mode, encoding=encoding,
             )
         elif cmode == 'local':
             if 'b' not in mode and encoding is None:
-                # Make sure encoding defaults to 'utf-8', not sys.getdefaultencoding()
+                # Make sure encoding defaults to UTF-8, not the system default.
                 encoding = 'utf-8'
             f = io.open(filename, mode, encoding=encoding)
         return f
