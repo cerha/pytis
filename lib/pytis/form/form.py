@@ -2266,15 +2266,6 @@ class RecordForm(LookupForm):
             app.echo(_(u"No file given. Process terminated."), kind='error')
             return False
         with fh:
-            # In case of remote file, make local copy
-            if pytis.remote.client_connection_ok():
-                import tempfile
-                flocal = tempfile.NamedTemporaryFile()
-                filename = flocal.name
-                flocal.write(fh.read())
-                fh.close()
-                fh = flocal
-                fh.seek(0)
             record = self.Record(self, self._view.fields(), self._data, None,
                                  transaction=self._open_transaction(),
                                  singleline=self._SINGLE_LINE, new=True)
