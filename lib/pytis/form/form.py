@@ -2499,7 +2499,8 @@ class EditForm(RecordForm, TitledForm, Refreshable):
         else:
             self._set_focus_field()
 
-    def _init_attributes(self, mode=MODE_EDIT, focus_field=None, set_values=None, **kwargs):
+    def _init_attributes(self, mode=MODE_EDIT, focus_field=None, set_values=None,
+                         inserted_data=None, on_commit_record=None, **kwargs):
         """Process constructor keyword arguments and initialize the attributes.
 
         Arguments:
@@ -2519,9 +2520,18 @@ class EditForm(RecordForm, TitledForm, Refreshable):
             directly.  These values will not affect the initial row state
             (unlike the 'prefill' argument of the parent class) and thus will
             appear as changed to the user.
+          inserted_data -- iterable providing items for batch insertion.  Each
+            item may be a 'pytis.data.Row' instance or a dictionary as in
+            'set_values'.  If not null, the form is gradually prefilled by
+            given data and the user can individually accept or skip each row.
+          on_commit_record -- callback to be called when the record is
+            succesfully saved after the submit button is pressed.  Similar to
+            'cleanup' in form specification and called just after cleanup when
+            both defined.
 
         """
         assert mode in (self.MODE_EDIT, self.MODE_INSERT, self.MODE_VIEW)
+        assert inserted_data is None or mode == self.MODE_INSERT, (inserted_data, mode)
         new = mode == self.MODE_INSERT
         super_(EditForm)._init_attributes(self, _new=new, **kwargs)
         self._mode = mode
@@ -2540,6 +2550,16 @@ class EditForm(RecordForm, TitledForm, Refreshable):
                     value = pytis.data.Value(type, value)
                 self._row[key] = value
         self._closed_connection_handled = False
+        if inserted_data is not None:
+            self._inserted_data = iter(enumerate(inserted_data))
+            try:
+                self._inserted_data_len = len(inserted_data)
+            except TypeError:
+                self._inserted_data_len = None
+        else:
+            self._inserted_data = None
+        self._inserted_data_loaded = False
+        self._on_commit_record = on_commit_record
 
     def _disable_buttons(self, w):
         for c in w.GetChildren():
@@ -2814,6 +2834,30 @@ class EditForm(RecordForm, TitledForm, Refreshable):
         if not self._closed_connection_handled and any(f.connection_closed() for f in self._fields):
             self._closed_connection_handled = True
             self._on_closed_connection()
+        if self._inserted_data and not self._inserted_data_loaded:
+            self._inserted_data_loaded = True
+            self._load_next_row()
+
+    def _load_next_row(self):
+        row = None
+        prefill = self._prefill
+        if self._inserted_data:
+            try:
+                i, item = next(self._inserted_data)
+            except StopIteration:
+                self.set_status('progress', '')
+                app.message(_(u"All records processed."))
+                self._inserted_data = None
+                self.close()
+            else:
+                if isinstance(item, pytis.data.Row):
+                    row = item
+                else:
+                    prefill = dict(prefill or {}, **item)
+                self.set_status('progress', "{}/{}".format(i + 1, self._inserted_data_len or '?'))
+                self._inserted_data_index = i
+        self._row.set_row(row, reset=True, prefill=prefill)
+        self._set_focus_field()
 
     def _commit_form(self, close=True):
         # Re-validate all fields.
@@ -2923,6 +2967,8 @@ class EditForm(RecordForm, TitledForm, Refreshable):
             cleanup = self._view.cleanup()
             if cleanup is not None:
                 cleanup(self._row, original_row)
+            if self._on_commit_record:
+                self._on_commit_record(self._row)
             if close:
                 self._result = self._row
                 self.close()
@@ -2958,6 +3004,27 @@ class EditForm(RecordForm, TitledForm, Refreshable):
         return self._data.update, (self._current_key(), rdata)
 
     def _exit_check(self):
+        if self._inserted_data:
+            i = self._inserted_data_index
+            total = self._inserted_data_len
+            next_, abort, cancel = _("Next record"), _("Abort batch"), _("Cancel")
+            answer = app.question(
+                _("You are leaving the form without saving the current record\n"
+                  "while there is a batch in progress.") + "\n" +
+                (_("There are {} more records until the end of the batch.")
+                 .format(total - i) + "\n" if total is not None else '') +
+                _("Do you want to:\n"
+                  "  • advance to the next record in the batch ({}),\n"
+                  "  • skip the rest of the batch ({}) or\n"
+                  "  • return back to the current record ({})?").format(next_, abort, cancel),
+                answers=(next_, abort, cancel))
+            if answer == cancel:
+                return False
+            elif answer == abort:
+                return True
+            else:
+                self._load_next_row()
+                return False
         if self.changed():
             if not app.question(_(u"Unsaved changes in form data!") + "\n" + \
                                 _(u"Do you really want to close the form?")):
@@ -2973,6 +3040,9 @@ class EditForm(RecordForm, TitledForm, Refreshable):
         result = self._commit_form(close=close)
         if result:
             app.refresh()
+            if not close:
+                app.echo(_("Record saved"))
+                self._load_next_row()
         return result
 
     def _can_navigate(self, back=False):
@@ -3108,14 +3178,11 @@ class PopupEditForm(PopupForm, EditForm):
                                                connection_name=connection_name,
                                                ok_rollback_closed=True)
 
-    def _init_attributes(self, inserted_data=None, multi_insert=True, **kwargs):
+    def _init_attributes(self, multi_insert=True, **kwargs):
         """Process constructor keyword arguments and initialize the attributes.
 
         Arguments:
 
-          inserted_data -- allows to pass a sequence of 'pytis.data.Row' instances to be inserted.
-            The form is then gradually prefilled by values of these rows and the user can
-            individually accept or skip each row.
           multi_insert -- boolean flag indicating whether inserting multiple values is permitted.
             This option is only relevant in insert mode.  False value will disable this feature and
             the `Next' button will not be present on the form.
@@ -3123,26 +3190,8 @@ class PopupEditForm(PopupForm, EditForm):
 
         """
         EditForm._init_attributes(self, **kwargs)
-        assert inserted_data is None or self._mode == self.MODE_INSERT, (inserted_data, self._mode)
         assert isinstance(multi_insert, bool), multi_insert
-        assert multi_insert or inserted_data is None, (multi_insert, inserted_data)
-        if inserted_data is not None:
-            self._inserted_data = iter(enumerate(inserted_data))
-            try:
-                self._inserted_data_len = len(inserted_data)
-            except TypeError:
-                self._inserted_data_len = None
-        else:
-            self._inserted_data = None
-        self._inserted_data_loaded = False
         self._multi_insert = multi_insert
-
-    def _on_idle(self, event):
-        super(PopupEditForm, self)._on_idle(event)
-        if self._inserted_data and not self._inserted_data_loaded:
-            self._inserted_data_loaded = True
-            self._load_next_row()
-
 
     def _create_form_parts(self):
         sizer = self.Sizer
@@ -3157,7 +3206,6 @@ class PopupEditForm(PopupForm, EditForm):
         if self._inserted_data:
             spec += (('progress', 9, _(u"Batch insertion progress indicator")),)
         box = wx.BoxSizer()
-
         self._status_fields = dict(
             [(id, self._create_status_bar_field(box, width, descr))
              for id, width, descr in spec])
@@ -3182,62 +3230,22 @@ class PopupEditForm(PopupForm, EditForm):
         box.Fit(panel)
         return field
 
-    def _load_next_row(self):
-        row = None
-        prefill = self._prefill
-        if self._inserted_data:
-            try:
-                i, item = next(self._inserted_data)
-            except StopIteration:
-                self.set_status('progress', '')
-                app.message(_(u"All records processed."))
-                self._inserted_data = None
-                self.close()
-            else:
-                if isinstance(item, pytis.data.Row):
-                    row = item
-                else:
-                    prefill = dict(prefill or {}, **item)
-                self.set_status('progress', "{}/{}".format(i + 1, self._inserted_data_len or '?'))
-                self._inserted_data_index = i
-        self._row.set_row(row, reset=True, prefill=prefill)
-        self._set_focus_field()
-
-    def _exit_check(self):
-        if self._inserted_data:
-            raise Exception()
-            i = self._inserted_data_index
-            total = self._inserted_data_len
-            next_, abort, cancel = _("Next record"), _("Abort import"), _("Cancel")
-            answer = app.question(
-                _("You are leaving the form without saving the current record.") + "\n" +
-                (_("There are {} more records until the end of the batch.")
-                 .format(total - i) + "\n" if total is not None else '') +
-                _("Do you want to advance to the next record in the batch,\n"
-                  "abort and skip the rest of the batch or return back to "
-                  "the current record?"),
-                answers=(next_, abort, cancel))
-            if answer == cancel:
-                return False
-            elif answer == abort:
-                return True
-            else:
-                self._load_next_row()
-                return False
-        return super(PopupEditForm, self)._exit_check()
-
     def _buttons(self):
-        buttons = (dict(label=_("Ok"),
-                        tooltip=_("Save the record and close the form"),
-                        command=self.COMMAND_COMMIT_RECORD(close=self._inserted_data is None)),
-                   dict(id=wx.ID_CANCEL,
-                        itooltip=_("Close the form without saving"),
-                        command=self.COMMAND_LEAVE_FORM()))
+        buttons = (
+            dict(label=_("Ok"),
+                 tooltip=_("Save the record and close the form"),
+                 command=self.COMMAND_COMMIT_RECORD(close=self._inserted_data is None)),
+            dict(id=wx.ID_CANCEL,
+                 tooltip=_("Close the form without saving"),
+                 command=self.COMMAND_LEAVE_FORM()),
+        )
         if self._mode == self.MODE_INSERT and self._multi_insert and not self._inserted_data:
-            buttons += (dict(id=wx.ID_FORWARD, label=_("Next"),  # icon=wx.ART_GO_FORWARD,
-                             tooltip=_("Save the current record without closing the form "
-                                       "to allow next record insertion."),
-                             command=self.COMMAND_COMMIT_RECORD(close=False)),)
+            buttons += (
+                dict(id=wx.ID_FORWARD, label=_("Next"),  # icon=wx.ART_GO_FORWARD,
+                     tooltip=_("Save the current record without closing the form "
+                               "to allow next record insertion."),
+                     command=self.COMMAND_COMMIT_RECORD(close=False)),
+            )
         return buttons
 
     def _create_buttons(self):
@@ -3257,13 +3265,6 @@ class PopupEditForm(PopupForm, EditForm):
         # to change the inheritance hierarchy so that single record forms don't
         # inherit profiles at all but that's a little too complicated for now.
         pass
-
-    def _cmd_commit_record(self, close=True):
-        result = super(PopupEditForm, self)._cmd_commit_record(close=close)
-        if result and not close:
-            app.echo(_("Record saved"))
-            self._load_next_row()
-        return result
 
     def _cmd_leave_form(self):
         # Leaving the form in wx.CallAfter (as in the parent method) causes
@@ -3320,9 +3321,9 @@ class _VirtualEditForm(EditForm):
         this initial selection.
 
     """
-
     def _full_init(self, resolver, name, guardian=None, transaction=None,
-                   prefill=None, avoid_initial_selection=False, **kwargs):
+                   prefill=None, avoid_initial_selection=False,
+                   inserted_data=None, on_commit_record=None, **kwargs):
         self._specification = Specification.create_from_kwargs(
             resolver,
             data_cls=pytis.data.RestrictedMemData,
@@ -3335,7 +3336,10 @@ class _VirtualEditForm(EditForm):
             additional_kwargs = dict()
         super(_VirtualEditForm, self)._full_init(resolver, name, guardian=guardian,
                                                  mode=self.MODE_INSERT, prefill=prefill,
-                                                 transaction=transaction, **additional_kwargs)
+                                                 transaction=transaction,
+                                                 inserted_data=inserted_data,
+                                                 on_commit_record=on_commit_record,
+                                                 **additional_kwargs)
 
     def _set_focus_field(self, event=None):
         super(_VirtualEditForm, self)._set_focus_field(event=event)
@@ -3364,7 +3368,10 @@ class _VirtualEditForm(EditForm):
         return []
 
     def _exit_check(self):
-        return True
+        if self._inserted_data:
+            return super(_VirtualEditForm, self)._exit_check()
+        else:
+            return True
 
 
 class InputForm(_VirtualEditForm, PopupEditForm):
