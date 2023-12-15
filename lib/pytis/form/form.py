@@ -2205,11 +2205,6 @@ class RecordForm(LookupForm):
         return True
 
     def _cmd_import_interactive(self):
-        def error_dialog(message, line_number=None):
-            if line_number is not None:
-                message = _("Error at line %d:", line_number) + '\n' + message
-            app.error(message)
-
         class Separators(pytis.presentation.Enumeration):
             enumeration = (
                 ('|', _("Pipe '|'")),
@@ -2243,7 +2238,6 @@ class RecordForm(LookupForm):
                               if f.editable() is not False]),
             )),
         )
-        computer = pytis.presentation.computer
         result = run_form(
             InputForm, title=_(u"Batch import"),
             fields=(
@@ -2252,10 +2246,14 @@ class RecordForm(LookupForm):
                       descr=_("The character used to separate column values "
                               "in each input file row.")),
                 Field('custom', _("Custom separator"),
-                      check=computer(lambda r, separator, custom:
-                                     _("The value is mandatory when 'Other' is selected above.")
-                                     if separator == 'other' and not custom else None),
-                      editable=computer(lambda e, separator: separator == 'other')),
+                      check=pytis.presentation.computer(
+                          lambda r, separator, custom:
+                          _("The value is mandatory when 'Other' is selected above.")
+                          if separator == 'other' and not custom else None
+                      ),
+                      editable=pytis.presentation.computer(
+                          lambda e, separator: separator == 'other'
+                      )),
             ), layout=(content, 'separator', 'custom'),
         )
         if not result:
@@ -2268,48 +2266,36 @@ class RecordForm(LookupForm):
             app.echo(_(u"No file given. Import aborted."), kind='warning')
             return False
         with fh:
-            record = self.Record(self, self._view.fields(), self._data, None,
-                                 transaction=self._open_transaction(),
-                                 singleline=self._SINGLE_LINE, new=True)
-            columns = [cid.strip() for cid in fh.readline().split(separator)]
-            for cid in columns:
-                field = self._view.field(cid)
-                if not field:
-                    error_dialog(_("Unknown column:") + ' ' + cid)
-                    return False
-                elif field.editable() is False:
-                    # This checks for statically ineditable columns (Editable.NEVER).
-                    error_dialog(_("Column '%s' (%s) not editable.", cid, field.column_label()))
-                    return False
-            validation_order = ([cid for cid in order if cid in columns] +
-                                [cid for cid in columns if cid not in order])
-            colindex = [columns.index(cid) for cid in validation_order]
-            line_number = 1
-            inserted_data = []
-            for line in fh:
-                line_number += 1
-                values = line.rstrip('\r\n').split(separator)
-                if len(values) != len(columns):
-                    error_dialog(_("The number of values doesn't match the number of columns."),
-                                 line_number=line_number)
-                    return False
-                record.set_row(None, reset=True)
-                # Validate the values in the layout order to get sensible results of
-                # dynamic column editablility checks.
-                for cid, i in zip(validation_order, colindex):
-                    if not record.editable(cid):
-                        # This checks for dynamically ineditable columns (editable=Computer(...)).
-                        field = self._view.field(cid)
-                        error_dialog(_("Column '%s' (%s) not editable.", cid, field.column_label()),
-                                     line_number=line_number)
-                        return False
-                    error = record.validate(cid, values[i], transaction=self._open_transaction())
-                    if error:
-                        error_dialog(_("Invalid value of column '%s':", cid) + '\n' +
-                                     error.message(), line_number=line_number)
-                        return False
-                inserted_data.append(pytis.data.Row([(cid, record[cid]) for cid in columns]))
-        app.new_record(self._name, prefill=self._prefill, inserted_data=inserted_data)
+            columns = [cid.strip() for cid in fh.readline().rstrip('\r\n').split(separator)]
+            try:
+                types = [self._row[cid].type() for cid in columns]
+            except KeyError as e:
+                app.error(_("Invalid column id in CSV file, line 1: '{}'").format(e.message))
+                return
+
+            class Continue(Exception):
+                pass
+
+            def validate(cid, t, value, line_number):
+                kwargs = {'format': t.DEFAULT_FORMAT} if isinstance(t, pytis.data.DateTime) else {}
+                result, error = t.validate(value, strict=False, **kwargs)
+                if error:
+                    app.error(_("Invalid data in CSV file, line {}, column {}:")
+                              .format(line_number, cid)
+                              + '\n' + value + ': ' + error.message() + '\n' +
+                              _("Skipping line {}.").format(line_number))
+                    raise Continue()
+                return result.value()
+
+            def inserted_data():
+                for i, line in enumerate(fh):
+                    values = line.rstrip('\r\n').split(separator)
+                    try:
+                          yield {cid: validate(cid, t, value, i + 2)  # i is 0 at line 2...
+                                 for cid, t, value in zip(columns, types, values)}
+                    except Continue:
+                        continue
+            app.new_record(self._name, prefill=self._prefill, inserted_data=inserted_data())
 
     def _cmd_open_editor(self, field_id):
         run_form(StructuredTextEditor, self.name(),
