@@ -2468,28 +2468,29 @@ class RecordForm(LookupForm):
 
 
 class EditForm(RecordForm, TitledForm, Refreshable):
-    """Formulář pro editaci všech vlastností jednoho záznamu.
+    """Form for editing a single record.
 
-    Formulář je vytvořen poskládáním jednotlivých vstupních políček daných
-    specifikací do mřížky.  Pole mohou být různě seskupována a jejich rozložení
-    je určeno specifikační třídou 'LayoutSpec' resp. 'GroupSpec'.
+    The form consists of all fields defined by the specification.  These fields
+    are arranged according to the 'layout' specification.
 
-    Každé vstupní pole je reprezentováno objektem třídy 'InputField'.  To se
-    stará o interakci s uživatelem, validaci vstupních dat apod.
+    Particular interactive fields in the UI are represented by
+    'pytis.form.InputField' instances (actually instances of a subclass given
+    by field type and specification).
 
-    Formulář může sloužit jak k prohlížení či editaci stávajících dat, tak
-    i k vytváření nových záznamů (viz argument konstruktoru 'mode').
+    The form is primarily designed for editing data for insert or update, but
+    can be also used in read-only mode for viewing the records in their natural
+    layout.  See the constructor argument 'mode'.
 
     """
 
     _LOG_STATISTICS = False
 
     MODE_INSERT = 'MODE_INSERT'
-    """Mód formuláře pro vkládání nových záznamů."""
+    """Form mode for insertion of new records."""
     MODE_EDIT = 'MODE_EDIT'
-    """Mód formuláře pro editaci stávajících záznamů."""
+    """Form mode for updating existing records."""
     MODE_VIEW = 'MODE_VIEW'
-    """Mód formuláře pro zobrazení záznamů bez možnosti editace."""
+    """Form mode for viewing existing records."""
 
     def _full_init(self, *args, **kwargs):
         super(EditForm, self)._full_init(*args, **kwargs)
