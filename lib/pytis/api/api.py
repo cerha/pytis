@@ -579,7 +579,8 @@ class Application(API):
         """
         pass
 
-    def input_form(self, title, fields, prefill=None, layout=None, check=None, noselect=False):
+    def input_form(self, title, fields, prefill=None, layout=None, check=None, noselect=False,
+                   inserted_data=None, on_commit_record=None):
         """Display modal form to collect user input from user defined fields.
 
         Arguments:
@@ -599,6 +600,16 @@ class Application(API):
             selected when the field is entered, which results in overwriting
             the whole value when the user starts typing.  Passing True here
             avoids this initial selection.
+          inserted_data -- iterable providing items for batch insertion.  Each
+            item may be a 'pytis.data.Row' instance or a dictionary as in
+            'prefill'.  If not null, the form is gradually prefilled by
+            given data and the user can individually accept or skip each row.
+            Use 'on_commit_record' to handle the user accepted records
+            (multiple records can not be passed through the return value).
+          on_commit_record -- callback to be called when the record is
+            succesfully saved after the submit button is pressed.  Similar to
+            'cleanup' in form specification and called just after cleanup when
+            both defined.  A 'PresentedRow' instance is passed as argument.
 
         Returns a 'pp.PresentedRow' instance containing field values or None if
         the user cancels the form.

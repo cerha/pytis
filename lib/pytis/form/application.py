@@ -1841,10 +1841,12 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         return self._input(t, title, label, default=default, width=width,
                            descr=descr, noselect=noselect)
 
-    def api_input_form(self, title, fields, prefill=None, layout=None, check=None, noselect=False):
+    def api_input_form(self, title, fields, prefill=None, layout=None, check=None, noselect=False,
+                       inserted_data=None, on_commit_record=None):
         return run_form(pytis.form.InputForm, title=title, fields=fields,
                         prefill=prefill, layout=layout, check=check or (),
-                        avoid_initial_selection=noselect)
+                        avoid_initial_selection=noselect, inserted_data=inserted_data,
+                        on_commit_record=on_commit_record)
 
     def api_new_record(self, name, prefill=None, inserted_data=None, multi_insert=True,
                        copied_row=None, set_values=None, block_on_new_record=False,
