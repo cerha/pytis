@@ -26,6 +26,8 @@ jsou v oddělených modulech 'list' a 'dualform'.  Blíže viz dokumentace
 jednotlivých tříd.
 
 """
+from __future__ import print_function
+
 from past.builtins import basestring
 from builtins import object
 from future.utils import python_2_unicode_compatible
@@ -3060,8 +3062,6 @@ class PopupEditForm(PopupForm, EditForm):
 
     def _full_init(self, *args, **kwargs):
         EditForm._full_init(self, *args, **kwargs)
-        if self._inserted_data is not None:
-            self._load_next_row()
         # Set the popup window size according to the ideal form size limited to
         # the screen size.  If the form size exceeds the screen, scrollbars
         # will appear.
@@ -3139,9 +3139,23 @@ class PopupEditForm(PopupForm, EditForm):
         assert inserted_data is None or self._mode == self.MODE_INSERT, (inserted_data, self._mode)
         assert isinstance(multi_insert, bool), multi_insert
         assert multi_insert or inserted_data is None, (multi_insert, inserted_data)
-        self._inserted_data = inserted_data
-        self._inserted_data_pointer = 0
+        if inserted_data is not None:
+            self._inserted_data = iter(enumerate(inserted_data))
+            try:
+                self._inserted_data_len = len(inserted_data)
+            except TypeError:
+                self._inserted_data_len = None
+        else:
+            self._inserted_data = None
+        self._inserted_data_loaded = False
         self._multi_insert = multi_insert
+
+    def _on_idle(self, event):
+        super(PopupEditForm, self)._on_idle(event)
+        if self._inserted_data and not self._inserted_data_loaded:
+            self._inserted_data_loaded = True
+            self._load_next_row()
+
 
     def _create_form_parts(self):
         sizer = self.Sizer
@@ -3153,7 +3167,7 @@ class PopupEditForm(PopupForm, EditForm):
     def _create_status_bar(self):
         # We use our own statusbar implementation
         spec = (('message', None, _(u"Notification area")),)
-        if self._inserted_data is not None:
+        if self._inserted_data:
             spec += (('progress', 9, _(u"Batch insertion progress indicator")),)
         box = wx.BoxSizer()
 
@@ -3182,58 +3196,61 @@ class PopupEditForm(PopupForm, EditForm):
         return field
 
     def _load_next_row(self):
-        data = self._inserted_data
-        if data is None or self._inserted_data_pointer > 0:
-            self._row.set_row(None, reset=True, prefill=self._prefill)
-        if data is not None:
-            i = self._inserted_data_pointer
-            self._row.set_row(None, reset=True, prefill=self._prefill)
-            if i < len(data):
-                self.set_status('progress', "%d/%d" % (i + 1, len(data),))
-                self._inserted_data_pointer += 1
-                ok_button = wx.FindWindowById(wx.ID_OK, self.Parent)
-                ok_button.Enable(i == len(data) - 1)
-                for id, value in data[i].items():
-                    self._row[id] = pytis.data.Value(self._row.type(id), value.value())
-            else:
+        row = None
+        prefill = self._prefill
+        if self._inserted_data:
+            try:
+                i, item = next(self._inserted_data)
+            except StopIteration:
                 self.set_status('progress', '')
                 app.message(_(u"All records processed."))
                 self._inserted_data = None
+                self.close()
+            else:
+                if isinstance(item, pytis.data.Row):
+                    row = item
+                else:
+                    prefill = dict(prefill or {}, **item)
+                self.set_status('progress', "{}/{}".format(i + 1, self._inserted_data_len or '?'))
+                self._inserted_data_index = i
+        self._row.set_row(row, reset=True, prefill=prefill)
         self._set_focus_field()
 
     def _exit_check(self):
-        i = self._inserted_data_pointer
-        data = self._inserted_data
-        if data is not None and i <= len(data):
-            if not app.question(_("Not all input records processed yet.\n" +
-                                  "Really quit batch insertion?"), default=False):
+        if self._inserted_data:
+            raise Exception()
+            i = self._inserted_data_index
+            total = self._inserted_data_len
+            next_, abort, cancel = _("Next record"), _("Abort import"), _("Cancel")
+            answer = app.question(
+                _("You are leaving the form without saving the current record.") + "\n" +
+                (_("There are {} more records until the end of the batch.")
+                 .format(total - i) + "\n" if total is not None else '') +
+                _("Do you want to advance to the next record in the batch,\n"
+                  "abort and skip the rest of the batch or return back to "
+                  "the current record?"),
+                answers=(next_, abort, cancel))
+            if answer == cancel:
+                return False
+            elif answer == abort:
+                return True
+            else:
+                self._load_next_row()
                 return False
         return super(PopupEditForm, self)._exit_check()
 
-    def _on_skip_button(self, event):
-        i = self._inserted_data_pointer
-        if self._inserted_data is None:
-            app.echo(_("No next record"), kind='error')
-        else:
-            app.echo(_("Record %d/%d skipped") % (i, len(self._inserted_data)))
-            self._load_next_row()
-
     def _buttons(self):
-        buttons = (dict(id=wx.ID_OK,
+        buttons = (dict(label=_("Ok"),
                         tooltip=_("Save the record and close the form"),
-                        command=self.COMMAND_COMMIT_RECORD()),
+                        command=self.COMMAND_COMMIT_RECORD(close=self._inserted_data is None)),
                    dict(id=wx.ID_CANCEL,
-                        tooltip=_("Close the form without saving"),
+                        itooltip=_("Close the form without saving"),
                         command=self.COMMAND_LEAVE_FORM()))
-        if self._mode == self.MODE_INSERT and self._multi_insert:
+        if self._mode == self.MODE_INSERT and self._multi_insert and not self._inserted_data:
             buttons += (dict(id=wx.ID_FORWARD, label=_("Next"),  # icon=wx.ART_GO_FORWARD,
-                             tooltip=_("Save the current record and read next record into "
-                                       "the form."),
-                             command=self.COMMAND_COMMIT_RECORD(next=True)),)
-        if self._inserted_data is not None:
-            buttons += (dict(label=_("Skip"),
-                             tooltip=_("Skip this record without saving"),
-                             callback=self._on_skip_button),)
+                             tooltip=_("Save the current record without closing the form "
+                                       "to allow next record insertion."),
+                             command=self.COMMAND_COMMIT_RECORD(close=False)),)
         return buttons
 
     def _create_buttons(self):
@@ -3254,14 +3271,9 @@ class PopupEditForm(PopupForm, EditForm):
         # inherit profiles at all but that's a little too complicated for now.
         pass
 
-    def _can_commit_record(self, close=True, next=False):
-        if next and (self._mode != self.MODE_INSERT or not self._multi_insert):
-            return False
-        return super(PopupEditForm, self)._can_commit_record()
-
-    def _cmd_commit_record(self, close=True, next=False):
-        result = super(PopupEditForm, self)._cmd_commit_record(close=close and not next)
-        if result and next:
+    def _cmd_commit_record(self, close=True):
+        result = super(PopupEditForm, self)._cmd_commit_record(close=close)
+        if result and not close:
             app.echo(_("Record saved"))
             self._load_next_row()
         return result
