@@ -19,7 +19,7 @@ sudo -u $user dropdb pytis-demo --if-exists
 
 sudo -u $user createdb pytis-demo
 echo "create extension if not exists ltree ;" | sudo -u $user psql pytis-demo
-echo "create extension if not exists plpythonu ;" | sudo -u $user psql pytis-demo
+echo "create extension if not exists plpython3u ;" | sudo -u $user psql pytis-demo
 
 for role in pytis demo pytis-demo demowebuser pytiswebuser www-data
 do
@@ -27,7 +27,7 @@ do
       sudo -u $user createuser $role && sudo -u $user psql pytis-demo -c "grant \"$role\" to $USER"
 done
 
-$dir/pytis/tools/gsql.py pytis.dbdefs.demo > pytis-demo.sql
+$dir/pytis/tools/gsql.py --plpython3 pytis.dbdefs.demo > pytis-demo.sql
 sudo -u $user psql pytis-demo -v ON_ERROR_STOP=1 -1f pytis-demo.sql
 
 sudo -u $user psql pytis-demo -c "insert into cms_users (login, passwd, fullname) values ('demo', md5('xxxx'), 'Demo User');"
