@@ -1011,6 +1011,9 @@ class PytisUpdateRightsRedundancy(Base_PyFunction):
                             raise Exception('programming error', k)
                         setattr(self, k, v)
 
+            def __hash__(self):
+                return hash((self.__class__, self.id))
+
             def __eq__(self, other):
                 if pytis.util.sameclass(self, other):
                     return self.id == other.id
