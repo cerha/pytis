@@ -3007,7 +3007,7 @@ class EditForm(RecordForm, TitledForm, Refreshable):
         if self._inserted_data:
             i = self._inserted_data_index
             total = self._inserted_data_len
-            next_, abort, cancel = _("Next record"), _("Abort batch"), _("Cancel")
+            next_, abort, back = _("Next record"), _("Abort batch"), _("Back")
             answer = app.question(
                 _("You are leaving the form without saving the current record\n"
                   "while there is a batch in progress.") + "\n" +
@@ -3015,10 +3015,10 @@ class EditForm(RecordForm, TitledForm, Refreshable):
                  .format(total - i) + "\n" if total is not None else '') +
                 _("Do you want to:\n"
                   "  • advance to the next record in the batch ({}),\n"
-                  "  • skip the rest of the batch ({}) or\n"
-                  "  • return back to the current record ({})?").format(next_, abort, cancel),
-                answers=(next_, abort, cancel))
-            if answer == cancel:
+                  "  • skip the rest of the batch ({}),\n"
+                  "  • return to the current record ({})?").format(next_, abort, back),
+                answers=(next_, abort, back))
+            if answer == back:
                 return False
             elif answer == abort:
                 return True
