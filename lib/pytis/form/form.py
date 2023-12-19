@@ -3022,12 +3022,12 @@ class EditForm(RecordForm, TitledForm, Refreshable):
                   "  • skip the rest of the batch ({}),\n"
                   "  • return to the current record ({})?").format(next_, abort, back),
                 answers=(next_, abort, back))
-            if answer == back:
+            if answer == next_:
+                self._load_next_row()
                 return False
             elif answer == abort:
                 return True
             else:
-                self._load_next_row()
                 return False
         return True
 
