@@ -2556,6 +2556,7 @@ class EditForm(RecordForm, TitledForm, Refreshable):
                 self._inserted_data_len = len(inserted_data)
             except TypeError:
                 self._inserted_data_len = None
+            self._inserted_data_index = 0
         else:
             self._inserted_data = None
         self._inserted_data_loaded = False
@@ -2838,24 +2839,36 @@ class EditForm(RecordForm, TitledForm, Refreshable):
             self._inserted_data_loaded = True
             self._load_next_row()
 
-    def _load_next_row(self):
+    def _batch_position(self):
+        return '{}{}'.format(
+            self._inserted_data_index + 1,
+            '/{}'.format(self._inserted_data_len) if self._inserted_data_len else '',
+        )
+
+    def _load_next_row(self, report_success=False):
         row = None
         prefill = self._prefill
         if self._inserted_data:
+            def message(*messages):
+                app.message('\n\n'.join([m for m in messages if m]))
+            success = _("The record has been saved succesfully.") if report_success else None
+            batch_info = _("Batch progress:") + ' ' + self._batch_position()
             try:
                 i, item = next(self._inserted_data)
             except StopIteration:
                 self.set_status('progress', '')
-                app.message(_(u"All records processed."))
+                message(success, batch_info, _("All records have been processed."))
                 self._inserted_data = None
                 self.close()
             else:
+                if report_success:
+                    message(success, batch_info)
                 if isinstance(item, pytis.data.Row):
                     row = item
                 else:
                     prefill = dict(prefill or {}, **item)
-                self.set_status('progress', "{}/{}".format(i + 1, self._inserted_data_len or '?'))
                 self._inserted_data_index = i
+                self.set_status('progress', self._batch_position())
         self._row.set_row(row, reset=True, prefill=prefill)
         self._set_focus_field()
 
@@ -3046,8 +3059,7 @@ class EditForm(RecordForm, TitledForm, Refreshable):
         if result:
             app.refresh()
             if not close:
-                app.echo(_("Record saved"))
-                self._load_next_row()
+                self._load_next_row(report_success=True)
         return result
 
     def _can_navigate(self, back=False):
