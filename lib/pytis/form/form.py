@@ -3004,6 +3004,10 @@ class EditForm(RecordForm, TitledForm, Refreshable):
         return self._data.update, (self._current_key(), rdata)
 
     def _exit_check(self):
+        if self.changed():
+            if not app.question(_(u"Unsaved changes in form data!") + "\n" +
+                                _(u"Do you really want to quit?")):
+                return False
         if self._inserted_data:
             i = self._inserted_data_index
             total = self._inserted_data_len
@@ -3024,10 +3028,6 @@ class EditForm(RecordForm, TitledForm, Refreshable):
                 return True
             else:
                 self._load_next_row()
-                return False
-        if self.changed():
-            if not app.question(_(u"Unsaved changes in form data!") + "\n" + \
-                                _(u"Do you really want to close the form?")):
                 return False
         return True
 
