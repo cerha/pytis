@@ -2291,8 +2291,8 @@ class RecordForm(LookupForm):
                 for i, line in enumerate(fh):
                     values = line.rstrip('\r\n').split(separator)
                     try:
-                          yield {cid: validate(cid, t, value, i + 2)  # i is 0 at line 2...
-                                 for cid, t, value in zip(columns, types, values)}
+                        yield {cid: validate(cid, t, value, i + 2)  # i is 0 at line 2...
+                               for cid, t, value in zip(columns, types, values)}
                     except Continue:
                         continue
             app.new_record(self._name, prefill=self._prefill, inserted_data=inserted_data())
