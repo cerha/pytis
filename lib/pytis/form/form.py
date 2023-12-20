@@ -2852,7 +2852,7 @@ class EditForm(RecordForm, TitledForm, Refreshable):
             def message(*messages):
                 app.message('\n\n'.join([m for m in messages if m]))
             success = _("The record has been saved succesfully.") if report_success else None
-            batch_info = _("Batch progress:") + ' ' + self._batch_position()
+            batch_info = _("Batch insertion progress:") + ' ' + self._batch_position()
             try:
                 i, item = next(self._inserted_data)
             except StopIteration:
