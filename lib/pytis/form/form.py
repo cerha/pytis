@@ -3019,7 +3019,7 @@ class EditForm(RecordForm, TitledForm, Refreshable):
     def _exit_check(self):
         if self.changed():
             if not app.question(_(u"Unsaved changes in form data!") + "\n" +
-                                _(u"Do you really want to quit?")):
+                                _(u"Do you really want to quit without saving?")):
                 return False
         if self._inserted_data:
             total = self._inserted_data_len
