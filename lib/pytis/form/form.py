@@ -3039,8 +3039,10 @@ class EditForm(RecordForm, TitledForm, Refreshable):
                 answer = app.question(
                     _(u"You are leaving the form without saving the current record\n"
                       u"during batch insertion.") + "\n\n" +
-                    (_("There are {} more records until the end of the batch.")
-                     .format(remaining) + "\n\n" if remaining is not None else '') +
+                    (_.ngettext(
+                        u"There is %d more record until the end of the batch.",
+                        u"There are %d more records until the end of the batch.",
+                        remaining) + "\n\n" if remaining is not None else '') +
                     _(u"Do you want to:\n"
                       u"  • advance to the next record in the batch ({}),\n"
                       u"  • skip the rest of the batch ({}),\n"
