@@ -3027,19 +3027,26 @@ class EditForm(RecordForm, TitledForm, Refreshable):
                 remaining = total - (self._inserted_data_index + 1)
             else:
                 remaining = None
-            if remaining == 0:
-                return True
             next_, abort, back = _("Next record"), _("Abort batch"), _("Back")
-            answer = app.question(
-                _("You are leaving the form without saving the current record\n"
-                  "while there is a batch in progress.") + "\n\n" +
-                (_("There are {} more records until the end of the batch.")
-                 .format(remaining) + "\n\n" if remaining is not None else '') +
-                _("Do you want to:\n"
-                  "  • advance to the next record in the batch ({}),\n"
-                  "  • skip the rest of the batch ({}),\n"
-                  "  • return to the current record ({})?").format(next_, abort, back),
-                answers=(next_, abort, back))
+            if remaining == 0:
+                answer = app.question(
+                    _(u"You are leaving the form without saving the current record\n"
+                      u"while at the last record of batch insertion.") + '\n\n' +
+                    _(u"Do you really want to quit without saving?"),
+                    answers=(abort, back),
+                )
+            else:
+                answer = app.question(
+                    _(u"You are leaving the form without saving the current record\n"
+                      u"during batch insertion.") + "\n\n" +
+                    (_("There are {} more records until the end of the batch.")
+                     .format(remaining) + "\n\n" if remaining is not None else '') +
+                    _(u"Do you want to:\n"
+                      u"  • advance to the next record in the batch ({}),\n"
+                      u"  • skip the rest of the batch ({}),\n"
+                      u"  • return to the current record ({})?").format(next_, abort, back),
+                    answers=(next_, abort, back),
+                )
             if answer == next_:
                 self._load_next_row()
                 return False
