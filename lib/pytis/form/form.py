@@ -3022,9 +3022,8 @@ class EditForm(RecordForm, TitledForm, Refreshable):
                                 _(u"Do you really want to quit without saving?")):
                 return False
         if self._inserted_data:
-            total = self._inserted_data_len
-            if total is not None:
-                remaining = total - (self._inserted_data_index + 1)
+            if self._inserted_data_len is not None:
+                remaining = self._inserted_data_len - (self._inserted_data_index + 1)
             else:
                 remaining = None
             next_, abort, back = _("Next record"), _("Abort batch"), _("Back")
