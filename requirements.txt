@@ -6,7 +6,7 @@ future
 gnupg
 psycopg2-binary
 pillow
-pycrypto
+pycryptodome
 pymupdf
 pygobject
 reportlab
