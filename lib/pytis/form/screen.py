@@ -1992,6 +1992,17 @@ class mupdfProcessor(wx.lib.pdfviewer.viewer.mupdfProcessor):
 
     def __init__(self, parent, pdf_file):
         self.parent = parent
+        # TODO:
+        # New versions of PyMuPDF have a lot of differences
+        # to old versions, but they are not available for
+        # Python2. In order to support Python2 and Python3
+        # we have to make some adjustments here.
+        # These adjustments can be removed as soon as
+        # we completely switch to Python3
+        if hasattr(fitz.Document, "is_pdf"):
+            self.fitz_obsolete = False
+        else:
+            self.fitz_obsolete = True
         if isinstance(pdf_file, basestring):
             # a filename/path string, pass the name to fitz.open
             pathname = pdf_file
@@ -2008,8 +2019,11 @@ class mupdfProcessor(wx.lib.pdfviewer.viewer.mupdfProcessor):
             stream = bytearray(pdf_file.read())
             self.pdfdoc = fitz.open(pathname, stream)
 
-        self.numpages = self.pdfdoc.pageCount
-        page = self.pdfdoc.loadPage(0)
+        if self.fitz_obsolete:
+            self.pdfdoc.page_count = self.pdfdoc.pageCount
+            self.pdfdoc.load_page = self.pdfdoc.loadPage
+        self.numpages = self.pdfdoc.page_count
+        page = self.pdfdoc.load_page(0)
         self.pagewidth = page.bound().width
         self.pageheight = page.bound().height
         self.page_rect = page.bound()
@@ -2026,10 +2040,12 @@ class mupdfProcessor(wx.lib.pdfviewer.viewer.mupdfProcessor):
         # unusable. Now it is necessary to make another fix:
         # (see https://github.com/wxWidgets/Phoenix/issues/1350)
         """Render the set of pagedrawings into gc for specified page """
-        page = self.pdfdoc.loadPage(pageno)
+        page = self.pdfdoc.load_page(pageno)
+        if self.fitz_obsolete:
+            page.get_pixmap = page.getPixmap
         matrix = fitz.Matrix(scale, scale)
         try:
-            pix = page.getPixmap(matrix=matrix)   # MUST be keyword arg(s)
+            pix = page.get_pixmap(matrix=matrix)   # MUST be keyword arg(s)
             if [int(v) for v in fitz.version[1].split('.')] >= [1,15,0]:
                 # See https://github.com/wxWidgets/Phoenix/issues/1350
                 bmp = wx.Bitmap.FromBuffer(pix.width, pix.height, pix.samples)
