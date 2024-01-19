@@ -1181,9 +1181,11 @@ def rsa_encrypt(key, text):
     if key:
         if isinstance(text, unistr):
             text = text.encode('utf-8')
-        import Crypto.PublicKey.RSA
-        rsa = Crypto.PublicKey.RSA.importKey(key)
-        encrypted = rsa.encrypt(text, None)[0]
+        from Crypto.Cipher import PKCS1_OAEP
+        from Crypto.PublicKey import RSA
+        rsa_key = RSA.importKey(key)
+        cipher = PKCS1_OAEP.new(rsa_key)
+        encrypted = cipher.encrypt(text)
         return base64.b64encode(encrypted)
     else:
         return text

@@ -330,10 +330,14 @@ class PytisCryptoDecryptUsingKey(Base_PyFunction):
         private, encrypted = args
         import Crypto.PublicKey.RSA
         import base64
-        private = private.encode('utf-8')
-        encrypted = encrypted.encode('utf-8')
-        rsa = Crypto.PublicKey.RSA.importKey(private)
-        decrypted = rsa.decrypt(base64.decodestring(encrypted))
+        from Crypto.Cipher import PKCS1_OAEP
+        if not isinstance(private, bytes):
+            private = private.encode('utf-8')
+        if not isinstance(encrypted, bytes):
+            encrypted = encrypted.encode('utf-8')
+        rsa_key = Crypto.PublicKey.RSA.importKey(private)
+        cipher = PKCS1_OAEP.new(rsa_key)
+        decrypted = cipher.decrypt(base64.decodestring(encrypted))
         if isinstance(decrypted, bytes):
             decrypted = decrypted.decode('utf-8')
         return decrypted
@@ -355,10 +359,14 @@ class PytisCryptoEncryptUsingKey(Base_PyFunction):
         public, text = args
         import Crypto.PublicKey.RSA
         import base64
-        public = public.encode('utf-8')
-        text = text.encode('utf-8')
+        from Crypto.Cipher import PKCS1_OAEP
+        if not isinstance(public, bytes):
+            public = public.encode('utf-8')
+        if not isinstance(text, bytes):
+            text = text.encode('utf-8')
         rsa = Crypto.PublicKey.RSA.importKey(public)
-        encrypted = rsa.encrypt(text, None)[0]
+        cipher = PKCS1_OAEP.new(rsa_key)
+        encrypted = cipher.encrypt(text)
         encoded = base64.b64encode(encrypted)
         if isinstance(encoded, bytes):
             encoded = encoded.decode('utf-8')
