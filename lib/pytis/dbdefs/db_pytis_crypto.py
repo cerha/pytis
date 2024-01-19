@@ -364,7 +364,7 @@ class PytisCryptoEncryptUsingKey(Base_PyFunction):
             public = public.encode('utf-8')
         if not isinstance(text, bytes):
             text = text.encode('utf-8')
-        rsa = Crypto.PublicKey.RSA.importKey(public)
+        rsa_key = Crypto.PublicKey.RSA.importKey(public)
         cipher = PKCS1_OAEP.new(rsa_key)
         encrypted = cipher.encrypt(text)
         encoded = base64.b64encode(encrypted)
