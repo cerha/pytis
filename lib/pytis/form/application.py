@@ -1606,6 +1606,9 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
             def readable(self):
                 return True
 
+            def read(self, size=-1):
+                return self._instance.read(size)
+
             def readinto(self, b):
                 data = self._instance.read(len(b))
                 size = len(data)
@@ -1616,8 +1619,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
                 return True
 
             def write(self, b):
-                size = self._instance.write(b)
-                return size
+                return self._instance.write(b)
 
             def close(self):
                 self.closed = True
