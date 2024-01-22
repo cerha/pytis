@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2023 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2024 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2017 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -1621,6 +1621,9 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
 
             def close(self):
                 self.closed = True
+
+            def flush(self):
+                return self._instance.flush()
 
         def __init__(self, instance, mode=None, encoding=None):
             assert mode is not None or encoding is None, (mode, encoding)
