@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2023 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2024 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2002-2016 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -371,7 +371,7 @@ DEFAULT_KEYMAP = (
     ('Shift--', FoldableForm.COMMAND_COLLAPSE_ALL),
     ('Ctrl-Shift-+', FoldableForm.COMMAND_FOLDING_LEVEL),
     ('Ctrl-Enter', EditForm.COMMAND_COMMIT_RECORD),
-    ('Ctrl-Shift-Enter', EditForm.COMMAND_COMMIT_RECORD(next=True)),
+    ('Ctrl-Shift-Enter', EditForm.COMMAND_COMMIT_RECORD(close=False)),
     ('Tab', EditForm.COMMAND_NAVIGATE),
     ('Shift-Tab', EditForm.COMMAND_NAVIGATE(back=True)),
     ('Next', BrowsableShowForm.COMMAND_NEXT_RECORD),
