@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2023 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2024 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2007-2018 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -141,8 +141,8 @@ class Application(pytis.presentation.Application):
 
     def _dialog_test(self):
         app.message("A series of dialogs will follow.\nAnswer the questions as they come.")
-        app.question("The default answer shold be `No'.\nCorrect?", default=False)
-        app.question("The default answer shold be `Yes'.\nCorrect?", default=True)
+        app.question("The default answer should be `No'.\nCorrect?", default=False)
+        app.question("The default answer should be `Yes'.\nCorrect?", default=True)
         if app.question("Do you want to exit now?\nAnswer `No' if you want the test to continue."):
             return
 
