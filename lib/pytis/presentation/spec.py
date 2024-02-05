@@ -3581,7 +3581,7 @@ class Field(object):
             types support encryption, it is an error to set encryption here for
             field types which don't support it.
           check -- 'Computer' instance to verify the integrity of the whole
-            record.  May also by specified as a function in which case it will
+            record.  May also be specified as a function in which case it will
             be automatically turned into a 'Computer' instance using
             'computer()'.  In contrast to "validation" which only verifies
             whether a single value matches its data type and constraints
