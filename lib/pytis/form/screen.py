@@ -65,6 +65,11 @@ from .event import wx_callback, top_level_exception
 from .command import Command, CommandHandler, UICommand, command_icon
 from .managers import FormProfileManager
 
+try:
+    import darkdetect
+    darkmode = darkdetect.isDark()
+except ImportError:
+    darkmode = False
 
 # Needed for urllib.parse (urlparse in Python 2).
 standard_library.install_aliases()
@@ -101,7 +106,7 @@ _ = pytis.util.translations('pytis-wx')
 # gray which is darker than it should be, so we rather hard code the color
 # which looks fine with the default GTK+ color theme.
 # DEFAULT_WINDOW_BACKGROUND_COLOUR = wx.SystemSettings.GetColour(wx.SYS_COLOUR_BACKGROUND)
-DEFAULT_WINDOW_BACKGROUND_COLOUR = '#e8e8e8'
+DEFAULT_WINDOW_BACKGROUND_COLOUR = '#181818' if darkmode else '#e8e8e8'
 
 FIELD_PADDING = (24, 11)
 """Text field padding as a tuple of (x-padding, y-padding) in pixels.
@@ -1577,8 +1582,8 @@ class LocationBar(wx.TextCtrl):
         if editable:
             wx_callback(wx.EVT_TEXT_ENTER, self, self._on_enter)
         else:
-            from .inputfield import TextField
-            self.SetOwnBackgroundColour(TextField.FIELD_DISABLED_COLOR)
+            from .inputfield import InputField
+            self.SetOwnBackgroundColour(InputField.DISABLED_FIELD_BACKGROUND_COLOR)
             self.Refresh()
         browser = command[1]['_command_handler']
         browser.set_callback(browser.CALL_URI_CHANGED, self.SetValue)

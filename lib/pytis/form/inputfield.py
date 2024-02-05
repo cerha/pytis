@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2023 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2024 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2017 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -61,7 +61,7 @@ from .screen import (
     CallbackHandler, InfoWindow, KeyHandler, TextHeadingSelector,
     char2px, dlg2px, file_menu_items, get_icon, uicommand_mitem,
     paste_from_clipboard, wx_button, wx_focused_window,
-    copy_to_clipboard, field_size, wx_toolbar,
+    copy_to_clipboard, field_size, wx_toolbar, darkmode
 )
 from .application import (
     Application, run_dialog, run_form,
@@ -96,6 +96,20 @@ class InputField(KeyHandler, CommandHandler):
     """
     _DEFAULT_WIDTH = 13
     _DEFAULT_HEIGHT = 1
+
+    DEFAULT_FIELD_LABEL_COLOR = wx.WHITE if darkmode else wx.BLACK
+    DISABLED_FIELD_LABEL_COLOR = '#606060' if darkmode else '#606060'
+    INVALID_FIELD_LABEL_COLOR = '#ff546f' if darkmode else '#ba344f'
+
+    DEFAULT_FIELD_BACKGROUND_COLOR = wx.BLACK if darkmode else wx.WHITE
+    DISABLED_FIELD_BACKGROUND_COLOR = '#202020' if darkmode else '#f0f0f0'
+
+    # 'wx.TextCtrl' has its own system color in the disabled state, but we don't
+    # use the disabled state because of its side effects and make the field read
+    # only and change the color manually.  This color should match the system
+    # color, particularly we use the default color used by GTK+ 3 on Linux as
+    # this is our primary target platform.  To support other platforms or themes,
+    # we would need to do some decision making here.
 
     _last_focused_field = None
     _icon_cache = {}
@@ -248,8 +262,7 @@ class InputField(KeyHandler, CommandHandler):
             widget = self._hbox(*([widget] + self._icons(parent)))
         self._label = label
         self._widget = widget
-        if not self._enabled:
-            self._set_editable(False)
+        self._set_editable(self._enabled)
         row.register_callback(row.CALL_CHANGE, id, self._change_callback)
         row.register_callback(row.CALL_EDITABILITY_CHANGE, id,
                               self._editability_change_callback)
@@ -488,15 +501,15 @@ class InputField(KeyHandler, CommandHandler):
         if self._denied:
             icon = 'field-locked'
             tooltip = _("The field is ineditable due to insufficient permissions.")
-            color = '#606060'
+            color = self.DISABLED_FIELD_LABEL_COLOR
         elif self._hidden and not self._modified():
             icon = 'field-hidden'
             tooltip = _("The field value is not visible due to insufficient permissions.")
-            color = '#606060'
+            color = self.DISABLED_FIELD_LABEL_COLOR
         elif not self._row.editable(self._id):
             icon = 'field-disabled'
             tooltip = _("The field is not editable.")
-            color = '#606060'
+            color = self.DISABLED_FIELD_LABEL_COLOR
         elif not self.valid():
             icon = 'field-invalid'
             error = self._last_validation_error
@@ -506,11 +519,11 @@ class InputField(KeyHandler, CommandHandler):
                     tooltip += ' (' + _("this field is mandatory") + ')'
             else:
                 tooltip = self._last_check_result
-            color = '#ba344f'
+            color = self.INVALID_FIELD_LABEL_COLOR
         else:
             icon = 'field-ok'
             tooltip = _("The current field value is valid.")
-            color = '#000000'
+            color = self.DEFAULT_FIELD_LABEL_COLOR
         self._status_icon.SetBitmap(InputField.icon(icon))
         self._status_icon.SetToolTip(tooltip)
         label = self._label
@@ -725,18 +738,6 @@ class TextField(InputField):
     LETTERS = [chr(x) for x in (list(range(ord('a'), ord('z') + 1)) +
                                 list(range(ord('A'), ord('Z') + 1)))]
 
-    FIELD_DISABLED_COLOR = '#f0f0f0'
-    """Ineditable input field background color.
-
-    'wx.TextCtrl' has its own system color in the disabled state, but we don't
-    use the disabled state because of its side effects and make the field read
-    only and change the color manually.  This color should match the system
-    color, particularly we use the default color used by GTK+ 3 on Linux as
-    this is our primary target platform.  To support other platforms or themes,
-    we would need to do some decision making here.
-
-    """
-
     def _create_ctrl(self, parent):
         control = wx.TextCtrl(parent, -1, '', style=self._text_ctrl_style(),
                               size=field_size(parent, self.width(), self.height()))
@@ -758,10 +759,10 @@ class TextField(InputField):
     def _set_ctrl_editable(self, ctrl, editable):
         ctrl.SetEditable(editable)
         if editable:
-            color = None
+            color = self.DEFAULT_FIELD_BACKGROUND_COLOR
             validator = self.TextValidator(ctrl, filter=self._filter())
         else:
-            color = self.FIELD_DISABLED_COLOR
+            color = self.DISABLED_FIELD_BACKGROUND_COLOR
             validator = wx.DefaultValidator
         ctrl.SetValidator(validator)
         ctrl.SetOwnBackgroundColour(color)
@@ -1546,7 +1547,7 @@ class CodebookField(Invocable, GenericCodebookField, TextField):
             if display_size:
                 size = field_size(parent, display_size, 1)
                 display = wx.TextCtrl(parent, style=wx.TE_READONLY, size=size)
-                display.SetOwnBackgroundColour(self.FIELD_DISABLED_COLOR)
+                display.SetOwnBackgroundColour(self.DISABLED_FIELD_BACKGROUND_COLOR)
                 self._display = display
                 wx_callback(wx.EVT_NAVIGATION_KEY, display, self._on_navigation(display, skip=True))
                 self._controls.append((display, lambda c, e: None))
@@ -1656,9 +1657,9 @@ class ListField(GenericCodebookField, CallbackHandler):
         # Disabling the control also disables scrolling.
         # Instead we simply don't perform selection changes when disabled.
         if editable:
-            ctrl.SetBackgroundColour(wx.WHITE)
+            ctrl.SetBackgroundColour(InputField.DEFAULT_FIELD_BACKGROUND_COLOR)
         else:
-            ctrl.SetBackgroundColour(TextField.FIELD_DISABLED_COLOR)
+            ctrl.SetBackgroundColour(InputField.DISABLED_FIELD_BACKGROUND_COLOR)
 
     def _change_callback(self):
         self._reload_enumeration()
@@ -1891,7 +1892,7 @@ class FileField(Invocable, InputField):
             size = 10
         ctrl = wx.TextCtrl(parent, -1, '', size=field_size(parent, size, 1))
         ctrl.SetEditable(False)
-        ctrl.SetOwnBackgroundColour(TextField.FIELD_DISABLED_COLOR)
+        ctrl.SetOwnBackgroundColour(InputField.DISABLED_FIELD_BACKGROUND_COLOR)
         wx_callback(wx.EVT_LEFT_DCLICK, ctrl, self._on_filename_dclick)
         return ctrl
 
