@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2023 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2024 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2018 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -3260,8 +3260,10 @@ class PopupEditForm(PopupForm, EditForm):
     def _buttons(self):
         buttons = (
             dict(label=_("Ok"),
-                 tooltip=_("Save the record and close the form"),
-                 command=self.COMMAND_COMMIT_RECORD(close=self._inserted_data is None)),
+                 tooltip=(_("Save the current record and advance to the next one.")
+                          if self._inserted_data else
+                          _("Save the record and close the form.")),
+                 command=self.COMMAND_COMMIT_RECORD(close=not self._inserted_data)),
             dict(id=wx.ID_CANCEL,
                  tooltip=_("Close the form without saving"),
                  command=self.COMMAND_LEAVE_FORM()),
