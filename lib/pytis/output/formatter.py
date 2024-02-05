@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2019-2023 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2019-2024 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2002-2015 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -553,7 +553,7 @@ class LCGFormatter(object):
             landscape=self._page_layout.get(PAGE_LANDSCAPE_MODE),
         )
         start_time_export = pytis.data.DateTime.now()
-        exporter = lcg.pdf.PDFExporter(translations=self._translations)
+        exporter = lcg.PDFExporter(translations=self._translations)
         body = xtuple(self._body) if self._body else ()
         body_nodes = [doc.lcg_document(globals=lcg_globals) for doc in body]
         root_node = lcg.ContentNode(id='__dummy', content=lcg.Content(),
