@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2023 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2024 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2011-2018 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -872,7 +872,12 @@ class ExposedFileWrapper(object):
 
         """
         assert encoding is None or 'b' not in mode, (encoding, mode)
+        self._filename = filename
+        self._encoding = encoding
+        self._decrypt = decrypt
         if handle is None:
+            if sys.version_info[0] == 2 and isinstance(filename, unicode):
+                filename = filename.encode('utf-8')
             f = open(filename, mode)
         else:
             f = os.fdopen(handle, mode)
@@ -886,9 +891,6 @@ class ExposedFileWrapper(object):
         else:
             self._decrypted = None
         self._f = f
-        self._filename = filename
-        self._encoding = encoding
-        self._decrypt = decrypt
 
     def __enter__(self):
         return self
