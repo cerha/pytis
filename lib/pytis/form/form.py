@@ -3065,12 +3065,17 @@ class EditForm(RecordForm, TitledForm, Refreshable):
         return self._mode != self.MODE_VIEW
 
     def _cmd_commit_record(self, close=True):
-        result = self._commit_form(close=close)
-        if result:
-            app.refresh()
-            if not close:
-                self._load_next_row(report_success=True)
-        return result
+        try:
+            # TODO: Busy cursor doesn't work over X2Go!
+            busy_cursor(True)
+            result = self._commit_form(close=close)
+            if result:
+                app.refresh()
+                if not close:
+                    self._load_next_row(report_success=True)
+            return result
+        finally:
+            busy_cursor(False)
 
     def _can_navigate(self, back=False):
         return self._mode != self.MODE_VIEW
