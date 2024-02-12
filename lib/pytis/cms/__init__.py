@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2019-2020 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2019-2024 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2009-2012 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -71,7 +71,7 @@ needed to employ Pytis CMS in an existing Pytis Application are:
 from .cms import (  # noqa: F401
     Menu, MenuParents, Languages, Modules, Actions, GenericActions,
     Users, Roles, SystemRoles, AllRoles, UserRoles, RoleUsers, Rights,
-    SessionLog, AccessLog, UserSessionLog, Themes, specname
+    SessionLog, AccessLog, UserSessionLog, Themes
 )
 
 from . import web  # noqa: F401
