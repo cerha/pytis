@@ -57,7 +57,7 @@ unistr = type(u'')  # Python 2/3 transition hack.
 class Specification(wiking.Specification):
     access_rights = None
 
-    def _spec_name(self, name, needed_in_wiking=True):
+    def _name(self, name, needed_in_wiking=True):
         if needed_in_wiking:
             return name
         else:

@@ -54,11 +54,6 @@ def nextval(seq):
     counter = pd.DBCounterDefault(seq, conn_spec)
     return lambda transaction=None: counter.next(transaction=transaction)
 
-def specname(name, needed_in_wiking=True):
-    # Hack to allow namespaced spec names in wx app and plain module names in Wiking (the
-    # specification is inherited by the Wiking Module).
-    return 'cms.' + name
-
 
 
 class _TreeOrder(pp.PrettyFoldable, pd.String):
@@ -72,6 +67,11 @@ class _TreeOrder(pp.PrettyFoldable, pd.String):
 class Specification(pp.Specification):
     access_rights = pd.AccessRights((None, (('cms_user', 'cms_admin'), pd.Permission.ALL)))
     public = True
+
+    def _name(self, name, needed_in_wiking=True):
+        # Hack to allow namespaced spec names in wx app and plain module names
+        # in Wiking (method overriden in pytis.cms.web.Specification).
+        return 'cms.' + name
 
 
 class Languages(Specification):
@@ -138,14 +138,14 @@ class Modules(Specification):
     columns = ('modname', 'descr')
 
     def bindings(self):
-        return (Binding('actions', _("Dostupné akce tohoto modulu"), specname('Actions'),
+        return (Binding('actions', _("Dostupné akce tohoto modulu"), self._name('Actions'),
                         'mod_id'),)
 
     def actions(self):
         return (Action('reload', _("Přenačíst dostupné akce"), self._reload_actions),)
 
     def on_delete_record(self, record):
-        data = pytis.util.data_object(specname('Menu'))
+        data = pytis.util.data_object(self._name('Menu'))
         count = data.select(condition=pd.EQ('mod_id', record['mod_id']))
         data.close()
         if count:
@@ -155,7 +155,7 @@ class Modules(Specification):
             return True
     # def on_new_record(self, prefill, transaction=None):
     #    import pytis.form
-    #    record = app.new_record(specname('Modules'), prefill=prefill,
+    #    record = app.new_record(self._name('Modules'), prefill=prefill,
     #                            block_on_new_record=True, transaction=transaction)
     #    if record:
     #
@@ -177,7 +177,7 @@ class Modules(Specification):
                 return docstring and docstring.splitlines()[0] or _("Neuvedeno")
         module = wiking.module(record['modname'].value())
         if module:
-            data = pytis.util.data_object(specname('Actions'))
+            data = pytis.util.data_object(self._name('Actions'))
             data.select(condition=pd.EQ('mod_id', record['mod_id']))
             existing_actions = {}
             while True:
@@ -265,7 +265,7 @@ class Menu(Specification):
                               "v odkazech na tuto stránku v rámci textu jiných stránek. Platný "
                               "identifikátor může obsahovat pouze písmena bez diakritiky, "
                               "číslice, pomlčky a podtržítka a musí začínat písmenem."))
-        fields.modify('lang', label=_("Jazyk"), editable=ONCE, codebook=specname('Languages'),
+        fields.modify('lang', label=_("Jazyk"), editable=ONCE, codebook=self._name('Languages'),
                       value_column='lang', not_null=True, selection_type=pp.SelectionType.CHOICE)
         fields.modify('title_or_identifier', label=_("Title"), width=30, type=_TreeOrder())
         fields.modify('title', label=_("Title"), width=20,
@@ -280,12 +280,12 @@ class Menu(Specification):
                       text_format=pp.TextFormat.LCG, attachment_storage=self._attachment_storage,
                       descr=_("Text stránky formátovaný jako LCG strukturovaný text (wiki)"))
         fields.modify('mod_id', label=_("Modul"), type=pd.Integer(), not_null=False,
-                      codebook=specname('Modules', False), allow_codebook_insert=True,
+                      codebook=self._name('Modules', False), allow_codebook_insert=True,
                       descr=_("Vyberte rozšiřující modul zobrazený uvnitř stránky.  "
                               "Ponechte prázdné pro prostou textovou stránku."))
         fields.modify('modname', label=_("Modul"))
         fields.modify('parent', label=_("Parent item"), type=pd.Integer(), not_null=False,
-                      codebook=specname('MenuParents', False), value_column='menu_item_id',
+                      codebook=self._name('MenuParents', False), value_column='menu_item_id',
                       runtime_filter=computer(self._parent_filter),
                       descr=_("Vyberte bezprostředně nadřízenou položku v hierarchii menu.  "
                               "Ponechte prázdné pro stránky na nejvyšší úrovni menu."))
@@ -367,7 +367,7 @@ class Menu(Specification):
 
     def bindings(self):
         return (
-            Binding('rights', _("Přístupová práva"), specname('Rights'),
+            Binding('rights', _("Přístupová práva"), self._name('Rights'),
                     condition=lambda r: pd.EQ('menu_item_id', r['menu_item_id']),
                     prefill=lambda r: {'menu_item_id': r['menu_item_id'].value(),
                                        'mod_id': r['mod_id'].value()}),
@@ -409,8 +409,8 @@ class Users(Specification):
     sorting = (('login', ASC),)
 
     def bindings(self):
-        return (Binding('roles', _("Uživatelské role"), specname('UserRoles'), 'uid'),
-                Binding('sessions', _("Historie přihlášení"), specname('UserSessionLog'),
+        return (Binding('roles', _("Uživatelské role"), self._name('UserRoles'), 'uid'),
+                Binding('sessions', _("Historie přihlášení"), self._name('UserSessionLog'),
                         'uid'),
                 )
 
@@ -432,7 +432,7 @@ class Roles(Specification):
 
     def bindings(self):
         return (
-            Binding('users', _("Uživatelé zařazení do této role"), specname('RoleUsers'),
+            Binding('users', _("Uživatelé zařazení do této role"), self._name('RoleUsers'),
                     'role_id'),
         )
     cb = CodebookSpec(display='name')
@@ -462,9 +462,9 @@ class UserRoles(Specification):
 
     def _customize_fields(self, fields):
         fields.modify('user_role_id', default=nextval('cms_user_role_assignment_user_role_id_seq'))
-        fields.modify('role_id', label=_("Role"), not_null=True, codebook=specname('Roles', False))
+        fields.modify('role_id', label=_("Role"), not_null=True, codebook=self._name('Roles', False))
         fields.modify('system_role')
-        fields.modify('uid', label=_('UID'), not_null=True, codebook=specname('Users', False),
+        fields.modify('uid', label=_('UID'), not_null=True, codebook=self._name('Users', False),
                       width=5)
         fields.modify('login', label=_("Přihlašovací jméno"), width=16)
         fields.modify('fullname', label=_("Celé jméno"), width=50)
@@ -490,7 +490,7 @@ class Actions(Specification):
 
     def _customize_fields(self, fields):
         fields.modify('action_id', default=nextval('cms_actions_action_id_seq'))
-        fields.modify('mod_id', label=_("Modul"), not_null=True, codebook=specname('Modules', False))
+        fields.modify('mod_id', label=_("Modul"), not_null=True, codebook=self._name('Modules', False))
         fields.modify('name', label=_("Title"), width=16)
         fields.modify('description', label=_("Description"), width=64)
 
@@ -517,11 +517,11 @@ class Rights(Specification):
         fields.modify('rights_assignment_id',
                       default=nextval('cms_rights_assignment_rights_assignment_id_seq'))
         fields.modify('menu_item_id')
-        fields.modify('role_id', label=_("Role"), not_null=True, codebook=specname('AllRoles', False))
+        fields.modify('role_id', label=_("Role"), not_null=True, codebook=self._name('AllRoles', False))
         fields.modify('role_name', label=_("Role"))
         fields.modify('system_role')
         fields.modify('mod_id')
-        fields.modify('action_id', label=_("Action"), codebook=specname('Actions', False),
+        fields.modify('action_id', label=_("Action"), codebook=self._name('Actions', False),
                       not_null=True, runtime_filter=computer(self._action_filter))
         fields.modify('action_name', label=_("Action Name"))
         fields.modify('action_description', label=_("Description"), width=30, editable=NEVER)
@@ -570,7 +570,7 @@ class SessionLog(_Log):
         super(SessionLog, self)._customize_fields(fields)
         fields.modify('log_id')
         fields.modify('session_id')
-        fields.modify('uid', not_null=True, codebook=specname('Users'))
+        fields.modify('uid', not_null=True, codebook=self._name('Users'))
         fields.modify('login', label=_("Login"), width=8)
         fields.modify('fullname', label=_("Jméno"), width=15)
         fields.modify('success', label=_("Úspěch"), width=3)
@@ -609,7 +609,7 @@ class AccessLog(_Log):
         fields.modify('log_id')
         fields.modify('timestamp', label=_("Datum a čas"), width=17)
         fields.modify('uri', label=_("Cesta"), width=17)
-        fields.modify('uid', label=_("User"), not_null=True, codebook=specname('Users'))
+        fields.modify('uid', label=_("User"), not_null=True, codebook=self._name('Users'))
         fields.modify('modname', label=_("Modul"), width=17)
         fields.modify('action', label=_("Action"), width=17)
 
