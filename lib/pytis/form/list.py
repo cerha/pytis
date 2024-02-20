@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2023 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2024 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2017 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -1919,6 +1919,14 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             # We prefer exporting all data into memory and write to the file in the
             # end in order to prevent numerous rpc calls in case of remote export.
             data = app.run(export_method, kwargs=dict(only_selected=(scope == 'selection')))
+            pytis.form.app.log_user_action(self._name, self.__class__.__name__, 'export', dict(
+                condition=str(self._current_condition()) if self._current_condition() else None,
+                columns=[c.id() for c in self._columns],
+                total_rows=self._table.number_of_rows(),
+                selected_rows=len(self._grid.GetSelectedRows()) if scope == 'selection' else None,
+                filename=export_file.name,
+                size=len(data),
+            ))
             export_file.write(data)
             if after_export:
                 export_file.flush()

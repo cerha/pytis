@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2023 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2024 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2013 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -83,7 +83,7 @@ from .dualform import (  # noqa: F401
 )
 
 from .application import (  # noqa: F401
-    Application, DbActionLogger, run_form, run_dialog, db_operation,
+    Application, run_form, run_dialog, db_operation,
     recent_forms_menu, close_forms,
     # Backwards compatibility aliases.
     refresh, exit, launch_url, select_file, select_files, select_directory,

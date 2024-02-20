@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2019, 2020 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2019, 2020, 2024 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2009-2015 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -19,44 +19,79 @@
 from __future__ import unicode_literals
 
 import datetime
+import lcg
+import pprint
 
 import pytis.data as pd
 import pytis.util
-from pytis.presentation import Specification, Field, Editable, \
-    QueryFields, HGroup, VGroup, procedure
+import pytis.dbdefs.db_pytis_logging
+
+from pytis.presentation import (
+    Binding, Editable, Field, QueryFields, Specification, HGroup, VGroup, procedure,
+)
 from pytis.form import BrowseForm, run_form
 
 _ = pytis.util.translations('pytis-defs')
 
 
-class FormActionLog(Specification):
+class UserActionLog(Specification):
+    class Logger(object):
+        """Log user actions into the database."""
+
+        def __init__(self, dbconnection, username):
+            factory = pytis.config.resolver.get('pytis.defs.logging.UserActionLog', 'data_spec')
+            self._data = factory.create(connection_data=pytis.config.dbconnection)
+            self._username = username
+
+        def _values(self, **kwargs):
+            return [(key, pd.Value(self._data.find_column(key).type(), value))
+                    for key, value in [('username', self._username)] + list(kwargs.items())]
+
+        def log(self, spec_name, form_name, action, data=None):
+            rdata = (
+                ('timestamp', pd.dtval(pd.DateTime.datetime())),
+                ('username', pd.sval(self._username)),
+                ('spec_name', pd.sval(spec_name)),
+                ('form_name', pd.sval(form_name)),
+                ('action', pd.sval(action)),
+                ('data', pd.Value(pd.JSON(), data)),
+            )
+            row = pd.Row(rdata)
+            result, success = self._data.insert(row)
+            if not success:
+                raise pd.DBException(result)
+
     # This specification is used for insertion of log record by pytis
     # internally, so it is not public.  The derived specification
-    # FormActionLogView is used for viewing the logs through admin forms.
+    # UserActionLogView is used for viewing the logs through admin forms.
     public = False
-    table = 'e_pytis_action_log'
+    table = pytis.dbdefs.db_pytis_logging.EPytisActionLog
     title = _("User Actions Log")
-    fields = (
-        Field('id', editable=Editable.NEVER),
-        Field('timestamp', _("Time"), width=25, editable=Editable.NEVER),
-        Field('username', _("User"), not_null=True, codebook='statistics.FormUserList',
-              value_column='login', editable=Editable.NEVER),
-        Field('spec_name', _("Specification Name"),
-              width=50, column_width=30, editable=Editable.NEVER),
-        Field('form_name', _("Form Class"),
-              width=50, column_width=30, editable=Editable.NEVER),
-        Field('action', _("Action"), width=25, editable=Editable.NEVER),
-        Field('info', _("Information"), editable=Editable.NEVER, height=10, width=70),
-    )
     sorting = (('timestamp', pd.ASCENDENT),)
     columns = ('timestamp', 'username', 'spec_name', 'form_name', 'action')
-    layout = ('timestamp', 'username', 'spec_name', 'form_name', 'action', 'info')
+    layout = ('timestamp', 'username', 'spec_name', 'form_name', 'action', 'data')
+
+    def _customize_fields(self, fields):
+        fields.modify('id', editable=Editable.NEVER)
+        fields.modify('timestamp', label=_("Time"), width=25, editable=Editable.NEVER)
+        fields.modify('username', label=_("User"), not_null=True, editable=Editable.NEVER,
+                      codebook='statistics.FormUserList', value_column='login')
+        fields.modify('spec_name', label=_("Specification Name"),
+                      width=50, column_width=30, editable=Editable.NEVER)
+        fields.modify('form_name', label=_("Form Class"),
+                      width=50, column_width=30, editable=Editable.NEVER)
+        fields.modify('action', label=_("Action"), width=25, editable=Editable.NEVER)
+        fields.modify('data', label=_("Data"), editable=Editable.NEVER, height=10, width=70)
 
 
-class FormActionLogView(FormActionLog):
+class UserActionLogView(UserActionLog):
     # This specification is used for viewing the logs through admin forms.
     public = True
-    access_rights = pd.AccessRights((None, (['dmp_view'], pd.Permission.VIEW,)))
+    bindings = (
+        Binding('data', _("Data"), content_type='lcg',
+                content=lambda r: lcg.PreformattedText(pprint.pformat(r['data'].value()))),
+    )
+
 
 
 class ChangesLog(Specification):

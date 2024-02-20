@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2019-2023 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2019-2024 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2009-2015 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -150,9 +150,6 @@ class ApplicationRoles(_ApplicationRolesSpecification):
                                            arguments=(lambda row:
                                                       dict(roleid=row['roleid'],
                                                            new=pytis.data.bval(True)))),
-                pytis.presentation.Binding('log', _(u"Log Akcí"), 'logging.FormActionLogView',
-                                           condition=(lambda r:
-                                                      pytis.data.EQ('username', r['roleid']))),
                 )
 
     def on_delete_record(self, row):
@@ -423,8 +420,6 @@ class ApplicationMenuM(pytis.presentation.Specification):
                 pytis.presentation.Binding('profiles', _("Profiles"), 'profiles.FormProfiles',
                                            condition=self._profiles_binding_condition),
                 pytis.presentation.Binding('settings', _(u"Nastavení"), 'profiles.FormSettings',
-                                           condition=self._spec_name_form_name_binding_condition),
-                pytis.presentation.Binding('log', _(u"Log Akcí"), 'logging.FormActionLogView',
                                            condition=self._spec_name_form_name_binding_condition),
                 )
 

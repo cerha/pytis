@@ -216,13 +216,15 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
             pytis.config.dbconnection)
         # Initialize user action logger.
         try:
-            self._logger = DbActionLogger(pytis.config.dbconnection, pytis.config.dbuser)
+            from pytis.defs.logging import UserActionLog
+            self._user_action_logger = UserActionLog.Logger(pytis.config.dbconnection,
+                                                            pytis.config.dbuser)
         except pd.DBException as e:
-            # Logging is optional.  The application may choose not to include
+            # DB logging is optional.  The application may choose not to include
             # the logging table in the database schema and this will simply
-            # lead to logging being ignored.
+            # lead to action logging not being written into the database.
             log(OPERATIONAL, "Form action logging not activated:", e)
-            self._logger = None
+            self._user_action_logger = None
         # Read the stored configuration.
         for option, value in self._application_config_manager.load().items():
             if hasattr(pytis.config, option):
@@ -1421,11 +1423,10 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
     def aggregated_views_manager(self):
         return self._aggregated_views_manager
 
-    def log(self, spec_name, form_name, action, info=None):
-        if self._logger:
-            self._logger.log(spec_name, form_name, action, info=info)
-        else:
-            log(ACTION, "Form action:", (spec_name, form_name, action, info))
+    def log_user_action(self, spec_name, form_name, action, data=None):
+        log(ACTION, "User action:", (spec_name, form_name, action, data))
+        if self._user_action_logger:
+            self._user_action_logger.log(spec_name, form_name, action, data)
 
     def client_mode(self):
         """Return the client operation mode as one of 'remote', 'local' or None.
@@ -2401,31 +2402,6 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
             self._OutputResolver(pytis.config.print_spec_dir, pytis.config.resolver),
         )
         return self._OutputFormatter(pytis.config.resolver, output_resovers, template_id, **kwargs)
-
-
-class DbActionLogger(object):
-    """Log user actions into the database."""
-
-    def __init__(self, dbconnection, username):
-        factory = pytis.config.resolver.get('pytis.defs.logging.FormActionLog', 'data_spec')
-        self._data = factory.create(connection_data=pytis.config.dbconnection)
-        self._username = username
-
-    def _values(self, **kwargs):
-        return [(key, pd.Value(self._data.find_column(key).type(), value))
-                for key, value in [('username', self._username)] + list(kwargs.items())]
-
-    def log(self, spec_name, form_name, action, info=None):
-        rdata = (('timestamp', pd.dtval(pd.DateTime.datetime())),
-                 ('username', pd.sval(self._username)),
-                 ('spec_name', pd.sval(spec_name)),
-                 ('form_name', pd.sval(form_name)),
-                 ('action', pd.sval(action)),
-                 ('info', pd.sval(info)))
-        row = pd.Row(rdata)
-        result, success = self._data.insert(row)
-        if not success:
-            raise pd.DBException(result)
 
 
 # Funkce odpovídající příkazům aplikace.
