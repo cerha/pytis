@@ -74,8 +74,7 @@ class UserActionLog(Specification):
     def _customize_fields(self, fields):
         fields.modify('id', editable=Editable.NEVER)
         fields.modify('timestamp', label=_("Time"), width=25, editable=Editable.NEVER)
-        fields.modify('username', label=_("User"), not_null=True, editable=Editable.NEVER,
-                      codebook='statistics.FormUserList', value_column='login')
+        fields.modify('username', label=_("User"), not_null=True, editable=Editable.NEVER)
         fields.modify('spec_name', label=_("Specification Name"),
                       width=50, column_width=30, editable=Editable.NEVER)
         fields.modify('form_name', label=_("Form Class"),
