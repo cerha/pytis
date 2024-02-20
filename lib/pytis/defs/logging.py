@@ -61,15 +61,19 @@ class UserActionLog(Specification):
             if not success:
                 raise pd.DBException(result)
 
-    # This specification is used for insertion of log record by pytis
-    # internally, so it is not public.  The derived specification
-    # UserActionLogView is used for viewing the logs through admin forms.
+    # This specification is used for insertion of log record by Pytis internally,
+    # so it is not public.  If the application wishes to make it available in the
+    # UI, it should override it with public=True and put it to the menu..
     public = False
     table = pytis.dbdefs.db_pytis_logging.EPytisActionLog
     title = _("User Actions Log")
     sorting = (('timestamp', pd.ASCENDENT),)
     columns = ('timestamp', 'username', 'spec_name', 'form_name', 'action')
     layout = ('timestamp', 'username', 'spec_name', 'form_name', 'action', 'data')
+    bindings = (
+        Binding('data', _("Data"), content_type='lcg',
+                content=lambda r: lcg.PreformattedText(pprint.pformat(r['data'].value()))),
+    )
 
     def _customize_fields(self, fields):
         fields.modify('id', editable=Editable.NEVER)
@@ -82,16 +86,6 @@ class UserActionLog(Specification):
                       width=50, column_width=30, editable=Editable.NEVER)
         fields.modify('action', label=_("Action"), width=25, editable=Editable.NEVER)
         fields.modify('data', label=_("Data"), editable=Editable.NEVER, height=10, width=70)
-
-
-class UserActionLogView(UserActionLog):
-    # This specification is used for viewing the logs through admin forms.
-    public = True
-    bindings = (
-        Binding('data', _("Data"), content_type='lcg',
-                content=lambda r: lcg.PreformattedText(pprint.pformat(r['data'].value()))),
-    )
-
 
 
 class ChangesLog(Specification):
