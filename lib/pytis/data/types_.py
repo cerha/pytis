@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2022 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2022, 2024 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2017 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -2747,10 +2747,13 @@ class JSON(Type):
 
     def _validate(self, obj):
         assert isinstance(obj, basestring), obj
+        if sys.version_info[0] == 2:
+            errcls = ValueError
+        else:
+            errcls = json.JSONDecodeError  # not defined in Python 2
         try:
             value = json.loads(obj)
-        # TODO PY3: ValueError is for Python 2 compatibility.  Use json.JSONDecodeError in Py3.
-        except ValueError:   # json.JSONDecodeError:  (not defined in Python 2)
+        except errcls:
             # Translators: User input validation error message.
             raise ValidationError(_(u"Not a JSON string"))
         try:
