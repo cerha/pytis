@@ -31,6 +31,21 @@ při spuštění aplikace mohl použít.  Ten řádek s klíčem pro uživatele 
 jako "fresh", díky čemuž aplikace pozná, že je zapotřebí ho zašifrovat znovu,
 tentokrát již s heslem zadaným po úspěšném přihlášení do databáze.
 
+Stručně shrnuto:
+- Pytis si zjistí názvy šifrovaných oblastí, ke který má uživatel přístup.
+- Potřebuje v databázi získat přístup k šifrovacímu master klíči té které
+  oblasti.
+- Ten je zašifrovaný uživatelským heslem.
+- Pytis potřebuje "bezpečně" dostat uživatelské heslo do DB.
+- Pytis si tedy vyžádá veřejný klíč Pytisu, přičemž privátní část zůstává v DB.
+- Pytis pošle uživatelské heslo do DB zašifrované tím veřejným klíčem.
+- V databázi se uživatelské heslo dešifruje a současně se vytvoří temporary
+  tabulka, ve které je k dané oblasti už ten dešifrovaný master klíč.
+- Tato temporary tabulka se používá při dotazech na tabulky s šifrovanými
+  sloupci a za běhu se dešifrují hodnoty sloupců.
+- Po ukončení DB session temporary tabulka automaticky mizí.
+
+
 * Úvahy k možnostem využití šifrování ve webových aplikacích
 
 Pro webovou aplikaci nelze mechanizmus navržený pro wx aplikaci vůbec
