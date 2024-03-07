@@ -2265,6 +2265,16 @@ class RecordForm(LookupForm):
         if not fh:
             app.echo(_(u"No file given. Import aborted."), kind='warning')
             return False
+        # Make a local copy of the remote file as long as transparent remote file buffering
+        # is deactivated in Application._ExposedFileWrapper.__init__().
+        if pytis.remote.client_connection_ok():
+            import tempfile
+            flocal = tempfile.NamedTemporaryFile()
+            filename = flocal.name
+            flocal.write(fh.read())
+            fh.close()
+            fh = flocal
+            fh.seek(0)
         with fh:
             columns = [cid.strip() for cid in fh.readline().rstrip('\r\n').split(separator)]
             try:

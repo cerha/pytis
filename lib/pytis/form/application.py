@@ -1637,6 +1637,8 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
                 else:
                     # Supply default encoding in text modes.
                     encoding = encoding or 'utf-8'
+            # Temporarily deactivate buffering as it proved to cause some problems.
+            if False:  # mode is not None:
                 if 'r' in mode:
                     buffer_class = io.BufferedReader
                 else:
