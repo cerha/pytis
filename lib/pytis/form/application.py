@@ -1633,6 +1633,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
             self._instance = instance
             if mode is not None:
                 if 'b' in mode:
+                    assert encoding is None, (mode, encoding)
                     encoding = None
                 else:
                     # Supply default encoding in text modes.
@@ -1648,7 +1649,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
                 # TODO: Apply buffering in all situations (also for app.make_selected_file(),
                 # which doesn't pass mode here?
                 self._buffer = instance
-            self._encoding = None
+            self._encoding = encoding
 
         def __getattr__(self, name):
             return getattr(self._instance, name)
