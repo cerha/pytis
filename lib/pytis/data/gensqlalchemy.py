@@ -721,6 +721,12 @@ def visit_TIMESTAMP(element, compiler, **kwargs):
     return "TIMESTAMP%s %s" % ('' if precision is None else "(%d)" % (precision,),
                                (element.timezone and "WITH" or "WITHOUT") + " TIME ZONE",)
 
+@compiles(sqlalchemy.dialects.postgresql.TIME)
+def visit_TIME(element, compiler, **kwargs):
+    # Current SQLAlchemy implementation is buggy: it omits zero precision.
+    precision = getattr(element, 'precision', None)
+    return "TIME%s %s" % ('' if precision is None else "(%d)" % (precision,),
+                               (element.timezone and "WITH" or "WITHOUT") + " TIME ZONE",)
 
 # Columns
 

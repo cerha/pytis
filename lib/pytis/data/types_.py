@@ -2053,8 +2053,8 @@ class Time(_CommonDateTime):
         return value
 
     def sqlalchemy_type(self):
-        return sqlalchemy.Time(timezone=(not self._without_timezone), precision=self._precision)
-
+        return sqlalchemy.dialects.postgresql.TIME(timezone=(not self._without_timezone),
+                                                   precision=self._precision)
 
 class LocalTime(Time):
     "Time stored as UTC in database but presented as local time by default."
