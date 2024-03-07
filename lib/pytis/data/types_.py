@@ -1514,6 +1514,8 @@ class _CommonDateTime(Type):
       without_timezone -- iff true then use WITHOUT TIMEZONE when declaring the
         type in the database.  This is only to support legacy tables, all new
         database objects should be created WITH TIMEZONE.
+      precision -- optional precision value p which specifies the number
+        of fractional digits retained in the seconds field, default 0
 
     """
     _SPECIAL_VALUES = Type._SPECIAL_VALUES + ((None, ''),)
@@ -1522,7 +1524,7 @@ class _CommonDateTime(Type):
     UTC_TZINFO = _UTCTimezone()
     LOCAL_TZINFO = _LocalTimezone()
 
-    def _init(self, format, utc=True, without_timezone=False, **kwargs):
+    def _init(self, format, utc=True, without_timezone=False, precision=0, **kwargs):
         assert format is True or isinstance(format, basestring), format
         assert isinstance(utc, bool), utc
         self._format = format
@@ -1533,6 +1535,7 @@ class _CommonDateTime(Type):
             self._timezone = self.LOCAL_TZINFO
         self._check_matcher = {}
         self._without_timezone = without_timezone
+        self._precision = precision
         super(_CommonDateTime, self)._init(**kwargs)
 
     def _comparison_key(self):
@@ -1566,6 +1569,9 @@ class _CommonDateTime(Type):
     def timezone(self):
         """Return 'datetime.tzinfo' object corresponding to the time zone."""
         return self._timezone
+
+    def precision(self):
+        return self._precision
 
     def is_utc(self):
         """Deprecated.  Use 'utc' instead."""
@@ -1679,6 +1685,8 @@ class DateTime(_CommonDateTime):
         'config.date_time_format' is used.  The class defines '*_FORMAT'
         constants which may be used as a value of this argument.
       mindate, maxdate -- limits of acceptable date/time
+      precision -- optional precision value p which specifies the number
+        of fractional digits retained in the seconds field, default 0
       utc -- specifies, if timestamp in database is in UTC
 
     """
@@ -1691,7 +1699,7 @@ class DateTime(_CommonDateTime):
 
     _ISO_TZ_MATCHER = re.compile('(?P<sign>[-+])(?P<hours>[0-9]+):(?P<minutes>[0-9]+)')
 
-    def _init(self, format=None, mindate=None, maxdate=None, utc=True, **kwargs):
+    def _init(self, format=None, mindate=None, maxdate=None, utc=True, precision=0, **kwargs):
         assert mindate is None or isinstance(mindate, basestring)
         assert maxdate is None or isinstance(maxdate, basestring)
         if format is None:
@@ -1872,7 +1880,7 @@ class DateTime(_CommonDateTime):
 
     def sqlalchemy_type(self):
         return sqlalchemy.dialects.postgresql.TIMESTAMP(timezone=(not self._without_timezone),
-                                                        precision=0)
+                                                        precision=self._precision)
 
 
 class LocalDateTime(DateTime):
@@ -2043,7 +2051,7 @@ class Time(_CommonDateTime):
         return value
 
     def sqlalchemy_type(self):
-        return sqlalchemy.Time(timezone=(not self._without_timezone))
+        return sqlalchemy.Time(timezone=(not self._without_timezone), precision=self._precision)
 
 
 class LocalTime(Time):
