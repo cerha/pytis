@@ -2059,7 +2059,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
                         break
                     if pass_n:
                         kwargs['n'] = n
-                    func(update, arg, *args, **kwargs)
+                    func(lambda message=None: update(message=message), arg, *args, **kwargs)
         if progress:
             dlg = dialog.ProgressDialog
             dialog_kwargs = dict(
