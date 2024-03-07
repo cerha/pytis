@@ -1704,7 +1704,7 @@ class DateTime(_CommonDateTime):
         assert maxdate is None or isinstance(maxdate, basestring)
         if format is None:
             format = pytis.config.date_time_format
-        super(DateTime, self)._init(format=format, utc=utc, **kwargs)
+        super(DateTime, self)._init(format=format, utc=utc, precision=precision, **kwargs)
         if mindate:
             try:
                 self._mindate = datetime.datetime.strptime(mindate, self.DEFAULT_FORMAT)
@@ -1999,6 +1999,8 @@ class Time(_CommonDateTime):
         May be also None in which case the configuration option
         'pytis.config.date_time_format' is used.  The class defines '*_FORMAT'
         constants which may be used as a value of this argument.
+      precision -- optional precision value p which specifies the number
+        of fractional digits retained in the seconds field, default 0
 
     """
 
@@ -2009,10 +2011,10 @@ class Time(_CommonDateTime):
     SHORT_FORMAT = '%H:%M'
     """Formát času bez zobrazení sekund."""
 
-    def _init(self, format=None, **kwargs):
+    def _init(self, format=None, precision=0, **kwargs):
         if format is None:
             format = pytis.config.time_format
-        super(Time, self)._init(format=format, **kwargs)
+        super(Time, self)._init(format=format, precision=precision, **kwargs)
 
     def _validate(self, *args, **kwargs):
         value = super(Time, self)._validate(*args, **kwargs)
