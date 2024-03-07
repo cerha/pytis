@@ -2253,7 +2253,8 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         f = self.api_make_selected_file(filename=filename, mode=mode, encoding=encoding,
                                         filetypes=filetypes, context=context)
         if f:
-            if sys.version_info[0] == 2 and isinstance(data, bytes):
+            if ((sys.version_info[0] == 2 and isinstance(data, bytes)
+                 and self.client_mode() == 'remote')):
                 # TODO: The older version of P2Go's pytisproc.py currently distributed
                 # between users doesn't handle text encoding quite well.  It attempts
                 # to encode everything which is not a 'buffer'.  We can remove this
