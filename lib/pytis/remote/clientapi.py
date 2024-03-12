@@ -876,8 +876,6 @@ class ExposedFileWrapper(object):
         self._encoding = encoding
         self._decrypt = decrypt
         if handle is None:
-            if sys.version_info[0] == 2 and isinstance(filename, unicode):
-                filename = filename.encode('utf-8')
             f = open(filename, mode)
         else:
             f = os.fdopen(handle, mode)
