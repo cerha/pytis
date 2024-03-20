@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2023 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2024 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2014 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -911,6 +911,7 @@ def dbfunction(fspec, *args, **kwargs):
         assert not kwargs
         arguments = [('arg{}'.format(i + 1), argument(value)) for i, value in enumerate(args)]
         multirow = False
+        result_type = None
     else:
         fargs = [a for a in fspec.arguments if not a.out()]
         if len(args) + len(kwargs) != len(fargs):
@@ -927,8 +928,11 @@ def dbfunction(fspec, *args, **kwargs):
              for arg in fargs[len(args):]]
         )
         multirow = fspec.multirow
+        result_type = fspec.result_type
     result = function.call(Row(arguments), transaction=transaction)
-    if multirow:
+    if result_type is None:
+        return None
+    elif multirow:
         return result
     else:
         return result[0][0].value()
