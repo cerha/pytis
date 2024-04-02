@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2023 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2024 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2018 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -2241,10 +2241,10 @@ def make_in_operator(column_id, spec_name, table_column_id, profile_id,
 
     Arguemnts match the arguments of 'pytis.presentation.IN' constructor.
 
-    Profiles managed by 'FormProfileManager' (recognized by 'profile_id'
-    prefix) are resolved to 'profile_name' and 'condition' and passed on.
-    Other profiles are left to be resolved by 'pytis.presentation.IN'
-    constructor.
+    User defined profiles (managed by 'FormProfileManager', recognized by
+    'profile_id' prefix) are resolved to 'profile_name' and 'condition' and
+    passed on.  Other profiles are left to be resolved by
+    'pytis.presentation.IN' constructor.
 
     """
     if profile_id and profile_id.startswith(FormProfileManager.USER_PROFILE_PREFIX):
