@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2019, 2021 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2019-2024 Tomáš Cerha <t.cerha@gmail.com>
 
 # Copyright (C) 2002-2017 OUI Technology Ltd.
 #
@@ -391,6 +391,20 @@ class Roman(_Container):
 
     def _lcg(self):
         return lcg.Container(self._lcg_contents(), presentation=lcg.Presentation(italic=False))
+
+
+class Subscript(_Container):
+    """Dolní index."""
+
+    def _lcg(self):
+        return lcg.Subscript(self._lcg_contents())
+
+
+class Superscript(_Container):
+    """Horní index."""
+
+    def _lcg(self):
+        return lcg.Superscript(self._lcg_contents())
 
 
 class FontSize(_Container):
