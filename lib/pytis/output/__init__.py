@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2019-2020 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2019-2024 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2002-2013 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -36,8 +36,8 @@ from .resolver import (  # noqa: F401
 from .markup import (  # noqa: F401
     Null, Nbsp, Euro, Pound, Center, AlignLeft, AlignRight, VCenter,
     VSpace, HSpace, HLine, Paragraph, List, NewPage, PageNumber, Bold,
-    Italic, Roman, FontSize, FontFamily, HGroup, VGroup, Group, Document,
-    Table, LongTable, Image, StructuredText,
+    Italic, Roman, Subscript, Superscript, FontSize, FontFamily, HGroup,
+    VGroup, Group, Document, Table, LongTable, Image, StructuredText,
     LEFT, RIGHT, CENTER, TOP, BOTTOM, MIDDLE,
 )
 
