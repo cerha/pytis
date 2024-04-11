@@ -397,14 +397,14 @@ class Subscript(_Container):
     """Dolní index."""
 
     def _lcg(self):
-        return lcg.Subscript(self._lcg_contents())
+        return lcg.Container(lcg.Subscript(self._lcg_contents()))
 
 
 class Superscript(_Container):
     """Horní index."""
 
     def _lcg(self):
-        return lcg.Superscript(self._lcg_contents())
+        return lcg.Container(lcg.Superscript(self._lcg_contents()))
 
 
 class FontSize(_Container):
