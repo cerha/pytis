@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2023 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2024 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2007-2017 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -400,8 +400,8 @@ class Products(Specification):
         results.
 
         """
-        from PyPDF2 import PdfFileMerger, PdfFileReader
-        merger = PdfFileMerger()
+        from PyPDF2 import PdfMerger, PdfReader
+        merger = PdfMerger()
         for lang in ('cs', 'en'):
             output = io.BytesIO()
             app.printout(
@@ -411,7 +411,7 @@ class Products(Specification):
                                 language=lang),
                 language=lang, output_file=output,
             )
-            merger.append(PdfFileReader(io.BytesIO(output.getvalue())))
+            merger.append(PdfReader(io.BytesIO(output.getvalue())))
         result = io.BytesIO()
         merger.write(result)
         app.launch_file(data=result, suffix='.pdf')
