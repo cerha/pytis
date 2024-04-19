@@ -2336,9 +2336,15 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         class _Spec(object):
             # This class has to emulate a specification module as well as a
             # (new style) specification class.
+            def __init__(self, error):
+                self._error = error
+
+            def init(self, resolver=None, **kwargs):
+                app.error(_("Print specification not found: {}").format(self._error))
+                return False
 
             def body(self, resolver=None, **kwargs):
-                app.error(_("Print specification not found!"))
+                return None
 
             def doc_header(self, resolver=None, **kwargs):
                 return None
@@ -2350,15 +2356,15 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
             # Supply a default specification module (old style spec).
             try:
                 return super(Application._OutputResolver, self)._get_module(name)
-            except pytis.util.ResolverError:
-                return self._Spec()
+            except pytis.util.ResolverError as e:
+                return self._Spec(e)
 
         def _get_instance(self, key):
             # Supply a default specification class (new style spec).
             try:
                 return super(Application._OutputResolver, self)._get_instance(key)
-            except pytis.util.ResolverError:
-                return self._Spec()
+            except pytis.util.ResolverError as e:
+                return self._Spec(e)
 
     class _OutputFormatter(pytis.output.Formatter):
 
