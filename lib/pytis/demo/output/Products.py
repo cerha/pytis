@@ -22,8 +22,8 @@ from __future__ import unicode_literals
 import lcg
 import datetime
 from pytis.output import UMm, PAGE_WIDTH, PAGE_HEIGHT, PAGE_LANDSCAPE_MODE, PAGE_TOP_MARGIN, \
-    PAGE_BOTTOM_MARGIN, PAGE_LEFT_MARGIN, PAGE_RIGHT_MARGIN, HGroup, VGroup, \
-    HSpace, f_smaller, PageNumber, PrintSpecification
+    PAGE_BOTTOM_MARGIN, PAGE_LEFT_MARGIN, PAGE_RIGHT_MARGIN, P_NAME, P_ROW, HGroup, VGroup, \
+    HSpace, f_smaller, PageNumber, PrintSpecification, StructuredText
 from pytis.util import translations
 
 _ = translations('pytis-demo')
@@ -61,3 +61,19 @@ class ProductPage(PrintSpecification):
             HSpace(None),
             PageNumber(),
         ))
+
+
+class ProductInfo(PrintSpecification):
+
+    def init(self):
+        self._row = self._parameter((self._parameter(P_NAME), P_ROW))
+
+    def page_header(self):
+        return HGroup(
+            self._row['product'].value(),
+            HSpace(None),
+            lcg.LocalizableDateTime(datetime.date.today()),
+        )
+
+    def body(self):
+        return StructuredText(self._row['notes'].value() or _("-"))

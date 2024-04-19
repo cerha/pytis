@@ -506,22 +506,6 @@ class Products(Specification):
         app.printout('misc.Products', 'misc.StandalonePrint', row=row)
 
 
-class ProductInfo(PrintSpecification):
-
-    def init(self):
-        self._row = self._parameter((self._parameter(pytis.output.P_NAME), pytis.output.P_ROW))
-        return True
-
-    def page_header(self):
-        return pytis.output.HGroup(
-            self._row['product'].value(),
-            pytis.output.HSpace(None),
-            lcg.LocalizableDateTime(datetime.date.today()),
-        )
-
-    def body(self):
-        return pytis.output.StructuredText(self._row['notes'].value() or _("-"))
-
 
 class XProducts(Specification):
     # Just for DMP testing
