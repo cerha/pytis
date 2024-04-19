@@ -562,15 +562,15 @@ class XTree(sql.SQLTable):
 
     init_columns = ('id', 'name', 'amount', 'description')
     init_values = (
-        ('ovoce', 'Fruit', None, ''),
-        ('ovoce.jablka', 'Apple', 5, 'Red balls'),
-        ('ovoce.pomeranče', 'Orange', None, 'Orange balls'),
-        ('ovoce.pomeranče.španělské', 'European Orange', 3, 'Orange balls from Spain'),
-        ('ovoce.pomeranče.kubánské', 'American Orange', 2, 'Orange balls from Cuba'),
-        ('zelenina', 'Vegetable', None, ''),
-        ('zelenina.čočka', 'Lentils', 10, 'Many brown seeds'),
-        ('zelenina.salát', 'Lettuce', 4, 'Green leaves'),
-        ('zelenina.špenát', 'Spinach', 1, 'Other green leaves'),
+        ('fruit', 'Fruit', None, ''),
+        ('fruit.apples', 'Apples', 5, 'Red balls'),
+        ('fruit.oranges', 'Oranges', None, 'Orange balls'),
+        ('fruit.oranges.spanish', 'European Oranges', 3, 'Orange balls from Spain'),
+        ('fruit.oranges.cubanian', 'American Oranges', 2, 'Orange balls from Cuba'),
+        ('vegetables', 'Vegetables', None, ''),
+        ('vegetables.cucumbres', 'Cucumbres', 10, 'Salad cucumbres'),
+        ('vegetables.lettuce', 'Lettuce', 4, 'Green salad leaves'),
+        ('vegetables.spinach', 'Spinach', 1, 'Other green leaves'),
     )
 
 
