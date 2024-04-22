@@ -62,7 +62,7 @@ from pytis.api import app
 from pytis.presentation import Orientation, TextFormat, StatusField, MenuItem, MenuSeparator
 from pytis.util import find, xtuple, log, DEBUG, EVENT, OPERATIONAL, ProgramError
 from .event import wx_callback, top_level_exception
-from .command import Command, CommandHandler, UICommand
+from .command import Command, CommandHandler, UICommand, command_icon
 from .managers import FormProfileManager
 
 
@@ -1306,7 +1306,7 @@ class ProfileSelectorPopup(wx.ComboPopup):
 class ProfileSelector(wx.ComboCtrl):
     """Toolbar control for form profile selection and management."""
 
-    def __init__(self, parent, uicmd, size):
+    def __init__(self, parent, command, size):
         wx.ComboCtrl.__init__(self, parent, style=wx.TE_PROCESS_ENTER, size=size)
         self._popup = ProfileSelectorPopup()
         self.SetPopupControl(self._popup)
@@ -1424,14 +1424,14 @@ class TextHeadingSelector(wx.Choice):
                 "Nadpis úrovně 6",
                 )
 
-    def __init__(self, parent, uicmd, size=None):
-        self._uicmd = uicmd
+    def __init__(self, parent, command, size=None):
+        self._command = command
         wx.Choice.__init__(self, parent, choices=self._CHOICES, size=size or wx.DefaultSize)
         wx_callback(wx.EVT_UPDATE_UI, self, self._on_ui_event)
         wx_callback(wx.EVT_CHOICE, self, self._on_selection)
 
     def _on_ui_event(self, event):
-        cmd, kwargs = self._uicmd.command(), self._uicmd.args()
+        cmd, kwargs = self._command
         enabled = cmd.enabled(**kwargs)
         event.Enable(enabled)
         if enabled:
@@ -1439,7 +1439,7 @@ class TextHeadingSelector(wx.Choice):
             self.SetSelection(ctrl.current_heading_level())
 
     def _on_selection(self, event):
-        cmd, kwargs = self._uicmd.command(), self._uicmd.args()
+        cmd, kwargs = self._command
         cmd.invoke(level=event.GetSelection(), **kwargs)
 
 
@@ -1454,24 +1454,25 @@ class FormStateToolbarControl(wx.BitmapButton):
     _ICONS = ()
     """Sequence of all possible icons as values for the first argument to 'get_icon()'."""
 
-    def __init__(self, parent, uicmd):
+    def __init__(self, parent, command, size=None):
         self._toolbar = parent
-        self._uicmd = uicmd
+        self._command = command
         self._bitmaps = [get_icon(icon, type=wx.ART_TOOLBAR) or
                          get_icon(wx.ART_ERROR, type=wx.ART_TOOLBAR)
                          for icon in self._ICONS]
         self._current_bitmap = self._bitmaps[0]
         wx.BitmapButton.__init__(self, parent, -1, self._current_bitmap,
+                                 size=size or wx.DefaultSize,
                                  style=wx.BU_EXACTFIT | wx.NO_BORDER)
         wx_callback(wx.EVT_BUTTON, self, self._on_click)
         wx_callback(wx.EVT_UPDATE_UI, self, self._on_update_ui)
 
     def _on_click(self, event):
-        cmd, kwargs = self._uicmd.command(), self._uicmd.args()
+        cmd, kwargs = self._command
         cmd.invoke(**kwargs)
 
     def _on_update_ui(self, event):
-        cmd, kwargs = self._uicmd.command(), self._uicmd.args()
+        cmd, kwargs = self._command
         enabled = cmd.enabled(**kwargs)
         event.Enable(enabled)
         if enabled:
@@ -1489,12 +1490,11 @@ class FormStateToolbarControl(wx.BitmapButton):
 class KeyboardSwitcher(wx.BitmapButton):
     """Special toolbar control for keyboard layout switching and indication.
 
-
     """
     _ICONS = ()
     """Sequence of all possible icons as values for the first argument to 'get_icon()'."""
 
-    def __init__(self, parent, uicmd):
+    def __init__(self, parent, command, size=None):
         self._toolbar = parent
         layouts = pytis.config.keyboard_layouts
         self._bitmaps = dict([(icon, get_icon(icon, type=wx.ART_TOOLBAR) or
@@ -1511,6 +1511,7 @@ class KeyboardSwitcher(wx.BitmapButton):
         icon, system_command = layout[1:]
         os.system(system_command)
         wx.BitmapButton.__init__(self, parent, -1, self._bitmaps[icon],
+                                 size=size or wx.DefaultSize,
                                  style=wx.BU_EXACTFIT | wx.NO_BORDER)
         wx_callback(wx.EVT_BUTTON, self, self._on_click)
 
@@ -1566,9 +1567,9 @@ class DualFormResplitter(FormStateToolbarControl):
 class LocationBar(wx.TextCtrl):
     """Toolbar control for browser location display and entry."""
 
-    def __init__(self, parent, uicmd, editable=True, size=None):
+    def __init__(self, parent, command, editable=True, size=None):
         self._toolbar = parent
-        self._uicmd = uicmd
+        self._command = command
         wx.TextCtrl.__init__(self, parent, -1, size=size or wx.DefaultSize,
                              style=wx.TE_PROCESS_ENTER, name='location-bar')
         self.SetEditable(editable)
@@ -1579,12 +1580,12 @@ class LocationBar(wx.TextCtrl):
             from .inputfield import TextField
             self.SetOwnBackgroundColour(TextField.FIELD_DISABLED_COLOR)
             self.Refresh()
-        browser = uicmd.args()['_command_handler']
+        browser = command[1]['_command_handler']
         browser.set_callback(browser.CALL_URI_CHANGED, self.SetValue)
         self._want_focus = 0
 
     def _on_update_ui(self, event):
-        cmd, kwargs = self._uicmd.command(), self._uicmd.args()
+        cmd, kwargs = self._command
         enabled = cmd.enabled(**kwargs)
         event.Enable(enabled)
         if self._want_focus:
@@ -1593,7 +1594,7 @@ class LocationBar(wx.TextCtrl):
             self._want_focus -= 1
 
     def _on_enter(self, event):
-        cmd, kwargs = self._uicmd.command(), self._uicmd.args()
+        cmd, kwargs = self._command
         uri = self.GetValue()
         cmd.invoke(uri=uri, **kwargs)
 
@@ -1893,27 +1894,24 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler, KeyHandler):
         itself).
 
         """
-        toolbar = wx.ToolBar(parent)
-        for uicmd in (UICommand(Browser.COMMAND_GO_BACK(_command_handler=self),
-                                _("Back"),
-                                _("Go back to the previous location in browser history.")),
-                      UICommand(Browser.COMMAND_GO_FORWARD(_command_handler=self),
-                                _("Forward"),
-                                _("Go forward to the following location in browser history.")),
-                      UICommand(Browser.COMMAND_RELOAD(_command_handler=self),
-                                _("Reload"),
-                                _("Reload the current document.")),
-                      UICommand(Browser.COMMAND_STOP_LOADING(_command_handler=self),
-                                _("Stop"),
-                                _("Stop loading the document.")),
-                      UICommand(Browser.COMMAND_LOAD_URI(_command_handler=self),
-                                _("Location"),
-                                _("Current browser URI."),
-                                ctrl=(LocationBar, dict(size=(600, 25), editable=False))),
-                      ):
-            uicmd.create_toolbar_ctrl(toolbar)
-        toolbar.Realize()
-        return toolbar
+        return wx_toolbar(parent, (
+            UICommand(Browser.COMMAND_GO_BACK(_command_handler=self),
+                      _("Back"),
+                      _("Go back to the previous location in browser history.")),
+            UICommand(Browser.COMMAND_GO_FORWARD(_command_handler=self),
+                      _("Forward"),
+                      _("Go forward to the following location in browser history.")),
+            UICommand(Browser.COMMAND_RELOAD(_command_handler=self),
+                      _("Reload"),
+                      _("Reload the current document.")),
+            UICommand(Browser.COMMAND_STOP_LOADING(_command_handler=self),
+                      _("Stop"),
+                      _("Stop loading the document.")),
+            UICommand(Browser.COMMAND_LOAD_URI(_command_handler=self),
+                      _("Location"),
+                      _("Current browser URI."),
+                      ctrl=(LocationBar, dict(size=(600, None), editable=False))),
+        ))
 
     def reload(self):
         """Reload the current browser document from its original source."""
@@ -2670,3 +2668,40 @@ def wx_text_view(parent, content, format=None, width=None, height=None, resource
         # We can' adjust the default size according to the content size, but since
         browser.SetInitialSize(char2px(browser, width or 90, height or 30))
         return browser
+
+
+def wx_toolbar(parent, items):
+    """Return wx.ToolBar instance created from given specification of items.
+
+    Arguments:
+      parent -- parent wx.Window instance
+      items -- Sequence of toolbar items.  Sequence of UICommand' instances or
+        a sequence of such sequences (representing groups to be delimited by a
+        separator).
+
+    """
+    if isinstance(parent, wx.Frame):
+        toolbar = parent.CreateToolBar(wx.NO_BORDER | wx.TB_DOCKABLE)
+    else:
+        toolbar = wx.ToolBar(parent)
+    if items and not isinstance(items[0], (tuple, list)):
+        items = (items,)
+    for i, group in enumerate(items):
+        if i != 0:
+            toolbar.AddSeparator()
+        for item in group:
+            cmd, args = item.command(), item.args()
+            icon = command_icon(cmd, args)
+            if item.ctrl():
+                ctrl, kwargs = item.ctrl()[0], copy.copy(item.ctrl()[1])
+            else:
+                assert icon is not None, (cmd, args)
+                ctrl, kwargs = wx_button, dict(icon=icon, fullsize=True, noborder=True)
+            size = tuple(x or 32 for x in kwargs.pop('size', (None, None)))
+            tool = toolbar.AddControl(ctrl(toolbar, command=(cmd, args), size=size, **kwargs))
+            toolbar.SetToolShortHelp(tool.GetId(), item.title())
+            toolbar.SetToolLongHelp(tool.GetId(), item.descr())  # Doesn't seem to have effect...
+            wx_callback(wx.EVT_UPDATE_UI, toolbar.Parent,
+                        lambda e: e.Enable(cmd.enabled(**args)), source=tool)
+    toolbar.Realize()
+    return toolbar

@@ -60,7 +60,7 @@ from .command import CommandHandler
 from .screen import (
     Browser, CallbackHandler, InfoWindow, KeyHandler,
     FileViewer, busy_cursor, dlg2px, char2px, orientation2wx,
-    wx_button, wx_focused_window,
+    wx_button, wx_focused_window, wx_toolbar,
     DEFAULT_WINDOW_BACKGROUND_COLOUR,
 )
 from .application import (
@@ -329,14 +329,7 @@ class Form(wx.Panel, KeyHandler, CallbackHandler, CommandHandler):
         return groups
 
     def _create_toolbar(self):
-        toolbar = wx.ToolBar(self)
-        for i, group in enumerate(self._toolbar_commands()):
-            if i != 0:
-                toolbar.AddSeparator()
-            for uicmd in group:
-                uicmd.create_toolbar_ctrl(toolbar)
-        toolbar.Realize()
-        return toolbar
+        return wx_toolbar(self, self._toolbar_commands())
 
     def _form_name(self):
         cls = self.__class__

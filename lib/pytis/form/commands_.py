@@ -543,7 +543,7 @@ class UICommands(object):
         LookupForm.COMMAND_PROFILE_MENU(),
         _("Profile selection"),
         _("Shows the current profile and allows selection from predefined profiles."),
-        ctrl=(ProfileSelector, dict(size=(270, 25))))
+        ctrl=(ProfileSelector, dict(size=(270, None))))
     FILTER = UICommand(
         LookupForm.COMMAND_FILTER(),
         _("Filter"),
@@ -580,17 +580,17 @@ class UICommands(object):
         DualForm.COMMAND_OTHER_FORM(),
         _("Switch the active form"),
         _("Switch between the top and the bottom form of a dual form."),
-        ctrl=DualFormSwitcher)
+        ctrl=(DualFormSwitcher, {}))
     SWITCH_KEYBOARD_LAYOUT = UICommand(
         Application.COMMAND_NOTHING(),
         _("Switch the current keyboard layout"),
         _("Switch between keyboard layouts defined in configuration."),
-        ctrl=KeyboardSwitcher)
+        ctrl=(KeyboardSwitcher, {}))
     RESPLIT = UICommand(
         DualForm.COMMAND_RESPLIT(),
         _("Switch splitter orientation"),
         _("Switch between horizontal and vertical arrangement of the main form and side form."),
-        ctrl=DualFormResplitter)
+        ctrl=(DualFormResplitter, {}))
     LEAVE_FORM = UICommand(
         Form.COMMAND_LEAVE_FORM(),
         _("Close form"),

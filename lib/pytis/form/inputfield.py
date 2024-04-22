@@ -61,7 +61,7 @@ from .screen import (
     CallbackHandler, InfoWindow, KeyHandler, TextHeadingSelector,
     char2px, dlg2px, file_menu_items, get_icon, uicommand_mitem,
     paste_from_clipboard, wx_button, wx_focused_window,
-    copy_to_clipboard, field_size
+    copy_to_clipboard, field_size, wx_toolbar,
 )
 from .application import (
     Application, run_dialog, run_form,
@@ -2257,7 +2257,7 @@ class StructuredTextField(TextField):
             (UICommand(self.COMMAND_HEADING(_command_handler=self),
                        _("Heading level"),
                        _("Insert markup for heading of given level."),
-                       ctrl=TextHeadingSelector),
+                       ctrl=(TextHeadingSelector, dict(size=(150, None)))),
              ),
             (UICommand(self.COMMAND_STRONG(),
                        _("Bold text"),
@@ -2354,13 +2354,7 @@ class StructuredTextField(TextField):
 
     def _create_widget(self, parent, ctrl):
         widget = super(StructuredTextField, self)._create_widget(parent, ctrl)
-        toolbar = wx.ToolBar(parent)
-        commands = self._toolbar_commands()
-        for group in commands:
-            if group != commands[0]:
-                toolbar.AddSeparator()
-            for uicmd in group:
-                uicmd.create_toolbar_ctrl(toolbar)
+        toolbar = wx_toolbar(parent, self._toolbar_commands())
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer.Add(toolbar, 0, wx.EXPAND)
         sizer.Add(widget, 1, wx.EXPAND)

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2023 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2024 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2002-2013 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -392,42 +392,6 @@ class UICommand(object):
         """Return the same 'UICommand' instance with command arguments overriden by 'kwargs'."""
         return UICommand((self._command, dict(self._args, **kwargs)), self._title, self._descr,
                          icon=self._icon, hotkey=self._hotkey)
-
-    def create_toolbar_ctrl(self, toolbar):
-        """Add a toolbar control for given UICommand into given wx 'toolbar'.
-
-        This method adds command control into the toolbar.  The default control
-        is a simple button which invokes the command on click.  More
-        sophisticated controls may be specified using the 'ctrl' constructor
-        argument.
-
-        """
-        if self._ctrl:
-            if isinstance(self._ctrl, tuple):
-                ctrl_cls, kwargs = self._ctrl
-            else:
-                ctrl_cls, kwargs = self._ctrl, {}
-            ctrl = ctrl_cls(toolbar, self, **kwargs)
-            ctrl.SetToolTip(self._title)
-            tool = toolbar.AddControl(ctrl)
-            toolbar.SetToolLongHelp(tool.GetId(), self._descr)  # Doesn't work...
-        else:
-            cmd, args = self._command, self._args
-            assigned_icon = command_icon(cmd, args)
-            if assigned_icon is None:
-                raise Exception("No icon assigned for command %s %s." % (cmd, args))
-            import wx
-            from .screen import get_icon
-            icon = get_icon(assigned_icon, type=wx.ART_TOOLBAR)
-            if icon is None:
-                icon = get_icon(wx.ART_ERROR, type=wx.ART_TOOLBAR)
-            tool = toolbar.AddTool(-1, self._title, icon, wx.NullBitmap,
-                                   shortHelp=self._title, longHelp=self._descr)
-            parent = toolbar.GetParent()
-            from .event import wx_callback
-            wx_callback(wx.EVT_TOOL, parent, lambda e: cmd.invoke(**args), source=tool)
-            wx_callback(wx.EVT_UPDATE_UI, parent, lambda e: e.Enable(cmd.enabled(**args)),
-                        source=tool)
 
 
 _command_icons = None

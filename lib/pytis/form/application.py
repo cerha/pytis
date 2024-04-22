@@ -68,7 +68,7 @@ from .event import (
 from .screen import (
     Browser, KeyHandler, Keymap, StatusBar,
     acceskey_prefix, beep, busy_cursor, get_icon, uicommand_mitem,
-    wx_focused_window, make_in_operator, hotkey_string,
+    wx_focused_window, make_in_operator, hotkey_string, wx_toolbar
 )
 from . import dialog
 from pytis.dbdefs.db_pytis_crypto import (
@@ -263,13 +263,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         if not self._headless:
             frame.Show(True)
         # Initialize the toolbar.
-        self._toolbar = toolbar = frame.CreateToolBar(wx.NO_BORDER | wx.TB_DOCKABLE)
-        for group in pytis.form.TOOLBAR_COMMANDS:
-            if group != pytis.form.TOOLBAR_COMMANDS[0]:
-                toolbar.AddSeparator()
-            for uicmd in group:
-                uicmd.create_toolbar_ctrl(self._toolbar)
-        toolbar.Realize()
+        self._toolbar = wx_toolbar(frame, pytis.form.TOOLBAR_COMMANDS)
 
         def init():
             try:
