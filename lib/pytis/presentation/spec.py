@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2023 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2024 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2017 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -37,7 +37,6 @@ from future.utils import with_metaclass, python_2_unicode_compatible
 
 import http.server
 import copy
-import lcg
 import os
 import re
 import string
@@ -1190,6 +1189,7 @@ class GroupSpec(object):
             default is False for legacy reasons.
 
         """
+        import lcg
         assert label is None or isinstance(label, basestring)
         assert isinstance(gap, int), gap
         assert gap >= 0
@@ -1842,6 +1842,7 @@ class ViewSpec(object):
               orientation=Orientation.HORIZONTAL, folding=None,
               arguments=None, argument_provider=None, condition_provider=None,
               query_fields=None, referer=None, spec_name='', public=None):
+        import lcg
         def err(msg, *args):
             """Return assertion error message."""
             return spec_name + ": " + msg % args
@@ -4210,6 +4211,7 @@ class AttachmentStorage(object):
         '_thumbnail_src_file()'.
 
         """
+        import lcg
         cls = self._resource_cls(filename)
         is_image = issubclass(cls, lcg.Image)
         if is_image and has_thumbnail:
@@ -4231,6 +4233,7 @@ class AttachmentStorage(object):
                    **kwargs)
 
     def _resource_cls(self, filename):
+        import lcg
         return lcg.Resource.subclass(filename)
 
     def _resource_uri(self, filename):
@@ -4428,6 +4431,7 @@ class AttachmentStorage(object):
         None is returned when a corresponding resource is not found.
 
         """
+        import lcg
         for resource in self.resources(transaction=transaction):
             if resource.uri() == uri:
                 return resource
@@ -4511,6 +4515,7 @@ class FileAttachmentStorage(AttachmentStorage):
 
     def insert(self, filename, data, values, transaction=None):
         import PIL.Image
+        import lcg
         path = self._resource_src_file(filename)
         try:
             if not os.path.exists(self._directory):
@@ -4540,6 +4545,7 @@ class FileAttachmentStorage(AttachmentStorage):
             raise self.StorageError(str(e))
 
     def _resource_kwargs(self, filename):
+        import lcg
         if issubclass(self._resource_cls(filename), lcg.Image):
             import PIL.Image
             img = PIL.Image.open(self._resource_src_file(filename))
