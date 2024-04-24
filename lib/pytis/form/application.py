@@ -144,6 +144,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
 
     def OnInit(self):
         import pytis.extensions
+        pytis.remote.write_python_version()
         wx.Log.SetActiveTarget(wx.LogStderr())
 
         # Make sure menu icons are always displayed.  Without this, the icons are

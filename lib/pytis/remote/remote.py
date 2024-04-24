@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2022 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2024 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2011-2018 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -98,6 +98,28 @@ class Connector(object):
         if server_hash != self._password_hash(server_challenge):
             raise rpyc.utils.authenticators.AuthenticationError("Invalid server authentication")
         return connection
+
+
+def write_python_version():
+    """If inside X2Go session, write running Python version to the file for Pytis2Go.
+
+    Pytis2Go needs to know the Python version of the running application in
+    order to start the RPyC service with the same Python version (otherwise
+    RPyC communication will not work).  We write the version number to a known
+    location and Pytis2go will wait until it finds the file, read the
+    information and start the RPyC service with that version.
+
+    """
+    try:
+        session_id = x2go_session_id()
+        if session_id:
+            filename = pytis_x2go_info_file(session_id) + '.python-version'
+            version = sys.version_info[0]
+            log(OPERATIONAL, "Writing Python version {} to {}.".format(version, filename))
+            with open(filename, 'wt') as f:
+                f.write('{}\n'.format(sys.version_info[0]))
+    except Exception as e:
+        log(OPERATIONAL, "Error writing Python version:", e)
 
 
 def client_ip():
