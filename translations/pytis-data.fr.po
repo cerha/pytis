@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 0.1\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2023-12-18 18:54+0100\n"
+"POT-Creation-Date: 2024-04-26 13:56+0200\n"
 "PO-Revision-Date: 2011-12-29 12:19+0100\n"
 "Last-Translator: Hynek Hanke <hanke@brailcom.org>\n"
 "Language-Team: French <wiking@lists.freebsoft.org>\n"
@@ -166,7 +166,7 @@ msgstr "Valeur non valide"
 #. User input validation error message.
 #: ../lib/pytis/data/types_.py:1305 ../lib/pytis/data/types_.py:1343
 #: ../lib/pytis/data/types_.py:1373 ../lib/pytis/data/types_.py:1393
-#: ../lib/pytis/data/types_.py:2113
+#: ../lib/pytis/data/types_.py:2123
 msgid "Invalid format"
 msgstr "Format non valide"
 
@@ -187,88 +187,88 @@ msgstr ""
 msgid "Invalid inet address value %(addr)s"
 msgstr ""
 
-#: ../lib/pytis/data/types_.py:1520
+#: ../lib/pytis/data/types_.py:1522
 msgid "Invalid date or time format"
 msgstr "Format de la date ou de l'heure non valide"
 
-#: ../lib/pytis/data/types_.py:1727
+#: ../lib/pytis/data/types_.py:1735
 msgid "Date outside the allowed range"
 msgstr "Date en dehors des limites autorisées"
 
-#: ../lib/pytis/data/types_.py:2129
+#: ../lib/pytis/data/types_.py:2139
 #, python-format
 msgid "%d min"
 msgid_plural "%d min"
 msgstr[0] ""
 msgstr[1] ""
 
-#: ../lib/pytis/data/types_.py:2131
+#: ../lib/pytis/data/types_.py:2141
 #, python-format
 msgid "%d h"
 msgid_plural "%d h"
 msgstr[0] ""
 msgstr[1] ""
 
-#: ../lib/pytis/data/types_.py:2133
+#: ../lib/pytis/data/types_.py:2143
 #, python-format
 msgid "%d day"
 msgid_plural "%d days"
 msgstr[0] ""
 msgstr[1] ""
 
-#: ../lib/pytis/data/types_.py:2135
+#: ../lib/pytis/data/types_.py:2145
 msgid "less than 1 min"
 msgstr ""
 
-#: ../lib/pytis/data/types_.py:2246
+#: ../lib/pytis/data/types_.py:2256
 #, fuzzy
 msgid "Invalid boolean type input value"
 msgstr "Date ou heure non valide"
 
-#: ../lib/pytis/data/types_.py:2473
+#: ../lib/pytis/data/types_.py:2483
 #, fuzzy
 msgid "Invalid graphics format"
 msgstr "Format non valide"
 
-#: ../lib/pytis/data/types_.py:2531
+#: ../lib/pytis/data/types_.py:2541
 #, python-format
 msgid "Minimal pixel size %(minsize)s exceeded"
 msgstr "La taille minimale de pixels %(minsize)s est dépassée"
 
-#: ../lib/pytis/data/types_.py:2534
+#: ../lib/pytis/data/types_.py:2544
 #, python-format
 msgid "Maximal pixel size %(maxsize)s exceeded"
 msgstr "La taille maximale de pixels %(maxsize)s est dépassée"
 
-#: ../lib/pytis/data/types_.py:2538
+#: ../lib/pytis/data/types_.py:2548
 #, fuzzy, python-format
 msgid "Unsupported format %(format)s; valid formats: %(formats)s"
 msgstr "Format non pris en charge %(format)s ; formats valides : %(formats)s"
 
-#: ../lib/pytis/data/types_.py:2585
+#: ../lib/pytis/data/types_.py:2595
 #, fuzzy
 msgid "Invalid hierarchical value format"
 msgstr "Format de la date ou de l'heure non valide"
 
-#: ../lib/pytis/data/types_.py:2587
+#: ../lib/pytis/data/types_.py:2597
 #, fuzzy
 msgid "One of hierarchical value items is too long"
 msgstr "Format de la date ou de l'heure non valide"
 
-#: ../lib/pytis/data/types_.py:2589
+#: ../lib/pytis/data/types_.py:2599
 msgid "One of hierarchical value items contains invalid characters"
 msgstr ""
 
 #. User input validation error message.
-#: ../lib/pytis/data/types_.py:2755
+#: ../lib/pytis/data/types_.py:2768
 msgid "Not a JSON string"
 msgstr ""
 
-#: ../lib/pytis/data/types_.py:2759
+#: ../lib/pytis/data/types_.py:2772
 msgid "Unsupported JSON value"
 msgstr ""
 
-#: ../lib/pytis/data/types_.py:2765
+#: ../lib/pytis/data/types_.py:2778
 msgid "JSON value doesn't match schema definition"
 msgstr ""
 
@@ -280,7 +280,7 @@ msgstr ""
 msgid "unlimited"
 msgstr ""
 
-#: ../lib/pytis/presentation/spec.py:5431
+#: ../lib/pytis/presentation/spec.py:5437
 #, python-format
 msgid ""
 "You don't have priviledges to invoke the action '%s'.\n"
