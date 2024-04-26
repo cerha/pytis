@@ -22,6 +22,7 @@ from __future__ import print_function
 from past.builtins import basestring
 from builtins import range
 
+import getpass
 import hashlib
 import os
 import random
@@ -46,6 +47,7 @@ _ip_matcher = re.compile('%s|%s' % (_ipv4_regexp, _ipv6_regexp,))
 _x2go_ip = None
 
 _remove_x2go_info_file = True
+_announce_obsolete_client_version = True
 
 
 class RPCInfo(object):
@@ -306,7 +308,14 @@ def _connect():
         # contains a fixed API.  Pushing is not necessary in this case as long
         # as we do not rely on newer API features.  Once we get rid of all
         # "fixed API" clients, we can start relying on all API features.
-        pass
+        global _announce_obsolete_client_version
+        if _announce_obsolete_client_version:
+            _announce_obsolete_client_version = False
+            log(OPERATIONAL, "Obsolete client version {}: {} from {}"
+                .format(version, getpass.getuser(), client_ip()))
+            app.warning(_("You are using an obsolete version of Pytis2Go.\n"
+                          "Please, contact IT support to install a newer version.\n"
+                          "Your current version will stop working soon."))
     else:
         # We may be just reconnecting to a previously extended service instance.
         if 'PytisClientAPIService' not in connection.root.extensions():
