@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2023 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2024 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2018 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -768,6 +768,13 @@ class MultiForm(Form, Refreshable):
                 for kind, function in self._form_callbacks_args:
                     if hasattr(form, kind):
                         form.set_callback(kind, function)
+                # Resize the notebook back and forth to force the form to size to the
+                # available area of the notebook page (the notebook doesn't seem to
+                # have a method to report this size).  Without this hack, the side
+                # forms don't fit the notebook when changing tabs - only the form in
+                # the initially active tab is sized properly.
+                for size in ((20, 20), self._notebook.Size):
+                    self._notebook.SetSize(size)
             finally:
                 if not busy:
                     busy_cursor(False)

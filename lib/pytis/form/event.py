@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2023 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2024 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2002-2013 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -274,14 +274,7 @@ def wx_callback(event_kind, handler, callback, **kwargs):
             if is_user:
                 _last_user_event_time = time.time()
         return result
-    if event_kind is wx.aui.EVT_AUINOTEBOOK_PAGE_CHANGING:
-        # Hack: This particular event kind needs to be bound using the EVT_* call,
-        # otherwise sideform tabs don't resize the contained form properly when
-        # switching to another tab (start a multiuform and switch to another tab).
-        # Strangely, this doesn't produce the depracation warning as the other events.
-        event_kind(handler, handler.GetId(), process_event)
-    else:
-        handler.Bind(event_kind, process_event, **kwargs)
+    handler.Bind(event_kind, process_event, **kwargs)
 
 
 def unlock_callbacks():
