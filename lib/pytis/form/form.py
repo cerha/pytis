@@ -3236,7 +3236,7 @@ class PopupEditForm(PopupForm, EditForm):
         sizer.Add(self._create_status_bar(), 0, wx.EXPAND)
 
     def _create_status_bar(self):
-        # We use our own statusbar implementation
+        # We use our own "statusbar implementation".
         spec = (('message', None, _(u"Notification area")),)
         if self._inserted_data:
             spec += (('progress', 9, _(u"Batch insertion progress indicator")),)

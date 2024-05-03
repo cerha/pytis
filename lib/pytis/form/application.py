@@ -139,6 +139,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         self._menu_by_id = {}
         self._yield_lock = None
         self._yield_blocked = False
+        self._last_echo = None
         self.keymap = Keymap()
         super(Application, self).__init__()
 
@@ -1750,7 +1751,9 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
 
     def api_echo(self, message, kind='info'):
         assert kind in ('info', 'warning', 'error')
-        log(EVENT, 'Echo [%s]:' % kind, message)
+        if self._last_echo != (message or '', kind):
+            self._last_echo = (message or '', kind)
+            log(EVENT, 'Echo [%s]:' % kind, message)
         if kind in ('warning', 'error'):
             beep()
         form = self._modals.top()
