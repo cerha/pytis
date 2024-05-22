@@ -32,8 +32,13 @@ import pytis.data as pd
 
 from pytis.api import app
 from pytis.presentation import StatusField, SharedParams, Menu, MenuItem, MenuSeparator
-from pytis.extensions import mf, bf, nr
+from pytis.extensions import mf, bf
 _ = pytis.util.translations('pytis-demo')
+
+
+def nr(title, name):
+    return MenuItem(title, command=pytis.form.Application.COMMAND_NEW_RECORD(name=name),
+                    help=_('Open insertion form "%s"', title))
 
 
 class Application(pytis.presentation.Application):

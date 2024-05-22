@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2023 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2024 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2005-2016 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -93,16 +93,6 @@ def run_form_mitem(title, name, form_class, hotkey=None, **kwargs):
                     hotkey=hotkey)
 
 
-def new_record_mitem(title, name, hotkey=None, **kwargs):
-    from pytis.form import Application
-    return MenuItem(title,
-                    command=Application.COMMAND_NEW_RECORD(name=name, **kwargs),
-                    help=_('Open insertion form "%s"', title),
-                    hotkey=hotkey)
-
-nr = new_record_mitem
-
-
 def run_procedure_mitem(title, name, proc_name, hotkey=None, groups=None, enabled=None, **kwargs):
     from pytis.form import Application
     if groups is not None:
@@ -143,21 +133,6 @@ def df(title, name, hotkey=None, **kwargs):
 def mf(title, name, hotkey=None, **kwargs):
     import pytis.form
     return run_form_mitem(title, name, pytis.form.MultiBrowseDualForm, hotkey, **kwargs)
-
-
-def sf(title, name, hotkey=None, **kwargs):
-    import pytis.form
-    return run_form_mitem(title, name, pytis.form.ShowForm, hotkey, **kwargs)
-
-
-def ddf(title, name, hotkey=None):
-    import pytis.form
-    return run_form_mitem(title, name, pytis.form.DescriptiveDualForm, hotkey)
-
-
-def ef(title, name, hotkey=None, **kwargs):
-    import pytis.form
-    return run_form_mitem(title, name, pytis.form.PopupEditForm, hotkey, **kwargs)
 
 
 # Další funkce pro zjednodušení často používaných konstrukcí
