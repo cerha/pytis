@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2020, 2022, 2023 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2024 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2017 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -731,8 +731,8 @@ class Application(API):
         """
         pass
 
-    def run_form(self, name, select_row=None, multi=True, sorting=None, filter=None,
-                 condition=None, profile=None, binding=None, transaction=None):
+    def run_form(self, name, select_row=None, multi=True, preview=False, sorting=None,
+                 filter=None, condition=None, profile=None, binding=None, transaction=None):
         """Display given form in the main application frame.
 
         Arguments:
@@ -747,6 +747,11 @@ class Application(API):
             specification defines 'bindings'.  If there are no bindings or
             'multi' is set to False, just a simple form without side forms will
             be opened.
+          preview -- display a preview of the current record in a side form.
+            The preview is a read-only form with the same layout as edit form
+            and refreshes as the user moves the current record within the main
+            form (table).  Currently implies multi=False, but this may change
+            in future.
           sorting -- specification of initial form sorting in the same format
             as the argument 'sorting' of the 'Profile' constructor.  If not
             None, overrides the sorting of the default form profile.

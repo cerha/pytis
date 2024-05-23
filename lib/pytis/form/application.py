@@ -1976,13 +1976,15 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         else:
             return False
 
-    def api_run_form(self, name, select_row=None, multi=True, sorting=None, filter=None,
-                     condition=None, profile=None, binding=None, transaction=None):
-        form_class = pytis.form.BrowseForm
+    def api_run_form(self, name, select_row=None, multi=True, preview=False, sorting=None,
+                     filter=None, condition=None, profile=None, binding=None, transaction=None):
         kwargs = {}
         if '::' in name:
             form_class = pytis.form.BrowseDualForm
+        elif preview:
+            form_class = pytis.form.DescriptiveDualForm
         elif multi:
+            form_class = pytis.form.BrowseForm
             try:
                 specification = pytis.config.resolver.specification(name)
             except ResolverError:
