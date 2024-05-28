@@ -1684,10 +1684,18 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
 
         def write(self, data):
             if self._encoding is not None:
+                if not isinstance(data, str):
+                    raise TypeError("a str object is required, not '{}'"
+                                    .format(type(data).__name__))
                 data = data.encode(self._encoding)
+            elif not isinstance(data, bytes) and not (sys.version_info[0] == 2 and
+                                                      isinstance(data, buffer)):
+                raise TypeError("a bytes-like object is required, not '{}'"
+                                .format(type(data).__name__))
             return self._buffer.write(data)
 
         def close(self):
+            # způsobuje: BlockingIOError: [Errno 11] write could not complete without blocking
             if self._buffer is not self._instance:
                 self._buffer.close()
             self._instance.close()
