@@ -397,6 +397,26 @@ class TestApp(DBTest):
         assert pd.dbfunction('square', 4) == 16
         assert pd.dbfunction('reverse', 'Hello World') == 'dlroW olleH'
 
+    def test_write_and_read_file(self):
+        filename = '/tmp/test.txt'
+        for m, data in (
+                ('b', b'some bytes'),
+                ('t', u'some text'),
+        ):
+            app.write_file(data, filename, mode='w'+m)
+            with app.open_file(filename, mode='r'+m) as f:
+                assert f.name == filename
+                assert f.read() == data
+
+    def test_write_file_type_errors(self):
+        filename = '/tmp/test.txt'
+        with pytest.raises(TypeError):
+            app.write_file(u'text', filename, mode='wb')
+        with pytest.raises(TypeError):
+            app.write_file(b'bytes', filename, mode='w')
+        with pytest.raises(TypeError):
+            app.write_file(8, filename, mode='wb')
+
 
 def test_shared_params(initconfig, initdb):
     # Shared params must work with the pytis.form.Application instance
