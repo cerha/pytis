@@ -64,7 +64,7 @@ import pytis
 from pytis.data import ColumnSpec, Data, Type, Row
 from pytis.util import (
     flatten, hash_attr, log, rsa_encrypt, sameclass,
-    super_, translations, Locked, ProgramError, DEBUG, EVENT, OPERATIONAL,
+    super_, translations, Locked, ProgramError, DEBUG, EVENT, OPERATIONAL, UNDEFINED,
 )
 
 _ = translations('pytis-data')
@@ -911,7 +911,7 @@ def dbfunction(fspec, *args, **kwargs):
         assert not kwargs
         arguments = [('arg{}'.format(i + 1), argument(value)) for i, value in enumerate(args)]
         multirow = False
-        result_type = None
+        result_type = UNDEFINED
     else:
         fargs = [a for a in fspec.arguments if not a.out()]
         if len(args) + len(kwargs) != len(fargs):
