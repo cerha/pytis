@@ -3315,6 +3315,7 @@ class DBFunction(_DBBaseTest):
                       "foo8() returns numeric(3,2) as 'select 3.14'",
                       "foo9() returns float as 'select 3.14::float'",
                       "foo10(bytea) returns int as 'select length($1)'",
+                      "only_digits(text) returns bool as 'select ($1 ~ \'\'^[0-9]+$\'\')'"
                       ):
                 self._sql_command("create function %s language sql " % q)
         except Exception:
@@ -3332,6 +3333,7 @@ class DBFunction(_DBBaseTest):
                   "foo8()",
                   "foo9()",
                   "foo10(bytea)",
+                  "only_digits(text)",
                   ):
             try:
                 self._sql_command("drop function %s" % q)
@@ -3426,7 +3428,7 @@ class DBFunction(_DBBaseTest):
         assert pd.dbfunction('reverse', 'Hello World') == 'dlroW olleH'
 
     def test_dbfunction_dbdefs(self):
-        # There is also a multirow dbfunction test in Pytis Demo tests
+        # There is also a multirow dbfunction test in pytis.form.test
         # (see doc/tutorials/testing.org for more info).
         import pytis.dbdefs.db_pytis_common as common
         import functools
