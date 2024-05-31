@@ -570,14 +570,17 @@ class DBParams(object):
                                  (self.__class__.__name__, self._name, name))
 
     def __setattr__(self, name, value):
-        if not name.startswith('_') and name in self._row:
+        if name.startswith('_'):
+            super(DBParams, self).__setattr__(name, value)
+        elif name in self._row:
             import pytis.data
             row = pytis.data.Row(((name, pytis.data.Value(self._row[name].type(), value)),))
             key = [self._row[c.id()] for c in self._data.key()]
             with Locked(self._lock):
                 self._row = self._data.update(key, row)[0]
         else:
-            super(DBParams, self).__setattr__(name, value)
+            raise AttributeError("'%s' object for '%s' has no attribute '%s'" %
+                                 (self.__class__.__name__, self._name, name))
 
     def __contains__(self, key):
         return key in self._row
