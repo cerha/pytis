@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2020 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2024 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2005 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -23,23 +23,44 @@ from __future__ import division
 from builtins import range
 
 import pytest
+import threading
+
+import pytis.form as pf
 import pytis.form.grid as grid
 import pytis.presentation as pp
 import pytis.data as pd
-from pytis.data.test import DBTest
+import pytis.data.gensqlalchemy as sql
+import pytis.remote
+import pytis.util
+import pytis
+
+from pytis.api import app
+from pytis.data.test import DBTest, connector, dbconnection, execute
+
+connection_data = {'database': 'test'}
+
+"""Non-interactive tests of pytis.form (the wx application).
+
+Run this test in local mode like:
+
+  pytest lib/pytis/form/test.py -v --disable-warnings
+
+or in remote mode similarly through a Pytis2Go terminal.
+
+"""
 
 
 class TestDataTable(DBTest):
 
     @pytest.fixture
-    def table(self, connector):
+    def table(self, execute):
         try:
-            self.sql('create table grid_test'
+            execute('create table grid_test'
                      '(id int, name text, price decimal(10, 2), flag bool)')
             yield 'grid_test'
         finally:
             try:
-                self.sql('drop table grid_test')
+                execute('drop table grid_test')
             except Exception:
                 pass
 
@@ -66,8 +87,8 @@ class TestDataTable(DBTest):
         return grid.DataTable(data, row, row.fields(), count, row_style=row_style,
                               sorting=sorting, grouping=grouping)
 
-    def test_cell_value(self, spec, data):
-        self.insert(data, (
+    def test_cell_value(self, connector, spec, data):
+        self.insert(connector, data, (
             (1, 'Apple', 12.3, False),
             (2, 'Banana', 23.4, True),
             (3, 'Strawberry', 2.34, False),
@@ -84,8 +105,8 @@ class TestDataTable(DBTest):
         finally:
             data.close()
 
-    def test_cell_style(self, spec, data):
-        self.insert(data, (
+    def test_cell_style(self, connector, spec, data):
+        self.insert(connector, data, (
             (1, 'Apple', 12.3, False),
             (2, 'Banana', 23.4, True),
             (3, 'Strawberry', 2.34, True),
@@ -106,7 +127,7 @@ class TestDataTable(DBTest):
         finally:
             data.close()
 
-    def test_grouping(self, spec, data):
+    def test_grouping(self, connector, spec, data):
         sequence = (
             # Sequence of name, number of rows with flag=False, number of rows with flag=True.
             ('Charles', 44, 21), ('Jerry', 21, 34), ('Joe', 25, 14), ('Mike', 67, 21),
@@ -123,7 +144,7 @@ class TestDataTable(DBTest):
                         price = (i % 8 + 140 * (i % 6 + count) / (2 + i % 6)) / 100
                         yield (i, name, price, flag)
 
-        self.insert(data, rows())
+        self.insert(connector, data, rows())
         t = self.grid_table(spec, data, sorting=(('name', pd.ASCENDENT),
                                                  ('flag', pd.ASCENDENT),
                                                  ('price', pd.ASCENDENT),),
@@ -141,12 +162,12 @@ class TestDataTable(DBTest):
         finally:
             data.close()
 
-    def test_buffer_fetching(self, spec, data):
+    def test_buffer_fetching(self, connector, spec, data):
         # This test can be used to examine row buffer filling strategy
         # and database performance on bigger jumps.  It is practical to
         # add something like:
         #
-        # print '  ', query.format()[:140]
+        # print('  ', query.format()[:140])
         #
         # into PostgreSQLConnector._pg_query() in postgresql.py and
         # run pytest with -s to see how the buffer is filled in response
@@ -156,7 +177,7 @@ class TestDataTable(DBTest):
             while i < count:
                 i += 1
                 yield (i, 'Row number %d' % i, 1.86 * i, i % 3 == 0)
-        self.insert(data, rows(9500))
+        self.insert(connector, data, rows(9500))
 
         t = self.grid_table(spec, data, sorting=(('id', pd.ASCENDENT),))
         try:
@@ -193,13 +214,13 @@ class TestDataTable(DBTest):
                         t.cell_style(row, col)
                         t.group(row)
 
-    def test_grid_performance(self, spec, data, benchmark):
+    def test_grid_performance(self, connector, spec, data, benchmark):
         def rows(count):
             i = 0
             while i < count:
                 i += 1
                 yield (i, 'Row number %d' % i, 1.86 * i, i % 3 == 0)
-        self.insert(data, rows(9500))
+        self.insert(connector, data, rows(9500))
         t = self.grid_table(
             spec, data,
             sorting=(('name', pd.ASCENDENT),
@@ -213,3 +234,167 @@ class TestDataTable(DBTest):
             benchmark(self.emulate_real_grid, t)
         finally:
             data.close()
+
+
+class user_params(sql.SQLTable):
+    name = 'user_params'
+    fields = (sql.PrimaryColumn('id', pytis.data.Serial()),
+              sql.Column('login', pytis.data.Name(not_null=True)),
+              sql.Column('name', pytis.data.String(not_null=True)),
+              sql.Column('number', pytis.data.Integer(not_null=True)),
+              sql.Column('enabled', pytis.data.Boolean(not_null=True)),
+              )
+    init_columns = ('login', 'name', 'number', 'enabled')
+    init_values = (
+        ('test', 'Test User', 64, True),
+        ('bob', 'Bob User', 1024, False),
+    )
+
+
+class UserParams(pp.Specification):
+    table = user_params
+    public = True
+
+
+class square(sql.SQLPlFunction):
+    name = 'square'
+    arguments = (
+        sql.Column('x', pytis.data.Integer()),
+    )
+    result_type = pytis.data.Integer()
+    def body(self):
+        return """
+begin
+  return x * x;
+end;
+        """
+
+
+class Application(pp.Application):
+    def params(self):
+        return (
+            pp.SharedParams('user', 'pytis.form.test.UserParams',
+                            pd.EQ('login', pd.sval('test'))),
+        )
+
+
+@pytest.fixture(scope='class')
+def initdb(execute):
+    dbdefs = (
+        ('pytis.dbdefs.db_pytis_config', ('EPytisConfig', 'XChanges', 'EPytisFormSettings',
+                                          'EPytisFormProfileBase', 'EPytisFormProfileParams',
+                                          'EPytisAggregatedViews')),
+        ('pytis.form.test', ('user_params', 'square')),
+    )
+    init_sql = []
+    teardown_sql = []
+    for module, names in dbdefs:
+        regexp = '^({})'.format('|'.join(names))
+        init_sql.append(sql.capture(sql.gsql_module, module, regexp=regexp, plpython3=True))
+        names_sql = sql.capture(sql.gsql_module, module, names_only=True, regexp=regexp, plpython3=True)
+        for name in names_sql.splitlines():
+            if not name.startswith(b'None '):
+                teardown_sql.append(b'drop ' + name
+                                    .replace(b'TABLE ', b' table if exists ')
+                                    .replace(b'VIEW ', b' view if exists ')
+                                    .replace(b'TRIGGER ', b'function if exists ')
+                                    .replace(b'FUNCTION ', b'function if exists ')
+                                    .replace(b'SEQUENCE ', b'sequence if exists ')
+                                    .replace(b'TYPE ', b'type if exists ')
+                                    .replace(b'::', b' ')
+                                    + b' cascade')
+    #init_sql.extend(("insert into c_pytis_crypto_names (name) values ('test')",
+    #          "insert into e_pytis_crypto_keys (name, username, key) "
+    #          "values ('test', current_user, "
+    #          "pytis_crypto_store_key('somekey', 'somepassword'))",
+    #          "create table cfoo (id serial, x bytea, y bytea, z bytea)"))
+    try:
+        for part in init_sql:
+            execute(part)
+        yield
+    finally:
+        for part in teardown_sql:
+            execute(part)
+
+
+@pytest.fixture(scope='class')
+def initconfig(dbconnection):
+    pytis.config.resolver = pytis.util.Resolver(search=('pytis.form.test', 'pytis.defs'))
+    pytis.config.dbconnection = dbconnection
+
+
+@pytest.fixture(scope='class')
+def initapp(initconfig, initdb):
+    # Avoid removing the info file (to allow running tests multiple times).
+    pytis.remote.keep_x2go_info_file()
+    threading.Thread(target=pf.Application(headless=True).run).start()
+    yield
+    # Release the pytis.form.Application instance from pytis.api.app to make sure
+    # the tests outside this class don't use the previously created instance.
+    a = pf.app
+    app.exit()
+    a.ExitMainLoop()
+    app.release()
+
+
+@pytest.mark.usefixtures('initapp')
+class TestApp(DBTest):
+    """Tests running inside wx Application environment.
+
+    Starts a headless wx application in a separate thread and runs test cases
+    within its environment.  It may be useful for testing fetures which require
+    the wx Application to exist.
+
+    TODO: This test randomly ends with SIGABRT, SIGSEGV or SIGTRAP.
+
+    """
+    def test_api_form(self):
+        import time
+        assert app.form is None
+        f = app.run_form('UserParams')
+        assert app.form is not None
+        # TODO: Testing form attributes below is very fragile.  Sometimes it
+        # works, but most often it causes SIGABRT, SIGSEGV or SIGTRAP.
+        #assert app.form.name == 'UserParams'
+        #assert app.form.query_fields is not None
+        #assert app.form.query_fields.row is not None
+        #assert app.form.query_fields.row['min'].value() == 10
+
+    def test_shared_params(self):
+        assert app.param.user.name == 'Test User'
+        assert app.param.user.number == 64
+        assert app.param.user.enabled == True
+        with pytest.raises(AttributeError):
+            app.param.user.xval
+        with pytest.raises(AttributeError):
+            app.param.user.xyz = 1
+
+    def test_shared_param_callbacks(self):
+        def callback():
+            names.append(app.param.user.name)
+        name = app.param.user.name
+        try:
+            names = []
+            app.param.user.add_callback('name', callback)
+            app.param.user.name = 'x'
+            assert app.param.user.name == 'x'
+            pf.app.wx_yield()  # Let the callbacks be called (randomly unreliable).
+            app.param.user.name = 'y'
+            assert app.param.user.name == 'y'
+            pf.app.wx_yield()  # Let the callbacks be called (randomly unreliable).
+            assert names == ['x', 'y']
+        finally:
+            app.param.user.name = name
+
+    def test_dbfunction(self):
+        assert pd.dbfunction(square, 5) == 25
+        assert pd.dbfunction('square', 4) == 16
+        assert pd.dbfunction('reverse', 'Hello World') == 'dlroW olleH'
+
+
+def test_shared_params(initconfig, initdb):
+    # Shared params must work with the pytis.form.Application instance
+    # (tessted in TestApp above) as well as without it (with automatically
+    # created pytis.api.BaseApplication).
+    assert app.param.user.name == 'Test User'
+    assert app.param.user.number == 64

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2023 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2024 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2017 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -1301,100 +1301,6 @@ class _DBBaseTest(unittest.TestCase):
 
     def tearDown(self):
         self._connector.close()
-
-
-class DBTest(object):
-    """Pytest alternative to _DBBaseTest.
-
-    All tests derived from '_DBBaseTest' should be gradually overwritten to
-    derive from this class and make better use of pytest.
-
-    """
-
-    class DataStream(object):
-        """Pretend a file-like object for given generator of row data.
-
-        Used as the first argument for cursor.copy_from() to insert data
-        efficiently.
-
-        TODO: Currently only used internally in tests, but might be generally
-        useful.
-
-        """
-        def __init__(self, generator):
-            if isinstance(generator, (tuple, list)):
-                generator = (x for x in generator)
-            self._generator = generator
-            self._buffer = ''
-
-        def read(self, n=None):
-            while n is None or len(self._buffer) < n:
-                line = self.readline()
-                if not line:
-                    break
-                self._buffer += line
-            if not self._buffer:
-                result = ''
-            elif n is None:
-                result = self._buffer
-                self._buffer = ''
-            else:
-                result = self._buffer[:n]
-                self._buffer = self._buffer[n:]
-            return result
-
-        def readline(self):
-            try:
-                row = next(self._generator)
-                return '\t'.join('\\N' if x is None else str(x) for x in row) + '\n'
-            except StopIteration:
-                return None
-
-    @pytest.fixture
-    def dbconnection(self):
-        return pd.DBConnection(**_connection_data)
-
-    @pytest.fixture(autouse=True)
-    def connector(self):
-        import psycopg2
-        self._connector = psycopg2.connect(**_connection_data)
-        yield None
-        self._connector.close()
-
-    def sql(self, command):
-        cursor = self._connector.cursor()
-        try:
-            cursor.execute(command)
-        except Exception as e:
-            try:
-                self._connector.rollback()
-                cursor.close()
-            except Exception:
-                pass
-            raise e
-        try:
-            result = cursor.fetchall()
-        except Exception:
-            result = ()
-        self._connector.commit()
-        cursor.close()
-        return result
-
-    def insert(self, data, rows):
-        cursor = self._connector.cursor()
-        cursor.copy_from(self.DataStream(rows), data.table(data.columns()[0].id()))
-        self._connector.commit()
-
-
-def test_data_stream():
-    # Test testing infrastructure.
-    s = DBTest.DataStream((('a', 1), ('b', '2'), ('c', 3)))
-    assert s.readline() == 'a\t1\n'
-    assert s.read(2) == 'b\t'
-    assert s.read() == '2\nc\t3\n'
-    assert DBTest.DataStream(()).read() == ''
-    s = DBTest.DataStream((('a', 1), ('b', '2'), ('c', 3)))
-    assert s.read(4096) == 'a\t1\nb\t2\nc\t3\n'
 
 
 class _DBTest(_DBBaseTest):
@@ -2938,17 +2844,117 @@ class DBSessionVariables(_DBBaseTest):
         _DBBaseTest.tearDown(self)
 
 
+@pytest.fixture(scope='class')
+def connector():
+    import psycopg2
+    connector = psycopg2.connect(**_connection_data)
+    yield connector
+    connector.close()
+
+
+@pytest.fixture(scope='class')
+def dbconnection():
+    return pd.DBConnection(**_connection_data)
+
+
+@pytest.fixture(scope='class')
+def execute(connector):
+    def execute_(sql):
+        cursor = connector.cursor()
+        try:
+            cursor.execute(sql)
+        except Exception as e:
+            try:
+                connector.rollback()
+                cursor.close()
+            except Exception:
+                pass
+            raise e
+        try:
+            return cursor.fetchall()
+        except Exception:
+            return ()
+        finally:
+            connector.commit()
+            cursor.close()
+    return execute_
+
+
+class DBTest(object):
+    """Pytest alternative to _DBBaseTest.
+
+    All tests derived from '_DBBaseTest' should be gradually overwritten to
+    derive from this class and make better use of pytest.
+
+    """
+
+    class DataStream(object):
+        """Pretend a file-like object for given generator of row data.
+
+        Used as the first argument for cursor.copy_from() to insert data
+        efficiently.
+
+        TODO: Currently only used internally in tests, but might be generally
+        useful.
+
+        """
+        def __init__(self, generator):
+            if isinstance(generator, (tuple, list)):
+                generator = (x for x in generator)
+            self._generator = generator
+            self._buffer = ''
+
+        def read(self, n=None):
+            while n is None or len(self._buffer) < n:
+                line = self.readline()
+                if not line:
+                    break
+                self._buffer += line
+            if not self._buffer:
+                result = ''
+            elif n is None:
+                result = self._buffer
+                self._buffer = ''
+            else:
+                result = self._buffer[:n]
+                self._buffer = self._buffer[n:]
+            return result
+
+        def readline(self):
+            try:
+                row = next(self._generator)
+                return '\t'.join('\\N' if x is None else str(x) for x in row) + '\n'
+            except StopIteration:
+                return None
+
+    def insert(self, connector, data, rows):
+        cursor = connector.cursor()
+        cursor.copy_from(self.DataStream(rows), data.table(data.columns()[0].id()))
+        connector.commit()
+
+
+def test_data_stream():
+    # Test testing infrastructure.
+    s = DBTest.DataStream((('a', 1), ('b', '2'), ('c', 3)))
+    assert s.readline() == 'a\t1\n'
+    assert s.read(2) == 'b\t'
+    assert s.read() == '2\nc\t3\n'
+    assert DBTest.DataStream(()).read() == ''
+    s = DBTest.DataStream((('a', 1), ('b', '2'), ('c', 3)))
+    assert s.read(4096) == 'a\t1\nb\t2\nc\t3\n'
+
+
 class TestFetchSelect(DBTest):
     """Test fetching rows from DB select."""
 
     @pytest.fixture
-    def table(self):
+    def table(self, execute):
         try:
-            self.sql("create table test (x int)")
+            execute("create table test (x int)")
             yield 'test'
         finally:
             try:
-                self.sql('drop table test')
+                execute('drop table test')
             except Exception:
                 pass
 
@@ -2991,9 +2997,9 @@ class TestFetchSelect(DBTest):
             assert row['x'].value() == n
 
     @pytest.fixture
-    def rows(self, data):
+    def rows(self, connector, data):
         table_size = pytis.config.initial_fetch_size + pytis.config.fetch_size + 10
-        self.insert(data, ((i,) for i in range(table_size)))
+        self.insert(connector, data, ((i,) for i in range(table_size)))
         return table_size
 
     def test_skip_fetch(self, data, rows):
@@ -3012,13 +3018,13 @@ class TestFetchSelect(DBTest):
         self._check_skip_fetch(data, (('s', initial_fetch_size + fetch_size + 3),))
         self._check_skip_fetch(data, (('s', 10 * initial_fetch_size + fetch_size),), noresult=True)
 
-    def test_small_table_skip_fetch(self, data):
-        self.insert(data, ((i,) for i in range(4)))
+    def test_small_table_skip_fetch(self, connector, data):
+        self.insert(connector, data, ((i,) for i in range(4)))
         self._check_skip_fetch(data, (('s', 3), ('f', 1), ('s', -2), ('f', -1)))
         self._check_skip_fetch(data, (('s', 4), ('f', 1), ('s', -2), ('f', -1)))
 
-    def test_rewind(self, data):
-        self.insert(data, ((i,) for i in range(10)))
+    def test_rewind(self, connector, data):
+        self.insert(connector, data, ((i,) for i in range(10)))
         data.select()
         for n in (0, 1, 6, 10, 12):
             for i in range(n):
@@ -3044,8 +3050,8 @@ class TestFetchSelect(DBTest):
         assert row is not None
         assert row['x'].value() == 0
 
-    def test_skip_result(self, data):
-        self.insert(data, ((i,) for i in range(10)))
+    def test_skip_result(self, connector, data):
+        self.insert(connector, data, ((i,) for i in range(10)))
         data.select()
         assert data.skip(14) == 11
         assert data.skip(12, pd.BACKWARD) == 11
