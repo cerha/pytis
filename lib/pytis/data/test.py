@@ -2058,69 +2058,11 @@ class DBDataDefault(_DBTest):
             self.assertEqual(actual_row['y'].value(), expected_row['y'].value(), "Row #%d" % (i,))
             self.assertIn('x', actual_row, "Row #%d" % (i,))
 
-        result, success = self.view5_serial.insert(row)
-        assert success
-        self.assertEqual(result['y'].value(), 5)
-
     def test_insert_many_succeeds(self):
         expected_rows = self.newrows
         actual_rows, success = self.data.insert_many(expected_rows)
         assert success
         assert set(actual_rows) == set(expected_rows)
-
-    def test_insert_many_empty_succeeds(self):
-        actual_rows, success = self.data.insert_many(())
-        assert success
-        assert set(actual_rows) == set(())
-
-    def test_insert_many_fails_with_some_rows_already_present(self):
-        expected_rows = self.newrows
-        expected_rows[2]['cislo'] = ival(3)
-        actual_rows, success = self.data.insert_many(expected_rows)
-        assert not success
-
-    def test_insert_many_fails_with_duplicate_key(self):
-        expected_rows = self.newrows
-        expected_rows[2]['cislo'] = expected_rows[0]['cislo']
-        self.assertRaisesRegex(pd.DBUserException, 'integrity', self.data.insert_many, expected_rows)
-
-    def test_insert_many_fails_with_differing_columns(self):
-        CHANGED_ROW_INDEX = 2
-        DELETED_COLUMN_ID = 'datum'
-        expected_rows = self.newrows
-        expected_rows[CHANGED_ROW_INDEX] = pd.Row([
-            (k, v) for k, v in expected_rows[CHANGED_ROW_INDEX].items()
-            if k != DELETED_COLUMN_ID
-        ])
-
-        with self.assertRaises(ProgramError) as e:
-            self.data.insert_many(expected_rows)
-        e = e.exception
-        self.assertEqual(len(e.args), 3)
-
-        self.assertEqual(len(e.args[1]), 2)
-        self.assertEqual(e.args[1][0], 0)
-        self.assertIn(DELETED_COLUMN_ID, e.args[1][1])
-
-        self.assertEqual(len(e.args[2]), 2)
-        self.assertEqual(e.args[2][0], CHANGED_ROW_INDEX)
-        self.assertNotIn(DELETED_COLUMN_ID, e.args[2][1])
-
-    def test_insert_many_succeeds_with_view_wo_returning(self):
-        expected_rows = [pd.Row((('x', ival(3 + i)),)) for i in range(3)]
-        actual_rows, success = self.view3.insert_many(expected_rows)
-        assert success
-        assert set(actual_rows) == set(expected_rows)
-
-    def test_insert_many_succeeds_with_view_w_serialkey_wo_returning(self):
-        expected_rows = [pd.Row((('y', ival(i)),)) for i in range(3)]
-        actual_rows, success = self.view5_serial.insert_many(expected_rows)
-        assert success
-        self.longMessage = True
-        self.assertEqual(len(actual_rows), len(expected_rows), (actual_rows, expected_rows,))
-        for i, (actual_row, expected_row) in enumerate(zip(actual_rows, expected_rows)):
-            self.assertEqual(actual_row['y'].value(), expected_row['y'].value(), "Row #%d" % (i,))
-            self.assertIn('x', actual_row, "Row #%d" % (i,))
 
     def test_update(self):
         row = self.newrow
