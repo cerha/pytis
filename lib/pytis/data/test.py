@@ -2017,7 +2017,8 @@ class DBDataDefault(_DBTest):
     def test_insert_many_fails_with_duplicate_key(self):
         expected_rows = self.newrows
         expected_rows[2]['cislo'] = expected_rows[0]['cislo']
-        self.assertRaisesRegex(pd.DBUserException, 'integrity', self.data.insert_many, expected_rows)
+        with pytest.raises(pd.DBUserException, match='integrity'):
+            self.data.insert_many(expected_rows)
 
     def test_insert_many_fails_with_differing_columns(self):
         CHANGED_ROW_INDEX = 2
