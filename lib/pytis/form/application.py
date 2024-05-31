@@ -2323,7 +2323,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         return f
 
     def api_write_file(self, data, filename, mode='w'):
-        if isinstance(data, bytes):
+        if sys.version_info[0] == 2 and isinstance(data, bytes):
             # Maybe the same problem as described in write_selected_file() may apply
             # here?  Morover RPyC doesn't seem to pass pd.Binary.Data correctly
             # and leads to "TypeError: argument 1 must be convertible to a buffer,
