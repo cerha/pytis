@@ -844,6 +844,35 @@ class PyZenityUIBackend(ClipboardUIBackend):
             return None
 
 
+# TODO: Remove when Python 2 support not needed.
+
+class TextModeWrapper(object):
+    """File-like object wrapper encoding/decoding all written/read data.
+
+    Used to emulate automatic text encoding in Python 2, where os.fdopen()
+    doesn't have the encoding argument.
+
+    """
+    def __init__(self, f, encoding):
+        self._f = f
+        self._encoding = encoding
+
+    def __getattr__(self, name):
+        return getattr(self._f, name)
+
+    def read(self, *args, **kwargs):
+        return self._f.read(*args, **kwargs).decode(self._encoding)
+
+    def readline(self):
+        return self._f.readline().decode(self._encoding)
+
+    def readlines(self):
+        return [line.decode(self._encoding) for line in self._f]
+
+    def write(self, b):
+        self._f.write(b.encode(self._encoding))
+
+
 class ExposedFileWrapper(object):
     """Exposed 'file' like object.
 
@@ -864,21 +893,24 @@ class ExposedFileWrapper(object):
         encrypt -- function performing data encryption.  The function must
           accept a file like object as argument and return its encrypted
           contents as a string.  If 'None' then don't encrypt the file;
-          applicable only for input modes
+          applicable only for input modes ('r*').
         decrypt -- function performing data decryption.  The function must
           accept a string argument and return its decrypted content as a
           string.  If 'None' then don't decrypt the file.  Applicable only for
-          output modes
+          output modes (non 'r*').
 
         """
         assert encoding is None or 'b' not in mode, (encoding, mode)
         self._filename = filename
-        self._encoding = encoding
         self._decrypt = decrypt
         if handle is None:
-            f = open(filename, mode)
-        else:
+            f = io.open(filename, mode, encoding=encoding)
+        elif sys.version_info[0] == 2:
             f = os.fdopen(handle, mode)
+            if 'b' not in mode:
+                f = TextModeWrapper(f, encoding or 'utf-8')
+        else:
+            f = os.fdopen(handle, mode, encoding=encoding)
         if encrypt is not None:
             assert mode[0] == 'r', mode
             f = io.BytesIO(encrypt(f))
@@ -896,33 +928,22 @@ class ExposedFileWrapper(object):
     def __exit__(self, exc_type, exc_value, exc_tb):
         self.exposed_close()
 
-    def _decode(self, data):
-        # TODO: Remove when Python 2 support not needed and pass encoding to open().
-        if self._encoding is not None:
-            data = data.decode(self._encoding)
-        return data
-
     @property
     def exposed_name(self):
         return self._filename
 
     def exposed_read(self, *args, **kwargs):
-        return self._decode(self._f.read(*args, **kwargs))
+        return self._f.read(*args, **kwargs)
 
     def exposed_readline(self):
-        return self._decode(self._f.readline())
+        return self._f.readline()
 
     def exposed_readlines(self):
-        lines = self._f.readlines()
-        if self._encoding is not None:
-            lines = [self._decode(l) for l in lines]
-        return lines
+        return self._f.readlines()
 
     def exposed_write(self, data):
         if sys.version_info[0] == 2 and isinstance(data, buffer):
             data = data[:]
-        elif self._encoding is not None and self._decrypted is None:
-            data = data.encode(self._encoding)
         self._f.write(data)
 
     def exposed_seek(self, *args, **kwargs):
@@ -939,8 +960,6 @@ class ExposedFileWrapper(object):
             encrypted = self._f.getvalue()
             if encrypted:
                 decrypted = self._decrypt(encrypted)
-                if self._encoding is not None:
-                    decrypted = decrypted.encode(self._encoding)
                 self._decrypted.write(decrypted)
                 self._decrypted.close()
         self._f.close()
