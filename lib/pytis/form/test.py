@@ -345,7 +345,13 @@ class TestApp(DBTest):
     within its environment.  It may be useful for testing fetures which require
     the wx Application to exist.
 
-    TODO: This test randomly ends with SIGABRT, SIGSEGV or SIGTRAP.
+    TODO: This test randomly ends with SIGABRT, SIGSEGV or SIGTRAP.  Probabbly
+    because the wx app doesn't run in the main thread.  This document may shed
+    some light on that: https://wiki.wxpython.org/MainLoopAsThread
+
+    To debug:
+    gdb python (in the appropriate venv)
+    (gdb) run -m pytest src/pytis/lib/pytis/form/test.py::TestApp -v --disable-warnings
 
     """
     def test_api_form(self):
