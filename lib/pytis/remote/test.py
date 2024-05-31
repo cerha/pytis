@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2021 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2024 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2011-2018 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -85,11 +85,11 @@ class TestRemote:
                                             b'k\xc5\xaf\xc5\x88\n')
 
     def test_run_python(script):
-        with pytis.remote.make_temporary_file(suffix='.txt', mode='w') as f:
-            f.write('a')
+        with pytis.remote.make_temporary_file(suffix='.txt', mode='wb') as f:
+            f.write(b'a')
             fname = f.name
-        pytis.remote.run_python("with open('{}', 'a') as f: f.write('bc')".format(fname))
-        with pytis.remote.open_file(fname, mode='r') as f:
+        pytis.remote.run_python("with open('{}', 'ab') as f: f.write(b'bc')".format(fname))
+        with pytis.remote.open_file(fname, mode='rb') as f:
             assert f.read() == b'abc'
         pytis.remote.run_python("import os; os.remove('{}')".format(fname))
 
@@ -98,7 +98,7 @@ class TestRemote:
         directory = pytis.remote.select_directory(title=("Select a directory"))
         assert directory is not None
         path = pytis.remote.select_file(directory=directory, pattern='*.pdf',
-                                            title="Select a PDF file in this directory")
+                                        title="Select a PDF file in this directory")
         assert path and path.startswith(directory)
         with pytis.remote.open_file(path, mode='r') as f:
             assert f.read(4) == b'%PDF'
