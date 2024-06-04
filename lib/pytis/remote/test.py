@@ -92,6 +92,9 @@ class TestRemote:
         with pytis.remote.open_file(fname, mode='rb') as f:
             assert f.read() == b'abc'
         pytis.remote.run_python("import os; os.remove('{}')".format(fname))
+        assert pytis.remote.run_python('print("hello world")') == 0
+        assert pytis.remote.run_python('script_with_some_error()') == 1
+        assert pytis.remote.run_python('import sys; sys.exit(24)') == 24
 
     @interactive
     def test_file_dialogs(self):
