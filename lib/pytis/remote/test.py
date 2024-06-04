@@ -52,6 +52,9 @@ class TestRemote:
         # Avoid removing the info file (to allow running tests multiple times).
         pytis.remote.keep_x2go_info_file()
 
+    def test_clientapi_loaded(script):
+        assert pytis.remote.RPCInfo.client_api_pushed
+
     def test_clipboard(self):
         pytis.remote.set_clipboard_text('foo')
         assert pytis.remote.get_clipboard_text() == 'foo'
