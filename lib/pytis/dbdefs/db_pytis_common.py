@@ -382,7 +382,7 @@ class TChanges(sql.SQLTable):
     """Log of data changes."""
     name = 't_changes'
     schemas = (('public',),)
-    fields = (sql.PrimaryColumn('id', pytis.data.Serial()),
+    fields = (sql.PrimaryColumn('id', pytis.data.LargeSerial()),
               sql.Column('timestamp', pytis.data.DateTime(not_null=True), index=True),
               sql.Column('username', pytis.data.String(not_null=True), index=True),
               sql.Column('schemaname', pytis.data.String(not_null=True)),
@@ -400,7 +400,7 @@ class TChangesDetail(sql.SQLTable):
     """Detail information about database changes."""
     name = 't_changes_detail'
     schemas = (('public',),)
-    fields = (sql.Column('id', pytis.data.Integer(not_null=True), index=True,
+    fields = (sql.Column('id', pytis.data.LargeInteger(not_null=True), index=True,
                          references=sql.a(sql.r.TChanges.id, onupdate='CASCADE',
                                           ondelete='CASCADE')),
               sql.Column('detail', pytis.data.String(not_null=True)),
