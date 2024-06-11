@@ -1,5 +1,5 @@
 declare
-  id_ int;
+  id_ bigint;
   current_record record;
   c text;
   cc text;
