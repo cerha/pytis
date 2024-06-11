@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2019-2022 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2019-2022, 2024 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2013 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -42,7 +42,7 @@ from .types_ import (  # noqa: F401
     DateRange, Time, LocalTime, TimeInterval, date_and_time, add_timedelta,
     Boolean, Uuid, Binary, Image, LTree, Array, JSON, JSONB, Enumerator,
     TransactionalEnumerator, FixedEnumerator, DataEnumerator, ValidationError,
-    Value, WMValue, sval, ival, fval, bval, dval, dtval, tval, wmval,
+    Value, WMValue, sval, ival, fval, bval, dval, dtval, tval, wmval, binval,
 )
 from .data import (  # noqa: F401
     FORWARD, BACKWARD, ASCENDENT, DESCENDANT,
