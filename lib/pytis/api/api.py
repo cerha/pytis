@@ -676,8 +676,8 @@ class Application(API):
         """
         pass
 
-    def edit_record(self, name, row, set_values=None, block_on_edit_record=False,
-                    transaction=None):
+    def edit_record(self, name, row, set_values=None, layout=None,
+                    block_on_edit_record=False, transaction=None):
         """Edit an existing record in a modal form.
 
         Arguments:
@@ -692,6 +692,9 @@ class Application(API):
             fields's data type or 'pytis.data.Value' instances directly.  These
             values will not affect the initial row state and thus will appear
             as changed to the user.
+          layout -- custom layout of the edit form overriding the specification
+            defined layout.  Instance of 'pp.GroupSpec' or a sequence of items
+            to be passed to a vertical 'GroupSpec'.
           block_on_edit_record -- if true, the 'on_edit_record' procedure from
             specification  will be blocked.  This makes it possible to call
             'edit_record' from within the 'on_new_record' procedure without

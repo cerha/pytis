@@ -2502,7 +2502,7 @@ class EditForm(RecordForm, TitledForm, Refreshable):
         else:
             self._set_focus_field()
 
-    def _init_attributes(self, mode=MODE_EDIT, focus_field=None, set_values=None,
+    def _init_attributes(self, mode=MODE_EDIT, focus_field=None, set_values=None, layout=None,
                          inserted_data=None, on_commit_record=None, **kwargs):
         """Process constructor keyword arguments and initialize the attributes.
 
@@ -2515,7 +2515,6 @@ class EditForm(RecordForm, TitledForm, Refreshable):
             default.  It is also possible to pass a function of one argument --
             the PresentedRow instance representing the current record.  This
             function must return a field identifier or None.
-          kwargs -- arguments passed to the parent class
           set_values -- dictionary of row values to set in the newly openened
             form.  If not None, the dictionary keys are field identifiers and
             values are either the corresponding internal python values valid
@@ -2523,6 +2522,9 @@ class EditForm(RecordForm, TitledForm, Refreshable):
             directly.  These values will not affect the initial row state
             (unlike the 'prefill' argument of the parent class) and thus will
             appear as changed to the user.
+          layout -- custom layout of the form overriding the specification
+            defined layout.  Instance of 'pp.GroupSpec' or a sequence of items
+            to be passed to a vertical 'GroupSpec'.
           inserted_data -- iterable providing items for batch insertion.  Each
             item may be a 'pytis.data.Row' instance or a dictionary as in
             'set_values'.  If not null, the form is gradually prefilled by
@@ -2531,6 +2533,7 @@ class EditForm(RecordForm, TitledForm, Refreshable):
             succesfully saved after the submit button is pressed.  Similar to
             'cleanup' in form specification and called just after cleanup when
             both defined.
+          kwargs -- arguments passed to the parent class
 
         """
         assert mode in (self.MODE_EDIT, self.MODE_INSERT, self.MODE_VIEW)
@@ -2552,6 +2555,7 @@ class EditForm(RecordForm, TitledForm, Refreshable):
                 else:
                     value = pytis.data.Value(type, value)
                 self._row[key] = value
+        self._layout = layout
         self._closed_connection_handled = False
         if inserted_data is not None:
             self._inserted_data = iter(enumerate(inserted_data))
@@ -2617,7 +2621,12 @@ class EditForm(RecordForm, TitledForm, Refreshable):
 
     def _create_form_controls(self):
         self._fields = []
-        group = self._view.layout().group()
+        if isinstance(self._layout, GroupSpec):
+            group = self._layout
+        elif self._layout:
+            group = GroupSpec(self._layout, orientation=Orientation.VERTICAL)
+        else:
+            group = self._view.layout().group()
         if isinstance(group, TabGroup):
             window = wx.Notebook(self)
             for item in group.items():

@@ -1899,7 +1899,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         # not worth the complication here....
         return run_form(pytis.form.BrowsableShowForm, name, select_row=row)
 
-    def api_edit_record(self, name, row, set_values=None, block_on_edit_record=False,
+    def api_edit_record(self, name, row, set_values=None, layout=None, block_on_edit_record=False,
                         transaction=None):
         view = pytis.config.resolver.get(name, 'view_spec')
         if not isinstance(row, PresentedRow):
@@ -1936,7 +1936,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
                 app.echo(_(u"This form is read-only."), kind='error')
                 return
             key = row.row().columns([c.id() for c in row.data().key()])
-            return run_form(pytis.form.PopupEditForm, name, select_row=key,
+            return run_form(pytis.form.PopupEditForm, name, select_row=key, layout=layout,
                             set_values=set_values, transaction=transaction)
 
     def api_delete_record(self, name, row, question=None, transaction=None):
