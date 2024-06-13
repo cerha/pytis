@@ -214,7 +214,7 @@ class Form(API):
     """Iterator over all currently selected rows.
 
     The iterator returns all rows present in the current selection as
-    'PresentedRow' instances in the order of their presence in the form.
+    'pytis.presentation.PresentedRow' instances in the order of their presence in the form.
 
     """
     main_form = property()
@@ -609,10 +609,11 @@ class Application(API):
           on_commit_record -- callback to be called when the record is
             succesfully saved after the submit button is pressed.  Similar to
             'cleanup' in form specification and called just after cleanup when
-            both defined.  A 'PresentedRow' instance is passed as argument.
+            both defined.  A 'pytis.presentation.PresentedRow' instance is
+            passed as argument.
 
-        Returns a 'pp.PresentedRow' instance containing field values or None if
-        the user cancels the form.
+        Returns a 'pytis.presentation.PresentedRow' instance containing field
+        values or None if the user cancels the form.
 
         """
         pass
@@ -707,9 +708,9 @@ class Application(API):
         Runs 'on_edit_record' instead of the default edit form if the
         specification defines it.
 
-        Returns a 'pp.PresentedRow' instance of the updated record or None if
-        the user cancels the form.  If 'on_edit_record' is defined, returns
-        whatever 'on_edit_record()' returned.
+        Returns a 'pytis.presentation.PresentedRow' instance of the updated
+        record or None if the user cancels the form.  If 'on_edit_record' is
+        defined, returns whatever 'on_edit_record()' returned.
 
         """
         pass
