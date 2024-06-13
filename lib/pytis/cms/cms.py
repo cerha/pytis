@@ -155,7 +155,7 @@ class Modules(Specification):
             return True
     # def on_new_record(self, prefill, transaction=None):
     #    import pytis.form
-    #    record = app.new_record(self._name('Modules'), prefill=prefill,
+    #    record = app.new_record(self, prefill=prefill,
     #                            block_on_new_record=True, transaction=transaction)
     #    if record:
     #

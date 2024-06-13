@@ -617,7 +617,7 @@ class Application(API):
         """
         pass
 
-    def new_record(self, name, prefill=None, inserted_data=None, multi_insert=True,
+    def new_record(self, specification, prefill=None, inserted_data=None, multi_insert=True,
                    copied_row=None, set_values=None, block_on_new_record=False,
                    # spec_kwargs is here temporarily just for backwards compatibility...
                    spec_kwargs={}, transaction=None):
@@ -625,7 +625,8 @@ class Application(API):
 
         Arguments:
 
-          name -- specification name for resolver.
+          specification -- 'pytis.presentation.Specification' subclass,
+            instance or its name for resolver as a string.
           prefill -- a dictionary of initial field values.  Keys are field
             identifiers and values are either 'pytis.data.Value' instances or
             the corresponding Python internal values directly.  These values
@@ -660,12 +661,13 @@ class Application(API):
         """
         pass
 
-    def show_record(self, name, row):
+    def show_record(self, specification, row):
         """Show existing record details in a separate form.
 
         Arguments:
 
-          name -- specification name as a string.
+          specification -- 'pytis.presentation.Specification' subclass,
+            instance or its name for resolver as a string.
           row -- edited record as a 'pytis.data.Row' or
             'pytis.presentation.PresentedRow' instance or record key as a
             'pytis.data.Value' instance.
@@ -676,13 +678,14 @@ class Application(API):
         """
         pass
 
-    def edit_record(self, name, row, set_values=None, layout=None,
+    def edit_record(self, specification, row, set_values=None, layout=None,
                     block_on_edit_record=False, transaction=None):
         """Edit an existing record in a modal form.
 
         Arguments:
 
-          name -- specification name as a string.
+          specification -- 'pytis.presentation.Specification' subclass,
+            instance or its name for resolver as a string.
           row -- edited record as a 'pytis.data.Row' or
             'pytis.presentation.PresentedRow' instance or record key as a
             'pytis.data.Value' instance.
@@ -693,7 +696,7 @@ class Application(API):
             values will not affect the initial row state and thus will appear
             as changed to the user.
           layout -- custom layout of the edit form overriding the specification
-            defined layout.  Instance of 'pp.GroupSpec' or a sequence of items
+            defined layout.  Instance of 'GroupSpec' or a sequence of items
             to be passed to a vertical 'GroupSpec'.
           block_on_edit_record -- if true, the 'on_edit_record' procedure from
             specification  will be blocked.  This makes it possible to call
@@ -711,12 +714,12 @@ class Application(API):
         """
         pass
 
-    def delete_record(self, name, row, question=None, transaction=None):
+    def delete_record(self, specification, row, question=None, transaction=None):
         """Delete an existing record after user's confirmation.
 
         Arguments:
-
-          name -- specification name as a string.
+          specification -- 'pytis.presentation.Specification' subclass,
+            instance or its name for resolver as a string.
           row -- deleted record as a 'pytis.data.Row' or
             'pytis.presentation.PresentedRow' instance or record key as a
             'pytis.data.Value' instance.
@@ -734,13 +737,14 @@ class Application(API):
         """
         pass
 
-    def run_form(self, name, select_row=None, multi=True, preview=False, sorting=None,
+    def run_form(self, specification, select_row=None, multi=True, preview=False, sorting=None,
                  filter=None, condition=None, profile=None, binding=None, transaction=None):
         """Display given form in the main application frame.
 
         Arguments:
 
-          name -- specification name as a string.
+          specification -- 'pytis.presentation.Specification' subclass,
+            instance or its name for resolver as a string.
           select_row -- the row to be intially selected within the opened form
             or None to perform no initial row selection.  If not None, has the
             same meaning as the 'position' argument of
@@ -780,13 +784,14 @@ class Application(API):
         """
         pass
 
-    def codebook(self, name, select_row=0, columns=None, sorting=None, filter=None,
+    def codebook(self, specification, select_row=0, columns=None, sorting=None, filter=None,
                  condition=None, multirow=False, begin_search=None, transaction=None):
         """Display a modal codebook selection form and return the selected row.
 
         Arguments:
 
-          name -- specification name as a string.
+          specification -- 'pytis.presentation.Specification' subclass,
+            instance or its name for resolver as a string.
           select_row -- the row to be intially selected within the opened form
             or None to perform no initial row selection.  If not None, has the
             same meaning as the 'position' argument of

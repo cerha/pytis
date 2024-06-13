@@ -62,8 +62,7 @@ class _ApplicationRolesSpecification(pytis.presentation.Specification):
         if not self._row_editable(row):
             app.warning(_(u"Správcovské role nelze editovat"))
             return None
-        return app.edit_record('menu.' + self.__class__.__name__, row=row,
-                               block_on_edit_record=True)
+        return app.edit_record(self, row=row, block_on_edit_record=True)
 
     def _row_deleteable(self, row):
         if not self._row_editable(row):
@@ -325,8 +324,7 @@ class ApplicationMenu(pytis.presentation.Specification):
         if row['locked'].value():
             app.warning(_(u"Tuto položku menu nelze editovat"))
             return None
-        return app.edit_record('menu.' + self.__class__.__name__, row=row,
-                               block_on_edit_record=True)
+        return app.edit_record(self, row=row, block_on_edit_record=True)
 
     def on_delete_record(self, row):
         if row['locked'].value():
@@ -721,8 +719,8 @@ class ApplicationMenuRights(_ApplicationMenuRightsBase):
 
     def on_new_record(self, prefill=None, transaction=None):
         self._before_edit_checks()
-        result = app.new_record('menu.ApplicationMenuRights', prefill=prefill,
-                                transaction=transaction, block_on_new_record=True)
+        result = app.new_record(self, prefill=prefill, transaction=transaction,
+                                block_on_new_record=True)
         if result:
             self._after_edit_checks()
         return result
@@ -732,8 +730,7 @@ class ApplicationMenuRights(_ApplicationMenuRightsBase):
             app.warning(_(u"Systémová práva nelze editovat"))
             return None
         self._before_edit_checks()
-        result = app.edit_record('menu.' + self.__class__.__name__, row=row,
-                                 block_on_edit_record=True)
+        result = app.edit_record(self, row=row, block_on_edit_record=True)
         if result:
             self._after_edit_checks()
         return result

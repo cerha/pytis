@@ -492,7 +492,7 @@ class Products(Specification):
         try:
             for product_id in data.select_map(lambda r: r['product_id'],
                                               condition=pd.EQ('marked', pd.bval(True))):
-                if not app.edit_record('misc.Products', product_id, transaction=transaction):
+                if not app.edit_record(self, product_id, transaction=transaction):
                     app.warning("Transaction aborted")
                     transaction.rollback()
                     return

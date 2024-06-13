@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2019-2023 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2019-2024 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2010-2015 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -127,6 +127,6 @@ class DirectUserOutputTemplates(UserOutputTemplates):
         if data.fetchone() is not None:
             app.error(_("Tisková sestava se vyskytuje ve více exemplářích: ") + specification)
             return
-        if app.delete_record('printing.DirectUserOutputTemplates', row):
+        if app.delete_record(self, row):
             # Update the printing button of the current form
             app.refresh()

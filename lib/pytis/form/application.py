@@ -1863,9 +1863,16 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
                         avoid_initial_selection=noselect, inserted_data=inserted_data,
                         on_commit_record=on_commit_record)
 
-    def api_new_record(self, name, prefill=None, inserted_data=None, multi_insert=True,
+    def _spec_name(self, specification):
+        if isinstance(specification, basestring):
+            return specification
+        else:
+            return specification._spec_name()
+
+    def api_new_record(self, specification, prefill=None, inserted_data=None, multi_insert=True,
                        copied_row=None, set_values=None, block_on_new_record=False,
                        spec_kwargs={}, transaction=None):
+        name = self._spec_name(specification)
         view = pytis.config.resolver.get(name, 'view_spec', **spec_kwargs)
         kwargs = dict(prefill=prefill)
         if copied_row and view.on_copy_record():
@@ -1890,8 +1897,9 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
                         multi_insert=multi_insert, transaction=transaction,
                         set_values=set_values, spec_kwargs=spec_kwargs)
 
-    def api_show_record(self, name, row):
+    def api_show_record(self, specification, row):
         assert isinstance(row, (PresentedRow, pytis.data.Row, pytis.data.Value)), row
+        name = self._spec_name(specification)
         if isinstance(row, PresentedRow):
             row = row.row()
         # TODO: show_record() doesn't support redirect() (see api_edit_record()
@@ -1899,8 +1907,9 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         # not worth the complication here....
         return run_form(pytis.form.BrowsableShowForm, name, select_row=row)
 
-    def api_edit_record(self, name, row, set_values=None, layout=None, block_on_edit_record=False,
-                        transaction=None):
+    def api_edit_record(self, specification, row, set_values=None, layout=None,
+                        block_on_edit_record=False, transaction=None):
+        name = self._spec_name(specification)
         view = pytis.config.resolver.get(name, 'view_spec')
         if not isinstance(row, PresentedRow):
             data = pytis.util.data_object(name)
@@ -1939,7 +1948,8 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
             return run_form(pytis.form.PopupEditForm, name, select_row=key, layout=layout,
                             set_values=set_values, transaction=transaction)
 
-    def api_delete_record(self, name, row, question=None, transaction=None):
+    def api_delete_record(self, specification, row, question=None, transaction=None):
+        name = self._spec_name(specification)
         view = pytis.config.resolver.get(name, 'view_spec')
         data = pytis.util.data_object(name)
         if not isinstance(row, PresentedRow):
@@ -1984,8 +1994,9 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         else:
             return False
 
-    def api_run_form(self, name, select_row=None, multi=True, preview=False, sorting=None,
+    def api_run_form(self, specification, select_row=None, multi=True, preview=False, sorting=None,
                      filter=None, condition=None, profile=None, binding=None, transaction=None):
+        name = self._spec_name(specification)
         kwargs = {}
         if '::' in name:
             form_class = pytis.form.BrowseDualForm
@@ -2005,8 +2016,9 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
                         filter=filter, condition=condition, profile_id=profile,
                         transaction=transaction, **kwargs)
 
-    def api_codebook(self, name, select_row=0, columns=None, sorting=None, filter=None,
+    def api_codebook(self, specification, select_row=0, columns=None, sorting=None, filter=None,
                      condition=None, multirow=False, begin_search=None, transaction=None):
+        name = self._spec_name(specification)
         if multirow:
             form_class = pytis.form.SelectRowsForm
         else:
