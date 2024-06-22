@@ -2343,7 +2343,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
             # Open remote file in binary mode and rely on text mode emulation
             # in self._ExposedFileWrapper, because older clients don't support
             # 'encoding' in pytis.remote.open_file().
-            remote_mode = mode + 'b' if 'b' not in mode else mode
+            remote_mode = mode.replace('t', '') + 'b' if 'b' not in mode else mode
             f = self._wrap_exposed_file_wrapper(
                 pytis.remote.open_file(filename, mode=remote_mode),
                 mode=mode, encoding=encoding,
