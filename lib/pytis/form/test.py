@@ -37,6 +37,7 @@ import pytis
 
 from pytis.api import app
 from pytis.data.test import DBTest, connector, dbconnection, execute
+from pytis.remote.test import interactive
 
 connection_data = {'database': 'test'}
 
@@ -417,6 +418,29 @@ class TestApp(DBTest):
                 app.write_file(u'text', filename, mode='wb')
             with pytest.raises(TypeError):
                 app.write_file(b'bytes', filename, mode='w')
+
+    @interactive
+    def test_write_selected_file(self):
+        # This is terrible, but we still need this to work with the
+        # invalid combinations of the arguments.
+        for data, mode, encoding in ((u'some text', 'w', 'utf-8'),
+                                     (b'some bytes', 'w', 'utf-8'),
+                                     (b'some bytes', 'wb', None),
+                                     (u'some text', 'wt', None)):
+            filename = app.write_selected_file(data, 'test.txt', mode=mode, encoding=encoding)
+            with app.open_file(filename, mode='r') as f:
+                assert f.read() == data
+
+    @interactive
+    def test_write_selected_file_type_errors(self):
+        if sys.version_info[0] > 2:
+            # Does not raise error in Python 2.
+            with pytest.raises(TypeError):
+                app.write_selected_file(u'text', 'text.txt', mode='wb')
+            with pytest.raises(TypeError):
+                app.write_selected_file(b'bytes', 'test.txt', mode='w')
+        with pytest.raises(TypeError):
+            app.write_selected_file(8, 'test.txt', mode='wb')
 
 
 def test_shared_params(initconfig, initdb):
