@@ -1577,14 +1577,20 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         encoding), so this wrapper implements them on top of the
         ExposedFileWrapper instance.
 
-        Older Pytis2Go clients only support binary mode in 'open_file()' and
-        'open_selected_file()', so we actually always open remote files in
+        Older Pytis2Go clients always open the file in binary mode with
+        'open_file()' and 'open_selected_file()'.  Encoding can not be passed
+        to those methods so we perform encoding in this class and pass bytes
+        data to the underlying class.  For these always open remote files in
         binary mode and encode/decode the data in this class.
+        'make_selected_file()' on the othe hand does support text mode encoding
+        so we pass the data without encoding in this case ('encoding' passed to
+        our constructor is None).
 
-        Also, because reading and writing data in small chunks (such as using
-        readline()) over a remote connection is really slow, we implement
-        buffering through 'io.BufferedReader'/'io.BufferedWriter' which
-        significantly improves performance.
+        Temporarily disabled: Also, because reading and writing data in small
+        chunks (such as using readline()) over a remote connection is really
+        slow, we implement buffering through
+        'io.BufferedReader'/'io.BufferedWriter' which significantly improves
+        performance.
 
         """
         _BUFFER_SIZE = 512 * 1024
@@ -1625,15 +1631,23 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
                 return self._instance.flush()
 
         def __init__(self, instance, mode=None, encoding=None):
-            assert mode is not None or encoding is None, (mode, encoding)
             self._instance = instance
             if mode is not None:
-                if 'b' in mode:
+                self._binary_mode = binary_mode = 'b' in mode
+                self._text_mode = not binary_mode
+                if binary_mode:
                     assert encoding is None, (mode, encoding)
                     encoding = None
-                else:
+                elif encoding is None:
                     # Supply default encoding in text modes.
-                    encoding = encoding or 'utf-8'
+                    encoding = 'utf-8'
+            else:
+                assert encoding is None, (mode, encoding)
+                # We don't know so we will not do any type checks...
+                self._binary_mode = False
+                self._text_mode = False
+            self._encoding = encoding
+
             # Temporarily deactivate buffering as it proved to cause some problems.
             if False:  # mode is not None:
                 if 'r' in mode:
@@ -1645,7 +1659,6 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
                 # TODO: Apply buffering in all situations (also for app.make_selected_file(),
                 # which doesn't pass mode here?
                 self._buffer = instance
-            self._encoding = encoding
 
         def __getattr__(self, name):
             return getattr(self._instance, name)
@@ -1683,15 +1696,23 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
             return [self._decode(line) for line in self]
 
         def write(self, data):
-            if self._encoding is not None:
-                if not isinstance(data, str):
+            if self._text_mode:
+                if sys.version_info[0] > 2 and not isinstance(data, str):
                     raise TypeError("a str object is required, not '{}'"
                                     .format(type(data).__name__))
+                if sys.version_info[0] == 2 and not isinstance(data, unicode):
+                    # The error is not critical in Python 2 to allow the applications
+                    # to accommodate.
+                    log(OPERATIONAL, ("A unicode object expected, not '{}'"
+                                      .format(type(data).__name__)))
                 data = data.encode(self._encoding)
-            elif not isinstance(data, bytes) and not (sys.version_info[0] == 2 and
-                                                      isinstance(data, buffer)):
-                raise TypeError("a bytes-like object is required, not '{}'"
-                                .format(type(data).__name__))
+            elif self._binary_mode and not isinstance(data, bytes):
+                if sys.version_info[0] > 2:
+                    raise TypeError("a bytes-like object is required, not '{}'"
+                                    .format(type(data).__name__))
+                elif not isinstance(data, buffer):
+                    log(OPERATIONAL, ("A bytes-like object expected, not '{}'"
+                                      .format(type(data).__name__)))
             return self._buffer.write(data)
 
         def close(self):
@@ -2335,6 +2356,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         return f
 
     def api_write_file(self, data, filename, mode='w'):
+        # TODO: Add 'encoding' argument.
         if sys.version_info[0] == 2 and isinstance(data, bytes):
             # Maybe the same problem as described in write_selected_file() may apply
             # here?  Morover RPyC doesn't seem to pass pd.Binary.Data correctly
@@ -2721,7 +2743,6 @@ def delete_record(view, data, transaction, record,
     assert pytis.config.resolver.get(view.spec_name(), 'view_spec') is view
     return app.delete_record(view.spec_name(), tuple(record[k.id()] for k in data.key()),
                              question=question, transaction=transaction)
-
 
 def printout(spec_name, template_id, **kwargs):
     return app.printout(spec_name, template_id, **kwargs)
