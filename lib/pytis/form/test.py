@@ -24,6 +24,7 @@ from builtins import range
 
 import pytest
 import threading
+import time
 
 import pytis.form as pf
 import pytis.form.grid as grid
@@ -385,9 +386,11 @@ class TestApp(DBTest):
             app.param.user.name = 'x'
             assert app.param.user.name == 'x'
             pf.app.wx_yield()  # Let the callbacks be called (randomly unreliable).
+            time.sleep(0.2)
             app.param.user.name = 'y'
             assert app.param.user.name == 'y'
             pf.app.wx_yield()  # Let the callbacks be called (randomly unreliable).
+            time.sleep(0.2)
             assert names == ['x', 'y']
         finally:
             app.param.user.name = name
