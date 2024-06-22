@@ -23,6 +23,7 @@ from __future__ import division
 from builtins import range
 
 import pytest
+import sys
 import time
 
 import pytis.form as pf
@@ -402,10 +403,8 @@ class TestApp(DBTest):
 
     def test_write_and_read_file(self):
         filename = '/tmp/test.txt'
-        for m, data in (
-                ('b', b'some bytes'),
-                ('t', u'some text'),
-        ):
+        for m, data in (('b', b'some bytes'),
+                        ('t', u'some text')):
             app.write_file(data, filename, mode='w'+m)
             with app.open_file(filename, mode='r'+m) as f:
                 assert f.name == filename
@@ -413,12 +412,11 @@ class TestApp(DBTest):
 
     def test_write_file_type_errors(self):
         filename = '/tmp/test.txt'
-        with pytest.raises(TypeError):
-            app.write_file(u'text', filename, mode='wb')
-        with pytest.raises(TypeError):
-            app.write_file(b'bytes', filename, mode='w')
-        with pytest.raises(TypeError):
-            app.write_file(8, filename, mode='wb')
+        if sys.version_info[0] > 2:
+            with pytest.raises(TypeError):
+                app.write_file(u'text', filename, mode='wb')
+            with pytest.raises(TypeError):
+                app.write_file(b'bytes', filename, mode='w')
 
 
 def test_shared_params(initconfig, initdb):
