@@ -274,7 +274,7 @@ end;
 class Application(pp.Application):
     def params(self):
         return (
-            pp.SharedParams('user', 'pytis.form.test.UserParams',
+            pp.SharedParams('user', 'test.UserParams',
                             pd.EQ('login', pd.sval('test'))),
         )
 
@@ -320,7 +320,7 @@ def initdb(execute):
 
 @pytest.fixture(scope='class')
 def initconfig(dbconnection):
-    pytis.config.resolver = pytis.util.Resolver(search=('pytis.form.test', 'pytis.defs'))
+    pytis.config.resolver = pytis.util.Resolver(search=('pytis.form.test', 'pytis.form', 'pytis.defs'))
     pytis.config.dbconnection = dbconnection
 
 
@@ -358,11 +358,11 @@ class TestApp(DBTest):
     def test_api_form(self):
         import time
         assert app.form is None
-        f = app.run_form('UserParams')
+        f = app.run_form('test.UserParams')
         assert app.form is not None
         # TODO: Testing form attributes below is very fragile.  Sometimes it
         # works, but most often it causes SIGABRT, SIGSEGV or SIGTRAP.
-        #assert app.form.name == 'UserParams'
+        assert app.form.name == 'test.UserParams'
         #assert app.form.query_fields is not None
         #assert app.form.query_fields.row is not None
         #assert app.form.query_fields.row['min'].value() == 10
