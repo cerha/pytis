@@ -23,7 +23,6 @@ from __future__ import division
 from builtins import range
 
 import pytest
-import threading
 import time
 
 import pytis.form as pf
@@ -328,13 +327,18 @@ def initconfig(dbconnection):
 def initapp(initconfig, initdb):
     # Avoid removing the info file (to allow running tests multiple times).
     pytis.remote.keep_x2go_info_file()
-    threading.Thread(target=pf.Application(headless=True).run).start()
+    # TODO: When we start the main wx app thread, the tests randomly end with
+    # SIGABRT, SIGSEGV or SIGTRAP.  Probabbly because the wx app doesn't run in
+    # the main thread (see https://wiki.wxpython.org/MainLoopAsThread).  But for
+    # the currently present tests it doesn't seem to be necessary to run the app
+    # thread, so we just create the Application instance.
+    #threading.Thread(target=pf.Application(headless=True).run).start()
+    pf.Application(headless=True)
     yield
     # Release the pytis.form.Application instance from pytis.api.app to make sure
     # the tests outside this class don't use the previously created instance.
-    a = pf.app
+    pf.app.ExitMainLoop()
     app.exit()
-    a.ExitMainLoop()
     app.release()
 
 
@@ -345,10 +349,6 @@ class TestApp(DBTest):
     Starts a headless wx application in a separate thread and runs test cases
     within its environment.  It may be useful for testing fetures which require
     the wx Application to exist.
-
-    TODO: This test randomly ends with SIGABRT, SIGSEGV or SIGTRAP.  Probabbly
-    because the wx app doesn't run in the main thread.  This document may shed
-    some light on that: https://wiki.wxpython.org/MainLoopAsThread
 
     To debug:
     gdb python (in the appropriate venv)
