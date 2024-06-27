@@ -2023,16 +2023,17 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
             form_class = pytis.form.BrowseDualForm
         elif preview:
             form_class = pytis.form.DescriptiveDualForm
-        elif multi:
+        else:
             form_class = pytis.form.BrowseForm
-            try:
-                specification = pytis.config.resolver.specification(name)
-            except ResolverError:
-                pass
-            else:
-                if specification.view_spec().bindings():
-                    form_class = pytis.form.MultiBrowseDualForm
-                    kwargs = dict(binding=binding)
+            if  multi:
+                try:
+                    specification = pytis.config.resolver.specification(name)
+                except ResolverError:
+                    pass
+                else:
+                    if specification.view_spec().bindings():
+                        form_class = pytis.form.MultiBrowseDualForm
+                        kwargs = dict(binding=binding)
         return run_form(form_class, name, select_row=select_row, sorting=sorting,
                         filter=filter, condition=condition, profile_id=profile,
                         transaction=transaction, **kwargs)
