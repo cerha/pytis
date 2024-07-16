@@ -1731,6 +1731,7 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler, KeyHandler):
     def __init__(self, parent, guardian=None):
         wx.Panel.__init__(self, parent)
         CallbackHandler.__init__(self)
+        self._reload = None
         self._restricted_navigation_uri = None
         self._guardian = guardian
         self._webview = webview = wx.html2.WebView.New(self)
@@ -1791,6 +1792,8 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler, KeyHandler):
 
     def _on_navigating(self, event):
         uri = event.GetURL()
+        if uri != 'about:blank':
+            self._reload = None
         if uri.startswith('#'):
             script = ("var x = document.getElementById('%s'); "
                       "if (x) { x.scrollIntoView() };") % uri[1:]
@@ -1920,7 +1923,10 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler, KeyHandler):
 
     def reload(self):
         """Reload the current browser document from its original source."""
-        self._webview.Reload(wx.html2.WEBVIEW_RELOAD_NO_CACHE)
+        if self._reload is not None:
+            self._reload()
+        else:
+            self._webview.Reload(wx.html2.WEBVIEW_RELOAD_NO_CACHE)
 
     def load_uri(self, uri, restrict_navigation=None):
         """Load browser content from given URL.
@@ -1956,6 +1962,15 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler, KeyHandler):
             provider.
 
         """
+        # Avoid dismissing the page contents on reload (form refresh in web form).
+        # This way it works at least until we navigate away (when self._reload
+        # is cleared).  To fix it also when getting back in history, we would
+        # need to remember the context for each history item, which now seems
+        # an overkill.
+        self._reload = lambda: self.load_html(html,
+                                              base_uri=base_uri,
+                                              restrict_navigation=restrict_navigation,
+                                              resource_provider=resource_provider)
         if sys.version_info[0] == 2 and isinstance(html, unistr):
             html = html.encode('utf-8')
         self._resource_server.load_resources(resource_provider)
