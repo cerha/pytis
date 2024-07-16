@@ -1792,8 +1792,6 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler, KeyHandler):
 
     def _on_navigating(self, event):
         uri = event.GetURL()
-        if uri != 'about:blank':
-            self._reload = None
         if uri.startswith('#'):
             script = ("var x = document.getElementById('%s'); "
                       "if (x) { x.scrollIntoView() };") % uri[1:]
@@ -1823,6 +1821,8 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler, KeyHandler):
             app.echo(_("External URL navigation denied: %s") % uri, kind='error')
             log(OPERATIONAL, "Restricted to :", self._restricted_navigation_uri)
             event.Veto()
+        elif uri != 'about:blank':
+            self._reload = None
         event.Skip()
 
     def _help_handler(self, uri, path):
