@@ -1188,8 +1188,8 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
             # The spec is invalid, but we want the crash on attempt to run it.
             return True
 
-    def _cmd_new_record(self, **kwargs):
-        return self.api_new_record(**kwargs)
+    def _cmd_new_record(self, name, **kwargs):
+        return self.api_new_record(name, **kwargs)
 
     def _can_run_procedure(self, spec_name, proc_name, args=None, enabled=None,
                            block_refresh=False, **kwargs):
