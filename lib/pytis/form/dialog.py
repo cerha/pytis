@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2019-2023 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2019-2024 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2018 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -586,7 +586,7 @@ class ProgressDialog(OperationDialog):
     def __init__(self, parent, function, args=(), kwargs={},
                  title=_("Operation in progress"), message=_("Please wait..."),
                  maximum=100, elapsed_time=False, estimated_time=False,
-                 remaining_time=False, can_abort=False, new_thread=False):
+                 remaining_time=False, can_abort=False):
         """Inicializuj dialog.
 
         Argumenty:
@@ -602,8 +602,6 @@ class ProgressDialog(OperationDialog):
           can_abort -- Pokud je 'True', bude možno vykonávání funkce přerušit,
             pokud to funkce vykonávající operaci umožňuje (viz. docstring
             třídy).
-          new_thread -- experimantal support for invoking function in a
-            separate thread.
 
         """
         super_(ProgressDialog).__init__(self, parent, function, args=args,
@@ -620,7 +618,6 @@ class ProgressDialog(OperationDialog):
             style = style | wx.PD_CAN_ABORT
         self._style = style
         self._maximum = maximum
-        self._new_thread = new_thread
 
     def _create_dialog(self):
         self._dialog = wx.ProgressDialog(self._title, unistr(self._message),
@@ -683,20 +680,8 @@ class ProgressDialog(OperationDialog):
                     #time.sleep(0.01)
 
     def _run_dialog(self):
-        if self._new_thread:
-            def update(*args, **kwargs):
-                update_ = self._Queued(self._update)
-                wx.CallAfter(update_, *args, **kwargs)
-                return update_.result()
-
-            function = self._Queued(self._function)
-            thread = threading.Thread(target=function,
-                                      args=(update,) + self._args, kwargs=self._kwargs)
-            thread.start()
-            return function.result()
-        else:
-            pytis.form.app.wx_yield(full=True)
-            return self._function(self._update, *self._args, **self._kwargs)
+        pytis.form.app.wx_yield(full=True)
+        return self._function(self._update, *self._args, **self._kwargs)
 
     def _customize_result(self, result):
         return result
