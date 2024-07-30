@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2022 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2024 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2002-2017 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -624,9 +624,9 @@ class PresentedRow(object):
         """
         if secure and not self.permitted(key, pytis.data.Permission.VIEW):
             return default
-        try:
+        if key in self._coldict:
             return self.__getitem__(key, lazy=lazy)
-        except KeyError:
+        else:
             return default
 
     def cb_value(self, key, column):

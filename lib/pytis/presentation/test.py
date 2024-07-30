@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2019 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2019, 2024 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2017 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -740,6 +740,31 @@ class TestPresentedRow:
         prefill = dict(a=5, b=8)
         row.set_row(None, reset=True, prefill=prefill)
         assert prefill == dict(a=5, b=8)
+
+    def test_keyerror(self):
+        row = self._row((
+            pp.Field('x', type=pd.Integer()),
+            pp.Field('y', type=pd.Integer(), computer=pp.computer(lambda r, x: x + r['z'].value())),
+        ))
+        with pytest.raises(KeyError) as exc_info:
+            row['a']
+        assert exc_info.value.args[0] == 'a'
+        assert row.get('a') is None
+        row['x'] = pd.ival(1)
+        with pytest.raises(KeyError) as exc_info:
+            row['y']
+        assert exc_info.value.args[0] == 'z'
+        row['x'] = pd.ival(2)
+        with pytest.raises(KeyError) as exc_info:
+            row.get('y')
+        assert exc_info.value.args[0] == 'z'
+
+
+        with pytest.raises(KeyError):
+            # New row raises the KeyError already in construction time.
+            row = self._row((
+                pp.Field('x', type=pd.Integer(), computer=pp.computer(lambda r: r['xx'].value())),
+            ), new=True)
 
 
 class TestPrettyTypes:
