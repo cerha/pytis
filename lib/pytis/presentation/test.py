@@ -758,6 +758,10 @@ class TestPresentedRow:
         with pytest.raises(KeyError) as exc_info:
             row.get('y')
         assert exc_info.value.args[0] == 'z'
+        row['x'] = pd.ival(3)
+        with pytest.raises(KeyError) as exc_info:
+            row.format('y')
+        assert exc_info.value.args[0] == 'z'
 
 
         with pytest.raises(KeyError):

@@ -398,6 +398,7 @@ class PresentedRow(object):
             computed_values += [c for c in (column.editable, column.visible, column.check,
                                             column.runtime_filter, column.runtime_arguments) if c]
         if prefill:
+            # Prefill should have been consumed above, otherwise it contained unknown keys...
             raise KeyError(list(prefill.keys())[0])
         if row:
             # Preserve any extra row columns - they may include inline_display values.
@@ -710,10 +711,22 @@ class PresentedRow(object):
             pass
         try:
             value = self[key]
-        except KeyError:
-            # Může nastat například v případě, kdy k danému sloupci nejsou
-            # přístupová práva.
-            return ''
+        except KeyError as e:
+            # The previous comment said that the KeyError here may occur in
+            # case there are insufficient access rights for given column,
+            # but it sounds quite strange.  Where would a permission check
+            # raise a KeyError?  The problem is that catching KeyError here
+            # masks errors inside computer functions which should not be
+            # caught at all.  So the conservative solution is to check if
+            # the KeyError relates to the actual column key and re-raise
+            # it if not.  But maybe the whole KeyError catching should be
+            # simply removed.  Calling .format() with an invalid key most
+            # likely should raise a KeyError.
+            if e.args[0] == key:
+                return ''
+            else:
+                raise
+
         column = self._coldict[key]
         if secure is False or self.permitted(key, permission=pytis.data.Permission.VIEW):
             if column.formatter is not None:
