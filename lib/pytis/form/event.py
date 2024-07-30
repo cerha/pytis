@@ -95,7 +95,7 @@ def top_level_exception(einfo=None):
                 tbstring = "\n".join(traceback.format_exception(*einfo))
             log(OPERATIONAL, 'Top-level exception caught', tbstring)
             if pytis.form.run_dialog(pytis.form.BugReport, einfo):
-                sys.exit()
+                app.exit(force=True)
             if pytis.config.debug_on_error:
                 import pdb
                 pdb.post_mortem(sys.exc_info()[2])
