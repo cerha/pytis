@@ -1189,8 +1189,16 @@ class Application(API):
         """Refresh visible application components."""
         pass
 
-    def exit(self):
-        """Exit the application."""
+    def exit(self, force=False):
+        """Exit the application.
+
+        Arguments:
+
+          force -- If True, exit unconditionally without asking about closing
+            open forms even if they contain unsaved changes or otherwise
+            require user's attention.
+
+        """
         pass
 
 

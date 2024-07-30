@@ -910,7 +910,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         if name in self._saved_state:
             del self._saved_state[name]
 
-    def _cleanup(self):
+    def _cleanup(self, force=False):
         # Zde ignorujeme všemožné výjimky, aby i při poměrně značně havarijní
         # situaci bylo možno aplikaci ukončit.
         def safelog(msg, *args):
@@ -920,7 +920,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
                 print(msg, args)
         safelog('Application exit called:', (pytis.config.dbschemas,))
         try:
-            if not self._modals.empty():
+            if not force and not self._modals.empty():
                 log(EVENT, "Couldn't close application with modal windows:",
                     self._modals.top())
                 return False
@@ -936,13 +936,14 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         except Exception as e:
             safelog(str(e))
         try:
-            for form in self._windows.items():
-                try:
-                    self._raise_form(form)
-                    if not form.close():
-                        return False
-                except Exception as e:
-                    safelog(str(e))
+            if not force:
+                for form in self._windows.items():
+                    try:
+                        self._raise_form(form)
+                        if not form.close():
+                            return False
+                    except Exception as e:
+                        safelog(str(e))
         except Exception as e:
             safelog(str(e))
         try:
@@ -965,7 +966,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
     # Callbacky
 
     def _on_frame_close(self, event):
-        if not self._cleanup():
+        if not self._cleanup(force=not event.CanVeto()):
             event.Veto()
         else:
             event.Skip()
@@ -1775,8 +1776,8 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
     def api_refresh(self):
         self._cmd_refresh(interactive=False)
 
-    def api_exit(self):
-        self._frame.Close()
+    def api_exit(self, force=False):
+        self._frame.Close(force=force)
 
     def api_echo(self, message, kind='info'):
         assert kind in ('info', 'warning', 'error')
