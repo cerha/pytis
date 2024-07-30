@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2021 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2024 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2018 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -26,7 +26,7 @@
 from builtins import object
 import copy
 import cachetools
-
+import sys
 import wx
 import wx.grid
 
@@ -454,7 +454,9 @@ class GridTable(wx.grid.GridTableBase, DataTable):
                         return attr
             return None
         except Exception:
-            top_level_exception()
+            # Calling top_level_exception() synchronously fails with a C++ traceback
+            # at least on macOS.
+            wx.CallAfter(top_level_exception, sys.exc_info())
 
 
 class TableRowIterator(object):
