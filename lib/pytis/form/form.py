@@ -147,7 +147,7 @@ class Form(wx.Panel, KeyHandler, CallbackHandler, CommandHandler):
 
         Argumenty:
 
-          parent -- instance 'wxFrame', do kterého formulář patří
+          parent -- parent 'wx.Frame' instance.
           resolver -- resolver jmenných odkazů, instance 'pytis.util.Resolver'
           name -- jméno specifikačního souboru pro resolver; string
           guardian -- formulář (instance libovolné třídy), ve kterém je
@@ -185,13 +185,13 @@ class Form(wx.Panel, KeyHandler, CallbackHandler, CommandHandler):
         neměly být přidávány.  Konstruktor je možno předefinovat a provádět
         nějaké doplňující akce, ale argumenty by neměly být měněny.
 
-        Po zpracování společných argumwentů jsou načteny specifikace a vytvořen
+        Po zpracování společných argumentů jsou načteny specifikace a vytvořen
         datový objekt.
 
         Poté jsou zpracovávány klíčové argumenty.  Každá odvozená třída může
         definovat své vlastní klíčové argumenty.  Ty potom zpracuje
         předefinováním metody '_init_attributes()'.  Ta již může využívat
-        inicializovaného datového objetu a specifikací a případně initializovat
+        inicializovaného datového objetu a specifikací a případně inicializovat
         další atributy třídy.  Metoda '_init_attributes()' by měla vždy
         zpracovávat pouze klíčové argumenty, které jsou specifické pro danou
         třídu.  Zbylé předá metodě rodičovské třídy konstrukcí **kwargs.  Takto
