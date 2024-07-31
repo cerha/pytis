@@ -1247,7 +1247,7 @@ class LookupForm(InnerForm):
     def _cmd_jump(self):
         max_value = self._lf_count()
         if max_value > 0:
-            result = run_form(InputForm, title=_(u"Jump to record"), fields=(
+            result = app.input_form(title=_(u"Jump to record"), fields=(
                 Field('row', _("Row number"),
                       type=pytis.data.Integer(not_null=True, minimum=1, maximum=max_value),
                       descr=_("Row number between 1 and %d", max_value)),
@@ -2231,24 +2231,21 @@ class RecordForm(LookupForm):
                               if f.editable() is not False]),
             )),
         )
-        result = run_form(
-            InputForm, title=_(u"Batch import"),
-            fields=(
-                Field('separator', _("Common separators"), enumerator=Separators,
-                      not_null=True,
-                      descr=_("The character used to separate column values "
-                              "in each input file row.")),
-                Field('custom', _("Custom separator"),
-                      check=pytis.presentation.computer(
-                          lambda r, separator, custom:
-                          _("The value is mandatory when 'Other' is selected above.")
-                          if separator == 'other' and not custom else None
-                      ),
-                      editable=pytis.presentation.computer(
-                          lambda e, separator: separator == 'other'
-                      )),
-            ), layout=(content, 'separator', 'custom'),
-        )
+        result = app.input_form(title=_(u"Batch import"), fields=(
+            Field('separator', _("Common separators"), enumerator=Separators,
+                  not_null=True,
+                  descr=_("The character used to separate column values "
+                          "in each input file row.")),
+            Field('custom', _("Custom separator"),
+                  check=pytis.presentation.computer(
+                      lambda r, separator, custom:
+                      _("The value is mandatory when 'Other' is selected above.")
+                      if separator == 'other' and not custom else None
+                  ),
+                  editable=pytis.presentation.computer(
+                      lambda e, separator: separator == 'other'
+                )),
+        ), layout=(content, 'separator', 'custom'))
         if not result:
             return False
         separator = result['separator'].value()
@@ -3448,6 +3445,9 @@ class InputForm(_VirtualEditForm, PopupEditForm):
     confirmed, the 'result' is a 'pytis.presentation.PresentedRow' instance
     containing the entered values.  Other specification attributes, such as
     'layout', 'check', etc. may be used.
+
+    However the form should rather be user through 'app.input_form()' Pytis API
+    method.
 
     """
     pass

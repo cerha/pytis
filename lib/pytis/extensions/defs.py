@@ -146,7 +146,7 @@ def check_form():
     import pytis.form
 
     resolver = pytis.config.resolver
-    result = pytis.form.run_form(pytis.form.InputForm, title="Kontrola specifikace", fields=(
+    result = app.input_form(title="Kontrola specifikace", fields=(
         Field('spec', "Specifikace", not_null=True, width=30),
     ))
     if result:

@@ -703,8 +703,8 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
 
     def _unlock_crypto_keys(self):
         def password_dialog(title, message, verify=False, check=()):
-            result = run_form(
-                pytis.form.InputForm, title=title,
+            result = app.input_form(
+                title=title,
                 fields=(Field('password', _("Password"),
                               type=pd.Password(verify=verify, not_null=True), width=40),),
                 layout=(Text(message), 'password'),
@@ -1838,13 +1838,10 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
 
     def _input(self, type, title, label, default=None, width=None, height=None, descr=None,
                noselect=False):
-        row = run_form(
-            pytis.form.InputForm, title=title, fields=(
-                Field('f', label, default=default, type=type, width=width, height=height,
-                      descr=descr),
-            ),
-            avoid_initial_selection=noselect,
-        )
+        row = app.input_form(title=title, noselect=noselect, fields=(
+            Field('f', label, default=default, type=type, width=width, height=height,
+                  descr=descr),
+        ))
         if row:
             return row['f'].value()
         else:
@@ -2573,16 +2570,15 @@ def db_operation(operation, *args, **kwargs):
                 else:
                     return None
 
-            if not run_form(
-                    pytis.form.InputForm, title=_("Log in for database access"),
+            if not app.input_form(
+                    title=_("Log in for database access"),
                     fields=(Field('login', _("Login"), width=24, not_null=True,
                                   enumerator=login_enumerator, default=default_login),
                             Field('password', _("Password"), type=pd.Password(verify=False),
                                   editable=password_editable, computer=password_computer,
                                   default=default_password, width=24, not_null=True),),
                     focus_field='password',
-                    check=check_login,
-            ):
+                    check=check_login):
                 return FAILURE
             pytis.config.dbconnection = pytis.config.dbconnection  # mark as changed
             pytis.config.dbuser = pytis.config.dbconnection.user()

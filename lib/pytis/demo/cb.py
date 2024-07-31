@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2022 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2024 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2007-2018 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -193,7 +193,7 @@ class PrintContinentCountries(pytis.output.PrintSpecification):
     def init(self):
         if not app.question(_("Really print?")):
             return None
-        result = pytis.form.run_form(pytis.form.InputForm, title=_("Document title"), fields=(
+        result = app.input_form(title=_("Document title"), fields=(
             Field('title', _("Title"), not_null=True),
         ))
         if result:

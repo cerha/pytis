@@ -2602,14 +2602,14 @@ class StructuredTextField(TextField):
                           "the image when the mouse moves over.")),
         )
         button = Button(_("Insert new"), self._load_new_file)
-        row = run_form(pytis.form.InputForm, title=_("Insert Image"), fields=fields,
-                       prefill=dict(filename=filename,
-                                    align=link.align(),
-                                    tooltip=link.tooltip()),
-                       layout=(HGroup(('filename', button), ('preview',)),
-                               'align', 'size', 'orig_size', 'preview_size', 'tooltip'),
-                       check=(self._check_file_selected,),
-                       transaction=transaction)
+        row = app.input_form(title=_("Insert Image"), fields=fields,
+                             prefill=dict(filename=filename,
+                                          align=link.align(),
+                                          tooltip=link.tooltip()),
+                             layout=(HGroup(('filename', button), ('preview',)),
+                                     'align', 'size', 'orig_size', 'preview_size', 'tooltip'),
+                             check=(self._check_file_selected,),
+                             transaction=transaction)
         if row:
             filename = row['filename'].value()
             if row['size'].value() != self._size_computer(row, filename):
@@ -2645,12 +2645,12 @@ class StructuredTextField(TextField):
                           "link when the mouse moves over.")),
         )
         button = Button(_("Insert new"), self._load_new_file)
-        row = run_form(pytis.form.InputForm, title=_("Insert attachment"), fields=fields,
-                       prefill=dict(filename=filename,
-                                    title=link.title(),
-                                    tooltip=link.tooltip()),
-                       layout=('filename', button, 'title', 'tooltip'),
-                       check=(self._check_file_selected,))
+        row = app.input_form(title=_("Insert attachment"), fields=fields,
+                             prefill=dict(filename=filename,
+                                          title=link.title(),
+                                          tooltip=link.tooltip()),
+                             layout=('filename', button, 'title', 'tooltip'),
+                             check=(self._check_file_selected,))
         if row:
             link.update(target=row['filename'].value(),
                         title=row['title'].value(),
@@ -2659,7 +2659,12 @@ class StructuredTextField(TextField):
 
     def _cmd_link(self):
         link = self.LCGLink(self._ctrl)
-        fields = (
+        prefill=dict(
+            target=link.target(),
+            title=link.title(),
+            tooltip=link.tooltip(),
+        )
+        row = app.input_form(title=_("Link properties"), prefill=prefill, fields=(
             Field('target', _("Target"), width=50, not_null=True,
                   descr=_("Enter the absolute URL, such as "
                           "http://www.mycompany.com or "
@@ -2670,11 +2675,7 @@ class StructuredTextField(TextField):
             Field('tooltip', _(u"Tooltip"), width=50,
                   descr=_("Enter the text displayed in baloon help above the link "
                           "when the mouse moves over.")),
-        )
-        row = run_form(pytis.form.InputForm, title=_("Link properties"), fields=fields,
-                       prefill=dict(target=link.target(),
-                                    title=link.title(),
-                                    tooltip=link.tooltip()))
+        ))
         if row:
             link.update(target=row['target'].value(),
                         title=row['title'].value(),

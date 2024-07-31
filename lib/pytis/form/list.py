@@ -65,7 +65,6 @@ from .dialog import AggregationSetupDialog, CheckListDialog
 from .form import (
     BrowsableShowForm, Form, LookupForm, PopupEditForm, PopupForm,
     QueryFieldsForm, RecordForm, Refreshable, ShowForm, TitledForm,
-    InputForm,
 )
 from .screen import (
     KeyHandler, busy_cursor, make_in_operator,
@@ -1852,27 +1851,24 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         import pkgutil
         xls_available = pkgutil.find_loader('xlsxwriter') is not None
         selection_active = self._grid.IsSelection()
-        answers = run_form(
-            InputForm, title=_("Export options"), fields=(
-                Field('scope', _("Scope"), enumerator=('all', 'selection'),
-                      default='selection' if selection_active else 'all',
-                      not_null=True, selection_type=SelectionType.RADIO,
-                      editable=Editable.ALWAYS if selection_active else Editable.NEVER,
-                      display=lambda x: (_("All rows") if x == 'all' else
-                                         _("Selected rows only")),
-                      descr=_("Select the extent of rows to be exported.")),
-                Field('format', _("File format"), enumerator=('XLSX', 'CSV'),
-                      default='CSV', not_null=True, selection_type=SelectionType.RADIO,
-                      descr=_("Choose the export file format")),
-                Field('action', _("Action"), enumerator=('save', 'launch'),
-                      default='save', not_null=True, selection_type=SelectionType.RADIO,
-                      display=lambda x: (_("Save to disk") if x == 'save' else
-                                         _("Open in spreadsheet")),
-                      descr=_("Select what to do with the exported file")),
-            ),
-            check=(lambda r: _("XLSX support not installed.  Ask your administrator.")
-                   if r['format'].value() == 'XLSX' and not xls_available else None),
-        )
+        answers = app.input_form(title=_("Export options"), fields=(
+            Field('scope', _("Scope"), enumerator=('all', 'selection'),
+                  default='selection' if selection_active else 'all',
+                  not_null=True, selection_type=SelectionType.RADIO,
+                  editable=Editable.ALWAYS if selection_active else Editable.NEVER,
+                  display=lambda x: (_("All rows") if x == 'all' else
+                                     _("Selected rows only")),
+                  descr=_("Select the extent of rows to be exported.")),
+            Field('format', _("File format"), enumerator=('XLSX', 'CSV'),
+                  default='CSV', not_null=True, selection_type=SelectionType.RADIO,
+                  descr=_("Choose the export file format")),
+            Field('action', _("Action"), enumerator=('save', 'launch'),
+                  default='save', not_null=True, selection_type=SelectionType.RADIO,
+                  display=lambda x: (_("Save to disk") if x == 'save' else
+                                     _("Open in spreadsheet")),
+                  descr=_("Select what to do with the exported file")),
+        ), check=(lambda r: _("XLSX support not installed.  Ask your administrator.")
+                  if r['format'].value() == 'XLSX' and not xls_available else None))
         if not answers:
             return
         scope, fileformat, action = (answers['scope'].value(), answers['format'].value(),
@@ -2474,7 +2470,7 @@ class FoldableForm(ListForm):
 
     def _cmd_folding_level(self):
         if self._folding_enabled():
-            result = run_form(InputForm, title=_("Select folding level"), fields=(
+            result = app.input_form(title=_("Select folding level"), fields=(
                 Field('level', _("Folding level"), width=2,
                       type=pytis.data.Integer(not_null=True, minimum=1),
                       descr=_("Enter the number denoting the folding level to fold/unfold")),

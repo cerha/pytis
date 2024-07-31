@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2023 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2024 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2002-2014 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -146,8 +146,7 @@ class UserDefaultPrinter(object):
 
 
 def set_default_printer():
-    from pytis.presentation import Field
-    from pytis.form import Text, InputForm, run_form
+    from pytis.presentation import Field, Text
     try:
         import cups
         import cupshelpers
@@ -162,17 +161,12 @@ def set_default_printer():
     if not default_printer:
         default_printer = connection.getDefault()
     printers = cupshelpers.getPrinters(connection)
-    result = run_form(
-        InputForm,
-        title=_("Printer Selection"),
-        fields=(
-            Field('printer', "", width=40, not_null=True,
-                  type=pytis.data.String,
-                  enumerator=pytis.data.FixedEnumerator(list(printers.keys())),
-                  default=default_printer),
-        ),
-        layout=(Text(_("Choose the default printer:")), 'printer'),
-    )
+    result = app.input_form(title=_("Printer Selection"), fields=(
+        Field('printer', "", width=40, not_null=True,
+              type=pytis.data.String,
+              enumerator=pytis.data.FixedEnumerator(list(printers.keys())),
+              default=default_printer),
+    ), layout=(Text(_("Choose the default printer:")), 'printer'),)
     if result:
         user_default.set(result['printer'].value())
     return None

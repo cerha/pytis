@@ -275,19 +275,17 @@ def run_any_form():
             return lambda val: val.lower().find(name_substr.lower()) != -1
         else:
             return None
-    row = pytis.form.run_form(
-        pytis.form.InputForm,
-        title=_("Run Form"),
-        fields=(Field('type', _("Form type"), not_null=True,
-                      enumerator=pd.FixedEnumerator([x[0] for x in form_types]),
-                      default='BrowseForm'),
-                Field('name_substr', _("Search string"), width=40,),
-                Field('name', _("Specification name"), width=40, height=10,
-                      enumerator=pd.FixedEnumerator(all_defs), not_null=True,
-                      selection_type=SelectionType.LISTBOX,
-                      runtime_filter=Computer(name_runtime_filter, depends=('name_substr',))
-                      ),
-                ))
+    row = app.input_form(title=_("Run Form"), fields=(
+        Field('type', _("Form type"), not_null=True,
+              enumerator=pd.FixedEnumerator([x[0] for x in form_types]),
+              default='BrowseForm'),
+        Field('name_substr', _("Search string"), width=40,),
+        Field('name', _("Specification name"), width=40, height=10,
+              enumerator=pd.FixedEnumerator(all_defs), not_null=True,
+              selection_type=SelectionType.LISTBOX,
+              runtime_filter=Computer(name_runtime_filter, depends=('name_substr',))
+              ),
+    ))
     if row is not None:
         form_type = dict(form_types)[row['type'].value()]
         pytis.form.run_form(form_type, row['name'].value())
