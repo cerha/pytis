@@ -5279,6 +5279,10 @@ class Command(object):
 
         """
         assert callable(method), method
+        assert hasattr(method, 'command_defining_class'), \
+            "{} was not decorated by 'Command.define()'.".format(method)
+        assert method.command_defining_class is not None, \
+            "{} is not a 'CommandHandler' subclass method.".format(method)
         self._method = method
         self._args = args
         self._kwargs = kwargs or {}
