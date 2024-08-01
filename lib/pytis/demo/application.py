@@ -46,9 +46,11 @@ class Application(pytis.presentation.Application):
     def menu(self):
         return (
             Menu(_("&System"), pytis.form.config_menu_items() + (
-                MenuItem(_("&Run form"), pytis.extensions.cmd_run_any_form(),
+                MenuItem(_("&Run form"),
+                         Command(pytis.extensions.Commands.run_any_form),
                          hotkey=('Alt-a', 'a')),
-                MenuItem(_("&Check specification files"), pytis.extensions.cmd_check_menus_defs()),
+                MenuItem(_("&Check specification files"),
+                         Command(pytis.extensions.Commands.check_menus_defs)),
                 Menu(_("Management of menus and user roles"), (
                     MenuItem(_("Roles"), Command(app.run_form, 'menu.ApplicationRoles')),
                     MenuItem(_("Menu"), Command(app.run_form, 'menu.ApplicationMenu')),

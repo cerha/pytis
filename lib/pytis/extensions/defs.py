@@ -112,50 +112,6 @@ def _get_default_select(spec):
         data.fetchone()
 
 
-def check_form():
-    """Zeptá se na název specifikace a zobrazí její report."""
-
-    resolver = pytis.config.resolver
-    result = app.input_form(title="Kontrola specifikace", fields=(
-        Field('spec', "Specifikace", not_null=True, width=30),
-    ))
-    if result:
-        spec = result['spec'].value()
-        try:
-            data_spec = resolver.get(spec, 'data_spec')
-            view_spec = resolver.get(spec, 'view_spec')
-        except ResolverError:
-            app.warning('Specifikace nenalezena.')
-            return
-        data = data_spec.create(dbconnection_spec=pytis.config.dbconnection)
-        # Title
-        obsah = "Title: %s\n" % (view_spec.title())
-        # Název tabulky
-        obsah += "Tabulka: %s\n\n" % (data.table(data.columns()[0].id()))
-        # Políčka v bindings
-        obsah += "Políčka v data_spec:\n%s\n\n" % \
-                 "\n".join(["  - %s" % c.id()
-                            for c in data.columns() if c.id() != 'oid'])
-        # Políčka ve fields
-        obsah += "Políčka ve fields:\n%s\n\n" % \
-                 "\n".join(["  - %s" % f.id() for f in view_spec.fields()])
-        # Actions - TODO: Bude třeba zohlednit vnořené seznamy a ActionGroup.
-        # obsah += "\n\nAkce kontextového menu:\n\n"
-        # actions = view_spec.actions()
-        # if actions:
-        #     obsah += "\n".join([a.title() for a in actions])
-        # else:
-        #     obsah += "Nejsou definovány"
-        # Default select
-        _get_default_select(spec)
-        app.message("DEFS: %s" % spec, content=obsah)
-
-
-def cmd_check_form():
-    import pytis.form
-    return Command(pytis.form.Application.handled_action, handler=check_form)
-
-
 class CheckReporter(object):
 
     def start(self, number_of_items):
@@ -449,23 +405,3 @@ class DevelChecker(MenuChecker):
 
     def check_reverse_codebook_rights(self, *args, **kwargs):
         return []
-
-
-def check_menus_defs():
-    """Zkontroluje všechny specifikace uvedené v menu aplikace."""
-    MenuChecker().interactive_check()
-
-
-def cmd_check_menus_defs():
-    import pytis.form
-    return Command(pytis.form.Application.handled_action, handler=check_menus_defs)
-
-
-def check_access_rights():
-    """Zkontroluje práva všech specifikací uvedených v menu aplikace."""
-    MenuChecker().access_check()
-
-
-def cmd_check_access_rights():
-    import pytis.form
-    return Command(pytis.form.Application.handled_action, handler=check_access_rights)

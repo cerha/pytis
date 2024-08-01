@@ -308,7 +308,7 @@ class InputField(KeyHandler, CommandHandler):
                 if hasattr(x, 'MinSize') and minsize != x.MinSize:
                     # This hack prevents the previously set minsize to drop
                     # unexpectedly, which happened for example with the ListBoxField
-                    # present in cmd_run_any_form() input form.
+                    # present in pe.Commands.run_any_form() input form.
                     x.SetMinSize(minsize)
         return box
 
