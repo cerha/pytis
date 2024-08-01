@@ -358,9 +358,6 @@ def cmd_run_any_form():
 def cmd_check_menus_defs():
     return Command(Commands.check_menus_defs)
 
-def cmd_check_access_rights():
-    return Command(Commands.check_access_rights)
-
 def cmd_check_form():
     return Command(Commands.check_form)
 
