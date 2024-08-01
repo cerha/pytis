@@ -266,49 +266,38 @@ def file_menu_items(fields, row, select_arguments):
             result = value.value() is not None
         return result
 
-    def field_data(field_id):
-        value = row[field_id]
-        if isinstance(value.type(), pytis.data.Big) and data.find_column(field_id):
+    def open_file(field):
+        fid = field.id()
+        value = row[fid]
+        if isinstance(value.type(), pytis.data.Big) and data.find_column(fid):
             # Big values are not included in list form select.
             key_id = data.key()[0].id()
             data.select(condition=pytis.data.EQ(key_id, row[key_id]),
-                        columns=(field_id,), transaction=row.transaction(),
+                        columns=(fid,), transaction=row.transaction(),
                         arguments=select_arguments)
             complete_row = data.fetchone()
             data.close()
             if complete_row:
-                value = complete_row[field_id]
-        if isinstance(value.type(), pytis.data.Binary):
-            result = value.value()
-        elif value.value() is not None:
-            result = value.export()
-        else:
-            result = None
-        return result
+                value = complete_row[fid]
+        if value.value() is not None:
+            if isinstance(value.type(), pytis.data.Binary):
+                field_data = value.value()
+            else:
+                field_data = value.export()
+            app.launch_file(data=field_data, suffix=os.path.splitext(row.filename(fid))[1])
 
-    def open_file(field_id, filename):
-        app.launch_file(data=field_data(field_id), suffix=os.path.splitext(filename)[1])
+    def can_open_file(field):
+        crypto_name = field.crypto_name()
+        return crypto_name is None or crypto_name in app.decrypted_areas()
 
-    def can_open(fspec):
-        crypto_name = fspec.crypto_name()
-
-        def can_open_file(field_id, filename):
-            return crypto_name is None or crypto_name in app.decrypted_areas()
-        return can_open_file
-
-    mitems = []
-    for f in fields:
-        fid = f.id()
-        filename = row.filename(fid)
-        if filename is not None and field_not_null(fid):
-            mitems.append(MenuItem(_('Open file "%s"', filename),
-                                   command=Command(Application.handled_action,
-                                                   handler=open_file,
-                                                   field_id=fid,
-                                                   filename=filename,
-                                                   enabled=can_open(f)),
-                                   help=_('Open the value of field "%s" as a file.', f.label())))
-    return mitems
+    return [MenuItem(_('Open file "%s"', filename),
+                     command=Command(Application.handled_action,
+                                     handler=open_file,
+                                     field=f,
+                                     enabled=can_open_file),
+                     help=_('Open the value of field "%s" as a file.', f.label()))
+            for f, filename in [(f, row.filename(f.id())) for f in fields]
+            if filename is not None and field_not_null(f.id())]
 
 
 # Utility classes
