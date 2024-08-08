@@ -34,6 +34,7 @@ import io
 import datetime
 import os
 import re
+import sys
 import textwrap
 
 import wx.lib.colourselect
@@ -56,7 +57,7 @@ from pytis.util import (
 from .command import CommandHandler, UICommand
 from .dialog import Calendar, ColorSelector, Error
 from .form import RecordForm
-from .event import wx_callback
+from .event import wx_callback, top_level_exception
 from .screen import (
     CallbackHandler, InfoWindow, KeyHandler, TextHeadingSelector,
     char2px, dlg2px, file_menu_items, get_icon, uicommand_mitem,
@@ -393,26 +394,32 @@ class InputField(KeyHandler, CommandHandler):
         return self._row.check(self.id())
 
     def _do_validation(self, do_validation, do_check):
-        transaction = self._row.transaction()
-        if transaction and not transaction.open() or not all(x[0] for x in self._controls):
-            # Don't validate when the transaction is already closed.  Also abort if the C++
-            # controls are already destroyed (as we may get called later due to wx.CallAfter).
-            return
-        if do_validation:
-            try:
-                error = self._validate()
-            except (pytis.data.DBRetryException, pytis.data.DBSystemException):
-                error = None
-                self._connection_closed = True
-            self._last_validation_error = error
-            self._on_change_hook()
-        if do_check:
-            self._last_check_result = self._check()
-        self._update_field_state()
-        if self._last_validation_error:
-            app.echo(self._last_validation_error.message())
-        elif self._last_check_result:
-            app.echo(self._last_check_result)
+        try:
+            transaction = self._row.transaction()
+            if transaction and not transaction.open() or not all(x[0] for x in self._controls):
+                # Don't validate when the transaction is already closed.  Also abort if the C++
+                # controls are already destroyed (as we may get called later due to wx.CallAfter).
+                return
+            if do_validation:
+                try:
+                    error = self._validate()
+                except (pytis.data.DBRetryException, pytis.data.DBSystemException):
+                    error = None
+                    self._connection_closed = True
+                self._last_validation_error = error
+                self._on_change_hook()
+            if do_check:
+                self._last_check_result = self._check()
+            self._update_field_state()
+            if self._last_validation_error:
+                app.echo(self._last_validation_error.message())
+            elif self._last_check_result:
+                app.echo(self._last_check_result)
+        except:
+            # _do_validation is called outside the main thread so we need to handle top
+            # level exceptions here.  Otherwise errors in runtime filters and check
+            # functions are silently ignored.
+            wx.CallAfter(top_level_exception, sys.exc_info())
 
     def _on_idle(self, event):
         w = wx_focused_window()
