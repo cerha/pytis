@@ -580,7 +580,7 @@ class Application(API):
         pass
 
     def input_form(self, title, fields, prefill=None, layout=None, check=None, noselect=False,
-                   inserted_data=None, on_commit_record=None):
+                   inserted_data=None, focus_field=None, on_commit_record=None):
         """Display modal form to collect user input from user defined fields.
 
         Arguments:
