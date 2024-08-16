@@ -606,6 +606,11 @@ class Application(API):
             given data and the user can individually accept or skip each row.
             Use 'on_commit_record' to handle the user accepted records
             (multiple records can not be passed through the return value).
+          focus_field -- identifier of the field to be activated for user input
+            on form startup.  If None, the first field is the default.  It is
+            also possible to pass a function of one argument -- the
+            PresentedRow instance representing the current record.  This
+            function must return a field identifier or None.
           on_commit_record -- callback to be called when the record is
             succesfully saved after the submit button is pressed.  Similar to
             'cleanup' in form specification and called just after cleanup when
