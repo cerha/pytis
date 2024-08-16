@@ -580,7 +580,7 @@ class Application(API):
         pass
 
     def input_form(self, title, fields, prefill=None, layout=None, check=None, noselect=False,
-                   inserted_data=None, focus_field=None, on_commit_record=None):
+                   inserted_data=None, focus_field=None, on_commit_record=None, transaction=None):
         """Display modal form to collect user input from user defined fields.
 
         Arguments:
@@ -611,6 +611,7 @@ class Application(API):
             'cleanup' in form specification and called just after cleanup when
             both defined.  A 'pytis.presentation.PresentedRow' instance is
             passed as argument.
+          transaction -- transaction for DB operations.
 
         Returns a 'pytis.presentation.PresentedRow' instance containing field
         values or None if the user cancels the form.
