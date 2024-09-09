@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2020, 2022 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2020, 2022, 2024 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2002-2016 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -29,7 +29,6 @@ from past.builtins import basestring
 from future.utils import with_metaclass
 
 import getopt
-import imp
 import os
 import stat
 import sys
@@ -1299,17 +1298,28 @@ class Configuration(object):
         except Exception:
             raise Exception("Unable to stat configuration file:", filename)
         try:
-            f = open(filename)
-        except Exception:
-            raise Exception("Unable to open configuration file:", filename)
-        try:
             del sys.modules['_config']
         except Exception:
             pass
-        try:
-            confmodule = imp.load_source('_config', filename, f)
-        finally:
-            f.close()
+        if sys.version_info[0] == 2:
+            import imp
+            try:
+                f = open(filename)
+            except Exception as e:
+                raise Exception("Unable to open configuration file {}: {}".format(filename, e))
+            try:
+                confmodule = imp.load_source('_config', filename, f)
+            finally:
+                f.close()
+        elif sys.version_info[1] < 5:
+            import importlib.machinery
+            loader = importlib.machinery.SourceFileLoader('_config', filename)
+            confmodule = loader.load_module()
+        else:
+            import importlib.util
+            spec = importlib.util.spec_from_file_location('_config', filename)
+            confmodule = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(confmodule)
         options = self._options
         cloptions = self.command_line_options
         for o in dir(confmodule):
