@@ -675,9 +675,11 @@ class InnerForm(Form):
                                                     perm=pytis.data.Permission.PRINT)]
         if app.has_access(self.name(), perm=pytis.data.Permission.PRINT):
             menu.append(MenuSeparator())
-            prefill = dict(module=pytis.data.sval(name))
-            menu.append(pytis.extensions.new_record_mitem(_("New report"), printing_form,
-                                                          prefill=prefill))
+            menu.append(MenuItem(_("New report"),
+                                 command=pytis.form.Application.COMMAND_NEW_RECORD(
+                                     name=printing_form,
+                                     prefill=dict(module=pytis.data.sval(name))
+                                 )))
             if db_print_spec:
                 mitem = pytis.extensions.run_form_mitem
                 edit_submenu = [mitem(label, printing_form, PopupEditForm,
