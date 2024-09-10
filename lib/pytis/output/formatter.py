@@ -584,17 +584,6 @@ class Formatter(object):
         "Return the formatted document as PDF data (basestring)."
         return self._pdf()
 
-    def preview(self, stream):
-        """Return the formatted document as a plain text.
-
-        Arguments:
-
-          stream -- stream open for writing, providing 'write' method.
-
-        'stream' gets closed by this method after its writing is finished.
-
-        """
-
     def printout(self, stream):
         """Send the document as PDF to 'stream'.
 
