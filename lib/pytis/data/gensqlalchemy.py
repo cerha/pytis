@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2023 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2024 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2012-2016 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -77,7 +77,6 @@ import collections
 from contextlib import contextmanager
 import copy
 import io
-import imp
 import inspect
 import os
 import re
@@ -4129,23 +4128,6 @@ def _dump_sql_command(sql, *multiparams, **params):
     if _pretty > 1:
         output_string = re.sub(' (UNION|EXCEPT|INTERSECT)( ALL|) ', '\n\\1\\2\n', output_string)
     _gsql_output(output_string)
-
-
-def include(file_name, globals_=None):
-    """Include specification file into current specification.
-
-    Arguments:
-
-      file_name -- name of the specification file to include; basestring
-      globals_ -- global dictionary to use; most often 'globals()' should be
-        given here
-
-    """
-    if globals_ is None:
-        globals_ = globals()
-    file_, pathname, description = imp.find_module(file_name)
-    with open(pathname, 'rb') as f:
-        exec(compile(f.read(), pathname, 'exec'), globals_)
 
 
 _output = None
