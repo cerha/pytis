@@ -53,8 +53,7 @@ from .flibutil import (  # noqa: F401
 from .formatter import (  # noqa: F401
     PAGE_WIDTH, PAGE_HEIGHT, PAGE_TOP_MARGIN, PAGE_BOTTOM_MARGIN,
     PAGE_LEFT_MARGIN, PAGE_RIGHT_MARGIN, PAGE_LANDSCAPE_MODE,
-    AbortOutput, HashableDict, LCGFormatter, Formatter,
-    PrintSpecification,
+    AbortOutput, HashableDict, Formatter, PrintSpecification,
 )
 
 # This import allows application developers to forget about the distinction

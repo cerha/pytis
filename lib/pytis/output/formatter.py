@@ -223,7 +223,7 @@ class _FakeDataIterator(lcg.SubstitutionIterator):
         pass
 
 
-class LCGFormatter(object):
+class Formatter(object):
     """LCG based formatter."""
 
     class _DummyDict(dict):
@@ -258,7 +258,7 @@ class LCGFormatter(object):
                 if current_row is None:
                     current_row = form.current_row()
                 if current_row is None:
-                    current_row_dictionary = LCGFormatter._DummyDict()
+                    current_row_dictionary = Formatter._DummyDict()
                 else:
                     current_row_dictionary = dict([(k, current_row.format(k, secure=True),)
                                                    for k in current_row.keys()
@@ -368,7 +368,7 @@ class LCGFormatter(object):
             binding_dictionary['data'] = _DataIterator(self._resolver, binding_name,
                                                        condition=condition, sorting=(),
                                                        transaction=self._transaction)
-            codebooks = LCGFormatter._retrieve_codebooks(view, resolver=self._resolver)
+            codebooks = Formatter._retrieve_codebooks(view, resolver=self._resolver)
             binding_dictionary['codebook'] = _DataIterator(self._resolver, binding_name,
                                                            condition=condition, sorting=(),
                                                            transaction=self._transaction,
@@ -646,7 +646,7 @@ class LCGFormatter(object):
         for field in view_spec.fields():
             text += '  %s ... %s\n' % (field.id(), field.label(),)
         text += "\n"
-        codebooks = LCGFormatter._retrieve_codebooks(view_spec, resolver=resolver)
+        codebooks = Formatter._retrieve_codebooks(view_spec, resolver=resolver)
         if codebooks:
             text += _("Codebooks:") + "\n"
             for field_id, cb_fields, _cb in codebooks:
@@ -666,7 +666,7 @@ class LCGFormatter(object):
                     sub_view_spec = resolver.get(b.name(), 'view_spec')
                     for field in sub_view_spec.fields():
                         text += '    %s ... %s\n' % (field.id(), field.label(),)
-                    codebooks = LCGFormatter._retrieve_codebooks(sub_view_spec, resolver=resolver)
+                    codebooks = Formatter._retrieve_codebooks(sub_view_spec, resolver=resolver)
                     if codebooks:
                         text += "  " + _("Codebooks:")
                         for field_id, cb_fields, _cb in codebooks:
@@ -682,10 +682,6 @@ class LCGFormatter(object):
                                             ('sum', _("sum")),
                                             ('avg', _("average")))]))
         return text
-
-
-Formatter = LCGFormatter
-"""Implicitní formátovač."""
 
 
 class PrintSpecification(object):
