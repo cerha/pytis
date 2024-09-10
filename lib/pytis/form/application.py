@@ -2191,6 +2191,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
                     else:
                         f.write(data)
                     f.flush()
+                    os.fsync(f)
                     # Call ourselves with temp file path.
                     self.api_launch_file(path=f.name)
                     # Give the viewer some time to read the file as it will be
