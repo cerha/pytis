@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2020 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2020, 2024 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2007-2016 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -67,6 +67,7 @@ class ProductInfo(PrintSpecification):
 
     def init(self):
         self._row = self._parameter((self._parameter(P_NAME), P_ROW))
+        return True
 
     def page_header(self):
         return HGroup(
