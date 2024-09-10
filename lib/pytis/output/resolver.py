@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2019-2021 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2019-2024 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2002-2014 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -26,7 +26,7 @@ zcela samostatné třídy využívané výhradně pro sestavování tiskových v
 from past.builtins import basestring
 
 import codecs
-import imp
+import sys
 import os
 
 import pytis.util
@@ -253,16 +253,24 @@ class FileResolver(Resolver):
             path = self._path
         name_list = name.split('/')
         top_name = name_list[0]
-        try:
-            file, pathname, descr = imp.find_module(top_name, path)
-        except ImportError as e:
-            raise ResolverFileError(top_name, path, e)
-        else:
+        if sys.version_info[0] == 2:
+            import imp
             try:
-                module = imp.load_module(top_name, file, pathname, descr)
-            finally:
-                if file is not None:
-                    file.close()
+                file, pathname, descr = imp.find_module(top_name, path)
+            except ImportError as e:
+                raise ResolverFileError(top_name, path, e)
+            else:
+                try:
+                    module = imp.load_module(top_name, file, pathname, descr)
+                finally:
+                    if file is not None:
+                        file.close()
+        else:
+            import importlib.machinery
+            import importlib.util
+            spec = importlib.machinery.PathFinder.find_spec(top_name, path)
+            module = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(module)
         if len(name_list) > 1:
             module = self._get_module('/'.join(name_list[1:]), path=module.__path__)
         return module
