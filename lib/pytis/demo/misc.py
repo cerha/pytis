@@ -414,7 +414,7 @@ class Products(Specification):
             merger.append(PdfReader(io.BytesIO(output.getvalue())))
         result = io.BytesIO()
         merger.write(result)
-        app.launch_file(data=result, suffix='.pdf')
+        app.launch_file(data=result.getvalue(), suffix='.pdf')
 
     def _content(self, record):
         pardir = os.path.pardir
