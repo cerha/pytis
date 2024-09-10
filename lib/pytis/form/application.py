@@ -181,7 +181,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
                 icons.AddIcon(icon)
         frame.SetIcons(icons)
         self._windows = XStack()
-        self._modals = Stack()
+        self._modals = []
         self._help_browser = None
         self._login_success = False
         for key, cmd in pytis.form.DEFAULT_KEYMAP + self._specification.keymap():
@@ -797,12 +797,18 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
             title += " (%s)" % form.descr()
         return title
 
+    def _top_modal(self):
+        if self._modals:
+            return self._modals[-1]
+        else:
+            return None
+
     def _modal_parent(self):
         # Return the wx parent for a newly created modal form or dialog.
         # Returns the top most modal form or the main application frame.
-        # Modal pytis dialogs are ignored as they are not wx.Window subclasses.
-        if not self._modals.empty() and isinstance(self._modals.top(), wx.Window):
-            parent = self._modals.top()
+        # Modal Pytis dialogs are ignored as they are not wx.Window subclasses.
+        if self._modals and isinstance(self._top_modal(), wx.Window):
+            parent = self._top_modal()
         else:
             parent = self._frame
         return parent
@@ -904,9 +910,8 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
                 print(msg, args)
         safelog('Application exit called:', (pytis.config.dbschemas,))
         try:
-            if not force and not self._modals.empty():
-                log(EVENT, "Couldn't close application with modal windows:",
-                    self._modals.top())
+            if not force and self._modals:
+                log(EVENT, "Couldn't close application with modal windows:", self._modals)
                 return False
             self._set_state_param(self._STATE_STARTUP_FORMS, [
                 (f.__class__.__name__, f.name())
@@ -1025,7 +1030,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         self._update_recent_forms_menu()
 
     def _cmd_refresh(self, interactive=True):
-        for w in (self._modals.top(), self._windows.active()):
+        for w in (self._top_modal(), self._windows.active()):
             if isinstance(w, pytis.form.Refreshable):
                 w.refresh(interactive=interactive)
 
@@ -1102,9 +1107,9 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
                 return result
             if issubclass(form_class, pytis.form.PopupForm):
                 parent = self._modal_parent()
-                kwargs['guardian'] = self._modals.top() or self
+                kwargs['guardian'] = self._top_modal() or self
             else:
-                # assert self._modals.empty()
+                # assert not self._modals
                 parent = self._frame
                 kwargs['guardian'] = self
             args = (parent, pytis.config.resolver, name)
@@ -1118,7 +1123,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
             else:
                 if isinstance(form, pytis.form.PopupForm):
                     log(EVENT, "Opening modal form:", form)
-                    self._modals.push(form)
+                    self._modals.append(form)
                     app.echo(None)
                     form.show()
                     busy_cursor(False)
@@ -1260,7 +1265,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
             args, kwargs = (), {}
         else:
             dialog = dialog_or_class_
-        self._modals.push(dialog)
+        self._modals.append(dialog)
         try:
             unlock_callbacks()
             result = dialog.run(*args, **kwargs)
@@ -1309,8 +1314,8 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         """Vrať momentálně aktivní okno aplikace.
 
         """
-        if allow_modal and not self._modals.empty():
-            return self._modals.top()
+        if allow_modal and self._modals:
+            return self._top_modal()
         else:
             return self._windows.active()
 
@@ -1739,7 +1744,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
 
     @property
     def api_forms(self):
-        return ([form.provider() for form in reversed(self._modals._list)
+        return ([form.provider() for form in reversed(self._modals)
                  if isinstance(form, pytis.form.Form)] +
                 [form.provider() for form in self._windows.items()])
 
@@ -1776,7 +1781,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
             log(EVENT, 'Echo [%s]:' % kind, message)
         if kind in ('warning', 'error'):
             beep()
-        form = self._modals.top()
+        form = self._top_modal()
         if isinstance(form, pytis.form.Form) and form.set_status('message', message):
             return
         if not hasattr(self, '_status_fields'):
