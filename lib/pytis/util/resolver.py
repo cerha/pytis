@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2020 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2024 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2018 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -38,11 +38,7 @@ def resolver():
 
 
 def _issubclass(c1, c2):
-    try:
-        return issubclass(c1, c2)
-    except TypeError:
-        return False
-
+    return isinstance(c1, type) and issubclass(c1, c2)
 
 class ResolverError(Exception):
     """Specification name resolution error."""
