@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pytis 0.1\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2024-04-26 13:56+0200\n"
+"POT-Creation-Date: 2024-09-10 10:50+0200\n"
 "PO-Revision-Date: 2011-12-29 12:15+0100\n"
 "Last-Translator: Pavel Vohnout <vohnout@officehouse.cz>\n"
 "Language-Team: German <wiking@lists.freebsoft.org>\n"
@@ -270,11 +270,11 @@ msgstr ""
 msgid "JSON value doesn't match schema definition"
 msgstr ""
 
-#: ../lib/pytis/presentation/field.py:483
+#: ../lib/pytis/presentation/field.py:484
 msgid "Such value already exists."
 msgstr ""
 
-#: ../lib/pytis/presentation/field.py:746
+#: ../lib/pytis/presentation/field.py:759
 msgid "unlimited"
 msgstr ""
 
