@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2019 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2019-2024 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2013 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -17,7 +17,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import imp
 import re
 import sys
 import psycopg2 as dbapi
@@ -34,14 +33,26 @@ def open_connection(db):
                          password=getattr(db, 'dbpass', None),
                          port=getattr(db, 'dbport', None))
 
+def load_module(name, path):
+    if sys.version_info[0] == 2:
+        import imp
+        return imp.load_module('current_db', *imp.find_module(path))
+    else:
+        import importlib.machinery
+        import importlib.util
+        spec = importlib.machinery.PathFinder.find_spec(name, path)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        return module
+
 
 def run(current_db, sample_db):
     if current_db.endswith('.py'):
         current_db = current_db[:-3]
     if sample_db.endswith('.py'):
         sample_db = sample_db[:-3]
-    current_config = imp.load_module('current_db', *imp.find_module(current_db))
-    sample_config = imp.load_module('sample_db', *imp.find_module(sample_db))
+    current_config = load_module('current_db', current_db)
+    sample_config = load_module('sample_db', sample_db)
     current_connection = open_connection(current_config)
     sample_connection = open_connection(sample_config)
     current_c = current_connection.cursor()
