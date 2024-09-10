@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2023 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2024 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2017 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -259,110 +259,53 @@ class Popen(object):
 
 
 @python_2_unicode_compatible
-class Stack(object):
-    """Obecný zásobník.
+class XStack(object):
+    """Stack of items tracking insertion order and activation order.
 
-    Datová struktura typu LIFO, umožňující pracovat s prvky libovolného typu.
-
-    """
-
-    def __init__(self):
-        self._list = []
-
-    def __str__(self):
-        classname = str(self.__class__).split('.')[-1]
-        contents = ', '.join(str(x) for x in self._list)
-        return '<%s contents=%s>' % (classname, contents)
-
-    def push(self, item):
-        """Přidej prvek na vrchol zásobníku.
-
-        Argumentem může být libovolný objekt.
-
-        """
-        self._list.append(item)
-
-    def pop(self):
-        """Odeber objekt z vrcholu zásobníku.
-
-        Při pokusu o odebrání z prázdného zásobníku vyvolej `IndexError'.
-
-        """
-        return self._list.pop()
-
-    def top(self):
-        """Vrať nejvrchnější prvek ze zásobníku.
-
-        Pokud je zásobník prázdný, vrať None.
-
-        """
-        if self.empty():
-            return None
-        return self._list[-1]
-
-    def empty(self):
-        """Vrať pravdu, je-li zásobník prázdný."""
-        return len(self._list) == 0
-
-
-class XStack(Stack):
-    """Zásobník s aktivním prvkem a dalšími rozšířenými možnostmi.
-
-    Rozšiřuje možnosti zásobníku o:
-
-      * aktivaci libovolného prvku
-      * zjištění aktivního prvku
-      * zjištění seznamu všech prvků
-      * vyjmutí libovolného prvku ze zásobníku
-      * zjištění pořadí posledně aktivovaných prvků (MRU)
-
-    Omezení: V zásobníku nesmí být přítomen jeden objekt současně vícekrát,
-    resp. zásobník nesmí obsahovat dva ekvivalentní prvky.  V
-    takovém případě není chování zásobníku definováno.
-
-    New elements are pushed just below the currently active element on the
-    stack, not to the top of the stack as in the superclass.
+    * Items are appended right after the currently active item.
+    * Any existing item can be activated.
+    * The order of activation is tracked and may be retrieved by 'mru()'.
+    * Each distinct object may only be pushed once.
 
     """
 
     def __init__(self):
         self._active = None
         self._mru = []
-        super(XStack, self).__init__()
+        self._list = []
+
+    def __str__(self):
+        classname = str(self.__class__).split('.')[-1]
+        contents = ', '.join(str(x) for x in self._list)
+        return '<%s items=%s>' % (classname, contents)
+
+    def __len__(self):
+        return len(self._list)
+
+    def items(self):
+        """Return the tuple of all items in their order on the stack."""
+        return tuple(self._list)
 
     def push(self, item):
-        """Push the element just below the currently active element.
+        """Append the item right after the currently active item.
 
-        The inserted element automatically becomes active.
+        The inserted item automatically becomes active.
 
         """
-        if self.empty():
-            super(XStack, self).push(item)
-        else:
+        if self._list:
             self._list.insert(self._list.index(self.active()), item)
+        else:
+            self._list.append(item)
         self.activate(item)
-
-    def pop(self):
-        """Odeber objekt z vrcholu zásobníku.
-
-        Při odebrání aktivního prvku se stává aktivním prvkem vrchní prvek
-        zásobníku.
-
-        """
-        item = self.top()
-        self._mru.remove(item)
-        super(XStack, self).pop()
-        if item is self._active:
-            self.activate(self.top())
 
     def remove(self, item):
         """Remove the given 'item' from the stack.
 
-        If 'item' is currently the active element, the following element is
-        activated (or the preceding one when no such element exists).
+        If 'item' is currently the active item, the following item is activated
+        (or the preceding one when no such item exists).
 
         """
-        if item is self.top():
+        if item is self._list[-1]:
             to_activate = self.prev()
         else:
             to_activate = self.next()
@@ -371,26 +314,9 @@ class XStack(Stack):
         if item is self._active:
             self.activate(to_activate)
 
-    def items(self):
-        """Vrať seznam všech prvků jako tuple.
-
-        Prvek ``top'' je poslední.
-
-        """
-        return tuple(self._list)
-
-    def mru(self):
-        """Vrať seznam prvků seřazený podle poslední aktivace.
-
-        Aktivní prvek je první, za ním následuje prvek, který byl aktivní před
-        tím, než se aktivní prvek stal aktivním, atd.
-
-        """
-        return tuple(self._mru)
-
     def activate(self, item):
-        """Aktivuj daný prvek."""
-        assert item in self._list or item is None and self.empty()
+        """Activate given item."""
+        assert item in self._list or item is None and not self._list
         self._active = item
         if item is not None:
             if item in self._mru:
@@ -398,16 +324,24 @@ class XStack(Stack):
             self._mru.insert(0, item)
 
     def active(self):
-        """Vrať právě aktivní prvek"""
-        assert self._active in self._list or (self._active is None and self.empty())
+        """Return the currently active item."""
+        assert self._active in self._list or (self._active is None and not self._list)
         return self._active
 
-    def next(self):
-        """Return element just below the currently active element.
+    def mru(self):
+        """Return the tuple of items ordered by last activation (most recently used).
 
-        If the active element is the only element on the stack or when the
-        stack is empty, return 'None'.  Otherwise, if there is nothing below
-        the currently active element, return the top element.
+        The active item is first followed by the previously active item etc.
+
+        """
+        return tuple(self._mru)
+
+    def next(self):
+        """Return item just after the currently active item.
+
+        If the active item is the only item on the stack or when the stack is
+        empty, return 'None'.  Otherwise, if there is nothing after the
+        currently active item, return the first item.
 
         """
         if len(self._list) <= 1:
@@ -416,11 +350,11 @@ class XStack(Stack):
         return self._list[(i + 1) % len(self._list)]
 
     def prev(self):
-        """Return element just above the currently active element.
+        """Return item just prior to the currently active item.
 
-        If the active element is the only element on the stack or when the
-        stack is empty, return 'None'.  Otherwise, if there is nothing above
-        the currently active element, return the bottom element.
+        If the active item is the only item on the stack or when the stack is
+        empty, return 'None'.  Otherwise, if there is nothing prior to the
+        currently active item, return the last item.
 
         """
         if len(self._list) <= 1:

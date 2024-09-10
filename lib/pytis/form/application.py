@@ -57,7 +57,7 @@ from pytis.presentation import (
     Menu, MenuItem, MenuSeparator,
 )
 from pytis.util import (
-    ACTION, DEBUG, EVENT, OPERATIONAL, ProgramError, ResolverError, Stack, XStack,
+    ACTION, DEBUG, EVENT, OPERATIONAL, ProgramError, ResolverError, XStack,
     argument_names, find, format_traceback, identity, log, rsa_encrypt
 )
 from .command import CommandHandler, command_icon
@@ -300,7 +300,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
     def _init(self):
         # Run application specific initialization.
         self._specification.init()
-        if self._windows.empty():
+        if len(self._windows) == 0:
             self._panel.SetFocus()
         # (Re)open the startup forms saved on last exit.
         startup_forms = []
@@ -1005,19 +1005,19 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         self._raise_form(form)
 
     def _can_raise_recent_form(self):
-        return len(self._windows.mru()) > 1
+        return len(self._windows) > 1
 
     def _cmd_raise_recent_form(self):
         self._raise_form(self._windows.mru()[1])
 
     def _can_raise_next_form(self):
-        return len(self._windows.items()) > 1
+        return len(self._windows) > 1
 
     def _cmd_raise_next_form(self):
         self._raise_form(self._windows.next())
 
     def _can_raise_prev_form(self):
-        return len(self._windows.items()) > 1
+        return len(self._windows) > 1
 
     def _cmd_raise_prev_form(self):
         self._raise_form(self._windows.prev())

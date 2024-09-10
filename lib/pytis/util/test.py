@@ -81,72 +81,59 @@ class Popen(unittest.TestCase):
         self.assertEqual(popen3.from_child().read(), self.RSTRING)
 
 
-class Stack(unittest.TestCase):
-
-    def test_it(self):
-        stack = util.Stack()
-        self.assertTrue(stack.empty())
-        a = 'AAA'
-        stack.push(a)
-        self.assertFalse(stack.empty())
-        self.assertIs(stack.top(), a)
-        b = 'BBB'
-        stack.push(b)
-        self.assertFalse(stack.empty())
-        self.assertIs(stack.top(), b)
-        stack.pop()
-        self.assertFalse(stack.empty())
-        self.assertIs(stack.top(), a)
-        stack.pop()
-        self.assertTrue(stack.empty())
-
-
 class XStack(unittest.TestCase):
 
     def test_it(self):
-        xstack = util.XStack()
-        self.assertTrue(xstack.empty())
-        self.assertIsNone(xstack.active())
-        self.assertIsNone(xstack.prev())
-        self.assertIsNone(xstack.next())
+        stack = util.XStack()
+        assert len(stack) == 0
+        assert stack.active() is None
+        assert stack.prev() is None
+        assert stack.next() is None
         a = 'AAA'
         b = 'BBB'
         c = 'CCC'
         d = 'DDD'
-        xstack.push(a)
-        self.assertEqual(xstack.items(), (a,))
-        self.assertIs(xstack.active(), a)
-        self.assertIsNone(xstack.prev())
-        self.assertIsNone(xstack.next())
-        xstack.push(b)
-        self.assertEqual(xstack.items(), (b, a,))
-        self.assertIs(xstack.active(), b)
-        self.assertIs(xstack.prev(), a)
-        self.assertIs(xstack.next(), a)
-        xstack.push(c)
-        self.assertEqual(xstack.items(), (c, b, a,))
-        self.assertIs(xstack.active(), c)
-        self.assertIs(xstack.prev(), a)
-        self.assertIs(xstack.next(), b)
-        xstack.activate(a)
-        self.assertIs(xstack.active(), a)
-        self.assertIs(xstack.prev(), b)
-        self.assertIs(xstack.next(), c)
-        xstack.activate(b)
-        self.assertIs(xstack.active(), b)
-        self.assertIs(xstack.prev(), c)
-        self.assertIs(xstack.next(), a)
-        xstack.remove(b)
-        self.assertEqual(xstack.items(), (c, a,))
-        self.assertIs(xstack.active(), a)
-        xstack.push(d)
-        self.assertEqual(xstack.items(), (c, d, a,))
-        self.assertIs(xstack.active(), d)
-        xstack.pop()
-        xstack.pop()
-        self.assertIs(xstack.active(), c)
-        self.assertIsNone(xstack.prev())
-        self.assertIsNone(xstack.next())
+        stack.push(a)
+        assert stack.items() == (a,)
+        assert len(stack) == 1
+        assert stack.active() is a
+        assert stack.prev() is None
+        assert stack.next() is None
+        stack.push(b)
+        assert stack.items() == (b, a,)
+        assert stack.active() is b
+        assert stack.prev() is a
+        assert stack.next() is a
+        stack.push(c)
+        assert stack.items() == (c, b, a,)
+        assert len(stack) == 3
+        assert stack.active() is c
+        assert stack.prev() is a
+        assert stack.next() is b
+        stack.activate(a)
+        assert stack.items() == (c, b, a,)
+        assert stack.active() is a
+        assert stack.prev() is b
+        assert stack.next() is c
+        stack.activate(b)
+        assert stack.active() is b
+        assert stack.prev() is c
+        assert stack.next() is a
+        stack.remove(b)
+        assert stack.items() == (c, a,)
+        assert stack.active() is a
+        stack.push(d)
+        assert stack.items() == (c, d, a,)
+        assert stack.active() is d
+        stack.remove(stack.active())
+        assert stack.active() is a
+        assert stack.prev() is c
+        assert stack.next() is c
+        stack.remove(stack.active())
+        assert stack.active() is c
+        assert len(stack) == 1
+        assert stack.prev() is None
+        assert stack.next() is None
 
 
 class Sameclass(unittest.TestCase):
