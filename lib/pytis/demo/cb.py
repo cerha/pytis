@@ -74,7 +74,7 @@ class Continents(Specification):
         (_("Default"), 'output/None'),  # This spec doen't exist, so defaults are used.
         (_("Countries of the current continent"), 'cb.PrintContinentCountries'),
         PrintAction('p_countries_continents',
-                    _("Countries of the current continent as specification"),
+                    _("Countries of the current continent (as PrintAction)"),
                     'cb.PrintContinentCountries'),
         PrintAction('p_overflow',
                     _("PDF LayoutError"),
