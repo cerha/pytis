@@ -400,7 +400,11 @@ class Products(Specification):
         results.
 
         """
-        from PyPDF2 import PdfMerger, PdfReader
+        try:
+            from PyPDF2 import PdfMerger, PdfReader
+        except ImportError:
+            from PyPDF2 import PdfFileMerger as PdfMerger, PdfFileReader as PdfReader
+
         merger = PdfMerger()
         for lang in ('cs', 'en'):
             output = io.BytesIO()
