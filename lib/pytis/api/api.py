@@ -253,6 +253,16 @@ class Form(API):
 
         """
 
+    def close(self, force=False):
+        """Close the form and destroy all its UI elements.
+
+        If 'force' is False, the user may be asked to confirm closing if there
+        is some "work in progress" (whatever that means for given form type).
+        If 'force' is True, the form is closed unconditionally.
+
+        """
+
+
 
 class StatusField(API):
     """Public API representation of a status bar field.

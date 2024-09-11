@@ -613,6 +613,11 @@ class Form(wx.Panel, KeyHandler, CallbackHandler, CommandHandler):
     def api_select_row(self, position):
         pass
 
+    def api_close(self, force=False):
+        if self is not pytis.form.app.top_window():
+            pytis.form.Application.COMMAND_RAISE_FORM.invoke(form=self)
+        return self.close(force=force)
+
 
 class InnerForm(Form):
     """Formulář, který zpracuje příkazy samostatně i unvitř duálního formuláře.
