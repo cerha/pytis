@@ -366,6 +366,16 @@ class Application(API):
 
     """
 
+    forms = property()
+    """List of all currently opened forms as 'pytis.api.Form' instances.
+
+    Returns the top level forms, so if there is a dual form, it is returned,
+    not its current subform (as in 'form').  The most recently used forms are
+    ordered first.  If there are any modal forms, they are returned at the
+    beginning of the list.
+
+    """
+
     main_form = property()
     """The main form of the current dual form as 'pytis.api.Form' instance or None.
 

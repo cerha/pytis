@@ -1754,6 +1754,12 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         return form.provider() if form else None
 
     @property
+    def api_forms(self):
+        return ([form.provider() for form in reversed(self._modals)
+                 if isinstance(form, pytis.form.Form)] +
+                [form.provider() for form in self._windows.items()])
+
+    @property
     def api_main_form(self):
         form = self.current_form(inner=False, allow_modal=False)
         return form.main_form().provider() if isinstance(form, pytis.form.DualForm) else None
