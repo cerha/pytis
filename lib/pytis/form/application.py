@@ -857,22 +857,6 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
                 self._windows.activate(form)
                 self.restore()
 
-    def _close_forms(self):
-        success = True
-        for form in self._windows.items():
-            try:
-                self._raise_form(form)
-                if not form.close():
-                    success = False
-            except Exception:
-                success = False
-            if not success:
-                break
-        if not success or self._windows.items():
-            return False
-        else:
-            return True
-
     def _config_filename(self):
         # Return a name for saving/restoring the configuration.
         # This name must be usable as a filename and should be
@@ -2667,11 +2651,6 @@ def recent_forms_menu():
         # This may happen when generating help.
         return Menu(_("Recently opened forms"), ())
 
-def close_forms():
-    """Close all currently opened forms."""
-    return pytis.form.app._close_forms()
-
-
 # Deprecated backwards compatibility aliases.
 
 # TODO: When cleaning this up, remove also:
@@ -2800,3 +2779,9 @@ from pytis.presentation import (
     Menu, MenuItem as MItem, MenuSeparator as MSeparator,
     MenuItem as CheckItem, MenuItem as RadioItem, help_proc,
 )
+
+def close_forms():
+    for form in app.forms:
+        if not form.close():
+            return False
+    return not app.forms
