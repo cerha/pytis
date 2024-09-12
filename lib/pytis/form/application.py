@@ -2601,43 +2601,6 @@ def run_dialog(arg1, *args, **kwargs):
     """Zobraz dialog v okně aplikace (viz 'Application.run_dialog()')."""
     if pytis.form.app is None:
         log(OPERATIONAL, "Attempt to run a dialog:", (arg1, args, kwargs))
-    elif arg1 == InputDialog:
-        return app.input_text(title=kwargs.get('message'),
-                              label=kwargs.get('prompt', '').rstrip(':'),
-                              default=kwargs.get('value'),
-                              width=kwargs.get('input_width'),
-                              height=kwargs.get('input_height'))
-    elif arg1 == InputNumeric:
-        precision = kwargs.get('decimal_width', 0)
-        minimum = kwargs.get('min_value')
-        maximum = kwargs.get('max_value')
-        if precision:
-            t = pd.Float(precision=precision)
-            cast = float
-        else:
-            t = pd.Integer()
-            cast = int
-        value = app.input_number(title=kwargs.get('message'),
-                                 label=kwargs.get('prompt', '').rstrip(':'),
-                                 width=kwargs.get('integer_width', 10) + precision + 1,
-                                 precision=precision,
-                                 minimum=cast(minimum) if minimum else None,
-                                 maximum=cast(maximum) if maximum else None,
-                                 noselect=not kwargs.get('select_on_entry', False),
-                                 default=kwargs.get('value'))
-        return pd.Value(t, value)
-
-    elif arg1 == InputDate:
-        # Backwards compatibility hack.
-        value = kwargs.get('value')
-        if value:
-            value, error = pd.Date().validate(value)
-            if value:
-                value = value.value()
-        value = app.input_date(title=kwargs.get('message'),
-                               label=kwargs.get('prompt', '').rstrip(':'),
-                               default=value)
-        return pd.Value(pd.Date(), value)
     else:
         return pytis.form.app.run_dialog(arg1, *args, **kwargs)
 
@@ -2770,15 +2733,6 @@ def delete_record_question(msg=None):
 
 def built_in_status_fields():
     return pytis.form.app.status_fields()
-
-class InputDialog(object):
-    pass
-
-class InputNumeric(object):
-    pass
-
-class InputDate(object):
-    pass
 
 from pytis.presentation import (
     Menu, MenuItem as MItem, MenuSeparator as MSeparator,
