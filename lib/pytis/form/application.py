@@ -2643,17 +2643,6 @@ def set_status(id, text, **kwargs):
         log(DEBUG, u"StatusBar field updated:", (id, text, kwargs))
     return  app.status(id).update(text, **kwargs)
 
-def current_form(**kwargs):
-    if pytis.form.app is not None:
-        return pytis.form.app.current_form(**kwargs)
-
-def top_window(**kwargs):
-    if pytis.form.app is not None:
-        return pytis.form.app.top_window(**kwargs)
-
-def frame_title(title):
-    app.title = title
-
 from pytis.presentation import (
     Menu, MenuItem as MItem, MenuSeparator as MSeparator,
     MenuItem as CheckItem, MenuItem as RadioItem, help_proc,
