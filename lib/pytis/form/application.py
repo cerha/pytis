@@ -2626,15 +2626,6 @@ def delete_record(view, data, transaction, record,
     return app.delete_record(view.spec_name(), tuple(record[k.id()] for k in data.key()),
                              question=question, transaction=transaction)
 
-def printout(spec_name, template_id, **kwargs):
-    return app.printout(spec_name, template_id, **kwargs)
-
-def message(message, beep_=False):
-    return app.echo(message, kind='error' if beep_ else 'info')
-
-def decrypted_names():
-    return app.decrypted_areas()
-
 from pytis.presentation import (
     Menu, MenuItem as MItem, MenuSeparator as MSeparator,
     MenuItem as CheckItem, MenuItem as RadioItem, help_proc,

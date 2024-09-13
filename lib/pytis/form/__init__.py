@@ -86,7 +86,7 @@ from .application import (  # noqa: F401
     Application, run_form, db_operation, recent_forms_menu,
     # Backwards compatibility aliases.
     run_procedure,
-    new_record, delete_record, printout, message, decrypted_names,
+    new_record, delete_record,
     MSeparator, Menu, MItem, CheckItem, RadioItem,
     help_proc, close_forms,
 )
