@@ -2612,11 +2612,6 @@ def recent_forms_menu():
 
 # Deprecated backwards compatibility aliases.
 
-def run_procedure(spec_name, proc_name, *args, **kwargs):
-    if 'block_refresh_' in kwargs:
-        kwargs['block_refresh'] = kwargs.pop('block_refresh_')
-    return app.run_procedure(spec_name, proc_name, *args, **kwargs)
-
 def new_record(name, prefill=None, inserted_data=None, **kwargs):
     return app.new_record(name, prefill=prefill, inserted_data=inserted_data, **kwargs)
 
@@ -2628,7 +2623,7 @@ def delete_record(view, data, transaction, record,
 
 from pytis.presentation import (
     Menu, MenuItem as MItem, MenuSeparator as MSeparator,
-    MenuItem as CheckItem, MenuItem as RadioItem, help_proc,
+    MenuItem as CheckItem, MenuItem as RadioItem,
 )
 
 def close_forms():
