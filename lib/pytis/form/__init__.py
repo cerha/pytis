@@ -83,8 +83,8 @@ from .dualform import (  # noqa: F401
 )
 
 from .application import (  # noqa: F401
-    Application, run_form, run_dialog, db_operation,
-    recent_forms_menu, close_forms,
+    Application, run_form, db_operation,
+    recent_forms_menu,
     # Backwards compatibility aliases.
     refresh, exit, launch_url, select_file, select_files, select_directory,
     make_selected_file, write_selected_file, open_selected_file, open_file,
@@ -93,7 +93,7 @@ from .application import (  # noqa: F401
     refresh_status, set_status, current_form, top_window, frame_title,
     delete_record_question, built_in_status_fields,
     MSeparator, Menu, MItem, CheckItem, RadioItem,
-    help_proc,
+    help_proc, close_forms,
 )
 
 from .configui import (  # noqa: F401

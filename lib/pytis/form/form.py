@@ -64,7 +64,7 @@ from .screen import (
     DEFAULT_WINDOW_BACKGROUND_COLOUR,
 )
 from .application import (
-    Application, db_operation, run_dialog, run_form,
+    Application, db_operation, run_form,
 )
 from .search import (
     SearchDialog, FilterDialog, SortingDialog
@@ -1274,7 +1274,7 @@ class LookupForm(InnerForm):
             direction = back and pytis.data.BACKWARD or pytis.data.FORWARD
         else:
             with Refreshable.block_refresh():
-                direction, condition = run_dialog(
+                direction, condition = pytis.form.app.run_dialog(
                     SearchDialog, self._lf_sfs_columns(), self.current_row(),
                     col=self._current_column_id(),
                     condition=self._lf_search_condition,
@@ -1500,10 +1500,12 @@ class LookupForm(InnerForm):
         if condition:
             perform = True
         else:
-            perform, condition = run_dialog(FilterDialog, self._lf_sfs_columns(),
-                                            self.current_row(), self._compute_aggregate,
-                                            col=self._current_column_id(),
-                                            condition=self._lf_filter)
+            perform, condition = pytis.form.app.run_dialog(
+                FilterDialog, self._lf_sfs_columns(),
+                self.current_row(), self._compute_aggregate,
+                col=self._current_column_id(),
+                condition=self._lf_filter,
+            )
         if perform and condition != self._lf_filter:
             self.filter(condition)
 
@@ -1562,8 +1564,8 @@ class LookupForm(InnerForm):
             columns = self._lf_sfs_columns()
             if col is None and self._lf_sorting:
                 col = self._sorting_columns()[0]
-            sorting = run_dialog(SortingDialog, columns, self._lf_sorting,
-                                 col=col, direction=direction)
+            sorting = pytis.form.app.run_dialog(SortingDialog, columns, self._lf_sorting,
+                                                col=col, direction=direction)
             if sorting is None:
                 return None
             elif sorting == ():

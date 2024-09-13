@@ -51,21 +51,19 @@ from pytis.presentation import (
     SelectionType, TextFilter, TextFormat, MenuSeparator, computer
 )
 from pytis.util import (
-    ProgramError, ResolverError, find, format_byte_size, argument_names,
+    ProgramError, ResolverError, find, format_byte_size,
 )
 
+from .application import Application, run_form
 from .command import CommandHandler, UICommand
 from .dialog import Calendar, ColorSelector, Error
-from .form import RecordForm
 from .event import wx_callback, top_level_exception
+from .form import RecordForm
 from .screen import (
     CallbackHandler, InfoWindow, KeyHandler, TextHeadingSelector,
     char2px, dlg2px, file_menu_items, get_icon, uicommand_mitem,
     paste_from_clipboard, wx_button, wx_focused_window,
     copy_to_clipboard, field_size, wx_toolbar, darkmode
-)
-from .application import (
-    Application, run_dialog, run_form,
 )
 
 
@@ -1383,7 +1381,7 @@ class DateField(Invocable, TextField, SpinnableField):
     def _on_invoke_selection(self, ctrl, alternate=False):
         t = self._date_type()
         value, error = t.validate(ctrl.GetValue())
-        date = run_dialog(Calendar, value and value.value())
+        date = pytis.form.app.run_dialog(Calendar, value and value.value())
         if date is not None:
             ctrl.SetValue(t.export(date))
 
@@ -1402,7 +1400,7 @@ class DateTimeField(DateField):
         t = self._date_type()
         value, error = t.validate(ctrl.GetValue())
         dt = value and value.value()
-        date = run_dialog(Calendar, dt)
+        date = pytis.form.app.run_dialog(Calendar, dt)
         if date is not None:
             if dt:
                 kwargs = dict(hour=dt.hour, minute=dt.minute, second=dt.second)
@@ -1439,7 +1437,7 @@ class ColorSelectionField(Invocable, TextField):
     _INVOKE_HELP = _("Show the color selection dialog.")
 
     def _on_invoke_selection(self, ctrl, alternate=False):
-        color = run_dialog(ColorSelector, self._get_value())
+        color = pytis.form.app.run_dialog(ColorSelector, self._get_value())
         if color is not None:
             self._set_value(color)
 

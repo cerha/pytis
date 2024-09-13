@@ -72,9 +72,7 @@ from .screen import (
     microsleep, wx_button, wx_checkbox, wx_choice, wx_text_ctrl,
 )
 from .search import sfs_columns
-from .application import (
-    Application, run_dialog, run_form,
-)
+from .application import Application, run_form
 from .grid import TableRowIterator, GridTable
 
 
@@ -1551,9 +1549,11 @@ class ListForm(RecordForm, TitledForm, Refreshable):
 
     def _cmd_toggle_columns(self):
         columns = self._available_columns()
-        result = run_dialog(CheckListDialog, title=_("Displayed columns"),
-                            message=_("Select the columns to be displayed:"),
-                            items=[(c in self._columns, c.column_label()) for c in columns])
+        result = pytis.form.app.run_dialog(
+            CheckListDialog, title=_("Displayed columns"),
+            message=_("Select the columns to be displayed:"),
+            items=[(c in self._columns, c.column_label()) for c in columns]
+        )
         if result:
             for i, (c, checked) in enumerate(zip(columns, result)):
                 present = c in self._columns
@@ -1676,14 +1676,16 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                 name = ''
                 group_by_columns = ()
                 aggregation_columns = ()
-            result = run_dialog(AggregationSetupDialog,
-                                aggregation_functions=self._available_aggregations(),
-                                grouping_functions=grouping_functions,
-                                columns=[(c.id(), c.label(), c.type())
-                                         for c in self._lf_sfs_columns()],
-                                aggregation_valid=self._aggregation_valid,
-                                name=name, group_by_columns=group_by_columns,
-                                aggregation_columns=aggregation_columns)
+            result = pytis.form.app.run_dialog(
+                AggregationSetupDialog,
+                aggregation_functions=self._available_aggregations(),
+                grouping_functions=grouping_functions,
+                columns=[(c.id(), c.label(), c.type())
+                         for c in self._lf_sfs_columns()],
+                aggregation_valid=self._aggregation_valid,
+                name=name, group_by_columns=group_by_columns,
+                aggregation_columns=aggregation_columns,
+            )
             if result is None:
                 return
             name, group_by_columns, aggregation_columns = result

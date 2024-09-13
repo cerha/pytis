@@ -193,13 +193,15 @@ class Modules(Specification):
             # Order default actions first and in the order of self._DEFAULT_ACTIONS.
             actions.sort(key=lambda a: str(default_actions.index(a)) if a in default_actions else a)
             descriptions = [action_descr(module, action) for action in actions]
-            from pytis.form import run_dialog, CheckListDialog
-            result = run_dialog(CheckListDialog, title=_("Nalezené akce"),
-                                message=_("Zaškrtněte akce, které chcete zpřístupnit webovým "
-                                          "uživatelům:"),
-                                items=[(a in existing_actions, a, d)
-                                       for a, d in zip(actions, descriptions)],
-                                columns=(_("Action"), _("Description")))
+            import pytis.form
+            result = pytis.form.app.run_dialog(
+                pytis.form.CheckListDialog, title=_("Nalezené akce"),
+                message=_("Zaškrtněte akce, které chcete zpřístupnit webovým "
+                          "uživatelům:"),
+                items=[(a in existing_actions, a, d)
+                       for a, d in zip(actions, descriptions)],
+                columns=(_("Action"), _("Description"))
+            )
             if result is not None:
                 # TODO: Use a transaction.  Respect existing actions.
                 for i, action in enumerate(actions):

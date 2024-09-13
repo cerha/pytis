@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2023 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2024 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2007-2016 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -83,10 +83,10 @@ class BinaryData(Specification):
         key_table = pytis.extensions.crypto_key_table(dbconnection)
         rows = key_table.select_map(pytis.util.identity)
         keys = [(False, r['username'].value(), r['name'].value(),) for r in rows]
-        checked = pytis.form.run_dialog(pytis.form.CheckListDialog,
-                                        message=_("Select recipient keys"),
-                                        columns=(_("User"), _("Area")),
-                                        items=keys)
+        checked = pytis.form.app.run_dialog(pytis.form.CheckListDialog,
+                                            message=_("Select recipient keys"),
+                                            columns=(_("User"), _("Area")),
+                                            items=keys)
         if checked is None:
             return None
         function = pytis.data.DBFunctionDefault('pytis_crypto_user_contact', dbconnection)

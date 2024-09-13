@@ -2596,15 +2596,6 @@ def db_operation(operation, *args, **kwargs):
 
 # Funkce, které jsou obrazem veřejných metod aktuální aplikace.
 
-
-def run_dialog(arg1, *args, **kwargs):
-    """Zobraz dialog v okně aplikace (viz 'Application.run_dialog()')."""
-    if pytis.form.app is None:
-        log(OPERATIONAL, "Attempt to run a dialog:", (arg1, args, kwargs))
-    else:
-        return pytis.form.app.run_dialog(arg1, *args, **kwargs)
-
-
 def recent_forms_menu():
     """Vrať menu posledně otevřených formulářů jako instanci 'pytis.presentation.Menu'.
 
