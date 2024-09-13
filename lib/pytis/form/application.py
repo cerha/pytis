@@ -2638,9 +2638,6 @@ def message(message, beep_=False):
 def decrypted_names():
     return app.decrypted_areas()
 
-def IN(*args, **kwargs):
-    return make_in_operator(*args, **kwargs)
-
 def refresh_status(id):
     return app.status(id).refresh()
 
