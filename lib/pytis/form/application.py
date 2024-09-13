@@ -2612,10 +2612,6 @@ def recent_forms_menu():
 
 # Deprecated backwards compatibility aliases.
 
-# TODO: When cleaning this up, remove also:
-# pytis.form.LookupForm.SORTING_ASCENDENT
-# pytis.form.LookupForm.SORTING_DESCENDANT
-
 def has_access(name, perm=pd.Permission.VIEW, column=None):
     return app.has_access(name, perm=perm, column=column)
 

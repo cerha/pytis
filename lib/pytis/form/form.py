@@ -912,18 +912,7 @@ class LookupForm(InnerForm):
 
     UNSORT = 'UNSORT'
     """Constant for 'COMMAND_SORT' 'direction' argument indicationg unsorting."""
-    SORTING_ASCENDENT = pytis.data.ASCENDENT
-    """Backwards compatibility alias for 'pytis.data.ASCENDENT'.
 
-    Deprecated: Use 'pytis.data.ASCENDENT' directly.
-
-    """
-    SORTING_DESCENDANT = pytis.data.DESCENDANT
-    """Backwards compatibility alias for 'pytis.data.DESCENDANT'.
-
-    Deprecated: Use 'pytis.data.DESCENDANT' directly.
-
-    """
     def _init_attributes(self, filter=None, sorting=None, columns=None, grouping=None,
                          profile_id=None, condition=None, arguments=None,
                          query_field_values=None, **kwargs):
