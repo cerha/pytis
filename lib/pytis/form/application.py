@@ -2654,9 +2654,6 @@ def top_window(**kwargs):
 def frame_title(title):
     app.title = title
 
-def delete_record_question(msg=None):
-    return app.delete_record_question(msg)
-
 from pytis.presentation import (
     Menu, MenuItem as MItem, MenuSeparator as MSeparator,
     MenuItem as CheckItem, MenuItem as RadioItem, help_proc,
