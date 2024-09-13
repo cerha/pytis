@@ -544,8 +544,8 @@ standalone python scripts.
 
 The Pytis API method 'app.run_procedure()' is used to invoke a procedure, pass
 it arguments and retrieve the result (however procedures are typically called
-for their side effects).  See the documentation of 'run_procedure()' for more
-detail.
+for their side effects).  See the documentation of 'app.run_procedure()' for
+more details.
 
 """
 

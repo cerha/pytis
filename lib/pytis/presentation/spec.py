@@ -2785,7 +2785,8 @@ def procedure(function):
     function or method actually is a "pytis procedure".
 
     It may be used in future to impose restrictions (only allow marked
-    procedures to be run through run_procedure) or add any other functionality.
+    procedures to be run through 'app.run_procedure()') or add any other
+    functionality.
 
     """
     return function
