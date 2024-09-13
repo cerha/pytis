@@ -2097,7 +2097,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
             def function(update, *args, **kwargs):
                 pass_n = ('n' in argument_names(func) and 'n' not in kwargs)
                 for n, arg in enumerate(over):
-                    if not update(progress=max(1, min(maximum, n / count * 100))):
+                    if not update(progress=max(1, min(maximum, n // count * 100))):
                         break
                     if pass_n:
                         kwargs['n'] = n
