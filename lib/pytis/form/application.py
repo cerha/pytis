@@ -2616,12 +2616,6 @@ def recent_forms_menu():
 # pytis.form.LookupForm.SORTING_ASCENDENT
 # pytis.form.LookupForm.SORTING_DESCENDANT
 
-def refresh():
-    app.refresh()
-
-def exit():
-    return app.exit()
-
 def _file_selection_kwargs(pattern=None, patterns=(), filetypes=None, **kwargs):
     # Backwards compatibility treatment of pattern/patterns.
     if patterns or pattern:
@@ -2632,9 +2626,6 @@ def _file_selection_kwargs(pattern=None, patterns=(), filetypes=None, **kwargs):
             lambda a, b: a + tuple(x.split('.')[-1] for x in b[-1].split(';')), patterns, (),
         ))
     return dict(kwargs, filetypes=filetypes)
-
-def launch_url(*args, **kwargs):
-    return app.launch_url(*args, **kwargs)
 
 def select_file(*args, **kwargs):
     return app.select_file(*args, **_file_selection_kwargs(**kwargs))
