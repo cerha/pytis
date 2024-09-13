@@ -26,7 +26,7 @@ import pytis.form
 from pytis.api import app
 from pytis.presentation import (
     Binding, computer, CbComputer, CodebookSpec, Field, Editable,
-    PostProcess, PrintAction, Specification, TextFilter,
+    PostProcess, PrintAction, Specification, TextFilter, help_proc,
 )
 from pytis.util import translations
 
@@ -151,7 +151,7 @@ class Countries(Specification):
         return 'https://en.wikipedia.org/wiki/' + article_name
 
 
-@pytis.form.help_proc
+@help_proc
 def pokus(message, x=None, y=None):
     app.message("%s\nx=%d, y=%d" % (message, x, y))
 

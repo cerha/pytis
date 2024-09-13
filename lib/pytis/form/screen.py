@@ -1846,7 +1846,7 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler, KeyHandler):
             proc = getattr(module, proc_name)
             if not isinstance(proc, pytis.presentation.HelpProc):
                 raise ProgramError("Unable to call '%s' from help. "
-                                   "Use the 'pytis.form.help_proc' decorator!" % uri[5:])
+                                   "Use the 'pytis.presentation.help_proc' decorator!" % uri[5:])
             proc(**kwargs)
         except Exception:
             top_level_exception()
