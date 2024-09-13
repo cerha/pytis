@@ -2612,15 +2612,6 @@ def recent_forms_menu():
 
 # Deprecated backwards compatibility aliases.
 
-def new_record(name, prefill=None, inserted_data=None, **kwargs):
-    return app.new_record(name, prefill=prefill, inserted_data=inserted_data, **kwargs)
-
-def delete_record(view, data, transaction, record,
-                  question=_("Are you sure to delete the record permanently?")):
-    assert pytis.config.resolver.get(view.spec_name(), 'view_spec') is view
-    return app.delete_record(view.spec_name(), tuple(record[k.id()] for k in data.key()),
-                             question=question, transaction=transaction)
-
 from pytis.presentation import (
     Menu, MenuItem as MItem, MenuSeparator as MSeparator,
     MenuItem as CheckItem, MenuItem as RadioItem,
