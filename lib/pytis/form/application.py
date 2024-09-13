@@ -2612,9 +2612,6 @@ def recent_forms_menu():
 
 # Deprecated backwards compatibility aliases.
 
-def has_access(name, perm=pd.Permission.VIEW, column=None):
-    return app.has_access(name, perm=perm, column=column)
-
 def run_procedure(spec_name, proc_name, *args, **kwargs):
     if 'block_refresh_' in kwargs:
         kwargs['block_refresh'] = kwargs.pop('block_refresh_')
