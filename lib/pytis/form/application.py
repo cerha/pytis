@@ -30,7 +30,6 @@ from builtins import range
 
 import copy
 import decimal
-import functools
 import gi
 import io
 import lcg
@@ -68,7 +67,7 @@ from .event import (
 from .screen import (
     Browser, KeyHandler, Keymap, StatusBar,
     acceskey_prefix, beep, busy_cursor, get_icon, uicommand_mitem,
-    wx_focused_window, make_in_operator, hotkey_string, wx_toolbar
+    wx_focused_window, hotkey_string, wx_toolbar
 )
 from . import dialog
 from pytis.dbdefs.db_pytis_crypto import (
