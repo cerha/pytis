@@ -2616,52 +2616,6 @@ def recent_forms_menu():
 # pytis.form.LookupForm.SORTING_ASCENDENT
 # pytis.form.LookupForm.SORTING_DESCENDANT
 
-def _file_selection_kwargs(pattern=None, patterns=(), filetypes=None, **kwargs):
-    # Backwards compatibility treatment of pattern/patterns.
-    if patterns or pattern:
-        assert filetypes is None, filetypes
-        if pattern:
-            patterns = tuple(patterns) + (('', pattern),)
-        filetypes = tuple(functools.reduce(
-            lambda a, b: a + tuple(x.split('.')[-1] for x in b[-1].split(';')), patterns, (),
-        ))
-    return dict(kwargs, filetypes=filetypes)
-
-def select_file(*args, **kwargs):
-    return app.select_file(*args, **_file_selection_kwargs(**kwargs))
-
-def select_files(*args, **kwargs):
-    return app.select_files(*args, **_file_selection_kwargs(**kwargs))
-
-def select_directory(*args, **kwargs):
-    return app.select_directory(*args, **kwargs)
-
-def make_selected_file(*args, **kwargs):
-    return app.make_selected_file(*args, **_file_selection_kwargs(**kwargs))
-
-def write_selected_file(*args, **kwargs):
-    return app.write_selected_file(*args, **_file_selection_kwargs(**kwargs))
-
-def open_selected_file(*args, **kwargs):
-    f = app.open_selected_file(*args, **_file_selection_kwargs(**kwargs))
-    if f:
-        filename = app.splitpath(f.name)[1]
-    else:
-        filename = None
-    return f, filename
-
-def open_file(*args, **kwargs):
-    return app.open_file(*args, **kwargs)
-
-def write_file(*args, **kwargs):
-    return app.write_file(*args, **kwargs)
-
-def launch_file(path):
-    return app.launch_file(path)
-
-def open_data_as_file(data, suffix, decrypt=False):
-    return app.launch_file(data=data, suffix=suffix, decrypt=decrypt)
-
 def has_access(name, perm=pd.Permission.VIEW, column=None):
     return app.has_access(name, perm=perm, column=column)
 
