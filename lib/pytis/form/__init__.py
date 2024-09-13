@@ -88,7 +88,7 @@ from .application import (  # noqa: F401
     run_procedure,
     new_record, delete_record, printout, message, decrypted_names,
     refresh_status, set_status, current_form, top_window, frame_title,
-    delete_record_question, built_in_status_fields,
+    delete_record_question,
     MSeparator, Menu, MItem, CheckItem, RadioItem,
     help_proc, close_forms,
 )

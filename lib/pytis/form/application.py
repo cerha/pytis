@@ -2657,9 +2657,6 @@ def frame_title(title):
 def delete_record_question(msg=None):
     return app.delete_record_question(msg)
 
-def built_in_status_fields():
-    return pytis.form.app.status_fields()
-
 from pytis.presentation import (
     Menu, MenuItem as MItem, MenuSeparator as MSeparator,
     MenuItem as CheckItem, MenuItem as RadioItem, help_proc,
