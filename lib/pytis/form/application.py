@@ -2635,14 +2635,6 @@ def message(message, beep_=False):
 def decrypted_names():
     return app.decrypted_areas()
 
-def refresh_status(id):
-    return app.status(id).refresh()
-
-def set_status(id, text, **kwargs):
-    if __debug__:
-        log(DEBUG, u"StatusBar field updated:", (id, text, kwargs))
-    return  app.status(id).update(text, **kwargs)
-
 from pytis.presentation import (
     Menu, MenuItem as MItem, MenuSeparator as MSeparator,
     MenuItem as CheckItem, MenuItem as RadioItem, help_proc,
