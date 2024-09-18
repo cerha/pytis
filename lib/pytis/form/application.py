@@ -251,6 +251,8 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         mb = self._create_menubar()
         if mb is None:
             return False
+        # Initialize the toolbar.
+        self._toolbar = wx_toolbar(frame, pytis.form.TOOLBAR_COMMANDS)
         # Finish and show the frame.
         #
         # TODO: There are problems when users use multiple monitors or start application
@@ -263,8 +265,6 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         self.SetTopWindow(frame)
         if not self._headless:
             frame.Show(True)
-        # Initialize the toolbar.
-        self._toolbar = wx_toolbar(frame, pytis.form.TOOLBAR_COMMANDS)
 
         def init():
             try:
