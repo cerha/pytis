@@ -156,8 +156,9 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         settings.set_property('gtk-menu-images', True)
 
         # Create the main application frame (set frame title later on).
-        frame = self._frame = wx.Frame(None, -1, '', pos=(0, 0), style=wx.DEFAULT_FRAME_STYLE)
+        frame = self._frame = wx.Frame(None, -1, '', style=wx.DEFAULT_FRAME_STYLE)
         wx_callback(wx.EVT_CLOSE, frame, self._on_frame_close)
+        wx_callback(wx.EVT_SIZE, frame, self._on_frame_size)
         # This panel is here just to catch keyboard events (frame doesn't support EVT_KEY_DOWN).
         self._panel = wx.Panel(frame, -1)
         KeyHandler.__init__(self, self._panel)
@@ -253,15 +254,17 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
             return False
         # Initialize the toolbar.
         self._toolbar = wx_toolbar(frame, pytis.form.TOOLBAR_COMMANDS)
+        # Set the main application frame size and position.
+        frame_sizes = self._get_state_param(self._STATE_FRAME_SIZE, [], list, list)
+        current_display_size = list(wx.DisplaySize())
+        for display_size, position, size in frame_sizes:
+            if display_size == current_display_size:
+                frame.SetSize(size)
+                frame.SetPosition(position)
+                break
+        else:
+            frame.SetSize((1000, 800))
         # Finish and show the frame.
-        #
-        # TODO: There are problems when users use multiple monitors or start application
-        # with different screens or screen resolutions. So until we find the adequate
-        # solution, we use some safe default frame size.
-        #
-        # frame.SetSize(self._get_state_param(self._STATE_FRAME_SIZE, [1000, 800], list, int))
-        frame.SetSize((1000, 800))
-        wx_callback(wx.EVT_SIZE, frame, self._on_frame_size)
         self.SetTopWindow(frame)
         if not self._headless:
             frame.Show(True)
@@ -271,7 +274,6 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
                 self._init()
             except Exception:
                 top_level_exception()
-
         wx.CallAfter(init)
         return True
 
@@ -900,8 +902,8 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
             del self._saved_state[name]
 
     def _cleanup(self, force=False):
-        # Zde ignorujeme všemožné výjimky, aby i při poměrně značně havarijní
-        # situaci bylo možno aplikaci ukončit.
+        # Ignore all kinds of exceptions in order to be able to exit the
+        # application even in quite seriously dispair state.
         def safelog(msg, *args):
             try:
                 log(ACTION, msg, *args)
@@ -920,7 +922,17 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
             ])
             self._set_state_param(self._STATE_RECENT_FORMS, list(self._recent_forms))
             self._set_state_param(self._STATE_RECENT_DIRECTORIES, self._recent_directories)
-            self._set_state_param(self._STATE_FRAME_SIZE, list(self._frame.GetSize()))
+            # The user may start the application from different systems with different
+            # screen sizes/resolutions/configurations, so we only use the saved size
+            # and position for the matching display size.  We remember the size and
+            # position for up to 8 most recently used display sizes.
+            frame_sizes = [[display_size, position, size]
+                           for display_size, position, size
+                           in self._get_state_param(self._STATE_FRAME_SIZE, [], list, list)
+                           if display_size != list(wx.DisplaySize())]
+            frame_sizes.append([list(wx.DisplaySize()), list(self._frame.Position),
+                                list(self._frame.Size)])
+            self._set_state_param(self._STATE_FRAME_SIZE, frame_sizes[-8:])
         except Exception as e:
             safelog(str(e))
         try:
