@@ -1739,7 +1739,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
 
     @property
     def api_forms(self):
-        return ([form.provider() for form in reversed(self._modals)
+        return ([form.provider() for form in reversed(self._modals._list)
                  if isinstance(form, pytis.form.Form)] +
                 [form.provider() for form in self._windows.items()])
 
