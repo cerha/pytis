@@ -447,8 +447,10 @@ class LCGFormatter(object):
              body and
              not (isinstance(body, (tuple, list)) and body and
                   isinstance(body[0], pytis.output.Document)))):
-            body.lcg()  # to generate parameters
-            body = pytis.output.Document(body, **parameters)
+            body = xtuple(body)
+            for item in body:
+                item.lcg()  # to generate parameters
+            body = pytis.output.Document(*body, **parameters)
         else:
             # It's unclear how to interpret this situation.  In the Lout
             # formatter the parameters were apparently taken from
