@@ -5091,7 +5091,7 @@ class StatusField(object):
         assert label is None or isinstance(label, basestring), label
         assert refresh is None or callable(refresh), refresh
         assert refresh_interval is None or isinstance(refresh_interval, int), refresh_interval
-        assert width is None or isinstance(width, int) and width > 0
+        assert width is None or isinstance(width, int) and width >= 0
         assert icon_position in (self.ICON_LEFT, self.ICON_RIGHT), icon_position
         assert on_click is None or callable(on_click), on_click
         self._id = id

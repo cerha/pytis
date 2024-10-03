@@ -1078,9 +1078,12 @@ class StatusBar(object):
         """Arguments:
 
           parent -- parent wx Window.
-          fields -- sequence of 'pytis.presentation.StatusField' instances.
+          fields -- list of 'pytis.presentation.StatusField' instances.
 
         """
+        # Insert a dummy first field because wx uses the first field
+        # internally and overwrites our contents unexpectedly.
+        fields.insert(0, pytis.presentation.StatusField('__dummy__', width=0))
         self._sb = sb = wx.StatusBar(parent, -1)
         self._fields = [self.Field(sb, f, i, len(fields),
                                    on_size_change=self._on_field_size_change)
@@ -1151,7 +1154,8 @@ class StatusBar(object):
 
     @property
     def fields(self):
-        return self._fields
+        # Don't expose the dummy field - see __init__().
+        return self._fields[1:]
 
 
 class InfoWindow(object):

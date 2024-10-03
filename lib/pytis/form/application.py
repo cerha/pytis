@@ -202,7 +202,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
 
         # Build up the status bar.
         if not self._headless:
-            sb = StatusBar(frame, self._specification.status_fields())
+            sb = StatusBar(frame, list(self._specification.status_fields()))
             self._status_fields = self._StatusFieldAccess(sb.fields)
 
         self._initial_config = [
