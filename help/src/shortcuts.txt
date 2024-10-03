@@ -1,5 +1,5 @@
 # -*- coding: utf-8; mode: structured-text -*-
-# Copyright (c) 2019 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (c) 2019, 2024 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (c) 2006, 2012, 2017 OUI Technology Ltd.
 # This is part of the Pytis User Manual.
 # See the file pytis.cs.txt for copying conditions.
@@ -51,19 +51,19 @@ Pro přístup do menu jsou definovány tyto zkratky:
 
 | =F10=        | Otevření hlavní nabídky aplikace |
 | =Alt-<znak>= | Otevření menu z hlavní nabídky, kde <znak> je podtržený znak v jeho názvu |
-| =Alt-Down=   | Otevření [help:pytis/context-menu kontextového menu] | 
+| =Alt-Down=   | Otevření [help:pytis/context-menu kontextového menu] |
 
-V otevřeném menu se lze dále pokybovat šipkami.  Více také viz [help:pytis/menu].
+V otevřeném menu se lze dále pohybovat šipkami.  Více také viz [help:pytis/menu].
 
 == Příkazy při práci se stromem ==
 
-Následující příkazy fungují pouze v případě kdy se nacházíte ve stromově řazeném náhledu.
+Ve formulářích se stromovým uspořádáním navíc fungují následující příkazy.
 
-| =+= 		  | Otevřít/Zavřít strom | 
-| =Ctrl-+= 	  |  Otevřít/Zavřít podstrom | 
-| =Shift-+= 	  |  Otevřít celý strom | 
-| =Shift--= 	  |  Zavřít celý strom | 
-| =Ctrl-Shift-+=  |  Zvolit úroveň otevření stromu | 
+| =+= 		  | Otevřít/Zavřít strom |
+| =Ctrl-+= 	  | Otevřít/Zavřít podstrom |
+| =Shift-+= 	  | Otevřít celý strom |
+| =Shift--= 	  | Zavřít celý strom |
+| =Ctrl-Shift-+=  | Zvolit úroveň otevření stromu |
 
 == Příkazy v rámci formuláře ==
 
@@ -141,9 +141,10 @@ přeskákat až k tlačítku „Filtrovat“.
 | =Ctrl-c=         | Zkopírování označeného textu do schránky |
 | =Ctrl-v=         | Vložení textu ze schránky |
 
-Pro [help:pytis/codebook-field číselníková políčka] navíc platí následující příkazy:
+Pro políčka s výběrem (např. datumová nebo [help:pytis/codebook-field
+číselníková políčka]) navíc platí následující příkazy:
 
-| =F2=         | Vyvolání číselníku |
+| =F2=         | Vyvolání výběru (kalendáře, číselníku, ...) |
 | =Ctrl-F2=    | Vyvolání číselníku s [help:pytis/searching-incremental inkrementálním hledáním] |
 
 #   | =Backspace= |  ListField.COMMAND_SHOW_SELECTED |
