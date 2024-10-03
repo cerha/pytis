@@ -115,6 +115,9 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
             else:
                 raise AttributeError("StatusBar has no field '{}'".format(name))
 
+        def __dir__(self):
+            return [f.spec.id() for f in self._fields]
+
         def __call__(self, name):
             return self.__getattr__(name.replace('-', '_'))
 
