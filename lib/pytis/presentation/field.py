@@ -791,6 +791,14 @@ class PresentedRow(object):
         """Return the list of identifiers of all fields contained within the row."""
         return [c.id for c in self._columns]
 
+    def items(self):
+        """Return the list of (KEY, VALUE) pairs for all fields contained within the row."""
+        return [(c.id, self[c.id]) for c in self._columns]
+
+    def values(self):
+        """Return the list of all values contained within the row."""
+        return [self[c.id] for c in self._columns]
+
     def key(self):
         """Return the data key for this row as a tuple of key column 'Value' instances."""
         return tuple([self[c.id()] for c in self._data.key()])
