@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2023 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2024 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2015 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -151,7 +151,7 @@ class _DBAPIAccessor(PostgreSQLAccessor):
             query_args = {}
         else:
             query, args = query.query()
-            query_args = dict([(k, transform_arg(v)) for k, v in args.items()])
+            query_args = {k: transform_arg(v) for k, v in args.items()}
 
         def do_query(connection, query):
             raw_connection = connection.connection()
@@ -176,7 +176,7 @@ class _DBAPIAccessor(PostgreSQLAccessor):
                         else:
                             result = arg
                         return result
-                    escaped_args = dict([(k, escape(v)) for k, v in query_args.items()])
+                    escaped_args = {k: escape(v) for k, v in query_args.items()}
                     query_string = query % escaped_args
                 else:
                     query_string = query
