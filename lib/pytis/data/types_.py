@@ -1068,6 +1068,9 @@ class Float(Number):
             if sys.version_info[0] == 2:
                 encoding = locale.getpreferredencoding() or 'UTF-8'
                 result = result.decode(encoding)
+            if sys.platform == 'darwin':
+                # macOS uses regular spaces instead of "NARROW NO-BREAK SPACE".
+                result = result.replace(' ', '\u202f')
         else:
             result = unistr(self._format_string % value)
         return result
