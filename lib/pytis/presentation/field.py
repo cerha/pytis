@@ -1193,6 +1193,8 @@ class PresentedRow(object):
                 else:
                     choices = list(choices)
                 import locale
+                # NOTE: locale.strxfrm() sorts incorrectly in cs_CZ locale (accented
+                # chars sorted to the end) on macOS.
                 choices.sort(key=lambda x: locale.strxfrm(x.lower()))
             if not (len(choices) == 1 and prefix and choices[0].lower() == prefix):
                 return choices
