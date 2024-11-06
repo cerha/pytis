@@ -1513,6 +1513,9 @@ def test_api_definition():
         def api_refresh(self):
             pass
 
+        def api_close(self, force=False):
+            pass
+
     @implements(pytis.api.Application, incomplete=True)
     class MyApp:
 
