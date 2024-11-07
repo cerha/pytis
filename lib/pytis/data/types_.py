@@ -1178,15 +1178,30 @@ class String(Limited):
 
 
 class Name(String):
-    """String type to be identified as 'name' in the database.
-
-    Useful in database specifications.
-
-    """
+    """String type representing a name or identifier identified as VARCHAR(64) in the database."""
 
     def sqlalchemy_type(self):
         import pytis.data.gensqlalchemy
         return pytis.data.gensqlalchemy.NAME()
+
+
+class PgName(Name):
+    """String type to be identified as PostgreSQL type 'NAME' in the database.
+
+    The type 'NAME' is limited to PostgreSQL and it is actually mentioned as
+    its internal type, so it should be probably avoided except for situations
+    where we interface with PostgreSQL internals, such as the catalog.
+    Everywhere else using VARCHAR(64) (produced by 'Name') should be preferred.
+
+    PgName is also useful for legacy projects, where the Postgresql NAME type
+    was for some reason used before DB specifications were converted to
+    gensqlalchemy and we need to make the specifications compatible with the
+    previously existing DB objects.
+
+    """
+    def sqlalchemy_type(self):
+        import pytis.data.gensqlalchemy
+        return pytis.data.gensqlalchemy.PGNAME()
 
 
 class Password(String):

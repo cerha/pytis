@@ -610,6 +610,20 @@ def compile_name(element, compiler, **kwargs):
     return 'VARCHAR(64)'
 
 
+class PGNAME(sqlalchemy.String):
+    """Variant of NAME represented by PostgreSQL internal type 'NAME'.
+
+    See 'pytis.data.PgName' for explanation of NAME vs. PGNAME.
+
+    """
+    pass
+
+
+@compiles(PGNAME)
+def compile_pgname(element, compiler, **kwargs):
+    return 'NAME'
+
+
 class SERIAL(sqlalchemy.Integer):
     # SQLAlchemy currently doesn't support explicit SERIAL types.
     pass
