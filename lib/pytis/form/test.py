@@ -22,6 +22,7 @@ from __future__ import print_function
 from __future__ import division
 from builtins import range
 
+import os
 import pytest
 import sys
 import time
@@ -327,6 +328,8 @@ def initconfig(dbconnection):
 
 @pytest.fixture(scope='class')
 def initapp(initconfig, initdb):
+    if not os.getenv('DISPLAY'):
+        pytest.skip("DISPLAY not set.")
     # Avoid removing the info file (to allow running tests multiple times).
     pytis.remote.keep_x2go_info_file()
     # TODO: When we start the main wx app thread, the tests randomly end with
