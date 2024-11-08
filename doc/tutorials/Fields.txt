@@ -1,3 +1,5 @@
+# -*- coding: utf-8; mode: structured-text -*-
+
 = Specifikace políček a výpočty hodnot =
 
 Souhrnná dokumentace ke specifikacím políček, inicializacím jejich hodnot v
