@@ -127,7 +127,8 @@ def dmp_menu():
         kind = components[0]
 
         if components[-1]:
-            return components[-1]
+            application = pytis.config.resolver.specification('Application')
+            return getattr(application, 'cmd_' + components[-1])()
         elif kind == 'form':
             command = pytis.form.Application.run_form
             class_name, form_name = components[1], components[2]

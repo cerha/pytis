@@ -5503,13 +5503,7 @@ class MenuItem(object):
 
           title -- menu item title, non-empty string
           command -- defines the command invoked when this menu item is
-            activated as a 'Command' instance.  Alternatively, this argument
-            may be passed as a string, in which case this string, together with
-            a 'cmd_' prefix, denotes the name of a method in the application
-            specification and this method is called to retrieve the 'Command'
-            instance.  For example when command is 'my_form', the application
-            specification must define a method named 'cmd_my_form' (with no
-            arguments) which returns the 'Command' instance.
+            activated as a 'Command' instance.
           state -- funkce (volaná bez argumentů), která vrací True/False podle
             toho, zda je stav této položky 'zapnuto', nebo 'vypnuto'.
           help -- string describing the menu item's action in more detail,
@@ -5523,9 +5517,6 @@ class MenuItem(object):
             be used if defined by pytis.
 
         """
-        if isinstance(command, basestring):
-            application = pytis.config.resolver.specification('Application')
-            command = getattr(application, 'cmd_' + command)()
         assert isinstance(command, Command), command
         assert isinstance(title, basestring), title
         assert help is None or isinstance(help, basestring), help
