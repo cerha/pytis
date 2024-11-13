@@ -50,7 +50,7 @@ from .defs import (  # noqa: F401
 )
 
 from .dmp import (  # noqa: F401
-    dmp_add_member, dmp_add_action, dmp_change_rights,
+    dmp_menu, dmp_add_member, dmp_add_action, dmp_change_rights,
     dmp_commit, dmp_import, dmp_ls, dmp_reset_rights,
     dmp_update_form, dmp_delete_menu, dmp_delete_fullname,
     dmp_delete_shortname, dmp_convert_system_rights,

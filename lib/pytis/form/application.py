@@ -34,7 +34,6 @@ import gi
 import io
 import lcg
 import os.path
-import string
 import sys
 import _thread
 import threading
@@ -410,143 +409,13 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         else:
             return spec_class.public
 
-    def _dynamic_menu(self):
-        def build(template):
-            def add_key(title):
-                # This actually works only for the top menubar, other
-                # accelerators are assigned by wx independently.  But it's OK
-                # as it's consistent with pre-DMP era.
-                for i in range(len(title)):
-                    letter = title[i]
-                    if letter in string.ascii_letters and letter not in used_letters:
-                        used_letters.append(letter)
-                        return title[:i] + '&' + title[i:]
-                return title
-
-            used_letters = []
-            if template is None:
-                result = MenuSeparator()
-            elif isinstance(template, list):
-                heading = template[0]
-                items = [build(i) for i in template[1:]]
-                if heading is None:
-                    result = items
-                else:
-                    title = add_key(heading[1])
-                    result = Menu(title, items)
-            else:
-                name, title, action, help, hotkey = template
-                command = self._parse_action(action)
-                if hotkey:
-                    hotkey = tuple(key.replace('SPC', ' ') for key in hotkey.split(' '))
-                result = MenuItem(add_key(title), command, help=help, hotkey=hotkey)
-            return result
-
-        # Check for menu presence, if not available, return None
-        language = pytis.util.current_language()
-        try:
-            menu_data = pd.dbtable('pytis_view_user_menu',
-                                   (('menuid', pd.Integer()),
-                                    ('name', pd.String()),
-                                    ('title', pd.String()),
-                                    ('fullname', pd.String()),
-                                    ('position', pd.LTree(),),
-                                    ('help', pd.String()),
-                                    ('hotkey', pd.String()),
-                                    ('language', pd.String()),),
-                                   arguments=())
-            menu_rows = menu_data.select_map(identity,
-                                             condition=pd.EQ('language', pd.sval(language)),
-                                             sort=(('position', pd.ASCENDENT,),))
-        except pd.DBException:
-            return None
-        # Build visible menu items
-        menu_template = []
-        parents = []
-        for row in menu_rows:
-            menuid, name, title, action, position, help, hotkey = \
-                [row[i].value() for i in (0, 1, 2, 3, 4, 5, 6,)]
-            if not parents:  # the top pseudonode, should be the first one
-                parents.append((position or '', menu_template,))
-                current_template = menu_template
-            else:
-                parent = '.'.join(position.split('.')[:-1])
-                parent_index = len(parents) - 1
-                while parent_index >= 0 and parent != parents[parent_index][0]:
-                    parent_index -= 1
-                if parent_index >= 0:
-                    parents = parents[:parent_index + 1]
-                else:
-                    continue
-                current_template = parents[-1][1]
-                if not title:  # separator
-                    current_template.append(None)
-                elif name:  # terminal item
-                    current_template.append((name, title, action, help, hotkey,))
-                else:          # non-terminal item
-                    upper_template = parents[-1][1]
-                    current_template = [(name, title, help, hotkey,)]
-                    upper_template.append(current_template)
-                    parents.append((position, current_template,))
-        # Done, build the menu structure from the template.
-        return [build(t) for t in menu_template]
-
-    def _parse_action(self, action):
-        """Parse action id back to command and its arguments.
-
-        Arguments:
-
-          action -- the action id, string
-          globals -- dictionary of global name space
-          locals -- dictionary of local name space
-
-        Return pair COMMAND, ARGUMENTS corresponding to the given action id.
-        If the action id is invalid, behavior of this method is undefined.
-
-        """
-        components = action.split('/')
-        kind = components[0]
-
-        def find_symbol(symbol):
-            # temporary hack to not crash on special situations to be solved
-            # later
-            try:
-                return eval(symbol)
-            except AttributeError:
-                sys.stderr.write("Can't find object named `%s'\n" % (symbol,))
-                return None
-        if components[-1]:
-            return components[-1]
-        elif kind == 'form':
-            command = pytis.form.Application.COMMAND_RUN_FORM
-            class_name, form_name = components[1], components[2]
-            arguments = dict(form_class=find_symbol(class_name), name=form_name)
-            if components[3]:
-                for extra in components[3].split('&'):
-                    if extra[:len('binding=')] == 'binding=':
-                        arguments['binding'] = extra[len('binding='):]
-                        break
-        elif kind == 'handle':
-            command = pytis.form.Application.COMMAND_HANDLED_ACTION
-            function_name = components[1]
-            arguments = dict(handler=find_symbol(function_name),
-                             enabled=lambda: pytis.form.app.action_has_access(action))
-        elif kind == 'proc':
-            command = pytis.form.Application.COMMAND_RUN_PROCEDURE
-            proc_name, spec_name = components[1], components[2]
-            arguments = dict(proc_name=proc_name, spec_name=spec_name,
-                             enabled=lambda: pytis.form.app.action_has_access(action))
-        elif kind == 'NEW_RECORD':
-            command = pytis.form.Application.COMMAND_NEW_RECORD
-            arguments = dict(name=components[1])
-        else:
-            command = pytis.form.Command.command(kind)
-            arguments = None
-        return command, arguments
-
     def _create_menubar(self):
-        menu = self._dynamic_menu()
-        if not menu:
+        # TODO: Temporary backwards compatilility hack.  Rely solely on self._specification.menu()
+        # as soon as all DMP applications define menu by calling pytis.extensions.dmp_menu().
+        import pytis.extensions
+        try:
+            menu = pytis.extensions.dmp_menu()
+        except pd.DBException:
             menu = list(self._specification.menu())
         self._menu = menu
 
