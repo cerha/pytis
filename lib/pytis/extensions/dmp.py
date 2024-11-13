@@ -149,9 +149,11 @@ def dmp_menu():
         elif kind == 'NEW_RECORD':
             command = pytis.form.Application.COMMAND_NEW_RECORD
             arguments = dict(name=components[1])
-        else:
+        elif kind.upper() in ('RELOAD_RIGHTS', 'EXIT'):
             command = getattr(pytis.form.app, 'COMMAND_' + kind)
             arguments = {}
+        else:
+            raise ValueError("Invalid command kind: {}.".format(kind))
         return command, arguments
 
     def build(template):
