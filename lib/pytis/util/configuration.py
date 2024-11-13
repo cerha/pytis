@@ -511,7 +511,7 @@ class Configuration(object):
         """
 
     class _Option_custom_debug(HiddenOption):
-        u"""Zvláštní ladící funkce, napojená na příkaz 'COMMAND_CUSTOM_DEBUG'."""
+        u"""Custom debugging function bound to command 'Application.custom_debug'."""
         _DEFAULT = (lambda self: None)
 
     # Cesty a adresáře
