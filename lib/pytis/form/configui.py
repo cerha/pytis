@@ -55,7 +55,6 @@ _LAYOUT = (
                 'show_tooltips',
                 'auto_menu_accel',
                 'show_splash',
-                'cache_spec_onstart',
                 ),
         LVGroup(_("Other"),
                 'sender_address'),
@@ -76,7 +75,6 @@ _LABELS = {
     'show_tooltips': _("Show tooltips"),
     'auto_menu_accel': _("Automatically numbered menus with accellerator keys"),
     'stretch_tables': _("Automatically stretch tables to full window width"),
-    'cache_spec_onstart': _("Cache specification files on startup"),
     'sender_address': _("E-mail address"),
     'export_encoding': _("Character encoding"),
 }

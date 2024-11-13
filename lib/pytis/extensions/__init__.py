@@ -46,7 +46,7 @@ from .defs import (  # noqa: F401
     get_form_defs, get_menu_forms, get_menu_defs, _get_default_select,
     check_form, cmd_check_form, CheckReporter, MenuChecker, AppChecker,
     DevelChecker, check_menus_defs, cmd_check_menus_defs,
-    check_access_rights, cmd_check_access_rights, cache_spec,
+    check_access_rights, cmd_check_access_rights,
 )
 
 from .dmp import (  # noqa: F401

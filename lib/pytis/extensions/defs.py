@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2023 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2024 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2006-2015 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -524,32 +524,3 @@ def check_access_rights():
 def cmd_check_access_rights():
     import pytis.form
     return pytis.form.Application.COMMAND_HANDLED_ACTION(handler=check_access_rights)
-
-
-def cache_spec(*args, **kwargs):
-    import pytis.form
-    resolver = pytis.config.resolver
-
-    def do(update, specs):
-        def cache(name):
-            for spec in ('data_spec', 'view_spec', 'cb_spec', 'binding_spec'):
-                try:
-                    resolver.get(name, spec)
-                except ResolverError:
-                    pass
-
-        total = len(specs)
-        last_status = 0
-        step = 5  # aktualizujeme jen po každých 'step' procentech...
-        for n, name in enumerate(specs):
-            status = int(float(n) / total * 100 / step)
-            if status != last_status:
-                last_status = status
-                if not update(status * step):
-                    break
-            for x in name.split('::'):
-                cache(x)
-    msg = '\n'.join(('Načítám specifikace (přerušte pomocí Esc).', '',
-                     'Načítání je možno trvale vypnout pomocí dialogu',
-                     '"Nastavení uživatelského rozhraní"'))
-    app.run(do, args=(get_menu_defs(),), message=msg, elapsed_time=True, can_abort=True)

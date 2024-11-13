@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2020, 2022, 2024 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2024 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2002-2016 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -1071,19 +1071,6 @@ class Configuration(object):
         """
         _DESCR = _("Enable automatic keyboard shortcut accelerators in menu items.")
         _DOC = _("Change requires the application to be restarted.")
-        _DEFAULT = True
-
-    class _Option_cache_spec_onstart(BooleanOption):
-        """Cache all specifications on application startup.
-
-        The caching is actually performed by application specific code, so the
-        filal interpretation of this option depends on the application.
-
-        """
-        _DESCR = _("Cache all specifications on application startup.")
-        _DOC = _("Initializes specifications of all forms when the application "
-                 "starts which may slightly reduce their subsequent startup "
-                 "time for the cost of a short initial delay.")
         _DEFAULT = True
 
     class _Option_startup_forms(StringOption, CommandlineOption):

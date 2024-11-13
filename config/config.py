@@ -1,5 +1,3 @@
-# Příznak cachování specifikací při startu aplikace.
-#cache_spec_onstart = True
 
 # Port databázového serveru.
 #dbport = None
