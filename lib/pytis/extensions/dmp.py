@@ -150,7 +150,7 @@ def dmp_menu():
             command = pytis.form.Application.COMMAND_NEW_RECORD
             arguments = dict(name=components[1])
         else:
-            command = pytis.form.Command.command(kind)
+            command = getattr(pytis.form.app, 'COMMAND_' + kind)
             arguments = {}
         return command, arguments
 
