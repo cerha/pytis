@@ -97,7 +97,8 @@ def get_menu_forms():
             return row['shortname'].value(), row['fullname'].value()
         for shortname, fullname in data.select_map(get_values):
             if ((shortname and shortname[:5] == 'form/' and
-                 fullname.startswith('form/pytis.form'))):
+                 fullname.startswith('form/pytis.form') and
+                 not fullname.startswith('form/pytis.form.configui.ConfigForm/'))):
                 formclass = getattr(pytis.form, fullname.split('/')[1].split('.')[-1])
                 forms.append((formclass, shortname[5:]))
     return forms
