@@ -101,8 +101,6 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
     _STATE_STARTUP_FORMS = 'saved_startup_forms'  # Avoid name conflict with config.startup_forms!
     _STATE_RECENT_DIRECTORIES = 'recent_directories'
     _STATE_FRAME_SIZE = 'frame_size'
-    _WINDOW_MENU_ID = 'window-menu'
-    _RECENT_FORMS_MENU_ID = 'recent-forms-menu'
 
     class _StatusFieldAccess(object):
         def __init__(self, fields):
@@ -439,7 +437,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
                      command=Command(pytis.form.Form.leave_form),
                      help=_("Closes the window of the active form.")),
             MenuSeparator(),
-        ), name=self._WINDOW_MENU_ID, autoindex=False))
+        ), id=Menu.WINDOW_MENU, autoindex=False))
         command_menu_items = []
         for group in pytis.form.FORM_MENU_COMMANDS:
             if command_menu_items:
@@ -511,8 +509,8 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         # Now create the items and remember max. width of whole item label.
         menu = wx.Menu()
         wx_callback(wx.EVT_MENU_HIGHLIGHT_ALL, menu, on_highlight_item)
-        if spec.name:
-            self._menu_by_id[spec.name] = menu
+        if spec.id:
+            self._menu_by_id[spec.id] = menu
         hotkey_items = []
         max_label_width = 0
         i = 0
@@ -690,7 +688,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         return parent
 
     def _update_window_menu(self):
-        menu = self._menu_by_id.get(self._WINDOW_MENU_ID)
+        menu = self._menu_by_id.get(Menu.WINDOW_MENU)
         if menu is not None:
             for i, item in enumerate(menu.GetMenuItems()):
                 if i >= 5:
@@ -708,7 +706,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
                 ))
 
     def _update_recent_forms_menu(self):
-        menu = self._menu_by_id.get(self._RECENT_FORMS_MENU_ID)
+        menu = self._menu_by_id.get(Menu.RECENT_FORMS_MENU)
         if menu:
             for item in menu.GetMenuItems():
                 menu.Remove(item.GetId())
@@ -1235,11 +1233,6 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
             form.focus()
         else:
             self._panel.SetFocus()
-
-    def recent_forms_menu(self):
-        """Return the menu of recently opened forms as 'Menu' instance."""
-        return Menu(_("Recently opened forms"), (),
-                    name=self._RECENT_FORMS_MENU_ID, autoindex=False)
 
     def wx_yield(self, full=False):
         """Process wx events in the queue.
@@ -2472,23 +2465,11 @@ def db_operation(operation, *args, **kwargs):
                 return FAILURE
 
 
-# Funkce, které jsou obrazem veřejných metod aktuální aplikace.
+# Deprecated backwards compatibility aliases.
 
 def recent_forms_menu():
-    """Vrať menu posledně otevřených formulářů jako instanci 'pytis.presentation.Menu'.
+    return Menu(_("Recently opened forms"), (), id=Menu.RECENT_FORMS_MENU, autoindex=False)
 
-    Tato funkce je určena pro využití při definici menu aplikace.  Pokud menu posledně otevřených
-    formulářů tímto způsobem do hlavního menu aplikace přidáme, bude jej aplikace dále
-    obhospodařovat.  Toto menu lze do hlavního menu umístit pouze jednou.
-
-    """
-    if pytis.form.app:
-        return pytis.form.app.recent_forms_menu()
-    else:
-        # This may happen when generating help.
-        return Menu(_("Recently opened forms"), ())
-
-# Deprecated backwards compatibility aliases.
 
 from pytis.presentation import (
     Menu, MenuItem as MItem, MenuSeparator as MSeparator,

@@ -71,7 +71,7 @@ class Application(pytis.presentation.Application):
                 MenuItem(_("Crypto users"),
                          Command(app.run_form, 'crypto.CryptoAreas')),
                 MenuSeparator(),
-                pytis.form.recent_forms_menu(),
+                Menu(_("Recently opened forms"), (), id=Menu.RECENT_FORMS_MENU, autoindex=False),
                 MenuSeparator(),
                 MenuItem(_("E&xit"), Command(app.exit), hotkey='Alt-x'),
             )),

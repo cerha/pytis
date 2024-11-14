@@ -83,9 +83,10 @@ from .dualform import (  # noqa: F401
 )
 
 from .application import (  # noqa: F401
-    Application, run_form, db_operation, recent_forms_menu,
+    Application, run_form, db_operation,
     # Backwards compatibility aliases.
     MSeparator, Menu, MItem, CheckItem, RadioItem, close_forms,
+    recent_forms_menu,
 )
 
 from .configui import (  # noqa: F401

@@ -5126,31 +5126,33 @@ class SharedParams(object):
 class Menu(object):
     """Menu specification."""
 
-    def __init__(self, title, items, name=None, autoindex=True):
+    RECENT_FORMS_MENU = 'recent-forms-menu'
+    WINDOW_MENU = 'window-menu'
+
+    def __init__(self, title, items, id=None, autoindex=True):
         """Arguments:
 
           title -- menu title as a string.
           items -- sequence of menu items as 'Menu', 'MenuItem' and
             'MenuSeparator' instances.
-          name -- menu identification string.  Specific menu names are used
-            internally by the application to recognize menus with specific
-            dynamic behavior, such as menu of active windows or menu o recent
-            forms.
+          id -- menu identifier used to recognize menus with specific dynamic
+            behavior managed by the application.  Available menu identifiers
+            are defined as constants of this class.
           autoindex -- allow automatic keyboard access index numbers on this
             menu.
 
         """
         assert isinstance(title, basestring), title
         assert isinstance(items, (tuple, list)), items
-        assert name is None or isinstance(name, basestring), name
+        assert id is None or isinstance(id, basestring), id
         assert isinstance(autoindex, bool), autoindex
         if __debug__:
             for item in items:
-                # Empty tuple is possible for items like 'recent_forms_menu' by generating help
+                # Empty tuple is possible for items like 'RECENT_FORMS_MENU' by generating help
                 assert isinstance(item, (Menu, MenuItem, MenuSeparator)) or item == (), item
         self._title = title
         self._items = tuple(items)
-        self._name = name
+        self._id = id
         self._autoindex = autoindex
 
     @property
@@ -5162,8 +5164,8 @@ class Menu(object):
         return self._items
 
     @property
-    def name(self):
-        return self._name
+    def id(self):
+        return self._id
 
     @property
     def autoindex(self):
