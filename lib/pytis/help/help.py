@@ -511,7 +511,7 @@ class SpecHelpGenerator(HelpGenerator):
                 children = ()
                 globs = dict(command=item.command, args=item.args)
             return self.ContentNode(
-                'help:application/%d' % counter.next(), title=item.title,
+                'help:application/%d' % counter.next(), title=item.title.replace('&', ''),
                 content=content, children=children, foldable=True, globals=globs,
                 resource_provider=self._resource_provider,
             )
