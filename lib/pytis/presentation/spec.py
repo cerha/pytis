@@ -2725,6 +2725,11 @@ def procedure(function):
     procedures to be run through 'app.run_procedure()') or add any other
     functionality.
 
+    Either way, it is advised to avoid running code through
+    'app.run_procedure()' as it seems much more straightforward to just import
+    that code and call it directly.  'app.run_procedure()' remains mainly just
+    for backwards compatibility.
+
     """
     return function
 

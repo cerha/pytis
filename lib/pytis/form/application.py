@@ -1064,9 +1064,12 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
     def _can_new_record(self, name, **kwargs):
         return self._can_api_new_record(name, **kwargs)
 
+    # TODO: This can be removed when all calls are turned to app.run_procedure().
     @Command.define
-    def run_procedure(self, enabled=None, **kwargs):
-        return self.api_run_procedure(**kwargs)
+    def run_procedure(self, spec_name, proc_name, args=None, enabled=None,
+                      block_refresh=False, **kwargs):
+        return self.api_run_procedure(spec_name, proc_name, args=args, enabled=enabled,
+                                      block_refresh=block_refresh, **kwargs)
 
     def _can_run_procedure(self, spec_name, proc_name, args=None, enabled=None,
                            block_refresh=False, **kwargs):

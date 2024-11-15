@@ -969,7 +969,8 @@ class Application(API):
             the keyword argument 'enabled',
 
         This method is useful to create a 'pytis.presentation.Command' instance
-        for given 'function' (which is not possible directly).
+        for given 'function' (which is not possible directly).  Otherwise
+        calling function directly is preferred.
 
         Returns the value returned by the function.
 
@@ -992,9 +993,12 @@ class Application(API):
         Returns the value returned by the procedure.
 
         TODO: This method may be deprecated in future because it seems
-        redundant and can be easily replaced by 'call()' which is much more
-        straightforward.  The arguemnt 'block_refresh' can be implemented for
-        'call()' too.
+        redundant.  It is advised to avoid running code through
+        'app.run_procedure()' as it seems much more straightforward to just
+        import that code and call it directly (or through 'app.call()' in
+        situations where a 'Command' is needed).  'app.run_procedure()' remains
+        mainly just for backwards compatibility.  The arguemnt 'block_refresh'
+        can be implemented for 'call()' too.
 
         """
         pass
