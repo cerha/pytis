@@ -1452,6 +1452,9 @@ class BaseApplication(object):
                 result = perm in permissions
         return result
 
+    def api_echo(self, message, kind='info'):
+        print('{}: {}'.format(kind, message))
+
 
 def test_api_definition():
     import pytest
