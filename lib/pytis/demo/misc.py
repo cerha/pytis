@@ -477,14 +477,10 @@ class Products(Specification):
         else:
             product_id = row["product_id"].value()
             mark = not row["marked"].value()
-        count = app.run_procedure('misc', 'mark_products', product_id=product_id, mark=mark)
-        app.echo(_("Marked %d rows") % count)
+        mark_products(product_id=product_id, mark=mark)
 
     def _mark_selected(self, rows, mark=True):
-        count = app.run_procedure('misc', 'mark_products',
-                                  product_id=[r['product_id'].value() for r in rows],
-                                  mark=mark)
-        app.echo(_("Marked %d rows") % count if mark else _("Unmarked %d rows") % count)
+        mark_products(product_id=[r['product_id'].value() for r in rows], mark=mark)
 
     def _unmark_selected(self, rows):
         self._mark_selected(rows, mark=False)
@@ -536,22 +532,20 @@ class XProducts(Specification):
                       height=3, text_format=pp.TextFormat.LCG)
 
 
-"""Definition of reusable procedures.
 
-Procedures are independent of the specifications they work on, so they can be
-called by name from anywhere within the application or even externally from
-standalone python scripts.
 
-The Pytis API method 'app.run_procedure()' is used to invoke a procedure, pass
-it arguments and retrieve the result (however procedures are typically called
-for their side effects).  See the documentation of 'app.run_procedure()' for
-more details.
-
-"""
-
-@procedure
 def mark_products(product_id=None, mark=True):
-    """Mark/unmark all products."""
+    """Mark/unmark selected/all products.
+
+    Demonstrates a function working with application data which can be called
+    from within application code (above) or from a standalone script (see
+    demo/script.py).
+
+    As demonstrated below, a limited set of Pytis API can also be user in such
+    functions.  More exactly these are the API methods and properties defined
+    by 'pytis.api.BaseApplication'.
+
+    """
     assert isinstance(mark, bool)
     assert product_id is None or isinstance(product_id, (int, tuple, list))
     row = pd.Row((('marked', pd.bval(mark)),))
@@ -562,7 +556,13 @@ def mark_products(product_id=None, mark=True):
     else:
         condition = pd.EQ('product_id', pd.ival(product_id))
     import pytis.extensions
-    return pytis.extensions.dbupdate_many('misc.Products', condition=condition, update_row=row)
+    count = pytis.extensions.dbupdate_many('misc.Products', condition=condition, update_row=row)
+    if mark:
+        message = _("Marked %d rows")
+    else:
+        message = _("Unmarked %d rows")
+    app.echo(message % count)
+    return count
 
 
 # TreeOrder is dead, long live LTree! (see below)
