@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pytis 0.1\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2024-09-10 16:36+0200\n"
+"POT-Creation-Date: 2024-11-15 17:54+0100\n"
 "PO-Revision-Date: 2024-09-10 10:58+0200\n"
 "Last-Translator: Tomáš Cerha <t.cerha@gmail.com>\n"
 "Language-Team: Czech <cs@li.org>\n"
@@ -697,11 +697,11 @@ msgstr "Označeno"
 msgid "Unmarked"
 msgstr "Neoznačeno"
 
-#: ../lib/pytis/demo/misc.py:384 ../lib/pytis/demo/misc.py:534
+#: ../lib/pytis/demo/misc.py:384 ../lib/pytis/demo/misc.py:530
 msgid "Date when the product was first included."
 msgstr "Datum prvního přidání produktu."
 
-#: ../lib/pytis/demo/misc.py:386 ../lib/pytis/demo/misc.py:535
+#: ../lib/pytis/demo/misc.py:386 ../lib/pytis/demo/misc.py:531
 msgid "Arbitrary internal notes about given product."
 msgstr "Libovolné interní poznámky o produktu."
 
@@ -753,23 +753,23 @@ msgstr "Tisknout cenu"
 msgid "Highlight low count"
 msgstr "Zvýraznit nízký stav"
 
-#: ../lib/pytis/demo/misc.py:481 ../lib/pytis/demo/misc.py:487
+#: ../lib/pytis/demo/misc.py:513
+msgid "XProducts"
+msgstr "XProducts"
+
+#: ../lib/pytis/demo/misc.py:517
+msgid "Price with VAT"
+msgstr "Cena vč. DPH"
+
+#: ../lib/pytis/demo/misc.py:561
 #, python-format
 msgid "Marked %d rows"
 msgstr "Označeno %d řádků"
 
-#: ../lib/pytis/demo/misc.py:487
+#: ../lib/pytis/demo/misc.py:563
 #, python-format
 msgid "Unmarked %d rows"
 msgstr "Zrušeno označení %d řádků"
-
-#: ../lib/pytis/demo/misc.py:517
-msgid "XProducts"
-msgstr "XProducts"
-
-#: ../lib/pytis/demo/misc.py:521
-msgid "Price with VAT"
-msgstr "Cena vč. DPH"
 
 #: ../lib/pytis/demo/misc.py:576
 msgid "Tree"
