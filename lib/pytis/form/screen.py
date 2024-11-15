@@ -1312,10 +1312,10 @@ class ProfileSelector(wx.ComboCtrl, CommandHandler):
                      command=Command(pytis.form.LookupForm.update_profile),
                      help=_("Update the saved profile according to the current form setup.")),
             MenuItem(_("Duplicate current profile"),
-                     command=Command(self.edit_profile_title, new=True),
+                     command=Command(self.duplicate_profile),
                      help=_("Create a new profile according to the current form setup.")),
             MenuItem(_("Rename current profile"),
-                     command=Command(self.edit_profile_title),
+                     command=Command(self.rename_profile),
                      help=_("Change the name of the current profile and save it.")),
             MenuItem(_("Delete current profile"),
                      command=Command(pytis.form.LookupForm.delete_profile),
@@ -1340,21 +1340,25 @@ class ProfileSelector(wx.ComboCtrl, CommandHandler):
         )
         pytis.form.app.popup_menu(self, menu)
 
-    @Command.define
-    def edit_profile_title(self, new=True):
+    def _begin_edit_profile_title(self):
         ctrl = self.GetTextCtrl()
-        if new:
-            ctrl.SetValue('')
-            self._on_enter_invoke = pytis.form.LookupForm.save_new_profile
-        else:
-            ctrl.SelectAll()
-            self._on_enter_invoke = pytis.form.LookupForm.rename_profile
+        ctrl.SetEditable(True)
+        ctrl.SelectAll()
         ctrl.SetFocus()
         app.echo(_("Enter the profile name and press ENTER when done."))
 
-    def _can_edit_profile_title(self, new=True):
-        return (self._on_enter_invoke is None or
-                Command(self._on_enter_invoke, title=self.GetValue()).enabled)
+    @Command.define
+    def duplicate_profile(self):
+        self._begin_edit_profile_title()
+        self._on_enter_invoke = pytis.form.LookupForm.save_new_profile
+
+    @Command.define
+    def rename_profile(self):
+        self._begin_edit_profile_title()
+        self._on_enter_invoke = pytis.form.LookupForm.rename_profile
+
+    def _can_rename_profile(self):
+        return Command(pytis.form.LookupForm.rename_profile, title=self.GetValue()).enabled
 
     def _on_enter(self, event):
         command_method = self._on_enter_invoke
