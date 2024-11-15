@@ -163,7 +163,7 @@ class HelpUpdater(object):
         elif kind == 'EXIT':
             content = self._generate_exit_help()
         else:
-            print("Ignoring menu item of unknown type:", (fullname, spec_name))
+            log(OPERATIONAL, "Ignoring menu item of unknown type:", (fullname, spec_name))
             return
         self._update(self._menu_help_data, dict(fullname=fullname), content=content)
         if spec_name and kind != 'handle' and spec_name not in ('ui', 'export'):
