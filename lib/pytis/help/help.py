@@ -499,7 +499,6 @@ class SpecHelpGenerator(HelpGenerator):
 
     def _application_help_nodes(self):
         counter = pytis.util.Counter()
-        app = pytis.config.resolver.specification('Application')
 
         def node(item):
             if isinstance(item, pytis.presentation.Menu):
@@ -519,7 +518,7 @@ class SpecHelpGenerator(HelpGenerator):
         return [
             self.ContentNode('help:application/menu', title=_("Application menu"),
                              content=lcg.NodeIndex(), foldable=True,
-                             children=[node(item) for item in app.menu()],
+                             children=[node(item) for item in pytis.form.app.menu],
                              resource_provider=self._resource_provider),
             # TODO: Read the static part of application help from the filesystem?
         ]

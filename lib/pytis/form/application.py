@@ -1121,6 +1121,11 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
     def headless(self):
         return self._headless
 
+    @property
+    def menu(self):
+        """Return the application menu as a sequence of 'pytis.presentation.Menu' instances."""
+        return self._menu
+
     def run_dialog(self, dialog_or_class_, *args, **kwargs):
         """Zobraz dialog určené třídy s hlavním oknem aplikace jako rodičem.
 
