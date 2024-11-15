@@ -107,6 +107,13 @@ def dmp_menu():
     'pytis.presentation.MenuSeparator' instances.
 
     """
+    # TODO: These translations can be removed here as soon as fullnames
+    # are updated accordingly in all databases.  'ConfigForm' filtering
+    # can then also be removed from 'pytis.extensions.get_menu_forms()'
+    LEGACY_ACTION_MAP = {
+        'form/pytis.form.configui.ConfigForm/ui//': 'handle/pytis.form.configui.edit_config/ui/',
+        'form/pytis.form.configui.ConfigForm/export//': 'handle/pytis.form.configui.edit_config/export/',
+    }
 
     def parse_action(action):
         """Return pair COMMAND, ARGUMENTS corresponding to the given action id.
@@ -125,6 +132,7 @@ def dmp_menu():
         import pytis.form
         components = action.split('/')
         kind = components[0]
+        args = ()
 
         if components[-1]:
             application = pytis.config.resolver.specification('Application')
@@ -132,31 +140,32 @@ def dmp_menu():
         elif kind == 'form':
             command = pytis.form.Application.run_form
             class_name, form_name = components[1], components[2]
-            arguments = dict(form_class=find_symbol(class_name), name=form_name)
+            kwargs = dict(form_class=find_symbol(class_name), name=form_name)
             if components[3]:
                 for extra in components[3].split('&'):
                     if extra[:len('binding=')] == 'binding=':
-                        arguments['binding'] = extra[len('binding='):]
+                        kwargs['binding'] = extra[len('binding='):]
                         break
         elif kind == 'handle':
-            command = pytis.form.Application.handled_action
-            function_name = components[1]
-            arguments = dict(handler=find_symbol(function_name),
-                             enabled=lambda: pytis.form.app.action_has_access(action))
+            command = pytis.form.Application.call
+            args = (find_symbol(components[1]),)
+            if components[2]:
+                args += (components[2],)
+            kwargs = dict(enabled=lambda *args: pytis.form.app.action_has_access(action))
         elif kind == 'proc':
             command = pytis.form.Application.run_procedure
             proc_name, spec_name = components[1], components[2]
-            arguments = dict(proc_name=proc_name, spec_name=spec_name,
-                             enabled=lambda: pytis.form.app.action_has_access(action))
+            kwargs = dict(proc_name=proc_name, spec_name=spec_name,
+                          enabled=lambda: pytis.form.app.action_has_access(action))
         elif kind == 'NEW_RECORD':
             command = pytis.form.Application.new_record
-            arguments = dict(name=components[1])
+            kwargs = dict(name=components[1])
         elif kind.upper() in ('RELOAD_RIGHTS', 'EXIT'):
             command = getattr(pytis.form.app, kind.lower())
-            arguments = {}
+            kwargs = {}
         else:
             raise ValueError("Invalid command kind: {}.".format(kind))
-        return Command(command, **arguments)
+        return Command(command, *args, **kwargs)
 
     def build(template):
         def add_key(title):
@@ -183,7 +192,7 @@ def dmp_menu():
                 result = Menu(title, items)
         else:
             name, title, action, help, hotkey = template
-            command = parse_action(action)
+            command = parse_action(LEGACY_ACTION_MAP.get(action, action))
             if hotkey:
                 hotkey = tuple(key.replace('SPC', ' ') for key in hotkey.split(' '))
             result = MenuItem(add_key(title), command, help=help, hotkey=hotkey)

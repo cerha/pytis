@@ -882,6 +882,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         """Interrupt the currently running operation."""
         app.echo(_("Stopped..."), kind='error')
 
+    # TODO: Zrušit handled_action a nahradit 'call()'
     @Command.define
     def handled_action(self, handler=None, enabled=None, **kwargs):
         """Perform application defined action."""
@@ -889,6 +890,23 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
 
     def _can_handled_action(self, handler=None, enabled=None, **kwargs):
         return enabled is None and True or enabled(**kwargs)
+
+    @Command.define
+    def call(self, function, *args, **kwargs):
+        """Perform application defined action."""
+        kwargs.pop('enabled', None)
+        return function(*args, **kwargs)
+
+    def _can_call(self, function, *args, **kwargs):
+        enabled = kwargs.pop('enabled', None)
+        return enabled is None and True or enabled(*args, **kwargs)
+
+    @Command.define
+    def api_call(self, function, *args, **kwargs):
+        return self.call(function, *args, **kwargs)
+
+    def _can_api_call(self, function, *args, **kwargs):
+        return self._can_call(function, *args, **kwargs)
 
     @Command.define
     def raise_form(self, form):
@@ -2470,6 +2488,13 @@ def db_operation(operation, *args, **kwargs):
 def recent_forms_menu():
     return Menu(_("Recently opened forms"), (), id=Menu.RECENT_FORMS_MENU, autoindex=False)
 
+def config_menu_items(hotkeys={}):
+    return (
+        MenuItem(_("User interface settings"),
+                 Command(app.call, pytis.form.edit_config, 'ui')),
+        MenuItem(_("Export settings"),
+                 Command(app.call, pytis.form.edit_config, 'export')),
+    )
 
 from pytis.presentation import (
     Menu, MenuItem as MItem, MenuSeparator as MSeparator,

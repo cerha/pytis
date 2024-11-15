@@ -16,188 +16,105 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Formuláře pro editaci konfiguračních voleb v uživatelském rozhraní.
-
-Formuláře nejsou vázány na žádnou specifikaci.  Datový objekt i prezentační
-specifikace jsou generovány automaticky při vytvoření formuláře.  Layout je
-zvolen podle argumentu 'name' konstruktoru formuláře jako jedna z položek
-konstanty '_LAYOUT' definované níže.  Takže výběr specifikace z resolveru,
-běžný u jiných formulářů je zde nahrazen výběrem layoutu z předdefinovaných
-layoutů a vygenerováním zbylých specifikačních parametrů podle vlastností
-konfiguračních voleb obsažených v tomto layoutu.
-
-"""
+"""Defines User Interface for modification of selected Pytis configuration options."""
 
 from __future__ import print_function
 import wx
 
-from pytis.presentation import Field, LVGroup, VGroup, ViewSpec, MenuItem, Command
+from pytis.presentation import Field, FieldSet, VGroup
 import pytis.util
-from .form import PopupEditForm
+from pytis.api import app
 
 _ = pytis.util.translations('pytis-wx')
 
-_LAYOUT = (
-    ('ui', _("User interface settings"), VGroup(
-        LVGroup(_("Colors"),
-                LVGroup(_("Current table row highlight"),
-                        'row_highlight_color',
-                        'row_highlight_edited_color',
-                        'row_highlight_unfocused_color',
-                        'row_highlight_width',
-                        ),
-                'cell_highlight_color',
-                'grid_line_color',
-                'grouping_background_downgrade',
-                ),
-        LVGroup(_("Behavior"),
-                'stretch_tables',
-                'show_tooltips',
-                'auto_menu_accel',
-                'show_splash',
-                ),
-        LVGroup(_("Other"),
-                'sender_address'),
-    )),
-    ('export', _("Export settings"), VGroup('export_encoding')),
+_FIELDS = (
+    Field('row_highlight_color', _("Default")),
+    Field('row_highlight_edited_color', _("During inline editation")),
+    Field('row_highlight_unfocused_color', _("Inactive form")),
+    Field('row_highlight_width', _("Border width"), width=2, slider=True),
+    Field('cell_highlight_color', _("Current cell highlight")),
+    Field('grid_line_color', _("Table grid")),
+    Field('grouping_background_downgrade', _("Grouping background change")),
+    Field('show_splash', _("Show start-up dialog")),
+    Field('show_tooltips', _("Show tooltips")),
+    Field('auto_menu_accel', _("Automatically numbered menus with accellerator keys")),
+    Field('stretch_tables', _("Automatically stretch tables to full window width")),
+    Field('sender_address', _("E-mail address"), width=45),
+    Field('export_encoding', _("Character encoding")),
 )
 
-_LABELS = {
-    'row_highlight_color': _("Default"),
-    'row_highlight_edited_color': _("During inline editation"),
-    'row_highlight_unfocused_color': _("Inactive form"),
-    'row_highlight_width': _("Border width"),
-    'cell_highlight_color': _("Current cell highlight"),
-    'grid_line_color': _("Table grid"),
-    'grouping_background_downgrade': _("Grouping background change"),
-    'show_splash': _("Show start-up dialog"),
-    'show_tooltips': _("Show tooltips"),
-    'auto_menu_accel': _("Automatically numbered menus with accellerator keys"),
-    'stretch_tables': _("Automatically stretch tables to full window width"),
-    'sender_address': _("E-mail address"),
-    'export_encoding': _("Character encoding"),
+_LAYOUT = {
+    'ui': (_("User interface settings"), VGroup(
+        FieldSet(_("Colors"), (
+            FieldSet(_("Current table row highlight"), (
+                'row_highlight_color',
+                'row_highlight_edited_color',
+                'row_highlight_unfocused_color',
+                'row_highlight_width',
+            )),
+            'cell_highlight_color',
+            'grid_line_color',
+            'grouping_background_downgrade',
+        )),
+        FieldSet(_("Behavior"), (
+            'stretch_tables',
+            'show_tooltips',
+            'auto_menu_accel',
+            'show_splash',
+        )),
+        FieldSet(_("Other"), (
+            'sender_address',
+        )),
+    )),
+    'export': (_("Export settings"), VGroup(
+        'export_encoding',
+    )),
 }
 
-_FIELDSPEC_KWARGS = {
-    'sender_address': dict(width=45),
-    'row_highlight_width': dict(width=2, slider=True),
-}
 
+def edit_config(selector):
+    """Open a form for modification of given set of Pytis configuration options.
 
-def config_menu_items(hotkeys={}):
-    """Vrať seznam položek menu pro otevření konfiguračních formulářů.
+    Selector can be one of the following strings:
 
-    Vrací tuple instancí 'MenuItem', z nichž každá otevírá jeden ze standardně
-    definovaných formulářů pro editaci konfiguračních voleb.  Použitím této
-    funkce v definici menu aplikace budou automaticky do menu přidávány položky
-    standardních konfiguračních formulářů bez nutnosti změn v aplikaci při
-    aktualizaci systému Pytis.
+    - 'ui' for editting Pytis user interface options.
+    - 'export' for editting Pytis export options.
 
-    """
-    return tuple(
-        MenuItem(title, command=Command(pytis.form.Application.run_form,
-                                        form_class=ConfigForm, name=name),
-                 hotkey=hotkeys.get(name),
-                 help=(_('Open configuration form "%s"') % title),
-                 icon=('config-' + name))
-        for name, title, layout in _LAYOUT
-    )
+    Configuration options are updated on form submission.
 
+    BEWARE: This function is referred from DMP identifiers of existing applications:
 
-def configurable_options():
-    """Vrať seznam všech voleb nastavitelných pomocí konfiguračních formulářů.
-
-    Vrací tuple řetězců odpovídajících názvům konfiguračních voleb.
+    'handle/pytis.form.configui.edit_config/ui/',
+    'handle/pytis.form.configui.edit_config/export/',
 
     """
-    options = ()
-    for name, title, layout in _LAYOUT:
-        options = options + tuple(layout.order())
-    return options
+    def descr(name):
+        option = pytis.config.option(name)
+        descr = option.description()
+        doc = option.documentation()
+        if doc:
+            descr += "\n" + doc
+        return descr
 
-
-class _ConfigData(pytis.data.RestrictedData):
-    """Falešná datová třída."""
-
-    def __init__(self, columns, **kwargs):
-        super(_ConfigData, self).__init__(columns=columns, key=columns[0], **kwargs)
-        self._giveone = False
-
-    def select(self, *args, **kwargs):
-        self._giveone = True
-        return 1
-
-    def fetch(self, position):
-        if self._giveone and position in (0, pytis.data.FORWARD):
-            self._giveone = False
-            row_data = [(o, pytis.data.Value(pytis.config.option(o).type(),
-                                             getattr(pytis.config, o)))
-                        for o in [c.id() for c in self.columns()]]
-            return pytis.data.Row(row_data)
-        else:
-            return None
-
-    def last_row_number(self):
-        if self._giveone:
-            return -1
-        else:
-            return 0
-
-    def update(self, key, row, transaction=None):
+    label, layout = _LAYOUT[selector]
+    options = layout.order()
+    fdict = {f.id(): f for f in _FIELDS}
+    fields = [
+        fdict[option].clone(Field(option, descr=descr(option),
+                                  type=pytis.config.option(option).type()))
+        for option in options
+    ]
+    prefill = dict((o, getattr(pytis.config, o)) for o in options)
+    row = app.input_form(label, fields=fields, layout=layout, prefill=prefill)
+    if row:
         for option in row.keys():
             setattr(pytis.config, option, row[option].value())
+        app.refresh()
         wx.ToolTip.Enable(pytis.config.show_tooltips)
-        self.select()
-        new_row = self.fetchone()
-        return new_row, True
 
-
-class ConfigForm(PopupEditForm):
-    """Formulář pro editaci konfiguračních voleb.
-
-    Argument 'name' konstruktoru zde nemá obvyklý význam.  Slouží jako klíč do
-    seznamu layoutů definovaného výše (konstanta '_LAYOUT').  Datová i
-    prezentační specifikace pro tento layout jsou vytvořeny automaticky.
-
-    Formulář po svém ukončení automaticky aktualizuje konfiguraci novými
-    hodnotami.
-
-    """
-    DESCR = _("configuration form")
-
-    def __init__(self, parent, resolver, name, *args, **kwargs):
-        for name_, title, layout in _LAYOUT:
-            if name_ == name:
-                kwargs['layout'] = self._layout = layout
-                self._title = title
-        kwargs['mode'] = self.MODE_EDIT
-        kwargs['select_row'] = 0
-        super(ConfigForm, self).__init__(parent, resolver, name, *args, **kwargs)
-
-    def _create_view_spec(self):
-        def descr(name):
-            option = pytis.config.option(name)
-            descr = option.description()
-            doc = option.documentation()
-            if doc:
-                descr += "\n" + doc
-            return descr
-        fields = [Field(option, _LABELS.get(option, option), descr=descr(option),
-                        **_FIELDSPEC_KWARGS.get(option, {}))
-                  for option in self._layout.order()]
-        return ViewSpec(self._title, fields, layout=self._layout)
-
-    def _create_data_object(self):
-        columns = [pytis.data.ColumnSpec(option, pytis.config.option(option).type())
-                   for option in self._layout.order()]
-        return pytis.data.DataFactory(_ConfigData, columns).create()
-
-    def _print_menu(self):
-        return None
-
-    def _buttons(self):
-        button = dict(id=wx.ID_APPLY,
-                      tooltip=_("Apply changes without closing the form"),
-                      command=Command(self.commit_record, close=False))
-        buttons = super(ConfigForm, self)._buttons()
-        return (buttons[0], button) + buttons[1:]
+def configurable_options():
+    """Vrací tuple řetězců odpovídajících názvům konfiguračních voleb."""
+    options = []
+    for title, layout in _LAYOUT.values():
+        options.extend(layout.order())
+    return tuple(options)

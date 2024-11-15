@@ -842,24 +842,6 @@ class Application(API):
 
         """
 
-    def run_procedure(self, spec_name, proc_name, *args, **kwargs):
-        """Run application defined procedure.
-
-        Arguments:
-
-          spec_name -- specification name as a string.
-          proc_name -- name of the procedure within the specification.
-
-        All other arguments, including keyword arguments, are passed on to the
-        invoked procedure, except for the keyword argument 'block_refresh'.
-        When 'block_refresh' is passed and is True, automatic refreshing of all
-        currently open forms will be blocked until the procedure returns.
-
-        Returns the value returned by the procedure.
-
-        """
-        pass
-
     def web_view(self, title, content):
         """Show given content in a web browser inside the main application frame.
 
@@ -972,6 +954,47 @@ class Application(API):
         estimated times will only be accurate if the progress grows more or
         less consistently.  So only use the measures when these conditions can
         be met, otherwise they may give confusing results.
+
+        """
+        pass
+
+    def call(self, function, *args, **kwargs):
+        """Call given function with given arguments.
+
+        Arguments:
+
+          function -- callable to be called
+
+          *args, **kwargs -- arguments to be passed to the function except for
+            the keyword argument 'enabled',
+
+        This method is useful to create a 'pytis.presentation.Command' instance
+        for given 'function' (which is not possible directly).
+
+        Returns the value returned by the function.
+
+        """
+        pass
+
+    def run_procedure(self, spec_name, proc_name, *args, **kwargs):
+        """Run application defined procedure by name.
+
+        Arguments:
+
+          spec_name -- specification name as a string.
+          proc_name -- name of the procedure within the specification.
+
+        All other arguments, including keyword arguments, are passed on to the
+        invoked procedure, except for the keyword argument 'block_refresh'.
+        When 'block_refresh' is passed and is True, automatic refreshing of all
+        currently open forms will be blocked until the procedure returns.
+
+        Returns the value returned by the procedure.
+
+        TODO: This method may be deprecated in future because it seems
+        redundant and can be easily replaced by 'call()' which is much more
+        straightforward.  The arguemnt 'block_refresh' can be implemented for
+        'call()' too.
 
         """
         pass

@@ -135,18 +135,21 @@ class HelpUpdater(object):
                              pd.Row(self._values(data, removed=True)))
 
     def _update_menu_item_help(self, fullname, spec_name):
-        kind = fullname.split('/', 1)[0]
+        # TODO: Don't decode fullname here, generate help from menu items and their commands.
+        components = fullname.split('/')
+        kind = components[0]
         if kind == 'menu':
             content = None
         elif kind == 'form' and spec_name:
-            form_class = fullname.split('/')[1]
+            form_class = components[1]
             content = self._generate_form_help(form_class, spec_name)
         elif kind == 'proc':
-            procname = fullname.strip('/').split('/')[1]
+            procname = components[1]
             content = self._generate_proc_help(procname, spec_name)
         elif kind == 'handle':
-            action = fullname.strip('/').split('/')[1]
-            content = self._generate_action_help(action)
+            action = components[1]
+            arg = components[2] if len(components) >= 3 else None
+            content = self._generate_action_help(action, arg)
         elif kind == 'NEW_RECORD':
             if not fullname.endswith('/'):
                 # This is probably possible also for other fullname kinds...
@@ -180,14 +183,7 @@ class HelpUpdater(object):
         return '[help:spec/%s %s]' % (spec_name, title)
 
     def _generate_form_help(self, form_class, spec_name):
-        if form_class.endswith('.ConfigForm'):
-            if spec_name == 'ui':
-                return _("Opens a form for customizing the application user interface.")
-            if spec_name == 'export':
-                return _("Opens a form for customizing data export.")
-            else:
-                return None
-        elif '::' in spec_name:
+        if '::' in spec_name:
             resolver = pytis.config.resolver
             mainname, sidename = spec_name.split('::')
             try:
@@ -247,8 +243,13 @@ class HelpUpdater(object):
     def _generate_proc_help(self, procname, spec_name):
         return _("Invokes procedure %s from %s.") % (procname, spec_name)
 
-    def _generate_action_help(self, action):
-        return _("Invokes %s.") % action
+    def _generate_action_help(self, action, arg):
+        if action == 'pytis.form.configui.edit_config' and arg == 'ui':
+            return _("Opens a form for customizing the application user interface.")
+        elif action == 'pytis.form.configui.edit_config' and arg == 'export':
+            return _("Opens a form for customizing data export.")
+        else:
+            return _("Invokes %s.") % action
 
     def _generate_reload_rights_help(self):
         return _("Reloads access rights.")
@@ -278,6 +279,7 @@ def help_page(uri):
     """Return a help page for given URI as a 'lcg.ContentNode' instance."""
     global generator
     if not generator:
+        # TODO: decide which one to use without trying...
         for cls in (DmpHelpGenerator, SpecHelpGenerator):
             try:
                 generator = cls()

@@ -45,7 +45,11 @@ class Application(pytis.presentation.Application):
 
     def menu(self):
         return (
-            Menu(_("&System"), pytis.form.config_menu_items() + (
+            Menu(_("&System"), (
+                MenuItem(_("User interface settings"),
+                         Command(app.call, pytis.form.edit_config, 'ui')),
+                MenuItem(_("Export settings"),
+                         Command(app.call, pytis.form.edit_config, 'export')),
                 MenuItem(_("&Run form"),
                          Command(pytis.extensions.Commands.run_any_form),
                          hotkey=('Alt-a', 'a')),

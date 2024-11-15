@@ -86,11 +86,11 @@ from .application import (  # noqa: F401
     Application, run_form, db_operation,
     # Backwards compatibility aliases.
     MSeparator, Menu, MItem, CheckItem, RadioItem, close_forms,
-    recent_forms_menu,
+    recent_forms_menu, config_menu_items,
 )
 
-from .configui import (  # noqa: F401
-    ConfigForm, config_menu_items, configurable_options,
+from .configui import (
+    edit_config, configurable_options,
 )
 
 from .defaults import (  # noqa: F401

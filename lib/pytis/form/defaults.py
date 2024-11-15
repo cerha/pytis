@@ -38,6 +38,7 @@ from .inputfield import (
     FileField, InputField, Invocable, ListField, SpinnableField,
     StructuredTextField, TextField,
 )
+from .configui import edit_config
 from .list import BrowseForm, FoldableForm, ListForm
 from .screen import (
     Browser, DualFormSwitcher, DualFormResplitter, ProfileSelector, KeyboardSwitcher,
@@ -222,6 +223,8 @@ COMMAND_ICONS = (
     (Command(Browser.go_forward), wx.ART_GO_FORWARD),
     (Command(Browser.stop_loading), wx.ART_CROSS_MARK),
     (Command(Browser.reload), 'reload'),
+    (Command(Application.call, edit_config, 'ui'), 'config-ui'),
+    (Command(Application.call, edit_config, 'export'), 'config-export'),
 )
 
 
