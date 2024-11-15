@@ -39,14 +39,15 @@ from .spec import (  # noqa: F401
     FIELD_STYLE_DEFAULT, FIELD_STYLE_EMPHASIS, FIELD_STYLE_WARNING,
     FieldStyle, run_form_mitem, run_procedure_mitem,
     rp, bf, df, mf, get_value, format_value, rp_handler,
-    cb2colvalue, run_cb, make_presented_row, Commands,
-    cmd_run_any_form, cmd_check_form, cmd_check_menus_defs,
-    print2mail, mime_type_constraint,
+    cb2colvalue, run_cb, make_presented_row,
+    run_any_form, cmd_run_any_form, cmd_check_form,
+    cmd_check_menus_defs, print2mail, mime_type_constraint,
 )
 
 from .defs import (  # noqa: F401
     get_form_defs, get_menu_defs, _get_default_select,
     CheckReporter, MenuChecker, AppChecker, DevelChecker,
+    check_form, check_menus_defs, check_access_rights,
 )
 
 from .dmp import (  # noqa: F401

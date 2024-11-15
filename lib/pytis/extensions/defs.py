@@ -405,3 +405,70 @@ class DevelChecker(MenuChecker):
 
     def check_reverse_codebook_rights(self, *args, **kwargs):
         return []
+
+
+def check_form():
+    """Show report for user selected specification.
+
+    BEWARE: This function is referred from DMP identifiers of existing applications:
+
+    'handle/pytis.extensions.defs.check_form/'
+
+    """
+    resolver = pytis.config.resolver
+    result = app.input_form(title="Kontrola specifikace", fields=(
+        Field('spec', "Specifikace", not_null=True, width=30),
+    ))
+    if result:
+        spec = result['spec'].value()
+        try:
+            data_spec = resolver.get(spec, 'data_spec')
+            view_spec = resolver.get(spec, 'view_spec')
+        except ResolverError:
+            app.warning('Specifikace nenalezena.')
+            return
+        data = data_spec.create(dbconnection_spec=pytis.config.dbconnection)
+        # Title
+        obsah = "Title: %s\n" % (view_spec.title())
+        # Název tabulky
+        obsah += "Tabulka: %s\n\n" % (data.table(data.columns()[0].id()))
+        # Políčka v bindings
+        obsah += "Políčka v data_spec:\n%s\n\n" % \
+                 "\n".join(["  - %s" % c.id()
+                            for c in data.columns() if c.id() != 'oid'])
+        # Políčka ve fields
+        obsah += "Políčka ve fields:\n%s\n\n" % \
+                 "\n".join(["  - %s" % f.id() for f in view_spec.fields()])
+        # Actions - TODO: Bude třeba zohlednit vnořené seznamy a ActionGroup.
+        # obsah += "\n\nAkce kontextového menu:\n\n"
+        # actions = view_spec.actions()
+        # if actions:
+        #     obsah += "\n".join([a.title() for a in actions])
+        # else:
+        #     obsah += "Nejsou definovány"
+        # Default select
+        _get_default_select(spec)
+        app.message("DEFS: %s" % spec, content=obsah)
+
+
+def check_menus_defs():
+    """Check all specifications present in application menu interactively.
+
+    BEWARE: This function is referred from DMP identifiers of existing applications:
+
+    'handle/pytis.extensions.defs.check_menus_defs/'
+
+    """
+    MenuChecker().interactive_check()
+
+
+
+def check_access_rights():
+    """Check access rights of all specifications present in application menu.
+
+    BEWARE: This function is referred from DMP identifiers of existing applications:
+
+    'handle/pytis.extensions.defs.check_access_rights/'
+
+    """
+    MenuChecker().access_check()

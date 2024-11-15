@@ -51,10 +51,10 @@ class Application(pytis.presentation.Application):
                 MenuItem(_("Export settings"),
                          Command(app.call, pytis.form.edit_config, 'export')),
                 MenuItem(_("&Run form"),
-                         Command(pytis.extensions.Commands.run_any_form),
+                         Command(app.call, pytis.extensions.run_any_form),
                          hotkey=('Alt-a', 'a')),
                 MenuItem(_("&Check specification files"),
-                         Command(pytis.extensions.Commands.check_menus_defs)),
+                         Command(app.call, pytis.extensions.check_menus_defs)),
                 Menu(_("Management of menus and user roles"), (
                     MenuItem(_("Roles"), Command(app.run_form, 'menu.ApplicationRoles')),
                     MenuItem(_("Menu"), Command(app.run_form, 'menu.ApplicationMenu')),

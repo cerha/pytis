@@ -253,113 +253,61 @@ def make_presented_row(specname, prefill={}):
     return prow
 
 
-class Commands(CommandHandler):
-    """Collection of a few additional commands to be used in applications."""
+def run_any_form():
+    """Allows runnung a user selected form type on user selected specification.
 
-    _instance = None
+    BEWARE: This function is referred from DMP identifiers of existing applications:
 
-    @classmethod
-    def command_handler_instance(cls):
-        instance = cls._instance
-        if instance is None:
-            instance = cls._instance = cls()
-        return instance
+    'handle/pytis.extensions.spec.run_any_form/'
 
-    @Command.define
-    def run_any_form(self):
-        import pytis.form
-        form_types = (
-            ("BrowseForm", pytis.form.BrowseForm),
-            ("PopupEditForm", pytis.form.PopupEditForm),
-            ("PopupInsertForm", pytis.form.PopupInsertForm),
-            ("BrowseDualForm", pytis.form.BrowseDualForm),
-            ("MultiBrowseDualForm", pytis.form.MultiBrowseDualForm),
-            ("CodebookForm", pytis.form.CodebookForm),
-        )
-        all_defs = []
-        for d in get_form_defs():
-            all_defs.append(specification_path(d)[1])
-        all_defs.sort()
+    """
+    import pytis.form
+    form_types = (
+        ("BrowseForm", pytis.form.BrowseForm),
+        ("PopupEditForm", pytis.form.PopupEditForm),
+        ("PopupInsertForm", pytis.form.PopupInsertForm),
+        ("BrowseDualForm", pytis.form.BrowseDualForm),
+        ("MultiBrowseDualForm", pytis.form.MultiBrowseDualForm),
+        ("CodebookForm", pytis.form.CodebookForm),
+    )
+    all_defs = []
+    for d in get_form_defs():
+        all_defs.append(specification_path(d)[1])
+    all_defs.sort()
 
-        def name_runtime_filter(row):
-            name_substr = row['name_substr'].value()
-            if name_substr:
-                return lambda val: val.lower().find(name_substr.lower()) != -1
-            else:
-                return None
-        row = app.input_form(title=_("Run Form"), fields=(
-            Field('type', _("Form type"), not_null=True,
-                  enumerator=pd.FixedEnumerator([x[0] for x in form_types]),
-                  default='BrowseForm'),
-            Field('name_substr', _("Search string"), width=40,),
-            Field('name', _("Specification name"), width=40, height=10,
-                  enumerator=pd.FixedEnumerator(all_defs), not_null=True,
-                  selection_type=SelectionType.LISTBOX,
-                  runtime_filter=Computer(name_runtime_filter, depends=('name_substr',))
-                  ),
-        ))
-        if row is not None:
-            form_type = dict(form_types)[row['type'].value()]
-            pytis.form.run_form(form_type, row['name'].value())
-
-    @Command.define
-    def check_form(self):
-        """Zeptá se na název specifikace a zobrazí její report."""
-        resolver = pytis.config.resolver
-        result = app.input_form(title="Kontrola specifikace", fields=(
-            Field('spec', "Specifikace", not_null=True, width=30),
-        ))
-        if result:
-            spec = result['spec'].value()
-            try:
-                data_spec = resolver.get(spec, 'data_spec')
-                view_spec = resolver.get(spec, 'view_spec')
-            except ResolverError:
-                app.warning('Specifikace nenalezena.')
-                return
-            data = data_spec.create(dbconnection_spec=pytis.config.dbconnection)
-            # Title
-            obsah = "Title: %s\n" % (view_spec.title())
-            # Název tabulky
-            obsah += "Tabulka: %s\n\n" % (data.table(data.columns()[0].id()))
-            # Políčka v bindings
-            obsah += "Políčka v data_spec:\n%s\n\n" % \
-                     "\n".join(["  - %s" % c.id()
-                                for c in data.columns() if c.id() != 'oid'])
-            # Políčka ve fields
-            obsah += "Políčka ve fields:\n%s\n\n" % \
-                     "\n".join(["  - %s" % f.id() for f in view_spec.fields()])
-            # Actions - TODO: Bude třeba zohlednit vnořené seznamy a ActionGroup.
-            # obsah += "\n\nAkce kontextového menu:\n\n"
-            # actions = view_spec.actions()
-            # if actions:
-            #     obsah += "\n".join([a.title() for a in actions])
-            # else:
-            #     obsah += "Nejsou definovány"
-            # Default select
-            _get_default_select(spec)
-            app.message("DEFS: %s" % spec, content=obsah)
-
-    @Command.define
-    def check_menus_defs(self):
-        """Zkontroluje všechny specifikace uvedené v menu aplikace."""
-        MenuChecker().interactive_check()
-
-    @Command.define
-    def check_access_rights(self):
-        """Zkontroluje práva všech specifikací uvedených v menu aplikace."""
-        MenuChecker().access_check()
+    def name_runtime_filter(row):
+        name_substr = row['name_substr'].value()
+        if name_substr:
+            return lambda val: val.lower().find(name_substr.lower()) != -1
+        else:
+            return None
+    row = app.input_form(title=_("Run Form"), fields=(
+        Field('type', _("Form type"), not_null=True,
+              enumerator=pd.FixedEnumerator([x[0] for x in form_types]),
+              default='BrowseForm'),
+        Field('name_substr', _("Search string"), width=40,),
+        Field('name', _("Specification name"), width=40, height=10,
+              enumerator=pd.FixedEnumerator(all_defs), not_null=True,
+              selection_type=SelectionType.LISTBOX,
+              runtime_filter=Computer(name_runtime_filter, depends=('name_substr',))
+              ),
+    ))
+    if row is not None:
+        form_type = dict(form_types)[row['type'].value()]
+        pytis.form.run_form(form_type, row['name'].value())
 
 
-# Backwards compatibility alises:
 def cmd_run_any_form():
-    return Command(Commands.run_any_form)
-
-def cmd_check_menus_defs():
-    return Command(Commands.check_menus_defs)
+    """Deprecated, left just for backwards compatibility."""
+    return Command(app.call, run_any_form)
 
 def cmd_check_form():
-    return Command(Commands.check_form)
+    """Deprecated, left just for backwards compatibility."""
+    return Command(app.call, check_form)
+
+def cmd_check_menus_defs():
+    """Deprecated, left just for backwards compatibility."""
+    return Command(app.call, check_menus_defs)
 
 
 def print2mail(resolver, spec_name, template_id, row, to, from_, subject, msg, filename=None,
