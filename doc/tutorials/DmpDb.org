@@ -84,7 +84,7 @@ akcí a jejich identifikátorů:
   NAME ... argument `name'
   COMMAND_PROC ... argument `command' nebo prázdné 
 
-- Příkaz HANDLED_ACTION:
+- Příkaz CALL:
 
     handle/NAME/COMMAND_PROC/
 

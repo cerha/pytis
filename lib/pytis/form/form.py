@@ -2774,9 +2774,7 @@ class EditForm(RecordForm, TitledForm, Refreshable):
                 busy_cursor(False)
             label = button.label()
             tooltip = button.tooltip()
-            command = Command(Application.handled_action,
-                              handler=handler, row=self._row,
-                              enabled=button.enabled())
+            command = Command(app.call, handler, self._row, enabled=button.enabled())
         else:
             action = find(button.action(), self._view.actions(unnest=True), key=lambda a: a.name())
             label = button.label() or action.title()

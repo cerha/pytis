@@ -814,10 +814,12 @@ class DMPMenu(DMPObject):
                 form_name = command.args.pop('name', '')
                 if form_name is not None and not command.args:
                     return '%s/%s/%s' % (command.method.__name__.upper(), form_name, command_proc,)
-            elif command.name == 'Application.handled_action':
-                handler = command.args.pop('handler', None)
-                if not command.args and isinstance(handler, types.FunctionType):
-                    name = modulify(handler, handler.__name__)
+            elif command.name in ('Application.call', 'Application.api_call'):
+                # TODO: Umožnit i poziční argumenty, viz pytis.extensions.dmp_menu()
+                args = dict(command.args)
+                function = args.pop('function', None)
+                if not args and isinstance(function, types.FunctionType):
+                    name = modulify(function, function.__name__)
                     return 'handle/%s/%s' % (name, command_proc,)
             elif command.name == 'Application.run_procedure':
                 proc_name = command.args.pop('proc_name')

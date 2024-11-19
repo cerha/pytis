@@ -291,10 +291,7 @@ def file_menu_items(fields, row, select_arguments):
         return crypto_name is None or crypto_name in app.decrypted_areas()
 
     return [MenuItem(_('Open file "%s"', filename),
-                     command=Command(Application.handled_action,
-                                     handler=open_file,
-                                     field=f,
-                                     enabled=can_open_file),
+                     command=Command(app.call, open_file, f, enabled=can_open_file),
                      help=_('Open the value of field "%s" as a file.', f.label()))
             for f, filename in [(f, row.filename(f.id())) for f in fields]
             if filename is not None and field_not_null(f.id())]
