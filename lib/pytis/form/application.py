@@ -882,15 +882,6 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         """Interrupt the currently running operation."""
         app.echo(_("Stopped..."), kind='error')
 
-    # TODO: Zrušit handled_action a nahradit 'call()'
-    @Command.define
-    def handled_action(self, handler=None, enabled=None, **kwargs):
-        """Perform application defined action."""
-        return handler(**kwargs)
-
-    def _can_handled_action(self, handler=None, enabled=None, **kwargs):
-        return enabled is None and True or enabled(**kwargs)
-
     @Command.define
     def call(self, function, *args, **kwargs):
         """Perform application defined action."""
