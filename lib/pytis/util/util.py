@@ -460,6 +460,7 @@ class Structure (object):
         return True
 
     def __ne__(self, other):
+        # Implied automatically in Python 3 so can be removed when dropping Python 2 support.
         return not self.__eq__(other)
 
     __hash__ = None
