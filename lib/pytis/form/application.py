@@ -890,7 +890,10 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
 
     def _can_call(self, function, *args, **kwargs):
         enabled = kwargs.pop('enabled', None)
-        return enabled is None and True or enabled(*args, **kwargs)
+        if enabled is None:
+            return True
+        else:
+            return enabled(*args, **kwargs)
 
     @Command.define
     def api_call(self, function, *args, **kwargs):
