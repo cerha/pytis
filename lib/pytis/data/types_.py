@@ -2723,6 +2723,9 @@ class JSON(Type):
             return hash(self.__key())
         def __eq__(self, other):
             return self.__key() == other.__key()
+        def __ne__(self, other):
+            # Implied automatically in Python 3 so can be removed when dropping Python 2 support.
+            return not self == other
 
     class JSONValue:
         """Wrapper type allowing recognition of JSON values in DB interface."""
