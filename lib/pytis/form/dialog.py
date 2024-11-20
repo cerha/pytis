@@ -849,16 +849,16 @@ class BugReport(GenericDialog):
             "Unhandled exception caught. Please, use the button below to report the problem."
         )), 0, wx.EXPAND | wx.ALL | wx.CENTER, 6)
 
-        nb = wx.Notebook(dialog)
         try:
+            # cgitb may fail here resolving attributes...
             html = cgitb.html(self._einfo)
         except Exception:
-            # cgitb sometimes fails resolving attributes...
             html = '<pre>' + ''.join(traceback.format_exception(*self._einfo)) + '</pre>'
-
         if isinstance(html, bytes):
-            # Python 2 hack to avoid ASCII decoding error in unicode concatenation on next line.
+            # cgitb returns bytes in Python 2...
             html = html.decode('utf-8')
+
+        nb = wx.Notebook(dialog)
         nb.AddPage(wx_text_view(nb, html, format=TextFormat.HTML, width=74, height=14),
                    _("Exception details"))
         nb.AddPage(wx.TextCtrl(nb, value='', name='message', size=(740, 200),
