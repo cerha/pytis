@@ -5316,6 +5316,9 @@ class Command(object):
                 self.method.__name__ == other.method.__name__ and
                 self.args == other.args)
 
+    def __ne__(self, other):
+        return not self == other
+
     @classmethod
     def define(cls, method):
         """Define given method as a command handling method.
