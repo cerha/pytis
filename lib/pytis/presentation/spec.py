@@ -5351,11 +5351,55 @@ class Command(object):
 
         Arguments passed to the constructor as positional are mapped to
         corresponding argument names by inspecting the command method
-        definition, so positional and keyword arguments can't be distinguished.
+        definition, so whwther the arguemnts are passed as positional or
+        keyword can't be distinguished.
+
+        When the command method accepts variable positional arguemnts, such as
+        '*args', and these arguemnts will appear in the returned dictionary as
+        a tuple keyed by the argument name including the initial '*'.
+
+        >>> class Greeter(CommandHandler):
+        ...     @Command.define
+        ...     def greet(self, name, polite=True, shout=False, greeting='Hello'):
+        ...         result = '{}, {}.'.format(greeting, name)
+        ...         if polite:
+        ...             result += ' How are you?'
+        ...         if shout:
+        ...             result = result.upper()
+        ...         return result
+        ...
+        ...     @Command.define
+        ...     def greet_people(self, greeting, *names, **kwargs):
+        ...         people = ', '.join(names[:-1]) + (' and ' if len(names) > 1 else '') + names[-1]
+        ...         return self.greet(people, greeting=greeting, **kwargs)
+        ...
+
+        >>> g = Greeter()
+        >>> Command(g.greet, 'Peter').args
+        {'name': 'Peter'}
+        >>> command = Command(g.greet, 'Peter', True, True)
+        >>> command.args
+        {'name': 'Peter', 'polite': True, 'shout': True}
+        >>> command.invoke()
+        'HELLO, PETER. HOW ARE YOU?'
+        >>> command = Command(g.greet, 'Bob', shout=False)
+        >>> command.args
+        {'name': 'Bob', 'shout': False}
+        >>> command.invoke()
+        'Hello, Bob. How are you?'
+        >>> command = Command(g.greet_people, 'Hi', 'Peter', 'Ann', polite=False)
+        >>> command.args
+        {'greeting': 'Hi', '*names': ('Peter', 'Ann'), 'polite': False}
+        >>> command.invoke()
+        'Hi, Peter and Ann.'
 
         """
-        return dict([(k, v) for k, v in zip(argument_names(self._method),
-                                            self._args)], **self._kwargs)
+        named_positionals = [(k, v) for k, v in zip(argument_names(self._method), self._args)]
+        if len(named_positionals) < len(self._args):
+            names = argument_names(self._method, var_positional=True)
+            name = names[-1] if names[-1].startswith('*') else '*args'
+            named_positionals.append((name, self._args[len(named_positionals):]))
+        return dict(named_positionals, **self._kwargs)
 
     def bind(self, handler):
         """Return a new instance of this command bound to given 'CommandHandler' instance.
