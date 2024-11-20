@@ -839,19 +839,42 @@ def public_attr_values(class_, prefix=None):
     return tuple(getattr(class_, attr) for attr in public_attributes(class_, prefix=prefix))
 
 
-def argument_names(callable):
+def argument_names(callable, var_positional=False, var_keyword=False):
     """Return names of all function/method arguments as a tuple of strings.
 
     The method argument 'self' is ignored.  The names are returned in the order in which the
-    arguments are defined, including all keyword arguments.  Only named arguments are taken into
-    account, so any `*' and `**' arguments are ignored.
+    arguments are defined, including all keyword arguments.
+
+    Only named arguments are taken into account by default.  Set
+    'var_positional' to True to also return variable positional arguments such
+    as '*args' and set 'var_keyword' to True to return also variable keyword
+    arguments such as '**kwargs'.
+
+    >>> def x(a, count, *names, **keys):
+    ...     return count
+    >>> argument_names(x)
+    ('a', 'count')
+    >>> argument_names(x, var_keyword=True)
+    ('a', 'count', '**keys')
+    >>> argument_names(x, var_positional=True)
+    ('a', 'count', '*names')
+    >>> argument_names(x, var_positional=True, var_keyword=True)
+    ('a', 'count', '*names', '**keys')
 
     """
     if sys.version_info[0] == 2:
-        args = tuple(inspect.getargspec(callable)[0])
+        spec = inspect.getargspec(callable)
+        args = spec.args
+        if var_positional and spec.varargs:
+            args.append('*' + spec.varargs)
+        if var_keyword and spec.keywords:
+            args.append('**' + spec.keywords)
     else:
-        args = [a.name for a in inspect.signature(callable).parameters.values()
-                if a.kind in (a.KEYWORD_ONLY, a.POSITIONAL_ONLY, a.POSITIONAL_OR_KEYWORD)]
+        args = [{a.VAR_POSITIONAL: '*', a.VAR_KEYWORD: '**'}.get(a.kind, '') + a.name
+                for a in inspect.signature(callable).parameters.values()
+                if (a.kind == a.VAR_POSITIONAL and var_positional or
+                    a.kind == a.VAR_KEYWORD and var_keyword or
+                    a.kind not in (a.VAR_POSITIONAL, a.VAR_KEYWORD))]
     if args and args[0] == 'self':
         args = args[1:]
     return tuple(args)
