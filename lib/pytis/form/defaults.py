@@ -225,6 +225,10 @@ COMMAND_ICONS = (
     (Command(Browser.reload), 'reload'),
     (Command(Application.call, edit_config, 'ui'), 'config-ui'),
     (Command(Application.call, edit_config, 'export'), 'config-export'),
+    # edit_config may referred through Application in dmp_menu() and through
+    # app (Pytis API) in direct menu specifications.
+    (Command(Application.api_call, edit_config, 'ui'), 'config-ui'),
+    (Command(Application.api_call, edit_config, 'export'), 'config-export'),
 )
 
 
