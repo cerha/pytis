@@ -495,7 +495,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
                     command = lookup_key(keymap, hotkey)
                     if command and command != item.command:
                         log(OPERATIONAL, "Duplicate hotkey %s on menu item '%s': "
-                            "Command %s collides with command %s defined elsewhere." %
+                            "%s collides with %s defined elsewhere." %
                             (hotkey, item.title, item.command, command))
                 if not hotkey and keymap:
                     hotkey = keymap.lookup_command(item.command)
