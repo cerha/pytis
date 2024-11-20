@@ -30,6 +30,7 @@ import pytis.presentation
 import pytis.util
 
 from pytis.util import log, OPERATIONAL
+from pytis.presentation import Specification
 
 
 def implements(api_class, incomplete=False):
@@ -1370,7 +1371,7 @@ class BaseApplication(object):
                     if r not in relaxed_action_rights:
                         relaxed_action_rights.append(r)
         rights_data.select_map(process)
-        pytis.presentation.Specification._init_access_rights(pytis.config.dbconnection)
+        Specification._init_access_rights(pytis.config.dbconnection)
         pytis.config.resolver.clear()
         if pytis.config.debug:
             self._dump_rights()
@@ -1380,9 +1381,9 @@ class BaseApplication(object):
         registered_shortnames = set()
         if self._access_rights not in (None, 'nonuser',):
             registered_shortnames = registered_shortnames.union(self._access_rights.keys())
-        if pytis.presentation.Specification._access_rights not in (None, 'nonuser'):
+        if Specification._access_rights not in (None, 'nonuser'):
             registered_shortnames = registered_shortnames.union(
-                pytis.presentation.Specification._access_rights.keys()
+                Specification._access_rights.keys()
             )
         resolver = pytis.config.resolver
         output = sys.stderr
@@ -1496,7 +1497,7 @@ class BaseApplication(object):
                 # No action rights defined => only system rights apply
                 # (this function is *action* rights check).
                 result = True
-                access_rights = pytis.presentation.Specification.data_access_rights(action)
+                access_rights = Specification.data_access_rights(action)
                 if access_rights is not None:
                     result = access_rights.permitted(perm, self._user_roles, column=column)
             else:
