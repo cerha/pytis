@@ -5182,7 +5182,7 @@ class Command(object):
 
     Commands are defined by classes.  A class derived form 'CommandHandler' can
     define its own commands as instance methods decorated by '@Command.define'.
-    Such method may be used in 'Command' instances.
+    Such method may be used to create a 'Command' instances.
 
     Example:
 
@@ -5194,83 +5194,156 @@ class Command(object):
     ...         return position
     ...
     >>> command = Command(Form.select_row, 3)
-    >>> assert command.definer == Form
-    >>> assert command.method == Form.select_row
-    >>> assert command.name == 'Form.select_row'
-    >>> assert command.args == {'position': 3}
-    >>> assert str(command) == '<Command Form.select_row(3)>'
+    >>> command
+    <Command Form.select_row(3)>
+    >>> command.name
+    'Form.select_row'
+    >>> command.definer is Form
+    True
+    >>> command.method is Form.select_row
+    True
+    >>> command.args
+    {'position': 3}
 
-    Command instances created on unbound methods (class methods) are unbound
-    commands, command instances created on bound methods (instance methods) are
-    bound methods.  The command in the previous example was unbound.
+    Command instances created on unbound methods (referred through their class)
+    are unbound commands, command instances created on bound methods (referred
+    through a particular instance) are bound commands.  The command in the
+    previous example was unbound.
+
+    Note: The command method is actually always an instance method, so unbound
+    commands still need to find their instance in order to be invoked, but more
+    on that later.  The difference is only that bound commands know their
+    instance in advance.
 
     Bound command example:
 
     >>> form = Form()
     >>> command = Command(form.select_row, position=5)
-    >>> assert command.definer == Form
-    >>> assert command.name == 'Form.select_row'
-    >>> assert command.args == {'position': 5}
-    >>> assert str(command) == ('<Command Form.select_row(position=5) bound to '
-    ...                         '<pytis.presentation.spec.Form object at 0x{:x}>>'
-    ...                         .format(id(form)))
+    >>> command
+    <Command Form.select_row(position=5) bound to <pytis.presentation.spec.Form object at 0x...>>
+    >>> command.definer is Form
+    True
+    >>> command.handler is form
+    True
+    >>> command.invoke()
+    5
 
-    Bound commands know the 'CommandHandler' instance on which they are to be
-    invoked.
+    Bound commands can also be created from unbound commands using 'bind()':
 
-    >>> assert command.handler == form
-    >>> assert command.invoke() == 5
+    >>> unbound_command = Command(Form.select_row, 7)
+    >>> unbound_command
+    <Command Form.select_row(7)>
+    >>> command = unbound_command.bind(form)
+    >>> command
+    <Command Form.select_row(7) bound to <pytis.presentation.spec.Form object at 0x...>>
+    >>> command.handler is form
+    True
+    >>> command.invoke()
+    7
 
-    Bound commands can be created from unbound commands using 'bind()':
-
-    >>> command = Command(Form.select_row, 7).bind(form)
-    >>> assert command.handler == form
-    >>> assert command.invoke() == 7
-
-    Unbound commands need cooperation of their 'CommandHandler' in order to
-    find their handling instance by implementing the method
+    Unbound commands need cooperation of their defining class ('CommandHandler'
+    subclass) to find their handling instance by implementing the method
     'command_handler_instance()'.  In the application this is typically the
     currently active component, which handles all compatible unbound commands.
     The example below tracks the active instances and uses them in
     'command_handler_instance()'
 
-    >>> class Form(CommandHandler):
+    >>> class Greeter(CommandHandler):
     ...     _active_instance = None
     ...
+    ...     def __init__(self, name):
+    ...         self._name = name
+    ...
     ...     def activate(self):
-    ...         Form._active_instance = self
+    ...         Greeter._active_instance = self
     ...
     ...     @classmethod
     ...     def command_handler_instance(cls):
-    ...         return Form._active_instance
+    ...         return Greeter._active_instance
     ...
     ...     @Command.define
-    ...     def select_row(self, position):
-    ...         # Do something...
-    ...         return position
+    ...     def greet(self, greeting='Hello'):
+    ...         return '{}, my name is {}.'.format(greeting, self._name)
 
-    >>> f1 = Form()
-    >>> f2 = Form()
-    >>> command = Command(Form.select_row, 15)
-    >>> f1.activate()
-    >>> assert command.handler == f1
-    >>> f2.activate()
-    >>> assert command.handler == f2
-    >>> assert command.enabled
-    >>> assert command.invoke() == 15
+    >>> command = Command(Greeter.greet, 'Hi')
+    >>> command.enabled  # There is no active greeter.
+    False
 
-    Command availability can be defined by defining the instance method
+    Invocation of a disabled command is skipped and returns None.
+
+    >>> command.invoke() is None
+    True
+
+    >>> g1 = Greeter('Peter')
+    >>> g1.activate()
+    >>> command.enabled
+    True
+    >>> command.handler == g1
+    True
+    >>> command.invoke()
+    'Hi, my name is Peter.'
+    >>> g2 = Greeter('Bob')
+    >>> g2.activate()
+    >>> command.handler == g2
+    True
+    >>> command.enabled
+    True
+    >>> command.invoke()
+    'Hi, my name is Bob.'
+
+    Regardless of the active instance, bound command is invoked on its own instance:
+
+    >>> Command(g1.greet).invoke()
+    'Hello, my name is Peter.'
+
+    Command availability (returned by the property 'enabled') is in the first
+    place determined by availability of an instance to invoke the command on.
+    In addition it can be limited by defining the instance method
     '_can_<name>', where '<name>' is the command method name, which accepts the
     same arguemnts as the command method.
 
-    >>> class LimitedForm(Form):
-    ...     def _can_select_row(self, position):
-    ...         return position >= 0 and position <= 12
+    >>> class MorningGreeter(Greeter):
+    ...     def _can_greet(self, greeting):
+    ...         return 'morning' in greeting.lower()
 
-    >>> f3 = LimitedForm()
-    >>> f3.activate()
-    >>> assert not command.enabled
-    >>> assert command.invoke() is None
+    >>> g3 = MorningGreeter('Marry')
+    >>> g3.activate()
+    >>> morning_greeting = Command(Greeter.greet, 'Good morning')
+    >>> morning_greeting.enabled
+    True
+    >>> morning_greeting.invoke()
+    'Good morning, my name is Marry.'
+    >>> evening_greeting = Command(Greeter.greet, 'Good evening')
+    >>> evening_greeting.enabled
+    False
+    >>> evening_greeting.invoke() is None
+    True
+
+    But instances of the previous classes can still greet happily (they don't
+    have the '_enabled_*' method).
+
+    >>> g1.activate()
+    >>> evening_greeting.enabled
+    True
+    >>> evening_greeting.invoke()
+    'Good evening, my name is Peter.'
+
+    Commands are considered equal if they call the same method with the same
+    arguents and are both unbound or bound to the same instance.
+
+    >>> Command(Greeter.greet, 'Hi') == Command(Greeter.greet, 'Hi')
+    True
+    >>> Command(g1.greet, 'Hi') == Command(g1.greet, 'Hi')
+    True
+    >>> Command(Greeter.greet, 'Hi') == Command(Greeter.greet, 'Hello')
+    False
+    >>> Command(g1.greet, 'Hi') == Command(g2.greet, 'Hi')
+    False
+    >>> g1.activate()
+    >>> Command(Greeter.greet, 'Hi') == Command(g1.greet, 'Hi')
+    True
+    >>> Command(Greeter.greet, 'Hi') == Command(g2.greet, 'Hi')
+    False
 
     """
     def __init__(self, method, *args, **kwargs):
