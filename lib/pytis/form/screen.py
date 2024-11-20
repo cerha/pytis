@@ -1270,6 +1270,8 @@ class ProfileSelector(wx.ComboCtrl, CommandHandler):
         self._popup = ProfileSelectorPopup()
         self.SetPopupControl(self._popup)
         self._on_enter_invoke = None
+        # Avoid repeated command instance creation in _on_ui_event()
+        self._cmd = Command(pytis.form.LookupForm.update_profile)
         # SetButtonPosition works around incorrect initial text control sizing in
         # codebook form, which starts with size 10x35 and resizes to the correct
         # size only after resizing the parent Dialog manually.
@@ -1296,7 +1298,7 @@ class ProfileSelector(wx.ComboCtrl, CommandHandler):
                 current_profile = app.form.profile
                 if current_profile and ctrl.GetValue() != current_profile.title():
                     ctrl.SetValue(current_profile.title())
-            if Command(pytis.form.LookupForm.update_profile).enabled:
+            if self._cmd.enabled:
                 # Indicate changed profile by color (update is enabled for changed profiles).
                 color = wx.Colour(255 if darkmode else 200, 0, 0)
             else:
