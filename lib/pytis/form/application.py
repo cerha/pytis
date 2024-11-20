@@ -223,6 +223,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
             from pytis.defs.logging import UserActionLog
             self._user_action_logger = UserActionLog.Logger(pytis.config.dbconnection,
                                                             pytis.config.dbuser)
+            log(OPERATIONAL, "Form action logging activated.")
         except pd.DBException as e:
             # DB logging is optional.  The application may choose not to include
             # the logging table in the database schema and this will simply
