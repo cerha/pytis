@@ -5312,6 +5312,7 @@ class Command(object):
     def __eq__(self, other):
         return (isinstance(other, self.__class__) and
                 self.definer == other.definer and
+                self.handler == other.handler and
                 self.method.__name__ == other.method.__name__ and
                 self.args == other.args)
 
