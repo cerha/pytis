@@ -2856,20 +2856,26 @@ class EditForm(RecordForm, TitledForm, Refreshable):
         row = None
         prefill = self._prefill
         if self._inserted_data:
-            def message(*messages):
-                app.message('\n\n'.join([m for m in messages if m]))
-            success = _("The record has been saved succesfully.") if report_success else None
-            batch_info = _("Batch insertion progress:") + ' ' + self._batch_position()
+            if report_success:
+                # Get the batch position before performing next iteration!
+                success = _("The record {} has been saved successfully."
+                            ).format(self._batch_position())
+            else:
+                success = None
             try:
                 i, item = next(self._inserted_data)
             except StopIteration:
                 self.set_status('progress', '')
-                message(success, batch_info, _("All records have been processed."))
+                app.message('\n\n'.join([m for m in (
+                    success,
+                    _("All records have been processed.")
+                ) if m]))
                 self._inserted_data = None
                 self.close()
             else:
                 if report_success:
-                    message(success, batch_info)
+                    # TODO: Buttons "Next", "Cancel", instead of "Ok"?
+                    app.message(success)
                 if isinstance(item, pytis.data.Row):
                     row = item
                 else:
