@@ -2268,7 +2268,7 @@ class RecordForm(LookupForm):
             try:
                 types = [self._row[cid].type() for cid in columns]
             except KeyError as e:
-                app.error(_("Invalid column id in CSV file, line 1: '{}'").format(e.message))
+                app.error(_("Invalid column id in CSV file, line 1: '{}'").format(e))
                 return
 
             class Continue(Exception):
