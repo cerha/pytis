@@ -654,6 +654,8 @@ class ProgressDialog(OperationDialog):
                 # will not slow down processes which call update often.
                 continue_, skip = self._dialog.Update(progress, newmsg=message)
                 self._dialog.Refresh()
+                if not continue_:
+                    break
         # Note, we currently don't support skiping (which is actually not
         # very well documented in wx, but wx.PD_CAN_SKIP seems to work).
         # If we want skipping, we can return an object with .skip and .abort
