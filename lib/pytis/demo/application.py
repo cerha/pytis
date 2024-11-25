@@ -84,11 +84,16 @@ class Application(pytis.presentation.Application):
                        (mf(_("Continents"), 'cb.Continents', binding='islands'),
                         mf(_("Countries"), 'cb.Countries'),
                         )),
-                  MenuItem(_("Dialog test"),
+                  MenuItem(_("Question dialog test"),
                            command=pytis.form.Application.COMMAND_HANDLED_ACTION(
-                               handler=self._dialog_test,
+                               handler=self._question_dialog_test,
                            ),
-                           hotkey='Alt-d'),
+                           hotkey=('Alt-d', 'q')),
+                  MenuItem(_("Progress dialog test"),
+                           command=pytis.form.Application.COMMAND_HANDLED_ACTION(
+                               handler=self._progress_dialog_test,
+                           ),
+                           hotkey=('Alt-d', 'd')),
                   bf(_("Password fields"), 'misc.Passwords'),
                   mf(_('Products'), 'misc.Products'),
                   bf(_('Tree Order'), 'misc.ObsoleteTree'),
@@ -137,13 +142,20 @@ class Application(pytis.presentation.Application):
                         refresh_interval=5000, width=3),
         ]
 
-    def _dialog_test(self):
-        app.message("A series of dialogs will follow.\nAnswer the questions as they come.")
-        app.question("The default answer should be `No'.\nCorrect?", default=False)
-        app.question("The default answer should be `Yes'.\nCorrect?", default=True)
-        if app.question("Do you want to exit now?\nAnswer `No' if you want the test to continue."):
-            return
+    def _question_dialog_test(self):
+        answers = (
+            app.question(_("Question with the default answer set to '%s'.", _("No")) + "\n" +
+                         _("Do you want to continue?"), default=False),
+            app.question(_("Question with the default answer set to '%s'.", _("Yes")) + "\n" +
+                         _("Do you still want to continue?"), default=True),
+            app.question(_("Question dialog with multiple answers.\nAdvance to the next record?"),
+                         answers=(_("Next"), _("Previous"), _("Cancel"))),
+        )
+        app.message(_("Python values corresponding to your answers were:") + "\n" + "\n".join(
+            "{}. {!r}".format(i + 1, a) for i, a in enumerate(answers)
+        ))
 
+    def _progress_dialog_test(self):
         def func1(update, data):
             for i, x in enumerate(data):
                 if update and not update(i, _("Processing: %d/%d", i, len(data))):
