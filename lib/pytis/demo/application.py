@@ -84,7 +84,11 @@ class Application(pytis.presentation.Application):
                        (mf(_("Continents"), 'cb.Continents', binding='islands'),
                         mf(_("Countries"), 'cb.Countries'),
                         )),
-                  MenuItem(_("Dialog test"), command='dialog_test', hotkey='Alt-d'),
+                  MenuItem(_("Dialog test"),
+                           command=pytis.form.Application.COMMAND_HANDLED_ACTION(
+                               handler=self._dialog_test,
+                           ),
+                           hotkey='Alt-d'),
                   bf(_("Password fields"), 'misc.Passwords'),
                   mf(_('Products'), 'misc.Products'),
                   bf(_('Tree Order'), 'misc.ObsoleteTree'),
@@ -132,9 +136,6 @@ class Application(pytis.presentation.Application):
             StatusField('counter', _("Counter"), refresh=self._refresh_counter,
                         refresh_interval=5000, width=3),
         ]
-
-    def cmd_dialog_test(self):
-        return pytis.form.Application.COMMAND_HANDLED_ACTION(handler=self._dialog_test)
 
     def _dialog_test(self):
         app.message("A series of dialogs will follow.\nAnswer the questions as they come.")
