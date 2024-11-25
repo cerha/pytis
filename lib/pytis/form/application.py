@@ -1980,12 +1980,13 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
             func = function
             def function(update, *args, **kwargs):
                 pass_n = ('n' in argument_names(func) and 'n' not in kwargs)
-                for n, arg in enumerate(over):
-                    if not update(progress=min(maximum, int(float(n + 1) / count * 100))):
-                        break
-                    if pass_n:
-                        kwargs['n'] = n
-                    func(lambda message=None: update(message=message), arg, *args, **kwargs)
+                if update(progress=0):
+                    for n, arg in enumerate(over):
+                        if pass_n:
+                            kwargs['n'] = n
+                        func(lambda message=None: update(message=message), arg, *args, **kwargs)
+                        if not update(progress=min(maximum, int(float(n + 1) / count * 100))):
+                            break
         if progress:
             dlg = dialog.ProgressDialog
             dialog_kwargs = dict(
