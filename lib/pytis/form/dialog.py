@@ -647,6 +647,14 @@ class ProgressDialog(OperationDialog):
             if progress > self._maximum:
                 # Prevent wxAssertionError: C++ assertion ""pos <= m_rangeMax"" failed.
                 progress = self._maximum
+            if progress == 0:
+                # This hack works around a problem observed in wx 4.1.0
+                # and 4.2.1 on Linux (not in 4.2.1 on macOS), which display
+                # progress around 30% when zero is passed.  This causes the
+                # progress bar to jump back for later values higher than
+                # zero (but smaller # than 30%). So it is safer to start
+                # at one.
+                progress = 1
             for i in range(10):
                 # HACK: Calling Update just once (without even calling Refresh)
                 # should be enough, but it doesn't reliably update the gauge.
