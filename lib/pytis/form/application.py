@@ -416,6 +416,8 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         import pytis.extensions
         try:
             menu = pytis.extensions.dmp_menu()
+            if not menu:
+                menu = list(self._specification.menu())
         except pd.DBException:
             menu = list(self._specification.menu())
         self._menu = menu
