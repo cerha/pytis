@@ -32,6 +32,7 @@ import pytis.data as pd
 from pytis.api import app
 from pytis.presentation import StatusField, SharedParams, Menu, MenuItem, MenuSeparator
 from pytis.extensions import mf, bf
+from pytis.util import log, OPERATIONAL
 _ = pytis.util.translations('pytis-demo')
 
 
@@ -160,7 +161,7 @@ class Application(pytis.presentation.Application):
             for i, x in enumerate(data):
                 if update and not update(i, _("Processing: %d/%d", i, len(data))):
                     break
-                print('Processing:', x)
+                log(OPERATIONAL, 'Processing:', x)
                 time.sleep(0.1)
 
         import string
@@ -168,7 +169,7 @@ class Application(pytis.presentation.Application):
 
         def func2(update, x):
             update(message=_("Processing: %s", x))
-            print('Processing:', x)
+            log(OPERATIONAL, 'Processing:', x)
             time.sleep(2)
 
         chars = 'ABCD'
@@ -180,6 +181,6 @@ class Application(pytis.presentation.Application):
 
         def func3(count=100):
             for i in range(count):
-                print('Processing: %d/%d' % (i + 1, count))
+                log(OPERATIONAL, '...:', i)
                 time.sleep(0.1)
         app.run(func3, kwargs=dict(count=18), progress=False)
