@@ -337,7 +337,7 @@ class PytisCryptoDecryptUsingKey(Base_PyFunction):
             encrypted = encrypted.encode('utf-8')
         rsa_key = Crypto.PublicKey.RSA.importKey(private)
         cipher = PKCS1_OAEP.new(rsa_key)
-        decrypted = cipher.decrypt(base64.decodestring(encrypted))
+        decrypted = cipher.decrypt(base64.decodebytes(encrypted))
         if isinstance(decrypted, bytes):
             decrypted = decrypted.decode('utf-8')
         return decrypted
