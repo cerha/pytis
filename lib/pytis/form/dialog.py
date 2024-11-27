@@ -52,7 +52,7 @@ import pytis.util
 
 from pytis.api import app
 from pytis.presentation import TextFormat
-from pytis.util import ProgramError, super_, send_mail
+from pytis.util import ProgramError, send_mail, public_attr_values
 
 from .command import CommandHandler
 from .event import wx_callback
@@ -157,7 +157,7 @@ class GenericDialog(Dialog):
         assert report_format is None or \
             report_format in pytis.util.public_attr_values(TextFormat), report_format
         assert isinstance(report_size, (list, tuple)) and len(report_size) == 2, report_size
-        super_(GenericDialog).__init__(self, parent)
+        super(GenericDialog, self).__init__(parent)
         self._title = unistr(title)
         self._button_labels = buttons
         self._default = default
@@ -384,7 +384,7 @@ class Message(GenericDialog):
           'icon' -- Jedna z ICON_* konstant třídy ('ICON_INFO' atd.).
 
         """
-        super_(Message).__init__(self, parent, title, buttons, default=default, **kwargs)
+        super(Message, self).__init__(parent, title, buttons, default=default, **kwargs)
         assert icon in self._icons + (None,)
         if message:
             self._message = unistr(message)
@@ -422,11 +422,11 @@ class Warning(Message):
             default = 'GenericDialog.BUTTON_OK'
 
         """
-        super_(Warning).__init__(self, parent, message, title=title,
-                                 icon=Message.ICON_WARNING,
-                                 buttons=(GenericDialog.BUTTON_OK,),
-                                 default=GenericDialog.BUTTON_OK,
-                                 **kwargs)
+        super(Warning, self).__init__(parent, message, title=title,
+                                      icon=Message.ICON_WARNING,
+                                      buttons=(GenericDialog.BUTTON_OK,),
+                                      default=GenericDialog.BUTTON_OK,
+                                      **kwargs)
 
 
 class Error(Message):
@@ -446,11 +446,11 @@ class Error(Message):
             default = 'GenericDialog.BUTTON_OK'
 
         """
-        super_(Error).__init__(self, parent, message, title=title,
-                               icon=Message.ICON_ERROR,
-                               buttons=(GenericDialog.BUTTON_OK,),
-                               default=GenericDialog.BUTTON_OK,
-                               **kwargs)
+        super(Error, self).__init__(parent, message, title=title,
+                                    icon=Message.ICON_ERROR,
+                                    buttons=(GenericDialog.BUTTON_OK,),
+                                    default=GenericDialog.BUTTON_OK,
+                                    **kwargs)
 
 
 class MultiQuestion(Message):
@@ -458,8 +458,8 @@ class MultiQuestion(Message):
 
     def __init__(self, parent, message, buttons, default=None,
                  title=_("Question"), icon=Message.ICON_QUESTION, timeout=None, **kwargs):
-        super_(MultiQuestion).__init__(self, parent, message, title=title, buttons=buttons,
-                                       default=default, icon=icon, **kwargs)
+        super(MultiQuestion, self).__init__(parent, message, title=title, buttons=buttons,
+                                            default=default, icon=icon, **kwargs)
         self._timeout_limit = timeout
 
     def _create_dialog(self):
@@ -509,8 +509,8 @@ class Question(MultiQuestion):
         else:
             default = self.BUTTON_NO
         self._COMMIT_BUTTON = default
-        super_(Question).__init__(self, parent, message, buttons=(self.BUTTON_YES, self.BUTTON_NO),
-                                  default=default, **kwargs)
+        super(Question, self).__init__(parent, message, buttons=(self.BUTTON_YES, self.BUTTON_NO),
+                                       default=default, **kwargs)
 
     def _customize_result(self, result):
         if result in (-1000, wx.ID_CANCEL):
@@ -542,9 +542,9 @@ class OperationDialog(Message):
           kwargs -- klíčové argumenty spouštěné funkce jako dictionary.
 
         """
-        super_(OperationDialog).__init__(self, parent, message=message,
-                                         title=title, icon=self.ICON_TIP,
-                                         buttons=(), default=None)
+        super(OperationDialog, self).__init__(parent, message=message,
+                                              title=title, icon=self.ICON_TIP,
+                                              buttons=(), default=None)
         assert callable(function)
         assert isinstance(args, (tuple, list))
         assert isinstance(kwargs, dict)
@@ -604,9 +604,9 @@ class ProgressDialog(OperationDialog):
             třídy).
 
         """
-        super_(ProgressDialog).__init__(self, parent, function, args=args,
-                                        kwargs=kwargs, message=message,
-                                        title=title)
+        super(ProgressDialog, self).__init__(parent, function, args=args,
+                                             kwargs=kwargs, message=message,
+                                             title=title)
         style = wx.PD_APP_MODAL | wx.PD_AUTO_HIDE
         if elapsed_time:
             style = style | wx.PD_ELAPSED_TIME
@@ -725,9 +725,9 @@ class Calendar(GenericDialog):
         'wx.DateTime.ParseDate()', bude datum nastaven na dnešní datum.
 
         """
-        super_(Calendar).__init__(self, parent, title=title,
-                                  buttons=(GenericDialog.BUTTON_OK,
-                                           GenericDialog.BUTTON_CANCEL))
+        super(Calendar, self).__init__(parent, title=title,
+                                       buttons=(GenericDialog.BUTTON_OK,
+                                                GenericDialog.BUTTON_CANCEL))
         # vytvoř kalendář
         style = (wx.adv.CAL_SHOW_HOLIDAYS |
                  wx.adv.CAL_SHOW_SURROUNDING_WEEKS)
@@ -793,7 +793,7 @@ class ColorSelector(GenericDialog):
           title -- titulek dialogového okna jako string
 
         """
-        super_(ColorSelector).__init__(self, parent, title=title, buttons=())
+        super(ColorSelector, self).__init__(parent, title=title, buttons=())
         assert isinstance(color, basestring) or color is None
         self._color = color
 
@@ -837,9 +837,9 @@ class BugReport(GenericDialog):
           einfo -- exception information as returned by 'sys.exc_info()'
 
         """
-        super_(BugReport).__init__(self, parent, _("Unhandled exception"),
-                                   buttons=(self._IGNORE_LABEL, self._EXIT_LABEL),
-                                   default=self._IGNORE_LABEL)
+        super(BugReport, self).__init__(parent, _("Unhandled exception"),
+                                        buttons=(self._IGNORE_LABEL, self._EXIT_LABEL),
+                                        default=self._IGNORE_LABEL)
         self._einfo = einfo
 
     def _create_content(self, sizer):
@@ -1189,7 +1189,7 @@ class FileDialog(Dialog):
             návratovou hodnotou metody 'run()' tuple.
 
         """
-        super_(FileDialog).__init__(self, parent)
+        super(FileDialog, self).__init__(parent)
         assert mode in (FileDialog.OPEN, FileDialog.SAVE)
         if title is None:
             title = {(FileDialog.OPEN, False): _("Open file"),
@@ -1259,7 +1259,7 @@ class DirDialog(Dialog):
           path -- initial derectory or None to use the last selected directory.
 
         """
-        super_(FileDialog).__init__(self, parent)
+        super(FileDialog, self).__init__(parent)
         assert isinstance(title, basestring)
         assert path is None or isinstance(path, basestring)
         self._title = unistr(title)
