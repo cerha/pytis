@@ -1150,15 +1150,15 @@ class AggregationSetupDialog(GenericDialog):
 
 
 class FileDialog(Dialog):
-    """Dialog pro výběr souboru.
+    """File selection dialog.
 
-    Zobrazí dialog s možností procházení adresářů a výběru souboru.
+    Displays a dialog with a file browser for selecting one or more files.
 
     """
     OPEN = 'OPEN'
-    """Konstanta určující dialog pro otevření existujícího souboru."""
+    """Constant for the 'mode' constructor argument to open an existing file."""
     SAVE = 'SAVE'
-    """Konstanta určující dialog pro zadání jména souboru pro uložení."""
+    """Constant for the 'mode' constructor argument to enter the name of a file to save."""
 
     _last_directory = {}
 
