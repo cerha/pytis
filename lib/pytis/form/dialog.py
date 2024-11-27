@@ -513,7 +513,7 @@ class Question(MultiQuestion):
                                   default=default, **kwargs)
 
     def _customize_result(self, result):
-        if result == -1000:
+        if result in (-1000, wx.ID_CANCEL):
             return None
         elif self._button_label(result) == self.BUTTON_YES:
             return True
