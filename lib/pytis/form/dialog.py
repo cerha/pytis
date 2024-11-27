@@ -207,24 +207,27 @@ class GenericDialog(Dialog):
         dialog = self._dialog
         sizer = wx.BoxSizer(wx.VERTICAL)
         self._create_content(sizer)
-        # vytvoř tlačítka a poskládej je vedle sebe
-        button_sizer = wx.BoxSizer()
-        for b in self._create_buttons():
-            button_sizer.Add(b, 0, wx.ALL, 8)
-            # registruj handlery událostí
-            wx_callback(wx.EVT_BUTTON, b, self._on_button)
-            self._handle_keys(b)
-        # poskládej obsah a tlačítka do top-level sizeru (nad sebe)
         if self._report is not None:
             report = wx_text_view(dialog, self._report,
                                   format=self._report_format,
                                   width=self._report_size[0],
                                   height=self._report_size[1])
+            #report.SetMinSize((300, 0))
             sizer.Add(report, 1, wx.EXPAND)
-        sizer.Add(button_sizer, 0, wx.CENTER)
-        wx_callback(wx.EVT_IDLE, self._dialog, self._on_idle)
+        buttons = self._create_buttons()
+        if buttons:
+            bsizer = wx.BoxSizer()
+            for button in buttons:
+                bsizer.Add(button, 0)
+                bsizer.AddSpacer(10)
+                wx_callback(wx.EVT_BUTTON, button, self._on_button)
+                self._handle_keys(button)
+            sizer.AddSpacer(16)
+            sizer.Add(bsizer, 0, wx.CENTER)
+        sizer.AddSpacer(16)
         dialog.SetSizer(sizer)
         sizer.Fit(dialog)
+        wx_callback(wx.EVT_IDLE, self._dialog, self._on_idle)
 
     def _create_content(self, sizer):
         """Create the main dialog content and add it to the top level sizer.
@@ -386,7 +389,7 @@ class Message(GenericDialog):
         """
         super(Message, self).__init__(parent, title, buttons, default=default, **kwargs)
         assert icon in self._icons + (None,)
-        if message:
+        if message is not None:
             self._message = unistr(message)
         else:
             self._message = None
@@ -394,15 +397,18 @@ class Message(GenericDialog):
 
     def _create_content(self, sizer):
         """Vytvoř obsah - to co bude vyplňovat plochu okna nad tlačítky."""
-        icon = self._icon and self._create_icon(self._icon)
-        message = self._message and wx.StaticText(self._dialog, -1, self._message)
-        if icon:
+        if self._message is not None:
+            message_box = wx.StaticText(self._dialog, wx.ID_ANY, self._message)
+        if self._icon and self._message is not None:
             box = wx.BoxSizer()
-            box.Add(icon, 0, wx.ALL | wx.ALIGN_CENTER_VERTICAL, 5)
-            box.Add(message or 0, 1, wx.EXPAND | wx.ALL, 12)
-            sizer.Add(box, 0, wx.EXPAND | wx.ALL | wx.CENTER, 5)
-        elif self._message:
-            sizer.Add(message, 0, wx.ALL | wx.CENTER, 5)
+            box.Add(self._create_icon(self._icon), 0, wx.RIGHT, 12)
+            box.Add(message_box, 1, wx.EXPAND | wx.TOP,
+                    16 if len(self._message.splitlines()) == 1 else 5)
+            sizer.Add(box, 0, wx.EXPAND | wx.ALL, 16)
+        elif self._icon:
+            sizer.Add(self._create_icon(self._icon), 0, wx.ALL, 16)
+        elif self._message is not None:
+            sizer.Add(message_box, 0, wx.ALL, 16)
 
 
 class Warning(Message):
