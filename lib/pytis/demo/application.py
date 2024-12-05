@@ -169,17 +169,25 @@ class Application(pytis.presentation.Application):
                 title=_("Operation with time measures"),
                 elapsed_time=True, remaining_time=True, estimated_time=True)
 
+        # Test dialog expansion when longer message is passed.
+        # Also test over with generator (maximum must be passed).
         def func2(update, x):
             update(message=_("Processing: %s", x))
             log(OPERATIONAL, 'Processing:', x)
             time.sleep(2)
-
-        chars = 'ABCD'
+        names = (
+            'South Africa',
+            'Democratic Socialist Republic of Sri Lanka',
+            'Spain',
+            'South Georgia and the South Sandwich Islands',
+            'Sudan',
+        )
+        # Also test over with generator (maximum must be passed).
         def gen():
-            for x in chars:
-                yield x
-
-        app.run(func2, over=gen(), maximum=len(chars), can_abort=True)
+            for name in names:
+                yield name
+        app.run(func2, over=gen(), maximum=len(names), can_abort=True,
+                elapsed_time=True, remaining_time=True, estimated_time=True)
 
         def func3(count=100):
             for i in range(count):
