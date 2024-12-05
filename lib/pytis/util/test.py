@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2019, 2021 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2019, 2021, 2024 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2018 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -286,9 +286,15 @@ class Classes(unittest.TestCase):
     class _D(_B, _C):
         pass
 
+    class _E(_D):
+        attr_x = 'x'
+        attr_y = 'y'
+
     def test_public_attributes(self):
         self.longMessage = True
         assert sorted(util.public_attributes(self._B)) == ['x', 'y']
+        assert sorted(util.public_attributes(self._E)) == ['attr_x', 'attr_y', 'x', 'y']
+        assert sorted(util.public_attributes(self._E, prefix='attr_')) == ['attr_x', 'attr_y']
 
     def test_direct_public_members(self):
         assert util.direct_public_members(self._A) == ('x',)

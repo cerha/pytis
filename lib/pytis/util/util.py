@@ -784,7 +784,7 @@ def _mro(class_):
 _public_attributes = {}
 
 
-def public_attributes(class_):
+def public_attributes(class_, prefix=None):
     """Vrať tuple všech jmen veřejných atributů třídy 'class_'.
 
     Vrácená jména jsou strings a obsahují i poděděné atributy.  Nejsou mezi
@@ -798,16 +798,18 @@ def public_attributes(class_):
     """
     global _public_attributes
     try:
-        return _public_attributes[class_]
+        return _public_attributes[(class_, prefix)]
     except KeyError:
         pass
-    att = functools.reduce(operator.add, [dir(c) for c in _mro(class_)])
+    att = functools.reduce(operator.add, [[attr for attr in dir(c)
+                                           if prefix is None or attr.startswith(prefix)]
+                                          for c in _mro(class_)])
     result = tuple(remove_duplicates([s for s in att if not s or s[0] != '_']))
-    _public_attributes[class_] = result
+    _public_attributes[(class_, prefix)] = result
     return result
 
 
-def public_attr_values(class_):
+def public_attr_values(class_, prefix=None):
     """Return a tuple of values of all public attributes of class 'class_'.
 
     Just a shorthand to get the values of attributes returned by
@@ -819,7 +821,7 @@ def public_attr_values(class_):
     # as they rely on the typical 1:1 mapping of attribute names and their
     # values.  But when this is not the case, public_attr_values() must be
     # used.
-    return tuple(getattr(class_, attr) for attr in public_attributes(class_))
+    return tuple(getattr(class_, attr) for attr in public_attributes(class_, prefix=prefix))
 
 
 def argument_names(callable):
