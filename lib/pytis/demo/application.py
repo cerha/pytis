@@ -157,15 +157,17 @@ class Application(pytis.presentation.Application):
         ))
 
     def _progress_dialog_test(self):
+        import string
+
         def func1(update, data):
             for i, x in enumerate(data):
                 if update and not update(i, _("Processing: %d/%d", i, len(data))):
                     break
                 log(OPERATIONAL, 'Processing:', x)
                 time.sleep(0.1)
-
-        import string
-        app.run(func1, (string.ascii_letters,), maximum=len(string.ascii_letters), can_abort=True)
+        app.run(func1, (string.ascii_letters,), maximum=len(string.ascii_letters), can_abort=True,
+                title=_("Operation with time measures"),
+                elapsed_time=True, remaining_time=True, estimated_time=True)
 
         def func2(update, x):
             update(message=_("Processing: %s", x))
