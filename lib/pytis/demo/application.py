@@ -195,3 +195,5 @@ class Application(pytis.presentation.Application):
                 log(OPERATIONAL, 'Processing:', i)
                 time.sleep(0.1)
         app.run(func3, args=(44,), title=_("Indeterminate mode operation"))
+
+        app.run(time.sleep, (4,), progress=False, title=_("Operation with no progress indication"))
