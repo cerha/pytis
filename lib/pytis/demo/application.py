@@ -189,8 +189,9 @@ class Application(pytis.presentation.Application):
         app.run(func2, over=gen(), maximum=len(names), can_abort=True,
                 elapsed_time=True, remaining_time=True, estimated_time=True)
 
-        def func3(count=100):
+        def func3(update, count):
             for i in range(count):
-                log(OPERATIONAL, '...:', i)
+                update(-1)
+                log(OPERATIONAL, 'Processing:', i)
                 time.sleep(0.1)
-        app.run(func3, kwargs=dict(count=18), progress=False)
+        app.run(func3, args=(44,), title=_("Indeterminate mode operation"))
