@@ -212,7 +212,8 @@ class GenericDialog(Dialog):
                                   format=self._report_format,
                                   width=self._report_size[0],
                                   height=self._report_size[1])
-            #report.SetMinSize((300, 0))
+            if self._report_format == TextFormat.PLAIN:
+                report.SetMinSize((300, report.MinSize.height))
             sizer.Add(report, 1, wx.EXPAND)
         buttons = self._create_buttons()
         if buttons:
