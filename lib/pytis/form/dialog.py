@@ -391,9 +391,12 @@ class Message(GenericDialog):
         super(Message, self).__init__(parent, title, buttons, default=default, **kwargs)
         assert icon in self._icons + (None,)
         if message is not None:
-            self._message = unistr(message)
-        else:
-            self._message = None
+            message = unistr(message)
+            if not icon:
+                # Only supply the default icon if message is given.  This will prevent
+                # a useless icon above the report widget.
+                icon = self.ICON_INFO
+        self._message = message
         self._icon = icon
 
     def _create_content(self, sizer):
