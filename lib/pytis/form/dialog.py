@@ -374,10 +374,10 @@ class Message(GenericDialog):
     "Ikona pro tipy, rady apod."
     ICON_QUIT = wx.ART_QUIT
     "Ikona opuštění aplikace."
+    ICON_RUN = wx.ART_EXECUTABLE_FILE
+    "Ikona opuštění aplikace."
 
-    _icons = (ICON_INFO, ICON_QUESTION, ICON_WARNING, ICON_ERROR, ICON_TIP, ICON_QUIT)
-
-    def __init__(self, parent, message, icon=ICON_INFO, title=_("Message"),
+    def __init__(self, parent, message, icon=None, title=_("Message"),
                  buttons=(GenericDialog.BUTTON_OK,), default=GenericDialog.BUTTON_OK, **kwargs):
         """Inicializuj dialog.
 
@@ -389,7 +389,7 @@ class Message(GenericDialog):
 
         """
         super(Message, self).__init__(parent, title, buttons, default=default, **kwargs)
-        assert icon in self._icons + (None,)
+        assert icon is None or icon in public_attr_values(self.__class__, prefix='ICON_'), icon
         if message is not None:
             message = unistr(message)
             if not icon:
@@ -399,20 +399,36 @@ class Message(GenericDialog):
         self._message = message
         self._icon = icon
 
+    def _set_message(self, message):
+        dialog = self._dialog
+        size = dialog.Size
+        self._message_display.SetLabel(message)
+        # Allow to expand, but don't shrink back.
+        self._message_display.SetMinSize(self._message_display.Size)
+        dialog.Sizer.Fit(dialog)
+        dialog.Refresh()
+        from pytis.util import log, OPERATIONAL
+        for i in range(4):
+            pytis.form.app.wx_yield(full=True)
+        if dialog.Size != size:
+            # Needed on wxGTK in order to let the dialog repaint correctly.
+            for i in range(10):
+                pytis.form.app.wx_yield(full=True)
+
     def _create_content(self, sizer):
         """Vytvoř obsah - to co bude vyplňovat plochu okna nad tlačítky."""
         if self._message is not None:
-            message_box = wx.StaticText(self._dialog, wx.ID_ANY, self._message)
+            self._message_display = wx.StaticText(self._dialog, wx.ID_ANY, self._message)
         if self._icon and self._message is not None:
             box = wx.BoxSizer()
             box.Add(self._create_icon(self._icon), 0, wx.RIGHT, 12)
-            box.Add(message_box, 1, wx.EXPAND | wx.TOP,
+            box.Add(self._message_display, 1, wx.EXPAND | wx.TOP,
                     16 if len(self._message.splitlines()) == 1 else 5)
             sizer.Add(box, 0, wx.EXPAND | wx.ALL, 16)
         elif self._icon:
             sizer.Add(self._create_icon(self._icon), 0, wx.ALL, 16)
         elif self._message is not None:
-            sizer.Add(message_box, 0, wx.ALL, 16)
+            sizer.Add(self._message_display, 0, wx.ALL, 16)
 
 
 class Warning(Message):
@@ -531,177 +547,199 @@ class Question(MultiQuestion):
             return False
 
 
-class OperationDialog(Message):
-    """Dialog pro spuštění dlouhotrvající operace.
+class ProgressDialog(Message):
+    """Dialog for execution of a long running operation in progress.
 
-    Spuštěním dialogu metodou 'run()' bude zobrazen modální dialog a spuštěna
-    funkce zadaná v konstruktoru.  Dialog je ukončen automaticky po skončení
-    funkce.  Do té doby uživatel nemůže dělat nic, než čekat...
+    The dialog is displayed until the operation is finished and may inform
+    the user about the progress of the operation visually (by a progress
+    bar) and textually (by a gradually updated progress message).
+
+    The operation is launched by executing the method 'run()' which will block
+    until the operation is finished and will return its result.
+
+    Progress updates:
+
+    Progress updates must be directly supported by the function performing the
+    operation.  If the function doesn't support progress updates, pass false to
+    'show_progress' and the remaining rules will not apply.
+
+    To support progress updates, the function must (in addition to its other
+    arguments passed through 'args' and 'kwargs') accept the first positional
+    argument named 'update' and call it periodically to update the progress.
+    The 'update' callback accepts two keyword arguments (both optional)
+    'progress' and 'message' ('progress' can also be passed as the first
+    positional argument).  If 'progress' is passed (is not None), it is an
+    integer between 0 and the 'maximum' passed to the dialog constructor.  It
+    will move the visual progress indicator proportionally to given position
+    between zero and the maximum.  The argument 'message' (if not None) updates
+    the progress message displayed above the progress bar.  If 'can_abort' was
+    true, the caller should also check the return value of the 'update'
+    callback and abort the operation if the return value is false.
+
+    Indeterminate mode:
+
+    When the value of 'progress' passed to the 'update' callback is -1, the
+    progress bar will switch to indeterminate mode, where it doesn't show an
+    exact percentage, but bounces between the left and right edge of the gauge.
+    To keep bouncing, the 'update' callback needs to be called repeatedly (with
+    progress=-1).  To make an impression of pulsing smoothly, it is good to
+    call the callback a few times a second.  Thus this mode is good for
+    operations which are able to call the callback but where the final point of
+    the operation can not be measured.
+
+    Time measures:
+
+    Time can display current elapsed time, estimated total and estimated
+    remainng time of the whole operation and can be turned on by constructor
+    arguments 'elapsed_time', 'estimated_time' and 'remaining_time'.  But
+    remember that they are only updated when the 'update' callback is called.
+    As the times are measured in seconds, it only makes sense to use the
+    measures if you are able to call the update callback at least a few times a
+    second.  Also note, that the estimated times will only be accurate if the
+    progress grows more or less consistently.  So only use the measures when
+    these conditions can be met, otherwise they will only confuse the user.
 
     """
+    BUTTON_ABORT = _("Abort")
+
     def __init__(self, parent, function, args=(), kwargs={},
-                 title=_("Operation in progress"),
-                 message=_("Please wait...")):
-        """Inicializuj dialog.
+                 title=_("Operation in progress"), message=_("Please wait..."),
+                 show_progress=True, maximum=100, can_abort=False,
+                 elapsed_time=False, estimated_time=False, remaining_time=False):
+        """Inicialize the dialog.
 
-        Argumenty:
+        Arguments:
 
-          parent, title, message -- odpovídají stejným argumentům rodič. třídy.
-          function -- funkce, která má být spuštěna.
-          args -- argumenty spouštěné funkce jako tuple.
-          kwargs -- klíčové argumenty spouštěné funkce jako dictionary.
+          parent -- as in the parent class.
+          title -- as in the parent class.
+          function -- function to be called and tracked by the progress dialog.
+            The function must accept the 'update' callback as its first
+            argument unless 'show_progress' is false (see the class docstring).
+          args, kwargs -- additional positional and keyword arguments to be
+            passed to 'function' after the 'update' callback.
+          message -- initial message displayed above the progress bar.  May be
+            changed later calling the 'update' callback with the 'message'
+            argument.
+          show_progress -- if false, the dialog desn't show progress and the
+            message can not be updated.  The 'function' does not receive the
+            'update' callback as the first argument in this case and all the
+            remaining arguments are irrelevant (and should not be passed).
+          maximum -- integer value determining the range in which the progress
+            is tracked (corresponds to 100% progress).
+          elapsed_time -- if true, show the time from the beginning.
+          estimated_time -- if true, show the estimated total time.
+          remaining_time -- If true, show the estimated time to the end.
+          can_abort -- if true, display the "Abort" button.  Operation abortion
+            must be supported by the called operation through the 'update'
+            callback return value (see the class docstring).
+
+        See the class docstring for more information about progress updates and
+        arguemnt relations.
 
         """
-        super(OperationDialog, self).__init__(parent, message=message,
-                                              title=title, icon=self.ICON_TIP,
-                                              buttons=(), default=None)
+        if can_abort:
+            buttons = (self.BUTTON_ABORT,)
+        else:
+            buttons = ()
+        super(ProgressDialog, self).__init__(parent, message=message or '',
+                                             title=title, icon=self.ICON_RUN,
+                                             buttons=buttons, default=None)
         assert callable(function)
         assert isinstance(args, (tuple, list))
         assert isinstance(kwargs, dict)
+        assert show_progress or (not elapsed_time and not estimated_time and
+                                 not remaining_time and not can_abort)
         self._function = function
         self._args = args
         self._kwargs = kwargs
-
-    def _on_show(self):
-        self._result = self._function(*self._args, **self._kwargs)
-        pytis.form.app.wx_yield(full=True)
-        if self._dialog.IsShown():
-            self._end_modal(wx.ID_OK)
-
-    def _customize_result(self, result):
-        return self._result
-
-
-class ProgressDialog(OperationDialog):
-    """Dialog pro spuštění dlouhotrvající operace s ProgressBarem.
-
-    Spuštěním dialogu metodou 'run()' bude zobrazen modální dialog a spuštěna
-    funkce zadaná v konstruktoru s argumenty předanými konstruktoru.  Navíc je
-    funkci jako první argument předán callback sloužící k aktualizaci stavu
-    progress baru.  Za jeho volání v průběhu operace je funkce vykonávající
-    operaci zodpovědná.  Tento callback vyžaduje jeden argument, kterým je stav
-    operace v procentech (integer).  Je li namísto číselné hodnoty předána
-    hodnota None, bude ukazatel průběhu změněn na pulzující pruh bez zobrazení
-    konkrétní hodnoty.  Návratová hodnota callbacku bude pravdivá, pokud má být
-    operace ukončena (uživatelské přerušení, je-li povoleno).  Za ukončení je
-    však opět zodpovědná funkce vykonávající operaci.  Druhým nepovinným
-    argumentem je klíčový argument 'newmsg'.  Pokud je předán neprázdný
-    řetězec, bude také aktualizována zpráva zobrazená na dialogu (tato zpráva
-    nahradí původní zprávu zadanou v konstruktoru).
-
-    Po ukončení dialogu (ať už z důvodu uživatelského přerušení, či dokončení
-    operace) je vrácena návratová hodnota funkce vykonávající operaci.
-
-    """
-    def __init__(self, parent, function, args=(), kwargs={},
-                 title=_("Operation in progress"), message=_("Please wait..."),
-                 maximum=100, elapsed_time=False, estimated_time=False,
-                 remaining_time=False, can_abort=False):
-        """Inicializuj dialog.
-
-        Argumenty:
-
-          parent, function, args, kwargs, message, title -- stejné, jako u
-            rodičovské třídy, pouze 'function' musí navíc přijímat odkaz na
-            aktualizační funkci jako první argument (viz dokumentace třídy).
-          maximum -- value determining the range in which the progress is
-            updated.
-          elapsed_time -- Pokud je 'True', zobrazí se uběhlý čas
-          estimated_time -- Pokud je 'True', zobrazí se předpokládaný čas
-          remaining_time -- Pokud je 'True', zobrazí se zbývající čas
-          can_abort -- Pokud je 'True', bude možno vykonávání funkce přerušit,
-            pokud to funkce vykonávající operaci umožňuje (viz. docstring
-            třídy).
-
-        """
-        super(ProgressDialog, self).__init__(parent, function, args=args,
-                                             kwargs=kwargs, message=message,
-                                             title=title)
-        style = wx.PD_APP_MODAL | wx.PD_AUTO_HIDE
-        if elapsed_time:
-            style = style | wx.PD_ELAPSED_TIME
-        if estimated_time:
-            style = style | wx.PD_ESTIMATED_TIME
-        if remaining_time:
-            style = style | wx.PD_REMAINING_TIME
-        if can_abort:
-            style = style | wx.PD_CAN_ABORT
-        self._style = style
         self._maximum = maximum
+        self._last_progress = 0
+        self._show_progress = show_progress
+        self._show_elapsed_time = elapsed_time
+        self._show_estimated_time = estimated_time
+        self._show_remaining_time = remaining_time
+        self._abort = False
+        self._time_display = {}
 
-    def _create_dialog(self):
-        self._dialog = wx.ProgressDialog(self._title, unistr(self._message),
-                                         maximum=self._maximum, parent=self._parent,
-                                         style=self._style)
+    def _create_content(self, sizer):
+        super(ProgressDialog, self)._create_content(sizer)
+        if self._show_progress:
+            self._gauge = gauge = wx.Gauge(self._dialog, wx.ID_ANY, range=self._maximum,
+                                           style=wx.GA_HORIZONTAL | wx.GA_SMOOTH | wx.GA_PROGRESS)
+            gauge.SetMinSize((340, gauge.Size.height))
+            gauge.SetValue(0)
+            sizer.Add(gauge, 0, wx.EXPAND | wx.LEFT | wx.RIGHT, 16)
+            grid = wx.FlexGridSizer(2, 0, 6)
+            for display, label, shown in (
+                    ('elapsed-time', _("Elapsed time:"), self._show_elapsed_time),
+                    ('estimated-time', _("Estimated total time:"), self._show_estimated_time),
+                    ('remaining-time', _("Estimated remaining time:"), self._show_remaining_time),
+            ):
+                if shown:
+                    grid.Add(wx.StaticText(self._dialog, wx.ID_ANY, label), 0, wx.ALIGN_RIGHT)
+                    ctrl = wx.StaticText(self._dialog, wx.ID_ANY, '', size=(24, 10))
+                    self._time_display[display] = ctrl
+                    grid.Add(ctrl)
+            if grid.ItemCount:
+                sizer.Add(grid, 0, wx.LEFT | wx.RIGHT | wx.ALIGN_RIGHT, 20)
 
-    def _update(self, progress=None, message=None, newmsg=None):
-        # progress is a number in range from 0 to the 'maximum' passed to the constructor.
-        # newmsg is for backwards compatibility. Pass 'message' in new code.
-        message = message or newmsg
-        if message:
-            message_width = self._dialog.GetFullTextExtent(message, self._dialog.Font)[0]
-            dialog_width = min(message_width + 30, wx.DisplaySize()[0] - 50)
-            if dialog_width > self._dialog.Size.width:
-                self._dialog.SetSize((dialog_width, self._dialog.Size.height))
+    def _show_time(self, display, time):
+        try:
+            ctrl = self._time_display[display]
+        except KeyError:
+            pass
         else:
-            message = self._dialog.Message
-        if progress == -1 or progress is None and self._dialog.Value == 0:
-            # TODO: Pulsing doesn't really work well.  The indicator is not
-            # updated reliably.  It starts to move a little when update is
-            # called at least 50 times per second but it still doesn't look
-            # good.
-            continue_, skip = self._dialog.Pulse(newmsg=message)
+            if time is None:
+                formatted = ''
+            else:
+                minutes, seconds = divmod(int(time), 60)
+                hours, minutes = divmod(minutes, 60)
+                if hours:
+                    fmt = _("{hours} h {minutes} m")
+                else:
+                    fmt = _("{minutes} m {seconds} s")
+                formatted = fmt.format(hours=hours, minutes=minutes, seconds=seconds)
+            ctrl.Label = formatted
+            size = self._dialog.GetTextExtent(formatted)
+            ctrl.SetMinSize((max(size.x, 24), size.y))
+            self._dialog.Sizer.Layout()
+
+    def _on_button(self, event):
+        if self._button_label(event.GetId()) == self.BUTTON_ABORT:
+            self._abort = True
         else:
-            if progress is None:
-                progress = self._dialog.Value
-            if progress > self._maximum:
-                # Prevent wxAssertionError: C++ assertion ""pos <= m_rangeMax"" failed.
-                progress = self._maximum
-            if progress == 0:
-                # This hack works around a problem observed in wx 4.1.0
-                # and 4.2.1 on Linux (not in 4.2.1 on macOS), which display
-                # progress around 30% when zero is passed.  This causes the
-                # progress bar to jump back for later values higher than
-                # zero (but smaller # than 30%). So it is safer to start
-                # at one.
-                progress = 1
-            for i in range(10):
-                # HACK: Calling Update just once (without even calling Refresh)
-                # should be enough, but it doesn't reliably update the gauge.
-                # Repeating 10 times seems to work in most cases.  Hopefully it
-                # will not slow down processes which call update often.
-                continue_, skip = self._dialog.Update(progress, newmsg=message)
-                self._dialog.Refresh()
-                if not continue_:
-                    break
-        # Note, we currently don't support skiping (which is actually not
-        # very well documented in wx, but wx.PD_CAN_SKIP seems to work).
-        # If we want skipping, we can return an object with .skip and .abort
-        # attributes and __bool__() for backwards compatibility.
-        return continue_
+            return super(ProgressDialog, self)._on_button(event)
 
-    class _Queued:
-        def __init__(self, function):
-            self._function = function
-            self._queue = queue.Queue()
-
-        def __call__(self, *args, **kwargs):
-            def function():
-                result = self._function(*args, **kwargs)
-                self._queue.put(result)
-            return function()
-
-        def result(self):
-            while True:
-                try:
-                    return self._queue.get(block=False)
-                except queue.Empty:
-                    pytis.form.app.wx_yield(full=True)
-                    #time.sleep(0.01)
+    def _update(self, progress=None, message=None):
+        # progress is a number in range from 0 to the 'maximum' passed to the
+        # constructor or -1 to switch to indeterminate mode pulsing.
+        if message is not None:
+            self._set_message(message)
+        if progress == -1:
+            # Note: Pulsing starts to look good when update is
+            # called at least a few times per second.
+            self._gauge.Pulse()
+        elif progress is not None:
+            self._gauge.Value = self._last_progress = max(0, min(progress, self._maximum))
+        if self._time_display:
+            elapsed_time = time.time() - self._start_time
+            self._show_time('elapsed-time', elapsed_time)
+            if self._last_progress:
+                estimated_time = elapsed_time / self._last_progress * self._maximum
+                self._show_time('estimated-time', estimated_time)
+                self._show_time('remaining-time', estimated_time - elapsed_time)
+        pytis.form.app.wx_yield(full=True)
+        return not self._abort
 
     def _run_dialog(self):
+        self._dialog.Show()
         pytis.form.app.wx_yield(full=True)
-        return self._function(self._update, *self._args, **self._kwargs)
+        if self._time_display:
+            self._start_time = time.time()
+        args = self._args
+        if self._show_progress:
+            args = (self._update,) + tuple(args)
+        return self._function(*args, **self._kwargs)
 
     def _customize_result(self, result):
         return result

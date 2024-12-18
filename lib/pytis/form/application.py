@@ -1990,24 +1990,16 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
                         func(lambda message=None: update(message=message), arg, *args, **kwargs)
                         if not update(progress=min(maximum, int(float(n + 1) / count * 100))):
                             break
-        if progress:
-            dlg = dialog.ProgressDialog
-            dialog_kwargs = dict(
-                maximum=maximum if maximum is not None else 100,
-                elapsed_time=elapsed_time,
-                estimated_time=estimated_time,
-                remaining_time=remaining_time,
-                can_abort=can_abort,
-            )
-        else:
-            assert not any((elapsed_time, estimated_time, remaining_time, can_abort))
-            dlg = dialog.OperationDialog
-            dialog_kwargs = dict()
         return self.run_dialog(
-            dlg, function, args, kwargs,
+            dialog.ProgressDialog, function, args, kwargs,
             title=title or _("Operation in progress"),
             message=message or _("Please wait..."),
-            **dialog_kwargs
+            show_progress=progress,
+            maximum=maximum if maximum is not None else 100,
+            elapsed_time=elapsed_time,
+            estimated_time=estimated_time,
+            remaining_time=remaining_time,
+            can_abort=can_abort,
         )
 
     def api_launch_file(self, path=None, data=None, suffix=None, decrypt=False):

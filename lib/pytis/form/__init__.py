@@ -50,7 +50,7 @@ from .screen import (  # noqa: F401
 )
 
 from .dialog import (  # noqa: F401
-    Dialog, Message, Warning, Error, MultiQuestion, Question, OperationDialog,
+    Dialog, Message, Warning, Error, MultiQuestion, Question,
     ProgressDialog, Calendar, ColorSelector, BugReport, CheckListDialog, AggregationSetupDialog,
     FileDialog, DirDialog,
 )
