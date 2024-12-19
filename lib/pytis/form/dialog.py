@@ -605,7 +605,8 @@ class ProgressDialog(Message):
     def __init__(self, parent, function, args=(), kwargs={},
                  title=_("Operation in progress"), message=_("Please wait..."),
                  show_progress=True, maximum=100, can_abort=False,
-                 elapsed_time=False, estimated_time=False, remaining_time=False):
+                 elapsed_time=False, estimated_time=False, remaining_time=False,
+                 time_precision='seconds'):
         """Inicialize the dialog.
 
         Arguments:
@@ -628,7 +629,12 @@ class ProgressDialog(Message):
             is tracked (corresponds to 100% progress).
           elapsed_time -- if true, show the time from the beginning.
           estimated_time -- if true, show the estimated total time.
-          remaining_time -- If true, show the estimated time to the end.
+          remaining_time -- if true, show the estimated time to the end.
+          time_precision -- elapsed/total/remaining time is by default
+            displayed with precision to seconds unless it has non-zero hours,
+            in which case it only displays hours and minutes.  Setting this
+            option to 'minutes' (a string literal) will suppress displaying
+            seconds in any case.
           can_abort -- if true, display the "Abort" button.  Operation abortion
             must be supported by the called operation through the 'update'
             callback return value (see the class docstring).
@@ -649,6 +655,7 @@ class ProgressDialog(Message):
         assert isinstance(kwargs, dict)
         assert show_progress or (not elapsed_time and not estimated_time and
                                  not remaining_time and not can_abort)
+        assert time_precision in ('minutes', 'seconds'), time_precision
         self._function = function
         self._args = args
         self._kwargs = kwargs
@@ -658,6 +665,7 @@ class ProgressDialog(Message):
         self._show_elapsed_time = elapsed_time
         self._show_estimated_time = estimated_time
         self._show_remaining_time = remaining_time
+        self._time_precision = time_precision
         self._abort = False
         self._time_display = {}
 
@@ -696,8 +704,12 @@ class ProgressDialog(Message):
                 hours, minutes = divmod(minutes, 60)
                 if hours:
                     fmt = _("{hours} h {minutes} m")
-                else:
+                elif self._time_precision == 'seconds' and not minutes:
+                    fmt = _("{seconds} s")
+                elif self._time_precision == 'seconds':
                     fmt = _("{minutes} m {seconds} s")
+                else:
+                    fmt = _("{minutes} m")
                 formatted = fmt.format(hours=hours, minutes=minutes, seconds=seconds)
             ctrl.Label = formatted
             size = self._dialog.GetTextExtent(formatted)

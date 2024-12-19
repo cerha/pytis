@@ -1969,7 +1969,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
 
     def api_run(self, function, args=(), kwargs={}, over=None, title=None, message=None,
                 progress=True, maximum=None, elapsed_time=False, estimated_time=False,
-                remaining_time=False, can_abort=False):
+                remaining_time=False, time_precision='seconds', can_abort=False):
         if over is not None:
             try:
                 count = len(over)
@@ -1999,6 +1999,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
             elapsed_time=elapsed_time,
             estimated_time=estimated_time,
             remaining_time=remaining_time,
+            time_precision=time_precision,
             can_abort=can_abort,
         )
 
