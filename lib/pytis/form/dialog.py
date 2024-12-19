@@ -557,47 +557,8 @@ class ProgressDialog(Message):
     The operation is launched by executing the method 'run()' which will block
     until the operation is finished and will return its result.
 
-    Progress updates:
-
-    Progress updates must be directly supported by the function performing the
-    operation.  If the function doesn't support progress updates, pass false to
-    'show_progress' and the remaining rules will not apply.
-
-    To support progress updates, the function must (in addition to its other
-    arguments passed through 'args' and 'kwargs') accept the first positional
-    argument named 'update' and call it periodically to update the progress.
-    The 'update' callback accepts two keyword arguments (both optional)
-    'progress' and 'message' ('progress' can also be passed as the first
-    positional argument).  If 'progress' is passed (is not None), it is an
-    integer between 0 and the 'maximum' passed to the dialog constructor.  It
-    will move the visual progress indicator proportionally to given position
-    between zero and the maximum.  The argument 'message' (if not None) updates
-    the progress message displayed above the progress bar.  If 'can_abort' was
-    true, the caller should also check the return value of the 'update'
-    callback and abort the operation if the return value is false.
-
-    Indeterminate mode:
-
-    When the value of 'progress' passed to the 'update' callback is -1, the
-    progress bar will switch to indeterminate mode, where it doesn't show an
-    exact percentage, but bounces between the left and right edge of the gauge.
-    To keep bouncing, the 'update' callback needs to be called repeatedly (with
-    progress=-1).  To make an impression of pulsing smoothly, it is good to
-    call the callback a few times a second.  Thus this mode is good for
-    operations which are able to call the callback but where the final point of
-    the operation can not be measured.
-
-    Time measures:
-
-    Time can display current elapsed time, estimated total and estimated
-    remainng time of the whole operation and can be turned on by constructor
-    arguments 'elapsed_time', 'estimated_time' and 'remaining_time'.  But
-    remember that they are only updated when the 'update' callback is called.
-    As the times are measured in seconds, it only makes sense to use the
-    measures if you are able to call the update callback at least a few times a
-    second.  Also note, that the estimated times will only be accurate if the
-    progress grows more or less consistently.  So only use the measures when
-    these conditions can be met, otherwise they will only confuse the user.
+    This dialog implements the API defined by 'pytis.api.Application.run()' so
+    most of its documentation applies here.
 
     """
     BUTTON_ABORT = _("Abort")
@@ -639,8 +600,8 @@ class ProgressDialog(Message):
             must be supported by the called operation through the 'update'
             callback return value (see the class docstring).
 
-        See the class docstring for more information about progress updates and
-        arguemnt relations.
+        See the documentation of 'pytis.api.Application.run()' for more
+        information about progress updates and arguemnt relations.
 
         """
         if can_abort:

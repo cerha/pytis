@@ -888,6 +888,9 @@ class Application(API):
         the user about the progress of the operation visually (by a progress
         bar) and textually (by a progress message).
 
+        Blocks until the operation is finished and returns the value returned
+        by 'function'.
+
         Arguments:
 
           function -- the Python function to be executed.
@@ -928,25 +931,50 @@ class Application(API):
           can_abort -- if true, the executed function may be aborted if it is
             written properly (see Progress updates below).
 
-        Progress updates
+        Progress updates:
 
-        The progress updates must be directly supported by the called function
-        (if the function doesn't support progress updates, pass false to
-        'progress' and the remaining rules will not apply).  The function must
-        (in addition to 'args' and 'kwargs') accept the first positional
-        argument 'update' and call it as a function periodically to update the
-        progress.  The 'update' function accepts two keyword arguments (both
-        optional) 'progress' and 'message'.  The argument 'progress' can also
-        be passed as the first positional argument.  If not None, it is a
-        number between zero and the 'maximum' passed to 'app.run()' (see
-        above).  It will move the visual progress indicator proportionally to
-        given position between zero and the maximum.  The argument 'message'
-        (if not None) updates the progress message displayed within the dialog.
-        If 'can_abort' was true, the caller should also check the return value
-        of the 'update' function and abort the operation if the return value is
-        false.
+        Progress updates must be directly supported by the function performing
+        the operation.  If the function doesn't support progress updates, pass
+        false to 'show_progress' and the remaining rules will not apply.
 
-        Returns the value returned by 'function' when finished.
+        To support progress updates, the function must (in addition to its
+        other arguments passed through 'args' and 'kwargs') accept the first
+        positional argument named 'update' and call it periodically to update
+        the progress.  The 'update' callback accepts two keyword arguments
+        (both optional) 'progress' and 'message' ('progress' can also be passed
+        as the first positional argument).  If 'progress' is passed (is not
+        None), it is an integer between 0 and the 'maximum' passed to the
+        dialog constructor.  It will move the visual progress indicator
+        proportionally to given position between zero and the maximum.  The
+        argument 'message' (if not None) updates the progress message displayed
+        above the progress bar.  If 'can_abort' was true, the caller should
+        also check the return value of the 'update' callback and abort the
+        operation if the return value is false.
+
+        Indeterminate mode:
+
+        When the value of 'progress' passed to the 'update' callback is -1, the
+        progress bar will switch to indeterminate mode, where it doesn't show
+        an exact percentage, but bounces between the left and right edge of the
+        gauge.  To keep bouncing, the 'update' callback needs to be called
+        repeatedly (with progress=-1).  To make an impression of pulsing
+        smoothly, it is good to call the callback a few times a second.  Thus
+        this mode is good for operations which are able to call the callback
+        but where the final point of the operation can not be measured.
+
+        Time measures:
+
+        Time can display current elapsed time, estimated total and estimated
+        remainng time of the whole operation and can be turned on by
+        constructor arguments 'elapsed_time', 'estimated_time' and
+        'remaining_time'.  But remember that they are only updated when the
+        'update' callback is called.  The times are by default displayed with
+        precision to seconds.  This will work nicely if it is possible to call
+        the update callback at least a few times a second.  If not, it may be a
+        good idea to set 'time_precision' to 'minutes'.  Also note, that the
+        estimated times will only be accurate if the progress grows more or
+        less consistently.  So only use the measures when these conditions can
+        be met, otherwise they may give confusing results.
 
         """
         pass
