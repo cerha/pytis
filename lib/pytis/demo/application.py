@@ -181,13 +181,14 @@ class Application(pytis.presentation.Application):
             'Spain',
             'South Georgia and the South Sandwich Islands',
             'Sudan',
+            'Jemen',
         )
         # Also test over with generator (maximum must be passed).
         def gen():
             for name in names:
                 yield name
         app.run(func2, over=gen(), maximum=len(names), can_abort=True,
-                elapsed_time=True, remaining_time=True, estimated_time=True)
+                title=_("Operation with dialog growing on longer messages"))
 
         def func3(update, count):
             for i in range(count):
@@ -196,4 +197,5 @@ class Application(pytis.presentation.Application):
                 time.sleep(0.1)
         app.run(func3, args=(44,), title=_("Indeterminate mode operation"))
 
-        app.run(time.sleep, (4,), progress=False, title=_("Operation with no progress indication"))
+        app.run(time.sleep, (4,), progress=False, title=_("Operation with no progress indication"),
+                message=_("Please wait for the operation to finish."))
