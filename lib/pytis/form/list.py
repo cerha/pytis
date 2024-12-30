@@ -29,6 +29,8 @@ wxWidgets.
 # obvykle `the_row'.  Matoucí jméno `row' bylo převzato z wxWidgets.
 
 from __future__ import unicode_literals
+from __future__ import print_function
+
 from past.builtins import basestring
 from builtins import range
 
