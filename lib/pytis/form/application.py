@@ -17,13 +17,15 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-"""Hlavní aplikační okno.
+"""Implementation of the wx.Widgets application.
 
-Tento modul definuje třídu 'Application', která představuje hlavní okno
-aplikace a zajišťuje základní služby s ním související.  Modul se týká pouze
-uživatelského rozhraní, neřeší obecně start a zastavení aplikace.
+The class 'Application' handles creation of the main application window and
+manages it during its lifetime.  It also implements the public API of
+'pytis.api.Application' and other public methods used internally throughout
+'pytis.form'.
 
 """
+
 from __future__ import print_function
 from past.builtins import basestring
 from builtins import range
