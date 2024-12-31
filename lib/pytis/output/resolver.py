@@ -270,6 +270,8 @@ class FileResolver(Resolver):
             import importlib.machinery
             import importlib.util
             spec = importlib.machinery.PathFinder.find_spec(top_name, path)
+            if not spec:
+                raise ResolverFileError(top_name, path, Exception('Module not found'))
             module = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(module)
         if len(name_list) > 1:
