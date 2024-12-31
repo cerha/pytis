@@ -20,13 +20,12 @@
 from __future__ import print_function
 from __future__ import unicode_literals
 
-
 import pytis
 import pytis.util
 import pytis.data as pd
 
 from pytis.api import app
-from pytis.presentation import Field, PresentedRow, Menu, MenuItem
+from pytis.presentation import Field, PresentedRow, Menu, MenuItem, MenuSeparator
 from pytis.util import Resolver, ResolverError, identity, log, EVENT, OPERATIONAL
 
 
@@ -58,56 +57,23 @@ def get_form_defs(resolver=None, messages=None):
     return specification_names
 
 
-def get_menu_forms():
-    """Return sequence of all forms present in application menu as tuples (form_class, specname).
-    """
+def get_menu_defs():
+    """Return sequence of names of all specifications present in application menu."""
     import pytis.form
 
-    def flatten_menus(queue, found, level=0):
-        if queue:
-            head, tail = queue[0], queue[1:]
-            found.append(head)
-            if isinstance(head, Menu):
-                flatten_menus(list(head.items), found, level=level + 1)
-            result = flatten_menus(tail, found, level=level)
-        else:
-            result = found
+    def menu_names(items):
+        result = []
+        for item in items:
+            if isinstance(item, Menu):
+                result.extend(menu_names(item.items))
+            elif not isinstance(item, MenuSeparator):
+                assert isinstance(item, MenuItem), item
+                if ((item.command == pytis.form.Application.COMMAND_RUN_FORM and
+                     not issubclass(item.args['form_class'], pytis.form.ConfigForm))):
+                    result.append(item.args['name'])
         return result
-    try:
-        data = pd.dbtable('ev_pytis_menu', ('shortname', 'fullname'))
-    except Exception:
-        data = None
-    if data is None:
-        try:
-            appl = pytis.config.resolver.specification('Application')
-        except ResolverError:
-            menus = pytis.config.resolver.get('application', 'menu')
-        else:
-            menus = appl.menu()
-        forms = [(item.args['form_class'], item.args['name'])
-                 for item in flatten_menus(menus, [])
-                 if (isinstance(item, MenuItem) and
-                     item.command == pytis.form.Application.COMMAND_RUN_FORM and
-                     not issubclass(item.args['form_class'], pytis.form.ConfigForm))]
-    else:
-        forms = []
 
-        def get_values(row):
-            return row['shortname'].value(), row['fullname'].value()
-        for shortname, fullname in data.select_map(get_values):
-            if ((shortname and shortname[:5] == 'form/' and
-                 fullname.startswith('form/pytis.form') and
-                 not fullname.startswith('form/pytis.form.configui.ConfigForm/'))):
-                formclass = getattr(pytis.form, fullname.split('/')[1].split('.')[-1])
-                forms.append((formclass, shortname[5:]))
-    return forms
-
-
-def get_menu_defs():
-    """Return sequence of names of all specifications present in application menu.
-    """
-    forms = get_menu_forms()
-    return pytis.util.remove_duplicates([f[1] for f in forms])
+    return pytis.util.remove_duplicates(menu_names(pytis.form.app.menu))
 
 
 def _get_default_select(spec):
@@ -143,7 +109,6 @@ def _get_default_select(spec):
 
 def check_form():
     """Zeptá se na název specifikace a zobrazí její report."""
-    import pytis.form
 
     resolver = pytis.config.resolver
     result = app.input_form(title="Kontrola specifikace", fields=(
@@ -383,46 +348,31 @@ class MenuChecker(object):
         if name.find('::') != -1:
             main, side = name.split('::')
             return self.check_bindings(main, side) + self._check_spec(main) + self._check_spec(side)
-        return (self.check_public(name) +
-                self.check_data(name) +
-                self.check_codebook_rights(name))
+        return (
+            self.check_public(name) +
+            self.check_data(name) +
+            self.check_codebook_rights(name)
+        )
 
     def interactive_check(self):
-        import pytis.form
-        errors = []
-        specnames = self._specification_names(errors)
-        self._output_specs = {}
-        if specnames:
-            width = max([len(s) for s in specnames]) + len('Poslední chyba v: ') + 6
-        else:
-            width = 30
+        def check(update, name):
+            update("\n".join((
+                "Kontroluji datové specifikace...",
+                "Specifikace: " + name,
+                "Poslední chyba: " + (errors[-1][0] if errors else ''),
+                '  ' + errors[-1][1][:80] + '...' if errors else '',
+            )))
+            errors.extend([(name, e) for e in self._check_spec(name)])
 
-        def check_specs(update, specnames):
-            check_spec = self._check_spec
-            total = len(specnames)
-            last_error = ''
-            step = 1  # aktualizujeme jen po každých 'step' procentech...
-            for n, name in enumerate(specnames):
-                newmsg = "\n".join(("Kontroluji datové specifikace...",
-                                    "Specifikace: " + name,
-                                    "Poslední chyba v: " + last_error))
-                status = int(float(n) / total * 100 / step)
-                if not update(status * step, newmsg=newmsg):
-                    break
-                if name.find('::') != -1:
-                    main, side = name.split('::')
-                    results = self.check_bindings(main, side) + check_spec(main) + check_spec(side)
-                else:
-                    results = check_spec(name)
-                for error in results:
-                    errors.append("Specifikace %s: %s" % (name, error))
-                    last_error = "%s\n%s...)" % (name, error[:width - 4])
-        app.run(check_specs, (specnames,),
-                message='Kontroluji datové specifikace...'.ljust(width) + '\n\n\n\n',
+        self._output_specs = {}
+        errors = []
+        app.run(check, over=self._specification_names(errors),
                 elapsed_time=True, can_abort=True)
         if errors:
-            errors = pytis.util.remove_duplicates(errors)
-            app.message("Chyby ve specifikacích", content="\n".join(errors))
+            app.message("Chyby ve specifikacích", content="\n".join(
+                "Specifikace %s: %s" % (name, error)
+                for name, error in pytis.util.remove_duplicates(errors)
+            ))
 
     def batch_check(self, reporter):
         errors = []
@@ -442,40 +392,31 @@ class MenuChecker(object):
         reporter.end()
 
     def access_check(self):
-        import pytis.form
-        errors = []
-        specnames = self._specification_names(errors)
+        def check(update, name):
+            update("\n".join((
+                "Kontroluji přístupová práva...",
+                "Specifikace: " + name,
+                "Poslední chyba: " + (errors[-1][0] if errors else ''),
+                '  ' + errors[-1][1][:80] + '...' if errors else '',
+            )))
+            if name.find('::') != -1:
+                main, side = name.split('::')
+                errors.extend(
+                    [(main, e) for e in self.check_codebook_rights(main, no_spec_error=True)] +
+                    [(side, e) for e in self.check_codebook_rights(side, no_spec_error=True)]
+                )
+            else:
+                errors.extend([(name, e) for e in
+                               self.check_codebook_rights(name, no_spec_error=True)])
+
         self._output_specs = {}
-        width = max([len(s) for s in specnames]) + len('Poslední chyba v: ') + 6
-
-        def check_specs(update, specnames):
-            check_spec = self.check_codebook_rights
-            total = len(specnames)
-            last_error = ''
-            step = 1  # aktualizujeme jen po každých 'step' procentech...
-            for n, name in enumerate(specnames):
-                newmsg = "\n".join(("Kontroluji přístupová práva...",
-                                    "Specifikace: " + name,
-                                    "Poslední chyba v: " + last_error))
-                status = int(float(n) / total * 100 / step)
-                if not update(status * step, newmsg=newmsg):
-                    break
-                if name.find('::') != -1:
-                    main, side = name.split('::')
-                    results = (check_spec(main, no_spec_error=True) +
-                               check_spec(side, no_spec_error=True))
-                else:
-                    results = check_spec(name, no_spec_error=True)
-                for error in results:
-                    errors.append("Specifikace %s: %s" % (name, error))
-                    last_error = "%s\n%s...)" % (name, error[:width - 4])
-        app.run(check_specs, (specnames,),
-                message='Kontroluji přístupová práva...'.ljust(width) + '\n\n\n\n',
-                elapsed_time=True, can_abort=True)
+        errors = []
+        app.run(check, over=self._specification_names(errors), elapsed_time=True, can_abort=True)
         if errors:
-            errors = pytis.util.remove_duplicates(errors)
-            app.message("Chyby v přístupových právech", content="\n".join(errors))
-
+            app.message("Chyby v přístupových právech", content="\n".join(
+                "Specifikace %s: %s" % (name, error)
+                for name, error in pytis.util.remove_duplicates(errors)
+            ))
 
 class AppChecker(MenuChecker):
 

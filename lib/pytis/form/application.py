@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2024 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2025 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2017 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -297,8 +297,8 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
     def _spec_title(self, name):
         if name.find('::') != -1:
             names = name.split('::')
-            return (pytis.config.resolver.get(names[0], 'binding_spec')[names[1]].title() or
-                    ' / '.join([self._spec_title(n) for n in names]))
+            bindings = pytis.config.resolver.get(names[0], 'binding_spec')
+            return bindings[names[1]].title() or ' / '.join([self._spec_title(n) for n in names])
         else:
             return pytis.config.resolver.get(name, 'view_spec').title()
 
@@ -307,30 +307,37 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         self._specification.init()
         if len(self._windows) == 0:
             self._panel.SetFocus()
-        # (Re)open the startup forms saved on last exit.
+        # Open the startup forms passed as a command line argument.
+        menu_names = pytis.extensions.get_menu_defs()
         startup_forms = []
         if pytis.config.startup_forms:
             for name in pytis.config.startup_forms.split(','):
                 if name.find('/') != -1:
-                    cls_name, name = name.split('/')
+                    cls_name, name = [n.strip() for n in name.split('/')]
                     try:
-                        cls = getattr(pytis.form, cls_name.strip())
+                        cls = getattr(pytis.form, cls_name)
                         if not issubclass(cls, pytis.form.Form):
                             raise AttributeError
                     except AttributeError:
                         app.error(_("Invalid form class in 'startup_forms':") + ' ' + cls_name)
                         continue
                 else:
+                    name = name.strip()
                     cls = (name.find('::') == -1 and
                            pytis.form.BrowseForm or
                            pytis.form.BrowseDualForm)
-                startup_forms.append((cls, name.strip()))
+                if name in menu_names:
+                    startup_forms.append((cls, name))
+                else:
+                    log(OPERATIONAL, "Ignoring '{}' in startup forms: not in menu".format(name))
+
+        # Add the forms saved on last exit to startup forms.
         saved_forms = []
         for cls, name in self._get_state_param(self._STATE_STARTUP_FORMS, [], list, list):
             if isinstance(cls, basestring):
                 cls = getattr(pytis.form, cls)
             if ((issubclass(cls, pytis.form.Form) and
-                 self._is_valid_spec(name) and
+                 self._is_valid_spec(name) and name in menu_names and
                  (cls, name) not in startup_forms)):
                 saved_forms.append((cls, name))
             else:
@@ -359,16 +366,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
                     run_form(cls, name)
                 except Exception as e:
                     log(OPERATIONAL, "Unable to init startup form:", (cls, name, e))
-        menu_items = pytis.extensions.get_menu_forms()
-        if menu_items:
-            # get_menu_forms() returns an empty list if DMP is not used!
-            filtered_forms = []
-            for i, f in enumerate(startup_forms[:]):
-                for m in menu_items:
-                    if f[0] == m[0] and f[1] == m[1]:
-                        filtered_forms.append(f)
-                        break
-            startup_forms = filtered_forms
+
         if len(startup_forms) > 1:
             app.run(run_startup_forms, args=(startup_forms,), maximum=len(startup_forms),
                     title=_("Opening saved forms"), message=_("Opening form") + ' ' * 40)
