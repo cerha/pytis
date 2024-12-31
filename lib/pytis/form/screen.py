@@ -16,16 +16,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Specifikace a zpracování uživatelských prvků hlavní obrazovky.
+"""Implementation of common UI elements for the wx Widgets application."""
 
-Modul zavádí prvky společné pro všechny formuláře: menu, stavový řádek,
-nápovědu, atd.  Tyto prvky se mohou vyskytovat ve všech formulářích, avšak
-v každém mohou mít jiný obsah.
-
-Modul definuje jak třídy sloužící ke specifikaci konkrétních prvků, tak
-i třídy, které tyto specifikace následně zpracovávají.
-
-"""
 from past.builtins import basestring
 from builtins import range, str
 from future import standard_library
