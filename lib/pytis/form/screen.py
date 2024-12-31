@@ -19,7 +19,7 @@
 """Implementation of common UI elements for the wx Widgets application."""
 
 from past.builtins import basestring
-from builtins import range, str
+from builtins import str
 from future import standard_library
 from future.utils import python_2_unicode_compatible
 
