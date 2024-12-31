@@ -16,7 +16,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Pomocné třídy pro seznamové formuláře."""
+"""Helper classes for forms with tabular (grid) data."""
+
+from __future__ import print_function
 
 # Note on terminology: Identifiers named `row' usually refer to row number
 # (starting from zero) as this is what wxWidgets use.  When refering to

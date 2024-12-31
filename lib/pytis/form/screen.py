@@ -18,6 +18,8 @@
 
 """Implementation of common UI elements for the wx Widgets application."""
 
+from __future__ import print_function
+
 from past.builtins import basestring
 from builtins import str
 from future import standard_library

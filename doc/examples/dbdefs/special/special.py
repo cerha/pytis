@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2019 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2024 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2013 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -35,6 +35,7 @@ dbdefs/__init__.py.
 
 """
 
+from __future__ import print_function
 import pytis.data
 import pytis.data.gensqlalchemy as sql
 

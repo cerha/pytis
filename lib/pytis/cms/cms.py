@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+# Copyright (C) 2018-2024 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2009-2017 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -15,8 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from __future__ import unicode_literals
-
 """Pytis CMS specifications.
 
 Pytis CMS is a fat client application for management of database structures, which define the
@@ -26,6 +25,8 @@ Wiking modules which implement a Wiking application, which reads these database 
 behaves according to them can be found in the 'web' submodule of this module.
 
 """
+from __future__ import unicode_literals
+from __future__ import print_function
 
 import os
 import socket

@@ -25,6 +25,8 @@ automatically propagated between the PresentedRow instance and the user interfac
 The actual class representing each field is determined by its specification and data type.
 
 """
+from __future__ import print_function
+
 from past.builtins import basestring
 from builtins import range
 from future.utils import python_2_unicode_compatible

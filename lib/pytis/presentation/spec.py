@@ -29,6 +29,8 @@ All classes of this module are of specificational nature and can be considered
 immutable.  Thus they can be shared as needed.
 
 """
+from __future__ import print_function
+
 from past.builtins import basestring
 from builtins import range
 from future import standard_library

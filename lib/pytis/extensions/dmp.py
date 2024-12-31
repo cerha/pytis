@@ -76,6 +76,7 @@ functions defined and exported here, serving mostly as an interface for 'dmp'
 script.
 
 """
+from __future__ import print_function
 from past.builtins import basestring
 from builtins import range
 

@@ -34,6 +34,7 @@ This module also defines global keyboard shortcuts for selected commands (and
 their arguments) in the constant 'DEFAULT_KEYMAP'.
 
 """
+from __future__ import print_function
 
 import wx
 

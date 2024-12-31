@@ -21,6 +21,7 @@
 Pro jména veřejných funkcí platí konvence, že začínají prefixem 'f_'.
 
 """
+from __future__ import print_function
 
 import pytis.output
 

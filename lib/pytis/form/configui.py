@@ -28,6 +28,7 @@ konfiguračních voleb obsažených v tomto layoutu.
 
 """
 
+from __future__ import print_function
 import wx
 
 from pytis.presentation import Field, LayoutSpec, LVGroup, VGroup, ViewSpec, MenuItem

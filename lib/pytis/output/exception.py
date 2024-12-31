@@ -18,6 +18,8 @@
 
 """Výjimkové třídy související s formátováním výstupu."""
 
+from __future__ import print_function
+
 
 class FormattingException(Exception):
     """Výjimka signalizovaná při jakémkoliv problému formátování šablony."""

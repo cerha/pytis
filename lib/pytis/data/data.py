@@ -35,6 +35,8 @@ volitelné, konkrétní databázový backend nemusí nabízet žádnou jejich ko
 implementaci.
 
 """
+from __future__ import print_function
+
 from past.builtins import basestring, long
 from builtins import range
 from future.utils import python_2_unicode_compatible

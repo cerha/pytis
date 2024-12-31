@@ -21,6 +21,7 @@
 This module implements web-based dialogs.
 
 """
+from __future__ import print_function
 
 import lcg
 import pytis.util

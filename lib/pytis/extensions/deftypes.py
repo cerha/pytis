@@ -18,6 +18,7 @@
 
 """Definice odvozených datových typů."""
 
+from __future__ import print_function
 import pytis.data
 from pytis.util import ProgramError
 from pytis.presentation import PrettyTreeOrder

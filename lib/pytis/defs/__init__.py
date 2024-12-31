@@ -22,6 +22,7 @@ Pytis ships with its own set of specifications which may be used in
 applications to access pytis system data through the user interface.
 
 """
+from __future__ import print_function
 
 from . import menu  # noqa: F401
 from . import printing  # noqa: F401

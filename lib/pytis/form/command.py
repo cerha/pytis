@@ -23,6 +23,7 @@ definice všech dostupných příkazů aplikace je potom soustředěna centráln
 modulu 'commands_'.
 
 """
+from __future__ import print_function
 from future.utils import python_2_unicode_compatible
 
 from past.builtins import basestring

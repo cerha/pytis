@@ -21,6 +21,7 @@
 Modul nabízí třídy umožňující provádět různé typy cachování.
 
 """
+from __future__ import print_function
 from future import standard_library
 
 import _thread

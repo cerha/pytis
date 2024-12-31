@@ -68,6 +68,8 @@ needed to employ Pytis CMS in an existing Pytis Application are:
 
 """
 
+from __future__ import print_function
+
 from .cms import (  # noqa: F401
     Menu, MenuParents, Languages, Modules, Actions, GenericActions,
     Users, Roles, SystemRoles, AllRoles, UserRoles, RoleUsers, Rights,

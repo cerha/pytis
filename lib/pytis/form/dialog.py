@@ -30,6 +30,8 @@ se vyskytující dialogové operace.
 """
 from __future__ import unicode_literals
 from __future__ import division
+from __future__ import print_function
+
 from past.builtins import basestring
 from builtins import range
 from future import standard_library

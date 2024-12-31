@@ -26,6 +26,7 @@ changes of editability of input fields, their validation and integrity
 checking, dynamic codebook filtering etc.
 
 """
+from __future__ import print_function
 
 from .spec import (  # noqa: F401
     TextFormat, Color, Style, Orientation, Text, Button, ActionContext,

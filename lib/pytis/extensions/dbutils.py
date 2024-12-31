@@ -18,6 +18,8 @@
 
 """Pomůcky pro operace s datovými objekty a daty obecně."""
 
+from __future__ import print_function
+
 from past.builtins import basestring
 
 import pytis

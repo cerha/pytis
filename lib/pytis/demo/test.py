@@ -21,6 +21,7 @@
 # database.
 
 from __future__ import unicode_literals
+from __future__ import print_function
 
 import copy
 import psycopg2 as dbapi

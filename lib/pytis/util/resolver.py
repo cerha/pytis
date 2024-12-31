@@ -25,6 +25,7 @@ components are created transparently by the resolver in the moment of their
 actual use.
 
 """
+from __future__ import print_function
 
 from builtins import range
 import sys

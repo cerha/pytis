@@ -22,6 +22,7 @@ Tento modul poskytuje všechny funkce potřebné pro jednoduché sestavení výs
 Konkrétně definuje jednoduché značkování textu a provádí jeho formátování.
 
 """
+from __future__ import print_function
 
 from .exception import (  # noqa: F401
     FormattingException, TemplateException

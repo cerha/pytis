@@ -8,6 +8,7 @@
 # http://svn.python.org/projects/python/trunk/Demo/parser/unparse.py
 # The same license conditions as for the Python language itself apply.
 
+from __future__ import print_function
 import sys
 import ast
 

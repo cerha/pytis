@@ -40,6 +40,8 @@ Hlavní třídou modulu je třída 'Formatter'.  Ta zajišťuje načtení a zpra
 
 """
 from __future__ import unicode_literals
+from __future__ import print_function
+
 from past.builtins import basestring
 
 import copy

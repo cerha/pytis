@@ -22,6 +22,8 @@ Tyto resolvery byly původně odvozeny od pytisových resolverů.  Nyní jsou to
 zcela samostatné třídy využívané výhradně pro sestavování tiskových výstupů.
 
 """
+from __future__ import print_function
+
 from past.builtins import basestring
 
 import codecs

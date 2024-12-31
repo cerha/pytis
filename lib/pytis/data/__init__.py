@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2019-2022, 2024 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2024 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2013 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -31,6 +31,7 @@ The module defines:
   database (see the module 'dbdata').
 
 """
+from __future__ import print_function
 
 from .types_ import (  # noqa: F401
     Type, Number, Big, Large, Limited,

@@ -18,6 +18,8 @@
 
 """Formátovací funkce pro datové objekty."""
 
+from __future__ import print_function
+
 from past.builtins import basestring
 from lcg import UFont
 import pytis.presentation

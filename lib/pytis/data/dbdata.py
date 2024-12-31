@@ -45,6 +45,8 @@ obzvláštní pozornost, pomocí nich se definují nejdůležitější věci tý
 tabulky.
 
 """
+from __future__ import print_function
+
 # TODO: V implementaci se počítá s tím, že z databáze nedostaneme nesmysly
 # (z důvodu jiného než programátorské chyby).  Tyto situace sice obecně
 # ošetřujeme metáním DBException, to ale nestačí, protože taková situace může

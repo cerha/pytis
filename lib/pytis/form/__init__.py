@@ -25,6 +25,8 @@ specifikace jednotlivých prvků rozhraní.
 
 """
 
+from __future__ import print_function
+
 from .event import (  # noqa: F401
     UserBreakException, top_level_exception, last_user_event, last_event_age,
     wx_callback, unlock_callbacks, yield_, idle_blocked, block_idle,

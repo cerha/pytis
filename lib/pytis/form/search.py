@@ -24,6 +24,7 @@ je míněna jako abstraktní.  Z ní jsou pak odvozeny dialogové třídy pro
 konkrétní použití.
 
 """
+from __future__ import print_function
 from past.builtins import basestring
 from builtins import range
 

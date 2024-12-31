@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2023 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2024 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2013-2015 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -17,6 +17,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 "Miscellaneous utilities for gensqlalchemy specifications."
+
+from __future__ import print_function
 
 from past.builtins import basestring
 

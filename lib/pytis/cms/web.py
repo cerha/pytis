@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (c) 2019-2021 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (c) 2019-2024 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2006-2017 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -38,6 +38,8 @@ this class may be further customized for a particular application.  Full API
 defined and documented by `wiking.Application' may be used.
 
 """
+
+from __future__ import print_function
 
 import datetime
 import os

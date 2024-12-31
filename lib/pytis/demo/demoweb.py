@@ -36,6 +36,7 @@ web server must be configured to run Wiking (see Wiking documentation for more i
 
 """
 from __future__ import unicode_literals
+from __future__ import print_function
 
 import wiking
 import pytis.cms.web

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2023 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2024 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2017 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -25,6 +25,8 @@ tvoří jen obecné rozhraní skládající například SQL příkazy.  Fyzický
 k databázi zajišťují rozhraní dále implementovaná v jiných zdrojových souborech.
 
 """
+from __future__ import print_function
+
 from past.builtins import basestring, long
 from builtins import range, object
 from future.utils import raise_

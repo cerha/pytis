@@ -40,6 +40,7 @@ z výše uvedeného seznamu.
 Konfigurace modulu je dána proměnnou 'config'.
 
 """
+from __future__ import print_function
 from past.builtins import basestring
 from builtins import range
 

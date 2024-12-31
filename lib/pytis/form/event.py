@@ -38,6 +38,7 @@ Aby modul plnil svůj účel, je nutno zajistit následující:
 
 """
 
+from __future__ import print_function
 import sys
 import _thread
 import time

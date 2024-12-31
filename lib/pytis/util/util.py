@@ -32,6 +32,8 @@ Tento modul je výjimečný ve dvou směrech:
      from util import *
 
 """
+from __future__ import print_function
+
 from past.builtins import basestring
 from builtins import range
 from future.utils import python_2_unicode_compatible

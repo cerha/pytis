@@ -46,6 +46,8 @@ applications to use this API.
 
 """
 
+from __future__ import print_function
+
 from .api import (  # noqa: F401
     implements, APIProvider, ApplicationAPIProvider, BaseApplication,
     Application, Form, Field, QueryFields, StatusField,

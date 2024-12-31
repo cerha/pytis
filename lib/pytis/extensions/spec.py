@@ -24,6 +24,8 @@ nějaké konstrukce vyžaduje složitější zápis, ale protože se tato konstr
 často opakuje, je možné ji parametrizovaně vytvořit automaticky.
 
 """
+from __future__ import print_function
+
 from past.builtins import basestring
 
 import io

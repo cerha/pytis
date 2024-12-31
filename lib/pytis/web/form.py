@@ -33,6 +33,8 @@ http://www.freebsoft.org/lcg.
 
 """
 
+from __future__ import print_function
+
 import lcg
 import copy
 import re

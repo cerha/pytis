@@ -22,6 +22,7 @@ A _field_ in this context refers to a logical element of the user intercace,
 not its concrete representation (input widget).
 
 """
+from __future__ import print_function
 from past.builtins import basestring
 from future.utils import python_2_unicode_compatible
 

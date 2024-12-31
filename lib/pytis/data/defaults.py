@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2019-2021 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2019-2024 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2006 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -24,6 +24,7 @@ This effectively selects particular database backend to be used by importing
 the corresponding source file.
 
 """
+from __future__ import print_function
 
 from .dbapi import (  # noqa: F401
     DBDataDefault, DBCounterDefault, DBFunctionDefault, DBTransactionDefault,

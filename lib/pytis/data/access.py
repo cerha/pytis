@@ -28,6 +28,8 @@ Access rights violation is signalized exclusively using the
 'DataAccessException' class.
 
 """
+from __future__ import print_function
+
 from past.builtins import basestring
 
 import pytis

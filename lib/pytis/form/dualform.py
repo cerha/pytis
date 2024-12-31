@@ -23,6 +23,8 @@ jednoduchý formulář, přičemž data horního a dolního formuláře jsou ně
 způsobem závislá.  Blíže viz dokumentace jednotlivých tříd.
 
 """
+from __future__ import print_function
+
 from past.builtins import basestring
 from builtins import range
 

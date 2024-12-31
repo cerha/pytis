@@ -29,6 +29,8 @@ budou vloženy tak, jak jsou, včetně mezer a odřádkování, a sekvence obsa
 elementy ke spojení dohromady.
 
 """
+from __future__ import print_function
+
 from past.builtins import basestring, long
 
 import copy

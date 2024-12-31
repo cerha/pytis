@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2020, 2024 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2024 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2007-2016 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -18,6 +18,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 from __future__ import unicode_literals
+from __future__ import print_function
 
 import lcg
 import datetime

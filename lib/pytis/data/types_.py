@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2022, 2024 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2024 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2017 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -34,6 +34,8 @@ specializovanější základy.  Hodnoty daných typů jsou pak reprezentovány
 instancemi samostatné třídy 'Value'.
 
 """
+from __future__ import print_function
+
 from past.builtins import basestring, long
 from builtins import range
 from future.utils import with_metaclass, python_2_unicode_compatible

@@ -17,6 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 """Deprecated features to be removed."""
+from __future__ import print_function
 
 from pytis.data import Integer
 

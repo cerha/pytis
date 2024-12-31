@@ -27,6 +27,8 @@ implementation specific and has to be implemented separately for each supported
 Database API implementation.
 
 """
+from __future__ import print_function
+
 from past.builtins import basestring, long
 from builtins import range
 

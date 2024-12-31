@@ -10,6 +10,7 @@ The path to pytis configuration file must be set in environment variable
 'PYTISCONFIG'.
 
 """
+from __future__ import print_function
 
 import pytis
 from pytis.demo.misc import mark_products

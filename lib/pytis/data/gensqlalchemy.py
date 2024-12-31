@@ -63,6 +63,8 @@ see all the most important constructs there.
 """
 
 from __future__ import unicode_literals
+from __future__ import print_function
+
 from past.builtins import basestring, long
 from builtins import range
 from future.utils import with_metaclass
