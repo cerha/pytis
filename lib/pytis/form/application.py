@@ -341,9 +341,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
             else:
                 log(OPERATIONAL, "Ignoring saved startup form:", (cls, name))
         if saved_forms and not self._headless:
-            if pytis.config.autostart_saved_forms:
-                startup_forms.extend(reversed(saved_forms))
-            else:
+            if not pytis.config.autostart_saved_forms:
                 checked = self.run_dialog(
                     dialog.CheckListDialog,
                     title=_("Restore forms"),
@@ -352,8 +350,8 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
                            for f, name in saved_forms],
                     icon=dialog.CheckListDialog.ICON_QUESTION,
                 )
-                if checked:
-                    startup_forms.extend(reversed([x for x, ch in zip(saved_forms, checked) if ch]))
+                saved_forms = [x for x, ch in zip(saved_forms, checked or []) if ch]
+            startup_forms[:0] = reversed(saved_forms)
 
         def run_startup_forms(update, startup_forms):
             total = len(startup_forms)
