@@ -308,7 +308,6 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         if len(self._windows) == 0:
             self._panel.SetFocus()
         # Open the startup forms passed as a command line argument.
-        menu_names = pytis.extensions.get_menu_defs()
         startup_forms = []
         if pytis.config.startup_forms:
             for name in pytis.config.startup_forms.split(','):
@@ -326,13 +325,11 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
                     cls = (name.find('::') == -1 and
                            pytis.form.BrowseForm or
                            pytis.form.BrowseDualForm)
-                if name in menu_names:
-                    startup_forms.append((cls, name))
-                else:
-                    log(OPERATIONAL, "Ignoring '{}' in startup forms: not in menu".format(name))
+                startup_forms.append((cls, name))
 
         # Add the forms saved on last exit to startup forms.
         saved_forms = []
+        menu_names = pytis.extensions.get_menu_defs()
         for cls, name in self._get_state_param(self._STATE_STARTUP_FORMS, [], list, list):
             if isinstance(cls, basestring):
                 cls = getattr(pytis.form, cls)
