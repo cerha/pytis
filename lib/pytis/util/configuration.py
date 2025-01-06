@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2024 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2025 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2002-2016 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -1073,7 +1073,7 @@ class Configuration(object):
         _DEFAULT = True
 
     class _Option_startup_forms(StringOption, CommandlineOption):
-        u"""Seznam formulářů, které mají být otevřeny po spuštění aplikace."""
+        u"""Form(s) to be opened on start as a comma separated list of specification names."""
         _DEFAULT = None
 
     class _Option_autostart_saved_forms(BooleanOption):

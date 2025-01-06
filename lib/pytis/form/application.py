@@ -318,13 +318,14 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
                         if not issubclass(cls, pytis.form.Form):
                             raise AttributeError
                     except AttributeError:
-                        app.error(_("Invalid form class in 'startup_forms':") + ' ' + cls_name)
+                        app.error(_("Invalid form class in startup forms:") + ' ' + cls_name)
                         continue
                 else:
                     name = name.strip()
-                    cls = (name.find('::') == -1 and
-                           pytis.form.BrowseForm or
-                           pytis.form.BrowseDualForm)
+                    if self._has_bindings(name):
+                        cls = pytis.form.MultiBrowseDualForm
+                    else:
+                        cls = pytis.form.BrowseForm
                 startup_forms.append((cls, name))
 
         # Add the forms saved on last exit to startup forms.
@@ -406,6 +407,17 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
             return True
         else:
             return spec_class.public
+
+    def _has_bindings(self, name):
+        try:
+            specification = pytis.config.resolver.specification(name)
+        except ResolverError:
+            return False
+        else:
+            if specification.view_spec().bindings():
+                return True
+            else:
+                return False
 
     def _create_menubar(self):
         # TODO: Temporary backwards compatilility hack.  Rely solely on self._specification.menu()
@@ -1906,17 +1918,11 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
             form_class = pytis.form.BrowseDualForm
         elif preview:
             form_class = pytis.form.DescriptiveDualForm
+        elif multi and self._has_bindings(name):
+            form_class = pytis.form.MultiBrowseDualForm
+            kwargs = dict(binding=binding)
         else:
             form_class = pytis.form.BrowseForm
-            if  multi:
-                try:
-                    specification = pytis.config.resolver.specification(name)
-                except ResolverError:
-                    pass
-                else:
-                    if specification.view_spec().bindings():
-                        form_class = pytis.form.MultiBrowseDualForm
-                        kwargs = dict(binding=binding)
         return run_form(form_class, name, select_row=select_row, sorting=sorting,
                         filter=filter, condition=condition, profile_id=profile,
                         transaction=transaction, **kwargs)
