@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2024 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2025 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2002-2013 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -27,25 +27,23 @@ from future import standard_library
 import _thread
 import collections
 
-from pytis.util import Locked, Counter, super_
+from pytis.util import Locked, Counter
 
 standard_library.install_aliases()  # to get collections.UserDict
 
 
 class _Cache(collections.UserDict):
-    """Bázový objekt pro všechny cache."""
+    """Base class for all caches."""
 
     def __init__(self, provider, validator=None):
-        """Inicializuj instanci.
+        """Initialize the instance.
 
-        Argumenty:
-
-          provider -- funkce jednoho argumentu, kterým je klíč, vracející
-            hodnotu odpovídající danému klíči
-          validator -- funkce jednoho argumentu, kterým je klíč, vracející
-            pravdu právě když položka odpovídající klíči je platná; může být
-            též 'None', v kterémžto případě jsou všechny položky automaticky
-            považovány za platné
+        Arguments:
+          provider -- function of one argument (the cache key) returning the
+            value corresponding to given key.
+          validator -- function of one argument (the cache key) returning true
+            if the value corresponding to given key is valid.  If None, all
+            values are considered valid.
 
         """
         collections.UserDict.__init__(self)
@@ -62,7 +60,7 @@ class _Cache(collections.UserDict):
 
         """
         try:
-            result = super_(_Cache).__getitem__(self, key)
+            result = super(_Cache, self).__getitem__(key)
             if self._validator is not None and not self._validator(key):
                 raise KeyError()
         except KeyError:
@@ -71,7 +69,7 @@ class _Cache(collections.UserDict):
 
     def __setitem__(self, key, value):
         """Ulož 'value' s 'key' do cache."""
-        super_(_Cache).__setitem__(self, key, value)
+        super(_Cache, self).__setitem__(key, value)
 
     def reset(self):
         """Kompletně zruš aktuální obsah cache."""
@@ -100,25 +98,24 @@ class LimitedCache(_Cache):
             cache
 
         """
-        super_(LimitedCache).__init__(self, provider)
+        super(LimitedCache, self).__init__(provider)
         assert isinstance(limit, int), limit
         self._limit = limit
         self._counter = Counter()
         self._lock = _thread.allocate_lock()
 
     def __getitem__(self, key):
-        result = super_(LimitedCache).__getitem__(self, key)
-        return result
+        return super(LimitedCache, self).__getitem__(key)
 
     def __setitem__(self, key, value):
         if self._limit > 0:
             with Locked(self._lock):
                 if self._counter.next() > self._limit:
                     self._collect()
-                super_(LimitedCache).__setitem__(self, key, value)
+                super(LimitedCache, self).__setitem__(key, value)
 
     def reset(self):
-        super_(LimitedCache).reset(self)
+        super(LimitedCache, self).reset(self)
         self._counter.reset()
 
     def _collect(self):
@@ -142,6 +139,6 @@ class RangeCache(_Cache):
           size -- nezáporný integer, maximální velikost cachovaného úseku dat
 
         """
-        _Cache.__init__(self, provider)
+        super(RangeCache, self).__init__(provider)
         assert isinstance(size, int), size
         self._size = size
