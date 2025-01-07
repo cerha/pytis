@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2024 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2025 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2014 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -66,7 +66,7 @@ import pytis
 from pytis.data import ColumnSpec, Data, Type, Row
 from pytis.util import (
     flatten, hash_attr, log, rsa_encrypt, sameclass,
-    super_, translations, Locked, ProgramError, DEBUG, EVENT, OPERATIONAL, UNDEFINED,
+    translations, Locked, ProgramError, DEBUG, EVENT, OPERATIONAL, UNDEFINED,
 )
 
 _ = translations('pytis-data')
@@ -721,7 +721,7 @@ class DBException(Exception):
         """
         if message is None:
             message = _(u"Database error")
-        super_(DBException).__init__(self, message, exception, *args)
+        super(DBException, self).__init__(message, exception, *args)
         log(OPERATIONAL, 'Database exception:', (message,) + args)
         if exception:
             log(OPERATIONAL, 'Wrapped database exception:', (exception,) + exception.args)
@@ -789,7 +789,7 @@ class DBLoginException(DBException):
 
     def __init__(self):
         """Inicializuj databázovou výjimku s patřičnými argumenty."""
-        super_(DBLoginException).__init__(self, _(u"Invalid user name or password"))
+        super(DBLoginException, self).__init__(_(u"Invalid user name or password"))
 
 
 class DBLockException(DBException):
@@ -797,7 +797,7 @@ class DBLockException(DBException):
     """
 
     def __init__(self):
-        super_(DBLockException).__init__(self, None)
+        super(DBLockException, self).__init__(None)
 
 
 class DBInsertException(DBException):
@@ -805,14 +805,14 @@ class DBInsertException(DBException):
     """
 
     def __init__(self):
-        super_(DBLockException).__init__(self, None)
+        super(DBInsertException, self).__init__(None)
 
 
 class NotWithinSelect(ProgramError):
     """Exception thrown on an attempt for a cursor operation when there is no active select."""
 
     def __init__(self):
-        ProgramError.__init__(self, 'Not within select')
+        super(NotWithinSelect, self).__init__(self, 'Not within select')
 
 
 def dbtable(table, columns, connection_data=None, arguments=None, connection_name=None,
