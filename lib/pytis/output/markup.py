@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2019-2024 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2019-2025 Tomáš Cerha <t.cerha@gmail.com>
 
 # Copyright (C) 2002-2017 OUI Technology Ltd.
 #
@@ -43,7 +43,6 @@ import lcg
 from lcg import Unit, UPoint, Color, UPercent
 import pytis.output
 import pytis.util
-from pytis.util import super_
 from functools import reduce
 
 _ = pytis.util.translations('pytis-wx')
@@ -422,7 +421,7 @@ class FontSize(_Container):
           contents -- značky, na které je změna velikosti fontu aplikována
 
         """
-        super_(FontSize).__init__(self, *contents)
+        super(FontSize, self).__init__(*contents)
         self._size = size
 
     def size(self):
@@ -457,7 +456,7 @@ class FontFamily(_Container):
           contents -- značky, na které je změna velikosti fontu aplikována
 
         """
-        super_(FontFamily).__init__(self, *contents)
+        super(FontFamily, self).__init__(*contents)
         self._family = family
 
     def family(self):
