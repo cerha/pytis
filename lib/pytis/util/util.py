@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2024 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2025 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2017 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -102,7 +102,7 @@ class InvalidAccessError(Exception):
     def __init__(self, *args):
         import pytis.util
         pytis.util.log(pytis.util.OPERATIONAL, 'Invalid access:', args)
-        super_(InvalidAccessError).__init__(self, *args)
+        super(InvalidAccessError, self).__init__(*args)
 
 
 class FileError(Exception):
