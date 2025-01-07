@@ -353,21 +353,13 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
                 saved_forms = [x for x, ch in zip(saved_forms, checked or []) if ch]
             startup_forms[:0] = reversed(saved_forms)
 
-        def run_startup_forms(update, startup_forms):
-            total = len(startup_forms)
-            msg = _("Opening form: %s (%d/%d)")
-            for i, (cls, name) in enumerate(startup_forms):
-                update(i, message=msg % (name, i + 1, total))
-                try:
-                    run_form(cls, name)
-                except Exception as e:
-                    log(OPERATIONAL, "Unable to init startup form:", (cls, name, e))
-
-        if len(startup_forms) > 1:
-            app.run(run_startup_forms, args=(startup_forms,), maximum=len(startup_forms),
-                    title=_("Opening saved forms"), message=_("Opening form") + ' ' * 40)
-        else:
-            run_startup_forms(lambda *args, **kwargs: True, startup_forms)
+        def run_startup_form(update, args):
+            update(message=_("Opening form:") + " " + args[1])
+            try:
+                run_form(*args)
+            except Exception as e:
+                log(OPERATIONAL, "Unable to init startup form:", (args, e))
+        app.run(run_startup_form, over=startup_forms, title=_("Opening saved forms"))
         # Caching menu availibility must come after calling Application.init()
         # (here self._specification.init()) to allow the application defined
         # enabled() methods to refer things created Application.init().
