@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2024 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2025 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2017 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -32,7 +32,7 @@ import pytest
 import unittest
 
 import pytis
-from pytis.util import super_, DEBUG, OPERATIONAL, ACTION, EVENT, ProgramError
+from pytis.util import DEBUG, OPERATIONAL, ACTION, EVENT, ProgramError
 import pytis.data as pd
 from pytis.data import bval, fval, ival, sval
 
@@ -3014,7 +3014,7 @@ class TestFetchSelect(DBTest):
 class DBDataOrdering(_DBTest):
 
     def setUp(self):
-        super_(DBDataOrdering).setUp(self)
+        super(DBDataOrdering, self).setUp()
         B = pd.DBColumnBinding
         key = B('id', 'xcosi', 'id')
         self.data = pd.DBDataDefault(
@@ -3028,7 +3028,7 @@ class DBDataOrdering(_DBTest):
             self.data.sleep()
         except Exception:
             pass
-        super_(DBDataOrdering).tearDown(self)
+        super(DBDataOrdering, self).tearDown()
 
     def test_insert(self):
         row = pd.Row((('popis', sval('bla bla')),))
