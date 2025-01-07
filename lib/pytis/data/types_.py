@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2024 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2025 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2017 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -53,7 +53,7 @@ import uuid
 
 from pytis.util import (
     Counter, InvalidAccessError, LimitedCache, OPERATIONAL, ProgramError,
-    assoc, format_byte_size, identity, log, rassoc, sameclass, super_, Locked, xtuple,
+    assoc, format_byte_size, identity, log, rassoc, sameclass, Locked, xtuple,
 )
 import pytis.util
 
@@ -3181,7 +3181,7 @@ class ValidationError(Exception):
           message -- string obsahující zprávu o chybě pro uživatele
 
         """
-        super_(ValidationError).__init__(self, message)
+        super(ValidationError, self).__init__(message)
         self._message = message
 
     def __str__(self):
