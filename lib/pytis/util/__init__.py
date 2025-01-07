@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2024 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2025 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2013 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -24,7 +24,7 @@ from .util import (  # noqa: F401
     XStack, Attribute, Structure, DBParams,
     object_2_5, identity, is_, xor, xtuple, xlist,
     position, find, assoc, rassoc, remove_duplicates, flatten,
-    nreverse, super_, sameclass, public_attributes,
+    nreverse, sameclass, public_attributes,
     public_attr_values, argument_names, direct_public_members,
     hash_attr, is_sequence, ecase, Locked, dev_null_stream, mktempdir,
     format_byte_size, split_camel_case, camel_case_to_lower, nextval,

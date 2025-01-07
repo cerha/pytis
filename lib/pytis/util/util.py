@@ -740,11 +740,6 @@ def nreverse(list):
     return list
 
 
-def super_(class_):
-    """Vrať prvního předka třídy 'class_'."""
-    return class_.__bases__[0]
-
-
 def sameclass(o1, o2, strict=False):
     """Vrať pravdu, právě když 'o1' a 'o2' jsou instance téže třídy.
 
