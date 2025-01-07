@@ -109,7 +109,7 @@ class LimitedCache(_Cache):
                 super(LimitedCache, self).__setitem__(key, value)
 
     def reset(self):
-        super(LimitedCache, self).reset(self)
+        super(LimitedCache, self).reset()
         self._counter.reset()
 
     def _collect(self):
