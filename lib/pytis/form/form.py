@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2024 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2025 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2018 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -51,7 +51,7 @@ from pytis.presentation import (
 )
 from pytis.util import (
     ACTION, EVENT, OPERATIONAL, ProgramError, ResolverError, UNDEFINED,
-    find, format_traceback, log, super_, xlist, xtuple,
+    find, format_traceback, log, xlist, xtuple,
 )
 
 from .event import UserBreakException, wx_callback
@@ -964,7 +964,7 @@ class LookupForm(InnerForm):
         previous user specific form settings.
 
         """
-        super_(LookupForm)._init_attributes(self, **kwargs)
+        super(LookupForm, self)._init_attributes(**kwargs)
         assert columns is None or isinstance(columns, (list, tuple))
         self._transaction_close_scheduled = False
         # Create a Profile instance representing the form constructor
@@ -1757,7 +1757,7 @@ class RecordForm(LookupForm):
         self._select_row_argument = select_row
         self._initial_select_row_called = False
         self._action_access_groups_cache = {}
-        super_(RecordForm)._init_attributes(self, **kwargs)
+        super(RecordForm, self)._init_attributes(**kwargs)
         if select_row is not None:
             row = self._find_row(select_row)
             # assert row is not None, select_row
@@ -2533,7 +2533,7 @@ class EditForm(RecordForm, TitledForm, Refreshable):
         assert mode in (self.MODE_EDIT, self.MODE_INSERT, self.MODE_VIEW)
         assert inserted_data is None or mode == self.MODE_INSERT, (inserted_data, mode)
         new = mode == self.MODE_INSERT
-        super_(EditForm)._init_attributes(self, _new=new, **kwargs)
+        super(EditForm, self)._init_attributes(_new=new, **kwargs)
         self._mode = mode
         self._focus_field = focus_field or self._view.focus_field()
         self._edit_form_timeout = (None if self._transaction is None
@@ -3746,7 +3746,7 @@ class PopupInsertForm(PopupEditForm):
     DESCR = _(u"insert form")
 
     def _init_attributes(self, **kwargs):
-        super_(PopupInsertForm)._init_attributes(self, mode=EditForm.MODE_INSERT, **kwargs)
+        super(PopupInsertForm, self)._init_attributes(mode=EditForm.MODE_INSERT, **kwargs)
 
 
 class ShowForm(EditForm):
@@ -3761,7 +3761,7 @@ class ShowForm(EditForm):
     DESCR = _(u"view form")
 
     def _init_attributes(self, mode=EditForm.MODE_VIEW, select_row=0, **kwargs):
-        super_(ShowForm)._init_attributes(self, mode=mode, select_row=select_row, **kwargs)
+        super(ShowForm, self)._init_attributes(mode=mode, select_row=select_row, **kwargs)
 
     def changed(self):
         # Since the row is not reset when the current record changes, it would report a change...
@@ -3841,7 +3841,7 @@ class ViewerForm(Form, Refreshable):
         return None
 
     def _init_attributes(self, title=None, content=None, **kwargs):
-        super_(ViewerForm)._init_attributes(self, **kwargs)
+        super(ViewerForm, self)._init_attributes(**kwargs)
         assert (content is not None) == (title is not None), \
             "When 'content' specified, 'title' must be set too (and wice versa)."
         self._title = title
