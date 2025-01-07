@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2019-2024 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2019-2025 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2002-2014 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -31,7 +31,7 @@ import sys
 import os
 
 import pytis.util
-from pytis.util import SimpleCache, identity, super_, xlist
+from pytis.util import SimpleCache, identity, xlist
 import pytis.output
 
 _ = pytis.util.translations('pytis-wx')
@@ -50,7 +50,7 @@ class ResolverModuleError(pytis.util.ResolverError):
 
         """
         msg = 'Specification module not found: %s, %s' % (module_name, args)
-        super_(ResolverModuleError).__init__(self, msg)
+        super(ResolverModuleError, self).__init__(msg)
 
 
 class ResolverFileError(pytis.util.ResolverError):
@@ -68,7 +68,7 @@ class ResolverFileError(pytis.util.ResolverError):
 
         """
         msg = 'Error importing specification file %s: %s %s' % (file_name, exception, path)
-        super_(ResolverFileError).__init__(self, msg)
+        super(ResolverFileError, self).__init__(msg)
 
 
 class ResolverSpecError(pytis.util.ResolverError):
@@ -84,7 +84,7 @@ class ResolverSpecError(pytis.util.ResolverError):
 
         """
         msg = 'Specification not found: %s, %s' % (module_name, spec_name)
-        super_(ResolverSpecError).__init__(self, msg)
+        super(ResolverSpecError, self).__init__(msg)
 
 
 class Resolver(object):
