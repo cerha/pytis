@@ -52,11 +52,11 @@ class _Cache(collections.UserDict):
         self._validator = validator
 
     def __getitem__(self, key):
-        """Vrať hodnotu odpovídající klíči 'key'.
+        """Return the value corresponding to 'key'.
 
-        Pokud hodnota není v cache přítomna, použij pro její získání funkci
-        'provider' a ulož ji do cache.  Metoda sama o sobě nevyvolává žádnou
-        výjimku.
+        If the value is not present in the cache, use the 'provider' function
+        to retrieve it and save it to the cache.  The method itself doesn't
+        raise any exception.
 
         """
         try:
@@ -68,34 +68,28 @@ class _Cache(collections.UserDict):
         return result
 
     def __setitem__(self, key, value):
-        """Ulož 'value' s 'key' do cache."""
+        """Save 'value' with 'key' to the cache."""
         super(_Cache, self).__setitem__(key, value)
 
     def reset(self):
-        """Kompletně zruš aktuální obsah cache."""
+        """Completely discard all current cache content."""
         self.data = {}
 
 
 class SimpleCache(_Cache):
-    """Jednoduchá cache s neomezeným počtem uložených položek."""
+    """Simple cache with unlimited number of items."""
 
 
 class LimitedCache(_Cache):
-    """Cache s omezeným počtem položek.
-
-    V konstruktoru je zadán maximální počet položek cache, který není nikdy
-    překročen.
-
-    """
+    """Cache with a limited number of items."""
 
     def __init__(self, provider, limit=1000):
-        """Inicializuj instanci.
+        """Initialize the instance.
 
-        Argumenty:
+        Arguments:
 
-          provider -- stejné jako v předkovi
-          limit -- nezáporný integer určující maximální povolený počet položek
-            cache
+          provider -- same as in parent class
+          limit -- maximal number of cached items as a non-negative integer.
 
         """
         super(LimitedCache, self).__init__(provider)
@@ -123,20 +117,21 @@ class LimitedCache(_Cache):
 
 
 class RangeCache(_Cache):
-    """Cache s celočíselnými klíči ukládající souvislé úseky dat.
+    """Cache with integer keys saving continuous ranges of data.
 
-    Tyto úseky jsou dány souvislými intervaly klíčů, dané velikosti.
-    V podstatě se tedy jedná o pole cachovaných hodnot.
+    The ranges are given by continuous intervals of key values and their size
+    is given.  The result is actually an array of cached values, but values
+    outside the given range are discarded.
 
     """
 
     def __init__(self, provider, size=1000):
-        """Inicializuj instanci.
+        """Initialize the instance.
 
-        Argumenty:
+        Arguments:
 
-          provider -- stejné jako v předkovi
-          size -- nezáporný integer, maximální velikost cachovaného úseku dat
+          provider -- same as in parent class.
+          size -- maximal cached range size as a non-negative integer.
 
         """
         super(RangeCache, self).__init__(provider)

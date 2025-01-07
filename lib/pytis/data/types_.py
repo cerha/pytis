@@ -3166,19 +3166,19 @@ class DataEnumerator(Enumerator, TransactionalEnumerator):
 
 @python_2_unicode_compatible
 class ValidationError(Exception):
-    """Popis chyby při neúspěchu validace v 'Type.validate'.
+    """Validation error message on 'Type.validate()' failure.
 
-    Popis lze získat veřejnou metodou 'message'.  Popisem je string a měl by
-    být srozumitelný jako zpráva pro uživatele.
+    The human readable error message can be retrieved using the public method
+    'message()'.
 
     """
 
     def __init__(self, message):
-        """Inicializuj zprávu o chybě.
+        """Initialize the instance.
 
-        Argumenty:
+        Arguments:
 
-          message -- string obsahující zprávu o chybě pro uživatele
+          message -- human readable error message as a string
 
         """
         super(ValidationError, self).__init__(message)
@@ -3188,7 +3188,7 @@ class ValidationError(Exception):
         return '<ValidationError: ' + self.message() + '>'
 
     def message(self):
-        """Vrať zprávu o chybě jako string srozumitelný pro uživatele."""
+        """Return the human readable error message as a string."""
         return self._message
 
 

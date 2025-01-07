@@ -780,29 +780,26 @@ class DBUserException(DBException):
 
 
 class DBLoginException(DBException):
-    """Databázová výjimka způsobená chybnou autentizací jménem a heslem.
+    """Database exception caused by invalid authentication by username and password.
 
-    Tato výjimka je vyvolávána pouze při uvedeném způsobu autentizace, jestliže
-    uživatel zadá chybné jméno nebo heslo.
+    This exception is only raised on given authentication method when the user
+    enters a wrong username or password.
 
     """
 
     def __init__(self):
-        """Inicializuj databázovou výjimku s patřičnými argumenty."""
         super(DBLoginException, self).__init__(_(u"Invalid user name or password"))
 
 
 class DBLockException(DBException):
-    """Exception thrown when trying to lock an already locked record.
-    """
+    """Exception thrown when trying to lock an already locked record."""
 
     def __init__(self):
         super(DBLockException, self).__init__(None)
 
 
 class DBInsertException(DBException):
-    """Exception thrown when INSERT ... RETURNING can't be performed.
-    """
+    """Exception thrown when INSERT ... RETURNING can't be performed."""
 
     def __init__(self):
         super(DBInsertException, self).__init__(None)
