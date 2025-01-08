@@ -8,9 +8,14 @@ psycopg2-binary
 pillow
 pycryptodome
 pymupdf
+# If building pygobject fails, this may help:
+# sudo apt-get install libgirepository1.0-dev
 pygobject
 reportlab
 # RPyC 3.3.0 is needed in python 2.7, newest version works on Python 3
 rpyc
 sqlalchemy
+# To use a binary wxPython wheel, it may be necessary to add -f and limit 
+# wxPython version to the one available in given source, such as:
+# pip install -f https://extras.wxpython.org/wxPython4/extras/linux/gtk3/debian-10/ wxPython==4.2.1
 wxpython
