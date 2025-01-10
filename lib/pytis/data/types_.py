@@ -2749,8 +2749,17 @@ class JSON(Type):
         super(JSON, self)._init(**kwargs)
         if schema:
             import jsonschema
-            jsonschema.Validator.check_schema(schema)
-            validator = jsonschema.validators.validator_for(schema)(schema)
+            if hasattr(jsonschema, 'Validator'):
+                jsonschema.Validator.check_schema(schema)
+                validator = jsonschema.validators.validator_for(schema)(schema)
+            else:
+                # TODO NOPY2: This is for Python 2, where the jsonschema version is 3.2.0.
+                class Validator(object):
+                    def __init__(self, schema):
+                        self._schema = schema
+                    def validate(self, instance):
+                        jsonschema.validate(instance=instance, schema=self._schema)
+                validator = Validator(schema)
         else:
             validator = None
         self._validator = validator
