@@ -25,14 +25,13 @@ from __future__ import print_function
 from future import standard_library
 
 import _thread
-import collections
 
 from pytis.util import Locked, Counter
 
 standard_library.install_aliases()  # to get collections.UserDict
 
 
-class _Cache(collections.UserDict):
+class _Cache(dict):
     """Base class for all caches."""
 
     def __init__(self, provider, validator=None):
@@ -46,7 +45,7 @@ class _Cache(collections.UserDict):
             values are considered valid.
 
         """
-        collections.UserDict.__init__(self)
+        super(_Cache, self).__init__()
         assert callable(provider)
         self._provider = provider
         self._validator = validator
@@ -73,7 +72,7 @@ class _Cache(collections.UserDict):
 
     def reset(self):
         """Completely discard all current cache content."""
-        self.data = {}
+        self.clear()
 
 
 class SimpleCache(_Cache):
