@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2024 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2025 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2007-2017 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -542,7 +542,7 @@ def mark_products(product_id=None, mark=True):
     from within application code (above) or from a standalone script (see
     demo/script.py).
 
-    As demonstrated below, a limited set of Pytis API can also be user in such
+    As demonstrated below, a limited set of Pytis API can also be used in such
     functions.  More exactly these are the API methods and properties defined
     by 'pytis.api.BaseApplication'.
 
