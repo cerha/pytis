@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pytis 0.1\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2025-01-07 14:52+0100\n"
+"POT-Creation-Date: 2025-01-17 20:01+0100\n"
 "PO-Revision-Date: 2022-05-13 14:08+0200\n"
 "Last-Translator: Hynek Hanke <hanke@brailcom.org>\n"
 "Language-Team: Czech <wiking@lists.freebsoft.org>\n"
@@ -254,15 +254,15 @@ msgid "One of hierarchical value items contains invalid characters"
 msgstr "Jedna z položek hierarchické hodnoty obsahuje neplatné znaky"
 
 #. User input validation error message.
-#: ../lib/pytis/data/types_.py:2790
+#: ../lib/pytis/data/types_.py:2799
 msgid "Not a JSON string"
 msgstr "Není JSON řetězec"
 
-#: ../lib/pytis/data/types_.py:2794
+#: ../lib/pytis/data/types_.py:2803
 msgid "Unsupported JSON value"
 msgstr "Nepodporovaná JSON hodnota"
 
-#: ../lib/pytis/data/types_.py:2800
+#: ../lib/pytis/data/types_.py:2809
 msgid "JSON value doesn't match schema definition"
 msgstr "JSON hodnota neodpovídá definici schematu"
 
