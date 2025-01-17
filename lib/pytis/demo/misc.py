@@ -661,17 +661,16 @@ class Files(Specification):
         fields.modify('id', fixed=True)
 
     def actions(self):
-        return (Action('a_open_file', _("Open file"), self._open_file),
-                Action('a_open_url', _("Open URL"), self._open_url),
-                )
+        return (
+            Action('open-file', _("Open file"), self._open_file),
+            Action('open-url', _("Open URL"), self._open_url),
+        )
 
     def _open_file(self, row):
         app.launch_file(row['file'].value())
 
     def _open_url(self, row):
-        import pytis.windows
-        url = row['url'].value()
-        app.launch_url(url)
+        app.launch_url(row['url'].value())
 
 
 class StandalonePrint(pytis.output.PrintSpecification):
