@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2019-2024 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2019-2025 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2018 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -498,7 +498,7 @@ class MultiQuestion(Message):
                 except Exception:
                     # The wx instance of `self' may already be inactive
                     pass
-            wx.FutureCall(self._timeout_limit * 1000, destroy)
+            wx.CallLater(self._timeout_limit * 1000, destroy)
 
 
 class Question(MultiQuestion):
