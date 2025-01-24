@@ -332,9 +332,16 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         saved_forms = []
         menu_names = pytis.extensions.get_menu_defs()
         for cls, name in self._get_state_param(self._STATE_STARTUP_FORMS, [], list, list):
+            # TODO: This probably ramained after legacy support for configurantion
+            # saved in picked objects.  Now with JSON, wi well always get a string.
             if isinstance(cls, basestring):
                 cls = getattr(pytis.form, cls)
             if ((issubclass(cls, pytis.form.Form) and
+                 # The check aginst menu_names was added probably to avoid reopening forms
+                 # which were opened by application code.  These forms may have special
+                 # parameters, such as filters, which would not be recovered this way,
+                 # so it looks safe to open only forms which are available through the
+                 # application menu.
                  self._is_valid_spec(name) and name in menu_names and
                  (cls, name) not in startup_forms)):
                 saved_forms.append((cls, name))
