@@ -2618,8 +2618,8 @@ class EditForm(RecordForm, TitledForm, Refreshable):
         if self:
             age = pytis.form.last_event_age()
             if ((self._edit_form_timeout is not None and age > self._edit_form_timeout)):
-                edit = app.question(_("The time limit for form editing has expired.\n"
-                                      "Do you want to continue?"),
+                edit = app.question(_("The time limit for editing the form has elapsed.") + '\n' +
+                                    _("Do you want to continue?"),
                                     title=_("Continue editing?"),
                                     timeout=20)
                 if not edit:
@@ -2629,7 +2629,7 @@ class EditForm(RecordForm, TitledForm, Refreshable):
                         callback()
                     self._edit_form_timeout = None
                     if edit is None:
-                        app.error(_("The time limit for form editation has elapsed."))
+                        app.error(_("The time limit for editing the form has elapsed."))
             if self._open_transaction() is not None:
                 self._transaction.set_max_age(age)
         super(EditForm, self)._on_idle_close_transactions()
