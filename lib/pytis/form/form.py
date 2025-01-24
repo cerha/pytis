@@ -1156,7 +1156,8 @@ class LookupForm(InnerForm):
 
     def _on_idle_close_transactions(self):
         pytis.data.DBTransactionDefault.close_transactions()
-        wx.CallLater(1000, self._on_idle_close_transactions)
+        if self:
+            wx.CallLater(1000, self._on_idle_close_transactions)
 
     def _init_transaction_timeouts(self, data):
         if self._governing_transaction is None:
@@ -2614,22 +2615,23 @@ class EditForm(RecordForm, TitledForm, Refreshable):
                 self._disable_buttons(c)
 
     def _on_idle_close_transactions(self):
-        age = pytis.form.last_event_age()
-        if ((self._edit_form_timeout is not None and age > self._edit_form_timeout)):
-            edit = app.question(_("The time limit for form editing has expired.\n"
-                                  "Do you want to continue?"),
-                                title=_("Continue editing?"),
-                                timeout=20)
-            if not edit:
-                self._disable_buttons(self.Parent)
-                callback = self._transaction_timeout_callback
-                if callback is not None:
-                    callback()
-                self._edit_form_timeout = None
-                if edit is None:
-                    app.error(_("The time limit for form editation has elapsed."))
-        if self._open_transaction() is not None:
-            self._transaction.set_max_age(age)
+        if self:
+            age = pytis.form.last_event_age()
+            if ((self._edit_form_timeout is not None and age > self._edit_form_timeout)):
+                edit = app.question(_("The time limit for form editing has expired.\n"
+                                      "Do you want to continue?"),
+                                    title=_("Continue editing?"),
+                                    timeout=20)
+                if not edit:
+                    self._disable_buttons(self.Parent)
+                    callback = self._transaction_timeout_callback
+                    if callback is not None:
+                        callback()
+                    self._edit_form_timeout = None
+                    if edit is None:
+                        app.error(_("The time limit for form editation has elapsed."))
+            if self._open_transaction() is not None:
+                self._transaction.set_max_age(age)
         super(EditForm, self)._on_idle_close_transactions()
 
     def _set_focus_field(self, event=None):
