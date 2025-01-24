@@ -2619,7 +2619,7 @@ class EditForm(RecordForm, TitledForm, Refreshable):
             age = pytis.form.last_event_age()
             if ((self._edit_form_timeout is not None and age > self._edit_form_timeout)):
                 edit = app.question(_("The time limit for editing the form has elapsed.") + '\n' +
-                                    _("Do you want to continue?"),
+                                    _("Would you like to continue editing?"),
                                     title=_("Continue editing?"),
                                     timeout=20)
                 if not edit:
