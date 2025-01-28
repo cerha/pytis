@@ -2048,8 +2048,13 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
                         shell = True
                     else:
                         app.error(_("Viewer for '%s' (%s) not found.",
-                                    path, mime_type or 'unknown'))
+                                    os.path.basename(path), mime_type))
                         return
+                else:
+                    app.error(_("MIME type for '%s' not found.\n"
+                                "Your system doesn't recognize the MIME type of this file.",
+                                os.path.basename(path)))
+                    return
                 log(OPERATIONAL, "Launching local file viewer:", command)
                 proc = subprocess.Popen(command, shell=shell)
                 proc.wait()
