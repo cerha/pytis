@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2024 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2025 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2016 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -31,14 +31,14 @@ konfiguračních voleb obsažených v tomto layoutu.
 from __future__ import print_function
 import wx
 
-from pytis.presentation import Field, LayoutSpec, LVGroup, VGroup, ViewSpec, MenuItem
+from pytis.presentation import Field, LVGroup, VGroup, ViewSpec, MenuItem
 import pytis.util
 from .form import PopupEditForm
 
 _ = pytis.util.translations('pytis-wx')
 
 _LAYOUT = (
-    ('ui', LayoutSpec(_("User interface settings"), VGroup(
+    ('ui', _("User interface settings"), VGroup(
         LVGroup(_("Colors"),
                 LVGroup(_("Current table row highlight"),
                         'row_highlight_color',
@@ -58,10 +58,9 @@ _LAYOUT = (
                 ),
         LVGroup(_("Other"),
                 'sender_address'),
-    ))),
-    ('export', LayoutSpec(_("Export settings"),
-                          VGroup('export_encoding')),
-     ))
+    )),
+    ('export', _("Export settings"), VGroup('export_encoding')),
+)
 
 _LABELS = {
     'row_highlight_color': _("Default"),
@@ -96,12 +95,12 @@ def config_menu_items(hotkeys={}):
 
     """
     return tuple(
-        MenuItem(layout.caption(),
+        MenuItem(title,
                  command=pytis.form.Application.COMMAND_RUN_FORM(form_class=ConfigForm, name=name),
                  hotkey=hotkeys.get(name),
-                 help=(_('Open configuration form "%s"') % layout.caption()),
+                 help=(_('Open configuration form "%s"') % title),
                  icon=('config-' + name))
-        for name, layout in _LAYOUT
+        for name, title, layout in _LAYOUT
     )
 
 
@@ -112,7 +111,7 @@ def configurable_options():
 
     """
     options = ()
-    for id, layout in _LAYOUT:
+    for name, title, layout in _LAYOUT:
         options = options + tuple(layout.order())
     return options
 
@@ -166,11 +165,14 @@ class ConfigForm(PopupEditForm):
     """
     DESCR = _("configuration form")
 
-    def __init__(self, *args, **kwargs):
-        super(ConfigForm, self).__init__(*args, **dict(kwargs, mode=self.MODE_EDIT, select_row=0))
-
-    def _layout(self):
-        return dict(_LAYOUT)[self._name]
+    def __init__(self, parent, resolver, name, *args, **kwargs):
+        for name_, title, layout in _LAYOUT:
+            if name_ == name:
+                kwargs['layout'] = self._layout = layout
+                self._title = title
+        kwargs['mode'] = self.MODE_EDIT
+        kwargs['select_row'] = 0
+        super(ConfigForm, self).__init__(parent, resolver, name, *args, **kwargs)
 
     def _create_view_spec(self):
         def descr(name):
@@ -182,12 +184,12 @@ class ConfigForm(PopupEditForm):
             return descr
         fields = [Field(option, _LABELS.get(option, option), descr=descr(option),
                         **_FIELDSPEC_KWARGS.get(option, {}))
-                  for option in self._layout().order()]
-        return ViewSpec(_("User interface settings"), fields, layout=self._layout())
+                  for option in self._layout.order()]
+        return ViewSpec(self._title, fields, layout=self._layout)
 
     def _create_data_object(self):
         columns = [pytis.data.ColumnSpec(option, pytis.config.option(option).type())
-                   for option in self._layout().order()]
+                   for option in self._layout.order()]
         return pytis.data.DataFactory(_ConfigData, columns).create()
 
     def _print_menu(self):

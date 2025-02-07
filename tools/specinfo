@@ -88,10 +88,7 @@ def print_info(info):
             output.write(u'%sButton: %s\n' % (indentation_string, layout.label(),))
         else:
             output.write('%sUnknown layout object: %s\n' % (indentation_string, layout,))
-    layout = info['layout']
-    if isinstance(layout, pytis.presentation.LayoutSpec):
-        layout = layout.group()
-    print_layout(layout)
+    print_layout(info['layout'])
 
     def enabled_action(action):
         if isinstance(action, pytis.presentation.Action):
