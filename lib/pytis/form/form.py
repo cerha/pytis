@@ -2672,7 +2672,7 @@ class EditForm(RecordForm, TitledForm, Refreshable):
         elif self._layout:
             group = GroupSpec(self._layout, orientation=Orientation.VERTICAL)
         else:
-            group = self._view.layout().group()
+            group = self._view.layout()
         if isinstance(group, TabGroup):
             window = wx.Notebook(self)
             for item in group.items():
@@ -3161,7 +3161,7 @@ class EditForm(RecordForm, TitledForm, Refreshable):
 
     def title(self):
         """Return the form title as a string."""
-        return self._view.layout().caption()
+        return self._view.singular()
 
     def field(self, id):
         """Return the 'InputField' instance for the field 'id'.
@@ -3696,7 +3696,7 @@ class ResizableEditForm(object):
         return super(ResizableEditForm, self)._popup_frame_style() | wx.RESIZE_BORDER
 
     def _resizable_fields(self):
-        return self._view.layout().group().order()
+        return self._view.layout().order()
 
     def _create_form_parts(self):
         panel = wx.Panel(self)

@@ -398,7 +398,7 @@ class LayoutForm(FieldForm):
 
     def __init__(self, view, req, uri_provider, row, layout=None, **kwargs):
         if layout is None:
-            layout = view.layout().group()
+            layout = view.layout()
         if isinstance(layout, (tuple, list)):
             layout = GroupSpec(layout, orientation=VERTICAL)
         assert isinstance(layout, GroupSpec)
@@ -547,7 +547,7 @@ class LayoutForm(FieldForm):
 class _SingleRecordForm(LayoutForm):
 
     def __init__(self, view, req, uri_provider, row, layout=None, **kwargs):
-        layout = layout or view.layout().group()
+        layout = layout or view.layout()
         super().__init__(view, req, uri_provider, row, layout=layout, **kwargs)
 
     def _export_body(self, context):

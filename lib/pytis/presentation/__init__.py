@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2024 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2025 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2002-2017 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -32,15 +32,18 @@ from .spec import (  # noqa: F401
     TextFormat, Color, Style, Orientation, Text, Button, ActionContext,
     Action, PrintAction, ActionGroup, Profile, ProfileGroup, AggregatedView,
     Folding, Profiles, Filter, Condition, GroupSpec, HGroup, FieldSet, TabGroup,
-    ColumnLayout, VGroup, LHGroup, LVGroup, LayoutSpec, QueryFields,
-    ViewSpec, BindingSpec, Binding, Editable, SelectionType, PostProcess,
+    QueryFields, ViewSpec, BindingSpec, Binding, Editable, SelectionType, PostProcess,
     TextFilter, Computer, computer, procedure, CbComputer, CodebookSpec,
     FormType, Link, ListLayout, Enumeration, Field, Fields, AttachmentStorage,
     FileAttachmentStorage, HttpAttachmentStorage, DbAttachmentStorage,
     SharedParams, Menu, MenuItem, MenuSeparator, StatusField,
     SpecificationBase, Application, HelpProc, help_proc,
     Specification, specification_path, IN,
+    # Deprecated:
+    ColumnLayout, VGroup, LHGroup, LVGroup,
+
 )
+
 
 from .field import PresentedRow  # noqa: F401
 
