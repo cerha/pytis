@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2024 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2025 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2017 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -1162,6 +1162,7 @@ class GroupSpec(object):
           orientation -- defines how the fields are composed together as one of
             'Orientation' class constants.  Vertical group has items above each
             other, horizontal has items side by side.
+
           label -- Group label as a (localizable) string displayed at the top
             of the group or None for unlabeled group.  Labeled groups are
             always framed.
@@ -1319,60 +1320,6 @@ class LVGroup(VGroup):
     def __init__(self, label, *items, **kwargs):
         kwargs['label'] = label
         super(LVGroup, self).__init__(*items, **kwargs)
-
-
-class LayoutSpec(object):
-    """Deprecated: Use 'GroupSpec' directly to specify 'ViewSpec' 'layout'."""
-
-    def __init__(self, caption, group, order=None):
-        """Inicializace a doplnění defaultních hodnot atributů.
-
-        Argumenty:
-
-          caption -- nadpis editačního formuláře jednoho záznamu
-
-          group -- specifikace skupiny políček nejvýšší úrovně; instance
-            'GroupSpec'. Tato skupina může obsahovat další vnořené skupiny
-            (viz dokumentace třídy 'GroupSpec').
-
-          order -- specifikace pořadí procházení mezi políčky jako sekvence
-            řatězců - identifikátorů políček.  Pokud není None, je pořadí
-            procházení políček určeno pořadím jejich identifikátorů v této
-            sekvenci.  V takovém případě musí sekvence obsahovat identifikátory
-            všech políček obsažených v 'group'.  Pokud je ponechána výchozí
-            hodnota 'None', je pořadí procházení dáno pořadím políček v
-            'group' při procházení stromu do hloubky.  Tento výchozí způsob
-            určení pořadí v naprosté většině případú vyhovuje a je z pohledu
-            uživatele nejpřirozenější, proto se použítí tohoto argumentu
-            doporučuje jen v nevyhnutelných případech!  Prioritním řešením by
-            vždy měla být reorganizace skupin formuláře.
-
-        'caption' je vždy považován za jazykově závislý text a tudíž automaticky
-        podléhá jazykové konverzi.
-
-        """
-        assert caption is None or isinstance(caption, basestring)
-        assert isinstance(group, GroupSpec)
-        assert order is None or all(isinstance(f, basestring) for f in order), order
-        self._caption = caption
-        self._group = group
-        self._order = tuple(order if order is not None else group.order())
-
-    def caption(self):
-        """Vrať nadpis pro editační formulář jednoho záznamu."""
-        return self._caption
-
-    def group(self):
-        """Vrať skupinu políček nejvýšší úrovně; instance 'GroupSpec'."""
-        return self._group
-
-    def order(self):
-        """Vrať tuple id všech políček editačního formuláře v pořadí procházení.
-
-        Pokud nebylo pořadí v konstruktoru určeno, odpovídá pořadí ve skupinách.
-
-        """
-        return self._order
 
 
 class QueryFields(object):
@@ -1541,9 +1488,8 @@ class ViewSpec(object):
             are automatically wrapped into a newly created 'GroupSpec' instance
             with vertical arrangement.  The items must be compatible with
             item types supported by 'GroupSpec'.  If None, the default layout
-            will automatically contain all fields defined by 'fields'.
-            'LayoutSpec' instance is also accepted for backwards compatibility,
-            but its usage is deprecated.
+            will automatically be a vertical group containing all fields
+            defined by 'fields'.
 
           list_layout -- specification of list layout as a 'ListLayout'
             instance or None.
@@ -1849,10 +1795,7 @@ class ViewSpec(object):
             return spec_name + ": " + msg % args
         assert isinstance(title, basestring)
         if singular is None:
-            if isinstance(layout, LayoutSpec):
-                singular = layout.caption()
-            else:
-                singular = title
+            singular = title
         else:
             assert isinstance(singular, basestring)
         assert isinstance(fields, (tuple, list)), fields
@@ -1861,17 +1804,13 @@ class ViewSpec(object):
         self._spec_name = spec_name
         # Initialize the layout
         if layout is None:
-            layout = LayoutSpec(singular, GroupSpec([f.id() for f in self._fields],
-                                                    orientation=Orientation.VERTICAL))
-        elif isinstance(layout, GroupSpec):
-            layout = LayoutSpec(singular, layout)
+            layout = GroupSpec([f.id() for f in self._fields], orientation=Orientation.VERTICAL)
         elif isinstance(layout, (list, tuple)):
-            layout = LayoutSpec(singular, GroupSpec(layout, orientation=Orientation.VERTICAL))
+            layout = GroupSpec(layout, orientation=Orientation.VERTICAL)
         if __debug__:
             assert isinstance(actions, (tuple, list)), actions
-            assert isinstance(layout, LayoutSpec), layout
+            assert isinstance(layout, GroupSpec), layout
             action_ids = [action.id() for action in ActionGroup.unnest(actions)]
-
             def recourse_group(group):
                 for item in group.items():
                     if isinstance(item, GroupSpec):
@@ -1884,8 +1823,7 @@ class ViewSpec(object):
                     else:
                         assert item in self._field_dict, err("Unknown field in layout: %r" % item,)
                         if self._field_dict[item].width() == 0:
-                            log(OPERATIONAL,
-                                "Zero width field in layout:", item)
+                            log(OPERATIONAL, "Zero width field in layout:", item)
 
             def all_deps(fid):
                 result = set((fid,))
@@ -1895,7 +1833,7 @@ class ViewSpec(object):
                         result.update(all_deps(k))
                 return result
 
-            recourse_group(layout.group())
+            recourse_group(layout)
             for f in fields:
                 assert isinstance(f, Field)
                 if isinstance(f.computer(), CbComputer):
@@ -2071,11 +2009,7 @@ class ViewSpec(object):
         return self._singular
 
     def fields(self):
-        """Vrať tuple specifikací všech políček v layoutu.
-
-        (A navíc to vrací i políčka, která v layoutu nejsou.)
-
-        """
+        """Return a tuple of all field specifications as 'Field' instances."""
         return self._fields
 
     def field(self, id):
@@ -2087,14 +2021,15 @@ class ViewSpec(object):
         return self._field_dict.get(id)
 
     def layout(self):
-        """Vrať specifikaci rozvržení editačního formuláře."""
+        """Return form layout as a 'GroupSpec' instance."""
         return self._layout
 
     def list_layout(self):
+        """Return list layout as a 'ListLayout' instance."""
         return self._list_layout
 
     def columns(self):
-        """Vrať tuple identifikátorů sloupců pro tabulkový formulář."""
+        """Return a tuple of field identifiers present in table form columns."""
         return self._columns
 
     def actions(self, unnest=False):
