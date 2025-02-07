@@ -38,7 +38,6 @@ from .inputfield import (
     FileField, InputField, Invocable, ListField, SpinnableField,
     StructuredTextField, TextField,
 )
-from .configui import edit_config
 from .list import BrowseForm, FoldableForm, ListForm
 from .screen import (
     Browser, DualFormSwitcher, DualFormResplitter, ProfileSelector, KeyboardSwitcher,
@@ -223,12 +222,12 @@ COMMAND_ICONS = (
     (Command(Browser.go_forward), wx.ART_GO_FORWARD),
     (Command(Browser.stop_loading), wx.ART_CROSS_MARK),
     (Command(Browser.reload), 'reload'),
-    (Command(Application.call, edit_config, 'ui'), 'config-ui'),
-    (Command(Application.call, edit_config, 'export'), 'config-export'),
-    # edit_config may referred through Application in dmp_menu() and through
-    # app (Pytis API) in direct menu specifications.
-    (Command(Application.api_call, edit_config, 'ui'), 'config-ui'),
-    (Command(Application.api_call, edit_config, 'export'), 'config-export'),
+    (Command(Application.run_procedure, 'configui', 'ui_settings'), 'config-ui'),
+    (Command(Application.run_procedure, 'configui', 'export_settings'), 'config-export'),
+    # Config menu items refer to run_procedure through 'Application' in dmp_menu()
+    # or through 'app' (Pytis API) in direct menu specifications.
+    (Command(Application.api_run_procedure, 'configui', 'ui_settings'), 'config-ui'),
+    (Command(Application.api_run_procedure, 'configui', 'export_settings'), 'config-export'),
 )
 
 

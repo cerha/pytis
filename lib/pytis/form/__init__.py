@@ -89,10 +89,6 @@ from .application import (  # noqa: F401
     recent_forms_menu, config_menu_items,
 )
 
-from .configui import (
-    edit_config, configurable_options,
-)
-
 from .defaults import (  # noqa: F401
     DEFAULT_KEYMAP, COMMAND_ICONS, TOOLBAR_COMMANDS, FORM_MENU_COMMANDS, UICommands,
 )

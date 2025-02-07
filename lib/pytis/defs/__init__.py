@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2024 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2025 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2011 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -29,3 +29,4 @@ from . import printing  # noqa: F401
 from . import profiles  # noqa: F401
 from . import statistics  # noqa: F401
 from . import logging  # noqa: F401
+from . import configui  # noqa: F401

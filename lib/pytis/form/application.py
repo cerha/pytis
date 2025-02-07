@@ -202,9 +202,11 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
             sb = StatusBar(frame, list(self._specification.status_fields()))
             self._status_fields = self._StatusFieldAccess(sb.fields)
 
+        import pytis.defs.configui
+        configurable_options = tuple(f.id() for f in pytis.defs.configui.FIELDS)
         self._initial_config = [
             (o, copy.copy(getattr(pytis.config, o)))
-            for o in pytis.form.configurable_options() + ('initial_keyboard_layout',)]
+            for o in configurable_options + ('initial_keyboard_layout',)]
         self._saved_state = {}
         # Initialize all needed user settings managers.
         self._application_config_manager = pytis.form.ApplicationConfigManager(
@@ -1920,6 +1922,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
                         sorting=sorting, filter=filter, condition=condition,
                         begin_search=begin_search, transaction=transaction)
 
+    @Command.define
     def api_run_procedure(self, spec_name, proc_name, *args, **kwargs):
         result = None
         try:
@@ -2488,9 +2491,9 @@ def recent_forms_menu():
 def config_menu_items(hotkeys={}):
     return (
         MenuItem(_("User interface settings"),
-                 Command(app.call, pytis.form.edit_config, 'ui')),
+                 Command(app.run_procedure, 'configui', 'ui_settings')),
         MenuItem(_("Export settings"),
-                 Command(app.call, pytis.form.edit_config, 'export')),
+                 Command(app.run_procedure, 'configui', 'export_settings')),
     )
 
 from pytis.presentation import (

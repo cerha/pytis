@@ -25,11 +25,10 @@ import string
 import sys
 import time
 
-import pytis.presentation
-import pytis.extensions
-import pytis.form
-import pytis.util
 import pytis.data as pd
+import pytis.extensions
+import pytis.presentation
+import pytis.util
 
 from pytis.api import app
 from pytis.presentation import Command, Menu, MenuItem, MenuSeparator, StatusField, TextFormat
@@ -47,9 +46,9 @@ class Application(pytis.presentation.Application):
         return (
             Menu(_("&System"), (
                 MenuItem(_("User interface settings"),
-                         Command(app.call, pytis.form.edit_config, 'ui')),
+                         Command(app.run_procedure, 'configui', 'ui_settings')),
                 MenuItem(_("Export settings"),
-                         Command(app.call, pytis.form.edit_config, 'export')),
+                         Command(app.run_procedure, 'configui', 'export_settings')),
                 MenuItem(_("&Run form"),
                          Command(app.call, pytis.extensions.run_any_form),
                          hotkey=('Alt-a', 'a')),

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2024 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2025 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2012-2017 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -241,15 +241,15 @@ class HelpUpdater(object):
             return _("Invokes command %s.") % command_name
 
     def _generate_proc_help(self, procname, spec_name):
-        return _("Invokes procedure %s from %s.") % (procname, spec_name)
+        if spec_name == 'configui' and procname == 'ui_settings':
+            return _("Opens a dialog for customizing the application user interface.")
+        elif spec_name == 'configui' and procname == 'export_settings':
+            return _("Opens a dialog for customizing data export.")
+        else:
+            return _("Invokes procedure %s from %s.") % (procname, spec_name)
 
     def _generate_action_help(self, action, arg):
-        if action == 'pytis.form.configui.edit_config' and arg == 'ui':
-            return _("Opens a form for customizing the application user interface.")
-        elif action == 'pytis.form.configui.edit_config' and arg == 'export':
-            return _("Opens a form for customizing data export.")
-        else:
-            return _("Invokes %s.") % action
+        return _("Invokes %s.") % action
 
     def _generate_reload_rights_help(self):
         return _("Reloads access rights.")

@@ -110,8 +110,8 @@ def dmp_menu():
     # TODO: These translations can be removed here as soon as fullnames
     # are updated accordingly in all databases.
     LEGACY_ACTION_MAP = {
-        'form/pytis.form.configui.ConfigForm/ui//': 'handle/pytis.form.configui.edit_config/ui/',
-        'form/pytis.form.configui.ConfigForm/export//': 'handle/pytis.form.configui.edit_config/export/',
+        'form/pytis.form.configui.ConfigForm/ui//': 'proc/ui_settings/configui/',
+        'form/pytis.form.configui.ConfigForm/export//': 'proc/export_settings/configui/',
     }
 
     def parse_action(action):

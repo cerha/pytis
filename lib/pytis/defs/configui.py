@@ -19,15 +19,14 @@
 """Defines User Interface for modification of selected Pytis configuration options."""
 
 from __future__ import print_function
-import wx
 
-from pytis.presentation import Field, FieldSet, VGroup
+from pytis.presentation import Field, FieldSet, VGroup, procedure
 import pytis.util
 from pytis.api import app
 
 _ = pytis.util.translations('pytis-wx')
 
-_FIELDS = (
+FIELDS = (
     Field('row_highlight_color', _("Default")),
     Field('row_highlight_edited_color', _("During inline editation")),
     Field('row_highlight_unfocused_color', _("Inactive form")),
@@ -43,8 +42,46 @@ _FIELDS = (
     Field('export_encoding', _("Character encoding")),
 )
 
-_LAYOUT = {
-    'ui': (_("User interface settings"), VGroup(
+def edit_config(title, layout):
+    """Open a form for modification of given set of Pytis configuration options.
+
+    Configuration options are updated on form submission.
+
+    """
+    def descr(name):
+        option = pytis.config.option(name)
+        descr = option.description()
+        doc = option.documentation()
+        if doc:
+            descr += "\n" + doc
+        return descr
+
+    options = layout.order()
+    fdict = {f.id(): f for f in FIELDS}
+    fields = [
+        fdict[option].clone(Field(option, descr=descr(option),
+                                  type=pytis.config.option(option).type()))
+        for option in options
+    ]
+    prefill = dict((o, getattr(pytis.config, o)) for o in options)
+    row = app.input_form(title, fields=fields, layout=layout, prefill=prefill)
+    if row:
+        for option in row.keys():
+            setattr(pytis.config, option, row[option].value())
+        app.refresh()
+        import wx
+        wx.ToolTip.Enable(pytis.config.show_tooltips)
+
+
+@procedure
+def ui_settings():
+    """Edit configuration options related to user interface.
+
+    BEWARE: This procedure is referred from DMP identifiers of existing applications:
+    'proc/export_settings/configui/',
+
+    """
+    return edit_config(_("User interface settings"), VGroup(
         FieldSet(_("Colors"), (
             FieldSet(_("Current table row highlight"), (
                 'row_highlight_color',
@@ -65,56 +102,15 @@ _LAYOUT = {
         FieldSet(_("Other"), (
             'sender_address',
         )),
-    )),
-    'export': (_("Export settings"), VGroup(
-        'export_encoding',
-    )),
-}
+    ))
 
 
-def edit_config(selector):
-    """Open a form for modification of given set of Pytis configuration options.
+@procedure
+def export_settings():
+    """Edit configuration options related to export.
 
-    Selector can be one of the following strings:
-
-    - 'ui' for editting Pytis user interface options.
-    - 'export' for editting Pytis export options.
-
-    Configuration options are updated on form submission.
-
-    BEWARE: This function is referred from DMP identifiers of existing applications:
-
-    'handle/pytis.form.configui.edit_config/ui/',
-    'handle/pytis.form.configui.edit_config/export/',
+    BEWARE: This procedure is referred from DMP identifiers of existing applications:
+    'proc/export_settings/configui/',
 
     """
-    def descr(name):
-        option = pytis.config.option(name)
-        descr = option.description()
-        doc = option.documentation()
-        if doc:
-            descr += "\n" + doc
-        return descr
-
-    label, layout = _LAYOUT[selector]
-    options = layout.order()
-    fdict = {f.id(): f for f in _FIELDS}
-    fields = [
-        fdict[option].clone(Field(option, descr=descr(option),
-                                  type=pytis.config.option(option).type()))
-        for option in options
-    ]
-    prefill = dict((o, getattr(pytis.config, o)) for o in options)
-    row = app.input_form(label, fields=fields, layout=layout, prefill=prefill)
-    if row:
-        for option in row.keys():
-            setattr(pytis.config, option, row[option].value())
-        app.refresh()
-        wx.ToolTip.Enable(pytis.config.show_tooltips)
-
-def configurable_options():
-    """Vrací tuple řetězců odpovídajících názvům konfiguračních voleb."""
-    options = []
-    for title, layout in _LAYOUT.values():
-        options.extend(layout.order())
-    return tuple(options)
+    return edit_config(_("Export settings"), VGroup('export_encoding'))
