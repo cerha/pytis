@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2024 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2025 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2017 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -469,13 +469,13 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             panel.SetSizer(sizer)
             sizer.Fit(panel)
             panel.SetAutoLayout(1)
-            position = self._get_saved_setting('query-fields-position', 'up')
+            position = self._saved_settings.get('query-fields-position', 'up')
             if position == 'up':
                 i = self.Sizer.GetChildren().index(self.Sizer.GetItem(self._grid))
                 self.Sizer.Insert(i, panel, 0, wx.EXPAND)
             else:
                 self.Sizer.Add(panel, 0, wx.EXPAND)
-            if self._get_saved_setting('query-fields-minimized', False):
+            if self._saved_settings.get('query-fields-minimized', False):
                 self._toggle_query_fields_minimization()
             self._update_query_fields_panel_button_bitmaps()
         else:
@@ -525,12 +525,12 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         self._update_query_fields_panel_button_bitmaps()
         position = ('up' if sizer.GetItem(panel).Position.y < sizer.GetItem(self._grid).Position.y
                     else 'down')
-        self._set_saved_setting('query-fields-position', position)
+        self._saved_settings.set('query-fields-position', position)
 
     def _on_minimize_query_fields(self, event):
         self._toggle_query_fields_minimization()
         self._update_query_fields_panel_button_bitmaps()
-        self._set_saved_setting('query-fields-minimized', self._query_fields_minimized())
+        self._saved_settings.set('query-fields-minimized', self._query_fields_minimized())
 
     def _query_fields_minimized(self):
         return not self._query_fields_form.IsShown()
@@ -3185,11 +3185,12 @@ class AggregationForm(BrowseForm):
     def _current_arguments(self):
         return self._af_aggregation_arguments
 
-    def _profile_spec_name(self):
+    def _form_specific_manager_args(self):
         # We need to have unique names for different column configurations
         # because profiles for one configuration may not be valid in the other.
-        return (super(AggregationForm, self)._profile_spec_name() +
-                '/' + ':'.join(self._select_columns()))
+        spec_name, form_name = super(AggregationForm, self)._form_specific_manager_args()
+        spec_name += '/' + ':'.join(self._select_columns())
+        return (spec_name, form_name)
 
     def _can_aggregated_view(self, aggregated_view_id):
         return False

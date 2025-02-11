@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2024 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2025 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2018 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -116,7 +116,7 @@ class DualForm(Form, Refreshable):
         self._splitter_position_initialized = False
 
     def _initial_orientation(self):
-        saved_orientation = self._get_saved_setting('sash_orientation')
+        saved_orientation = self._saved_settings.get('sash_orientation')
         if saved_orientation is not None:
             return saved_orientation
         else:
@@ -221,7 +221,7 @@ class DualForm(Form, Refreshable):
         else:
             self._splitter.SplitVertically(self._main_form, self._side_form)
             new_orientation = Orientation.VERTICAL
-        self._set_saved_setting('sash_orientation', new_orientation)
+        self._saved_settings.set('sash_orientation', new_orientation)
         self._select_form(self._active_form)
 
     def main_form(self):
@@ -303,7 +303,7 @@ class DualForm(Form, Refreshable):
             active.focus()
 
     def _initial_sash_position(self, total_size):
-        saved_position = self._get_saved_setting('sash_position')
+        saved_position = self._saved_settings.get('sash_position')
         if saved_position:
             if self._splitter.GetSplitMode() == wx.SPLIT_HORIZONTAL:
                 maximum = total_size.height
@@ -332,7 +332,7 @@ class DualForm(Form, Refreshable):
             return total_size.width * self._default_sash_ratio()
 
     def _on_sash_changed(self, event):
-        self._set_saved_setting('sash_position', event.GetSashPosition())
+        self._saved_settings.set('sash_position', event.GetSashPosition())
         # Sometimes the form is not redrawn correctly...
         self._main_form.Refresh()
         self._active_form.focus()
@@ -1099,8 +1099,8 @@ class MultiSideForm(MultiForm):
         return form_class(parent, self._resolver, binding.name(), full_init=False, **kwargs)
 
     def _create_subforms(self, parent):
-        saved_order = self._get_saved_setting('binding_order', [])
-        hidden = self._get_saved_setting('hidden_bindings', [])
+        saved_order = self._saved_settings.get('binding_order', [])
+        hidden = self._saved_settings.get('hidden_bindings', [])
         spec_bindings = self._subform_bindings()
         spec_order_without_new = [b.id() for b in spec_bindings if b.id() in saved_order]
         if not saved_order or saved_order == spec_order_without_new and not hidden:
@@ -1119,8 +1119,8 @@ class MultiSideForm(MultiForm):
                 [(bdict[bid], False) for bid in saved_order if bid in bdict]
             )
         # Make sure new forms don't show as new on next startup.
-        self._set_saved_setting('binding_order', [b.id() for b, new in bindings])
-        self._set_saved_setting('hidden_bindings', [b.id() for b in spec_bindings if b in hidden])
+        self._saved_settings.set('binding_order', [b.id() for b, new in bindings])
+        self._saved_settings.set('hidden_bindings', [b.id() for b in spec_bindings if b in hidden])
         return [(self._create_subform(parent, binding), binding.title(),
                  'new-tab' if new else None,
                  _("This form was newly added to the application. "
@@ -1179,8 +1179,8 @@ class MultiSideForm(MultiForm):
         all_bindings = [binding.id() for binding in self._subform_bindings()]
         binding_order = [form.binding().id() for form in self._subforms()]
         hidden_bindings = list(set(all_bindings) - set(binding_order))
-        self._set_saved_setting('binding_order', binding_order)
-        self._set_saved_setting('hidden_bindings', hidden_bindings)
+        self._saved_settings.set('binding_order', binding_order)
+        self._saved_settings.set('hidden_bindings', hidden_bindings)
 
     def _on_tab_move(self, old_position, new_position):
         super(MultiSideForm, self)._on_tab_move(old_position, new_position)
@@ -1320,7 +1320,7 @@ class MultiBrowseDualForm(BrowseDualForm):
         form.set_callback(MultiSideForm.CALL_BINDING_SELECTED, self._on_binding_selection)
         selected_binding = self._selected_binding
         if selected_binding is None:
-            saved_binding = self._get_saved_setting('binding')
+            saved_binding = self._saved_settings.get('binding')
             if saved_binding in [b.id() for b in self._main_form.bindings()]:
                 selected_binding = saved_binding
         if selected_binding:
@@ -1328,7 +1328,7 @@ class MultiBrowseDualForm(BrowseDualForm):
         return form
 
     def _on_binding_selection(self, binding):
-        self._set_saved_setting('binding', binding.id())
+        self._saved_settings.set('binding', binding.id())
 
     def _on_main_activation(self, alternate=False):
         if alternate:

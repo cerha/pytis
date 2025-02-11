@@ -216,7 +216,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         self._application_config_manager = pytis.form.ApplicationConfigManager(
             pytis.config.dbconnection)
         self._form_settings_manager = pytis.form.FormSettingsManager(pytis.config.dbconnection)
-        self._profile_manager = pytis.form.FormProfileManager(pytis.config.dbconnection)
+        self._form_profile_manager = pytis.form.FormProfileManager(pytis.config.dbconnection)
         self._aggregated_views_manager = pytis.form.AggregatedViewsManager(
             pytis.config.dbconnection)
         # Initialize user action logger.
@@ -1288,8 +1288,8 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
                 self._login_success = True
 
     @property
-    def profile_manager(self):
-        return self._profile_manager
+    def form_profile_manager(self):
+        return self._form_profile_manager
 
     @property
     def form_settings_manager(self):

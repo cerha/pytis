@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2024 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2025 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2011-2017 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -23,10 +23,11 @@ application configuration, form profiles and other settings.  The user's data
 are stored in database tables but pytis internally uses ``managers'' to access
 them.  All managers are similar, but each of them has a slightly different API.
 
-A pytis application instance automatically creates instances of all managers
-needed by a typical pytis application at startup and these managers are then
-accessible from within pytis through its properties, such as
-'Application.profile_manager', etc.
+A pytis application instance automatically creates instances of all needed
+managers at startup and these managers are then accessible through its
+properties 'Application.form_profile_manager',
+'Application.form_settings_manager' and 'Application.aggregated_views_manager'.
+
 
 Most of the settings are stored as JSON objects, but the API works with pytis
 classes, such as 'pytis.presentation.Profile()'.  Conversion to/from these

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2024 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2025 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2018 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -2263,7 +2263,7 @@ def make_in_operator(column_id, spec_name, table_column_id, profile_id,
 
     """
     if profile_id and profile_id.startswith(FormProfileManager.USER_PROFILE_PREFIX):
-        manager = pytis.form.app.profile_manager
+        manager = pytis.form.app.form_profile_manager
         data_object = pytis.util.data_object(spec_name)
         profile_condition, profile_name = manager.load_filter(spec_name, data_object, profile_id)
         if condition:
