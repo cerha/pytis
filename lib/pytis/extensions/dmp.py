@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2024 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2025 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2009-2015 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -188,7 +188,7 @@ def dmp_menu():
             result = MenuItem(add_key(title), command, help=help, hotkey=hotkey)
         return result
 
-    # Check for menu presence, if not available, return None
+    # Get menu definition from the database.
     language = pytis.util.current_language()
     menu_data = pd.dbtable('pytis_view_user_menu',
                            (('menuid', pd.Integer()),
@@ -203,7 +203,7 @@ def dmp_menu():
     menu_rows = menu_data.select_map(identity,
                                      condition=pd.EQ('language', pd.sval(language)),
                                      sort=(('position', pd.ASCENDENT,),))
-    # Build visible menu items
+    # Build visible menu items.
     menu_template = []
     parents = []
     for row in menu_rows:
