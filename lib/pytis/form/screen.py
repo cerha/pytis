@@ -1348,10 +1348,10 @@ class ProfileSelector(wx.ComboCtrl):
 
     def _on_context_menu(self, event):
         menu = (
-            MenuItem(_("Save"),
+            MenuItem(_("Save current profile settings"),
                      command=pytis.form.LookupForm.COMMAND_UPDATE_PROFILE(),
                      help=_("Update the saved profile according to the current form setup.")),
-            MenuItem(_("Save as new"),
+            MenuItem(_("Duplicate current profile"),
                      command=pytis.form.Application.COMMAND_HANDLED_ACTION(
                          # Name must be edited first and 'cmd' will be invoked after confirmation.
                          handler=self._edit_profile_title,
@@ -1359,14 +1359,14 @@ class ProfileSelector(wx.ComboCtrl):
                          cmd=pytis.form.LookupForm.COMMAND_SAVE_NEW_PROFILE,
                          clear=True),
                      help=_("Create a new profile according to the current form setup.")),
-            MenuItem(_("Rename"),
+            MenuItem(_("Rename current profile"),
                      command=pytis.form.Application.COMMAND_HANDLED_ACTION(
                          # Name must be edited first and 'cmd' will be invoked after confirmation.
                          handler=self._edit_profile_title,
                          enabled=self._edit_profile_title_enabled,
                          cmd=pytis.form.LookupForm.COMMAND_RENAME_PROFILE),
                      help=_("Change the name of the current profile and save it.")),
-            MenuItem(_("Delete"),
+            MenuItem(_("Delete current profile"),
                      command=pytis.form.LookupForm.COMMAND_DELETE_PROFILE(),
                      help=_("Delete the selected saved profile.")),
             MenuItem(_("Use this profile automatically on form starup"),
