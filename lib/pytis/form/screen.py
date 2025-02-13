@@ -1214,7 +1214,8 @@ class ProfileSelectorPopup(wx.ComboPopup):
         ctrl = self._listctrl
         i = ctrl.GetItemCount()
         ctrl.InsertItem(i, label)
-        ctrl.SetItemBackgroundColour(i, wx.Colour(225, 225, 225))
+        ctrl.SetItemBackgroundColour(i, wx.Colour(60, 60, 60) if darkmode
+                                     else wx.Colour(225, 225, 225))
         if toplevel:
             ctrl.SetItemFont(i, wx.Font(ctrl.GetFont().GetPointSize(),
                                         wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL,
@@ -1322,9 +1323,10 @@ class ProfileSelector(wx.ComboCtrl):
         wx_callback(wx.EVT_UPDATE_UI, self, self._on_ui_event)
         wx_callback(wx.EVT_RIGHT_DOWN, self, self._on_context_menu)
         wx_callback(wx.EVT_RIGHT_DOWN, ctrl, self._on_context_menu)
-        wx_callback(wx.EVT_TEXT_ENTER, ctrl, self._on_enter)
+        wx_callback(wx.EVT_TEXT_ENTER, ctrl, self._on_enter) # Does not work on macOS...
         wx_callback(wx.EVT_KEY_DOWN, self, self._on_key_down)
         wx_callback(wx.EVT_KEY_DOWN, ctrl, self._on_key_down)
+        # TODO: Add button for context menu invocation.
 
     def _on_ui_event(self, event):
         enabled = pytis.form.LookupForm.COMMAND_PROFILE_MENU.enabled()
@@ -1337,9 +1339,9 @@ class ProfileSelector(wx.ComboCtrl):
                     ctrl.SetValue(current_profile.title())
             if pytis.form.LookupForm.COMMAND_UPDATE_PROFILE.enabled():
                 # Indicate changed profile by color (update is enabled for changed profiles).
-                color = wx.Colour(200, 0, 0)
+                color = wx.Colour(255 if darkmode else 200, 0, 0)
             else:
-                color = wx.Colour(0, 0, 0)
+                color = wx.Colour(255, 255, 255) if darkmode else wx.Colour(0, 0, 0)
             ctrl.SetForegroundColour(color)
         elif pytis.form.app.top_window() is None and ctrl.GetValue() != '':
             ctrl.SetValue('')
