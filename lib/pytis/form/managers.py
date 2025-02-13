@@ -46,12 +46,7 @@ from __future__ import print_function
 
 from past.builtins import basestring
 
-try:
-    import cPickle as pickle
-except ImportError:
-    import pickle
-
-import base64
+import json
 import sys
 import pytis.data
 import pytis.form
@@ -59,6 +54,8 @@ import pytis.presentation
 
 from pytis.presentation import Profile
 from pytis.util import log, OPERATIONAL
+
+_ = pytis.util.translations('pytis-wx')
 
 
 class UserSetttingsManager(object):
@@ -278,6 +275,7 @@ class FormProfileManager(UserSetttingsManager):
     _OPERATORS = ('AND', 'OR', 'NOT', 'EQ', 'NE', 'WM', 'NW', 'LT', 'LE', 'GT', 'GE', 'IN')
     _PROFILE_PARAMS = ('sorting', 'columns', 'grouping', 'folding', 'aggregations',
                        'column_widths')
+    _EXPORT_PROFILES_VERSION = 1
 
     USER_PROFILE_PREFIX = '_user_profile_'
     """Profile identifier prefix used for user defined profiles.
@@ -286,11 +284,9 @@ class FormProfileManager(UserSetttingsManager):
     specifications) by this prefix.
 
     """
-    _PARAMS_MANAGER_CLASS = FormProfileParamsManager
-
     def __init__(self, dbconnection, username=None):
         super(FormProfileManager, self).__init__(dbconnection, username=username)
-        self._params_manager = self._PARAMS_MANAGER_CLASS(dbconnection, username=username)
+        self._params_manager = FormProfileParamsManager(dbconnection, username=username)
 
     def _pack_filter(self, something):
         if isinstance(something, pytis.presentation.IN):
@@ -540,6 +536,81 @@ class FormProfileManager(UserSetttingsManager):
                                     **params))
         return profiles
 
+    def export_profiles(self, spec_name, form_name, profiles):
+        """Return a serialized represention of given profiles as a JSON string.
+
+        Arguments:
+
+          spec_name, form_name -- unique string identification of a form to which the
+            profile belongs (see 'FormProfileManager' class docuemntation).
+          profiles -- sequence of form profiles as 'pytis.presentation.Profile' instances.
+
+        The serialized represention can be deserialized using
+        'import_profiles'.
+
+        """
+        return json.dumps(dict(
+            version=self._EXPORT_PROFILES_VERSION,
+            spec_name=spec_name,
+            form_name=form_name,
+            profiles=[dict(
+                title=profile.title(),
+                filter=profile.filter() and self._pack_filter(profile.filter()),
+                params=self._profile_params(profile),
+            ) for profile in profiles],
+        ))
+
+    def import_profiles(self, spec_name, form_name, view_spec, data_object, json_string):
+        """Validate given JSON string and deserialize the contained profiles into Profile instances.
+
+        Arguments:
+
+          spec_name, form_name -- unique string identification of a form to which the
+            profile belongs (see 'FormProfileManager' class docuemntation).
+          view_spec -- ViewSpec instance of given specification to be used for
+            profile validation
+          data_object -- data object of given specification to be used for
+            profile validation
+          json string -- serialized profiles as returned by 'export_profiles'.
+
+        Returns a pair of (profiles, error), where 'error' is a string
+        describing the problem if 'json_string' can not be deserialized or None
+        if deserialization succeeds and 'profiles' is a sequence of
+        'pytis.presentation.Profile' instances if 'error' is None.
+
+        """
+        try:
+            data = json.loads(json_string)
+        except ValueError:
+            return _("Invalid file format: Not a JSON file."), None
+        if ((not isinstance(data, dict) or
+             not set(data.keys()) == {'version', 'spec_name', 'form_name', 'profiles'} or
+             not isinstance(data['profiles'], list) or
+             not all(isinstance(item, dict) and
+                     set(item.keys()) == {'title', 'params', 'filter'} and
+                     isinstance(item['title'], basestring) and
+                     isinstance(item['params'], dict) and
+                     (item['filter'] is None or isinstance(item['filter'], list))
+                     for item in data['profiles']))):
+            return _("Invalid JSON data structure."), None
+        if data['version'] != self._EXPORT_PROFILES_VERSION:
+            return _("Exported file version does not match the current application version."), None
+        if data['spec_name'] != spec_name or data['form_name'] != form_name:
+            return _("Profiles incompatible with the current form."), None
+        if not data['profiles']:
+            return _("Empty profiles list."), None
+        profile_ids = [r['profile_id'].value() for r in self._rows(spec_name=spec_name)]
+        profiles = []
+        for item in data['profiles']:
+            params = item['params']
+            unpacked_filter, errors = self._load_filter(data_object, item['filter'])
+            errors += self._validate_params(view_spec, params)
+            if errors:
+                return (item['title'] + ':' + ''.join('\n{}: {}'.format(*e) for e in errors)), None
+            profile_id = self._new_user_profile_id(profile_ids + [p.id() for p in profiles])
+            profiles.append(Profile(profile_id, item['title'], filter=unpacked_filter, **params))
+        return None, profiles
+
     def load_filter(self, spec_name, data_object, profile_id, transaction=None):
         """Return a previously saved user defined filter.
 
@@ -598,13 +669,16 @@ class FormProfileManager(UserSetttingsManager):
         """Return a sequence of distinct form names for which profiles were saved."""
         return self._params_manager.list_form_names(spec_name, transaction=transaction)
 
+    def _new_user_profile_id(self, profile_ids):
+        prefix = self.USER_PROFILE_PREFIX
+        user_profile_numbers = [int(profile_id[len(prefix):]) for profile_id in profile_ids
+                                if (profile_id.startswith(prefix) and
+                                    profile_id[len(prefix):].isdigit())]
+        return prefix + str(max(user_profile_numbers + [0]) + 1)
+
     def new_user_profile_id(self, profiles):
         """Generate a new unique user profile id based on given list of existing profiles."""
-        prefix = self.USER_PROFILE_PREFIX
-        user_profile_numbers = [int(profile.id()[len(prefix):]) for profile in profiles
-                                if (profile.id().startswith(prefix) and
-                                    profile.id()[len(prefix):].isdigit())]
-        return prefix + str(max(user_profile_numbers + [0]) + 1)
+        return self._new_user_profile_id([profile.id() for profile in profiles])
 
 
 class AggregatedViewsManager(UserSetttingsManager):

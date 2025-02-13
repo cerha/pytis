@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2024 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2025 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2002-2016 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -127,6 +127,10 @@ Command(LookupForm, 'RESET_PROFILE',
          "(only for predefined profiles)"))
 Command(LookupForm, 'SET_INITIAL_PROFILE',
         "Use the current profile as the initial profile on next form startup")
+Command(LookupForm, 'EXPORT_PROFILES',
+        "Export form profiles to a file.")
+Command(LookupForm, 'IMPORT_PROFILES',
+        "Import form profiles from a file.")
 Command(LookupForm, 'FILTER_BY_VALUE',
         "Vyfiltrování formuláře podle dané hodnoty (arg. 'column_id', 'value')")
 Command(LookupForm, 'JUMP',
@@ -486,6 +490,8 @@ COMMAND_ICONS = (
     (LookupForm.COMMAND_JUMP, 'jump'),
     (LookupForm.COMMAND_RESET_PROFILE, 'reset-profile'),
     (LookupForm.COMMAND_RELOAD_PROFILE, 'refresh'),
+    (LookupForm.COMMAND_EXPORT_PROFILES, wx.ART_FILE_SAVE),
+    (LookupForm.COMMAND_IMPORT_PROFILES, wx.ART_FILE_OPEN),
     (MultiSideForm.COMMAND_FILTER_BY_SIDEFORM, 'filter'),
     (Browser.COMMAND_GO_BACK, wx.ART_GO_BACK),
     (Browser.COMMAND_GO_FORWARD, wx.ART_GO_FORWARD),

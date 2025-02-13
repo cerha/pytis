@@ -67,8 +67,9 @@ from .application import (
     Application, db_operation, run_form,
 )
 from .search import (
-    SearchDialog, FilterDialog, SortingDialog
+    SearchDialog, FilterDialog, SortingDialog,
 )
+from .dialog import CheckListDialog
 from pytis.dbdefs.db_pytis_statistics import PytisLogForm
 
 _ = pytis.util.translations('pytis-wx')
@@ -1340,8 +1341,8 @@ class LookupForm(InnerForm):
         self._init_select(async_count=False)
         self.select_row(self._current_key())
 
-    def _create_profile(self, id, name):
-        return Profile(id, name, **self._profile_parameters_to_save())
+    def _create_profile(self, id, title):
+        return Profile(id, title, **self._profile_parameters_to_save())
 
     def _profile_parameters_to_save(self):
         """Return the profile parameters representing the current state of the form.
@@ -1485,6 +1486,46 @@ class LookupForm(InnerForm):
 
     def _cmd_set_initial_profile(self):
         self._saved_settings.set('initial_profile', self._current_profile.id())
+
+    def _can_export_profiles(self):
+        return any(self._is_user_defined_profile(p) for p in self._profiles)
+
+    def _cmd_export_profiles(self):
+        user_profiles = [p for p in self._profiles if self._is_user_defined_profile(p)]
+        result = pytis.form.app.run_dialog(
+            CheckListDialog, title=_("Export profiles"),
+            message=_("Select the profiles to be exported:"),
+            items=[(True, p.title()) for p in user_profiles],
+        )
+        if result:
+            selected_profiles = [p for (checked, p) in zip(result, user_profiles) if checked]
+            data = self._saved_profiles.export_profiles(selected_profiles)
+            filename = self._name.replace('.', '-') + '-profiles.json'
+            app.write_selected_file(data.encode('ascii'), filename, mode='wb')
+
+    def _cmd_import_profiles(self):
+        f = app.open_selected_file(mode='rb')
+        if f:
+            with f:
+                data = f.read()
+            error, profiles = self._saved_profiles.import_profiles(self._view, self._data, data)
+            if error:
+                app.error(error)
+            else:
+                titles = [p.title() for p in self._profiles if self._is_user_defined_profile(p)]
+                result = pytis.form.app.run_dialog(
+                    CheckListDialog, title=_("Import profiles"),
+                    message=_("Select the profiles to be imported:"),
+                    items=[(p.title() not in titles,
+                            p.title() + ((' ' + _("(duplicate title)"))
+                                         if p.title() in titles else ''))
+                           for p in profiles],
+                )
+                if result:
+                    for checked, profile in zip(result, profiles):
+                        if checked:
+                            self._saved_profiles.save_profile(profile)
+                            self._profiles.append(profile)
 
     def _cmd_filter(self, condition=None):
         if condition:

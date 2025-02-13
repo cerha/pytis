@@ -1378,6 +1378,12 @@ class ProfileSelector(wx.ComboCtrl):
             MenuItem(_("Restore to default form settings"),
                      command=pytis.form.LookupForm.COMMAND_RESET_PROFILE(),
                      help=_("Discard all user changes in form settings.")),
+            MenuItem(_("Export user profiles to file"),
+                     command=pytis.form.LookupForm.COMMAND_EXPORT_PROFILES(),
+                     help=_("Export user defined form profiles to a file.")),
+            MenuItem(_("Import profiles from file"),
+                     command=pytis.form.LookupForm.COMMAND_IMPORT_PROFILES(),
+                     help=_("Import form profiles from a file.")),
         )
         pytis.form.app.popup_menu(self, menu)
 
