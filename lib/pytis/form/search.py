@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2024 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2025 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2018 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -36,7 +36,7 @@ from pytis.api import app
 from pytis.presentation import Field
 from pytis.util import find
 
-from .dialog import Error, GenericDialog
+from .dialog import GenericDialog
 from .screen import wx_button, wx_choice, wx_spin_ctrl, wx_text_ctrl, field_size
 
 _ = pytis.util.translations('pytis-wx')
