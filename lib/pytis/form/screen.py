@@ -2446,7 +2446,7 @@ def _init_wx_ctrl(ctrl, tooltip=None, update=False, enabled=True, width=None, he
 
 
 def wx_button(parent, label=None, icon=None, bitmap=None, id=-1, noborder=False,
-              fullsize=False, command=None, callback=None, enabled=True, update=False,
+              compact=False, command=None, callback=None, enabled=True, update=False,
               tooltip=None, size=None, width=None, height=None):
     """Create and setup a button.
 
@@ -2463,8 +2463,7 @@ def wx_button(parent, label=None, icon=None, bitmap=None, id=-1, noborder=False,
       bitmap -- button bitmap; overrides both label and icon
       id -- wx id of the button; integer; may be useful for creating ``stock buttons''
       noborder -- if true, the button will not have the visible border
-      fullsize -- the button is created with exact fit by default (smallest possible).  Pass true
-        if you want normal size buttons (irrelevant when size is defined explicitly)
+      compact -- if true, the button is created as compact as possible
       command -- pytis command to invoke when button is pressed.  If defined, 'callback' must
         be None
       callback -- if specified, the given function will be associated with button press event.  The
@@ -2485,7 +2484,7 @@ def wx_button(parent, label=None, icon=None, bitmap=None, id=-1, noborder=False,
     if not bitmap and icon:
         bitmap = get_icon(icon, type=wx.ART_TOOLBAR)
     style = 0
-    if not fullsize:
+    if compact:
         style |= wx.BU_EXACTFIT
     if noborder:
         style |= wx.BORDER_NONE
@@ -2495,7 +2494,7 @@ def wx_button(parent, label=None, icon=None, bitmap=None, id=-1, noborder=False,
         button = wx.BitmapButton(parent, id, bitmap, size=size, style=style)
     else:
         button = wx.Button(parent, id, label=label or '', size=size, style=style)
-        if label and not fullsize and size == wx.DefaultSize:
+        if label and compact and size == wx.DefaultSize:
             # Add small left and right padding to the label, otherwise
             # the label is edge to edge with BU_EXACTFIT.
             button.SetMinSize((button.Size.width + 18, button.Size.height))
@@ -2721,7 +2720,7 @@ def wx_toolbar(parent, items):
                 ctrl, kwargs = item.ctrl()[0], copy.copy(item.ctrl()[1])
             else:
                 assert icon is not None, (cmd, args)
-                ctrl, kwargs = wx_button, dict(icon=icon, fullsize=True, noborder=True)
+                ctrl, kwargs = wx_button, dict(icon=icon, noborder=True)
             size = tuple(x or 32 for x in kwargs.pop('size', (None, None)))
             tool = toolbar.AddControl(ctrl(toolbar, command=(cmd, args), size=size, **kwargs))
             toolbar.SetToolShortHelp(tool.GetId(), item.title())

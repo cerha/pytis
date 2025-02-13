@@ -3341,7 +3341,7 @@ class PopupEditForm(PopupForm, EditForm):
     def _create_buttons(self):
         sizer = wx.BoxSizer(wx.HORIZONTAL)
         for i, kwargs in enumerate(self._buttons()):
-            button = wx_button(self, fullsize=True, **kwargs)
+            button = wx_button(self, **kwargs)
             if i == 0:
                 button.SetDefault()
             wx_callback(wx.EVT_KEY_DOWN, button, self.on_key_down)
@@ -3548,7 +3548,7 @@ class QueryFieldsForm(_VirtualEditForm):
         panel = super(QueryFieldsForm, self)._create_group_panel(parent, group)
         if self._materialized_view:
             self._query_fields_refresh_button = button = wx_button(
-                panel, _("Refresh view"),
+                panel, _("Refresh view"), compact=True,
                 callback=self._refresh_materialized_view,
                 tooltip=_("Refresh the underlying database view."),
             )
@@ -3562,7 +3562,7 @@ class QueryFieldsForm(_VirtualEditForm):
             panel.Sizer.Add(label, 0, wx.ALIGN_BOTTOM | wx.BOTTOM, 9)
         elif not self._autoapply:
             self._query_fields_apply_button = button = wx_button(
-                panel, _("Apply"),
+                panel, _("Apply"), compact=True,
                 callback=lambda e: self._apply_query_fields(self._row),
                 tooltip=_("Reload form data with current query field values."),
             )
