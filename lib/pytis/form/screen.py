@@ -2318,42 +2318,6 @@ def uicommand_mitem(uicmd):
     return MenuItem(uicmd.title(), command=uicmd.command(), help=uicmd.descr())
 
 
-def uicommand_toolbar_ctrl(toolbar, uicmd):
-    """Add a toolbar control for given UICommand into given wx 'toolbar'.
-
-    This method adds command control into the toolbar.  The default control
-    is a simple button which invokes the command on click.  More
-    sophisticated controls may be specified using the 'ctrl' constructor
-    argument.
-
-    """
-    title = uicmd.title()
-    descr = uicmd.descr()
-    ctrl_cls = uicmd.ctrl()
-    if ctrl_cls:
-        if isinstance(ctrl_cls, tuple):
-            ctrl_cls, kwargs = ctrl_cls
-        else:
-            kwargs = {}
-        ctrl = ctrl_cls(toolbar, uicmd, **kwargs)
-        ctrl.SetToolTip(title)
-        tool = toolbar.AddControl(ctrl)
-        toolbar.SetToolLongHelp(tool.GetId(), descr)  # Doesn't work...
-    else:
-        command = uicmd.command()
-        assigned_icon = command_icon(command)
-        if assigned_icon is None:
-            raise Exception("No icon assigned for command: {}".format(command))
-        icon = get_icon(assigned_icon, type=wx.ART_TOOLBAR)
-        if icon is None:
-            icon = get_icon(wx.ART_ERROR, type=wx.ART_TOOLBAR)
-        tool = toolbar.AddTool(-1, title, icon, wx.NullBitmap, shortHelp=title, longHelp=descr)
-        parent = toolbar.GetParent()
-        wx_callback(wx.EVT_TOOL, parent, lambda event: command.invoke(), source=tool)
-        wx_callback(wx.EVT_UPDATE_UI, parent,
-                    lambda event: event.Enable(command.enabled), source=tool)
-
-
 _command_icons = None
 
 def command_icon(command):
