@@ -369,6 +369,7 @@ class SFDialog(SFSDialog):
                      tooltip=_("Choose the level of precedence of the logical operator.")))
 
         def create_relational_operator(i, n, operator, col1, col2, value):
+            height = field_size(self._panel, 1, 1)[1]
             return (
                 choice([(c.label(), c) for c in self._columns], selected=col1,
                        on_change=lambda e: self._on_selection_change(i),
@@ -381,12 +382,12 @@ class SFDialog(SFSDialog):
                 field(value, length=self._TEXT_CTRL_SIZE,
                       tooltip=_("Enter the operand value.")),
                 button(_("Gather"), lambda e: self._on_suck(i),
-                       enabled=self._row is not None,
+                       icon='picker', height=height, enabled=self._row is not None,
                        tooltip=_("Use the value from the current form row.")),
                 button(_("Clear"), lambda e: self._on_clear(i),
-                       tooltip=_("Clear the condition.")),
+                       icon='clear', height=height, tooltip=_("Clear the condition.")),
                 button(_("Remove"), lambda e: self._on_remove(i), enabled=n > 1,
-                       tooltip=_("Remove this condition.")))
+                       icon='delete', height=height, tooltip=_("Remove this condition.")))
 
         def create_in_operator(i, n, operator):
             if operator.name() == 'NOT':
