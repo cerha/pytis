@@ -3332,18 +3332,18 @@ class PopupEditForm(PopupForm, EditForm):
 
     def _buttons(self):
         buttons = (
-            dict(label=_("Ok"),
+            dict(label=_("Ok"), icon='submit',
                  tooltip=(_("Save the current record and advance to the next one.")
                           if self._inserted_data else
                           _("Save the record and close the form.")),
                  command=self.COMMAND_COMMIT_RECORD(close=not self._inserted_data)),
-            dict(id=wx.ID_CANCEL,
+            dict(label=_("Cancel"), icon='cancel', id=wx.ID_CANCEL,
                  tooltip=_("Close the form without saving"),
                  command=self.COMMAND_LEAVE_FORM()),
         )
         if self._mode == self.MODE_INSERT and self._multi_insert and not self._inserted_data:
             buttons += (
-                dict(id=wx.ID_FORWARD, label=_("Next"),  # icon=wx.ART_GO_FORWARD,
+                dict(id=wx.ID_FORWARD, label=_("Next"), icon='forward',
                      tooltip=_("Save the current record without closing the form "
                                "to allow next record insertion."),
                      command=self.COMMAND_COMMIT_RECORD(close=False)),
