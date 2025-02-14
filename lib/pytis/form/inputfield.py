@@ -1344,7 +1344,8 @@ class Invocable(CommandHandler):
         return field_size(parent, 1, 1)
 
     def _create_invocation_button(self, parent):
-        return wx_button(parent, label='...', icon=self._INVOKE_ICON,
+        return wx_button(parent, icon=self._INVOKE_ICON,
+                         label='...' if not self._INVOKE_ICON else None,
                          size=self._button_size(parent), tooltip=self._INVOKE_TITLE)
 
     def _menu(self):
@@ -1559,7 +1560,7 @@ class CodebookField(Invocable, GenericCodebookField, TextField):
                 self._controls.append((display, lambda c, e: None))
                 added_controls.append(display)
         if spec.allow_codebook_insert():
-            button = wx_button(parent, label='+', icon='new-record', size=self._button_size(parent),
+            button = wx_button(parent, icon='new-record', size=self._button_size(parent),
                                tooltip=_("Insert a new codebook value."),
                                callback=lambda e: self._codebook_insert())
             wx_callback(wx.EVT_NAVIGATION_KEY, button, self._on_navigation(button, skip=True))

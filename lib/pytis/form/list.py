@@ -453,13 +453,11 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                 materialized_view=self._data if query_fields.materialized_view() else None,
             )
             self._query_fields_panel_buttons = buttons = (
-                wx_button(panel, label=_("Minimize"),
+                wx_button(panel, icon='minimize-down', noborder=True, size=(26, 20),
                           tooltip=_("Minimize/maximize query panel."),
-                          icon='minimize-down', noborder=True, size=(26, 20),
                           callback=self._on_minimize_query_fields),
-                wx_button(panel, label=_("Move up"),
+                wx_button(panel, icon='move-up', noborder=True, size=(26, 20),
                           tooltip=_("Move the query panel to the top/bottom edge of the form."),
-                          icon='move-up', noborder=True, size=(26, 20),
                           callback=self._on_move_query_fields))
             sizer = wx.BoxSizer()
             sizer.Add(form, 0, wx.EXPAND | wx.FIXED_MINSIZE)
@@ -600,8 +598,8 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                         tooltip=_("Check if you want to distinguish "
                                   "lower and upper case letters."),
                         checked=False),
-            wx_button(panel, label=_("Hide"), tooltip=_("Hide the search panel"),
-                      icon='close', noborder=True,
+            wx_button(panel, icon='close', noborder=True,
+                      tooltip=_("Hide the search panel"),
                       callback=lambda e: self._exit_incremental_search()),
         )
         sizer = wx.BoxSizer()
