@@ -30,8 +30,6 @@ import copy
 import os
 import string
 import types
-import wx
-import wx.html2
 import http.server
 import socketserver
 import io
@@ -40,10 +38,12 @@ import time
 import mimetypes
 import fitz
 
-import lcg
-
-import wx.lib.pdfviewer
+import wx
+import wx.html2
 import wx.lib.agw.supertooltip as supertooltip
+import wx.lib.pdfviewer
+
+import lcg
 
 import pytis
 import pytis.api
@@ -2490,14 +2490,35 @@ def wx_button(parent, label=None, icon=None, bitmap=None, id=-1, noborder=False,
         style |= wx.BORDER_NONE
     if size is None:
         size = wx.DefaultSize
+    kwargs = dict(size=size, style=style)
     if bitmap:
-        button = wx.BitmapButton(parent, id, bitmap, size=size, style=style)
+        if label:
+            # wx Widgets don't have a standard button with both text and icon.  There is
+            # wx.lib.buttons.ThemedGenBitmapTextButton, but is does not work in many ways
+            # (does not indicate keyboerd focus, does not set the default button, ...)
+            # So we rather draw the icon and the label into a new bitmap and use it
+            # with BitmapButton.
+            hmargin, vmargin, gap = 14, 6, 4
+            label_size = parent.GetTextExtent(label)
+            total_width = hmargin + bitmap.Size.width + gap + label_size.width + hmargin
+            total_height = 2 * vmargin + max(bitmap.Size.height, label_size.height)
+            bitmap_with_label = wx.Bitmap.FromRGBA(total_width, total_height)
+            dc = wx.MemoryDC(bitmap_with_label)
+            dc.SetBackground(wx.Brush(wx.TRANSPARENT_BRUSH))
+            dc.Clear()
+            dc.DrawBitmap(bitmap, hmargin, (total_height - bitmap.Size.height) // 2, True)
+            dc.SetFont(parent.GetFont())
+            dc.SetTextForeground(wx.Colour('white' if darkmode else 'black'))
+            dc.DrawText(label, hmargin + bitmap.Size.width + gap, (total_height - label_size.height) // 2)
+            del dc
+            bitmap = bitmap_with_label
+        button = wx.BitmapButton(parent, id, bitmap, **kwargs)
     else:
-        button = wx.Button(parent, id, label=label or '', size=size, style=style)
-        if label and compact and size == wx.DefaultSize:
-            # Add small left and right padding to the label, otherwise
-            # the label is edge to edge with BU_EXACTFIT.
-            button.SetMinSize((button.Size.width + 18, button.Size.height))
+        button = wx.Button(parent, id, label=label or '', **kwargs)
+    if label and compact and size == wx.DefaultSize:
+        # Add small left and right padding to the label, otherwise
+        # the label is edge to edge with BU_EXACTFIT.
+        button.SetMinSize((button.Size.width + 18, button.Size.height))
     button._pytis_in_button_handler = False
     if command:
         assert callback is None
