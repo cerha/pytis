@@ -42,7 +42,6 @@ import email.utils
 import lcg
 import os
 import sys
-import threading
 import time
 import traceback
 import wx.adv
@@ -58,12 +57,6 @@ from pytis.util import ProgramError, send_mail, public_attr_values
 from .command import CommandHandler
 from .event import wx_callback
 from .screen import KeyHandler, wx_focused_window, wx_text_ctrl, wx_text_view
-
-if sys.version_info[0] == 2:
-    import Queue as queue
-else:
-    import queue
-
 
 # Needed for subprocess.getstatusoutput (commands.getstatusoutput in Python 2).
 standard_library.install_aliases()
