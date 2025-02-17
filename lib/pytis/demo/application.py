@@ -75,12 +75,9 @@ class Application(pytis.presentation.Application):
             )),
             Menu(_("&Demo"), (
                 nr(_("&Input fields"), 'misc.InputFields'),
-                nr(_("Runtime &filters"), 'misc.RuntimeFilter'),
-                bf(_('&Query Fields'), 'misc.RandomNumbers'),
                 mf(_("Continents"), 'cb.Continents', binding='islands'),
                 mf(_("Countries"), 'cb.Countries'),
                 mf(_('Products'), 'misc.Products'),
-                bf(_('Insurance (table function)'), 'cb.Insurance'),
                 Menu(_("Working with files"), (
                     mf(_("Storing &binary data"), 'binary.BinaryData'),
                     bf(_("Storing binary &images"), 'binary.Images'),
@@ -98,7 +95,10 @@ class Application(pytis.presentation.Application):
                              ),
                              hotkey=('Alt-d', 'd')),
                 )),
+                nr(_("Runtime &filters"), 'misc.RuntimeFilter'),
+                bf(_('&Query Fields'), 'misc.RandomNumbers'),
                 bf(_("Password fields"), 'misc.Passwords'),
+                bf(_('Insurance (table function)'), 'cb.Insurance'),
                 bf(_('Tree Order'), 'misc.ObsoleteTree'),
                 bf(_('Foldable Tree'), 'misc.Tree'),
                 bf(_('Long Table'), 'misc.LongTable'),
