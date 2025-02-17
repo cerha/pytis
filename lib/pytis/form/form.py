@@ -60,7 +60,7 @@ from .command import CommandHandler
 from .screen import (
     Browser, CallbackHandler, InfoWindow, KeyHandler,
     FileViewer, busy_cursor, dlg2px, char2px, orientation2wx,
-    wx_button, wx_focused_window, wx_toolbar,
+    wx_button, wx_focused_window, wx_toolbar, field_size,
     DEFAULT_WINDOW_BACKGROUND_COLOUR,
 )
 from .application import (
@@ -3562,7 +3562,7 @@ class QueryFieldsForm(_VirtualEditForm):
         panel = super(QueryFieldsForm, self)._create_group_panel(parent, group)
         if self._materialized_view:
             self._query_fields_refresh_button = button = wx_button(
-                panel, _("Refresh view"), compact=True,
+                panel, _("Refresh view"), height=field_size(parent, 1, 1)[1],
                 callback=self._refresh_materialized_view,
                 tooltip=_("Refresh the underlying database view."),
             )
@@ -3576,7 +3576,7 @@ class QueryFieldsForm(_VirtualEditForm):
             panel.Sizer.Add(label, 0, wx.ALIGN_BOTTOM | wx.BOTTOM, 9)
         elif not self._autoapply:
             self._query_fields_apply_button = button = wx_button(
-                panel, _("Apply"), compact=True,
+                panel, _("Apply"), height=field_size(parent, 1, 1)[1],
                 callback=lambda e: self._apply_query_fields(self._row),
                 tooltip=_("Reload form data with current query field values."),
             )
