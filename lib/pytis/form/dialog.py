@@ -125,8 +125,8 @@ class GenericDialog(Dialog):
         def icon(self):
             return self._icon
 
-    BUTTON_OK = Button(_("Ok"), value=True)
-    BUTTON_CANCEL = Button(_("Cancel"), value=None)
+    BUTTON_OK = Button(_("Ok"), icon='ok', value=True)
+    BUTTON_CANCEL = Button(_("Cancel"), icon='cancel', value=None)
 
     _BUTTONS = ()
     """Sequence of Button instances representing dialog submit buttons."""
@@ -467,8 +467,8 @@ class Question(Message):
     answer itself (string) of the pressed button or None.
 
     """
-    BUTTON_YES = GenericDialog.Button(_("Yes"), value=True)
-    BUTTON_NO = GenericDialog.Button(_("No"), value=False)
+    BUTTON_YES = GenericDialog.Button(_("Yes"), icon='yes', value=True)
+    BUTTON_NO = GenericDialog.Button(_("No"), icon='no', value=False)
 
     def __init__(self, parent, message, title=_("Question"), icon=Message.ICON_QUESTION,
                  answers=None, default=None, timeout=None, **kwargs):
@@ -537,7 +537,7 @@ class ProgressDialog(Message):
     most of its documentation applies here.
 
     """
-    BUTTON_ABORT = GenericDialog.Button(_("Abort"))
+    BUTTON_ABORT = GenericDialog.Button(_("Abort"), icon='cancel')
 
     def __init__(self, parent, function, args=(), kwargs={},
                  title=_("Operation in progress"), message=_("Please wait..."),
