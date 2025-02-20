@@ -314,8 +314,8 @@ class GenericDialog(Dialog):
             widget = self._default_button_instance
         else:
             widget = wx_focused_window()
-        if widget and widget.Id in self._buttons_map:
-            # Simulate a click on the default button.
+        if isinstance(widget, wx.Button):
+            # Simulate a click on the button.
             widget.Command(wx.CommandEvent(wx.wxEVT_COMMAND_BUTTON_CLICKED, widget.Id))
         elif widget and self._can_commit(widget):
             self._end_modal(widget.Id)
@@ -845,6 +845,7 @@ class BugReport(GenericDialog):
             sizer.Add(email_ctrl, 0, wx.EXPAND | wx.ALL, 6)
 
         button = wx.Button(dialog, -1, label=_("Send error report"))
+        self._handle_keys(button)
         button.Bind(wx.EVT_BUTTON, self._on_send_bug_report)
         button.Bind(wx.EVT_UPDATE_UI, lambda e: e.Enable(bool(
             not self._sent and (pytis.config.sender_address or
