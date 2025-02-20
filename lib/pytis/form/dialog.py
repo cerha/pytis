@@ -310,10 +310,9 @@ class GenericDialog(Dialog):
         return False
 
     def _cmd_commit_dialog(self, force=False):
-        if force:
+        widget = wx_focused_window()
+        if force and (not widget or widget.Id not in self._buttons_map):
             widget = self._default_button_instance
-        else:
-            widget = wx_focused_window()
         if isinstance(widget, wx.Button):
             # Simulate a click on the button.
             widget.Command(wx.CommandEvent(wx.wxEVT_COMMAND_BUTTON_CLICKED, widget.Id))
