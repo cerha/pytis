@@ -94,9 +94,10 @@ class GenericDialog(Dialog):
 
     """
     class Button(object):
-        def __init__(self, label, value=None):
+        def __init__(self, label, value=None, icon=None):
             self._label = label
             self._value = value
+            self._icon = icon
 
         def __str__(self):
             return "<Button{}>".format(''.join(' {}={!r}'.format(k[1:], v)
@@ -231,7 +232,7 @@ class GenericDialog(Dialog):
             bsizer = wx.BoxSizer()
             bsizer.AddSpacer(30)
             for button in buttons:
-                wxbutton = wx_button(dialog, button.label)
+                wxbutton = wx_button(dialog, button.label, icon=button.icon)
                 self._buttons_map[wxbutton.Id] = button
                 bsizer.Add(wxbutton, 0)
                 bsizer.AddSpacer(30)
