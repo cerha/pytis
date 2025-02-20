@@ -453,25 +453,65 @@ class Error(Message):
         super(Error, self).__init__(parent, message, title=title, icon=icon, **kwargs)
 
 
-class MultiQuestion(Message):
-    """Dialog asking for answer to given question from given list of answers (buttons)."""
+class Question(Message):
+    """Dialog asking for answer to given question from list of answers (buttons).
 
-    def __init__(self, parent, message, buttons, default=None,
-                 title=_("Question"), icon=Message.ICON_QUESTION, timeout=None, **kwargs):
-        super(MultiQuestion, self).__init__(parent, message, title=title, icon=icon, **kwargs)
-        assert default is None or default in buttons
-        self._answers = buttons
+    The available answers are either specified explicitly or the default
+    answers are 'Yes' and 'No' ('Yes' being the default).
+
+    With default answers 'Yes'/'No', 'run()' returns True if the user pressed the
+    'Yes' button, False if the user pressed the 'No' button and None otherwise.
+
+    With answers explicitly passed to the constructor, 'run()' returns the
+    answer itself (string) of the pressed button or None.
+
+    """
+    BUTTON_YES = GenericDialog.Button(_("Yes"), value=True)
+    BUTTON_NO = GenericDialog.Button(_("No"), value=False)
+
+    def __init__(self, parent, message, title=_("Question"), icon=Message.ICON_QUESTION,
+                 answers=None, default=None, timeout=None, **kwargs):
+        """Initialize the dialog.
+
+        Arguments:
+
+          answers -- sequence of string labels to construct available buttons
+            for dialog submission.  If None, the default buttons are 'Yes' and
+            'No'.
+
+          default -- The initially selected answer.  If default answers 'Yes'
+            and 'No' are used, True and None stand for 'Yes' and False for
+            'No'.  With explicitly defined answers the string value
+            corresponding to one of the options is expected.
+
+          timeout -- dialog timeout in seconds; integer.  When the dialog is
+            shown for more than the given time, it gets automatically closed
+            and 'None' is returned as the answer.  If the argument value is
+            'None' then the dialog is shown until user chooses an answer.
+
+        """
+        super(Question, self).__init__(parent, message, title=title, icon=icon, **kwargs)
+        assert default is None or answers is None and default in (True, False) or default in answers
+        self._answers = answers
         self._default = default
         self._timeout = timeout
 
     def _buttons(self):
-        return [self.Button(answer, value=answer) for answer in self._answers]
+        if self._answers is not None:
+            return [self.Button(answer, value=answer) for answer in self._answers]
+        else:
+            return (self.BUTTON_YES, self.BUTTON_NO)
 
     def _default_button(self, buttons):
-        return pytis.util.find(self._default, buttons, lambda b: b.value)
+        if self._answers is not None:
+            return pytis.util.find(self._default, buttons, lambda b: b.value)
+        elif self._default is None or self._default:
+            return self.BUTTON_YES
+        else:
+            return self.BUTTON_NO
 
     def _create_dialog(self):
-        super(MultiQuestion, self)._create_dialog()
+        super(Question, self)._create_dialog()
         if self._timeout is not None:
             def destroy():
                 try:
@@ -480,43 +520,6 @@ class MultiQuestion(Message):
                     # The wx instance of `self' may already be inactive
                     pass
             wx.CallLater(self._timeout * 1000, destroy)
-
-
-class Question(Message):
-    """Dialog asking for an answer Yes/No to a given question.
-
-    'run()' returns True if the user pressed the 'Yes' button, False if the
-    user pressed the 'No' button and None otherwise.
-
-    """
-    BUTTON_YES = GenericDialog.Button(_("Yes"), value=True)
-    BUTTON_NO = GenericDialog.Button(_("No"), value=False)
-    _BUTTONS = (BUTTON_YES, BUTTON_NO)
-
-    def __init__(self, parent, message, default=True, **kwargs):
-        """Initialize the dialog.
-
-        Arguments:
-
-          default -- if true, the preselected answer is 'Yes', otherwise it is
-            'No'.
-          timeout -- dialog timeout in seconds; integer.  When the dialog is
-            shown for more than the given time, it gets automatically closed
-            and 'None' is returned as the answer.  If the argument value is
-            'None' then the dialog is shown until user chooses an answer.
-
-
-        The keyword argument 'default' may also be passed as positional.
-
-        """
-        super(Question, self).__init__(parent, message, (), **kwargs)
-        self._default = default
-
-    def _default_button(self, buttons):
-        if self._default:
-            return self.BUTTON_YES
-        else:
-            return self.BUTTON_NO
 
 
 class ProgressDialog(Message):
