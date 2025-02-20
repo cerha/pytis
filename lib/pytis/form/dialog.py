@@ -16,18 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Dialogová okna.
-
-Dialogová okna slouží jako nepřehlédnutelná upozornění nebo otázky pro
-uživatele.  Uživateli je znemožněno pokračovat práci až do doby, než potvrdí
-zobrazené hlášení nebo odpoví na otázku.
-
-Všechny dialogy vychází z abstraktní třídy 'Dialog'.
-
-Modul dále obsahuje několik pomocných funkcí využívajících dialogy pro vícekrát
-se vyskytující dialogové operace.
-
-"""
+"""Dialogs for modal user interaction."""
 from __future__ import unicode_literals
 from __future__ import division
 from __future__ import print_function
@@ -56,7 +45,7 @@ from pytis.util import ProgramError, send_mail, public_attr_values
 
 from .command import CommandHandler
 from .event import wx_callback
-from .screen import KeyHandler, wx_focused_window, wx_text_ctrl, wx_text_view
+from .screen import KeyHandler, wx_focused_window, wx_text_ctrl, wx_text_view, wx_button
 
 # Needed for subprocess.getstatusoutput (commands.getstatusoutput in Python 2).
 standard_library.install_aliases()
@@ -67,16 +56,14 @@ unistr = type(u'')  # Python 2/3 transition hack.
 
 
 class Dialog(KeyHandler, CommandHandler, object):
-    """Abstraktní třída, která je základem všech dialogů.
+    """Common base class for all dialogs.
 
-    Všechny dialogy musí být potomky této třídy.  Vytvoření instance dialogu
-    ještě neznamená jeho vyvolání, pro to slouží metoda 'run()'.  Metodu
-    'run()' lze na jednu instanci volat teoreticky i vícekrát.  Instance
-    dialogu však sama o sobě neobsahuje žádné objekty uživatelského rozhraní,
-    pouze si pamatuje jejich vlastnosti.  K vytvoření okna a jeho prvků dochází
-    až při volání metody 'run()'.
+    This class defines the public API.  All dialog classes used within Pytis
+    are derived from it.
 
-    Tato třída pouze definuje abstraktní metodu 'run()'.
+    Creating a dialog instance only sets its properties.  No UI elements are
+    created at that point.  Those are created by calling 'run()' on the
+    instance.
 
     """
     @classmethod
@@ -89,47 +76,79 @@ class Dialog(KeyHandler, CommandHandler, object):
         self._key_guardian = None
 
     def run(self):
-        """Vyvolej dialog a počkej na odpověď.
+        """Construct the dialog, display it and wait for user interaction.
 
-        Vrací: Hodnotu závislou na typu dialogu.
+        Returns: The result depends on the dialog type.
 
-        V této třídě metoda nedělá nic a vždy vrací pravdu.
+        The call blocks until the dialog is submitted, typically by pressing
+        one of its buttons.
 
         """
         return True
 
 
 class GenericDialog(Dialog):
-    """Obecný dialog s tlačítky.
+    """Common base class for more specific dialog classes defined below.
 
-    Univerzální dialogová třída, od které je možno odvodit specializované třídy
-    konkrétních dialogů pomocí předefinování některých metod.
+    This class provides some common infrastructure for building dialogs.
 
     """
-    _COMMIT_BUTTON = None
+    class Button(object):
+        def __init__(self, label, value=None):
+            self._label = label
+            self._value = value
+
+        def __str__(self):
+            return "<Button{}>".format(''.join(' {}={!r}'.format(k[1:], v)
+                                               for k, v in self.__dict__.items()))
+
+        def __eq__(self, other):
+            if pytis.util.sameclass(self, other):
+                return other.value == self.value
+            else:
+                return NotImplemented
+
+        def __ne__(self, other):
+            # Implied automatically in Python 3 so can be removed when dropping Python 2 support.
+            return not self.__eq__(other)
+
+        @property
+        def label(self):
+            return self._label
+
+        @property
+        def value(self):
+            return self._value
+
+        @property
+        def icon(self):
+            return self._icon
+
+    BUTTON_OK = Button(_("Ok"), value=True)
+    BUTTON_CANCEL = Button(_("Cancel"), value=None)
+
+    _BUTTONS = ()
+    """Sequence of Button instances representing dialog submit buttons."""
+    _DEFAULT_BUTTON = None
+    """Initially selected button.
+
+    One of the instances present in _BUTTONS or None.  The default button has
+    initial focus so it is pressed on Enter and Space keys.  The default button
+    press is also simulated on dialog force commit command (Ctrl-Enter) even if
+    it does not currently have keyboard focus.
+
+    """
+
     _HELP_TOPIC = 'dialog'
     _STYLE = wx.CAPTION | wx.CLOSE_BOX | wx.MINIMIZE_BOX | wx.SYSTEM_MENU
 
-    BUTTON_OK = _("Ok")
-    "Nápis pro potvrzovací tlačítko."
-    BUTTON_CANCEL = _("Cancel")
-    "Nápis pro opouštěcí tlačítko."
-    BUTTON_YES = _("Yes")
-    "Nápis pro tlačítko souhlasu."
-    BUTTON_NO = _("No")
-    "Nápis pro tlačítko nesouhlasu."
+    def __init__(self, parent, title=None, report=None, report_format=None, report_size=(None, None)):
+        """Initialize the dialog.
 
-    def __init__(self, parent, title, buttons, default=None, report=None,
-                 report_format=None, report_size=(None, None)):
-        """Inicializuj dialog.
+        Arguments:
 
-        Argumenty:
-
-          parent -- wx rodič; instance 'wx.Frame' nebo 'wx.Dialog'
-          title -- titulek dialogového okna jako string
-          buttons -- sekvence názvů tlačítek dialogu, strings
-          default -- název předvoleného tlačítka (string obsažený v 'buttons',
-            nebo 'None')
+          parent -- wx parent; 'wx.Frame' or 'wx.Dialog' instance
+          title -- title to show in the dialog title bar as a string
           report -- Dodatečný obsah, který má být zobrazen v okně dialogu
             (typicky delší scrollovatelný text).  Jde buďto o řetězec, jehož
             formátování je možné dále určit arguemntem 'report_format', nebo
@@ -145,20 +164,15 @@ class GenericDialog(Dialog):
 
         """
         assert isinstance(title, basestring), title
-        assert isinstance(buttons, (list, tuple)), buttons
-        assert default is None or default in buttons, default
         assert report is None or isinstance(report, (basestring, lcg.Content)), report
         assert report_format is None or \
             report_format in pytis.util.public_attr_values(TextFormat), report_format
         assert isinstance(report_size, (list, tuple)) and len(report_size) == 2, report_size
         super(GenericDialog, self).__init__(parent)
         self._title = unistr(title)
-        self._button_labels = buttons
-        self._default = default
         self._report = report
         self._report_format = report_format
         self._report_size = report_size
-        self._want_focus = None
         self._shown = False
 
     def _create_dialog(self):
@@ -178,6 +192,7 @@ class GenericDialog(Dialog):
         if self._report is not None:
             style |= wx.RESIZE_BORDER
         self._dialog = dialog = wx.Dialog(self._parent, title=self._title, style=style)
+        self._want_focus = None
         self._create_dialog_elements()
         self._handle_keys(dialog)
 
@@ -188,14 +203,13 @@ class GenericDialog(Dialog):
         self.focus()
 
     def _create_dialog_elements(self):
-        """Vlož do dialogu jeho vnitřní prvky.
+        """Build the dialog UI.
 
-        Pomocí sizerů je do dialogu vložen hlavní obsah (výsledek metody
-        '_create_content()') a tlačítka (výsledek metody '_create_buttons()').
+        The main dialog content is created by calling '_create_content()' and
+        submit buttons are appended underneath.
 
-        Tuto metodu by nemělo být třeba předefinovávat. Ve většině případů by
-        mělo stačit předefinovat metodu '_create_content()' a/nebo
-        '_create_buttons()'.
+        Most derived classes will just override '_create_content()' to
+        customize dialog appearance.
 
         """
         dialog = self._dialog
@@ -209,43 +223,40 @@ class GenericDialog(Dialog):
             if self._report_format == TextFormat.PLAIN:
                 report.SetMinSize((300, report.MinSize.height))
             sizer.Add(report, 1, wx.EXPAND)
-        buttons = self._create_buttons()
+        buttons = self._buttons()
+        default_button = self._default_button(buttons)
+        self._buttons_map = {}
+        self._default_button_instance = None
         if buttons:
             bsizer = wx.BoxSizer()
+            bsizer.AddSpacer(30)
             for button in buttons:
-                bsizer.Add(button, 0)
-                bsizer.AddSpacer(10)
-                wx_callback(wx.EVT_BUTTON, button, self._on_button)
-                self._handle_keys(button)
+                wxbutton = wx_button(dialog, button.label)
+                self._buttons_map[wxbutton.Id] = button
+                bsizer.Add(wxbutton, 0)
+                bsizer.AddSpacer(30)
+                wx_callback(wx.EVT_BUTTON, wxbutton, self._on_button)
+                self._handle_keys(wxbutton)
+                if button == default_button:
+                    wxbutton.SetDefault()
+                    if not self._want_focus:
+                        # Widgets created in _create_content() have a higher priority.
+                        self._want_focus = wxbutton
+                    self._default_button_instance = wxbutton
             sizer.AddSpacer(16)
             sizer.Add(bsizer, 0, wx.CENTER)
         sizer.AddSpacer(16)
         dialog.SetSizer(sizer)
         sizer.Fit(dialog)
-        wx_callback(wx.EVT_IDLE, self._dialog, self._on_idle)
+        wx_callback(wx.EVT_IDLE, dialog, self._on_idle)
 
     def _create_content(self, sizer):
-        """Create the main dialog content and add it to the top level sizer.
+        """Create the main dialog content and add it to given top level sizer.
 
-        The main content is the area above the dialog buttons, which is
-        constructed specifically for each derived class.
-
-        This method must be defined by all derived classes.  The base class
-        implementation does nothing.
+        Builds the main dialog content area above the dialog buttons.
 
         """
         pass
-
-    def _create_buttons(self):
-        """Create dialog buttons and return them as a sequence of wx widgets."""
-        self._buttons = []
-        for label in self._button_labels:
-            button = wx.Button(self._dialog, -1, label)
-            self._buttons.append(button)
-            if self._default == label:
-                button.SetDefault()
-                self._want_focus = button
-        return self._buttons
 
     def _create_icon(self, artid):
         bitmap = wx.ArtProvider.GetBitmap(artid, wx.ART_MESSAGE_BOX, (48, 48))
@@ -253,11 +264,6 @@ class GenericDialog(Dialog):
             return wx.StaticBitmap(self._dialog, -1, bitmap)
         else:
             return None
-
-    def _can_commit(self, widget):
-        # Override to allow certain widgets to commit the whole dialog, when
-        # COMMIT_DIALOG command is invoked (from the keyboard).
-        return False
 
     def _on_idle(self, event):
         event.Skip()
@@ -280,46 +286,39 @@ class GenericDialog(Dialog):
         nav.SetCurrentFocus(self._dialog)
         self._dialog.GetEventHandler().ProcessEvent(nav)
 
-    def _end_modal(self, result):
-        self._dialog.EndModal(result)
+    def _end_modal(self, wxid):
+        self._dialog.EndModal(wxid)
 
     def _on_button(self, event):
         self._end_modal(event.GetId())
 
-    def _button_label(self, id):
-        # Vrať nápis tlačítka s daným id.
-        button = pytis.util.find(id, self._buttons, key=lambda b: b.GetId())
-        return button and button.GetLabel()
+    def _buttons(self):
+        """Override if static definition through the '_BUTTONS' constant is not enough."""
+        return self._BUTTONS
 
-    def _button_id(self, label):
-        # Vrať id tlačítka s daným nápisem.
-        button = pytis.util.find(label, self._buttons, key=lambda b: b.GetLabel())
-        return button and button.GetId()
+    def _default_button(self, buttons):
+        """Override if static definition through the '_DEFAULT_BUTTON' constant is not enough."""
+        return self._DEFAULT_BUTTON
 
-    def _customize_result(self, result):
-        """Vrať návratovou hodnotu podle výsledku ukončeného dialogu.
+    def _button(self, wxid):
+        """Return the GenericDialog.Button instance for given wx button id or None."""
+        return self._buttons_map.get(wxid)
 
-        V této třídě jednoduše vrací nápis tlačítka, kterým byl dialog ukončen
-        ('None' v případě, že byl ukončen jiným způsobem než tlačítkem).
-
-        """
-        return self._button_label(result)
-
-    def _run_dialog(self):
-        return self._dialog.ShowModal()
+    def _can_commit(self, widget):
+        # Override to allow certain widgets to commit the whole dialog, when
+        # COMMIT_DIALOG command is invoked (from the keyboard).
+        return False
 
     def _cmd_commit_dialog(self, force=False):
-        if force and self._COMMIT_BUTTON is not None:
-            id = self._button_id(self._COMMIT_BUTTON)
-            widget = wx.FindWindowById(id, self._parent)
+        if force:
+            widget = self._default_button_instance
         else:
             widget = wx_focused_window()
-        if widget in self._buttons:
-            # Simulate a click on the commit button.
-            widget.Command(wx.CommandEvent(wx.wxEVT_COMMAND_BUTTON_CLICKED,
-                                           widget.GetId()))
+        if widget and widget.Id in self._buttons_map:
+            # Simulate a click on the default button.
+            widget.Command(wx.CommandEvent(wx.wxEVT_COMMAND_BUTTON_CLICKED, widget.Id))
         elif widget and self._can_commit(widget):
-            self._end_modal(widget.GetId())
+            self._end_modal(widget.Id)
         else:
             self._navigate()
 
@@ -329,16 +328,29 @@ class GenericDialog(Dialog):
     def _cmd_help(self):
         pytis.form.Application.COMMAND_HELP.invoke(topic='pytis/' + self._HELP_TOPIC)
 
-    def run(self):
-        """Zobraz dialog a po jeho ukončení vrať jeho návratovou hodnotu.
+    def _run_dialog(self):
+        return self._customize_result(self._dialog.ShowModal())
 
-        Návratová hodnota závisí na typu dialogu, resp. na jeho metodě
-        '_customize_result()'.
+    def _customize_result(self, wxid):
+        """Return the value to be returned by 'run()' for given wx '_run_dialog()' result.
+
+        Given 'wxid' is the integer returned by dialog's 'ShowModal()'.  The
+        default implementation returns the value of the dialog button pressed
+        or None if the dialog is ended otherwise (usually pressing escape or
+        closing by mouse).  May be overridden in derived classes.
 
         """
+        button = self._button(wxid)
+        if button:
+            return button.value
+        else:
+            return None
+
+    def run(self):
+        """Show the dialog as modal and return its result when closed."""
         self._create_dialog()
         self._dialog.SetFocus()
-        result = self._customize_result(self._run_dialog())
+        result = self._run_dialog()
         self._dialog.Destroy()
         return result
 
@@ -371,18 +383,21 @@ class Message(GenericDialog):
     ICON_RUN = wx.ART_EXECUTABLE_FILE
     "Ikona opuštění aplikace."
 
-    def __init__(self, parent, message, icon=None, title=_("Message"),
-                 buttons=(GenericDialog.BUTTON_OK,), default=GenericDialog.BUTTON_OK, **kwargs):
-        """Inicializuj dialog.
+    _BUTTONS = (GenericDialog.BUTTON_OK,)
+    _DEFAULT_BUTTON = GenericDialog.BUTTON_OK
 
-        Argumenty:
+    def __init__(self, parent, message, title=_("Message"), icon=None, **kwargs):
+        """Initialize the dialog.
 
-          'parent', 'buttons', 'title' a 'default' -- jako u 'GenericDialog'.
-          'message' -- Zpráva zobrazená v těle dialogu (string).
-          'icon' -- Jedna z ICON_* konstant třídy ('ICON_INFO' atd.).
+        Arguments:
+
+          parent -- wx parent; 'wx.Frame' or 'wx.Dialog' instance
+          title -- title to show in the dialog title bar as a string
+          message -- the message displayed in the main dialog area as a string (newlines respected).
+          icon -- One of ICON_* constants of the class.
 
         """
-        super(Message, self).__init__(parent, title, buttons, default=default, **kwargs)
+        super(Message, self).__init__(parent, title=title, **kwargs)
         assert icon is None or icon in public_attr_values(self.__class__, prefix='ICON_'), icon
         if message is not None:
             message = unistr(message)
@@ -410,7 +425,6 @@ class Message(GenericDialog):
                 pytis.form.app.wx_yield(full=True)
 
     def _create_content(self, sizer):
-        """Vytvoř obsah - to co bude vyplňovat plochu okna nad tlačítky."""
         if self._message is not None:
             self._message_display = wx.StaticText(self._dialog, wx.ID_ANY, self._message)
         if self._icon and self._message is not None:
@@ -426,119 +440,83 @@ class Message(GenericDialog):
 
 
 class Warning(Message):
-    """Dialog pro zobrazení varovné zprávy."""
+    """Dialog for displaying a warning."""
 
-    def __init__(self, parent, message, title=_("Warning"), **kwargs):
-        """Inicializuj dialog.
-
-        Argumenty:
-
-
-          Odpovídají stejným argumentům rodičovské třídy s tím, že následující
-          argumenty tato třída definuje vždy napevno:
-
-            icon = 'Message.ICON_WARNING'
-            buttons = ('GenericDialog.BUTTON_OK',)
-            default = 'GenericDialog.BUTTON_OK'
-
-        """
-        super(Warning, self).__init__(parent, message, title=title,
-                                      icon=Message.ICON_WARNING,
-                                      buttons=(GenericDialog.BUTTON_OK,),
-                                      default=GenericDialog.BUTTON_OK,
-                                      **kwargs)
+    def __init__(self, parent, message, title=_("Warning"), icon=Message.ICON_WARNING, **kwargs):
+        super(Warning, self).__init__(parent, message, title=title, icon=icon, **kwargs)
 
 
 class Error(Message):
-    """Dialog pro zobrazení chybové zprávy."""
+    """Dialog for displaying an error message."""
 
-    def __init__(self, parent, message, title=_("Error"), **kwargs):
-        """Inicializuj dialog.
-
-        Argumenty:
-
-
-          Odpovídají stejným argumentům rodičovské třídy s tím, že následující
-          argumenty tato třída definuje vždy napevno:
-
-            icon = 'Message.ICON_ERROR'
-            buttons = ('GenericDialog.BUTTON_OK',)
-            default = 'GenericDialog.BUTTON_OK'
-
-        """
-        super(Error, self).__init__(parent, message, title=title,
-                                    icon=Message.ICON_ERROR,
-                                    buttons=(GenericDialog.BUTTON_OK,),
-                                    default=GenericDialog.BUTTON_OK,
-                                    **kwargs)
+    def __init__(self, parent, message, title=_("Error"), icon=Message.ICON_ERROR, **kwargs):
+        super(Error, self).__init__(parent, message, title=title, icon=icon, **kwargs)
 
 
 class MultiQuestion(Message):
-    """Dialog vyžadující odpověď na otázku výběrem z tlačítek."""
+    """Dialog asking for answer to given question from given list of answers (buttons)."""
 
     def __init__(self, parent, message, buttons, default=None,
                  title=_("Question"), icon=Message.ICON_QUESTION, timeout=None, **kwargs):
-        super(MultiQuestion, self).__init__(parent, message, title=title, buttons=buttons,
-                                            default=default, icon=icon, **kwargs)
-        self._timeout_limit = timeout
+        super(MultiQuestion, self).__init__(parent, message, title=title, icon=icon, **kwargs)
+        assert default is None or default in buttons
+        self._answers = buttons
+        self._default = default
+        self._timeout = timeout
+
+    def _buttons(self):
+        return [self.Button(answer, value=answer) for answer in self._answers]
+
+    def _default_button(self, buttons):
+        return pytis.util.find(self._default, buttons, lambda b: b.value)
 
     def _create_dialog(self):
         super(MultiQuestion, self)._create_dialog()
-        if self._timeout_limit is not None:
+        if self._timeout is not None:
             def destroy():
                 try:
                     self._dialog.EndModal(-1000)
                 except Exception:
                     # The wx instance of `self' may already be inactive
                     pass
-            wx.CallLater(self._timeout_limit * 1000, destroy)
+            wx.CallLater(self._timeout * 1000, destroy)
 
 
-class Question(MultiQuestion):
-    """Dialog vyžadující odpověď ano/ne na zobrazenou zprávu (otázku).
+class Question(Message):
+    """Dialog asking for an answer Yes/No to a given question.
 
-    Metoda 'run()' vrací: Pravdu, právě když uživatel odpoví na danou
-    otázku kladně - stiskne tlačítko s nápisem 'GenericDialog.BUTTON_YES'.
+    'run()' returns True if the user pressed the 'Yes' button, False if the
+    user pressed the 'No' button and None otherwise.
 
     """
+    BUTTON_YES = GenericDialog.Button(_("Yes"), value=True)
+    BUTTON_NO = GenericDialog.Button(_("No"), value=False)
+    _BUTTONS = (BUTTON_YES, BUTTON_NO)
+
     def __init__(self, parent, message, default=True, **kwargs):
-        """Inicializuj dialog.
+        """Initialize the dialog.
 
-        Argumenty:
+        Arguments:
 
-          default -- pokud je pravda, bude předvoleným tlačítkem tlačítko
-            'GenericDialog.BUTTON_YES'. Jinak je předvolená odpověď
-            'GenericDialog.BUTTON_NO' (implicitně).
+          default -- if true, the preselected answer is 'Yes', otherwise it is
+            'No'.
           timeout -- dialog timeout in seconds; integer.  When the dialog is
             shown for more than the given time, it gets automatically closed
             and 'None' is returned as the answer.  If the argument value is
             'None' then the dialog is shown until user chooses an answer.
 
-          Ostatní argumenty odpovídají stejným argumentům rodičovské třídy s
-          tím, že následující argumenty tato třída definuje vždy napevno:
 
-            buttons = ('GenericDialog.BUTTON_YES', 'GenericDialog.BUTTON_NO')
-
-        Klíčový argument 'default' může být uváděn i bez explicitního
-        pojmenování, takže musí být do budoucna zaručeno jeho zachování včetně
-        pořadí.
+        The keyword argument 'default' may also be passed as positional.
 
         """
-        if default:
-            default = self.BUTTON_YES
-        else:
-            default = self.BUTTON_NO
-        self._COMMIT_BUTTON = default
-        super(Question, self).__init__(parent, message, buttons=(self.BUTTON_YES, self.BUTTON_NO),
-                                       default=default, **kwargs)
+        super(Question, self).__init__(parent, message, (), **kwargs)
+        self._default = default
 
-    def _customize_result(self, result):
-        if result in (-1000, wx.ID_CANCEL):
-            return None
-        elif self._button_label(result) == self.BUTTON_YES:
-            return True
+    def _default_button(self, buttons):
+        if self._default:
+            return self.BUTTON_YES
         else:
-            return False
+            return self.BUTTON_NO
 
 
 class ProgressDialog(Message):
@@ -555,19 +533,18 @@ class ProgressDialog(Message):
     most of its documentation applies here.
 
     """
-    BUTTON_ABORT = _("Abort")
+    BUTTON_ABORT = GenericDialog.Button(_("Abort"))
 
     def __init__(self, parent, function, args=(), kwargs={},
                  title=_("Operation in progress"), message=_("Please wait..."),
                  show_progress=True, maximum=100, can_abort=False,
                  elapsed_time=False, estimated_time=False, remaining_time=False,
                  time_precision='seconds'):
-        """Inicialize the dialog.
+        """Initialize the dialog.
 
         Arguments:
 
-          parent -- as in the parent class.
-          title -- as in the parent class.
+          parent, title -- as in the parent class.
           function -- function to be called and tracked by the progress dialog.
             The function must accept the 'update' callback as its first
             argument unless 'show_progress' is false (see the class docstring).
@@ -598,13 +575,8 @@ class ProgressDialog(Message):
         information about progress updates and arguemnt relations.
 
         """
-        if can_abort:
-            buttons = (self.BUTTON_ABORT,)
-        else:
-            buttons = ()
         super(ProgressDialog, self).__init__(parent, message=message or '',
-                                             title=title, icon=self.ICON_RUN,
-                                             buttons=buttons, default=None)
+                                             title=title, icon=self.ICON_RUN)
         assert callable(function)
         assert isinstance(args, (tuple, list))
         assert isinstance(kwargs, dict)
@@ -621,8 +593,15 @@ class ProgressDialog(Message):
         self._show_estimated_time = estimated_time
         self._show_remaining_time = remaining_time
         self._time_precision = time_precision
+        self._can_abort = can_abort
         self._abort = False
         self._time_display = {}
+
+    def _buttons(self):
+        if self._can_abort:
+            return (self.BUTTON_ABORT,)
+        else:
+            return ()
 
     def _create_content(self, sizer):
         super(ProgressDialog, self)._create_content(sizer)
@@ -672,7 +651,7 @@ class ProgressDialog(Message):
             self._dialog.Sizer.Layout()
 
     def _on_button(self, event):
-        if self._button_label(event.GetId()) == self.BUTTON_ABORT:
+        if self._button(event.GetId()) == self.BUTTON_ABORT:
             self._abort = True
         else:
             return super(ProgressDialog, self)._on_button(event)
@@ -708,29 +687,26 @@ class ProgressDialog(Message):
             args = (self._update,) + tuple(args)
         return self._function(*args, **self._kwargs)
 
-    def _customize_result(self, result):
-        return result
-
 
 class Calendar(GenericDialog):
-    """Dialog zobrazující kalendář, umožňující výběr dne.
+    """Dialog with calendar widget, allowing date selection.
 
-    Datum na kalendáři může být přednastaven parametrem konstruktoru. Metoda
-    'run()' vrací vybraný datum jako instanci 'datetime.datetime', nebo None, pokud
-    byl dialog opuštěn.
+    Date can be preset using constructor arguemnt 'date'.  The method 'run()'
+    returns the selected date as a 'datetime.datetime' instance or None if the
+    dialog was canceled.
 
     """
-    _COMMIT_BUTTON = GenericDialog.BUTTON_OK
+    _BUTTONS = (GenericDialog.BUTTON_OK, GenericDialog.BUTTON_CANCEL)
+    _DEFAULT_BUTTON = GenericDialog.BUTTON_OK
 
-    def __init__(self, parent, date, title=_("Calendar"),
-                 enable_year=True, enable_month=True, monday_first=True):
-        """Inicializuj dialog.
+    def __init__(self, parent, date, title=_("Calendar"), enable_year=True, enable_month=True,
+                 monday_first=True):
+        """Initialize the dialog.
 
-        Argumenty:
+        Arguments:
 
-          parent -- wx rodič; instance 'wx.Frame' nebo 'wx.Dialog'
+          parent, title -- as in the parent class.
           date -- přednastavený datum jako instance 'datetime.datetime'.
-          title -- titulek dialogového okna jako string
           enable_year -- když je pravda, zobrazí výběr roku; boolean
           enable_month -- když je pravda, zobrazí výběr měsíce; boolean
           monday_first -- když je pravda, bude pondělí prvním dnem v týdnu;
@@ -740,9 +716,7 @@ class Calendar(GenericDialog):
         'wx.DateTime.ParseDate()', bude datum nastaven na dnešní datum.
 
         """
-        super(Calendar, self).__init__(parent, title=title,
-                                       buttons=(GenericDialog.BUTTON_OK,
-                                                GenericDialog.BUTTON_CANCEL))
+        super(Calendar, self).__init__(parent, title=title)
         # vytvoř kalendář
         style = (wx.adv.CAL_SHOW_HOLIDAYS |
                  wx.adv.CAL_SHOW_SURROUNDING_WEEKS)
@@ -778,53 +752,15 @@ class Calendar(GenericDialog):
     def _can_commit(self, widget):
         return super(Calendar, self)._can_commit(widget) or widget == self._cal
 
-    def _customize_result(self, result):
-        if result == self._cal.GetId() or self._button_label(result) == GenericDialog.BUTTON_OK:
+    def _customize_result(self, wxid):
+        if wxid == self._cal.Id or self._button(wxid) == self.BUTTON_OK:
             date_string = str(self._cal.GetDate().FormatISODate())
-            return pytis.data.Date(format=pytis.data.Date.DEFAULT_FORMAT).\
-                validate(date_string)[0].value()
+            t = pytis.data.Date(format=pytis.data.Date.DEFAULT_FORMAT)
+            return t.validate(date_string)[0].value()
         return None
 
     def _on_calendar(self, event):
-        return self._end_modal(self._button_id(GenericDialog.BUTTON_OK))
-
-
-class ColorSelector(GenericDialog):
-    """Dialog umožňující výběr barvy.
-
-    Výchozí barva může být přednastavena parametrem konstruktoru.  Metoda
-    'run()' vrací barvu jako řetězec '#RRGGBB', nebo None, pokud byl dialog
-    opuštěn.
-
-    """
-
-    def __init__(self, parent, color=None, title=_("Color selection")):
-        """Inicializuj dialog.
-
-        Argumenty:
-
-          parent -- wx rodič; instance 'wx.Frame' nebo 'wx.Dialog'
-          color -- přednastavená barva, jako řetězec '#RRGGBB'.
-          title -- titulek dialogového okna jako string
-
-        """
-        super(ColorSelector, self).__init__(parent, title=title, buttons=())
-        assert isinstance(color, basestring) or color is None
-        self._color = color
-
-    def _create_dialog(self):
-        data = None
-        if self._color is not None:
-            data = wx.ColourData()
-            data.SetColour(self._color)
-        self._dialog = dialog = wx.ColourDialog(self._parent, data)
-        self._handle_keys(dialog)
-
-    def _customize_result(self, result):
-        if result == wx.ID_OK:
-            c = self._dialog.GetColourData().GetColour()
-            return '#%02x%02x%02x' % (c.Red(), c.Green(), c.Blue())
-        return None
+        return self._end_modal(self._cal.Id)
 
 
 class BugReport(GenericDialog):
@@ -840,21 +776,23 @@ class BugReport(GenericDialog):
     The return value is True if exit is requested or False otherwise.
 
     """
-    _IGNORE_LABEL = _("Ignore")
-    _EXIT_LABEL = _("Exit application")
-    _COMMIT_BUTTON = _EXIT_LABEL
+    BUTTON_IGNORE = GenericDialog.Button(_("Ignore"), value=False)
+    BUTTON_EXIT = GenericDialog.Button(_("Exit application"), value=True)
+
+    _BUTTONS = (BUTTON_IGNORE, BUTTON_EXIT)
+    _DEFAULT_BUTTON = BUTTON_IGNORE
     _STYLE = GenericDialog._STYLE | wx.RESIZE_BORDER
 
     def __init__(self, parent, einfo):
-        """Arguments:
+        """Initialize the dialog.
+
+        Arguments:
 
           parent -- wx parent window; 'wx.Frame' or 'wx.Dialog' instance
           einfo -- exception information as returned by 'sys.exc_info()'
 
         """
-        super(BugReport, self).__init__(parent, _("Unhandled exception"),
-                                        buttons=(self._IGNORE_LABEL, self._EXIT_LABEL),
-                                        default=self._IGNORE_LABEL)
+        super(BugReport, self).__init__(parent, title=_("Unhandled exception"))
         self._einfo = einfo
 
     def _create_content(self, sizer):
@@ -960,25 +898,13 @@ class BugReport(GenericDialog):
             self._dialog.Sizer.Layout()
             self._sent = True
 
-    def _customize_result(self, result):
-        label = self._button_label(result)
-        if label == self._EXIT_LABEL:
-            result = True
-        elif label == self._IGNORE_LABEL or label is None:
-            result = False
-        else:
-            raise ProgramError('Unknown BugReport dialog result', label)
-        return result
-
-    def _cmd_close_dialog(self):
-        self._end_modal(self._button_id(self._IGNORE_LABEL))
-
 
 class CheckListDialog(Message):
     """A question dialog with a list of checkable items.
 
     The dialog displays a question with a list of items and a checkbox for each
-    of the items.
+    of the items.  The question is passed as 'message' (report arguments are
+    actually allowed too as in 'Message').
 
     The result returned by the `run()' method is a sequence of boolean values,
     one for each item of 'items' passed to the constructor.  The value is True
@@ -986,18 +912,19 @@ class CheckListDialog(Message):
 
     """
     _STYLE = GenericDialog._STYLE | wx.RESIZE_BORDER
+    _BUTTONS = (GenericDialog.BUTTON_OK, GenericDialog.BUTTON_CANCEL)
 
-    def __init__(self, parent, columns=(), items=(), **kwargs):
-        """Arguments:
-             items -- a sequence of checkable items.  Each item is a pair of
-               (bool, unicode).  The bool value in indicates the initial
-               checkbox state for this item.  The unicode value is the textual
-               label for the item.
+    def __init__(self, parent, columns=(), items=(), title=_("Select"), message=None, **kwargs):
+        """Initialize the dialog.
+
+        Arguments:
+          items -- a sequence of checkable items.  Each item is a pair of
+            (bool, unicode).  The bool value in indicates the initial checkbox
+            state for this item.  The unicode value is the textual label for
+            the item.
 
         """
-        super(CheckListDialog, self).__init__(parent, buttons=(GenericDialog.BUTTON_OK,
-                                                               GenericDialog.BUTTON_CANCEL),
-                                              **kwargs)
+        super(CheckListDialog, self).__init__(parent, title=title, message=message, **kwargs)
         assert isinstance(columns, (list, tuple))
         assert isinstance(items, (list, tuple))
         self._columns = columns
@@ -1005,13 +932,15 @@ class CheckListDialog(Message):
 
     def _create_content(self, sizer):
         super(CheckListDialog, self)._create_content(sizer)
-        self._checklist = box = wx.CheckListBox(self._dialog,
-                                                choices=[label for state, label in self._items])
-        box.SetCheckedItems([i for i, (state, label) in enumerate(self._items) if state])
-        sizer.Add(box, 1, wx.EXPAND | wx.ALL, 5)
+        self._checklist = checklist = wx.CheckListBox(
+            self._dialog,
+            choices=[label for state, label in self._items],
+        )
+        checklist.SetCheckedItems([i for i, (state, label) in enumerate(self._items) if state])
+        sizer.Add(checklist, 1, wx.EXPAND | wx.ALL, 5)
 
-    def _customize_result(self, result):
-        if self._button_label(result) == self.BUTTON_OK:
+    def _customize_result(self, wxid):
+        if self._button(wxid) == self.BUTTON_OK:
             return [self._checklist.IsChecked(i) for i in range(len(self._items))]
         else:
             return None
@@ -1038,11 +967,15 @@ class AggregationSetupDialog(GenericDialog):
 
     """
     _STYLE = GenericDialog._STYLE | wx.RESIZE_BORDER
+    _BUTTONS = (GenericDialog.BUTTON_OK, GenericDialog.BUTTON_CANCEL)
 
     def __init__(self, parent, aggregation_functions, grouping_functions, columns,
                  name, group_by_columns, aggregation_columns, aggregation_valid,
                  title=_("Aggregated view parameters")):
-        """Arguments:
+        """Initialize the dialog.
+
+        Arguments:
+
              aggregation_functions -- specification of available aggregation
                functions as a sequence of pairs (operation, label), where
                operation is one of `pytis.data.AGG_*' constants and label is
@@ -1063,10 +996,9 @@ class AggregationSetupDialog(GenericDialog):
              aggregation_columns -- preselected aggregation columns in the same
                format as in the result of run() as described in the class
                docstring.
+
         """
-        super(AggregationSetupDialog, self).__init__(parent, title=title,
-                                                     buttons=(GenericDialog.BUTTON_OK,
-                                                              GenericDialog.BUTTON_CANCEL))
+        super(AggregationSetupDialog, self).__init__(parent, title=title)
         self._aggregation_functions = aggregation_functions
         self._grouping_functions = grouping_functions
         self._columns = columns
@@ -1130,8 +1062,9 @@ class AggregationSetupDialog(GenericDialog):
         sizer.Add(panel, 1, wx.EXPAND | wx.ALL, 5)
 
     def _create_dialog(self):
-        super(AggregationSetupDialog, self)._create_dialog()
+        dialog = super(AggregationSetupDialog, self)._create_dialog()
         self._resize()
+        return dialog
 
     def _on_collapsiblepane_changed(self, event):
         self._grid.Layout()
@@ -1146,7 +1079,7 @@ class AggregationSetupDialog(GenericDialog):
         self._dialog.SetMinClientSize(size)
 
     def _on_button(self, event):
-        if self._button_label(event.GetId()) == self.BUTTON_OK:
+        if self._button(event.GetId()) == self.BUTTON_OK:
             self._name = self._name_control.GetValue()
             self._group_by_columns = [spec for spec, checkbox in self._grouping_controls
                                       if checkbox.IsChecked()]
@@ -1157,9 +1090,51 @@ class AggregationSetupDialog(GenericDialog):
                 return
         return super(AggregationSetupDialog, self)._on_button(event)
 
-    def _customize_result(self, result):
-        if self._button_label(result) == self.BUTTON_OK:
+    def _customize_result(self, wxid):
+        if self._button(wxid) == self.BUTTON_OK:
             return self._name, tuple(self._group_by_columns), tuple(self._aggregation_columns)
+        else:
+            return None
+
+
+class ColorSelector(Dialog):
+    """Color selection dialog.
+
+    'run()' returns the selected color as an '#RRGGBB' string or None if the
+    dialog was canceled.
+
+    """
+
+    def __init__(self, parent, color=None):
+        """Initialize the dialog.
+
+        Arguments:
+
+          parent, title -- as in the parent class.
+          color -- initial color as '#RRGGBB' string.
+
+        """
+        super(ColorSelector, self).__init__(parent)
+        assert isinstance(color, basestring) or color is None
+        self._color = color
+
+    def run(self):
+        if self._color is not None:
+            cdata = wx.ColourData()
+            cdata.SetColour(self._color)
+        else:
+            cdata = None
+        dialog = wx.ColourDialog(self._parent, cdata)
+        self._handle_keys(dialog)
+        dialog.SetFocus()
+        result = dialog.ShowModal()
+        if result == wx.ID_OK:
+            color = dialog.GetColourData().GetColour()
+        else:
+            color = None
+        dialog.Destroy()
+        if color:
+            return '#%02x%02x%02x' % (color.Red(), color.Green(), color.Blue())
         else:
             return None
 
@@ -1180,28 +1155,25 @@ class FileDialog(Dialog):
     def __init__(self, parent, title=None, dir=None, file=None, mode=OPEN,
                  wildcards=(_("All files"), "*"),
                  multi=False, overwrite_prompt=True):
-        """Inicializuj dialog.
+        """Initialize the dialog.
 
-        Argumenty:
-
-          parent -- wx rodič; instance 'wx.Frame' nebo 'wx.Dialog'
-          title -- titulek dialogového okna jako string; pokud je None, bude
-            doplněn výchozí titulek v závislosti na argumentu 'mode'.
-          dir -- přednastavená cesta; řetězec, nebo None.
-          file -- přednastavený název souboru; řetězec, nebo None.
-          mode -- typ dialogu; jedna z konstant 'OPEN' a 'SAVE' třídy.
+        Arguments:
+          parent -- wx parent; 'wx.Frame' or 'wx.Dialog' instance
+          title -- title to show in the dialog title bar as a string
+          dir -- preselected directory name as a string or None.
+          file -- preselected file name as a string or None.
+          mode -- one of class constants 'OPEN' or 'SAVE'.
           wildcards -- seznam masek souborů a popisů, podle kterých bude možno
             filtrovat; jedná se o sekvenci, kde každý lichý prvek určuje popis
             a každý sudý prvek je wildcard řetězcem, podle kterého budou
             soubory filtrovány, pokud je zvolen; výchozí filtrování je podle
             první dvojice. příklad: ("BMP soubory (*.bmp)", "*.bmp",
                                      "GIF soubory (*.gif)", "*.gif")
-          multi -- pokud je pravda, bude možno vybrat více souborů najednou;
-            relevantní poouze pro 'mode'='OPEN'.
-          overwrite_prompt -- pokud je pravda, bude při výběru existujícího
-            souboru pro ukládání zobrazena otázka, zda má být soubor přepsán;
-            relevantní poouze pro 'mode'='SAVE'; pokud je pravda, bude
-            návratovou hodnotou metody 'run()' tuple.
+          multi -- if true, allow selection of multiple files at once (will be
+            returned as a tuple); only relevant when 'mode' is 'OPEN'
+          overwrite_prompt -- if true, selection of an existing file for save
+            will invoke an overwrite confirmation dialog; only relevant when
+            'mode' is 'SAVE'
 
         """
         super(FileDialog, self).__init__(parent)
@@ -1222,12 +1194,6 @@ class FileDialog(Dialog):
         self._overwrite_prompt = overwrite_prompt
 
     def run(self):
-        """Zobraz dialog a vrať cestu k vybranému souboru jeko řetězec.
-
-        Pokud je argument konstruktoru 'multi' pravdivý, bude vrácen tuple
-        řetězců.
-
-        """
         directory = self._dir or FileDialog._last_directory.get(self._mode, '')
         style = {FileDialog.OPEN: wx.FD_OPEN,
                  FileDialog.SAVE: wx.FD_SAVE}[self._mode]
@@ -1235,22 +1201,23 @@ class FileDialog(Dialog):
             style = style | wx.FD_MULTIPLE
         if self._overwrite_prompt and self._mode == FileDialog.SAVE:
             style = style | wx.FD_OVERWRITE_PROMPT
-        self._dialog = d = wx.FileDialog(self._parent,
-                                         message=self._title,
-                                         defaultDir=directory,
-                                         defaultFile=self._file or '',
-                                         # TODO: We may need to construct the wildcards
-                                         # to be case insensitive, such as '*.[jJ][pP][gG]':
-                                         wildcard='|'.join(self._wildcards),
-                                         style=style)
-        result = d.ShowModal()
-        FileDialog._last_directory[self._mode] = d.GetDirectory()
+        dialog = wx.FileDialog(self._parent,
+                               message=self._title,
+                               defaultDir=directory,
+                               defaultFile=self._file or '',
+                               # TODO: We may need to construct the wildcards
+                               # to be case insensitive, such as '*.[jJ][pP][gG]':
+                               wildcard='|'.join(self._wildcards),
+                               style=style)
+        result = dialog.ShowModal()
+        directory = dialog.GetDirectory()
         if self._multi:
-            path = tuple(d.GetPaths())
+            path = tuple(dialog.GetPaths())
         else:
-            path = d.GetPath()
-        d.Destroy()
+            path = dialog.GetPath()
+        dialog.Destroy()
         if result == wx.ID_OK:
+            FileDialog._last_directory[self._mode] = directory
             return path
         else:
             return None
@@ -1263,18 +1230,19 @@ class DirDialog(Dialog):
     of a new directory.
 
     """
-
     _last_directory = None
 
     def __init__(self, parent, title=_("Directory selection"), path=None):
-        """Arguments:
+        """Initialize the dialog.
+
+        Arguments:
 
           parent -- wx parent; 'wx.Frame' or 'wx.Dialog' instance
-          title -- Title to show in the dialog title bar.
+          title -- title to show in the dialog title bar as a string
           path -- initial derectory or None to use the last selected directory.
 
         """
-        super(FileDialog, self).__init__(parent)
+        super(DirDialog, self).__init__(parent)
         assert isinstance(title, basestring)
         assert path is None or isinstance(path, basestring)
         self._title = unistr(title)
@@ -1287,15 +1255,15 @@ class DirDialog(Dialog):
         řetězců.
 
         """
-        self._dialog = d = wx.DirDialog(self._parent,
-                                        message=self._title,
-                                        defaultPath=self._path or DirDialog._last_directory or '',
-                                        style=wx.DD_DEFAULT_STYLE)
-        result = d.ShowModal()
-        path = d.GetPath()
-        d.Destroy()
-        DirDialog._last_directory = path
+        dialog = wx.DirDialog(self._parent,
+                              message=self._title,
+                              defaultPath=self._path or DirDialog._last_directory or '',
+                              style=wx.DD_DEFAULT_STYLE)
+        result = dialog.ShowModal()
+        path = dialog.GetPath()
+        dialog.Destroy()
         if result == wx.ID_OK:
+            DirDialog._last_directory = path
             return path
         else:
             return None
