@@ -79,8 +79,8 @@ class SFSDialog(GenericDialog):
     """Common ancestor of all sorting/filtering/searching dialogs."""
 
     _TITLE = None
-    _ESCAPE_BUTTON = _("Close")
-    _BUTTONS = (_ESCAPE_BUTTON,)
+    BUTTON_CLOSE = GenericDialog.Button(_("Close"), value=None)
+    _BUTTONS = (BUTTON_CLOSE,)
 
     def __init__(self, parent, columns, col=None):
         """Initialize the dialog.
@@ -95,7 +95,7 @@ class SFSDialog(GenericDialog):
         self._parent = parent
         self._columns = tuple(columns)
         self._col = col
-        super(SFSDialog, self).__init__(parent, self._TITLE, self._BUTTONS)
+        super(SFSDialog, self).__init__(parent, self._TITLE)
 
     def _find_column(self, cid):
         return find(cid, self._columns, key=lambda c: c.id())
@@ -165,10 +165,10 @@ class SortingDialog(SFSDialog):
     """
 
     _TITLE = _("Sorting")
-    _SORT_BUTTON = _("Sort")
-    _RESET_BUTTON = _("Reset to default sorting")
-    _BUTTONS = (_SORT_BUTTON, _RESET_BUTTON) + SFSDialog._BUTTONS
-    _COMMIT_BUTTON = _SORT_BUTTON
+    BUTTON_SORT = GenericDialog.Button(_("Sort"), value='sort')
+    BUTTON_RESET = GenericDialog.Button(_("Reset to default sorting"), value='reset')
+    _BUTTONS = (BUTTON_SORT, BUTTON_RESET) + SFSDialog._BUTTONS
+    _DEFAULT_BUTTON = BUTTON_SORT
 
     _DIRECTIONS = (pytis.data.ASCENDENT, pytis.data.DESCENDANT, None)
     _LABELS = {pytis.data.ASCENDENT: _("Ascending"),
@@ -210,13 +210,14 @@ class SortingDialog(SFSDialog):
                                      tooltip=_("Add secondary sorting column."))
         sizer.Add(button, 0, wx.ALL | wx.CENTER, 5)
 
-    def _customize_result(self, button_wid):
-        label = self._button_label(button_wid)
-        if label == self._RESET_BUTTON:
+    def _customize_result(self, wxid):
+        button = self._button(wxid)
+        if button == self.BUTTON_RESET:
             return ()
-        elif label != self._SORT_BUTTON:
+        elif button != self.BUTTON_SORT:
             return None
-        return self._selected_sorting()
+        else:
+            return self._selected_sorting()
 
     def _selected_sorting(self):
         sorting = []
@@ -596,6 +597,18 @@ class SFDialog(SFSDialog):
         self._condition = None
         self._rebuild()
 
+    def _recompute_condition_for_button(self, button):
+        return False
+
+    def _on_button(self, event):
+        # Cancel button action on error.
+        if self._recompute_condition_for_button(self._button(event.Id)):
+            try:
+                self._condition = self._selected_condition()
+            except self.SFConditionError:
+                return
+        return super(SFDialog, self)._on_button(event)
+
 
 class SearchDialog(SFDialog):
     """Dialog for manipulation of the current searching condition.
@@ -611,32 +624,25 @@ class SearchDialog(SFDialog):
     instance.
 
     """
-    _NEXT_BUTTON = _("Next")
-    _PREVIOUS_BUTTON = _("Previous")
-    _BUTTONS = (_NEXT_BUTTON, _PREVIOUS_BUTTON) + SFSDialog._BUTTONS
-    _COMMIT_BUTTON = _NEXT_BUTTON
+    BUTTON_NEXT = GenericDialog.Button(_("Next"), value='next')
+    BUTTON_PREVIOUS = GenericDialog.Button(_("Previous"), value='prev')
+    _BUTTONS = (BUTTON_NEXT, BUTTON_PREVIOUS) + SFSDialog._BUTTONS
+    _DEFAULT_BUTTON = BUTTON_NEXT
     _TITLE = _("Search")
     _HELP_TOPIC = 'searching'
 
-    def __init__(self, *args, **kwargs):
-        self._direction = None
-        return super(SearchDialog, self).__init__(*args, **kwargs)
+    def _recompute_condition_for_button(self, button):
+        return button in (self.BUTTON_NEXT, self.BUTTON_PREVIOUS)
 
-    def _on_button(self, event):
-        mapping = {self._NEXT_BUTTON: pytis.data.FORWARD,
-                   self._PREVIOUS_BUTTON: pytis.data.BACKWARD}
-        direction = mapping.get(self._button_label(event.GetId()))
-        if direction is not None:
-            try:
-                self._condition = self._selected_condition()
-            except self.SFConditionError:
-                return
-        if direction is not None:
-            self._direction = direction
-        return super(SearchDialog, self)._on_button(event)
-
-    def _customize_result(self, button_wid):
-        return self._direction, self._condition
+    def _customize_result(self, wxid):
+        button = self._button(wxid)
+        if button == self.BUTTON_NEXT:
+            direction = pytis.data.FORWARD
+        elif button == self.BUTTON_PREVIOUS:
+            direction = pytis.data.BACKWARD
+        else:
+            return None, None
+        return direction, self._condition
 
 
 class FilterDialog(SFDialog):
@@ -660,10 +666,10 @@ class FilterDialog(SFDialog):
     wishes to unfilter the underlying form.
 
     """
-    _FILTER_BUTTON = _("Filter")
-    _UNFILTER_BUTTON = _("Unfilter")
-    _BUTTONS = (_FILTER_BUTTON, _UNFILTER_BUTTON) + SFSDialog._BUTTONS
-    _COMMIT_BUTTON = _FILTER_BUTTON
+    BUTTON_FILTER = GenericDialog.Button(_("Filter"), value='filter')
+    BUTTON_UNFILTER = GenericDialog.Button(_("Unfilter"), value='unfilter')
+    _BUTTONS = (BUTTON_FILTER, BUTTON_UNFILTER) + SFSDialog._BUTTONS
+    _DEFAULT_BUTTON = BUTTON_FILTER
     _AGG_OPERATORS = (pytis.data.Data.AGG_COUNT,
                       pytis.data.Data.AGG_MIN,
                       pytis.data.Data.AGG_MAX,
@@ -692,9 +698,8 @@ class FilterDialog(SFDialog):
           kwargs -- passed to the parent class constructor
 
         """
-        self._compute_aggregate = compute_aggregate
-        self._perform = False
         super(FilterDialog, self).__init__(parent, columns, row, **kwargs)
+        self._compute_aggregate = compute_aggregate
 
     def _create_content(self, sizer):
         super(FilterDialog, self)._create_content(sizer)
@@ -739,21 +744,17 @@ class FilterDialog(SFDialog):
                     v = ''
             wresult.SetValue(v)
 
-    def _on_button(self, event):
-        label = self._button_label(event.GetId())
-        if label == self._FILTER_BUTTON:
-            try:
-                self._condition = self._selected_condition()
-            except self.SFConditionError:
-                return
-            self._perform = True
-        elif label == self._UNFILTER_BUTTON:
-            self._perform = True
-            self._condition = None
-        return super(FilterDialog, self)._on_button(event)
+    def _recompute_condition_for_button(self, button):
+        return button == self.BUTTON_FILTER
 
-    def _customize_result(self, button_wid):
-        return self._perform, self._condition
+    def _customize_result(self, wxid):
+        button = self._button(wxid)
+        if button == self.BUTTON_FILTER:
+            return True, self._condition
+        elif button == self.BUTTON_UNFILTER:
+            return True, None
+        else:
+            return False, None
 
 
 def sfs_columns(fields, data, labelfunc=Field.label):
