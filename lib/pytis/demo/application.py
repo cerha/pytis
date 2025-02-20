@@ -32,7 +32,7 @@ import pytis.data as pd
 from pytis.api import app
 from pytis.presentation import StatusField, SharedParams, Menu, MenuItem, MenuSeparator
 from pytis.extensions import mf, bf
-from pytis.util import log, OPERATIONAL
+from pytis.util import log, OPERATIONAL, public_attr_values
 _ = pytis.util.translations('pytis-demo')
 
 
@@ -84,16 +84,26 @@ class Application(pytis.presentation.Application):
                     bf(_('&File names and URLs'), 'misc.Files'),
                 )),
                 Menu(_("Dialo&gs"), (
-                    MenuItem(_("Question dialog test"),
+                    MenuItem(_("Message dialogs"),
+                             command=pytis.form.Application.COMMAND_HANDLED_ACTION(
+                                 handler=self._message_dialog_test,
+                             ),
+                             hotkey=('Alt-d', 'm')),
+                    MenuItem(_("Question dialogs"),
                              command=pytis.form.Application.COMMAND_HANDLED_ACTION(
                                  handler=self._question_dialog_test,
                              ),
                              hotkey=('Alt-d', 'q')),
-                    MenuItem(_("Progress dialog test"),
+                    MenuItem(_("Progress dialogs"),
                              command=pytis.form.Application.COMMAND_HANDLED_ACTION(
                                  handler=self._progress_dialog_test,
                              ),
                              hotkey=('Alt-d', 'd')),
+                    MenuItem(_("Internal dialogs"),
+                             command=pytis.form.Application.COMMAND_HANDLED_ACTION(
+                                 handler=self._internal_dialog_test,
+                             ),
+                             hotkey=('Alt-d', 'i')),
                 )),
                 nr(_("Runtime &filters"), 'misc.RuntimeFilter'),
                 bf(_('&Query Fields'), 'misc.RandomNumbers'),
@@ -139,18 +149,38 @@ class Application(pytis.presentation.Application):
                         refresh_interval=5000, width=3),
         ]
 
+    def _dialog_test(self, f, *args, **kwargs):
+        repeat, done = _("Repeat"), _("Done")
+        while True:
+            result = f(*args, **kwargs)
+            if app.question(title=("Dialog test result"),
+                            message=_("The returned value:") + "\n\n" + repr(result),
+                            answers=(repeat, done), default=done) == done:
+                break
+
+    def _message_dialog_test(self):
+        test = self._dialog_test
+        test(app.message, _("Informational message."))
+        test(app.warning, _("Warning"))
+        test(app.error, _("Error message"))
+
     def _question_dialog_test(self):
-        answers = (
-            app.question(_("Question with the default answer set to '%s'.", _("No")) + "\n" +
-                         _("Do you want to continue?"), default=False),
-            app.question(_("Question with the default answer set to '%s'.", _("Yes")) + "\n" +
-                         _("Do you still want to continue?"), default=True),
-            app.question(_("Question dialog with multiple answers.\nAdvance to the next record?"),
-                         answers=(_("Next"), _("Previous"), _("Cancel"))),
+        test = self._dialog_test
+        test(
+            app.question,
+            _("Question with the default answer set to '%s'.", _("No")),
+            default=False
         )
-        app.message(_("Python values corresponding to your answers were:") + "\n" + "\n".join(
-            "{}. {!r}".format(i + 1, a) for i, a in enumerate(answers)
-        ))
+        test(
+            app.question,
+            _("Question with the default answer set to '%s'.", _("Yes")),
+            default=True,
+        )
+        test(
+            app.question,
+            _("Question with multiple answers."),
+            answers=(_("Next"), _("Previous"), _("Cancel")),
+        )
 
     def _progress_dialog_test(self):
         import string
@@ -195,3 +225,30 @@ class Application(pytis.presentation.Application):
 
         app.run(time.sleep, (4,), progress=False, title=_("Operation with no progress indication"),
                 message=_("Please wait for the operation to finish."))
+
+    def _internal_dialog_test(self):
+        def test(*args, **kwargs):
+            return self._dialog_test(pytis.form.app.run_dialog, *args, **kwargs)
+        import pytis.form.dialog as dialog
+        import datetime
+        test(dialog.Calendar, date=datetime.date.today())
+        test(dialog.ColorSelector, color='#ff0000')
+        test(dialog.CheckListDialog, items=((True, _("Checked item")),
+                                            (False, _("Unchecked item")),
+                                            (False, _("Another unchecked item"))))
+        try:
+            raise Exception("BugReport dialog test")
+        except:
+            einfo = sys.exc_info()
+        test(dialog.BugReport, einfo=einfo),
+        test(dialog.AggregationSetupDialog,
+             aggregation_functions=[(a, a[4:]) for a in public_attr_values(pd.Data, prefix='AGG_')],
+             columns=[('c{}'.format(i), t.__class__.__name__, t)
+                      for i, t in enumerate((pd.String(), pd.Integer(), pd.Date()))],
+             aggregation_valid=lambda op, t: (op == pd.Data.AGG_COUNT or
+                                              isinstance(t, pd.Number) or
+                                              isinstance(t, pd.Date) and op != pd.Data.AGG_SUM),
+             grouping_functions=(), name="", group_by_columns=(), aggregation_columns=())
+
+        test(dialog.FileDialog)
+        test(dialog.DirDialog)
