@@ -239,8 +239,9 @@ class GenericDialog(Dialog):
                 self._handle_keys(wxbutton)
                 if button == default_button:
                     wxbutton.SetDefault()
+                    wxbutton.SetFocus()
                     if not self._want_focus:
-                        # Widgets created in _create_content() have a higher priority.
+                        # Note: Widgets created in _create_content() may override self._want_focus.
                         self._want_focus = wxbutton
                     self._default_button_instance = wxbutton
             sizer.AddSpacer(16)
