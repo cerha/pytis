@@ -75,6 +75,11 @@ class Application(pytis.presentation.Application):
             )),
             Menu(_("&Demo"), (
                 nr(_("&Input fields"), 'misc.InputFields'),
+                MenuItem(_("&Dialogs"),
+                    command=pytis.form.Application.COMMAND_HANDLED_ACTION(
+                        handler=self._dialog_test,
+                    ),
+                    hotkey=('Alt-d', 'd')),
                 mf(_("Continents"), 'cb.Continents', binding='islands'),
                 mf(_("Countries"), 'cb.Countries'),
                 mf(_('Products'), 'misc.Products'),
@@ -82,28 +87,6 @@ class Application(pytis.presentation.Application):
                     mf(_("Storing &binary data"), 'binary.BinaryData'),
                     bf(_("Storing binary &images"), 'binary.Images'),
                     bf(_('&File names and URLs'), 'misc.Files'),
-                )),
-                Menu(_("Dialo&gs"), (
-                    MenuItem(_("Message dialogs"),
-                             command=pytis.form.Application.COMMAND_HANDLED_ACTION(
-                                 handler=self._message_dialog_test,
-                             ),
-                             hotkey=('Alt-d', 'm')),
-                    MenuItem(_("Question dialogs"),
-                             command=pytis.form.Application.COMMAND_HANDLED_ACTION(
-                                 handler=self._question_dialog_test,
-                             ),
-                             hotkey=('Alt-d', 'q')),
-                    MenuItem(_("Progress dialogs"),
-                             command=pytis.form.Application.COMMAND_HANDLED_ACTION(
-                                 handler=self._progress_dialog_test,
-                             ),
-                             hotkey=('Alt-d', 'd')),
-                    MenuItem(_("Internal dialogs"),
-                             command=pytis.form.Application.COMMAND_HANDLED_ACTION(
-                                 handler=self._internal_dialog_test,
-                             ),
-                             hotkey=('Alt-d', 'i')),
                 )),
                 nr(_("Runtime &filters"), 'misc.RuntimeFilter'),
                 bf(_('&Query Fields'), 'misc.RandomNumbers'),
@@ -149,55 +132,101 @@ class Application(pytis.presentation.Application):
                         refresh_interval=5000, width=3),
         ]
 
-    def _dialog_test(self, f, *args, **kwargs):
+    def _dialog_test(self):
+        # This test uses some Pytis internals which should not be used by standard
+        # Pytis applications as the APIs are not guaranted to stay.
+        from pytis.presentation import Button, Field, FieldSet, HGroup
+        import pytis.form.dialog as dialog
+        import datetime
+
+        def test(f, *args, **kwargs):
+            while True:
+                result = f(*args, **kwargs)
+                if app.question(title=("Dialog test result"),
+                                message=_("The returned value:") + "\n\n" + repr(result),
+                                answers=(repeat, done), default=done) == done:
+                    break
+
+        def button(label, *args, **kwargs):
+            return Button(label, lambda r: test(*args, **kwargs))
+
+        def run_dialog_button(cls, *args, **kwargs):
+            return Button(cls.__name__,
+                          lambda r: test(pytis.form.app.run_dialog, cls, *args, **kwargs))
+
         repeat, done = _("Repeat"), _("Done")
-        while True:
-            result = f(*args, **kwargs)
-            if app.question(title=("Dialog test result"),
-                            message=_("The returned value:") + "\n\n" + repr(result),
-                            answers=(repeat, done), default=done) == done:
-                break
+        try:
+            raise Exception("BugReport dialog test")
+        except:
+            einfo = sys.exc_info()
 
-    def _message_dialog_test(self):
-        test = self._dialog_test
-        test(app.message, _("Informational message."))
-        test(app.warning, _("Warning"))
-        test(app.error, _("Error message"))
+        # We are misusing an input form just because it allows us the lay the buttons out nicely.
+        app.input_form(_("Dialog test"), (Field('x'),), layout=HGroup((
+            FieldSet(_("Messages"), (
+                button(_("Message"), app.message, _("Informational message.")),
+                button(_("Warning"), app.warning, _("Something is dangerous.")),
+                button(_("Error"), app.error, _("Something failed.")),
+            )),
+            FieldSet(_("Progress dialogs"), (
+                button(_("Operation with time measures"), self._measured_progress_dialog_test),
+                button(_("Expanding progress dialog"), self._expanding_progress_dialog_test),
+                button(_("Indeterminate mode"), self._indeterminate_progress_dialog_test),
+                button(_("Without progress indication"), self._operation_dialog_test),
+            )),
+        ), (
+            FieldSet(_("Question dialogs"), (
+                button(_("Yes/No Question (default No)"), app.question,
+                       _("Question with the default answer set to '%s'.", _("No")),
+                    default=False),
+                button(_("Yes/No Question (default Yes)"), app.question,
+                       _("Question with the default answer set to '%s'.", _("Yes")),
+                       default=True),
+                button(_("Question with answers"), app.question,
+                       _("Question with multiple answers."),
+                       answers=(_("Next"), _("Previous"), _("Cancel"))),
+            )),
+            FieldSet(_("Internal dialogs"), (
+                run_dialog_button(dialog.Calendar, date=datetime.date.today()),
+                run_dialog_button(dialog.ColorSelector, color='#ff0000'),
+                run_dialog_button(dialog.CheckListDialog,
+                                  items=((True, _("Checked item")),
+                                         (False, _("Unchecked item")),
+                                         (False, _("Another unchecked item")))),
+                run_dialog_button(dialog.BugReport, einfo=einfo),
+                run_dialog_button(
+                    dialog.AggregationSetupDialog,
+                    aggregation_functions=[(a, a[4:]) for a in
+                                           public_attr_values(pd.Data, prefix='AGG_')],
+                    columns=[('c{}'.format(i), t.__class__.__name__, t)
+                             for i, t in enumerate((pd.String(), pd.Integer(), pd.Date()))],
+                    aggregation_valid=lambda op, t: (
+                        op == pd.Data.AGG_COUNT or
+                        isinstance(t, pd.Number) or
+                        isinstance(t, pd.Date) and op != pd.Data.AGG_SUM),
+                    grouping_functions=(), name="", group_by_columns=(), aggregation_columns=()),
+                run_dialog_button(dialog.FileDialog),
+                run_dialog_button(dialog.DirDialog),
+            )),
+        )))
 
-    def _question_dialog_test(self):
-        test = self._dialog_test
-        test(
-            app.question,
-            _("Question with the default answer set to '%s'.", _("No")),
-            default=False
-        )
-        test(
-            app.question,
-            _("Question with the default answer set to '%s'.", _("Yes")),
-            default=True,
-        )
-        test(
-            app.question,
-            _("Question with multiple answers."),
-            answers=(_("Next"), _("Previous"), _("Cancel")),
-        )
-
-    def _progress_dialog_test(self):
+    def _measured_progress_dialog_test(self):
         import string
 
-        def func1(update, data):
+        def func(update, data):
             for i, x in enumerate(data):
                 if update and not update(i, _("Processing: %d/%d", i, len(data))):
                     break
                 log(OPERATIONAL, 'Processing:', x)
                 time.sleep(0.1)
-        app.run(func1, (string.ascii_letters,), maximum=len(string.ascii_letters), can_abort=True,
+
+        app.run(func, (string.ascii_letters,), maximum=len(string.ascii_letters), can_abort=True,
                 title=_("Operation with time measures"),
                 elapsed_time=True, remaining_time=True, estimated_time=True)
 
+    def _expanding_progress_dialog_test(self):
         # Test dialog expansion when longer message is passed.
         # Also test over with generator (maximum must be passed).
-        def func2(update, x):
+        def func(update, x):
             update(message=_("Processing: %s", x))
             log(OPERATIONAL, 'Processing:', x)
             time.sleep(2)
@@ -213,42 +242,17 @@ class Application(pytis.presentation.Application):
         def gen():
             for name in names:
                 yield name
-        app.run(func2, over=gen(), maximum=len(names), can_abort=True,
+        app.run(func, over=gen(), maximum=len(names), can_abort=True,
                 title=_("Operation with dialog growing on longer messages"))
 
-        def func3(update, count):
+    def _indeterminate_progress_dialog_test(self):
+        def func(update, count):
             for i in range(count):
                 update(-1)
                 log(OPERATIONAL, 'Processing:', i)
                 time.sleep(0.1)
-        app.run(func3, args=(44,), title=_("Indeterminate mode operation"))
+        app.run(func, args=(44,), title=_("Indeterminate mode operation"))
 
+    def _operation_dialog_test(self):
         app.run(time.sleep, (4,), progress=False, title=_("Operation with no progress indication"),
                 message=_("Please wait for the operation to finish."))
-
-    def _internal_dialog_test(self):
-        def test(*args, **kwargs):
-            return self._dialog_test(pytis.form.app.run_dialog, *args, **kwargs)
-        import pytis.form.dialog as dialog
-        import datetime
-        test(dialog.Calendar, date=datetime.date.today())
-        test(dialog.ColorSelector, color='#ff0000')
-        test(dialog.CheckListDialog, items=((True, _("Checked item")),
-                                            (False, _("Unchecked item")),
-                                            (False, _("Another unchecked item"))))
-        try:
-            raise Exception("BugReport dialog test")
-        except:
-            einfo = sys.exc_info()
-        test(dialog.BugReport, einfo=einfo),
-        test(dialog.AggregationSetupDialog,
-             aggregation_functions=[(a, a[4:]) for a in public_attr_values(pd.Data, prefix='AGG_')],
-             columns=[('c{}'.format(i), t.__class__.__name__, t)
-                      for i, t in enumerate((pd.String(), pd.Integer(), pd.Date()))],
-             aggregation_valid=lambda op, t: (op == pd.Data.AGG_COUNT or
-                                              isinstance(t, pd.Number) or
-                                              isinstance(t, pd.Date) and op != pd.Data.AGG_SUM),
-             grouping_functions=(), name="", group_by_columns=(), aggregation_columns=())
-
-        test(dialog.FileDialog)
-        test(dialog.DirDialog)
