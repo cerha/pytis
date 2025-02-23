@@ -3185,12 +3185,11 @@ class AggregationForm(BrowseForm):
     def _current_arguments(self):
         return self._af_aggregation_arguments
 
-    def _form_specific_manager_args(self):
+    def _saved_settings_accessor(self):
         # We need to have unique names for different column configurations
         # because profiles for one configuration may not be valid in the other.
-        spec_name, form_name = super(AggregationForm, self)._form_specific_manager_args()
-        spec_name += '/' + ':'.join(self._select_columns())
-        return (spec_name, form_name)
+        spec_name = self._name + '/' + ':'.join(self._select_columns())
+        return self._SavedSettingsAccessor(spec_name, self._form_name(), self._view, self._data)
 
     def _can_aggregated_view(self, aggregated_view_id):
         return False
