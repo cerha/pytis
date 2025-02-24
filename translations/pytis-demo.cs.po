@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pytis 0.1\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2025-01-17 20:01+0100\n"
-"PO-Revision-Date: 2025-01-17 20:12+0100\n"
+"POT-Creation-Date: 2025-02-24 10:19+0100\n"
+"PO-Revision-Date: 2025-02-24 10:31+0100\n"
 "Last-Translator: Tomáš Cerha <t.cerha@gmail.com>\n"
 "Language-Team: Czech <cs@li.org>\n"
 "Language: cs\n"
@@ -41,7 +41,7 @@ msgstr "Správa rolí a přístupových práv"
 msgid "Roles"
 msgstr "Role"
 
-#: ../lib/pytis/demo/application.py:59 ../lib/pytis/demo/application.py:113
+#: ../lib/pytis/demo/application.py:59 ../lib/pytis/demo/application.py:106
 msgid "Menu"
 msgstr "Menu"
 
@@ -61,7 +61,7 @@ msgstr "Stručné statistiky"
 msgid "Full statistics"
 msgstr "Kompletní statistiky"
 
-#: ../lib/pytis/demo/application.py:65 ../lib/pytis/demo/application.py:117
+#: ../lib/pytis/demo/application.py:65 ../lib/pytis/demo/application.py:110
 msgid "Users"
 msgstr "Uživatelé"
 
@@ -90,207 +90,274 @@ msgid "&Input fields"
 msgstr "Vstupní políčka"
 
 #: ../lib/pytis/demo/application.py:78
-msgid "Runtime &filters"
-msgstr "Runtime filtry"
+msgid "&Dialogs"
+msgstr "Dialo&gová okna"
 
-#: ../lib/pytis/demo/application.py:79
-msgid "&Query Fields"
-msgstr "&Políčka dotazu"
-
-#: ../lib/pytis/demo/application.py:80 ../lib/pytis/demo/cb.py:55
+#: ../lib/pytis/demo/application.py:83 ../lib/pytis/demo/cb.py:55
 msgid "Continents"
 msgstr "Světadíly"
 
-#: ../lib/pytis/demo/application.py:81 ../lib/pytis/demo/cb.py:101
+#: ../lib/pytis/demo/application.py:84 ../lib/pytis/demo/cb.py:101
 msgid "Countries"
 msgstr "Země"
 
-#: ../lib/pytis/demo/application.py:82 ../lib/pytis/demo/misc.py:361
+#: ../lib/pytis/demo/application.py:85 ../lib/pytis/demo/misc.py:345
 msgid "Products"
 msgstr "Zboží"
 
-#: ../lib/pytis/demo/application.py:83
-msgid "Insurance (table function)"
-msgstr "Pojištění (tabulková funkce)"
-
-#: ../lib/pytis/demo/application.py:84
+#: ../lib/pytis/demo/application.py:86
 msgid "Working with files"
 msgstr "Práce se soubory"
 
-#: ../lib/pytis/demo/application.py:85
+#: ../lib/pytis/demo/application.py:87
 msgid "Storing &binary data"
 msgstr "Obecná &binární data"
 
-#: ../lib/pytis/demo/application.py:86
+#: ../lib/pytis/demo/application.py:88
 msgid "Storing binary &images"
 msgstr "Ukládání binárních &obrázků"
 
-#: ../lib/pytis/demo/application.py:87
+#: ../lib/pytis/demo/application.py:89
 msgid "&File names and URLs"
 msgstr "&Soubory a URL adresy"
 
-#: ../lib/pytis/demo/application.py:89
-msgid "Dialo&gs"
-msgstr "Dialo&gová okna"
+#: ../lib/pytis/demo/application.py:91
+msgid "Runtime &filters"
+msgstr "Runtime filtry"
 
-#: ../lib/pytis/demo/application.py:90
-msgid "Question dialog test"
-msgstr "Test dotazovacích dialogů"
+#: ../lib/pytis/demo/application.py:92
+msgid "&Query Fields"
+msgstr "&Políčka dotazu"
 
-#: ../lib/pytis/demo/application.py:95
-msgid "Progress dialog test"
-msgstr "Test dialogů s průběhem operace"
-
-#: ../lib/pytis/demo/application.py:101
+#: ../lib/pytis/demo/application.py:93
 msgid "Password fields"
 msgstr "Políčka pro zadání hesla"
 
-#: ../lib/pytis/demo/application.py:102
+#: ../lib/pytis/demo/application.py:94
+msgid "Insurance (table function)"
+msgstr "Pojištění (tabulková funkce)"
+
+#: ../lib/pytis/demo/application.py:95
 msgid "Tree Order"
 msgstr "Stromové řazení"
 
-#: ../lib/pytis/demo/application.py:103 ../lib/pytis/demo/misc.py:599
+#: ../lib/pytis/demo/application.py:96 ../lib/pytis/demo/misc.py:583
 msgid "Foldable Tree"
 msgstr "Sbalovací strom"
 
-#: ../lib/pytis/demo/application.py:104 ../lib/pytis/demo/misc.py:617
+#: ../lib/pytis/demo/application.py:97 ../lib/pytis/demo/misc.py:601
 msgid "Long Table"
 msgstr "Dlouhá tabulka"
 
-#: ../lib/pytis/demo/application.py:105 ../lib/pytis/demo/misc.py:633
+#: ../lib/pytis/demo/application.py:98 ../lib/pytis/demo/misc.py:617
 msgid "Slow Long Table"
 msgstr "Pomalá dlouhá tabulka"
 
-#: ../lib/pytis/demo/application.py:106 ../lib/pytis/demo/misc.py:649
+#: ../lib/pytis/demo/application.py:99 ../lib/pytis/demo/misc.py:633
 msgid "Fast Long Table"
 msgstr "Rychlá dlouhá tabulka"
 
-#: ../lib/pytis/demo/application.py:107
+#: ../lib/pytis/demo/application.py:100
 msgid "Range Types"
 msgstr "Rozsahové typy"
 
-#: ../lib/pytis/demo/application.py:109
-#, fuzzy
+#: ../lib/pytis/demo/application.py:102
 msgid "Insufficient access rights"
-msgstr "Země (nedostatečná přístupová práva)"
+msgstr "Nedostatečná přístupová práva"
 
-#: ../lib/pytis/demo/application.py:110
+#: ../lib/pytis/demo/application.py:103
 msgid "Inexistent specification"
 msgstr "Neexistující specifikace"
 
-#: ../lib/pytis/demo/application.py:112
+#: ../lib/pytis/demo/application.py:105
 msgid "&CMS"
 msgstr "&CMS"
 
-#: ../lib/pytis/demo/application.py:114
+#: ../lib/pytis/demo/application.py:107
 msgid "Languages"
 msgstr "Jazyky"
 
-#: ../lib/pytis/demo/application.py:115
+#: ../lib/pytis/demo/application.py:108
 msgid "Modules"
 msgstr "Moduly"
 
-#: ../lib/pytis/demo/application.py:116
+#: ../lib/pytis/demo/application.py:109
 msgid "Generic actions"
 msgstr "Obecné akce"
 
-#: ../lib/pytis/demo/application.py:118
+#: ../lib/pytis/demo/application.py:111
 msgid "User Roles"
 msgstr "Uživatelské role"
 
-#: ../lib/pytis/demo/application.py:119
+#: ../lib/pytis/demo/application.py:112
 msgid "Session Log"
 msgstr "Log uživatelských sezení"
 
-#: ../lib/pytis/demo/application.py:120
+#: ../lib/pytis/demo/application.py:113
 msgid "Access Log"
 msgstr "Log přístupů"
 
-#: ../lib/pytis/demo/application.py:121
+#: ../lib/pytis/demo/application.py:114
 msgid "Color themes"
 msgstr "Barevná témata"
 
-#: ../lib/pytis/demo/application.py:131 ../lib/pytis/demo/application.py:133
+#: ../lib/pytis/demo/application.py:124 ../lib/pytis/demo/application.py:126
 #, python-format
 msgid "Counter value: %d"
 msgstr "Hodnota čítače: %d"
 
-#: ../lib/pytis/demo/application.py:138
+#: ../lib/pytis/demo/application.py:131
 msgid "Counter"
 msgstr "Čítač"
 
-#: ../lib/pytis/demo/application.py:144 ../lib/pytis/demo/application.py:146
+#: ../lib/pytis/demo/application.py:146
+msgid "The returned value:"
+msgstr "Vrácená hodnota:"
+
+#: ../lib/pytis/demo/application.py:157
+msgid "Repeat"
+msgstr "Opakovat"
+
+#: ../lib/pytis/demo/application.py:157
+msgid "Done"
+msgstr "Hotovo"
+
+#: ../lib/pytis/demo/application.py:164
+msgid "Dialog test"
+msgstr "Test dialogů"
+
+#: ../lib/pytis/demo/application.py:165
+msgid "Messages"
+msgstr "Oznámení"
+
+#: ../lib/pytis/demo/application.py:166
+msgid "Message"
+msgstr "Oznámení"
+
+#: ../lib/pytis/demo/application.py:166
+msgid "Informational message."
+msgstr "Informační zpráva."
+
+#: ../lib/pytis/demo/application.py:167
+msgid "Warning"
+msgstr "Varování"
+
+#: ../lib/pytis/demo/application.py:167
+msgid "Something is dangerous."
+msgstr "Něco nebezpečného."
+
+#: ../lib/pytis/demo/application.py:168
+msgid "Error"
+msgstr "Chyba"
+
+#: ../lib/pytis/demo/application.py:168
+msgid "Something failed."
+msgstr "Něco se porouchalo."
+
+#: ../lib/pytis/demo/application.py:170
+msgid "Progress dialogs"
+msgstr "Dialogy s průběhem operace"
+
+#: ../lib/pytis/demo/application.py:171 ../lib/pytis/demo/application.py:223
+msgid "Operation with time measures"
+msgstr "Operace s měřením času"
+
+#: ../lib/pytis/demo/application.py:172
+msgid "Expanding progress dialog"
+msgstr "Expandující průběhový dialog"
+
+#: ../lib/pytis/demo/application.py:173
+msgid "Indeterminate mode"
+msgstr "Neurčitý režim"
+
+#: ../lib/pytis/demo/application.py:174
+msgid "Without progress indication"
+msgstr "Bez zobrazení průběhu"
+
+#: ../lib/pytis/demo/application.py:177
+msgid "Question dialogs"
+msgstr "Dotazovací dialogy"
+
+#: ../lib/pytis/demo/application.py:178
+msgid "Yes/No Question (default No)"
+msgstr "Otázka Ano/Ne (vychozí Ne)"
+
+#: ../lib/pytis/demo/application.py:179 ../lib/pytis/demo/application.py:182
 #, python-format
 msgid "Question with the default answer set to '%s'."
 msgstr "Otázka s výchozí odpovědí „%s”."
 
-#: ../lib/pytis/demo/application.py:144
+#: ../lib/pytis/demo/application.py:179
 msgid "No"
 msgstr "Ne"
 
-#: ../lib/pytis/demo/application.py:145
-msgid "Do you want to continue?"
-msgstr "Chcete pokračovat?"
+#: ../lib/pytis/demo/application.py:181
+msgid "Yes/No Question (default Yes)"
+msgstr "Otázka Ano/Ne (vychozí Ano)"
 
-#: ../lib/pytis/demo/application.py:146
+#: ../lib/pytis/demo/application.py:182
 msgid "Yes"
 msgstr "Ano"
 
-#: ../lib/pytis/demo/application.py:147
-msgid "Do you still want to continue?"
-msgstr "Chcete ještě pokračovat?"
+#: ../lib/pytis/demo/application.py:184
+msgid "Question with answers"
+msgstr "Otázka s výběrem odpovědí"
 
-#: ../lib/pytis/demo/application.py:148
-msgid ""
-"Question dialog with multiple answers.\n"
-"Advance to the next record?"
-msgstr ""
-"Dialog s otázkou a několika možnými odpověďmi.\n"
-"Pokročit na další záznam?"
+#: ../lib/pytis/demo/application.py:185
+msgid "Question with multiple answers."
+msgstr "Otázka s několika možnými odpovědmi."
 
-#: ../lib/pytis/demo/application.py:149
+#: ../lib/pytis/demo/application.py:186
 msgid "Next"
 msgstr "Další"
 
-#: ../lib/pytis/demo/application.py:149
+#: ../lib/pytis/demo/application.py:186
 msgid "Previous"
 msgstr "Předchozí"
 
-#: ../lib/pytis/demo/application.py:149
+#: ../lib/pytis/demo/application.py:186
 msgid "Cancel"
 msgstr "Zrušit"
 
-#: ../lib/pytis/demo/application.py:151
-msgid "Python values corresponding to your answers were:"
-msgstr "Pythonové hodnoty odpovídající odpovědím byly:"
+#: ../lib/pytis/demo/application.py:188
+msgid "Internal dialogs"
+msgstr "Interní dialogy"
 
-#: ../lib/pytis/demo/application.py:160
+#: ../lib/pytis/demo/application.py:192
+msgid "Checked item"
+msgstr "Zaškrtnutá položka"
+
+#: ../lib/pytis/demo/application.py:193
+msgid "Unchecked item"
+msgstr "Nezaškrtnutá položka"
+
+#: ../lib/pytis/demo/application.py:194
+msgid "Another unchecked item"
+msgstr "Další nezaškrtnutá položka"
+
+#: ../lib/pytis/demo/application.py:217
 #, python-format
 msgid "Processing: %d/%d"
 msgstr "Zpracovávám: %d/%d"
 
-#: ../lib/pytis/demo/application.py:165
-msgid "Operation with time measures"
-msgstr "Operace s měřením času"
-
-#: ../lib/pytis/demo/application.py:171
+#: ../lib/pytis/demo/application.py:230
 #, python-format
 msgid "Processing: %s"
 msgstr "Zpracovávám: %s"
 
-#: ../lib/pytis/demo/application.py:187
+#: ../lib/pytis/demo/application.py:246
 msgid "Operation with dialog growing on longer messages"
 msgstr "Operace se zvětšujícím se dialogem při delších zprávách"
 
-#: ../lib/pytis/demo/application.py:194
+#: ../lib/pytis/demo/application.py:254
 msgid "Indeterminate mode operation"
 msgstr "Operace v neurčitém režimu"
 
-#: ../lib/pytis/demo/application.py:196
+#: ../lib/pytis/demo/application.py:257
 msgid "Operation with no progress indication"
 msgstr "Operace bez zobrazení průběhu"
 
-#: ../lib/pytis/demo/application.py:197
+#: ../lib/pytis/demo/application.py:258
 msgid "Please wait for the operation to finish."
 msgstr "Vyčkejte prosím na dokončení operace."
 
@@ -310,7 +377,7 @@ msgstr "Prohlížeč"
 msgid "Select recipient keys"
 msgstr "Vybere klíče příjemců"
 
-#: ../lib/pytis/demo/binary.py:89 ../lib/pytis/demo/misc.py:316
+#: ../lib/pytis/demo/binary.py:89 ../lib/pytis/demo/misc.py:300
 msgid "User"
 msgstr "Uživatel"
 
@@ -464,7 +531,7 @@ msgstr "Kontinent"
 msgid "Select continent to limit country selection below to given continent."
 msgstr "Zvolte kontinent pro omezení výběru zemí na země daného kontinentu."
 
-#: ../lib/pytis/demo/demoweb.py:107 ../lib/pytis/demo/misc.py:308
+#: ../lib/pytis/demo/demoweb.py:107 ../lib/pytis/demo/misc.py:292
 msgid "Country"
 msgstr "Země"
 
@@ -494,7 +561,7 @@ msgid ""
 "contain only marked products."
 msgstr ""
 
-#: ../lib/pytis/demo/demoweb.py:119 ../lib/pytis/demo/misc.py:362
+#: ../lib/pytis/demo/demoweb.py:119 ../lib/pytis/demo/misc.py:346
 msgid "Product"
 msgstr "Produkt"
 
@@ -502,7 +569,7 @@ msgstr "Produkt"
 msgid "Select the product to set the price for."
 msgstr ""
 
-#: ../lib/pytis/demo/demoweb.py:123 ../lib/pytis/demo/misc.py:429
+#: ../lib/pytis/demo/demoweb.py:123 ../lib/pytis/demo/misc.py:413
 #: ../lib/pytis/demo/output/Products.py:50
 msgid "Price"
 msgstr "Cena"
@@ -523,23 +590,19 @@ msgstr "Banány"
 msgid "Oranges"
 msgstr "Pomeranče"
 
-#: ../lib/pytis/demo/misc.py:116 ../lib/pytis/demo/misc.py:249
+#: ../lib/pytis/demo/misc.py:116 ../lib/pytis/demo/misc.py:233
 msgid "Enumeration fields"
 msgstr "Výčtová políčka"
 
-#: ../lib/pytis/demo/misc.py:119
-msgid "Field Types"
-msgstr "Typy políček"
-
-#: ../lib/pytis/demo/misc.py:138
+#: ../lib/pytis/demo/misc.py:122
 msgid "Text"
 msgstr "Text"
 
-#: ../lib/pytis/demo/misc.py:140
+#: ../lib/pytis/demo/misc.py:124
 msgid "Completion"
 msgstr "Doplňování"
 
-#: ../lib/pytis/demo/misc.py:145
+#: ../lib/pytis/demo/misc.py:129
 msgid ""
 "Text entry with autocompletion.  The 'completer' provides available "
 "completions.  As opposed to enumerator (which also provides autocompletion "
@@ -547,70 +610,70 @@ msgid ""
 "(like here), dynamic or database connected list of completions."
 msgstr ""
 
-#: ../lib/pytis/demo/misc.py:150
+#: ../lib/pytis/demo/misc.py:134
 msgid "Multiline"
 msgstr "Víceřádkové"
 
-#: ../lib/pytis/demo/misc.py:152
+#: ../lib/pytis/demo/misc.py:136
 msgid "Password"
 msgstr "Heslo"
 
-#: ../lib/pytis/demo/misc.py:154
+#: ../lib/pytis/demo/misc.py:138
 msgid ""
 "Password field doesn't display the current value.  If 'verify' is set to "
 "True in field's type, the field requires the value to be entered twice and "
 "validation makes sure both values match."
 msgstr ""
 
-#: ../lib/pytis/demo/misc.py:157
+#: ../lib/pytis/demo/misc.py:141
 msgid "Number"
 msgstr "Číslo"
 
-#: ../lib/pytis/demo/misc.py:159 ../lib/pytis/demo/misc.py:163
+#: ../lib/pytis/demo/misc.py:143 ../lib/pytis/demo/misc.py:147
 msgid "A simple numeric field."
 msgstr "Jednoduché číselní políčko."
 
-#: ../lib/pytis/demo/misc.py:160
+#: ../lib/pytis/demo/misc.py:144
 msgid "Slider"
 msgstr "Posuvník"
 
-#: ../lib/pytis/demo/misc.py:164
+#: ../lib/pytis/demo/misc.py:148
 msgid "Decimal"
 msgstr "Desetinné"
 
-#: ../lib/pytis/demo/misc.py:166
+#: ../lib/pytis/demo/misc.py:150
 msgid "Date"
 msgstr "Datum"
 
-#: ../lib/pytis/demo/misc.py:168
+#: ../lib/pytis/demo/misc.py:152
 msgid "Date entry field with a calendar control and a default value."
 msgstr "Datumové políčko s kalendářovým výběrem a výchozí hodnotou."
 
-#: ../lib/pytis/demo/misc.py:169
+#: ../lib/pytis/demo/misc.py:153
 msgid "Time"
 msgstr "Čas"
 
-#: ../lib/pytis/demo/misc.py:171
+#: ../lib/pytis/demo/misc.py:155
 msgid "Date and time"
 msgstr "Datum a čas"
 
-#: ../lib/pytis/demo/misc.py:173
+#: ../lib/pytis/demo/misc.py:157
 msgid "File"
 msgstr "Soubor"
 
-#: ../lib/pytis/demo/misc.py:175
+#: ../lib/pytis/demo/misc.py:159
 msgid "Image"
 msgstr "Obrázek"
 
-#: ../lib/pytis/demo/misc.py:177
+#: ../lib/pytis/demo/misc.py:161
 msgid "Color"
 msgstr "Barva"
 
-#: ../lib/pytis/demo/misc.py:181
+#: ../lib/pytis/demo/misc.py:165
 msgid "Check box"
 msgstr "Zaškrtávátko"
 
-#: ../lib/pytis/demo/misc.py:182
+#: ../lib/pytis/demo/misc.py:166
 msgid ""
 "Check/uncheck this checkbox to enable/disable all other form fields.  This "
 "field demonstrates a simple boolean checkbox field.  It also demonstrates "
@@ -620,39 +683,39 @@ msgid ""
 "types look in the editable and non-editable state."
 msgstr ""
 
-#: ../lib/pytis/demo/misc.py:190
+#: ../lib/pytis/demo/misc.py:174
 msgid "Choice"
 msgstr "Výběr"
 
-#: ../lib/pytis/demo/misc.py:194
+#: ../lib/pytis/demo/misc.py:178
 msgid "Simple pull-down menu selection."
 msgstr "Jednoduchý výběr z rozbalovací nabídky"
 
-#: ../lib/pytis/demo/misc.py:195
+#: ../lib/pytis/demo/misc.py:179
 msgid "Radio box"
 msgstr "Přepínač"
 
-#: ../lib/pytis/demo/misc.py:199
+#: ../lib/pytis/demo/misc.py:183
 msgid ""
 "Radio box selection.  The enumeration is defined statically by an "
 "Enumeration class."
 msgstr ""
 
-#: ../lib/pytis/demo/misc.py:201
+#: ../lib/pytis/demo/misc.py:185
 msgid "List box"
 msgstr "Seznam"
 
-#: ../lib/pytis/demo/misc.py:205
+#: ../lib/pytis/demo/misc.py:189
 msgid ""
 "List selection which becomes scrollable when the number of items exceeds its "
 "height."
 msgstr ""
 
-#: ../lib/pytis/demo/misc.py:207
+#: ../lib/pytis/demo/misc.py:191
 msgid "Codebook"
 msgstr "Číselník"
 
-#: ../lib/pytis/demo/misc.py:213
+#: ../lib/pytis/demo/misc.py:197
 msgid ""
 "This field provides a text entry for writing down the code directly.  It "
 "most convenient when the codebook contains a relatively large number of "
@@ -668,224 +731,224 @@ msgid ""
 "is updated with any change of the field value."
 msgstr ""
 
-#: ../lib/pytis/demo/misc.py:227
+#: ../lib/pytis/demo/misc.py:211
 msgid "List Field"
 msgstr "Seznamové pole"
 
-#: ../lib/pytis/demo/misc.py:231
+#: ../lib/pytis/demo/misc.py:215
 msgid ""
 "This field also allows direct codebook manipulations through the row context "
 "menu."
 msgstr ""
 
-#: ../lib/pytis/demo/misc.py:235
+#: ../lib/pytis/demo/misc.py:219
 msgid "Numeric range"
 msgstr "Číselný rozsah"
 
-#: ../lib/pytis/demo/misc.py:237
+#: ../lib/pytis/demo/misc.py:221
 msgid "Date range"
 msgstr "Datumový rozsah"
 
-#: ../lib/pytis/demo/misc.py:245
+#: ../lib/pytis/demo/misc.py:229
 msgid "Basic fields"
 msgstr "Základní políčka"
 
-#: ../lib/pytis/demo/misc.py:253
+#: ../lib/pytis/demo/misc.py:237
 msgid "Range fields"
 msgstr "Rozsahová políčka"
 
-#: ../lib/pytis/demo/misc.py:277
+#: ../lib/pytis/demo/misc.py:261
 msgid "Codebook runtime filter demo"
 msgstr "Ukázka průběžného filtrování číselníku"
 
-#: ../lib/pytis/demo/misc.py:301
+#: ../lib/pytis/demo/misc.py:285
 msgid "Country name filter"
 msgstr "Filtr názvu země"
 
-#: ../lib/pytis/demo/misc.py:302
+#: ../lib/pytis/demo/misc.py:286
 msgid ""
 "Enter a wildcard expression to filter only matching countries in the "
 "codebook field below."
 msgstr ""
 
-#: ../lib/pytis/demo/misc.py:304
+#: ../lib/pytis/demo/misc.py:288
 msgid "Show only european countries"
 msgstr "Zobrazovat pouze evropské země"
 
-#: ../lib/pytis/demo/misc.py:306
+#: ../lib/pytis/demo/misc.py:290
 msgid ""
 "Check/uncheck this checkbox to enable/disable non-european countries in the "
 "codebook field below."
 msgstr ""
 
-#: ../lib/pytis/demo/misc.py:312
+#: ../lib/pytis/demo/misc.py:296
 msgid "Lists countries filtered by the above two fields."
 msgstr "Zobrazuje seznam zemí filtrovaných podle políček výše."
 
-#: ../lib/pytis/demo/misc.py:313
+#: ../lib/pytis/demo/misc.py:297
 msgid "Group"
 msgstr "Skupina"
 
-#: ../lib/pytis/demo/misc.py:315
+#: ../lib/pytis/demo/misc.py:299
 msgid "Lists system user groups."
 msgstr "Zobrazuje seznam systémových uživatelských skupin."
 
-#: ../lib/pytis/demo/misc.py:319
+#: ../lib/pytis/demo/misc.py:303
 msgid "Lists users of the above selected group."
 msgstr ""
 
-#: ../lib/pytis/demo/misc.py:364 ../lib/pytis/demo/misc.py:432
+#: ../lib/pytis/demo/misc.py:348 ../lib/pytis/demo/misc.py:416
 msgid "Notes"
 msgstr "Poznámky"
 
-#: ../lib/pytis/demo/misc.py:367
+#: ../lib/pytis/demo/misc.py:351
 msgid "Year"
 msgstr "Rok"
 
-#: ../lib/pytis/demo/misc.py:368
+#: ../lib/pytis/demo/misc.py:352
 msgid "Month"
 msgstr "Měsíc"
 
-#: ../lib/pytis/demo/misc.py:371
+#: ../lib/pytis/demo/misc.py:355
 msgid "Marked"
 msgstr "Označeno"
 
-#: ../lib/pytis/demo/misc.py:372
+#: ../lib/pytis/demo/misc.py:356
 msgid "Unmarked"
 msgstr "Neoznačeno"
 
-#: ../lib/pytis/demo/misc.py:385 ../lib/pytis/demo/misc.py:531
+#: ../lib/pytis/demo/misc.py:369 ../lib/pytis/demo/misc.py:515
 msgid "Date when the product was first included."
 msgstr "Datum prvního přidání produktu."
 
-#: ../lib/pytis/demo/misc.py:387 ../lib/pytis/demo/misc.py:532
+#: ../lib/pytis/demo/misc.py:371 ../lib/pytis/demo/misc.py:516
 msgid "Arbitrary internal notes about given product."
 msgstr "Libovolné interní poznámky o produktu."
 
-#: ../lib/pytis/demo/misc.py:392
+#: ../lib/pytis/demo/misc.py:376
 msgid "Product Page"
 msgstr "Stránka produktu"
 
-#: ../lib/pytis/demo/misc.py:394 ../lib/pytis/demo/misc.py:443
+#: ../lib/pytis/demo/misc.py:378 ../lib/pytis/demo/misc.py:427
 msgid "Product Info"
 msgstr " Informace o produktu"
 
-#: ../lib/pytis/demo/misc.py:430
+#: ../lib/pytis/demo/misc.py:414
 msgid "Available since"
 msgstr "Dostupné od"
 
-#: ../lib/pytis/demo/misc.py:444
+#: ../lib/pytis/demo/misc.py:428
 msgid "Shows web page generated from LCG structured text."
 msgstr "Zobrazuje webovou stránku vygenerovanou z LCG strukturovaného textu."
 
-#: ../lib/pytis/demo/misc.py:449
+#: ../lib/pytis/demo/misc.py:433
 msgid "Mark/unmark"
 msgstr "Označit/zrušit označení"
 
-#: ../lib/pytis/demo/misc.py:450
+#: ../lib/pytis/demo/misc.py:434
 msgid "Mark all"
 msgstr "Označit všechny"
 
-#: ../lib/pytis/demo/misc.py:451
+#: ../lib/pytis/demo/misc.py:435
 msgid "Unmark all"
 msgstr "Zrušit označení všech"
 
-#: ../lib/pytis/demo/misc.py:453
+#: ../lib/pytis/demo/misc.py:437
 msgid "Mark selected"
 msgstr "Označit vybrané"
 
-#: ../lib/pytis/demo/misc.py:455
+#: ../lib/pytis/demo/misc.py:439
 msgid "Unmark selected"
 msgstr "Zrušit označení vybraných"
 
-#: ../lib/pytis/demo/misc.py:457
+#: ../lib/pytis/demo/misc.py:441
 msgid "Edit marked products"
 msgstr "Upravit označené produkty"
 
-#: ../lib/pytis/demo/misc.py:458
+#: ../lib/pytis/demo/misc.py:442
 msgid "Print price"
 msgstr "Tisknout cenu"
 
-#: ../lib/pytis/demo/misc.py:470
+#: ../lib/pytis/demo/misc.py:454
 msgid "Highlight low count"
 msgstr "Zvýraznit nízký stav"
 
-#: ../lib/pytis/demo/misc.py:514
+#: ../lib/pytis/demo/misc.py:498
 msgid "XProducts"
 msgstr "XProducts"
 
-#: ../lib/pytis/demo/misc.py:518
+#: ../lib/pytis/demo/misc.py:502
 msgid "Price with VAT"
 msgstr "Cena vč. DPH"
 
-#: ../lib/pytis/demo/misc.py:562
+#: ../lib/pytis/demo/misc.py:546
 #, python-format
 msgid "Marked %d rows"
 msgstr "Označeno %d řádků"
 
-#: ../lib/pytis/demo/misc.py:564
+#: ../lib/pytis/demo/misc.py:548
 #, python-format
 msgid "Unmarked %d rows"
 msgstr "Zrušeno označení %d řádků"
 
-#: ../lib/pytis/demo/misc.py:577
+#: ../lib/pytis/demo/misc.py:561
 msgid "Tree"
 msgstr "Strom"
 
-#: ../lib/pytis/demo/misc.py:580 ../lib/pytis/demo/misc.py:607
+#: ../lib/pytis/demo/misc.py:564 ../lib/pytis/demo/misc.py:591
 msgid "ID"
 msgstr "ID"
 
-#: ../lib/pytis/demo/misc.py:581
+#: ../lib/pytis/demo/misc.py:565
 msgid "Tree ID"
 msgstr "ID stromu"
 
-#: ../lib/pytis/demo/misc.py:582 ../lib/pytis/demo/misc.py:607
+#: ../lib/pytis/demo/misc.py:566 ../lib/pytis/demo/misc.py:591
 #: ../lib/pytis/demo/output/Products.py:49
 msgid "Name"
 msgstr "Název"
 
-#: ../lib/pytis/demo/misc.py:583 ../lib/pytis/demo/misc.py:607
+#: ../lib/pytis/demo/misc.py:567 ../lib/pytis/demo/misc.py:591
 msgid "Amount"
 msgstr "Množství"
 
-#: ../lib/pytis/demo/misc.py:584 ../lib/pytis/demo/misc.py:608
+#: ../lib/pytis/demo/misc.py:568 ../lib/pytis/demo/misc.py:592
 msgid "Description"
 msgstr "Popis"
 
-#: ../lib/pytis/demo/misc.py:657
+#: ../lib/pytis/demo/misc.py:641
 msgid "Files and URLs"
 msgstr "Soubory a URL adresy"
 
-#: ../lib/pytis/demo/misc.py:665
+#: ../lib/pytis/demo/misc.py:649
 msgid "Open file"
 msgstr "Otevřít soubor"
 
-#: ../lib/pytis/demo/misc.py:666
+#: ../lib/pytis/demo/misc.py:650
 msgid "Open URL"
 msgstr "Otevřít URL"
 
-#: ../lib/pytis/demo/misc.py:706
+#: ../lib/pytis/demo/misc.py:690
 msgid "Random numbers controlled by query fields"
 msgstr "Náhodná čísla ovládaná políčky dotazu"
 
-#: ../lib/pytis/demo/misc.py:709
+#: ../lib/pytis/demo/misc.py:693
 msgid "Row Count"
 msgstr "Počet řádek"
 
-#: ../lib/pytis/demo/misc.py:710
+#: ../lib/pytis/demo/misc.py:694
 msgid "Min"
 msgstr "Minimum"
 
-#: ../lib/pytis/demo/misc.py:711
+#: ../lib/pytis/demo/misc.py:695
 msgid "Max"
 msgstr "Maximum"
 
-#: ../lib/pytis/demo/misc.py:712
+#: ../lib/pytis/demo/misc.py:696
 msgid "Max must be greater than Min!"
 msgstr "Maximum musí být vyšší než minimum!"
 
-#: ../lib/pytis/demo/misc.py:724
+#: ../lib/pytis/demo/misc.py:708
 msgid "RangeTypes"
 msgstr "Rozsahové typy"
 
@@ -905,6 +968,25 @@ msgstr "Jazyk: %s"
 #: ../lib/pytis/demo/output/Products.py:81
 msgid "-"
 msgstr "-"
+
+#~ msgid "Do you want to continue?"
+#~ msgstr "Chcete pokračovat?"
+
+#~ msgid "Do you still want to continue?"
+#~ msgstr "Chcete ještě pokračovat?"
+
+#~ msgid ""
+#~ "Question dialog with multiple answers.\n"
+#~ "Advance to the next record?"
+#~ msgstr ""
+#~ "Dialog s otázkou a několika možnými odpověďmi.\n"
+#~ "Pokročit na další záznam?"
+
+#~ msgid "Python values corresponding to your answers were:"
+#~ msgstr "Pythonové hodnoty odpovídající odpovědím byly:"
+
+#~ msgid "Field Types"
+#~ msgstr "Typy políček"
 
 #~ msgid "&Misc"
 #~ msgstr "Různé"
