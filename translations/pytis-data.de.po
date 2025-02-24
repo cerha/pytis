@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pytis 0.1\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2025-01-17 20:01+0100\n"
+"POT-Creation-Date: 2025-02-24 10:19+0100\n"
 "PO-Revision-Date: 2025-01-17 20:05+0100\n"
 "Last-Translator: Pavel Vohnout <vohnout@officehouse.cz>\n"
 "Language-Team: German <wiking@lists.freebsoft.org>\n"
@@ -278,7 +278,7 @@ msgstr ""
 msgid "unlimited"
 msgstr ""
 
-#: ../lib/pytis/presentation/spec.py:5439
+#: ../lib/pytis/presentation/spec.py:5374
 #, python-format
 msgid ""
 "You don't have priviledges to invoke the action '%s'.\n"
