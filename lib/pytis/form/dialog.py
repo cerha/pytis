@@ -228,6 +228,7 @@ class GenericDialog(Dialog):
         default_button = self._default_button(buttons)
         self._buttons_map = {}
         self._default_button_instance = None
+        max_button_height = 0
         if buttons:
             bsizer = wx.BoxSizer()
             bsizer.AddSpacer(30)
@@ -245,6 +246,12 @@ class GenericDialog(Dialog):
                         # Note: Widgets created in _create_content() may override self._want_focus.
                         self._want_focus = wxbutton
                     self._default_button_instance = wxbutton
+                max_button_height = max(wxbutton.Size.height, max_button_height)
+            # Make sure the buttons align nicely even if the icons have different heights.
+            for wxid in self._buttons_map:
+                wxbutton = wx.FindWindowById(wxid, parent=dialog)
+                if wxbutton.Size.height < max_button_height:
+                    wxbutton.SetMinSize((wxbutton.MinSize.width, max_button_height))
             sizer.AddSpacer(16)
             sizer.Add(bsizer, 0, wx.CENTER)
         sizer.AddSpacer(16)
