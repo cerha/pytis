@@ -787,8 +787,8 @@ class BugReport(GenericDialog):
     The return value is True if exit is requested or False otherwise.
 
     """
-    BUTTON_IGNORE = GenericDialog.Button(_("Ignore"), value=False)
-    BUTTON_EXIT = GenericDialog.Button(_("Exit application"), value=True)
+    BUTTON_IGNORE = GenericDialog.Button(_("Ignore"), value=False, icon='submit')
+    BUTTON_EXIT = GenericDialog.Button(_("Exit application"), value=True, icon=wx.ART_QUIT)
 
     _BUTTONS = (BUTTON_IGNORE, BUTTON_EXIT)
     _DEFAULT_BUTTON = BUTTON_IGNORE
@@ -855,9 +855,8 @@ class BugReport(GenericDialog):
                       wx.TOP | wx.LEFT | wx.RIGHT, 6)
             sizer.Add(email_ctrl, 0, wx.EXPAND | wx.ALL, 6)
 
-        button = wx.Button(dialog, -1, label=_("Send error report"))
-        self._handle_keys(button)
-        button.Bind(wx.EVT_BUTTON, self._on_send_bug_report)
+        button = wx_button(dialog, label=_("Send error report"), icon='envelope',
+                           callback=self._on_send_bug_report)
         button.Bind(wx.EVT_UPDATE_UI, lambda e: e.Enable(bool(
             not self._sent and (pytis.config.sender_address or
                                 dialog.FindWindowByName('from').GetValue() != '')
