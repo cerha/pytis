@@ -148,31 +148,25 @@ class GenericDialog(Dialog):
     _HELP_TOPIC = 'dialog'
     _STYLE = wx.CAPTION | wx.CLOSE_BOX | wx.MINIMIZE_BOX | wx.SYSTEM_MENU
 
-    def __init__(self, parent, title=None, report=None, report_format=None):
+    def __init__(self, parent, title=None, content=None):
+
         """Initialize the dialog.
 
         Arguments:
 
           parent -- wx parent; 'wx.Frame' or 'wx.Dialog' instance
           title -- title to show in the dialog title bar as a string
-          report -- Dodatečný obsah, který má být zobrazen v okně dialogu
-            (typicky delší scrollovatelný text).  Jde buďto o řetězec, jehož
-            formátování je možné dále určit arguemntem 'report_format', nebo
-            přímo LCG obsah jako instance 'lcg.Content'.
-          report_format -- konstanta třídy 'TextFormat' určující jak má být
-            nakládáno se vstupním textem argumentu 'report'.  V případě, že
-            report není specifikován, nebo nejde o řetězec, je tento argument
-            irelevantní.
+          content -- additional content to be displayed under the message in a
+            possibly scrollable view.  May be passed as 'lcg.Content' instance
+            which is exported and displayed in an HTML component or a string
+            which is displayed as plain text.
 
         """
         assert isinstance(title, basestring), title
-        assert report is None or isinstance(report, (basestring, lcg.Content)), report
-        assert report_format is None or \
-            report_format in pytis.util.public_attr_values(TextFormat), report_format
+        assert content is None or isinstance(content, (basestring, lcg.Content)), content
         super(GenericDialog, self).__init__(parent)
         self._title = unistr(title)
-        self._report = report
-        self._report_format = report_format
+        self._content = content
         self._shown = False
 
     def _create_dialog(self):
@@ -189,7 +183,7 @@ class GenericDialog(Dialog):
 
         """
         style = self._STYLE
-        if self._report is not None:
+        if self._content is not None:
             style |= wx.RESIZE_BORDER
         self._dialog = dialog = wx.Dialog(self._parent, title=self._title, style=style)
         self._want_focus = None
@@ -215,11 +209,15 @@ class GenericDialog(Dialog):
         dialog = self._dialog
         sizer = wx.BoxSizer(wx.VERTICAL)
         self._create_content(sizer)
-        if self._report is not None:
-            report = wx_text_view(dialog, self._report, format=self._report_format)
-            if self._report_format == TextFormat.PLAIN:
-                report.SetMinSize((300, report.MinSize.height))
-            sizer.Add(report, 1, wx.EXPAND)
+        if self._content is not None:
+            if isinstance(self._content, basestring):
+                content_format = TextFormat.PLAIN
+            else:
+                content_format = None
+            text_view = wx_text_view(dialog, self._content, format=content_format)
+            if content_format == TextFormat.PLAIN:
+                text_view.SetMinSize((300, text_view.MinSize.height))
+            sizer.Add(text_view, 1, wx.EXPAND)
         buttons = self._buttons()
         default_button = self._default_button(buttons)
         self._buttons_map = {}
@@ -407,7 +405,7 @@ class Message(GenericDialog):
             message = unistr(message)
             if not icon:
                 # Only supply the default icon if message is given.  This will prevent
-                # a useless icon above the report widget.
+                # a useless icon above the 'content' widget.
                 icon = self.ICON_INFO
         self._message = message
         self._icon = icon
@@ -926,8 +924,8 @@ class CheckListDialog(Message):
     """A question dialog with a list of checkable items.
 
     The dialog displays a question with a list of items and a checkbox for each
-    of the items.  The question is passed as 'message' (report arguments are
-    actually allowed too as in 'Message').
+    of the items.  The question is passed as 'message' ('content' is allowed
+    too as in 'Message').
 
     The result returned by the `run()' method is a sequence of boolean values,
     one for each item of 'items' passed to the constructor.  The value is True

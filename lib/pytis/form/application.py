@@ -1445,16 +1445,6 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
     def _set_recent_directory(self, cmode, context, directory):
         self._recent_directories[':'.join((cmode, context))] = directory
 
-    def _dialog_content_kwargs(self, content):
-        if not content:
-            return dict()
-        elif isinstance(content, lcg.Content):
-            return dict(report=content)
-        elif isinstance(content, basestring):
-            return dict(report=content, report_format=TextFormat.PLAIN)
-        else:
-            raise ProgramError("Invalid 'content': {}".format(content))
-
     class _ExposedFileWrapper(object):
         """Wrapper over wrapper to hide difficiencies of legacy ExposedFileWrapper.
 
@@ -1695,21 +1685,19 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
 
     def api_message(self, message=None, title=None, content=None):
         return self.run_dialog(dialog.Message, message, title=title or _("Message"),
-                               **self._dialog_content_kwargs(content))
+                               content=content)
 
     def api_warning(self, message=None, title=None, content=None):
         return self.run_dialog(dialog.Warning, message, title=title or _("Warning"),
-                               **self._dialog_content_kwargs(content))
+                               content=content)
 
     def api_error(self, message=None, title=None, content=None):
-        return self.run_dialog(dialog.Error, message, title=title or _("Error"),
-                               **self._dialog_content_kwargs(content))
+        return self.run_dialog(dialog.Error, message, title=title or _("Error"), content=content)
 
     def api_question(self, message, answers=None, default=None, title=None, content=None,
                      timeout=None):
         return self.run_dialog(dialog.Question, message, title=title or _("Question"),
-                               answers=answers, default=default, timeout=timeout,
-                               **self._dialog_content_kwargs(content))
+                               answers=answers, default=default, timeout=timeout, content=content)
 
     def api_delete_record_question(self, message=None):
         log(EVENT, 'Record deletion dialog')
