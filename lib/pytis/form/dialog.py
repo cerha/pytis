@@ -488,14 +488,22 @@ class Question(Message):
 
         Arguments:
 
-          answers -- sequence of string labels to construct available buttons
-            for dialog submission.  If None, the default buttons are 'Yes' and
-            'No'.
+          answers -- sequence of available answers to be presented as dialog
+            submit buttons.  If None, the default buttons are 'Yes' returning
+            True when pressed and 'No' returning False.  If not None the items
+            of the sequence may be strings or dictionaries.  If strings, these
+            are the labels of dialog submit buttons which return the string
+            label itself when pressed.  Using dictionaries allows more control.
+            Each dictionary may have the following keys: 'label' (string) is
+            the button label, 'value' is the value returned by the dialog when
+            the button is pressed, 'descr' is the button tooltip and 'icon' is
+            the icon name (as in 'get_icon()').  Only 'label' is mandatory,
+            others are None by default.
 
-          default -- The initially selected answer.  If default answers 'Yes'
-            and 'No' are used, True and None stand for 'Yes' and False for
-            'No'.  With explicitly defined answers the string value
-            corresponding to one of the options is expected.
+          default -- The initially selected answer value.  This means True or
+            False for the default answers 'Yes' and 'No', the button label for
+            answers passed as strings or the corresponding 'value' for the
+            answers passed as dictionaries.
 
           timeout -- dialog timeout in seconds; integer.  When the dialog is
             shown for more than the given time, it gets automatically closed
@@ -510,8 +518,13 @@ class Question(Message):
         self._timeout = timeout
 
     def _buttons(self):
+        def button(answer):
+            if isinstance(answer, dict):
+                return self.Button(**answer)
+            else:
+                return self.Button(answer, value=answer)
         if self._answers is not None:
-            return [self.Button(answer, value=answer) for answer in self._answers]
+            return [button(answer) for answer in self._answers]
         else:
             return (self.BUTTON_YES, self.BUTTON_NO)
 
