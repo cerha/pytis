@@ -19,6 +19,7 @@
 from __future__ import print_function
 from __future__ import unicode_literals
 
+import lcg
 import os
 import sys
 import time
@@ -30,7 +31,7 @@ import pytis.util
 import pytis.data as pd
 
 from pytis.api import app
-from pytis.presentation import StatusField, SharedParams, Menu, MenuItem, MenuSeparator
+from pytis.presentation import StatusField, SharedParams, Menu, MenuItem, MenuSeparator, TextFormat
 from pytis.extensions import mf, bf
 from pytis.util import log, OPERATIONAL, public_attr_values
 _ = pytis.util.translations('pytis-demo')
@@ -138,6 +139,15 @@ class Application(pytis.presentation.Application):
         from pytis.presentation import Button, Field, FieldSet, HGroup
         import pytis.form.dialog as dialog
         import datetime
+        p1, p2 = (
+            'Lorem ipsum dolor sit amet, consectetur adipisici elit, sed eiusmod tempora\n'
+            'incidunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud\n'
+            'exercitation ullamco laboris nisi ut aliquid ex ea commodi consequat.',
+            'Quis aute iure reprehenderit in voluptate velit esse cillum dolore eu\n'
+            'fugiat nulla pariatur. Excepteur sint obcaecat cupiditat non proident, sunt in\n'
+            'culpa qui officia deserunt mollit anim id est laborum.'
+        )
+        html = '<h1>Lorem ipsum</h1>\n<p>\n{}\n</p>\n<p>\n{}\n</p>\n'.format(p1, p2)
 
         def test(f, *args, **kwargs):
             while True:
@@ -160,12 +170,20 @@ class Application(pytis.presentation.Application):
         except:
             einfo = sys.exc_info()
 
-        # We are misusing an input form just because it allows us the lay the buttons out nicely.
+        # We are using an input form just because it allows us to lay the buttons out nicely.
         app.input_form(_("Dialog test"), (Field('x'),), layout=HGroup((
-            FieldSet(_("Messages"), (
+            FieldSet(_("Simple announcements"), (
                 button(_("Message"), app.message, _("Informational message.")),
                 button(_("Warning"), app.warning, _("Something is dangerous.")),
                 button(_("Error"), app.error, _("Something failed.")),
+            )),
+            FieldSet(_("Announcements with additional content"), (
+                button(_("Message with plain text"), app.message,
+                       _("This is the HTML source code:"), content=html),
+                button(_("HTML cotnent without message"), app.message,
+                       content=pytis.util.content(html, format=TextFormat.HTML)),
+                button(_("LCG content"), app.message,
+                       content=lcg.sec('Lorem ipsum', (lcg.p(p1), lcg.p(p2)))),
             )),
             FieldSet(_("Progress dialogs"), (
                 button(_("Operation with time measures"), self._measured_progress_dialog_test),
