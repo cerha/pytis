@@ -204,8 +204,19 @@ class Application(pytis.presentation.Application):
                        _("Question with the default answer set to '%s'.", _("Yes")),
                        default=True),
                 button(_("Question with answers"), app.question,
-                       _("Question with multiple answers."),
+                       _("Question with multiple answers defined just by labels."),
                        answers=(_("Next"), _("Previous"), _("Cancel"))),
+                button(_("Answers with values and icons"), app.question,
+                       _("Question with multiple answers, where each answer\n"
+                         "has a given label, return value, icon and tooltip."),
+                       answers=(
+                           dict(label=_("Next"), icon='go-forward', value='next',
+                                descr=_("Proceed to the next item.")),
+                           dict(label=_("Previous"), icon='go-back', value='prev',
+                                descr=_("Return to the previous item.")),
+                           dict(label= _("Cancel"), icon='cancel',
+                                descr=_("Get back to the current item.")),
+                       )),
             )),
             FieldSet(_("Internal dialogs"), (
                 run_dialog_button(dialog.Calendar, date=datetime.date.today()),
