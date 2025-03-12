@@ -805,8 +805,11 @@ class BugReport(GenericDialog):
     The return value is True if exit is requested or False otherwise.
 
     """
-    BUTTON_IGNORE = GenericDialog.Button(_("Ignore"), value=False, icon='submit')
-    BUTTON_EXIT = GenericDialog.Button(_("Exit application"), value=True, icon=wx.ART_QUIT)
+    BUTTON_IGNORE = GenericDialog.Button(_("Ignore"), value=False, icon='submit',
+                                         descr=_("Try to continue as if nothing happened "
+                                                 "(may not work)."))
+    BUTTON_EXIT = GenericDialog.Button(_("Exit application"), value=True, icon=wx.ART_QUIT,
+                                       descr=_("Abort the operation and exit."))
 
     _BUTTONS = (BUTTON_IGNORE, BUTTON_EXIT)
     _DEFAULT_BUTTON = BUTTON_IGNORE
