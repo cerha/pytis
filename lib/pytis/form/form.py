@@ -3090,16 +3090,28 @@ class EditForm(RecordForm, TitledForm, Refreshable):
                 remaining = self._inserted_data_len - (self._inserted_data_index + 1)
             else:
                 remaining = None
-            next_, abort, back = _("Next record"), _("Abort batch"), _("Back")
             if remaining == 0:
-                answer = app.question(
+                question = (
                     _(u"You are leaving the form without saving the current record\n"
                       u"while at the last record of batch insertion.") + '\n\n' +
                     _(u"Do you really want to quit without saving?"),
-                    answers=(abort, back),
+                )
+                answers = (
+                    dict(label=_("Abort without saving"), icon='no', value=True,
+                         descr=_("Abort insertion without saving the current record.")),
+                    dict(label= _("Back"), icon='undo', value=False,
+                         descr=_("Return to the current record.")),
                 )
             else:
-                answer = app.question(
+                answers = (
+                    dict(label=_("Next record"), icon='go-forward', value='next',
+                         descr=_("Advance to the next record in the batch")),
+                    dict(label=_("Abort batch"), icon='no', value=True,
+                         descr=_("Skip the rest of the batch")),
+                    dict(label= _("Back"), icon='undo', value=False,
+                         descr=_("Return to the current record")),
+                )
+                question = (
                     _(u"You are leaving the form without saving the current record\n"
                       u"during batch insertion.") + "\n\n" +
                     (_.ngettext(
@@ -3108,19 +3120,15 @@ class EditForm(RecordForm, TitledForm, Refreshable):
                         u"There are %d more records after the current one until "
                         u"the end of the batch.",
                         remaining) + "\n\n" if remaining is not None else '') +
-                    _(u"Do you want to:\n"
-                      u"  • advance to the next record in the batch ({}),\n"
-                      u"  • skip the rest of the batch ({}),\n"
-                      u"  • return to the current record ({})?").format(next_, abort, back),
-                    answers=(next_, abort, back),
+                    _(u"Do you want to:") + "\n" +
+                    ',\n'.join([u"  • {descr} ({label})".format(**a) for a in answers]) + '?'
                 )
-            if answer == next_:
+            result = app.question(question, answers=answers)
+            if result == 'next':
                 self._load_next_row()
                 return False
-            elif answer == abort:
-                return True
             else:
-                return False
+                return result
         return True
 
     # Command handling
