@@ -148,7 +148,7 @@ class GenericDialog(Dialog):
     _HELP_TOPIC = 'dialog'
     _STYLE = wx.CAPTION | wx.CLOSE_BOX | wx.MINIMIZE_BOX | wx.SYSTEM_MENU
 
-    def __init__(self, parent, title=None, report=None, report_format=None, report_size=(None, None)):
+    def __init__(self, parent, title=None, report=None, report_format=None):
         """Initialize the dialog.
 
         Arguments:
@@ -163,22 +163,16 @@ class GenericDialog(Dialog):
             nakládáno se vstupním textem argumentu 'report'.  V případě, že
             report není specifikován, nebo nejde o řetězec, je tento argument
             irelevantní.
-          report_size -- report window size as a pair of integers (width,
-            height) in characters.  If any of the numbers is 'None' given size
-            will be will automatically accommodate to the size of the contents
-            (for plain text) or use a default value.
 
         """
         assert isinstance(title, basestring), title
         assert report is None or isinstance(report, (basestring, lcg.Content)), report
         assert report_format is None or \
             report_format in pytis.util.public_attr_values(TextFormat), report_format
-        assert isinstance(report_size, (list, tuple)) and len(report_size) == 2, report_size
         super(GenericDialog, self).__init__(parent)
         self._title = unistr(title)
         self._report = report
         self._report_format = report_format
-        self._report_size = report_size
         self._shown = False
 
     def _create_dialog(self):
@@ -222,10 +216,7 @@ class GenericDialog(Dialog):
         sizer = wx.BoxSizer(wx.VERTICAL)
         self._create_content(sizer)
         if self._report is not None:
-            report = wx_text_view(dialog, self._report,
-                                  format=self._report_format,
-                                  width=self._report_size[0],
-                                  height=self._report_size[1])
+            report = wx_text_view(dialog, self._report, format=self._report_format)
             if self._report_format == TextFormat.PLAIN:
                 report.SetMinSize((300, report.MinSize.height))
             sizer.Add(report, 1, wx.EXPAND)
