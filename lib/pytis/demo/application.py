@@ -152,9 +152,14 @@ class Application(pytis.presentation.Application):
         def test(f, *args, **kwargs):
             while True:
                 result = f(*args, **kwargs)
-                if app.question(title=("Dialog test result"),
-                                message=_("The returned value:") + "\n\n" + repr(result),
-                                answers=(repeat, done), default=done) == done:
+                if not app.question(
+                        title=("Dialog test result"),
+                        message=_("The returned value:") + "\n\n" + repr(result),
+                        answers=(dict(label=_("Repeat"), icon='undo', value=True,
+                                      descr=_("Run the same dialog again.")),
+                                 dict(label=_("Done"), icon='ok',
+                                      descr=_("Back to dialog test control panel."))),
+                ):
                     break
 
         def button(label, *args, **kwargs):
@@ -164,7 +169,6 @@ class Application(pytis.presentation.Application):
             return Button(cls.__name__,
                           lambda r: test(pytis.form.app.run_dialog, cls, *args, **kwargs))
 
-        repeat, done = _("Repeat"), _("Done")
         try:
             raise Exception("BugReport dialog test")
         except:
