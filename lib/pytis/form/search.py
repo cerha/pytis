@@ -129,7 +129,7 @@ class SFSDialog(GenericDialog):
         panel.SetMinSize((label_ctrl.GetSize().width + 12, height))
         return panel
 
-    def _create_content(self, sizer):
+    def _create_main_content(self, sizer):
         self._panel = panel = wx.ScrolledWindow(self._dialog, style=wx.TAB_TRAVERSAL)
         panel_sizer = wx.BoxSizer(wx.VERTICAL)
         self._create_scrolled_panel_content(panel_sizer)
@@ -702,8 +702,8 @@ class FilterDialog(SFDialog):
         super(FilterDialog, self).__init__(parent, columns, row, **kwargs)
         self._compute_aggregate = compute_aggregate
 
-    def _create_content(self, sizer):
-        super(FilterDialog, self)._create_content(sizer)
+    def _create_main_content(self, sizer):
+        super(FilterDialog, self)._create_main_content(sizer)
         cp = wx.CollapsiblePane(self._dialog, label=_("Aggregation functions"))
         self._handle_keys(cp)
         pane = cp.GetPane()

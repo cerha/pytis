@@ -199,16 +199,16 @@ class GenericDialog(Dialog):
     def _create_dialog_elements(self):
         """Build the dialog UI.
 
-        The main dialog content is created by calling '_create_content()' and
-        submit buttons are appended underneath.
+        The main dialog content is created by calling '_create_main_content()' and
+        'content' view and submit buttons are appended underneath.
 
-        Most derived classes will just override '_create_content()' to
+        Most derived classes will just override '_create_main_content()' to
         customize dialog appearance.
 
         """
         dialog = self._dialog
         sizer = wx.BoxSizer(wx.VERTICAL)
-        self._create_content(sizer)
+        self._create_main_content(sizer)
         if self._content is not None:
             if isinstance(self._content, basestring):
                 content_format = TextFormat.PLAIN
@@ -237,7 +237,7 @@ class GenericDialog(Dialog):
                     wxbutton.SetDefault()
                     wxbutton.SetFocus()
                     if not self._want_focus:
-                        # Note: Widgets created in _create_content() may override self._want_focus.
+                        # Note: Widgets created in _create_main_content() may override self._want_focus.
                         self._want_focus = wxbutton
                     self._default_button_instance = wxbutton
                 max_button_height = max(wxbutton.Size.height, max_button_height)
@@ -253,7 +253,7 @@ class GenericDialog(Dialog):
         sizer.Fit(dialog)
         wx_callback(wx.EVT_IDLE, dialog, self._on_idle)
 
-    def _create_content(self, sizer):
+    def _create_main_content(self, sizer):
         """Create the main dialog content and add it to given top level sizer.
 
         Builds the main dialog content area above the dialog buttons.
@@ -426,7 +426,7 @@ class Message(GenericDialog):
             for i in range(10):
                 pytis.form.app.wx_yield(full=True)
 
-    def _create_content(self, sizer):
+    def _create_main_content(self, sizer):
         if self._message is not None:
             self._message_display = wx.StaticText(self._dialog, wx.ID_ANY, self._message)
         if self._icon and self._message is not None:
@@ -621,8 +621,8 @@ class ProgressDialog(Message):
         else:
             return ()
 
-    def _create_content(self, sizer):
-        super(ProgressDialog, self)._create_content(sizer)
+    def _create_main_content(self, sizer):
+        super(ProgressDialog, self)._create_main_content(sizer)
         if self._show_progress:
             self._gauge = gauge = wx.Gauge(self._dialog, wx.ID_ANY, range=self._maximum,
                                            style=wx.GA_HORIZONTAL | wx.GA_SMOOTH | wx.GA_PROGRESS)
@@ -753,7 +753,7 @@ class Calendar(GenericDialog):
             assert isinstance(date, datetime.date), date
             self._date = date
 
-    def _create_content(self, sizer):
+    def _create_main_content(self, sizer):
         cal = wx.adv.GenericCalendarCtrl(self._dialog, -1, style=self._style)
         # This makes year +/- buttons visible, but the calendar is not centered (not nice).
         cal.SetMinSize((cal.Size.width + 40, cal.Size.height))
@@ -816,7 +816,7 @@ class BugReport(GenericDialog):
         super(BugReport, self).__init__(parent, title=_("Unhandled exception"))
         self._einfo = einfo
 
-    def _create_content(self, sizer):
+    def _create_main_content(self, sizer):
         dialog = self._dialog
         label = wx.StaticText(dialog, -1, _("Program Error"))
         label.SetFont(wx.Font(18, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD,
@@ -951,8 +951,8 @@ class CheckListDialog(Message):
         self._columns = columns
         self._items = items
 
-    def _create_content(self, sizer):
-        super(CheckListDialog, self)._create_content(sizer)
+    def _create_main_content(self, sizer):
+        super(CheckListDialog, self)._create_main_content(sizer)
         self._checklist = checklist = wx.CheckListBox(
             self._dialog,
             choices=[label for state, label in self._items],
@@ -1028,8 +1028,8 @@ class AggregationSetupDialog(GenericDialog):
         self._group_by_columns = group_by_columns
         self._aggregation_columns = aggregation_columns
 
-    def _create_content(self, sizer):
-        super(AggregationSetupDialog, self)._create_content(sizer)
+    def _create_main_content(self, sizer):
+        super(AggregationSetupDialog, self)._create_main_content(sizer)
         self._name_control = wx_text_ctrl(self._dialog, value=self._name, length=50,
                                           tooltip=_("Enter the name for saving the view, or "
                                                     "leave empty, if you prefer not to save it."))
