@@ -3143,7 +3143,7 @@ class EditForm(RecordForm, TitledForm, Refreshable):
             result = self._commit_form(close=close)
             if result:
                 app.refresh()
-                if not close:
+                if not close and self._inserted_data:
                     self._load_next_row(report_success=True)
             return result
         finally:
