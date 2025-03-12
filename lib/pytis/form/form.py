@@ -3778,8 +3778,6 @@ class StructuredTextEditor(ResizableEditForm, PopupEditForm):
             if current_db_value != value_before_edits:
                 diff = pytis.util.html_diff(value_before_edits, current_db_value,
                                             _("Original text"), _("Concurrently changed version"))
-                revert, merge, ignore = (_(u"Discard my changes"), _(u"Merge"),
-                                         _(u"Ignore the concurrent changes"))
                 answer = app.question(
                     _("Someone else has changed the same text while you made your "
                       "modifications. You can see the overview of the changes below.\n"
@@ -3788,14 +3786,21 @@ class StructuredTextEditor(ResizableEditForm, PopupEditForm):
                       "were too extensive, you can try incorporating the below listed "
                       "changes into your version."),
                     title=_(u"Conflicting modifications"),
-                    report=diff, report_format=TextFormat.HTML,
-                    answers=(revert, ignore), # TODO: Add merge button.
+                    content=pytis.util.content(diff, format=TextFormat.HTML),
+                    answers=(
+                        dict(label=_(u"Discard my changes"), icon='undo', value='revert',
+                             descr=_("Use the new version currently present in the database.")),
+                        # TODO: Add merge button.
+                        #dict(label=_(u"Merge"), icon='', value='merge'),
+                        dict(label=_(u"Ignore the concurrent changes"), icon='no', value='ignore',
+                             descr=_("Use my version overwriting the concurrent version.")),
+                    ),
                 )
-                if answer == merge:
+                if answer == 'merge':
                     success, field_id = False, self._editor_field_id
-                elif answer == ignore:
+                elif answer == 'ignore':
                     pass
-                elif answer == revert:
+                elif answer == 'revert':
                     value = pytis.data.Value(row.type(self._editor_field_id), current_db_value)
                     row[self._editor_field_id] = value
         return success, field_id, msg
