@@ -1521,7 +1521,7 @@ class LookupForm(InnerForm):
         if f:
             with f:
                 data = f.read()
-            error, profiles = self._saved_settings.import_profiles(self._view, self._data, data)
+            error, profiles = self._saved_settings.import_profiles(data)
             if error:
                 app.error(error)
             else:
