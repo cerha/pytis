@@ -79,7 +79,7 @@ class SFSDialog(GenericDialog):
     """Common ancestor of all sorting/filtering/searching dialogs."""
 
     _TITLE = None
-    BUTTON_CLOSE = GenericDialog.Button(_("Close"), value=None)
+    BUTTON_CLOSE = GenericDialog.Button(_("Close"), icon='cancel', value=None)
     _BUTTONS = (BUTTON_CLOSE,)
 
     def __init__(self, parent, columns, col=None):
@@ -165,8 +165,8 @@ class SortingDialog(SFSDialog):
     """
 
     _TITLE = _("Sorting")
-    BUTTON_SORT = GenericDialog.Button(_("Sort"), value='sort')
-    BUTTON_RESET = GenericDialog.Button(_("Reset to default sorting"), value='reset')
+    BUTTON_SORT = GenericDialog.Button(_("Sort"), icon='submit', value='sort')
+    BUTTON_RESET = GenericDialog.Button(_("Reset to default sorting"), icon='undo', value='reset')
     _BUTTONS = (BUTTON_SORT, BUTTON_RESET) + SFSDialog._BUTTONS
     _DEFAULT_BUTTON = BUTTON_SORT
 
@@ -206,7 +206,7 @@ class SortingDialog(SFSDialog):
 
     def _create_scrolled_panel_content(self, sizer):
         super(SortingDialog, self)._create_scrolled_panel_content(sizer)
-        button = self._create_button(_("Add"), self._on_add,
+        button = self._create_button(_("Add"), self._on_add, icon='plus',
                                      tooltip=_("Add secondary sorting column."))
         sizer.Add(button, 0, wx.ALL | wx.CENTER, 5)
 
@@ -429,13 +429,13 @@ class SFDialog(SFSDialog):
         super(SFDialog, self)._create_scrolled_panel_content(sizer)
         button = self._create_button
         buttons = (
-            button(_("Add AND"), lambda e: self._on_add(),
+            button(_("Add AND"), lambda e: self._on_add(), icon='plus',
                    tooltip=_("Add a new condition in conjunction.")),
-            button(_("Add OR"), lambda e: self._on_add(or_=True),
+            button(_("Add OR"), lambda e: self._on_add(or_=True), icon='plus',
                    tooltip=_("Add a new condition in disjunction.")),
-            button(_("Remove all"), lambda e: self._on_reset(),
+            button(_("Remove all"), lambda e: self._on_reset(), icon='delete',
                    enabled=len(self._controls) > 1,
-                   tooltip=_("Remove all current conditions."))
+                   tooltip=_("Remove all current conditions.")),
         )
         bsizer = wx.BoxSizer(wx.HORIZONTAL)
         for b in buttons:
@@ -625,8 +625,8 @@ class SearchDialog(SFDialog):
     instance.
 
     """
-    BUTTON_NEXT = GenericDialog.Button(_("Next"), value='next')
-    BUTTON_PREVIOUS = GenericDialog.Button(_("Previous"), value='prev')
+    BUTTON_NEXT = GenericDialog.Button(_("Next"), icon='search-forward', value='next')
+    BUTTON_PREVIOUS = GenericDialog.Button(_("Previous"), icon='search-backwards', value='prev')
     _BUTTONS = (BUTTON_NEXT, BUTTON_PREVIOUS) + SFSDialog._BUTTONS
     _DEFAULT_BUTTON = BUTTON_NEXT
     _TITLE = _("Search")
@@ -667,8 +667,8 @@ class FilterDialog(SFDialog):
     wishes to unfilter the underlying form.
 
     """
-    BUTTON_FILTER = GenericDialog.Button(_("Filter"), value='filter')
-    BUTTON_UNFILTER = GenericDialog.Button(_("Unfilter"), value='unfilter')
+    BUTTON_FILTER = GenericDialog.Button(_("Filter"), icon='filter', value='filter')
+    BUTTON_UNFILTER = GenericDialog.Button(_("Unfilter"), icon='unfilter', value='unfilter')
     _BUTTONS = (BUTTON_FILTER, BUTTON_UNFILTER) + SFSDialog._BUTTONS
     _DEFAULT_BUTTON = BUTTON_FILTER
     _AGG_OPERATORS = (pytis.data.Data.AGG_COUNT,
