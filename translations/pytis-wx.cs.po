@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: pytis 0.1\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
 "POT-Creation-Date: 2025-02-24 10:19+0100\n"
-"PO-Revision-Date: 2025-02-13 16:11+0100\n"
+"PO-Revision-Date: 2025-03-17 15:47+0100\n"
 "Language-Team: Czech <wiking@lists.freebsoft.org>\n"
 "Language: cs\n"
 "MIME-Version: 1.0\n"
@@ -550,7 +550,7 @@ msgstr "Filtrovat záznamy podle zadaných podmínek."
 
 #: ../lib/pytis/form/commands_.py:564 ../lib/pytis/form/search.py:671
 msgid "Unfilter"
-msgstr "Zruš filtr"
+msgstr "Zrušit filtr"
 
 #: ../lib/pytis/form/commands_.py:565
 msgid "Cancel current filtering condition."
@@ -2800,7 +2800,7 @@ msgstr "Přidat novou podmínku v disjunkci (a nebo)"
 
 #: ../lib/pytis/form/search.py:436
 msgid "Remove all"
-msgstr "Odebrat vše"
+msgstr "Odstranit vše"
 
 #: ../lib/pytis/form/search.py:438
 msgid "Remove all current conditions."
