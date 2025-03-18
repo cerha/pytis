@@ -508,7 +508,7 @@ COMMAND_ICONS = (
 class UICommands(object):
     PYTIS_HELP = UICommand(
         Application.COMMAND_HELP(topic='pytis'),
-        _("Pytis Help"),
+        _("User interface handbook"),
         _("Open the user's manual describing work with the application in general"))
     HELP = UICommand(
         Form.COMMAND_HELP(),
