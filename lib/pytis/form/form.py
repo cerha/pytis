@@ -1463,9 +1463,7 @@ class LookupForm(InnerForm):
     def _cmd_delete_profile(self):
         self._saved_settings.drop_profile(self._current_profile.id())
         self._profiles.remove(self._current_profile)
-        profile_id = self._saved_settings.get('initial_profile') or self._view.profiles().default()
-        profile = find(profile_id, self._profiles, key=lambda p: p.id()) or self._profiles[0]
-        self._apply_profile(profile)
+        self._apply_profile(self.initial_profile())
 
     def _can_reload_profile(self):
         return self._current_profile_changed()
@@ -1725,6 +1723,10 @@ class LookupForm(InnerForm):
     def current_profile(self):
         """Return the current form profile as 'pytis.presentation.Profile' instance."""
         return self._current_profile
+
+    def initial_profile(self):
+        profile_id = self._saved_settings.get('initial_profile') or self._view.profiles().default()
+        return find(profile_id, self._profiles, key=lambda p: p.id()) or self._profiles[0]
 
     # Implementation of Public API 'pytis.api.Form'.
 

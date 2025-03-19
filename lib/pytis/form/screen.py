@@ -1222,7 +1222,7 @@ class ProfileSelectorPopup(wx.ComboPopup):
                                         wx.FONTWEIGHT_BOLD))
         ctrl.SetItemData(i, -1)
 
-    def _append_profile(self, profile, index, select=False, indent=''):
+    def _append_profile(self, profile, index, select=False, indent='', initial=False):
         ctrl = self._listctrl
         title = indent + profile.title()
         if profile.errors():
@@ -1230,6 +1230,9 @@ class ProfileSelectorPopup(wx.ComboPopup):
         i = ctrl.GetItemCount()
         ctrl.InsertItem(i, title)
         ctrl.SetItemData(i, index)
+        if initial:
+            # 0 is the star icon index in the image list created by ctrl.AssignImageList() below.
+            ctrl.SetItemImage(i, 0)
         if select:
             ctrl.Select(i)
 
@@ -1242,6 +1245,9 @@ class ProfileSelectorPopup(wx.ComboPopup):
         ctrl.InsertColumn(0, 'profile')
         ctrl.Bind(wx.EVT_LEFT_DOWN, self._on_left_down)
         ctrl.Bind(wx.EVT_MOTION, self._on_motion)
+        images = wx.ImageList(16, 16)
+        images.Add(get_icon('star'))
+        ctrl.AssignImageList(images, wx.IMAGE_LIST_SMALL)
         return True
 
     def GetControl(self):
@@ -1255,6 +1261,7 @@ class ProfileSelectorPopup(wx.ComboPopup):
         self._current_form = form = pytis.form.app.current_form()
         profiles = form.profiles()
         current = form.current_profile()
+        initial = form.initial_profile()
 
         def append_system_profiles(items, level=0):
             indent = 3 * level * ' '
@@ -1262,18 +1269,18 @@ class ProfileSelectorPopup(wx.ComboPopup):
                 if isinstance(item, pytis.presentation.Profile):
                     profile = find(item.id(), profiles, key=lambda p: p.id())
                     self._append_profile(profile, profiles.index(profile), profile is current,
-                                         indent=indent)
+                                         indent=indent, initial=profile is initial)
                 else:
                     self._append_label(indent + item.title(), False)
                     append_system_profiles(item.items(), level=level + 1)
         self._append_label(_("System Profiles"))
         # Default profile is always the first in form.profiles().
-        self._append_profile(profiles[0], 0, profiles[0] is current)
+        self._append_profile(profiles[0], 0, profiles[0] is current, initial=profiles[0] is initial)
         append_system_profiles(form.view().profiles())
         self._append_label(_("User Profiles"))
         for i, profile in enumerate(profiles):
             if profile.id().startswith(FormProfileManager.USER_PROFILE_PREFIX):
-                self._append_profile(profile, i, profile is current)
+                self._append_profile(profile, i, profile is current, initial=profile is initial)
         ctrl = self._listctrl
         ctrl.SetColumnWidth(0, minWidth)
         ctrl.SetSize((1000, 3000))  # Needed for GetViewRect to work consistently.
