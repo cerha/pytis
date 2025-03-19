@@ -2740,6 +2740,6 @@ def wx_toolbar(parent, items):
             toolbar.SetToolShortHelp(tool.GetId(), item.title())
             toolbar.SetToolLongHelp(tool.GetId(), item.descr())  # Doesn't seem to have effect...
             wx_callback(wx.EVT_UPDATE_UI, toolbar.Parent,
-                        lambda e: e.Enable(cmd.enabled(**args)), source=tool)
+                        lambda e, cmd=cmd, args=args: e.Enable(cmd.enabled(**args)), source=tool)
     toolbar.Realize()
     return toolbar
