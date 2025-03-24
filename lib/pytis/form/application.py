@@ -2169,6 +2169,15 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
                 # even work in Python 3 (which doesn't have buffer) old clients will
                 # not work with Python3 at all.
                 data = buffer(data)
+            # TODO: This is a temporary hack to avoid "TypeError: write()
+            # argument must be str, not bytes" when the application passes
+            # invalid type due to insufficient Python 2/3 transition.  The
+            # logs should be observed and this hack should be removed
+            # once the problem does not occur for "some" time.
+            if 'b' not in mode and isinstance(data, bytes):
+                log(OPERATIONAL, "TypeError: write_selected_file() 'data' argument must be str, "
+                    "not bytes when mode is '{}'.".format(mode), pytis.util.stack_info())
+                data = data.decode(encoding or 'utf-8')
             try:
                 f.write(data)
             finally:
