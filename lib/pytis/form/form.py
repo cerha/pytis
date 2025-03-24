@@ -1556,7 +1556,8 @@ class LookupForm(InnerForm):
     def _cmd_filter_by_value(self, column_id, value):
         if column_id not in [c.id() for c in self._lf_sfs_columns()]:
             app.echo(_(u"This column can not be used for filtering."), kind='error')
-        self.filter(pytis.data.EQ(column_id, value), append=True)
+        else:
+            self.filter(pytis.data.EQ(column_id, value), append=True)
 
     def _cmd_sort(self, col=None, direction=None, primary=False):
         """Change sorting.
