@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2024 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2025 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2017 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -48,7 +48,7 @@ import pytis.util
 from pytis.api import app
 from pytis.presentation import (
     AttachmentStorage, Button, CodebookSpec, Editable, Enumeration,
-    Field, HGroup, Orientation, PostProcess, PresentedRow, Command,
+    Field, HGroup, MenuItem, Orientation, PostProcess, PresentedRow, Command,
     SelectionType, TextFilter, TextFormat, MenuSeparator, computer
 )
 from pytis.util import (
