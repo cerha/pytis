@@ -2517,6 +2517,9 @@ class HandledAction(LegacyCommand):
     def __call__(self, handler, **kwargs):
         return Command(self._method, handler, **kwargs)
 
+# Backwards compatibility aliases for menu definition.  Remove after migrating all applications.
+# When removing, also remove the part marked by comment "Handle legacy menu commands."
+# in pytis.extensions.defs.
 Application.COMMAND_NEW_RECORD = LegacyCommand(Application.new_record)
 Application.COMMAND_RUN_FORM = LegacyCommand(Application.run_form)
 Application.COMMAND_RUN_PROCEDURE = LegacyCommand(Application.run_procedure)

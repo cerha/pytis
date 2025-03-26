@@ -65,6 +65,7 @@ def get_menu_defs():
 
     def menu_names(items):
         result = []
+        import pytis.form
         for item in items:
             if isinstance(item, Menu):
                 result.extend(menu_names(item.items))
@@ -76,6 +77,9 @@ def get_menu_defs():
                         result.append(specification)
                     else:
                         result.append(specification._spec_name())
+                # Handle legacy menu commands.
+                elif item.command.method == pytis.form.Application.run_form:
+                    result.append(item.command.args['name'])
         return result
 
     return pytis.util.remove_duplicates(menu_names(pytis.form.app.menu))
