@@ -949,10 +949,8 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             columns = self._fields
         else:
             columns = [self._view.field(cid) for cid in select_columns]
-        columns = [c for c in columns if c and not c.disable_column()]
-        import locale
-        columns.sort(key=lambda c: locale.strxfrm(c.column_label()))
-        return columns
+        return sorted([c for c in columns if c and not c.disable_column()],
+                      key=lambda col: pytis.util.strxfrm(col.column_label()))
 
     def _displayed_columns_menu(self, column_index):
         menu = [MenuItem(_("Display row headings"), command=ListForm.COMMAND_TOGGLE_ROW_LABELS(),

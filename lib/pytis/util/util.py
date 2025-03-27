@@ -740,6 +740,25 @@ def nreverse(list):
     return list
 
 
+def strxfrm(string):
+    """Return a string transformation for locale aware sorting.
+
+    Like, locale.strxfrm, but addresses some compatibility issues.
+
+    """
+    if sys.platform == 'darwin':
+        # locale.strxfrm sorts incorrectly on macOS and for some strings it even
+        # fails with "OSError: [Errno 22] Invalid argument".
+        # Normalize is not a 100% replacement for strxfrm, but at least improves the
+        # result sufficiently for the non-primary platform...
+        import unicodedata
+        return unicodedata.normalize('NFKD', string)
+    else:
+        import locale
+        return locale.strxfrm(string)
+
+
+
 def sameclass(o1, o2, strict=False):
     """Vrať pravdu, právě když 'o1' a 'o2' jsou instance téže třídy.
 

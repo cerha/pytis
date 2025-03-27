@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2024 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2025 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2002-2017 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -1192,10 +1192,7 @@ class PresentedRow(object):
                     choices = [x for x in choices if x.lower().startswith(prefix)]
                 else:
                     choices = list(choices)
-                import locale
-                # NOTE: locale.strxfrm() sorts incorrectly in cs_CZ locale (accented
-                # chars sorted to the end) on macOS.
-                choices.sort(key=lambda x: locale.strxfrm(x.lower()))
+                choices.sort(key=lambda x: pytis.util.strxfrm(x.lower()))
             if not (len(choices) == 1 and prefix and choices[0].lower() == prefix):
                 return choices
         return []

@@ -779,6 +779,4 @@ def sfs_columns(fields, data, labelfunc=Field.label):
         column = data.find_column(id)
         if column is not None and label and data.permitted(id, pytis.data.Permission.VIEW):
             columns.append(SFSColumn(id, column.type(), label))
-    import locale
-    columns.sort(key=lambda c: locale.strxfrm(c.label()))
-    return columns
+    return sorted(columns, key=lambda c: pytis.util.strxfrm(c.label()))
