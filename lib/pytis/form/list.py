@@ -971,7 +971,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                 for c in hidden_columns
             ]))
         else:
-            menu.append(MenuItem(_("Add column"), help=c.descr(),
+            menu.append(MenuItem(_("Add column"),
                                  command=Application.COMMAND_NOTHING(enabled=False)))
         menu.append(MenuItem(_("Displayed columns"), command=ListForm.COMMAND_TOGGLE_COLUMNS()))
         return menu
