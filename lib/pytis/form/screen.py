@@ -2392,37 +2392,48 @@ def get_icon(icon_id, type=wx.ART_MENU, size=(16, 16)):
 
     Arguments:
 
-      icon_id -- string icon identifier.  It may be either one of 'wx.ART_*'
-        constants or a filename.  The icons returned for wx constants should
-        honour the pre-defined symbol in the current user interface theme.
-        Identifiers not corresponding to wx constants are used as icon file
-        names within the 'pytis.config.icon_dir'.  The '.png' suffix is added
-        automatically, so the identifier consists just of a base name.
-      type, size -- only relevant when icon_id as a 'wx.ART_*' constant.  Size
-        is also used when icon is an SVG file.
+      icon_id -- icon identifier.  It may be either one of 'wx.ART_*' constants
+        resolved by 'wx.ArtProvider' (refers to icons in the current user
+        interface theme) or a string identifier used to search for the icon
+        file within 'pytis.config.icon_path' with either '.png' or '.svg' file
+        name extension (added automatically, so the identifier is just the the
+        base file name without extension).
+      type -- only relevant for 'wx.ArtProvider' icons.
+      size -- unused for PNG icons, selects the preferred size (if available)
+        for 'wx.ArtProvider' icons and used to scale SVG icons to given target
+        bitmap size.
 
-    If an icon for given identifier is not found, returns None.
+    Returns None if an icon for given identifier is not found.
 
     """
+    def find_file(icon_id):
+        for directory in pytis.config.icon_path:
+            for ext in ('.png', '.svg'):
+                filename = os.path.join(directory, icon_id) + ext
+                if os.path.exists(filename):
+                    return filename
+        return None
+
     if icon_id is None:
         bitmap = None
     elif (sys.version_info[0] == 2 and icon_id.startswith('wx') or
           sys.version_info[0] > 2 and isinstance(icon_id, bytes)):
         bitmap = wx.ArtProvider.GetBitmap(icon_id, type, size)
     else:
-        filename = os.path.join(pytis.config.icon_dir, icon_id)
-        if os.path.exists(filename + '.png'):
-            img = wx.Image(filename + '.png', type=wx.BITMAP_TYPE_PNG)
-        elif os.path.exists(filename + '.svg'):
+        filename = find_file(icon_id)
+        if not filename:
+            log(OPERATIONAL, "Could not find icon file {}.(svg|png):".format(icon_id),
+                pytis.config.icon_path)
+            return None
+        if filename.endswith('.png'):
+            img = wx.Image(filename, type=wx.BITMAP_TYPE_PNG)
+        else:
             import cairosvg
-            with open(filename + '.svg') as f:
+            with open(filename) as f:
                 data = f.read()
             png = cairosvg.svg2png(data, parent_width=size[0], parent_height=size[1])
-            img = wx.Image(io.BytesIO(png), wx.BITMAP_TYPE_PNG)
-            img = img.Scale(size[0], size[1], wx.IMAGE_QUALITY_HIGH)
-        else:
-            log(OPERATIONAL, "Could not find icon file:", filename + '.(svg|png)')
-            return None
+            img = wx.Image(io.BytesIO(png), wx.BITMAP_TYPE_PNG
+                           ).Scale(size[0], size[1], wx.IMAGE_QUALITY_HIGH)
         bitmap = wx.Bitmap(img)
     if bitmap and bitmap.IsOk():
         return bitmap

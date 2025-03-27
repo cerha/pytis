@@ -14,5 +14,4 @@ dbhost = None
 
 base_dir = os.path.dirname(__file__)
 help_dir = os.path.join(base_dir, 'help')
-icon_dir = os.path.join(base_dir, 'icons')
 print_spec_dir = os.path.join(base_dir, 'lib', 'pytis', 'demo', 'output')

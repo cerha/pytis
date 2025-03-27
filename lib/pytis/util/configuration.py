@@ -602,7 +602,21 @@ class Configuration(object):
         Může být zadán absolutně i relativně vzhledem k aktuálnímu adresáři.
 
         """
-        _DEFAULT = './icons'
+        def default(self):
+            d = os.path.dirname
+            return os.path.join(d(d(d(pytis.__file__))), 'icons')
+
+
+    class _Option_icon_path(PathOption):
+        u"""Sequence of directory names to look for icon files.
+
+        The contained directory names may be either absolute or relative to the
+        current working directory.
+
+        """
+        def default(self):
+            return (self._configuration.icon_dir,)
+
 
     class _Option_tmp_dir(StringOption):
         u"""Adresář pro dočasné pomocné soubory."""
@@ -1093,7 +1107,7 @@ class Configuration(object):
         The sequence consists of triplets (title, icon, command), where 'title'
         is the label for the UI layout selector (basestring), 'icon' is the
         corresponding icon identifier for 'pytis.form.get_icon()' -- name of a
-        file located in 'config.icon_dir' without the '.png' suffix
+        file located in 'config.icon_path' without suffix (.png or .svg)
         (basestring) and 'command' is the system command to be invoked to
         switch to given layout (basestring).
 
