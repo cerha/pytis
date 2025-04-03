@@ -1062,13 +1062,10 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
 
     # TODO: This can be removed when all calls are turned to app.run_procedure().
     @Command.define
-    def run_procedure(self, spec_name, proc_name, args=None, enabled=None,
-                      block_refresh=False, **kwargs):
-        return self.api_run_procedure(spec_name, proc_name, args=args, enabled=enabled,
-                                      block_refresh=block_refresh, **kwargs)
+    def run_procedure(self, spec_name, proc_name, enabled=None, **kwargs):
+        return self.api_run_procedure(spec_name, proc_name, **kwargs)
 
-    def _can_run_procedure(self, spec_name, proc_name, args=None, enabled=None,
-                           block_refresh=False, **kwargs):
+    def _can_run_procedure(self, spec_name, proc_name, enabled=None, **kwargs):
         if not self._public_spec(spec_name):
             return False
         return enabled is None and True or enabled(**kwargs)
