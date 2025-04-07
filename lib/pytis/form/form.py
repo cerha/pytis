@@ -3391,36 +3391,31 @@ class PopupEditForm(PopupForm, EditForm):
         box.Fit(panel)
         return field
 
-    def _buttons(self):
+    def _create_buttons(self):
         buttons = (
-            dict(label=_("Ok"), icon='submit',
-                 tooltip=(_("Save the current record and advance to the next one.")
-                          if self._inserted_data else
-                          _("Save the record and close the form.")),
-                 command=Command(self.commit_record, close=self._inserted_data is None,
-                                 advance=self._inserted_data is not None)),
-            dict(label=_("Cancel"), icon='cancel', id=wx.ID_CANCEL,
-                 tooltip=_("Close the form without saving"),
-                 command=Command(self.leave_form)),
+            wx_button(self, label=_("Ok"), icon='submit',
+                      tooltip=(_("Save the current record and advance to the next one.")
+                               if self._inserted_data else
+                               _("Save the record and close the form.")),
+                      command=Command(self.commit_record, close=self._inserted_data is None,
+                                      advance=self._inserted_data is not None)),
+            wx_button(self, label=_("Cancel"), icon='cancel', id=wx.ID_CANCEL,
+                      tooltip=_("Close the form without saving"),
+                      command=Command(self.leave_form)),
         )
         if self._mode == self.MODE_INSERT and self._multi_insert and not self._inserted_data:
             buttons += (
-                dict(label=_("Next"), icon='forward', id=wx.ID_FORWARD,
-                     tooltip=_("Save the current record without closing the form "
-                               "to allow next record insertion."),
-                     command=Command(self.commit_record, close=False, advance=True)),
+                wx_button(self, label=_("Next"), icon='forward', id=wx.ID_FORWARD,
+                          tooltip=_("Save the current record without closing the form "
+                                    "to allow next record insertion."),
+                          command=Command(self.commit_record, close=False, advance=True)),
             )
-        return buttons
-
-    def _create_buttons(self):
         sizer = wx.BoxSizer(wx.HORIZONTAL)
-        for i, kwargs in enumerate(self._buttons()):
-            button = wx_button(self, **kwargs)
-            if i == 0:
-                button.SetDefault()
+        for button in buttons:
             wx_callback(wx.EVT_KEY_DOWN, button, self.on_key_down)
-            self._tab_navigated_widgets.append(button)
             sizer.Add(button, 0, wx.ALL, 20)
+        self._tab_navigated_widgets.extend(buttons)
+        buttons[0].SetDefault()
         return sizer
 
     def _apply_profile(self, profile, refresh=True):
