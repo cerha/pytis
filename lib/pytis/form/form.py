@@ -3189,20 +3189,20 @@ class EditForm(RecordForm, TitledForm, Refreshable):
     # Commands
 
     @Command.define
-    def commit_record(self, close=True):
+    def commit_record(self, close=True, advance=False):
         try:
             # TODO: Busy cursor doesn't work over X2Go!
             busy_cursor(True)
             result = self._commit_form(close=close)
             if result:
                 app.refresh()
-                if not close:
+                if advance:
                     self._load_next_row(report_success=True)
             return result
         finally:
             busy_cursor(False)
 
-    def _can_commit_record(self, close=True):
+    def _can_commit_record(self, close=True, advance=False):
         return self._mode != self.MODE_VIEW
 
     @Command.define
@@ -3397,7 +3397,8 @@ class PopupEditForm(PopupForm, EditForm):
                  tooltip=(_("Save the current record and advance to the next one.")
                           if self._inserted_data else
                           _("Save the record and close the form.")),
-                 command=Command(self.commit_record, close=not self._inserted_data)),
+                 command=Command(self.commit_record, close=self._inserted_data is None,
+                                 advance=self._inserted_data is not None)),
             dict(label=_("Cancel"), icon='cancel', id=wx.ID_CANCEL,
                  tooltip=_("Close the form without saving"),
                  command=Command(self.leave_form)),
@@ -3407,7 +3408,7 @@ class PopupEditForm(PopupForm, EditForm):
                 dict(label=_("Next"), icon='forward', id=wx.ID_FORWARD,
                      tooltip=_("Save the current record without closing the form "
                                "to allow next record insertion."),
-                     command=Command(self.commit_record, close=False)),
+                     command=Command(self.commit_record, close=False, advance=True)),
             )
         return buttons
 
@@ -3429,18 +3430,10 @@ class PopupEditForm(PopupForm, EditForm):
         # inherit profiles at all but that's a little too complicated for now.
         pass
 
-    @Command.define
-    def commit_record(self, close=True, next=False):
-        result = super(PopupEditForm, self).commit_record(close=close and not next)
-        if result and next:
-            app.echo(_("Record saved"))
-            self._load_next_row()
-        return result
-
-    def _can_commit_record(self, close=True, next=False):
-        if next and (self._mode != self.MODE_INSERT or not self._multi_insert):
+    def _can_commit_record(self, close=True, advance=False):
+        if advance and (self._mode != self.MODE_INSERT or not self._multi_insert):
             return False
-        return super(PopupEditForm, self)._can_commit_record()
+        return super(PopupEditForm, self)._can_commit_record(close=close, advance=advance)
 
     @Command.define
     def leave_form(self):

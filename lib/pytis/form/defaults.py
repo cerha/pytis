@@ -99,7 +99,7 @@ DEFAULT_KEYMAP = (
     ('Shift--', Command(FoldableForm.collapse_all)),
     ('Ctrl-Shift-+', Command(FoldableForm.select_folding_level)),
     ('Ctrl-Enter', Command(EditForm.commit_record)),
-    ('Ctrl-Shift-Enter', Command(EditForm.commit_record, next=True)),
+    ('Ctrl-Shift-Enter', Command(EditForm.commit_record, close=False, advance=True)),
     ('Tab', Command(EditForm.navigate)),
     ('Shift-Tab', Command(EditForm.navigate, back=True)),
     ('Next', Command(BrowsableShowForm.next_record)),
