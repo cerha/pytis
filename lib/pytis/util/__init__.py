@@ -21,7 +21,7 @@ from __future__ import print_function
 from .util import (  # noqa: F401
     UNDEFINED, ProgramError, InvalidAccessError,
     FileError, NotImplementedException, Counter, Popen,
-    XStack, Attribute, Structure, DBParams,
+    Attribute, Structure, DBParams,
     object_2_5, identity, is_, xor, xtuple, xlist,
     position, find, assoc, rassoc, remove_duplicates, flatten,
     nreverse, strxfrm, sameclass, public_attributes,

@@ -553,15 +553,10 @@ class Form(wx.Panel, KeyHandler, CallbackHandler, CommandHandler):
         else:
             return False
 
-    def resize(self):
-        """Resize the form to fit the parent window."""
-        self.Size = self.Parent.ClientSize
-
     def show(self):
         """Make the form active to user interaction and display it visually."""
         self.Enable(True)
         self.Show(True)
-        self.focus()
 
     def hide(self):
         """Make the form inactive to user interaction and hide it visually."""
@@ -903,41 +898,6 @@ class PopupForm(object):
         result = self._result
         self._close(force=True)
         return result
-
-
-class TitledForm(object):
-    """Mix-in třída pro formuláře s titulkem.
-
-    Lze využít buďto pouze metodu '_create_caption()', která vytváří samotný
-    text titulku, nebo metodu '_create_title_bar()', která přidává 3d panel.
-
-    """
-    _TITLE_BORDER_WIDTH = 2
-
-    def _create_caption(self, parent=None, size=None):
-        # Create the title text as 'wxStaticText' instance.
-        text = self.title()
-        if parent is None:
-            parent = self
-        caption = wx.StaticText(parent, -1, text, style=wx.ALIGN_CENTER)
-        if size is None:
-            size = caption.GetFont().GetPointSize()
-        font = wx.Font(size, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD,
-                       encoding=wx.FONTENCODING_DEFAULT)
-        caption.SetFont(font)
-        width, height, d, e = self.GetFullTextExtent(text, font)
-        caption.SetMinSize((width, height))
-        return caption
-
-    def _create_title_bar(self):
-        """Vytvoř 3d panel s nadpisem formuláře."""
-        panel = wx.Panel(self, -1, style=wx.RAISED_BORDER)
-        caption = self._create_caption(panel)
-        box = wx.BoxSizer()
-        box.Add(caption, 1, wx.EXPAND | wx.ALL, self._TITLE_BORDER_WIDTH)
-        panel.SetSizer(box)
-        box.Fit(panel)
-        return panel
 
 
 class LookupForm(InnerForm):
@@ -2569,7 +2529,7 @@ class RecordForm(LookupForm):
 # Editační formulář
 
 
-class EditForm(RecordForm, TitledForm, Refreshable):
+class EditForm(RecordForm, Refreshable):
     """Form for editing a single record.
 
     The form consists of all fields defined by the specification.  These fields
@@ -2716,7 +2676,6 @@ class EditForm(RecordForm, TitledForm, Refreshable):
 
     def _create_form_parts(self):
         # Create all parts and add them to top-level sizer.
-        self.Sizer.Add(self._create_title_bar(), 0, wx.EXPAND)
         self.Sizer.Add(self._create_form_controls(), 1, wx.EXPAND)
 
     def _create_form_controls(self):
@@ -3356,10 +3315,18 @@ class PopupEditForm(PopupForm, EditForm):
 
     def _create_form_parts(self):
         sizer = self.Sizer
-        sizer.Add(self._create_caption(self, size=18), 0, wx.ALIGN_CENTER | wx.ALL, 8)
+        sizer.Add(self._create_form_title(), 0, wx.ALIGN_CENTER | wx.ALL, 8)
         sizer.Add(self._create_form_controls(), 1, wx.EXPAND)
         sizer.Add(self._create_buttons(), 0, wx.ALIGN_CENTER)
         sizer.Add(self._create_status_bar(), 0, wx.EXPAND)
+
+    def _create_form_title(self):
+        # Create the title text as 'wxStaticText' instance.
+        caption = wx.StaticText(self, -1, self.title(), style=wx.ALIGN_CENTER)
+        caption.Font = wx.Font(18, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL,
+                               wx.FONTWEIGHT_BOLD, encoding=wx.FONTENCODING_DEFAULT)
+        caption.MinSize = caption.GetFullTextExtent(self.title())[:2]
+        return caption
 
     def _create_status_bar(self):
         # We use our own "statusbar implementation".

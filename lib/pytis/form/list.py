@@ -65,7 +65,7 @@ from .event import UserBreakException, wx_callback
 from .dialog import AggregationSetupDialog, CheckListDialog
 from .form import (
     BrowsableShowForm, Form, LookupForm, PopupEditForm, PopupForm,
-    QueryFieldsForm, RecordForm, Refreshable, ShowForm, TitledForm,
+    QueryFieldsForm, RecordForm, Refreshable, ShowForm,
 )
 from .screen import (
     KeyHandler, busy_cursor, make_in_operator,
@@ -81,10 +81,10 @@ _ = pytis.util.translations('pytis-wx')
 
 unistr = type(u'')  # Python 2/3 transition hack.
 
+
 # Forms
 
-
-class ListForm(RecordForm, TitledForm, Refreshable):
+class ListForm(RecordForm, Refreshable):
     """Společná nadtřída pro formuláře se seznamovým zobrazením.
 
     Tyto formuláře zobrazují seznam řádků, rozdělených do několika sloupců,
@@ -107,7 +107,6 @@ class ListForm(RecordForm, TitledForm, Refreshable):
     _REFRESH_PERIOD = 60   # sekund
     _SELECTION_CALLBACK_DELAY = 3   # desítky milisekund
     _ROW_LABEL_WIDTH = 85
-    _ALLOW_TITLE_BAR = True
     _ALLOW_TOOLBAR = False
     _SINGLE_LINE = True
 
@@ -254,11 +253,6 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         g.FitInside()
 
     def _create_form_parts(self):
-        if self.title() is not None and self._ALLOW_TITLE_BAR:
-            self._title_bar = self._create_title_bar()
-            self.Sizer.Add(self._title_bar, 0, wx.EXPAND)
-        else:
-            self._title_bar = None
         if self._ALLOW_TOOLBAR:
             self.Sizer.Add(self._create_toolbar(), 0, wx.EXPAND)
         self.Sizer.Add(self._create_grid(), 1, wx.EXPAND)
@@ -2581,7 +2575,6 @@ class CodebookForm(PopupForm, FoldableForm, KeyHandler):
 
     _DEFAULT_WINDOW_HEIGHT = 500
     _ALLOW_TOOLBAR = True
-    _ALLOW_TITLE_BAR = False
 
     def __init__(self, parent, *args, **kwargs):
         parent = self._popup_frame(parent)
@@ -2617,8 +2610,6 @@ class CodebookForm(PopupForm, FoldableForm, KeyHandler):
             rows = g.GetNumberRows()
             if rows:
                 height += rows * g.GetRowSize(0) + 50
-            if self._title_bar:
-                height += self._title_bar.Size.height
             height = min(self._DEFAULT_WINDOW_HEIGHT, height)
         if self._search_panel:
             height += 30

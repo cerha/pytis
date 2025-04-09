@@ -56,7 +56,7 @@ from pytis.presentation import (
     Menu, MenuItem, MenuSeparator, Command
 )
 from pytis.util import (
-    ACTION, DEBUG, EVENT, OPERATIONAL, ProgramError, ResolverError, XStack,
+    ACTION, DEBUG, EVENT, OPERATIONAL, ProgramError, ResolverError,
     argument_names, find, format_traceback, identity, log, rsa_encrypt
 )
 from .command import CommandHandler
@@ -141,6 +141,8 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         self._yield_lock = None
         self._yield_blocked = False
         self._last_echo = None
+        self._current_form_index = None
+        self._previous_form_index = None
         self.keymap = Keymap()
         super(Application, self).__init__()
 
@@ -160,9 +162,10 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         # Create the main application frame (set frame title later on).
         frame = self._frame = wx.Frame(None, -1, '', style=wx.DEFAULT_FRAME_STYLE)
         wx_callback(wx.EVT_CLOSE, frame, self._on_frame_close)
-        wx_callback(wx.EVT_SIZE, frame, self._on_frame_size)
         # This panel is here just to catch keyboard events (frame doesn't support EVT_KEY_DOWN).
         self._panel = wx.Panel(frame, -1)
+        frame.SetSizer(wx.BoxSizer())
+        frame.Sizer.Fit(frame)
         KeyHandler.__init__(self, self._panel)
         wx.ToolTip('').Enable(pytis.config.show_tooltips)
         self._logo = None
@@ -182,7 +185,15 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
                 icon.CopyFromBitmap(icon_bmp)
                 icons.AddIcon(icon)
         frame.SetIcons(icons)
-        self._windows = XStack()
+
+        self._notebook = nb = wx.aui.AuiNotebook(frame, style=(wx.aui.AUI_NB_TOP |
+                                                               wx.aui.AUI_NB_TAB_MOVE |
+                                                               wx.aui.AUI_NB_SCROLL_BUTTONS |
+                                                               wx.aui.AUI_NB_TAB_MOVE |
+                                                               wx.aui.AUI_NB_WINDOWLIST_BUTTON),
+                                                 )
+        frame.Sizer.Add(nb, 1, wx.EXPAND)
+        wx_callback(wx.aui.EVT_AUINOTEBOOK_PAGE_CHANGED, nb, self._on_page_change)
         self._modals = []
         self._help_browser = None
         self._login_success = False
@@ -302,7 +313,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
     def _init(self):
         # Run application specific initialization.
         self._specification.init()
-        if len(self._windows) == 0:
+        if self._notebook.PageCount == 0:
             self._panel.SetFocus()
         # Open the startup forms passed as a command line argument.
         startup_forms = []
@@ -355,7 +366,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
                     icon=dialog.CheckListDialog.ICON_QUESTION,
                 )
                 saved_forms = [x for x, ch in zip(saved_forms, checked or []) if ch]
-            startup_forms[:0] = reversed(saved_forms)
+            startup_forms[:0] = saved_forms
 
         def run_startup_form(update, args):
             update(message=_("Opening form:") + " " + args[1])
@@ -690,6 +701,9 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
             parent = self._frame
         return parent
 
+    def _forms(self):
+        return (self._notebook.GetPage(i) for i in range(self._notebook.PageCount))
+
     def _update_window_menu(self):
         menu = self._menu_by_id.get(Menu.WINDOW_MENU)
         if menu is not None:
@@ -697,7 +711,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
                 if i >= 5:
                     menu.Remove(item.GetId())
                     item.Destroy()
-            for i, form in enumerate(self._windows.items()):
+            for i, form in enumerate(self._forms()):
                 info = form.__class__.__name__
                 if form.name():
                     info += '/' + form.name()
@@ -728,18 +742,6 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
                 help=_("Clear the menu of recent forms"),
                 command=Command(Application.clear_recent_forms),
             ))
-
-    def _raise_form(self, form):
-        if form is not None:
-            if form not in self._frame.GetChildren():
-                log(EVENT, "Reparent -- maybe it is really needed here...")
-                form.Reparent(self._frame)
-            old = self._windows.active()
-            if form is not old:
-                self.save()
-                old.hide()
-                self._windows.activate(form)
-                self.restore()
 
     def _config_filename(self):
         # Return a name for saving/restoring the configuration.
@@ -793,7 +795,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
                 return False
             self._set_state_param(self._STATE_STARTUP_FORMS, [
                 (f.__class__.__name__, f.name())
-                for f in self._windows.items()
+                for f in self._forms()
                 if not isinstance(f, (pytis.form.AggregationForm,
                                       pytis.form.AggregationDualForm))
             ])
@@ -814,9 +816,9 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
             safelog(str(e))
         try:
             if not force:
-                for form in self._windows.items():
+                for form in self._forms():
                     try:
-                        self._raise_form(form)
+                        self.raise_form(form)
                         if not form.close():
                             return False
                     except Exception as e:
@@ -840,7 +842,32 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
             safelog(str(e))
         return True
 
+    def _raise_form(self, index, switch_tab=True):
+        notebook = self._notebook
+        count = notebook.PageCount
+        old_index = self._current_form_index
+        if switch_tab:
+            self._notebook.SetSelection(index)
+        if 0 <= index < count and index != old_index:
+            form = notebook.GetPage(index)
+            old_form = notebook.GetPage(old_index) if old_index is not None and 0 <= old_index < count else None
+            if old_form:
+                old_form.save()
+                old_form.hide()
+                old_form.defocus()
+            if isinstance(form, pytis.form.Refreshable):
+                form.refresh()
+            form.show()
+            form.restore()
+            form.focus()
+            self._previous_form_index = old_index
+            self._current_form_index = index
+
     # Callbacky
+
+    def _on_page_change(self, event):
+        self._raise_form(event.Selection, switch_tab=False)
+        event.Skip()
 
     def _on_frame_close(self, event):
         if not self._cleanup(force=not event.CanVeto()):
@@ -849,33 +876,14 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
             event.Skip()
             pytis.form.app = None
 
-    def _on_frame_size(self, event):
-        size = event.GetSize()
-        self._frame.SetSize(size)
-        top = self._windows.active()
-        if top is not None:
-            top.resize()
-        if self._logo is not None:
-            logo = self._logo.GetBitmap()
-            logo_posx = max((size.GetWidth() - logo.GetWidth()) // 2, 0)
-            logo_posy = max((size.GetHeight() - logo.GetHeight() - 50) // 2, 0)
-            self._logo.SetPosition((logo_posx, logo_posy))
-            if top is None:
-                self._logo.Show(True)
-        return True
-
     def _on_form_close(self, event):
-        form = event.GetEventObject()
-        assert form is self._windows.active()
+        form = event.EventObject
         log(EVENT, "Non-modal form closed:", form)
-        self._windows.remove(form)
-        self._update_window_menu()
-        self.restore()
+        self._notebook.RemovePage(self._notebook.GetPageIndex(form))
 
     def on_key_down(self, event, dont_skip=False):
-        # Toto je záchranný odchytávač.  Věřte tomu nebo ne, ale pokud tady ta
-        # metoda není, wxWidgets se při více příležitostech po stisku klávesy
-        # zhroutí.
+        # Believe or not, wxWidgets crashes at various occassions when this
+        # handler is not defied.
         return KeyHandler.on_key_down(self, event)
 
     # Zpracování příkazů
@@ -907,28 +915,31 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
 
     @Command.define
     def raise_form(self, form):
-        self._raise_form(form)
+        index = self._notebook.GetPageIndex(form)
+        if index != wx.NOT_FOUND:
+            self._raise_form(index)
 
     @Command.define
     def raise_recent_form(self):
-        self._raise_form(self._windows.mru()[1])
+        self._raise_form(self._previous_form_index)
 
     def _can_raise_recent_form(self):
-        return len(self._windows) > 1
+        i = self._previous_form_index
+        return (i is not None and i < self._notebook.PageCount)
 
     @Command.define
     def raise_next_form(self):
-        self._raise_form(self._windows.next())
+        self._raise_form(self._notebook.Selection + 1)
 
     def _can_raise_next_form(self):
-        return len(self._windows) > 1
+        return self._notebook.Selection < (self._notebook.PageCount - 1)
 
     @Command.define
     def raise_prev_form(self):
-        self._raise_form(self._windows.prev())
+        self._raise_form(self._notebook.Selection - 1)
 
     def _can_raise_prev_form(self):
-        return len(self._windows) > 1
+        return self._notebook.Selection > 0
 
     @Command.define
     def clear_recent_forms(self):
@@ -941,7 +952,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
     @Command.define
     def refresh(self, interactive=True):
         """Request refresh of currently visible form(s)."""
-        for w in (self._top_modal(), self._windows.active()):
+        for w in (self._top_modal(), self._notebook.CurrentPage):
             if isinstance(w, pytis.form.Refreshable):
                 w.refresh(interactive=interactive)
 
@@ -956,6 +967,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         # Dokumentace viz funkce run_form().
         result = None
         try:
+            notebook = self._notebook
             if callable(name):
                 name = name()
                 if name is None:
@@ -969,12 +981,11 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
             busy_cursor(True)
             self.wx_yield()
             result = None
-            self.save()
-            form = find((form_class, name), self._windows.items(),
+            form = find((form_class, name), self._forms(),
                         key=lambda f: (f.__class__, f.name()))
             if form is not None:
                 busy_cursor(False)
-                self._raise_form(form)
+                self.raise_form(form)
                 app.echo(_('Form "%s" found between open windows.', form.title()))
                 if 'select_row' in kwargs and kwargs['select_row'] is not None:
                     form.select_row(kwargs['select_row'])
@@ -992,7 +1003,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
                 kwargs['guardian'] = self._top_modal() or self
             else:
                 # assert not self._modals
-                parent = self._frame
+                parent = notebook
                 kwargs['guardian'] = self
             args = (parent, pytis.config.resolver, name)
             try:
@@ -1026,15 +1037,11 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
                         self._panel.SetFocus()
                 else:
                     log(EVENT, "Opening non-modal form:", form)
-                    old = self._windows.active()
-                    if old is not None:
-                        old.hide()
-                    self._windows.push(form)
+                    notebook.AddPage(form, form.title(), select=True)
+                    if form.descr():
+                        notebook.SetPageToolTip(notebook.GetPageIndex(form), form.descr())
                     wx_callback(wx.EVT_CLOSE, form, self._on_form_close)
                     app.echo(None)
-                    form.resize()  # Needed in wx 2.8.x.
-                    form.show()
-                    self._update_window_menu()
                     if not isinstance(form, pytis.form.WebForm):
                         item = (self._form_menu_item_title(form), form_class.__name__, name)
                         try:
@@ -1212,7 +1219,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         if allow_modal and self._modals:
             return self._top_modal()
         else:
-            return self._windows.active()
+            return self._notebook.CurrentPage
 
     def current_form(self, inner=True, allow_modal=True):
         """Vrať právě aktivní formulář aplikace, pokud existuje.
@@ -1229,25 +1236,6 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
             while isinstance(form, (pytis.form.DualForm, pytis.form.MultiForm)):
                 form = form.active_form()
         return form
-
-    def save(self):
-        """Ulož stav aplikace."""
-        form = self._windows.active()
-        if form:
-            form.save()
-
-    def restore(self):
-        """Obnov stav aplikace."""
-        form = self._windows.active()
-        if form is not None:
-            form.resize()
-            if isinstance(form, pytis.form.Refreshable):
-                form.refresh()
-            form.show()
-            form.restore()
-            form.focus()
-        else:
-            self._panel.SetFocus()
 
     def wx_yield(self, full=False):
         """Process wx events in the queue.
@@ -1645,7 +1633,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
     def api_forms(self):
         return ([form.provider() for form in reversed(self._modals)
                  if isinstance(form, pytis.form.Form)] +
-                [form.provider() for form in self._windows.items()])
+                [form.provider() for form in self._forms()])
 
     @property
     def api_main_form(self):

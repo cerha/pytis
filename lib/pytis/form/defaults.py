@@ -50,8 +50,8 @@ _ = pytis.util.translations('pytis-wx')
 DEFAULT_KEYMAP = (
     ('F1', Command(Application.help, topic='pytis')),
     ('Ctrl-g', Command(Application.stop)),
-    ('Ctrl-Down', Command(Application.raise_next_form)),
-    ('Ctrl-Up', Command(Application.raise_prev_form)),
+    ('Ctrl-Alt-Right', Command(Application.raise_next_form)),
+    ('Ctrl-Alt-Left', Command(Application.raise_prev_form)),
     ('Ctrl-w', Command(Application.raise_recent_form)),
     ('Ctrl-l', Command(Application.refresh)),
     ('Ctrl-F11', Command(Application.reload_specifications)),

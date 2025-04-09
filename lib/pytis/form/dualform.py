@@ -29,10 +29,11 @@ from past.builtins import basestring
 from builtins import range
 
 import copy
+import fitz
+import io
 import re
 import wx
-import io
-import fitz
+import wx.aui
 
 import pytis.data
 from pytis.api import app
@@ -133,9 +134,10 @@ class DualForm(Form, Refreshable):
         # Hlavní i vedlejší formulář mají svůj datový objekt.
         return None
 
-    def _create_form(self):
+    def _create_form_parts(self):
         # Vytvoř rozdělené okno
-        self._splitter = splitter = wx.SplitterWindow(self.Parent, -1, style=wx.SP_LIVE_UPDATE)
+        self._splitter = splitter = wx.SplitterWindow(self, -1, style=wx.SP_LIVE_UPDATE)
+        self.Sizer.Add(splitter, 1, wx.EXPAND)
         wx_callback(wx.EVT_SPLITTER_DOUBLECLICKED, splitter, lambda e: True)
         wx_callback(wx.EVT_SPLITTER_SASH_POS_CHANGED, splitter, self._on_sash_changed)
         # Vytvoř formuláře
@@ -344,12 +346,9 @@ class DualForm(Form, Refreshable):
         event.Skip()
 
     def _on_size(self, event):
-        size = event.GetSize()
-        self._splitter.SetSize(size)
         if not self._splitter_position_initialized:
             self._splitter_position_initialized = True
-            position = self._initial_sash_position(size)
-            self._splitter.SetSashPosition(position)
+            self._splitter.SashPosition = self._initial_sash_position(event.Size)
         event.Skip()
 
     def _refresh(self, interactive=False):
@@ -700,6 +699,7 @@ class MultiForm(Form, Refreshable):
         self._form_callbacks_args = []
         self._old_notebook_selection = -1
         self._moved_notebook_tab = None
+        self._saved_active_form_index = None
         super(MultiForm, self)._full_init(*args, **kwargs)
 
     def _create_view_spec(self):
@@ -721,7 +721,6 @@ class MultiForm(Form, Refreshable):
         return [self._subform(i) for i in range(self._notebook.GetPageCount())]
 
     def _create_form(self):
-        import wx.aui
         self._notebook = nb = wx.aui.AuiNotebook(self, style=(wx.aui.AUI_NB_TOP |
                                                               wx.aui.AUI_NB_TAB_MOVE |
                                                               wx.aui.AUI_NB_SCROLL_BUTTONS |
@@ -876,14 +875,13 @@ class MultiForm(Form, Refreshable):
         super(MultiForm, self)._cleanup()
 
     def _on_size(self, event):
-        size = event.GetSize()
         # The active_form() call below is necessary to finish active
         # form initialization before resizing the notebook.  Otherwise
         # some forms in some cases don't size properly.  It was unclear
         # which forms under which conditions make troubles, but it was
         # often the case with web forms.
         self.active_form()
-        self._notebook.SetSize(size)
+        self._notebook.SetSize(event.Size)
 
     @Command.define
     def next_form(self, back=False):
@@ -1005,7 +1003,6 @@ class MultiSideForm(MultiForm):
                 super(MultiSideForm.TabbedForm, self).focus()
 
     class TabbedBrowseForm(TabbedForm, SideBrowseForm):
-        _ALLOW_TITLE_BAR = False
 
         def _init_attributes(self, binding, **kwargs):
             sbcol = binding.binding_column()

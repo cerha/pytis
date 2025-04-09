@@ -64,7 +64,7 @@ from .inputfield import InputField, TextField  # noqa: F401
 
 from .form import (  # noqa: F401
     FormProfile, FormSettings, Form, InnerForm, Refreshable, PopupForm,
-    TitledForm, LookupForm, RecordForm, EditForm, PopupEditForm,
+    LookupForm, RecordForm, EditForm, PopupEditForm,
     InputForm, QueryFieldsForm, ResizableEditForm, ResizableInputForm,
     StructuredTextEditor, PopupInsertForm, ShowForm, BrowsableShowForm,
     ViewerForm, WebForm, FileViewerForm,
