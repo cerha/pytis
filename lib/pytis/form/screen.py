@@ -1837,7 +1837,10 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler, KeyHandler):
     @Command.define
     def reload(self):
         """Reload the current browser document from its original source."""
-        self._webview.Reload(wx.html2.WEBVIEW_RELOAD_NO_CACHE)
+        if self._reload:
+            self._reload()
+        else:
+            self._webview.Reload(wx.html2.WEBVIEW_RELOAD_NO_CACHE)
 
     @Command.define
     def load_uri(self, uri, restrict_navigation=None):
