@@ -438,13 +438,13 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
 
         menu.append(Menu(_("&Windows"), (
             MenuItem(_("Previous window"),
-                     command=Command(Application.raise_prev_form),
+                     command=Command(Application.activate_next_form, back=True),
                      help=_("Switch to the previous window in the window list order.")),
             MenuItem(_("Next window"),
-                     command=Command(Application.raise_next_form),
+                     command=Command(Application.activate_next_form),
                      help=_("Switch to the next window in the window list order.")),
             MenuItem(_("Most recently active window"),
-                     command=Command(Application.raise_recent_form),
+                     command=Command(Application.activate_recent_form),
                      help=_("Allows mutual switching of two most recently active "
                             "windows cyclically.")),
             MenuItem(_("Close active window"),
@@ -818,7 +818,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
             if not force:
                 for form in self._forms():
                     try:
-                        self.raise_form(form)
+                        self.activate_form(form)
                         if not form.close():
                             return False
                     except Exception as e:
@@ -842,7 +842,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
             safelog(str(e))
         return True
 
-    def _raise_form(self, index, switch_tab=True):
+    def _activate_form(self, index, switch_tab=True):
         notebook = self._notebook
         count = notebook.PageCount
         old_index = self._current_form_index
@@ -866,7 +866,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
     # Callbacky
 
     def _on_page_change(self, event):
-        self._raise_form(event.Selection, switch_tab=False)
+        self._activate_form(event.Selection, switch_tab=False)
         event.Skip()
 
     def _on_frame_close(self, event):
@@ -914,32 +914,32 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         return self._can_call(function, *args, **kwargs)
 
     @Command.define
-    def raise_form(self, form):
+    def activate_form(self, form):
         index = self._notebook.GetPageIndex(form)
         if index != wx.NOT_FOUND:
-            self._raise_form(index)
+            self._activate_form(index)
 
     @Command.define
-    def raise_recent_form(self):
-        self._raise_form(self._previous_form_index)
+    def activate_recent_form(self):
+        self._activate_form(self._previous_form_index)
 
-    def _can_raise_recent_form(self):
+    def _can_activate_recent_form(self):
         i = self._previous_form_index
         return (i is not None and i < self._notebook.PageCount)
 
+    def _next_form_index(self, back):
+        if back:
+            d = -1
+        else:
+            d = 1
+        return self._notebook.Selection + d
+
     @Command.define
-    def raise_next_form(self):
-        self._raise_form(self._notebook.Selection + 1)
+    def activate_next_form(self, back=False):
+        self._activate_form(self._next_form_index(back))
 
-    def _can_raise_next_form(self):
-        return self._notebook.Selection < (self._notebook.PageCount - 1)
-
-    @Command.define
-    def raise_prev_form(self):
-        self._raise_form(self._notebook.Selection - 1)
-
-    def _can_raise_prev_form(self):
-        return self._notebook.Selection > 0
+    def _can_activate_next_form(self, back=False):
+        return 0 <= self._next_form_index(back) < self._notebook.PageCount
 
     @Command.define
     def clear_recent_forms(self):
@@ -985,7 +985,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
                         key=lambda f: (f.__class__, f.name()))
             if form is not None:
                 busy_cursor(False)
-                self.raise_form(form)
+                self.activate_form(form)
                 app.echo(_('Form "%s" found between open windows.', form.title()))
                 if 'select_row' in kwargs and kwargs['select_row'] is not None:
                     form.select_row(kwargs['select_row'])
