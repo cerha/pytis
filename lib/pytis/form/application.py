@@ -194,6 +194,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
                                                  )
         frame.Sizer.Add(nb, 1, wx.EXPAND)
         wx_callback(wx.aui.EVT_AUINOTEBOOK_PAGE_CHANGED, nb, self._on_page_change)
+        wx_callback(wx.aui.EVT_AUINOTEBOOK_TAB_RIGHT_DOWN, nb, self._on_tab_mouse_right)
         self._modals = []
         self._help_browser = None
         self._login_success = False
@@ -835,6 +836,30 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         self._activate_form(event.Selection, switch_tab=False)
         event.Skip()
 
+    def _on_tab_mouse_right(self, event):
+        index = event.Selection
+        self.popup_menu(self._notebook, (
+            MenuItem(_("Move left"),
+                     command=Command(Application.move_tab, index, back=True),
+                     help=_("Move this tab one position left (or drag by mouse).")),
+            MenuItem(_("Move right"),
+                     command=Command(Application.move_tab, index),
+                     help=_("Move this tab one position right (or drag by mouse).")),
+            MenuItem(_("Close"),
+                     command=Command(Application.close_tab, index),
+                     help=_("Close the form in this tab.")),
+            MenuSeparator(),
+            MenuItem(_("Activate previous tab"),
+                     command=Command(Application.activate_next_form, back=True),
+                     help=_("Switch to the tab on left from the current tab.")),
+            MenuItem(_("Activte next tab"),
+                     command=Command(Application.activate_next_form),
+                     help=_("Switch to the tab on right from the current tab.")),
+            MenuItem(_("Activate recently active tab"),
+                     command=Command(Application.activate_recent_form),
+                     help=_("Allows cyclic switching between two most recently active tabs.")),
+        ), keymap=self.keymap)
+
     def _on_frame_close(self, event):
         if not self._cleanup(force=not event.CanVeto()):
             event.Veto()
@@ -908,6 +933,24 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         return 0 <= self._next_form_index(back) < self._notebook.PageCount
 
     @Command.define
+    def move_tab(self, index, back=False):
+        form = self._notebook.GetPage(index)
+        self._notebook.RemovePage(index)
+        self._add_notebook_tab(form, index=index + (-1 if back else 1))
+        #self._activate_form()
+
+    def _can_move_tab(self, index, back=False):
+        return 0 <= (index + (-1 if back else 1)) < self._notebook.PageCount
+
+    @Command.define
+    def close_tab(self, index):
+        self._notebook.DeletePage(index)
+
+    def _can_close_tab(self, index):
+        form = self._notebook.GetPage(index)
+        return Command(form.leave_form).enabled
+
+    @Command.define
     def clear_recent_forms(self):
         self._recent_forms[:] = []
         self._update_recent_forms_menu()
@@ -933,7 +976,6 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         # Dokumentace viz funkce run_form().
         result = None
         try:
-            notebook = self._notebook
             if callable(name):
                 name = name()
                 if name is None:
@@ -969,7 +1011,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
                 kwargs['guardian'] = self._top_modal() or self
             else:
                 # assert not self._modals
-                parent = notebook
+                parent = self._notebook
                 kwargs['guardian'] = self
             args = (parent, pytis.config.resolver, name)
             try:
@@ -1003,9 +1045,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
                         self._panel.SetFocus()
                 else:
                     log(EVENT, "Opening non-modal form:", form)
-                    notebook.AddPage(form, form.title(), select=True)
-                    if form.descr():
-                        notebook.SetPageToolTip(notebook.GetPageIndex(form), form.descr())
+                    self._add_notebook_tab(form)
                     wx_callback(wx.EVT_CLOSE, form, self._on_form_close)
                     app.echo(None)
                     if not isinstance(form, pytis.form.WebForm):
@@ -1025,6 +1065,14 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         except Exception:
             top_level_exception()
         return result
+
+    def _add_notebook_tab(self, form, index=None):
+        notebook = self._notebook
+        if index is None:
+            index = notebook.PageCount
+        notebook.InsertPage(index, form, form.title(), select=True)
+        if form.descr():
+            notebook.SetPageToolTip(index, form.descr())
 
     @Command.define
     def new_record(self, name, **kwargs):

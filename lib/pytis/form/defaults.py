@@ -143,6 +143,9 @@ if __debug__:
 COMMAND_ICONS = (
     (Command(Application.help), wx.ART_HELP),
     (Command(Application.exit), wx.ART_QUIT),
+    (Command(Application.move_tab), 'go-forward'),
+    (Command(Application.move_tab, back=True), 'go-back'),
+    (Command(Application.close_tab), 'close'),
     (Command(Application.activate_next_form), 'next-form'),
     (Command(Application.activate_next_form, back=True), 'prev-form'),
     (Command(Application.activate_recent_form), 'recent-form'),
