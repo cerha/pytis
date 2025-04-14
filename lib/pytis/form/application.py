@@ -436,22 +436,6 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
             menu = list(self._specification.menu())
         self._menu = menu
 
-        menu.append(Menu(_("&Windows"), (
-            MenuItem(_("Previous window"),
-                     command=Command(Application.activate_next_form, back=True),
-                     help=_("Switch to the previous window in the window list order.")),
-            MenuItem(_("Next window"),
-                     command=Command(Application.activate_next_form),
-                     help=_("Switch to the next window in the window list order.")),
-            MenuItem(_("Most recently active window"),
-                     command=Command(Application.activate_recent_form),
-                     help=_("Allows mutual switching of two most recently active "
-                            "windows cyclically.")),
-            MenuItem(_("Close active window"),
-                     command=Command(pytis.form.Form.leave_form),
-                     help=_("Closes the window of the active form.")),
-            MenuSeparator(),
-        ), id=Menu.WINDOW_MENU, autoindex=False))
         command_menu_items = []
         for group in pytis.form.FORM_MENU_COMMANDS:
             if command_menu_items:
@@ -703,24 +687,6 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
 
     def _forms(self):
         return (self._notebook.GetPage(i) for i in range(self._notebook.PageCount))
-
-    def _update_window_menu(self):
-        menu = self._menu_by_id.get(Menu.WINDOW_MENU)
-        if menu is not None:
-            for i, item in enumerate(menu.GetMenuItems()):
-                if i >= 5:
-                    menu.Remove(item.GetId())
-                    item.Destroy()
-            for i, form in enumerate(self._forms()):
-                info = form.__class__.__name__
-                if form.name():
-                    info += '/' + form.name()
-                self._append_menu_item(self._frame, menu, MenuItem(
-                    acceskey_prefix(i) + self._form_menu_item_title(form),
-                    help=_("Bring form window to the top (%s)", info),
-                    command=Command(Application.raise_form, form=form),
-                    state=lambda form=form: self.top_window() is form,
-                ))
 
     def _update_recent_forms_menu(self):
         menu = self._menu_by_id.get(Menu.RECENT_FORMS_MENU)
@@ -1101,7 +1067,6 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         """Reload application rights and menu from the database."""
         self._init_access_rights()
         self._create_menubar()
-        self._update_window_menu()
         self._cache_menu_enabled(self._menu)
 
     @Command.define

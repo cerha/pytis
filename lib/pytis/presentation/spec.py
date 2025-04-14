@@ -5132,7 +5132,7 @@ class Menu(object):
     """Menu specification."""
 
     RECENT_FORMS_MENU = 'recent-forms-menu'
-    WINDOW_MENU = 'window-menu'
+    WINDOW_MENU = 'window-menu'  # Deprecated.
 
     def __init__(self, title, items, id=None, autoindex=True):
         """Arguments:
