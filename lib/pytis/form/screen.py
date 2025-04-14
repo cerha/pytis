@@ -2336,32 +2336,37 @@ def command_icon(command):
     The returned value is the icon identifier as accepted by 'get_icon()'.
 
     """
+    def score(iargs):
+        # Rate how icon args match the command args (highest score wins):
+        # 0: at least one non-matching arg exists,
+        # 1: no matching args, but no non-matching,
+        # 1 + n: n matching args.
+        result = 1
+        for k, v in iargs:
+            if k in command.args and command.args[k] == v:
+                result += 1
+            else:
+                return 0
+        return result
+
     global _command_icons
     if _command_icons is None:
         _command_icons = {}
         from .defaults import COMMAND_ICONS
         for cmd, icon in COMMAND_ICONS:
             icons = _command_icons.setdefault(cmd.name, [])
-            icons.append((cmd.args, icon))
-    try:
-        icons = _command_icons[command.name]
-    except KeyError:
-        pass
-    else:
-        for iargs, icon in icons:
-            for k, v in iargs.items():
-                if k not in command.args or command.args[k] != v:
-                    break
-            else:
-                return icon
-    if ((command.name == 'RecordForm.context_action'
+            icons.append((cmd.args.items(), icon))
+
+    rated = [(score(iargs), icon) for iargs, icon in _command_icons.get(command.name, ())]
+    icon = next((icon for s, icon in reversed(sorted(rated)) if s != 0), None)
+    if ((not icon and command.name == 'RecordForm.context_action'
          and command.args['action'].context() == 'SELECTION')):
         # Use 'selection' icon as the default for actions which operate on selection
         # in order to distingush these actions for the user.  This is not perfect, as
         # the distinction will disapear for actions which define their icons, but
         # icons are actually asigned quite rarely so it mostly works in practice.
-        return 'selection'
-    return None
+        icon = 'selection'
+    return icon
 
 
 def get_icon(icon_id, type=wx.ART_MENU, size=(16, 16)):
