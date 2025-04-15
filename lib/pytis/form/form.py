@@ -588,6 +588,10 @@ class Form(wx.Panel, KeyHandler, CallbackHandler, CommandHandler):
         return self._name
 
     @property
+    def api_title(self):
+        return self.title()
+
+    @property
     def api_field(self):
         return None
 
