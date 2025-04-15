@@ -1972,8 +1972,8 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
     def _can_api_run_procedure(self, spec_name, proc_name, *args, **kwargs):
         return self._public_spec(spec_name)
 
-    def api_web_view(self, title, content):
-        run_form(pytis.form.WebForm, title=title, content=content)
+    def api_web_view(self, title, content, name=None):
+        run_form(pytis.form.WebForm, title=title, content=content, name=name)
 
     def api_run(self, function, args=(), kwargs={}, over=None, title=None, message=None,
                 progress=True, maximum=None, elapsed_time=False, estimated_time=False,

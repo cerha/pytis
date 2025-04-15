@@ -857,7 +857,7 @@ class Application(API):
 
         """
 
-    def web_view(self, title, content):
+    def web_view(self, title, content, name=None):
         """Show given content in a web browser inside the main application frame.
 
         The browser window behaves as any other form displayed using
@@ -869,6 +869,8 @@ class Application(API):
             (e.g. when switching windows).
           content -- the content to be displayed.  May be passed as
             'lcg.Content' instance or an HTML string.
+          name -- optional string name identifying the web browser form within
+            'app.forms'.
 
         """
         pass
