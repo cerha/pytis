@@ -811,6 +811,8 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         return True
 
     def _activate_form(self, index, switch_tab=True):
+        if self._modals:
+            return False
         notebook = self._notebook
         count = notebook.PageCount
         old_index = self._current_form_index
@@ -830,6 +832,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
             form.focus()
             self._previous_form_index = old_index
             self._current_form_index = index
+        return True
 
     # Callbacky
 
@@ -909,15 +912,20 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
     def activate_form(self, form):
         index = self._notebook.GetPageIndex(form)
         if index != wx.NOT_FOUND:
-            self._activate_form(index)
+            return self._activate_form(index)
+        else:
+            return False
+
+    def _can_activate_form(self, form):
+        return not self._modals
 
     @Command.define
     def activate_recent_form(self):
-        self._activate_form(self._previous_form_index)
+        return self._activate_form(self._previous_form_index)
 
     def _can_activate_recent_form(self):
         i = self._previous_form_index
-        return (i is not None and i < self._notebook.PageCount)
+        return not self._modals and (i is not None and i < self._notebook.PageCount)
 
     def _next_form_index(self, back):
         if back:
@@ -928,17 +936,16 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
 
     @Command.define
     def activate_next_form(self, back=False):
-        self._activate_form(self._next_form_index(back))
+        return self._activate_form(self._next_form_index(back))
 
     def _can_activate_next_form(self, back=False):
-        return 0 <= self._next_form_index(back) < self._notebook.PageCount
+        return not self._modals and 0 <= self._next_form_index(back) < self._notebook.PageCount
 
     @Command.define
     def move_tab(self, index, back=False):
         form = self._notebook.GetPage(index)
         self._notebook.RemovePage(index)
         self._add_notebook_tab(form, index=index + (-1 if back else 1))
-        #self._activate_form()
 
     def _can_move_tab(self, index, back=False):
         return 0 <= (index + (-1 if back else 1)) < self._notebook.PageCount

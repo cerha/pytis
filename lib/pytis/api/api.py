@@ -264,6 +264,16 @@ class Form(API):
         application frame, receives keyboard focus and allows user interaction.
         The other forms are hidden and inactive.
 
+        Modal forms can not be activated this way.  The top most modal form is
+        always active and blocks activation of any other form (modal or
+        non-modal).
+
+        Returns:
+
+          True if the form was successfully activated or False otherwise (such
+          as when the form already is active, if there is a modal form or
+          dialog blocking its activation or if the form actually is modal).
+
         """
         pass
 
