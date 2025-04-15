@@ -725,6 +725,7 @@ class MultiForm(Form, Refreshable):
                                                               wx.aui.AUI_NB_TAB_MOVE |
                                                               wx.aui.AUI_NB_SCROLL_BUTTONS |
                                                               wx.aui.AUI_NB_WINDOWLIST_BUTTON))
+        nb.TabCtrlHeight = 34
         for i, (form, title, icon, tooltip) in enumerate(self._create_subforms(nb)):
             nb.AddPage(form, title)
             if icon:

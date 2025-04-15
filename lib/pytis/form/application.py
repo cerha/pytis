@@ -192,6 +192,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
                                                                wx.aui.AUI_NB_TAB_MOVE |
                                                                wx.aui.AUI_NB_WINDOWLIST_BUTTON),
                                                  )
+        nb.TabCtrlHeight = 36
         frame.Sizer.Add(nb, 1, wx.EXPAND)
         wx_callback(wx.aui.EVT_AUINOTEBOOK_PAGE_CHANGED, nb, self._on_page_change)
         wx_callback(wx.aui.EVT_AUINOTEBOOK_TAB_RIGHT_DOWN, nb, self._on_tab_mouse_right)
