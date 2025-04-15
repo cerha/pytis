@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pytis 0.1\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2025-01-07 14:52+0100\n"
+"POT-Creation-Date: 2025-04-15 18:44+0200\n"
 "PO-Revision-Date: 2014-01-14 16:54+0100\n"
 "Last-Translator: Hynek Hanke <hanke@brailcom.org>\n"
 "Language-Team: Czech <wiking@lists.freebsoft.org>\n"
@@ -639,6 +639,83 @@ msgstr ""
 
 #: ../lib/pytis/cms/cms.py:725
 msgid "Informační zprávy"
+msgstr ""
+
+#: ../lib/pytis/defs/configui.py:30
+msgid "Default"
+msgstr ""
+
+#: ../lib/pytis/defs/configui.py:31
+msgid "During inline editation"
+msgstr ""
+
+#: ../lib/pytis/defs/configui.py:32
+#, fuzzy
+msgid "Inactive form"
+msgstr "Informace"
+
+#: ../lib/pytis/defs/configui.py:33
+msgid "Border width"
+msgstr ""
+
+#: ../lib/pytis/defs/configui.py:34
+msgid "Current cell highlight"
+msgstr ""
+
+#: ../lib/pytis/defs/configui.py:35
+msgid "Table grid"
+msgstr ""
+
+#: ../lib/pytis/defs/configui.py:36
+msgid "Grouping background change"
+msgstr ""
+
+#: ../lib/pytis/defs/configui.py:37
+msgid "Show start-up dialog"
+msgstr ""
+
+#: ../lib/pytis/defs/configui.py:38
+msgid "Show tooltips"
+msgstr ""
+
+#: ../lib/pytis/defs/configui.py:39
+msgid "Automatically numbered menus with accellerator keys"
+msgstr ""
+
+#: ../lib/pytis/defs/configui.py:40
+msgid "Automatically stretch tables to full window width"
+msgstr ""
+
+#: ../lib/pytis/defs/configui.py:41
+msgid "E-mail address"
+msgstr ""
+
+#: ../lib/pytis/defs/configui.py:42
+msgid "Character encoding"
+msgstr ""
+
+#: ../lib/pytis/defs/configui.py:84
+msgid "User interface settings"
+msgstr ""
+
+#: ../lib/pytis/defs/configui.py:85
+msgid "Colors"
+msgstr ""
+
+#: ../lib/pytis/defs/configui.py:86
+msgid "Current table row highlight"
+msgstr ""
+
+#: ../lib/pytis/defs/configui.py:96
+msgid "Behavior"
+msgstr ""
+
+#: ../lib/pytis/defs/configui.py:102
+msgid "Other"
+msgstr ""
+
+#: ../lib/pytis/defs/configui.py:116
+msgid "Export settings"
 msgstr ""
 
 #: ../lib/pytis/defs/crypto.py:37
@@ -1517,10 +1594,6 @@ msgstr ""
 #, fuzzy
 #~ msgid "Print Specification Demo"
 #~ msgstr "Název specifikace"
-
-#, fuzzy
-#~ msgid "Invalid format"
-#~ msgstr "Informace"
 
 #, fuzzy
 #~ msgid "Uživatel"
