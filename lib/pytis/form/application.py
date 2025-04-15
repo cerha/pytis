@@ -168,15 +168,6 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         frame.Sizer.Fit(frame)
         KeyHandler.__init__(self, self._panel)
         wx.ToolTip('').Enable(pytis.config.show_tooltips)
-        self._logo = None
-        logo_file = pytis.config.logo
-        if logo_file is not None:
-            if os.access(logo_file, os.R_OK):
-                logo = wx.Image(logo_file, type=wx.BITMAP_TYPE_BMP)
-                self._logo = wx.StaticBitmap(frame, -1, logo.ConvertToBitmap())
-                self._logo.Show(False)
-            else:
-                log(OPERATIONAL, "Unable to read logo:", logo_file)
         icons = wx.IconBundle()
         for name in ('pytis', 'pytis-mini'):
             icon_bmp = get_icon(name)
