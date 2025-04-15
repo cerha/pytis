@@ -640,6 +640,9 @@ class Form(wx.Panel, KeyHandler, CallbackHandler, CommandHandler):
     def api_select_row(self, position):
         pass
 
+    def api_activate(self):
+        return pytis.form.app.activate_form(self)
+
     def api_close(self, force=False):
         if self is not pytis.form.app.top_window():
             pytis.form.app.raise_form(self)

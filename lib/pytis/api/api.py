@@ -256,6 +256,17 @@ class Form(API):
 
         """
 
+    def activate(self):
+        """Make the form active.
+
+        The application can have multiple open forms at once, but at any moment
+        only one of them is active.  The active form is displayed in the main
+        application frame, receives keyboard focus and allows user interaction.
+        The other forms are hidden and inactive.
+
+        """
+        pass
+
     def close(self, force=False):
         """Close the form and destroy all its UI elements.
 
