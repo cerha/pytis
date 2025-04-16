@@ -645,7 +645,7 @@ class Form(wx.Panel, KeyHandler, CallbackHandler, CommandHandler):
 
     def api_close(self, force=False):
         if self is not pytis.form.app.top_window():
-            pytis.form.app.raise_form(self)
+            pytis.form.app.activate_form(self)
         return self.close(force=force)
 
 
