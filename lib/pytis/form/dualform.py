@@ -959,7 +959,7 @@ class MultiForm(Form, Refreshable):
 
     def restore(self):
         i = self._saved_active_form_index
-        if i is not None:
+        if i is not None and 0 <= i < self._notebook.PageCount:
             form = self._init_subform(i)
             self._select_subform(i)
             form.restore()
