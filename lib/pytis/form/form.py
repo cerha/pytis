@@ -425,11 +425,11 @@ class Form(wx.Panel, KeyHandler, CallbackHandler, CommandHandler):
     # Veřejné metody
 
     def name(self):
-        """Vrať název specifikace formuláře."""
+        """Return the form specification name as a string."""
         return self._name
 
     def title(self):
-        """Vrať titulek ze specifikace formuláře jako řetězec."""
+        """Return the form title from the specification as a string."""
         return self._view.title()
 
     def view_spec(self):
@@ -437,13 +437,17 @@ class Form(wx.Panel, KeyHandler, CallbackHandler, CommandHandler):
         return self._view
 
     def guardian(self):
-        """Vrať guardian zadané v konstruktoru (nebo parent)."""
+        """Return the key 'guardian' passed to the constructor (or 'parent')."""
         return self._guardian
 
     def check_permission(self, perm, quiet=True):
-        """Vrať pravdu, pokud má uživatel daná práva k datovému objektu.
+        """Return true if the current user has given rights to the form's data object.
 
-        Argumentem je konstanta  třídy 'pytis.data.Permission'.
+        Arguments:
+
+          perm: One of the `pytis.data.Permission` class constants.
+          quiet: If true, a relevant error message is displayed in the echo area
+            when the result is false (the permission is not granted).
 
         """
         VIEW = pytis.data.Permission.VIEW
@@ -472,10 +476,10 @@ class Form(wx.Panel, KeyHandler, CallbackHandler, CommandHandler):
         return result
 
     def set_status(self, field, message):
-        """Zobraz zprávu `message' v poli `id' stavové řádky formuláře.
+        """Display the `message` in given `field` of the form's status line.
 
-        Má-li formulář vlastní stavovou řádku a v ní pole `id' zobraz v něm
-        danou zprávu a vrať pravdu.  V opačném případě vrať nepravdu.
+        Returns:
+          True if the form has a status line and it includes the given field.
 
         """
         return False
