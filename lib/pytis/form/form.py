@@ -466,11 +466,11 @@ class Form(wx.Panel, KeyHandler, CallbackHandler, CommandHandler):
                 result = False
         if not result and not quiet:
             msg = {
-                VIEW: "Nemáte právo k zobrazení formuláře.",
-                INSERT: "Nemáte právo vložit nový záznam.",
-                UPDATE: "Nemáte právo změnit existující záznam.",
-                DELETE: "Nemáte právo smazat existující záznam.",
-                EXPORT: "Nemáte právo k exportu do CSV.",
+                VIEW: _("You don't have permission to display the form."),
+                INSERT: _("You don't have permission to insert a new record."),
+                UPDATE: _("You don't have permission to edit the record."),
+                DELETE: _("You don't have permission to delete the record."),
+                EXPORT: _("You don't have permission to export the table data."),
             }[perm]
             app.echo(msg, kind='error')
         return result
