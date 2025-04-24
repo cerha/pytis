@@ -277,10 +277,14 @@ class DualForm(Form, Refreshable):
     def save(self):
         self._main_form.save()
         self._side_form.save()
+        super(DualForm, self).save()
+
 
     def restore(self):
-        self._main_form.restore()
-        self._side_form.restore()
+        if not self._restored:
+            self._main_form.restore()
+            self._side_form.restore()
+        super(DualForm, self).restore()
 
     def _exit_check(self):
         return self._main_form._exit_check() and self._side_form._exit_check()
@@ -956,13 +960,16 @@ class MultiForm(Form, Refreshable):
             self._saved_active_form_index = self._notebook.GetPageIndex(form)
         else:
             self._saved_active_form_index = None
+        super(MultiForm, self).save()
 
     def restore(self):
-        i = self._saved_active_form_index
-        if i is not None and 0 <= i < self._notebook.PageCount:
-            form = self._init_subform(i)
-            self._select_subform(i)
-            form.restore()
+        if not self._restored:
+            i = self._saved_active_form_index
+            if i is not None and 0 <= i < self._notebook.PageCount:
+                form = self._init_subform(i)
+                self._select_subform(i)
+                form.restore()
+        super(MultiForm, self).restore()
 
     def focus(self):
         active = self.active_form()

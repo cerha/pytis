@@ -486,7 +486,7 @@ class ListForm(RecordForm, Refreshable):
         return super(ListForm, self).refresh(**kwargs)
 
     def restore(self):
-        if self._query_fields_form:
+        if not self._restored and self._query_fields_form:
             self._query_fields_form.restore()
         return super(ListForm, self).restore()
 

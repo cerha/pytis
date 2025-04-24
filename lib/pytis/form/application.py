@@ -811,8 +811,8 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
             self._notebook.SetSelection(index)
         if 0 <= index < count and index != old_index:
             form = notebook.GetPage(index)
-            old_form = notebook.GetPage(old_index) if old_index is not None and 0 <= old_index < count else None
-            if old_form:
+            if old_index is not None and 0 <= old_index < count:
+                old_form = notebook.GetPage(old_index)
                 old_form.save()
                 old_form.hide()
                 old_form.defocus()

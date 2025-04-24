@@ -253,6 +253,7 @@ class Form(wx.Panel, KeyHandler, CallbackHandler, CommandHandler):
         self._full_init_started = False
         self._full_init_finished = False
         self._full_init_kwargs = dict(kwargs, resolver=resolver, name=name)
+        self._restored = True
         if full_init:
             self.full_init()
 
@@ -521,10 +522,14 @@ class Form(wx.Panel, KeyHandler, CallbackHandler, CommandHandler):
     def save(self):
         """Save form state to be able to restore it later when 'restore()' is called."""
         self._release_data()
+        self._restored = False
 
     def restore(self):
-        """Restore form state as saved by 'save()'."""
-        pass
+        """Restore form state as previously saved by 'save()'."""
+        # When overriding this method, make sure to only perform any operations
+        # when self._restored is False and don't forget to call the parent
+        # class method at the end.
+        self._restored = True
 
     def _exit_check(self):
         """Check whether it is ok to close the form.
@@ -3714,7 +3719,7 @@ class QueryFieldsForm(_VirtualEditForm):
             self._query_fields_refresh_button.Enable(True)
 
     def restore(self):
-        if not self._autoapply and self._unapplied_query_field_changes:
+        if not self._restored and not self._autoapply and self._unapplied_query_field_changes:
             self._unapplied_query_field_changes_after_restore = True
         return super(QueryFieldsForm, self).restore()
 
