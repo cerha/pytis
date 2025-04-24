@@ -1070,8 +1070,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         if index is None:
             index = notebook.PageCount
         notebook.InsertPage(index, form, form.title(), select=True)
-        if form.descr():
-            notebook.SetPageToolTip(index, form.descr())
+        notebook.SetPageToolTip(index, form.title())
 
     @Command.define
     def new_record(self, name, **kwargs):
