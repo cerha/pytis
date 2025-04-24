@@ -819,6 +819,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
             if isinstance(form, pytis.form.Refreshable):
                 form.refresh()
             form.show()
+            form.Sizer.Layout()
             form.restore()
             form.focus()
             self._previous_form_index = old_index
