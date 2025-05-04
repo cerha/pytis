@@ -141,7 +141,6 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         self._yield_lock = None
         self._yield_blocked = False
         self._last_echo = None
-        self._current_form_index = None
         self._previous_form_index = None
         self.keymap = Keymap()
         super(Application, self).__init__()
@@ -801,35 +800,39 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
             safelog(str(e))
         return True
 
-    def _activate_form(self, index, switch_tab=True):
-        if self._modals:
-            return False
+    def _activate_form(self, index):
+        notebook = self._notebook
+        old_index = notebook.Selection
+        # Calling SetSelection does not trigger _on_page_change()...
+        notebook.SetSelection(index)
+        self._switch_tabs(old_index, index)
+
+    def _switch_tabs(self, old_index, new_index):
         notebook = self._notebook
         count = notebook.PageCount
-        old_index = self._current_form_index
-        if switch_tab:
-            self._notebook.SetSelection(index)
-        if 0 <= index < count and index != old_index:
-            form = notebook.GetPage(index)
-            if old_index is not None and 0 <= old_index < count:
+        if 0 <= new_index < count and new_index != old_index:
+            if 0 <= old_index < count:
                 old_form = notebook.GetPage(old_index)
                 old_form.save()
                 old_form.hide()
                 old_form.defocus()
-            if isinstance(form, pytis.form.Refreshable):
-                form.refresh()
-            form.show()
-            form.Sizer.Layout()
-            form.restore()
-            form.focus()
+            new_form = notebook.GetPage(new_index)
+            if isinstance(new_form, pytis.form.Refreshable):
+                new_form.refresh()
+            new_form.show()
+            new_form.Sizer.Layout()
+            new_form.restore()
+            new_form.focus()
             self._previous_form_index = old_index
-            self._current_form_index = index
-        return True
 
     # Callbacky
 
     def _on_page_change(self, event):
-        self._activate_form(event.Selection, switch_tab=False)
+        # Strangely, we need to check whether this event belongs to the main
+        # form notebook, because wx sends side form notebook events to this
+        # event handler too.
+        if event.EventObject is self._notebook:
+            self._switch_tabs(event.OldSelection, event.Selection)
         event.Skip()
 
     def _on_tab_mouse_right(self, event):
@@ -904,7 +907,8 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
     def activate_form(self, form):
         index = self._notebook.GetPageIndex(form)
         if index != wx.NOT_FOUND:
-            return self._activate_form(index)
+            self._activate_form(index)
+            return True
         else:
             return False
 
@@ -913,7 +917,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
 
     @Command.define
     def activate_recent_form(self):
-        return self._activate_form(self._previous_form_index)
+        self._activate_form(self._previous_form_index)
 
     def _can_activate_recent_form(self):
         i = self._previous_form_index
@@ -928,7 +932,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
 
     @Command.define
     def activate_next_form(self, back=False):
-        return self._activate_form(self._next_form_index(back))
+        self._activate_form(self._next_form_index(back))
 
     def _can_activate_next_form(self, back=False):
         return not self._modals and 0 <= self._next_form_index(back) < self._notebook.PageCount
