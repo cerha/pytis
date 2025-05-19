@@ -101,6 +101,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
     _STATE_STARTUP_FORMS = 'saved_startup_forms'  # Avoid name conflict with config.startup_forms!
     _STATE_RECENT_DIRECTORIES = 'recent_directories'
     _STATE_FRAME_SIZE = 'frame_size'
+    _STATE_ACTIVE_FORM = 'active_form'
 
     class _StatusFieldAccess(object):
         def __init__(self, fields):
@@ -333,7 +334,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         menu_names = pytis.extensions.get_menu_defs()
         for cls, name in self._get_state_param(self._STATE_STARTUP_FORMS, [], list, list):
             # TODO: This probably ramained after legacy support for configurantion
-            # saved in picked objects.  Now with JSON, wi well always get a string.
+            # saved in picked objects.  Now with JSON, we will always get a string.
             if isinstance(cls, basestring):
                 cls = getattr(pytis.form, cls)
             if ((issubclass(cls, pytis.form.Form) and
@@ -367,6 +368,13 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
             except Exception as e:
                 log(OPERATIONAL, "Unable to init startup form:", (args, e))
         app.run(run_startup_form, over=startup_forms, title=_("Opening saved forms"))
+        # Activate the saved active form from the last run.
+        last_active_form = self._get_state_param(self._STATE_ACTIVE_FORM, None, (list, type(None)))
+        if last_active_form:
+            for f in self._forms():
+                if [f.__class__.__name__, f.name()] == last_active_form:
+                    self.activate_form(f)
+                    break
         # Caching menu availibility must come after calling Application.init()
         # (here self._specification.init()) to allow the application defined
         # enabled() methods to refer things created Application.init().
@@ -770,6 +778,12 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
             frame_sizes.append([list(wx.DisplaySize()), list(self._frame.Position),
                                 list(self._frame.Size)])
             self._set_state_param(self._STATE_FRAME_SIZE, frame_sizes[-8:])
+            active_form = self._notebook.CurrentPage
+            if active_form:
+                active_form_state = [active_form.__class__.__name__, active_form.name()]
+            else:
+                active_form_state = None
+            self._set_state_param(self._STATE_ACTIVE_FORM, active_form_state)
         except Exception as e:
             safelog(str(e))
         try:
