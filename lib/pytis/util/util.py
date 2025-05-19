@@ -1159,8 +1159,12 @@ def rsa_encrypt(key, text):
     if key:
         if isinstance(text, unistr):
             text = text.encode('utf-8')
-        from Crypto.Cipher import PKCS1_OAEP
-        from Crypto.PublicKey import RSA
+        try:
+            from Cryptodome.PublicKey import RSA
+            from Cryptodome.Cipher import PKCS1_OAEP
+        except ImportError as e:
+            from Crypto.PublicKey import RSA
+            from Crypto.Cipher import PKCS1_OAEP
         rsa_key = RSA.importKey(key)
         cipher = PKCS1_OAEP.new(rsa_key)
         encrypted = cipher.encrypt(text)

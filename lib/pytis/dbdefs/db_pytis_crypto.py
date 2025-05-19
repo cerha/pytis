@@ -305,8 +305,11 @@ class PytisCryptoGenerateKey(Base_PyFunction):
     @staticmethod
     def pytis_crypto_generate_key(bits):
         bits = args[0]
-        import Crypto.PublicKey.RSA
-        rsa = Crypto.PublicKey.RSA.generate(bits)
+        try:
+            from Cryptodome.PublicKey import RSA
+        except ImportError as e:
+            from Crypto.PublicKey import RSA
+        rsa = RSA.generate(bits)
         public = rsa.publickey().exportKey()
         private = rsa.exportKey()
         if isinstance(private, bytes):
@@ -329,14 +332,18 @@ class PytisCryptoDecryptUsingKey(Base_PyFunction):
     @staticmethod
     def pytis_crypto_decrypt_using_key(private, encrypted):
         private, encrypted = args
-        import Crypto.PublicKey.RSA
         import base64
-        from Crypto.Cipher import PKCS1_OAEP
+        try:
+            from Cryptodome.PublicKey import RSA
+            from Cryptodome.Cipher import PKCS1_OAEP
+        except ImportError as e:
+            from Crypto.PublicKey import RSA
+            from Crypto.Cipher import PKCS1_OAEP
         if not isinstance(private, bytes):
             private = private.encode('utf-8')
         if not isinstance(encrypted, bytes):
             encrypted = encrypted.encode('utf-8')
-        rsa_key = Crypto.PublicKey.RSA.importKey(private)
+        rsa_key = RSA.importKey(private)
         cipher = PKCS1_OAEP.new(rsa_key)
         decrypted = cipher.decrypt(base64.decodebytes(encrypted))
         if isinstance(decrypted, bytes):
@@ -358,14 +365,18 @@ class PytisCryptoEncryptUsingKey(Base_PyFunction):
     @staticmethod
     def pytis_crypto_encrypt_using_key(public, text):
         public, text = args
-        import Crypto.PublicKey.RSA
         import base64
-        from Crypto.Cipher import PKCS1_OAEP
+        try:
+            from Cryptodome.PublicKey import RSA
+            from Cryptodome.Cipher import PKCS1_OAEP
+        except ImportError as e:
+            from Crypto.PublicKey import RSA
+            from Crypto.Cipher import PKCS1_OAEP
         if not isinstance(public, bytes):
             public = public.encode('utf-8')
         if not isinstance(text, bytes):
             text = text.encode('utf-8')
-        rsa_key = Crypto.PublicKey.RSA.importKey(public)
+        rsa_key = RSA.importKey(public)
         cipher = PKCS1_OAEP.new(rsa_key)
         encrypted = cipher.encrypt(text)
         encoded = base64.b64encode(encrypted)
