@@ -513,7 +513,12 @@ class DBParams(object):
             row = pytis.data.Row(((name, pytis.data.Value(self._row[name].type(), value)),))
             key = [self._row[c.id()] for c in self._data.key()]
             with Locked(self._lock):
-                self._row = self._data.update(key, row)[0]
+                updated_row, success = self._data.update(key, row)
+                if success and updated_row:
+                    self._row = updated_row
+                else:
+                    raise ProgramError("Failed updating DBParams {} row {}: {}".format(
+                        self._name, [v.value() for v in key], updated_row))
         else:
             raise AttributeError("'%s' object for '%s' has no attribute '%s'" %
                                  (self.__class__.__name__, self._name, name))
@@ -525,7 +530,12 @@ class DBParams(object):
         data = self._data
         with Locked(self._lock):
             data.select(condition=self._condition)
-            self._row = data.fetchone()
+            row = data.fetchone()
+            if row:
+                self._row = row
+            else:
+                raise ProgramError("Failed getting DBParams {} row for {}.".format(
+                    self._name, self._condition))
             data.close()
 
     def _on_change(self):
