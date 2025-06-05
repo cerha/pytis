@@ -891,9 +891,9 @@ class ExposedFileWrapper(object):
           output modes
 
         """
-        assert encoding is None or 'b' not in mode, (encoding, mode)
         self._filename = filename
         if sys.version_info[0] == 2:
+            assert encoding is None or 'b' not in mode, (encoding, mode)
             if handle is None:
                 f = open(filename, mode)
             else:
