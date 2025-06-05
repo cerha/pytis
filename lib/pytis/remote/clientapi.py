@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2024 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2025 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2011-2018 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -872,12 +872,19 @@ class ExposedFileWrapper(object):
         """
         assert encoding is None or 'b' not in mode, (encoding, mode)
         self._filename = filename
-        self._encoding = encoding
-        self._decrypt = decrypt
-        if handle is None:
-            f = open(filename, mode)
+        if sys.version_info[0] == 2:
+            if handle is None:
+                f = open(filename, mode)
+            else:
+                f = os.fdopen(handle, mode)
+            self._encoding = encoding
         else:
-            f = os.fdopen(handle, mode)
+            if handle is None:
+                f = open(filename, mode, encoding=encoding)
+            else:
+                f = os.fdopen(handle, mode, encoding=encoding)
+            self._encoding = None
+        self._decrypt = decrypt
         if encrypt is not None:
             assert mode[0] == 'r', mode
             f = io.BytesIO(encrypt(f))
