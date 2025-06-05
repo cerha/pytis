@@ -998,6 +998,9 @@ class Float(Number):
                ('Invalid precision', precision)
         try:
             if locale_format:
+                if sys.platform == 'darwin':
+                    # macOS locale formatting uses regular spaces, not "NARROW NO-BREAK SPACE".
+                    obj = obj.replace('\u202f', ' ')
                 import locale
                 value = locale.atof(obj)
             else:
@@ -1070,7 +1073,7 @@ class Float(Number):
                 encoding = locale.getpreferredencoding() or 'UTF-8'
                 result = result.decode(encoding)
             if sys.platform == 'darwin':
-                # macOS uses regular spaces instead of "NARROW NO-BREAK SPACE".
+                # macOS locale formatting uses regular spaces, not "NARROW NO-BREAK SPACE".
                 result = result.replace(' ', '\u202f')
         else:
             result = unistr(self._format_string % value)
