@@ -136,6 +136,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         self._log_login = True
         self._recent_directories = {}
         self._remote_connection_last_available = None
+        self._remote_connection_info = None
         self._menu_by_id = {}
         self._yield_lock = None
         self._yield_blocked = False
@@ -1337,16 +1338,36 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         else:
             return ''
 
+    def _get_remote_connection_info(self):
+        if self._remote_connection_info is not None:
+            return self._remote_connection_info
+        if not pytis.remote.client_available():
+            return ()
+        # Retrieve the info just once as soon as the connection is established.
+        display = pytis.remote.x2go_display()
+        self._remote_connection_info = info = (
+            (_("Client version"), pytis.remote.RPCInfo.remote_client_version),
+            (_("Remote display"), ':{}'.format(display) if display else None),
+            (_("X2Go session ID"), pytis.remote.x2go_session_id()),
+            (_("Local Python version"), '.'.join(map(str, sys.version_info[:3]))),
+            (_("Remote Python version"), pytis.remote.python_version()),
+            (_("Local RPyC version"), pytis.remote.local_rpyc_version()),
+            (_("Remote RPyC version"), pytis.remote.rpyc_version()),
+            (_("Backend"), pytis.remote.backend_info()),
+        )
+        for label, value in info:
+            log(OPERATIONAL, "Remote connection info:", (label, value))
+        return info
+
     def _refresh_remote_status(self):
         if not pytis.remote.client_available():
             status = _("N/A")
             icon = 'status-offline'
             tooltip = _("Running locally.")
         elif pytis.remote.client_connection_ok():
-            version = pytis.remote.RPCInfo.remote_client_version or _("Not available")
             status = _("Ok")
             icon = 'status-online'
-            tooltip = _("Connected.") + "\n" + _("Client version: %s", version)
+            tooltip = _("Connected.")
             self._remote_connection_last_available = time.localtime()
         else:
             status = _("Error")
@@ -1356,6 +1377,8 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
                 tooltip = _("Connection lost.") + '\n' + _("Last available: %s", timestamp)
             else:
                 tooltip = _("Connection not established.")
+        tooltip += '\n\n' + '\n'.join('{}: {}'.format(label, value or _("Not available"))
+                                    for label, value in self._get_remote_connection_info())
         return (status, icon, tooltip)
 
     def _refresh_user_config(self):
@@ -1609,9 +1632,6 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
     @api_title.setter
     def api_title(self, title):
         self._title = title
-        display = pytis.remote.x2go_display()
-        if display:
-            title += ' (:%s)' % display
         if __debug__:
             title += ' - wx ' + wx.version() + ', Python %d.%d.%d' % sys.version_info[:3]
         self._frame.SetTitle(title)

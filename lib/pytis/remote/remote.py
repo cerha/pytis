@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2024 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2025 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2011-2018 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -513,3 +513,33 @@ def run_python(script):
         return _request('run_python', script)
     except Exception:
         return None
+
+
+def python_version():
+    try:
+        return _request('python_version')
+    except Exception:
+        return ()
+
+
+def backend_info():
+    try:
+        return _request('backend_info')
+    except Exception:
+        return None
+
+def _rpyc_version(version):
+    # The rpyc.__version__ contents is inconsistent across rpyc versions...
+    if isinstance(version, tuple):
+        return '.'.join(map(str, version))
+    else:
+        return version
+
+def rpyc_version():
+    try:
+        return _rpyc_version(_request('rpyc_version'))
+    except Exception:
+        return None
+
+def local_rpyc_version():
+    return _rpyc_version(rpyc.__version__)

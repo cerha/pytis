@@ -163,10 +163,14 @@ class ClientUIBackend(object):
 
         The real reason for having this in a separate method is the need to
         redirect UI actions into the main thread on Mac OS as described in
-        'ClientUIBackendWrapper' docestring in service.py of Pytis2Go.
+        'ClientUIBackendWrapper' docstring in service.py of Pytis2Go.
 
         """
         pass
+
+    def name(self):
+        """Return the backend name possibly including relevant version information."""
+        return self.__class__.__name__
 
     def enter_text(self, title=u"Zadejte text", label=None, password=False):
         """Prompt the user to enter text and return the text.
@@ -341,6 +345,10 @@ class WxUIBackend(ClientUIBackend):
             # in Pytis2go) as soon as there are no older Pytis2go versions in use.
             import wx
             self._app = wx.App(False)
+
+    def name(self):
+        import wx
+        return '{} (wx {})'.format(self.__class__.__name__, wx.version())
 
     def _enter_text(self, title, label, password):
         import wx
@@ -674,7 +682,7 @@ class MacUIBackend(ClientUIBackend):
     class App(object):
         def __getattr__(self, name):
             def method(*args, **kwargs):
-                script = '\n'.join((
+                result = self._run('osascript', '-l', 'JavaScript', '-e', '\n'.join((
                     'var app = Application.currentApplication()',
                     'app.includeStandardAdditions = true',
                     'var result = app.{}({}{})'.format(
@@ -686,23 +694,36 @@ class MacUIBackend(ClientUIBackend):
                     'else if (result.map) result = result.map(x => x.toString())',
                     'else if (Object.keys(result).length === 0) result = result.toString()',
                     'JSON.stringify(result)',
-                ))
-                cmd = ('osascript', '-l', 'JavaScript', '-e', script)
-                if sys.version_info[0] == 2:
-                    try:
-                        return json.loads(subprocess.check_output(cmd))
-                    except subprocess.CalledProcessError:
-                        return None
+                )))
+                if result is not None:
+                    return json.loads(result)
                 else:
-                    r = subprocess.run(cmd, capture_output=True)
-                    if r.returncode == 0:
-                        return json.loads(r.stdout)
-                    else:
-                        return None
+                    return None
             return method
+
+        def _run(self, *cmd):
+            if sys.version_info[0] == 2:
+                try:
+                    return subprocess.check_output(cmd)
+                except subprocess.CalledProcessError:
+                    return None
+            else:
+                r = subprocess.run(cmd, capture_output=True)
+                if r.returncode == 0:
+                    return r.stdout
+                else:
+                    return None
+
+        def version(self):
+            info = dict([map(lambda x: x.strip(), line.split(':'))
+                         for line in self._run('sw_vers').decode('ascii').splitlines()])
+            return '{ProductName} {ProductVersion}'.format(**info)
 
     def init(self):
         self._app = self.App()
+
+    def name(self):
+        return '{} ({})'.format(self.__class__.__name__, self._app.version())
 
     def _enter_text(self, title, label, password):
         result = self._app.displayDialog(label or title,
@@ -1206,6 +1227,16 @@ class PytisClientAPIService(rpyc.Service):
         return self._client.select_file(filename=filename, directory=directory, title=title,
                                         patterns=patterns, pattern=pattern,
                                         save=save, multi=multi)
+
+    def exposed_backend_info(self):
+        return self._client.name()
+
+    def exposed_python_version(self):
+        return '.'.join(map(str, sys.version_info[:3]))
+
+    def exposed_rpyc_version(self):
+        return rpyc.__version__
+
 
 
 class PasswordAuthenticator(object):
