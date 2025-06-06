@@ -3990,6 +3990,10 @@ class WebForm(ViewerForm):
         else:
             self._browser.load_content(content)
 
+    def focus(self):
+        super(WebForm, self).focus()
+        self._browser.SetFocus()
+
 
 class FileViewerForm(ViewerForm):
     """File Viewer embedded in a Pytis form."""
