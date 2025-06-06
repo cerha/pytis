@@ -5691,16 +5691,16 @@ class MenuSeparator(object):
     pass
 
 
-class Application(SpecificationBase, CommandHandler):
+class Application(SpecificationBase):
     """Specification of a Pytis application.
 
     Derive this class within your application's specification modules under the
     name 'Application' and override its methods and attributes described below
-    to customize the application's look and behaviour.
+    to customize the application's look and behavior.
 
-    Custom commands may be used in menu items using string identifiers.  For
-    all such identifiers, the derived class must also define a method named as
-    this identider with a prefix 'cmd_'.  This method, when called with no
+    Custom DMP commands may be used in menu items using string identifiers.
+    For all such identifiers, the derived class must also define a method named
+    as this identider with a prefix 'cmd_'.  This method, when called with no
     arguments, must return the 'pytis.presentation.Command' instance.  For
     example when command identifier is 'my_form', the application must define a
     method named 'cmd_my_form'.

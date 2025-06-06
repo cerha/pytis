@@ -82,7 +82,7 @@ class Application(pytis.presentation.Application):
                 MenuItem(_("&Input fields"),
                          Command(app.new_record, 'misc.InputFields')),
                 MenuItem(_("&Dialogs"),
-                         Command(self.dialog_test), hotkey=('Alt-d', 'd')),
+                         Command(app.call, self.dialog_test), hotkey=('Alt-d', 'd')),
                 MenuItem(_("Runtime &filters"),
                          Command(app.new_record, 'misc.RuntimeFilter')),
                 MenuItem(_('&Query Fields'),
@@ -153,7 +153,6 @@ class Application(pytis.presentation.Application):
                         refresh_interval=5000, width=3),
         ]
 
-    @Command.define
     def dialog_test(self):
         # This test uses some Pytis internals which should not be used by standard
         # Pytis applications as the APIs are not guaranted to stay.

@@ -642,7 +642,6 @@ class KeyHandler(object):
                     log(DEBUG, 'Found command for the key:', command)
                 command.invoke()
                 return True
-
         else:
             guardian = self._key_guardian
             if guardian is None:
