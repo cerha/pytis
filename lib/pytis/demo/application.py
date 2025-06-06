@@ -117,6 +117,9 @@ class Application(pytis.presentation.Application):
                          Command(app.run_form, 'misc.FastLongTable')),
                 MenuItem(_('Range Types'),
                          Command(app.run_form, 'misc.RangeTypes')),
+                MenuItem(_('Web View'),
+                         Command(app.web_view, 'Web View', name='web-form',
+                                 content=self._web_view_content)),
                 MenuSeparator(),
                 MenuItem(_("Insufficient access rights"),
                          Command(app.run_form, 'cb.DisabledCountries')),
@@ -309,3 +312,14 @@ class Application(pytis.presentation.Application):
     def _operation_dialog_test(self):
         app.run(time.sleep, (4,), progress=False, title=_("Operation with no progress indication"),
                 message=_("Please wait for the operation to finish."))
+
+    def _web_view_content(self):
+        return (
+            lcg.p("Web content constructed on the fly."),
+            lcg.p("The content can be defined as:"),
+            lcg.ul((
+                "a structure of LCG content elements,",
+                "LCG structured text,",
+                "HTML string."
+            )),
+        )

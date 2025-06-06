@@ -878,7 +878,8 @@ class Application(API):
           title - form title used to identify the window within the application
             (e.g. when switching windows).
           content -- the content to be displayed.  May be passed as
-            'lcg.Content' instance or an HTML string.
+            'lcg.Content' instance or an HTML string.  If callable, it will be
+            called without arguments and the returned value is used instead.
           name -- optional string name identifying the web browser form within
             'app.forms'.
 
