@@ -162,11 +162,8 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         # Create the main application frame (set frame title later on).
         frame = self._frame = wx.Frame(None, -1, '', style=wx.DEFAULT_FRAME_STYLE)
         wx_callback(wx.EVT_CLOSE, frame, self._on_frame_close)
-        # This panel is here just to catch keyboard events (frame doesn't support EVT_KEY_DOWN).
-        self._panel = wx.Panel(frame, -1)
-        frame.SetSizer(wx.BoxSizer())
+        frame.SetSizer(wx.BoxSizer(wx.VERTICAL))
         frame.Sizer.Fit(frame)
-        KeyHandler.__init__(self, self._panel)
         wx.ToolTip('').Enable(pytis.config.show_tooltips)
         icons = wx.IconBundle()
         for name in ('pytis', 'pytis-mini'):
@@ -176,17 +173,20 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
                 icon.CopyFromBitmap(icon_bmp)
                 icons.AddIcon(icon)
         frame.SetIcons(icons)
-
         self._notebook = nb = wx.aui.AuiNotebook(frame, style=(wx.aui.AUI_NB_TOP |
                                                                wx.aui.AUI_NB_TAB_MOVE |
                                                                wx.aui.AUI_NB_SCROLL_BUTTONS |
                                                                wx.aui.AUI_NB_TAB_MOVE |
-                                                               wx.aui.AUI_NB_WINDOWLIST_BUTTON),
-                                                 )
+                                                               wx.aui.AUI_NB_WINDOWLIST_BUTTON))
+
         nb.TabCtrlHeight = 36
         frame.Sizer.Add(nb, 1, wx.EXPAND)
         wx_callback(wx.aui.EVT_AUINOTEBOOK_PAGE_CHANGED, nb, self._on_page_change)
         wx_callback(wx.aui.EVT_AUINOTEBOOK_TAB_RIGHT_DOWN, nb, self._on_tab_mouse_right)
+        # This panel is solely for catching keyboard events (it can't be done
+        # with the frame or the notebook).
+        self._panel = wx.Panel(frame)
+        KeyHandler.__init__(self, self._panel)
         self._modals = []
         self._help_browser = None
         self._login_success = False
@@ -884,6 +884,8 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         form = event.EventObject
         log(EVENT, "Non-modal form closed:", form)
         self._notebook.RemovePage(self._notebook.GetPageIndex(form))
+        if self._notebook.PageCount == 0:
+            self._panel.SetFocus()
 
     def on_key_down(self, event, dont_skip=False):
         # Believe or not, wxWidgets crashes at various occassions when this
@@ -963,6 +965,8 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
     @Command.define
     def close_tab(self, index):
         self._notebook.DeletePage(index)
+        if self._notebook.PageCount == 0:
+            self._panel.SetFocus()
 
     def _can_close_tab(self, index):
         form = self._notebook.GetPage(index)
