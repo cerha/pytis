@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pytis 0.1\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2025-04-15 18:44+0200\n"
+"POT-Creation-Date: 2025-06-10 21:37+0200\n"
 "PO-Revision-Date: 2025-02-24 10:31+0100\n"
 "Last-Translator: Tomáš Cerha <t.cerha@gmail.com>\n"
 "Language-Team: Czech <cs@li.org>\n"
@@ -16,408 +16,412 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=((n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2);\n"
 
-#: ../lib/pytis/demo/application.py:52
+#: ../lib/pytis/demo/application.py:47
 msgid "&System"
 msgstr "&Systém"
 
-#: ../lib/pytis/demo/application.py:53
+#: ../lib/pytis/demo/application.py:48
 msgid "User interface settings"
 msgstr ""
 
-#: ../lib/pytis/demo/application.py:55
+#: ../lib/pytis/demo/application.py:50
 msgid "Export settings"
 msgstr ""
 
-#: ../lib/pytis/demo/application.py:57
+#: ../lib/pytis/demo/application.py:52
 msgid "&Run form"
 msgstr "Spustit fo&rmulář"
 
-#: ../lib/pytis/demo/application.py:60
+#: ../lib/pytis/demo/application.py:55
 msgid "&Check specification files"
 msgstr "Zkontrolovat specifikační soubory"
 
-#: ../lib/pytis/demo/application.py:62
+#: ../lib/pytis/demo/application.py:57
 msgid "Management of menus and user roles"
 msgstr "Správa rolí a přístupových práv"
 
-#: ../lib/pytis/demo/application.py:63
+#: ../lib/pytis/demo/application.py:58
 msgid "Roles"
 msgstr "Role"
 
-#: ../lib/pytis/demo/application.py:64 ../lib/pytis/demo/application.py:132
+#: ../lib/pytis/demo/application.py:59 ../lib/pytis/demo/application.py:130
 msgid "Menu"
 msgstr "Menu"
 
-#: ../lib/pytis/demo/application.py:65
+#: ../lib/pytis/demo/application.py:60
 msgid "Menu Rights"
 msgstr "Práva menu"
 
-#: ../lib/pytis/demo/application.py:67
+#: ../lib/pytis/demo/application.py:62
 msgid "Form statistics"
 msgstr "Statistiky formulářů"
 
-#: ../lib/pytis/demo/application.py:68
+#: ../lib/pytis/demo/application.py:63
 msgid "Short statistics"
 msgstr "Stručné statistiky"
 
-#: ../lib/pytis/demo/application.py:70
+#: ../lib/pytis/demo/application.py:65
 msgid "Full statistics"
 msgstr "Kompletní statistiky"
 
-#: ../lib/pytis/demo/application.py:72 ../lib/pytis/demo/application.py:136
+#: ../lib/pytis/demo/application.py:67 ../lib/pytis/demo/application.py:134
 msgid "Users"
 msgstr "Uživatelé"
 
-#: ../lib/pytis/demo/application.py:75
+#: ../lib/pytis/demo/application.py:70
 msgid "User printing templates"
 msgstr "Uživatelské tiskové sestavy"
 
-#: ../lib/pytis/demo/application.py:77
+#: ../lib/pytis/demo/application.py:72
 msgid "Global printing templates"
 msgstr "Globální tiskové sestavy"
 
-#: ../lib/pytis/demo/application.py:79
+#: ../lib/pytis/demo/application.py:74
 msgid "Crypto users"
 msgstr "Uživatelé šifrování"
 
-#: ../lib/pytis/demo/application.py:82
+#: ../lib/pytis/demo/application.py:77
 msgid "Recently opened forms"
 msgstr ""
 
-#: ../lib/pytis/demo/application.py:84
+#: ../lib/pytis/demo/application.py:79
 msgid "E&xit"
 msgstr "Ukončit"
 
-#: ../lib/pytis/demo/application.py:86
+#: ../lib/pytis/demo/application.py:81
 msgid "&Demo"
 msgstr "&Demo"
 
-#: ../lib/pytis/demo/application.py:87
+#: ../lib/pytis/demo/application.py:82
 msgid "&Input fields"
 msgstr "Vstupní políčka"
 
-#: ../lib/pytis/demo/application.py:89
+#: ../lib/pytis/demo/application.py:84
 msgid "&Dialogs"
 msgstr "Dialo&gová okna"
 
-#: ../lib/pytis/demo/application.py:91
+#: ../lib/pytis/demo/application.py:86
 msgid "Runtime &filters"
 msgstr "Runtime filtry"
 
-#: ../lib/pytis/demo/application.py:93
+#: ../lib/pytis/demo/application.py:88
 msgid "&Query Fields"
 msgstr "&Políčka dotazu"
 
-#: ../lib/pytis/demo/application.py:95 ../lib/pytis/demo/cb.py:55
+#: ../lib/pytis/demo/application.py:90 ../lib/pytis/demo/cb.py:55
 msgid "Continents"
 msgstr "Světadíly"
 
-#: ../lib/pytis/demo/application.py:97 ../lib/pytis/demo/cb.py:101
+#: ../lib/pytis/demo/application.py:92 ../lib/pytis/demo/cb.py:101
 msgid "Countries"
 msgstr "Země"
 
-#: ../lib/pytis/demo/application.py:99 ../lib/pytis/demo/misc.py:345
+#: ../lib/pytis/demo/application.py:94 ../lib/pytis/demo/misc.py:345
 msgid "Products"
 msgstr "Zboží"
 
-#: ../lib/pytis/demo/application.py:101
+#: ../lib/pytis/demo/application.py:96
 msgid "Insurance (table function)"
 msgstr "Pojištění (tabulková funkce)"
 
-#: ../lib/pytis/demo/application.py:103
+#: ../lib/pytis/demo/application.py:98
 msgid "Working with files"
 msgstr "Práce se soubory"
 
-#: ../lib/pytis/demo/application.py:104
+#: ../lib/pytis/demo/application.py:99
 msgid "Storing &binary data"
 msgstr "Obecná &binární data"
 
-#: ../lib/pytis/demo/application.py:106
+#: ../lib/pytis/demo/application.py:101
 #, fuzzy
 msgid "Storing &images"
 msgstr "Ukládání binárních &obrázků"
 
-#: ../lib/pytis/demo/application.py:108
+#: ../lib/pytis/demo/application.py:103
 #, fuzzy
 msgid "Opening &file names and URLs"
 msgstr "&Soubory a URL adresy"
 
-#: ../lib/pytis/demo/application.py:111
+#: ../lib/pytis/demo/application.py:106
 msgid "Password fields"
 msgstr "Políčka pro zadání hesla"
 
-#: ../lib/pytis/demo/application.py:113
+#: ../lib/pytis/demo/application.py:108
 msgid "Tree Order"
 msgstr "Stromové řazení"
 
-#: ../lib/pytis/demo/application.py:115 ../lib/pytis/demo/misc.py:583
+#: ../lib/pytis/demo/application.py:110 ../lib/pytis/demo/misc.py:583
 msgid "Foldable Tree"
 msgstr "Sbalovací strom"
 
-#: ../lib/pytis/demo/application.py:117 ../lib/pytis/demo/misc.py:601
+#: ../lib/pytis/demo/application.py:112 ../lib/pytis/demo/misc.py:601
 msgid "Long Table"
 msgstr "Dlouhá tabulka"
 
-#: ../lib/pytis/demo/application.py:119 ../lib/pytis/demo/misc.py:617
+#: ../lib/pytis/demo/application.py:114 ../lib/pytis/demo/misc.py:617
 msgid "Slow Long Table"
 msgstr "Pomalá dlouhá tabulka"
 
-#: ../lib/pytis/demo/application.py:121 ../lib/pytis/demo/misc.py:633
+#: ../lib/pytis/demo/application.py:116 ../lib/pytis/demo/misc.py:633
 msgid "Fast Long Table"
 msgstr "Rychlá dlouhá tabulka"
 
-#: ../lib/pytis/demo/application.py:123
+#: ../lib/pytis/demo/application.py:118
 msgid "Range Types"
 msgstr "Rozsahové typy"
 
-#: ../lib/pytis/demo/application.py:126
+#: ../lib/pytis/demo/application.py:120
+msgid "Web View"
+msgstr ""
+
+#: ../lib/pytis/demo/application.py:124
 msgid "Insufficient access rights"
 msgstr "Nedostatečná přístupová práva"
 
-#: ../lib/pytis/demo/application.py:128
+#: ../lib/pytis/demo/application.py:126
 msgid "Inexistent specification"
 msgstr "Neexistující specifikace"
 
-#: ../lib/pytis/demo/application.py:131
+#: ../lib/pytis/demo/application.py:129
 msgid "&CMS"
 msgstr "&CMS"
 
-#: ../lib/pytis/demo/application.py:133
+#: ../lib/pytis/demo/application.py:131
 msgid "Languages"
 msgstr "Jazyky"
 
-#: ../lib/pytis/demo/application.py:134
+#: ../lib/pytis/demo/application.py:132
 msgid "Modules"
 msgstr "Moduly"
 
-#: ../lib/pytis/demo/application.py:135
+#: ../lib/pytis/demo/application.py:133
 msgid "Generic actions"
 msgstr "Obecné akce"
 
-#: ../lib/pytis/demo/application.py:137
+#: ../lib/pytis/demo/application.py:135
 msgid "User Roles"
 msgstr "Uživatelské role"
 
-#: ../lib/pytis/demo/application.py:138
+#: ../lib/pytis/demo/application.py:136
 msgid "Session Log"
 msgstr "Log uživatelských sezení"
 
-#: ../lib/pytis/demo/application.py:139
+#: ../lib/pytis/demo/application.py:137
 msgid "Access Log"
 msgstr "Log přístupů"
 
-#: ../lib/pytis/demo/application.py:140
+#: ../lib/pytis/demo/application.py:138
 msgid "Color themes"
 msgstr "Barevná témata"
 
-#: ../lib/pytis/demo/application.py:150 ../lib/pytis/demo/application.py:152
+#: ../lib/pytis/demo/application.py:148 ../lib/pytis/demo/application.py:150
 #, python-format
 msgid "Counter value: %d"
 msgstr "Hodnota čítače: %d"
 
-#: ../lib/pytis/demo/application.py:157
+#: ../lib/pytis/demo/application.py:155
 msgid "Counter"
 msgstr "Čítač"
 
-#: ../lib/pytis/demo/application.py:183
+#: ../lib/pytis/demo/application.py:180
 msgid "The returned value:"
 msgstr "Vrácená hodnota:"
 
-#: ../lib/pytis/demo/application.py:184
+#: ../lib/pytis/demo/application.py:181
 msgid "Repeat"
 msgstr "Opakovat"
 
-#: ../lib/pytis/demo/application.py:185
+#: ../lib/pytis/demo/application.py:182
 msgid "Run the same dialog again."
 msgstr ""
 
-#: ../lib/pytis/demo/application.py:186
+#: ../lib/pytis/demo/application.py:183
 msgid "Done"
 msgstr "Hotovo"
 
-#: ../lib/pytis/demo/application.py:187
+#: ../lib/pytis/demo/application.py:184
 msgid "Back to dialog test control panel."
 msgstr ""
 
-#: ../lib/pytis/demo/application.py:204
+#: ../lib/pytis/demo/application.py:201
 msgid "Dialog test"
 msgstr "Test dialogů"
 
-#: ../lib/pytis/demo/application.py:205
+#: ../lib/pytis/demo/application.py:202
 msgid "Simple announcements"
 msgstr ""
 
-#: ../lib/pytis/demo/application.py:206
+#: ../lib/pytis/demo/application.py:203
 msgid "Message"
 msgstr "Oznámení"
 
-#: ../lib/pytis/demo/application.py:206
+#: ../lib/pytis/demo/application.py:203
 msgid "Informational message."
 msgstr "Informační zpráva."
 
-#: ../lib/pytis/demo/application.py:207
+#: ../lib/pytis/demo/application.py:204
 msgid "Warning"
 msgstr "Varování"
 
-#: ../lib/pytis/demo/application.py:207
+#: ../lib/pytis/demo/application.py:204
 msgid "Something is dangerous."
 msgstr "Něco nebezpečného."
 
-#: ../lib/pytis/demo/application.py:208
+#: ../lib/pytis/demo/application.py:205
 msgid "Error"
 msgstr "Chyba"
 
-#: ../lib/pytis/demo/application.py:208
+#: ../lib/pytis/demo/application.py:205
 msgid "Something failed."
 msgstr "Něco se porouchalo."
 
-#: ../lib/pytis/demo/application.py:210
+#: ../lib/pytis/demo/application.py:207
 msgid "Announcements with additional content"
 msgstr ""
 
-#: ../lib/pytis/demo/application.py:211
+#: ../lib/pytis/demo/application.py:208
 msgid "Message with plain text"
 msgstr ""
 
-#: ../lib/pytis/demo/application.py:212
+#: ../lib/pytis/demo/application.py:209
 msgid "This is the HTML source code:"
 msgstr ""
 
-#: ../lib/pytis/demo/application.py:213
+#: ../lib/pytis/demo/application.py:210
 msgid "HTML cotnent without message"
 msgstr ""
 
-#: ../lib/pytis/demo/application.py:215
+#: ../lib/pytis/demo/application.py:212
 msgid "LCG content"
 msgstr ""
 
-#: ../lib/pytis/demo/application.py:218
+#: ../lib/pytis/demo/application.py:215
 msgid "Progress dialogs"
 msgstr "Dialogy s průběhem operace"
 
-#: ../lib/pytis/demo/application.py:219 ../lib/pytis/demo/application.py:282
+#: ../lib/pytis/demo/application.py:216 ../lib/pytis/demo/application.py:279
 msgid "Operation with time measures"
 msgstr "Operace s měřením času"
 
-#: ../lib/pytis/demo/application.py:220
+#: ../lib/pytis/demo/application.py:217
 msgid "Expanding progress dialog"
 msgstr "Expandující průběhový dialog"
 
-#: ../lib/pytis/demo/application.py:221
+#: ../lib/pytis/demo/application.py:218
 msgid "Indeterminate mode"
 msgstr "Neurčitý režim"
 
-#: ../lib/pytis/demo/application.py:222
+#: ../lib/pytis/demo/application.py:219
 msgid "Without progress indication"
 msgstr "Bez zobrazení průběhu"
 
-#: ../lib/pytis/demo/application.py:225
+#: ../lib/pytis/demo/application.py:222
 msgid "Question dialogs"
 msgstr "Dotazovací dialogy"
 
-#: ../lib/pytis/demo/application.py:226
+#: ../lib/pytis/demo/application.py:223
 msgid "Yes/No Question (default No)"
 msgstr "Otázka Ano/Ne (vychozí Ne)"
 
-#: ../lib/pytis/demo/application.py:227 ../lib/pytis/demo/application.py:230
+#: ../lib/pytis/demo/application.py:224 ../lib/pytis/demo/application.py:227
 #, python-format
 msgid "Question with the default answer set to '%s'."
 msgstr "Otázka s výchozí odpovědí „%s”."
 
-#: ../lib/pytis/demo/application.py:227
+#: ../lib/pytis/demo/application.py:224
 msgid "No"
 msgstr "Ne"
 
-#: ../lib/pytis/demo/application.py:229
+#: ../lib/pytis/demo/application.py:226
 msgid "Yes/No Question (default Yes)"
 msgstr "Otázka Ano/Ne (vychozí Ano)"
 
-#: ../lib/pytis/demo/application.py:230
+#: ../lib/pytis/demo/application.py:227
 msgid "Yes"
 msgstr "Ano"
 
-#: ../lib/pytis/demo/application.py:232
+#: ../lib/pytis/demo/application.py:229
 msgid "Question with answers"
 msgstr "Otázka s výběrem odpovědí"
 
-#: ../lib/pytis/demo/application.py:233
+#: ../lib/pytis/demo/application.py:230
 #, fuzzy
 msgid "Question with multiple answers defined just by labels."
 msgstr "Otázka s několika možnými odpovědmi."
 
-#: ../lib/pytis/demo/application.py:234 ../lib/pytis/demo/application.py:239
+#: ../lib/pytis/demo/application.py:231 ../lib/pytis/demo/application.py:236
 msgid "Next"
 msgstr "Další"
 
-#: ../lib/pytis/demo/application.py:234 ../lib/pytis/demo/application.py:241
+#: ../lib/pytis/demo/application.py:231 ../lib/pytis/demo/application.py:238
 msgid "Previous"
 msgstr "Předchozí"
 
-#: ../lib/pytis/demo/application.py:234 ../lib/pytis/demo/application.py:243
+#: ../lib/pytis/demo/application.py:231 ../lib/pytis/demo/application.py:240
 msgid "Cancel"
 msgstr "Zrušit"
 
-#: ../lib/pytis/demo/application.py:235
+#: ../lib/pytis/demo/application.py:232
 msgid "Answers with values and icons"
 msgstr ""
 
-#: ../lib/pytis/demo/application.py:236
+#: ../lib/pytis/demo/application.py:233
 msgid ""
 "Question with multiple answers, where each answer\n"
 "has a given label, return value, icon and tooltip."
 msgstr ""
 
-#: ../lib/pytis/demo/application.py:240
+#: ../lib/pytis/demo/application.py:237
 msgid "Proceed to the next item."
 msgstr ""
 
-#: ../lib/pytis/demo/application.py:242
+#: ../lib/pytis/demo/application.py:239
 msgid "Return to the previous item."
 msgstr ""
 
-#: ../lib/pytis/demo/application.py:244
+#: ../lib/pytis/demo/application.py:241
 msgid "Get back to the current item."
 msgstr ""
 
-#: ../lib/pytis/demo/application.py:247
+#: ../lib/pytis/demo/application.py:244
 msgid "Internal dialogs"
 msgstr "Interní dialogy"
 
-#: ../lib/pytis/demo/application.py:251
+#: ../lib/pytis/demo/application.py:248
 msgid "Checked item"
 msgstr "Zaškrtnutá položka"
 
-#: ../lib/pytis/demo/application.py:252
+#: ../lib/pytis/demo/application.py:249
 msgid "Unchecked item"
 msgstr "Nezaškrtnutá položka"
 
-#: ../lib/pytis/demo/application.py:253
+#: ../lib/pytis/demo/application.py:250
 msgid "Another unchecked item"
 msgstr "Další nezaškrtnutá položka"
 
-#: ../lib/pytis/demo/application.py:276
+#: ../lib/pytis/demo/application.py:273
 #, python-format
 msgid "Processing: %d/%d"
 msgstr "Zpracovávám: %d/%d"
 
-#: ../lib/pytis/demo/application.py:289
+#: ../lib/pytis/demo/application.py:286
 #, python-format
 msgid "Processing: %s"
 msgstr "Zpracovávám: %s"
 
-#: ../lib/pytis/demo/application.py:305
+#: ../lib/pytis/demo/application.py:302
 msgid "Operation with dialog growing on longer messages"
 msgstr "Operace se zvětšujícím se dialogem při delších zprávách"
 
-#: ../lib/pytis/demo/application.py:313
+#: ../lib/pytis/demo/application.py:310
 msgid "Indeterminate mode operation"
 msgstr "Operace v neurčitém režimu"
 
-#: ../lib/pytis/demo/application.py:316
+#: ../lib/pytis/demo/application.py:313
 msgid "Operation with no progress indication"
 msgstr "Operace bez zobrazení průběhu"
 
-#: ../lib/pytis/demo/application.py:317
+#: ../lib/pytis/demo/application.py:314
 msgid "Please wait for the operation to finish."
 msgstr "Vyčkejte prosím na dokončení operace."
 

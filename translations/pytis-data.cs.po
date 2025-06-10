@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pytis 0.1\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2025-04-15 18:44+0200\n"
+"POT-Creation-Date: 2025-06-10 21:37+0200\n"
 "PO-Revision-Date: 2022-05-13 14:08+0200\n"
 "Last-Translator: Hynek Hanke <hanke@brailcom.org>\n"
 "Language-Team: Czech <wiking@lists.freebsoft.org>\n"
@@ -122,75 +122,75 @@ msgstr "Dolní hranice rozsahu je vyšší než horní"
 msgid "Not an integer"
 msgstr "Není to celé číslo"
 
-#: ../lib/pytis/data/types_.py:1006
+#: ../lib/pytis/data/types_.py:1009
 msgid "Invalid number"
 msgstr "Není to povolené číslo"
 
 #. User input validation error message.
-#: ../lib/pytis/data/types_.py:1142
+#: ../lib/pytis/data/types_.py:1145
 #, python-format
 msgid "Minimal length %(minlen)s characters not satisfied"
 msgstr "Nedodržena minimální délka %(minlen)s znaků"
 
 #. User input validation error message.
-#: ../lib/pytis/data/types_.py:1144
+#: ../lib/pytis/data/types_.py:1147
 #, python-format
 msgid "Maximal length %(maxlen)s characters exceeded"
 msgstr "Řetězec přesahuje maximální délku %(maxlen)s znaků"
 
 #. User input validation error message.
-#: ../lib/pytis/data/types_.py:1285
+#: ../lib/pytis/data/types_.py:1288
 msgid "Please use mix of letters and non-letters in your password"
 msgstr "Použijte ve svém hesle kombinaci písmenných a nepísmenných znaků"
 
 #. User input validation error message.
-#: ../lib/pytis/data/types_.py:1291
+#: ../lib/pytis/data/types_.py:1294
 msgid "Enter the password twice to eliminate typos"
 msgstr "Zadejte heslo dvakrát pro eliminování překlepů"
 
 #. User input validation error message.
-#: ../lib/pytis/data/types_.py:1294
+#: ../lib/pytis/data/types_.py:1297
 msgid "Passwords don't match"
 msgstr "Kontrolní zadání hesla neodpovídá"
 
 #. User input validation error message.
-#: ../lib/pytis/data/types_.py:1317
+#: ../lib/pytis/data/types_.py:1320
 msgid "Invalid MD5 hash"
 msgstr "Neplatná MD5 suma"
 
 #. User input validation error message.
-#: ../lib/pytis/data/types_.py:1324 ../lib/pytis/data/types_.py:1362
-#: ../lib/pytis/data/types_.py:1392 ../lib/pytis/data/types_.py:1412
-#: ../lib/pytis/data/types_.py:2142
+#: ../lib/pytis/data/types_.py:1327 ../lib/pytis/data/types_.py:1365
+#: ../lib/pytis/data/types_.py:1395 ../lib/pytis/data/types_.py:1415
+#: ../lib/pytis/data/types_.py:2145
 msgid "Invalid format"
 msgstr "Neplatný formát"
 
 #. User input validation error message.
-#: ../lib/pytis/data/types_.py:1347
+#: ../lib/pytis/data/types_.py:1350
 msgid "Invalid color format ('#RGB' or '#RRGGBB')"
 msgstr "Formát barvy neodpovídá ('#RGB' nebo '#RRGGBB')"
 
 #. User input validation error message.
-#: ../lib/pytis/data/types_.py:1367
+#: ../lib/pytis/data/types_.py:1370
 #, python-format
 msgid "Invalid inet address mask: %(mask)s"
 msgstr "Neplatná maska inet adresy: %(mask)s"
 
 #. User input validation error message.
-#: ../lib/pytis/data/types_.py:1374
+#: ../lib/pytis/data/types_.py:1377
 #, python-format
 msgid "Invalid inet address value %(addr)s"
 msgstr "Neplatná hodnota inet adresy: %(addr)s"
 
-#: ../lib/pytis/data/types_.py:1541
+#: ../lib/pytis/data/types_.py:1544
 msgid "Invalid date or time format"
 msgstr "Chybný formát data nebo času"
 
-#: ../lib/pytis/data/types_.py:1754
+#: ../lib/pytis/data/types_.py:1757
 msgid "Date outside the allowed range"
 msgstr "Datum mimo povolený rozsah"
 
-#: ../lib/pytis/data/types_.py:2158
+#: ../lib/pytis/data/types_.py:2161
 #, python-format
 msgid "%d min"
 msgid_plural "%d min"
@@ -198,7 +198,7 @@ msgstr[0] "%d min"
 msgstr[1] "%d min"
 msgstr[2] "%d min"
 
-#: ../lib/pytis/data/types_.py:2160
+#: ../lib/pytis/data/types_.py:2163
 #, python-format
 msgid "%d h"
 msgid_plural "%d h"
@@ -206,7 +206,7 @@ msgstr[0] "%d hod"
 msgstr[1] "%d hod"
 msgstr[2] "%d hod"
 
-#: ../lib/pytis/data/types_.py:2162
+#: ../lib/pytis/data/types_.py:2165
 #, python-format
 msgid "%d day"
 msgid_plural "%d days"
@@ -214,55 +214,55 @@ msgstr[0] "%d den"
 msgstr[1] "%d dny"
 msgstr[2] "%d dní"
 
-#: ../lib/pytis/data/types_.py:2164
+#: ../lib/pytis/data/types_.py:2167
 msgid "less than 1 min"
 msgstr "méně než 1 min"
 
-#: ../lib/pytis/data/types_.py:2275
+#: ../lib/pytis/data/types_.py:2278
 msgid "Invalid boolean type input value"
 msgstr "Neplatná vstupní hodnota typu boolean"
 
-#: ../lib/pytis/data/types_.py:2502
+#: ../lib/pytis/data/types_.py:2505
 msgid "Invalid graphics format"
 msgstr "Neplatný grafický formát"
 
-#: ../lib/pytis/data/types_.py:2560
+#: ../lib/pytis/data/types_.py:2563
 #, python-format
 msgid "Minimal pixel size %(minsize)s exceeded"
 msgstr "Minimální rozměr %(minsize)s pixelů nedodržen"
 
-#: ../lib/pytis/data/types_.py:2563
+#: ../lib/pytis/data/types_.py:2566
 #, python-format
 msgid "Maximal pixel size %(maxsize)s exceeded"
 msgstr "Maximální rozměr %(maxsize)s pixelů překročen"
 
-#: ../lib/pytis/data/types_.py:2567
+#: ../lib/pytis/data/types_.py:2570
 #, python-format
 msgid "Unsupported format %(format)s; valid formats: %(formats)s"
 msgstr "Nepodporovaný formát %(format)s; platné formáty: %(formats)s"
 
-#: ../lib/pytis/data/types_.py:2614
+#: ../lib/pytis/data/types_.py:2617
 msgid "Invalid hierarchical value format"
 msgstr "Chybný formát hierarchické hodnoty"
 
-#: ../lib/pytis/data/types_.py:2616
+#: ../lib/pytis/data/types_.py:2619
 msgid "One of hierarchical value items is too long"
 msgstr "Jedna z položek hierarchické hodnoty je příliš dlouhá"
 
-#: ../lib/pytis/data/types_.py:2618
+#: ../lib/pytis/data/types_.py:2621
 msgid "One of hierarchical value items contains invalid characters"
 msgstr "Jedna z položek hierarchické hodnoty obsahuje neplatné znaky"
 
 #. User input validation error message.
-#: ../lib/pytis/data/types_.py:2799
+#: ../lib/pytis/data/types_.py:2802
 msgid "Not a JSON string"
 msgstr "Není JSON řetězec"
 
-#: ../lib/pytis/data/types_.py:2803
+#: ../lib/pytis/data/types_.py:2806
 msgid "Unsupported JSON value"
 msgstr "Nepodporovaná JSON hodnota"
 
-#: ../lib/pytis/data/types_.py:2809
+#: ../lib/pytis/data/types_.py:2812
 msgid "JSON value doesn't match schema definition"
 msgstr "JSON hodnota neodpovídá definici schematu"
 
