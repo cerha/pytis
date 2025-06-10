@@ -143,6 +143,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         self._yield_blocked = False
         self._last_echo = None
         self._previous_form_index = None
+        self._initialized = False
         self.keymap = Keymap()
         super(Application, self).__init__()
 
@@ -281,6 +282,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
             except Exception:
                 top_level_exception()
         wx.CallAfter(init)
+        self._initialized = True
         return True
 
     def _cache_menu_enabled(self, menu):
@@ -882,7 +884,8 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
             pytis.form.app = None
 
     def _on_frame_size(self, event):
-        self._update_tab_titles(event.Size.width)
+        if self._initialized:
+            self._update_tab_titles(event.Size.width)
         event.Skip()
 
     def _update_tab_titles(self, frame_width):
