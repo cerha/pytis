@@ -796,7 +796,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
             safelog(str(e))
         try:
             if not force:
-                for form in self._forms():
+                for form in reversed(tuple(self._forms())):
                     try:
                         self.activate_form(form)
                         if not form.close():
