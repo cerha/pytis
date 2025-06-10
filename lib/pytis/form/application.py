@@ -162,6 +162,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         # Create the main application frame (set frame title later on).
         frame = self._frame = wx.Frame(None, -1, '', style=wx.DEFAULT_FRAME_STYLE)
         wx_callback(wx.EVT_CLOSE, frame, self._on_frame_close)
+        wx_callback(wx.EVT_SIZE, frame, self._on_frame_size)
         frame.SetSizer(wx.BoxSizer(wx.VERTICAL))
         frame.Sizer.Fit(frame)
         wx.ToolTip('').Enable(pytis.config.show_tooltips)
@@ -880,12 +881,37 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
             event.Skip()
             pytis.form.app = None
 
+    def _on_frame_size(self, event):
+        self._update_tab_titles(event.Size.width)
+        event.Skip()
+
+    def _update_tab_titles(self, frame_width):
+        notebook = self._notebook
+        count = notebook.PageCount
+        if count:
+            max_tab_width = max(100, frame_width // count)
+            for i in range(count):
+                title = full_title = notebook.GetPage(i).title()
+                title_width = notebook.GetTextExtent(title)[0]
+                approx_char_width = 1.2 * title_width / len(title)
+                while title_width - 10 > max_tab_width:
+                    chars = max(1, int((title_width - max_tab_width) / approx_char_width))
+                    title = title[:-chars]
+                    title_width = notebook.GetTextExtent(title)[0]
+                if (len(full_title) - len(title)) < 5:
+                    title = full_title
+                else:
+                    title += '…'
+                notebook.SetPageText(i, title)
+
     def _on_form_close(self, event):
         form = event.EventObject
         log(EVENT, "Non-modal form closed:", form)
         self._notebook.RemovePage(self._notebook.GetPageIndex(form))
         if self._notebook.PageCount == 0:
             self._panel.SetFocus()
+        else:
+            self._update_tab_titles(self._frame.Size.x)
 
     def on_key_down(self, event, dont_skip=False):
         # Believe or not, wxWidgets crashes at various occassions when this
@@ -967,6 +993,8 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         self._notebook.DeletePage(index)
         if self._notebook.PageCount == 0:
             self._panel.SetFocus()
+        else:
+            self._update_tab_titles(self._frame.Size.x)
 
     def _can_close_tab(self, index):
         form = self._notebook.GetPage(index)
@@ -1094,6 +1122,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
             index = notebook.PageCount
         notebook.InsertPage(index, form, form.title(), select=True)
         notebook.SetPageToolTip(index, form.title())
+        self._update_tab_titles(self._frame.Size.x)
 
     @Command.define
     def new_record(self, name, **kwargs):
