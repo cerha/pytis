@@ -364,20 +364,25 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
                 saved_forms = [x for x, ch in zip(saved_forms, checked or []) if ch]
             startup_forms[:0] = saved_forms
 
-        def run_startup_form(update, args):
-            update(message=_("Opening form:") + " " + args[1])
+        def run_startup_form(update, item):
+            cls, name = item
+            update(message=_("Opening form:") + " " + name)
             try:
-                run_form(*args)
+                run_form(cls, name, activate=False)
             except Exception as e:
-                log(OPERATIONAL, "Unable to init startup form:", (args, e))
+                log(OPERATIONAL, "Unable to init startup form:", (cls, name, e))
         app.run(run_startup_form, over=startup_forms, title=_("Opening saved forms"))
         # Activate the saved active form from the last run.
+        initially_active_form_index = self._notebook.PageCount - 1
         last_active_form = self._get_state_param(self._STATE_ACTIVE_FORM, None, (list, type(None)))
         if last_active_form:
-            for f in self._forms():
+            for i, f in enumerate(self._forms()):
                 if [f.__class__.__name__, f.name()] == last_active_form:
-                    self.activate_form(f)
+                    initially_active_form_index = i
                     break
+        if initially_active_form_index >= 0:
+            self._activate_form(initially_active_form_index)
+
         # Caching menu availibility must come after calling Application.init()
         # (here self._specification.init()) to allow the application defined
         # enabled() methods to refer things created Application.init().
@@ -1021,7 +1026,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         self._cache_menu_enabled(self._menu)
 
     @Command.define
-    def run_form(self, form_class, name, **kwargs):
+    def run_form(self, form_class, name, activate=True, **kwargs):
         # Dokumentace viz funkce run_form().
         result = None
         try:
@@ -1094,7 +1099,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
                         self._panel.SetFocus()
                 else:
                     log(EVENT, "Opening non-modal form:", form)
-                    self._add_notebook_tab(form)
+                    self._add_notebook_tab(form, activate=activate)
                     wx_callback(wx.EVT_CLOSE, form, self._on_form_close)
                     app.echo(None)
                     if not isinstance(form, pytis.form.WebForm):
@@ -1115,11 +1120,11 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
             top_level_exception()
         return result
 
-    def _add_notebook_tab(self, form, index=None):
+    def _add_notebook_tab(self, form, index=None, activate=True):
         notebook = self._notebook
         if index is None:
             index = notebook.PageCount
-        notebook.InsertPage(index, form, form.title(), select=True)
+        notebook.InsertPage(index, form, form.title(), select=activate)
         notebook.SetPageToolTip(index, form.title())
         self._update_tab_titles(self._frame.Size.x)
 
