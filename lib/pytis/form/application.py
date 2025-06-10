@@ -818,11 +818,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         return True
 
     def _activate_form(self, index):
-        notebook = self._notebook
-        old_index = notebook.Selection
-        # Calling SetSelection does not trigger _on_page_change()...
-        notebook.SetSelection(index)
-        self._switch_tabs(old_index, index)
+        self._notebook.SetSelection(index)
 
     def _switch_tabs(self, old_index, new_index):
         notebook = self._notebook
