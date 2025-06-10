@@ -144,6 +144,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         self._last_echo = None
         self._previous_form_index = None
         self._initialized = False
+        self._in_cleanup = False
         self.keymap = Keymap()
         super(Application, self).__init__()
 
@@ -764,9 +765,6 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
                 print(msg, args)
         safelog('Application exit called:', (pytis.config.dbschemas,))
         try:
-            if not force and self._modals:
-                log(EVENT, "Couldn't close application with modal windows:", self._modals)
-                return False
             self._set_state_param(self._STATE_STARTUP_FORMS, [
                 (f.__class__.__name__, f.name())
                 for f in self._forms()
@@ -798,9 +796,8 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
             if not force:
                 for form in reversed(tuple(self._forms())):
                     try:
-                        self.activate_form(form)
                         if not form.close():
-                            return False
+                            return form
                     except Exception as e:
                         safelog(str(e))
         except Exception as e:
@@ -820,7 +817,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
                 self._help_browser.GetParent().Close()
         except Exception as e:
             safelog(str(e))
-        return True
+        return None
 
     def _activate_form(self, index):
         self._notebook.SetSelection(index)
@@ -849,7 +846,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         # Strangely, we need to check whether this event belongs to the main
         # form notebook, because wx sends side form notebook events to this
         # event handler too.
-        if event.EventObject is self._notebook:
+        if event.EventObject is self._notebook and not self._in_cleanup:
             self._switch_tabs(event.OldSelection, event.Selection)
         event.Skip()
 
@@ -878,8 +875,18 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         ), keymap=self.keymap)
 
     def _on_frame_close(self, event):
-        if not self._cleanup(force=not event.CanVeto()):
+        if event.CanVeto() and self._modals:
+            app.echo(_("Can't exit when modal windows exist."), kind='error')
             event.Veto()
+            return
+        self._in_cleanup = True
+        try:
+            form = self._cleanup(force=not event.CanVeto())
+        finally:
+            self._in_cleanup = False
+        if form:
+            event.Veto()
+            self.activate_form(form)
         else:
             event.Skip()
             pytis.form.app = None
