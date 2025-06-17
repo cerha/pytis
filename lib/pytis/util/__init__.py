@@ -30,7 +30,7 @@ from .util import (  # noqa: F401
     format_byte_size, split_camel_case, camel_case_to_lower, nextval,
     rsa_encrypt, load_module, form_view_data, Attachment,
     SendMailError, EncryptionKeyError, EncryptionError, send_mail,
-    debugger, mem_info, ipython,
+    send_bug_report, debugger, mem_info, ipython,
     deepstr, format_traceback, exception_info, stack_info, lcg_node,
     parse_lcg_text, lcg_to_html, content, html_diff, current_language,
     set_current_language, environment_language, translation_status,

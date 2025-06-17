@@ -893,42 +893,24 @@ class BugReport(GenericDialog):
         self._want_focus = button
 
     def _on_send_bug_report(self, event):
-        to = pytis.config.bug_report_address
-        if not to:
+        def get_value(field_name):
+            w = self._dialog.FindWindowByName(field_name)
+            return  w.GetValue().strip() if w else None
+        if not pytis.config.bug_report_address:
             app.message(_("Destination address not known. The configuration option "
                           "`bug_report_address' must be set."))
             return
-        sender = pytis.config.sender_address
-        if not sender:
-            sender = self._dialog.FindWindowByName('from').GetValue()
-
-        tb = self._einfo[2]
-        while tb.tb_next is not None:
-            tb = tb.tb_next
-        subject = '{}: {} at {} line {}'.format(
-            pytis.config.bug_report_subject or _("Error"),
-            self._einfo[0].__name__,
-            os.path.split(tb.tb_frame.f_code.co_filename)[-1],  # file name
-            tb.tb_lineno,
-        )
-
-        message = self._dialog.FindWindowByName('message').GetValue().strip()
-        if message:
-            message += "\n\n"
-        message += pytis.util.exception_info(self._einfo)
-
-        try:
-            send_mail(subject, message, to, sender,
-                      message_id=email.utils.make_msgid('pytis_bugs'))
-        except Exception as e:
-            app.error(_("Failed sending error report:") + "\n" + unistr(e))
-        else:
+        sent = pytis.util.send_bug_report(self._einfo, sender=get_value('from'),
+                                          message=get_value('message'))
+        if sent:
             self._dialog.FindWindowByName('feedback').SetLabel(
-                _("The report has been sent succesfully.")
+                _("The report has been sent successfully.")
             )
             self._dialog.FindWindowByName('icon').Show()
             self._dialog.Sizer.Layout()
             self._sent = True
+        else:
+            app.error(_("Failed sending error report."))
 
 
 class CheckListDialog(Message):

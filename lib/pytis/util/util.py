@@ -1283,6 +1283,66 @@ def send_mail(subject, text, to, sender, sender_name=None, cc=(), bcc=(),
         server.quit()
 
 
+def send_bug_report(einfo, message=None, sender=None):
+    """Send bug report for given exception info.
+
+    Arguments:
+      einfo -- exception details as obtained from 'sys.exc_info()'.
+      message -- additional information (string) added to the error message
+        composed automatically based in 'einfo'.
+      sender -- sender email address as a string or None.
+        ('pytis.config.sender_address' is used by default).
+
+    The message is sent to 'pytis.config.sender_address'.  Success is logged.
+    In case of any problem during sending the message, the problem is logged as
+    well as the unsent bug report message.
+
+    """
+    import email.utils
+    import pytis
+    from pytis.util import log, OPERATIONAL
+
+
+    import pytis.form
+    pytis.form.app.wx_yield(full=True)
+    time.sleep(0.1)
+
+    def footprint(einfo):
+        tb = einfo[2]
+        while tb.tb_next is not None:
+            tb = tb.tb_next
+        return '{} at {} line {}'.format(
+            einfo[0].__name__,
+            os.path.split(tb.tb_frame.f_code.co_filename)[-1],
+            tb.tb_lineno,
+        )
+
+    subject = '{}: {}'.format(
+        pytis.config.bug_report_subject or "Error",
+        footprint(einfo),
+    )
+    if message:
+        message += "\n\n"
+    else:
+        message = ''
+    message += exception_info(einfo)
+    try:
+        if not sender and not pytis.config.sender_address:
+            raise ProgramError("Configuration option 'sender_address' not set.")
+        if not pytis.config.bug_report_address:
+            raise ProgramError("Configuration option 'bug_report_address' not set.")
+        to = pytis.config.bug_report_address
+        send_mail(subject, message, to, sender or pytis.config.sender_address,
+                  message_id=email.utils.make_msgid('pytis_bugs'))
+        log(OPERATIONAL, "Bug report sent to {}:".format(to), subject)
+        return True
+    except Exception as e:
+        log(OPERATIONAL, "Failed sending bug report: {}:".format(footprint(sys.exc_info())), e)
+        log(OPERATIONAL, subject)
+        log(OPERATIONAL, message)
+        return False
+
+
 class SendMailError(Exception):
     """Base class for exceptions raised by 'send_mail()'."""
     def __init__(self, message, **kwargs):
