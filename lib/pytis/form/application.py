@@ -224,17 +224,9 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         self._aggregated_views_manager = pytis.form.AggregatedViewsManager(
             pytis.config.dbconnection)
         # Initialize user action logger.
-        try:
-            from pytis.defs.logging import UserActionLog
-            self._user_action_logger = UserActionLog.Logger(pytis.config.dbconnection,
-                                                            pytis.config.dbuser)
-            log(OPERATIONAL, "Form action logging activated.")
-        except pd.DBException as e:
-            # DB logging is optional.  The application may choose not to include
-            # the logging table in the database schema and this will simply
-            # lead to action logging not being written into the database.
-            log(OPERATIONAL, "Form action logging not activated:", e)
-            self._user_action_logger = None
+        from pytis.defs.logging import UserActionLog
+        self._user_action_logger = UserActionLog.Logger(pytis.config.dbconnection,
+                                                        pytis.config.dbuser)
         # Read the stored configuration.
         for option, value in self._application_config_manager.load().items():
             if hasattr(pytis.config, option):
@@ -1362,9 +1354,29 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         return self._aggregated_views_manager
 
     def log_user_action(self, spec_name, form_name, action, data=None):
+        """Log user action to the database.
+
+        To activate database logging of user actions, include the table
+        'pytis.dbdefs.db_pytis_logging.EPytisActionLog' in the database schema.
+
+        If the logging table does not exist, the information will only be
+        written to server log.
+
+        """
         log(ACTION, "User action:", (spec_name, form_name, action, data))
         if self._user_action_logger:
-            self._user_action_logger.log(spec_name, form_name, action, data)
+            try:
+                self._user_action_logger.log(spec_name, form_name, action, data)
+            except pd.DBUserException as e:
+                if 'relation "e_pytis_action_log" does not exist' in str(e):
+                    # We get DBException if the logging table does not exist.
+                    # TODO: Test table presence in Logger constructor and avoid
+                    # exception handling here.  Successful data object creation
+                    # doesn't mean that the table actually exists.  The error
+                    # is already logged here, so we just ignore it.
+                    pass
+                else:
+                    raise
 
     def client_mode(self):
         """Return the client operation mode as one of 'remote', 'local' or None.
