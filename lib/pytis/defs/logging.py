@@ -44,10 +44,6 @@ class UserActionLog(Specification):
             self._data = factory.create(connection_data=pytis.config.dbconnection)
             self._username = username
 
-        def _values(self, **kwargs):
-            return [(key, pd.Value(self._data.find_column(key).type(), value))
-                    for key, value in [('username', self._username)] + list(kwargs.items())]
-
         def log(self, spec_name, form_name, action, data=None):
             rdata = (
                 ('timestamp', pd.dtval(pd.DateTime.datetime())),
