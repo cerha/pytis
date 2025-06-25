@@ -10,6 +10,8 @@ pycryptodome
 pymupdf
 # If building pygobject fails, this may help:
 # sudo apt-get install libgirepository1.0-dev
+# You may also need pygobject==3.50.0 to avoid dependency on libgirepository2.0
+# (which may not be availale).
 pygobject
 reportlab
 # RPyC 3.3.0 is needed in python 2.7, newest version works on Python 3
