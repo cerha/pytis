@@ -512,7 +512,8 @@ class Question(Message):
 
         """
         super(Question, self).__init__(parent, message, title=title, icon=icon, **kwargs)
-        assert default is None or answers is None and default in (True, False) or default in answers
+        assert (default is None or answers is None and default in (True, False) or
+                default in [a.get('value') if isinstance(a, dict) else a for a in answers])
         self._answers = answers
         self._default = default
         self._timeout = timeout
