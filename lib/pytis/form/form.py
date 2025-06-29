@@ -2091,12 +2091,16 @@ class RecordForm(LookupForm):
 
                     def __init__(self, form):
                         self._form = form
+                        self._iter = iter([form.current_row()])
 
                     def __len__(self):
                         return 1
 
                     def __iter__(self):
-                        return iter([self._form.current_row()])
+                        return self
+
+                    def __next__(self):
+                        return next(self._iter)
 
                     @property
                     def form(self):
