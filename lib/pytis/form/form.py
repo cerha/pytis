@@ -3409,7 +3409,8 @@ class PopupEditForm(PopupForm, EditForm):
         pass
 
     def _can_commit_record(self, close=True, advance=False):
-        if advance and (self._mode != self.MODE_INSERT or not self._multi_insert):
+        if advance and not self._inserted_data and (self._mode != self.MODE_INSERT or
+                                                    not self._multi_insert):
             return False
         return super(PopupEditForm, self)._can_commit_record(close=close, advance=advance)
 
