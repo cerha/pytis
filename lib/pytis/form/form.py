@@ -3124,7 +3124,7 @@ class EditForm(RecordForm, Refreshable):
                 question = (
                     _(u"You are leaving the form without saving the current record\n"
                       u"while at the last record of batch insertion.") + '\n\n' +
-                    _(u"Do you really want to quit without saving?"),
+                    _(u"Do you really want to quit without saving?")
                 )
                 answers = (
                     dict(label=_("Abort without saving"), icon='no', value=True,
