@@ -543,7 +543,7 @@ class Application(API):
         pass
 
     def input_text(self, title, label, default=None, not_null=False, width=20, height=1,
-                   descr=None, noselect=False):
+                   descr=None, noselect=False, compact=False):
         """Display a form for entering a single textual value and return this value.
 
         Arguments:
@@ -561,6 +561,8 @@ class Application(API):
             selected, which results in overwriting the whole value when the
             user starts typing.  Passing True here avoids this initial
             selection.
+          compact -- if true, show field label above the field instead of on
+            the left.
 
         Returns the value entered into the field as a string or None if the
         form was escaped or the value was empty (only possible when not_null is
