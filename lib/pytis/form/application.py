@@ -1801,7 +1801,11 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
     def _input(self, type, title, label, default=None, width=None, height=None, descr=None,
                noselect=False, compact=False):
         row = app.input_form(title=title, noselect=noselect, fields=(
-            Field('f', label, default=default, type=type, width=width, height=height,
+            # Convert None in label to '' because it makes more sense
+            # to use None for unlabeled fields.  We historically used
+            # empty string for that in field specifications, but we don't
+            # want to propagate this unfortunate decision to Pytis API.
+            Field('f', label or '', default=default, type=type, width=width, height=height,
                   descr=descr, compact=compact),
         ))
         if row:

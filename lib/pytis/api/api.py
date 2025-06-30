@@ -549,7 +549,7 @@ class Application(API):
         Arguments:
 
           title -- input form main title as a string.
-          label -- field label as a string.
+          label -- field label as a string or None for an unlabeled field.
           default -- initial field value as a string.
           not_null -- iff True, it will not be possible to submit the form without
             entering a value.
@@ -602,7 +602,7 @@ class Application(API):
         Arguments:
 
           title -- input form main title as a string.
-          label -- field label as a string.
+          label -- field label as a string or None for an unlabeled field.
           default -- initial field value as int or float (float when
             precision is given).
           not_null -- iff True, it will not be possible to submit the form without
