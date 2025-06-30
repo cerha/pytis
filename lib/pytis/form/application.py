@@ -1799,10 +1799,10 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         return True
 
     def _input(self, type, title, label, default=None, width=None, height=None, descr=None,
-               noselect=False):
+               noselect=False, compact=False):
         row = app.input_form(title=title, noselect=noselect, fields=(
             Field('f', label, default=default, type=type, width=width, height=height,
-                  descr=descr),
+                  descr=descr, compact=compact),
         ))
         if row:
             return row['f'].value()
@@ -1810,9 +1810,10 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
             return None
 
     def api_input_text(self, title, label, default=None, not_null=False, width=20, height=1,
-                       descr=None, noselect=False):
+                       descr=None, noselect=False, compact=False):
         return self._input(pd.String(not_null=not_null), title, label, default=default,
-                           width=width, height=height, descr=descr, noselect=noselect)
+                           width=width, height=height, descr=descr, noselect=noselect,
+                           compact=compact)
 
     def api_input_date(self, title, label=None, default=None, not_null=True, descr=None,
                        noselect=False):
