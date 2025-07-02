@@ -2083,36 +2083,11 @@ class RecordForm(LookupForm):
             return None
 
     def _context_action_args(self, action):
-        def selection(form):
-            result = self.selected_rows()
-            if len(result) == 0:
-                class CurrentRowIterator(object):
-                    """See '_grid.TableRowIterator' for documentation."""
-
-                    def __init__(self, form):
-                        self._form = form
-                        self._iter = iter([form.current_row()])
-
-                    def __len__(self):
-                        return 1
-
-                    def __iter__(self):
-                        return self
-
-                    def __next__(self):
-                        return next(self._iter)
-
-                    @property
-                    def form(self):
-                        return self._form.provider()
-
-                result = CurrentRowIterator(form)
-            return result
         context = action.context()
         if context == ActionContext.RECORD:
             args = (self.current_row(),)
         elif context == ActionContext.SELECTION:
-            args = (selection(self),)
+            args = (self.selected_rows(fallback_to_current_row=True),)
         else:
             raise ProgramError("Unsupported action context:", context)
         scontext = action.secondary_context()
@@ -2478,8 +2453,12 @@ class RecordForm(LookupForm):
         """
         return self._row
 
-    def selected_rows(self):
+    def selected_rows(self, fallback_to_current_row=False):
         """Return an iterator over all currently selected rows.
+
+        Arguments:
+          fallback_to_current_row -- if True and if there is no selection,
+            return iterator over the current row.
 
         The iterator returns all rows present in the current selection as
         'PresentedRow' instances in the order of ther presence in the form.

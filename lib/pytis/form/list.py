@@ -702,8 +702,11 @@ class ListForm(RecordForm, Refreshable):
                 pass
         return result
 
-    def selected_rows(self):
-        return TableRowIterator(self._table, self._grid.GetSelectedRows())
+    def selected_rows(self, fallback_to_current_row=False):
+        row_numbers = self._grid.GetSelectedRows()
+        if len(row_numbers) == 0 and fallback_to_current_row:
+            row_numbers = (self._table.current_row(),)
+        return TableRowIterator(self._table, row_numbers)
 
     def unselect_selected_rows(self):
         self._grid.ClearSelection()
@@ -2690,10 +2693,7 @@ class SelectRowsForm(CodebookForm):
     """Řádkový pop-up formulář vracející tuple všech vybraných řádků."""
 
     def _on_activation(self, alternate=False):
-        selected_rows = tuple(self.selected_rows())
-        if len(selected_rows) == 0:
-            selected_rows = (self.current_row(),)
-        self._result = selected_rows
+        self._result = tuple(self.selected_rows(fallback_to_current_row=True))
         self.Parent.EndModal(1)
         return True
 
