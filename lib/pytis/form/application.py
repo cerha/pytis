@@ -1799,25 +1799,38 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         return True
 
     def _input(self, type, title, label, default=None, width=None, height=None, descr=None,
-               noselect=False, compact=False):
-        row = app.input_form(title=title, noselect=noselect, fields=(
-            # Convert None in label to '' because it makes more sense
-            # to use None for unlabeled fields.  We historically used
-            # empty string for that in field specifications, but we don't
-            # want to propagate this unfortunate decision to Pytis API.
-            Field('f', label or '', default=default, type=type, width=width, height=height,
-                  descr=descr, compact=compact),
-        ))
+               noselect=False, compact=False, resizable=False,
+               text_format=TextFormat.PLAIN, attachment_storage=None):
+        if resizable:
+            form = pytis.form.ResizableInputForm
+        else:
+            form = pytis.form.InputForm
+        row = run_form(
+            form,
+            title=title,
+            avoid_initial_selection=noselect,
+            fields=(
+                # Convert None in label to '' because it makes more sense
+                # to use None for unlabeled fields.  We historically used
+                # empty string for that in field specifications, but we don't
+                # want to propagate this unfortunate decision to Pytis API.
+                Field('f', label or '', default=default, type=type, width=width,
+                      height=height, descr=descr, compact=compact,
+                      text_format=text_format, attachment_storage=attachment_storage),
+            ),
+        )
         if row:
             return row['f'].value()
         else:
             return None
 
     def api_input_text(self, title, label, default=None, not_null=False, width=20, height=1,
-                       descr=None, noselect=False, compact=False):
+                       descr=None, noselect=False, compact=False,
+                       text_format=TextFormat.PLAIN, attachment_storage=None):
         return self._input(pd.String(not_null=not_null), title, label, default=default,
                            width=width, height=height, descr=descr, noselect=noselect,
-                           compact=compact)
+                           compact=compact, resizable=height > 1,
+                           text_format=text_format, attachment_storage=attachment_storage)
 
     def api_input_date(self, title, label=None, default=None, not_null=True, descr=None,
                        noselect=False):

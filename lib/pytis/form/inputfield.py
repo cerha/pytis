@@ -250,16 +250,18 @@ class InputField(KeyHandler, CommandHandler):
         self._had_focus = False
         self._init_attributes()
         self._call_on_idle = []
-        self._status_icon = wx.StaticBitmap(parent, bitmap=InputField.icon('field-ok'))
+        self._status_icon = None
         self._ctrl = ctrl = self._create_ctrl(parent)
         self._controls = [(ctrl, self._set_ctrl_editable)]
         self._init_ctrl(ctrl)
         label = self._create_label(parent)
         widget = self._create_widget(parent, ctrl)
-        if label and spec.compact():
-            label = self._hbox(*([label] + self._icons(parent)))
-        else:
-            widget = self._hbox(*([widget] + self._icons(parent)))
+        if not spec.compact():
+            widget = self._append_icons(parent, widget)
+        elif label:
+            # We explicitly don't show icons for unlabeled compact fields.
+            # app.input_text(label=None, compact=True, height>1) relies on this.
+            label = self._append_icons(parent, label)
         self._label = label
         self._widget = widget
         self._set_editable(self._enabled)
@@ -337,7 +339,18 @@ class InputField(KeyHandler, CommandHandler):
         # etc. to create more sophisticated user interface.
         return ctrl
 
+    def _append_icons(self, parent, w):
+        if isinstance(self._guardian, pytis.form.ResizableInputForm):
+            # Make the field expandable in a ResizableInputForm.
+            # This is conditional just to be conservative and avoid potentially
+            # disrupting existing form layouts but still allow having resizable
+            # fields in ResizableInputForm.  We may try to make it unconditional
+            # when we can afford testing it sufficiently.
+            w = (w, 1, wx.EXPAND)
+        return self._hbox(*([w] + self._icons(parent)))
+
     def _icons(self, parent):
+        self._status_icon = wx.StaticBitmap(parent, bitmap=InputField.icon('field-ok'))
         icons = [(self._status_icon, 0, wx.LEFT, 4)]
         descr = self._spec.descr()
         if descr:
@@ -530,8 +543,9 @@ class InputField(KeyHandler, CommandHandler):
             icon = 'field-ok'
             tooltip = _("The current field value is valid.")
             color = self.DEFAULT_FIELD_LABEL_COLOR
-        self._status_icon.SetBitmap(InputField.icon(icon))
-        self._status_icon.SetToolTip(tooltip)
+        if self._status_icon:
+            self._status_icon.SetBitmap(InputField.icon(icon))
+            self._status_icon.SetToolTip(tooltip)
         label = self._label
         if isinstance(label, wx.Sizer):
             label = label.GetItem(0).Window  # When 'compact', the label includes icons.
@@ -2233,26 +2247,7 @@ class StructuredTextField(TextField):
                                   r'(?:[\t ]+(?:\*|(?P<anchor>[\w\d_-]+)))? *$')
 
     def _toolbar_commands(self):
-        commands = ()
-        if isinstance(self._guardian, pytis.form.StructuredTextEditor):
-            # Add form commands only in a standalone editor, not in ordinary forms.
-            commands += (
-                (UICommand(Command(pytis.form.EditForm.commit_record, close=False),
-                           _("Save"),
-                           _("Save the record without closing the form.")),
-                 ),
-            )
-        if isinstance(self._guardian, pytis.form.ResizableInputForm):
-            # ResizableInputForm is used within open_in_editor().  Commit
-            # will only return the current value (it is a virtual form), not
-            # save anything to the database.
-            commands += (
-                (UICommand(Command(pytis.form.EditForm.commit_record),
-                           _("Confirm and leave"),
-                           _("Confirm the changes and leave editation.")),
-                 ),
-            )
-        commands += (
+        commands = (
             # (UICommand(Command(self.undo),
             #            _(u"Zpět"),
             #            _(u"Vrátit zpět poslední akci.")),
@@ -2329,13 +2324,11 @@ class StructuredTextField(TextField):
 
     def _menu(self):
         menu = super(StructuredTextField, self)._menu()
-        if not isinstance(self._guardian,
-                          (pytis.form.StructuredTextEditor, pytis.form.ResizableInputForm)):
-            menu += (None,
-                     UICommand(Command(self.open_in_editor),
-                               _("Edit in a standalone window"),
-                               ""),
-                     )
+        if not isinstance(self._guardian, pytis.form.InputForm):
+            menu += (
+                None,
+                UICommand(Command(self.open_in_editor), _("Open in a standalone editor"), ""),
+            )
         return menu
 
     def _create_ctrl(self, parent):
@@ -2754,11 +2747,18 @@ class StructuredTextField(TextField):
 
     @Command.define
     def open_in_editor(self):
-        result = run_form(pytis.form.ResizableInputForm, name='x', title=self._spec.label(),
-                          fields=(self._spec,),
-                          prefill={self._id: self._ctrl.GetValue()})
-        if result is not None:
-            self._ctrl.SetValue(result[self._id].value())
+        """Edit the field in a standalone editor.
+
+        The editor is larger and resizable, which provides more convenience.
+
+        """
+        # TODO: This somewhat duplicates the input_text in RecordForm.open_editor().
+        value = app.input_text(self._spec.label(), label=None, not_null=self._type.not_null(),
+                               default=self._get_value(), width=100, height=35,
+                               noselect=True, compact=True, text_format=self._spec.text_format(),
+                               attachment_storage=self._spec.attachment_storage())
+        if value is not None:
+            self._ctrl.SetValue(value)
 
     def current_heading_level(self):
         ctrl = self._ctrl

@@ -2352,9 +2352,74 @@ class RecordForm(LookupForm):
 
     @Command.define
     def open_editor(self, field_id):
-        """Open StructuredTextEditor form for given field."""
-        run_form(StructuredTextEditor, self.name(),
-                 field_id=field_id, select_row=self.current_key())
+        """Open a standalone edit form for the current row and the given field.
+
+        It is assumed that structured text editation may take a "long time" and
+        it is not desired to block the database by a long running transaction.
+        This method will run the editor in a virtual form (avoiding locking and
+        transaction of the ordinary edit form).  The database is checked for
+        possible conflicting changes before saving the result and the situation
+        is resolved interactively.
+
+        """
+        key = self.current_key()
+        row = self.current_row()
+        field = self._view.field(field_id)
+        original_version = edited_version = row[field_id].export()
+        while True:
+            edited_version = app.input_text(self.title() + ' - ' + field.label(),
+                                            label=None,
+                                            not_null=row[field_id].type().not_null(),
+                                            default=edited_version,
+                                            width=100, height=35,
+                                            noselect=True, compact=True,
+                                            text_format=field.text_format(),
+                                            attachment_storage=field.attachment_storage())
+            if edited_version is None:
+                break
+            # Check for possible conflicting changes made since the record was
+            # last saved.  If the current value in database doesn't match the
+            # value before editation, someone else probably changed it.  The
+            # resolution is left up to the user.
+            db_row = self._data.row(key, columns=self._select_columns(),
+                                    arguments=self._current_arguments())
+            competing_version = db_row[field_id].export()
+            if competing_version != original_version:
+                diff = pytis.util.html_diff(original_version, competing_version,
+                                            _("Original version"), _("Competing version"))
+                answer = app.question(
+                    _("Someone else has changed the same text while you made your "
+                      "modifications. You can see the overview of the changes below.\n"
+                      "The safest resolution is to discard your changes and start "
+                      "over with the new version of the text. If your modifications\n"
+                      "were too extensive, you can try incorporating the below listed "
+                      "changes into your version."),
+                    title=_(u"Conflicting modifications"),
+                    content=pytis.util.content(diff, format=TextFormat.HTML),
+                    answers=(
+                        dict(value='edit-other', label=_("Edit the competing version"), icon='undo',
+                             descr=_("Resume editing, switching to the competing version.")),
+                        dict(value='edit-mine', label=_(u"Edit my version"), icon='no',
+                             descr=_("Resume editing my version.")),
+                        dict(value='save-mine', label=_(u"Save my version"), icon='yes',
+                             descr=_("Overwrite the competing version with my version.")),
+                        # TODO: Add merge button.
+                        # dict(value='merge', label=_("Merge"), icon=''),
+                    ),
+                )
+                original_version = competing_version  # Don't resolve this change again.
+                if answer == 'edit-other':
+                    edited_version = competing_version
+                    continue
+                elif answer in ('edit-mine', None):
+                    continue
+                elif answer == 'save-mine':
+                    pass
+                else:
+                    raise ProgramError('Unexpected answer!')
+            self._data.update(key, pytis.data.Row((((field_id, pytis.data.sval(edited_version)),))))
+            return edited_version
+
 
     @Command.define
     def view_field_pdf(self, field_id):
@@ -2699,23 +2764,29 @@ class EditForm(RecordForm, Refreshable):
             window = self._create_group_panel(self, group)
         return window
 
-    def _create_group_panel(self, parent, group):
-        panel = wx.ScrolledWindow(parent, style=wx.TAB_TRAVERSAL)
-        panel.SetScrollRate(20, 20)
+    def _create_group_panel(self, parent, group, growable=False):
+        if growable:
+            panel = wx.Panel(parent)
+        else:
+            panel = wx.ScrolledWindow(parent, style=wx.TAB_TRAVERSAL)
+            panel.SetScrollRate(20, 20)
         # Create the form controls first, according to the order.
         fields = [pytis.form.InputField.create(panel, self._row, id, guardian=self,
                                                readonly=self.readonly())
                   for id in group.order() if self._view.field(id).width() != 0]
         self._fields.extend(fields)
         # Create the layout groups.
-        group_sizer = self._create_group(panel, group)
-        # Add outer sizer with margins and alignment.
-        sizer = wx.BoxSizer(wx.HORIZONTAL)
-        sizer.Add(group_sizer, 0, wx.LEFT | wx.RIGHT, 8)
-        panel.SetSizer(sizer)
-        # SetMinSize is necessary here in order to get correct results from
-        # form.GetVirtualSize(), especially when wx.Notebook is involved.
-        panel.SetMinSize(sizer.CalcMin())
+        group_sizer = self._create_group(panel, group, growable=growable)
+        if growable:
+            panel.SetSizer(group_sizer)
+        else:
+            # Add outer sizer with margins and alignment.
+            sizer = wx.BoxSizer(wx.HORIZONTAL)
+            sizer.Add(group_sizer, 0, wx.LEFT | wx.RIGHT, 8)
+            panel.SetSizer(sizer)
+            # SetMinSize is necessary here in order to get correct results from
+            # form.GetVirtualSize(), especially when wx.Notebook is involved.
+            panel.SetMinSize(panel.Sizer.CalcMin())
         wx_callback(wx.EVT_KEY_DOWN, panel, self.on_key_down)
         return panel
 
@@ -2756,7 +2827,7 @@ class EditForm(RecordForm, Refreshable):
         browser.SetMinSize(char2px(parent, 72, 18))
         return browser
 
-    def _create_group(self, parent, group, aligned=False):
+    def _create_group(self, parent, group, aligned=False, growable=False):
         # Each continuous sequence of fields is first stored in an array and
         # finally packed into a grid sizer by self._pack_fields() and added to
         # this group's sizer.  'aligned' is True if this group is aligned
@@ -2793,21 +2864,28 @@ class EditForm(RecordForm, Refreshable):
                     continue
             if len(pack) != 0:
                 # Add the latest aligned pack into the sizer (if there was one).
-                sizer.Add(self._pack_fields(parent, pack, gap),
-                          0, wx.ALIGN_TOP | wx.ALL, border)
+                packed = self._pack_fields(parent, pack, gap, growable=growable)
+                if growable:
+                    sizer.Add(packed, 1, wx.EXPAND | wx.ALIGN_TOP | wx.ALL, border)
+                else:
+                    sizer.Add(packed, 0, wx.ALIGN_TOP | wx.ALL, border)
                 pack = []
             if isinstance(item, GroupSpec):
-                x = self._create_group(parent, item)
+                x = self._create_group(parent, item, growable=growable)
             elif isinstance(item, pytis.form.InputField):
                 if item.spec().compact():
                     # This is a compact field (not a part of the aligned pack).
-                    label = item.label() or wx.StaticText(parent, -1, '')
                     x = wx.BoxSizer(wx.VERTICAL)
-                    x.Add(label, 0, wx.ALIGN_LEFT)
-                    x.Add(item.widget())
+                    label = item.label()
+                    if label:
+                        x.Add(label, 0, wx.ALIGN_LEFT)
+                    if growable:
+                        x.Add(item.widget(), 1, wx.EXPAND)
+                    else:
+                        x.Add(item.widget())
                 else:
                     # Fields in a HORIZONTAL group are packed separately (label and ctrl).
-                    x = self._pack_fields(parent, (item,), gap,
+                    x = self._pack_fields(parent, (item,), gap, growable=growable,
                                           suppress_label=(i == 0 and aligned))
             elif isinstance(item, Button):
                 x = self._create_button(parent, item)
@@ -2821,19 +2899,29 @@ class EditForm(RecordForm, Refreshable):
                 border_style = wx.RIGHT
             else:
                 border_style = wx.ALL
-            sizer.Add(x, 0, wx.ALIGN_TOP | border_style, border)
+            if growable:
+                sizer.Add(x, 1, wx.EXPAND | wx.ALIGN_TOP | border_style, border)
+            else:
+                sizer.Add(x, 0, wx.ALIGN_TOP | border_style, border)
         if len(pack) != 0:
             # Add remaining fields pack, if any.
-            sizer.Add(self._pack_fields(parent, pack, gap),
-                      0, wx.ALIGN_TOP | wx.ALL, border)
+            packed = self._pack_fields(parent, pack, gap, growable=growable)
+            if growable:
+                sizer.Add(packed, 1, wx.EXPAND | wx.ALIGN_TOP | wx.ALL, border)
+            else:
+                sizer.Add(packed, 0, wx.ALIGN_TOP | wx.ALL, border)
         # If this is a labeled group, add small top margin, otherwise it is too tight.
         if group.label() is not None:
             s = wx.BoxSizer(orientation)
-            s.Add(sizer, 0, wx.TOP, 2)
+            if growable:
+                s.Add(sizer, 1, wx.EXPAND | wx.TOP, 2)
+            else:
+                s.Add(sizer, 0, wx.TOP, 2)
+
             sizer = s
         return sizer
 
-    def _pack_fields(self, parent, items, gap, suppress_label=False):
+    def _pack_fields(self, parent, items, gap, suppress_label=False, growable=False):
         # Pack the sequence of fields and/or buttons aligned vertically into a grid.
         #  items -- sequence of InputField, GroupSpec or Button instances.
         #  gap -- space between the fields in dlg units; integer
@@ -2841,7 +2929,11 @@ class EditForm(RecordForm, Refreshable):
         #    for vertically aligned horizontal groups (the label is placed in
         #    the parent pack)
         grid = wx.FlexGridSizer(len(items), 2, gap, 2)
-        for item in items:
+        if growable:
+            grid.AddGrowableCol(1, 1)
+        for i, item in enumerate(items):
+            if growable:
+                grid.AddGrowableRow(i, 1)
             if isinstance(item, GroupSpec):
                 field = self._field(item.items()[0])
                 label = field.label()
@@ -2864,7 +2956,10 @@ class EditForm(RecordForm, Refreshable):
                     else:
                         style = wx.ALIGN_RIGHT | wx.ALIGN_CENTER_VERTICAL
                     grid.Add(label, 0, style, 2)
-                grid.Add(item.widget())
+                if growable:
+                    grid.Add(item.widget(), 1, wx.EXPAND)
+                else:
+                    grid.Add(item.widget())
         return grid
 
     def _signal_update(self):
@@ -3313,11 +3408,13 @@ class PopupEditForm(PopupForm, EditForm):
         self._multi_insert = multi_insert
 
     def _create_form_parts(self):
-        sizer = self.Sizer
-        sizer.Add(self._create_form_title(), 0, wx.ALIGN_CENTER | wx.ALL, 8)
-        sizer.Add(self._create_form_controls(), 1, wx.EXPAND)
-        sizer.Add(self._create_buttons(), 0, wx.ALIGN_CENTER)
-        sizer.Add(self._create_status_bar(), 0, wx.EXPAND)
+        def add(widget, proportion, flags, border=0):
+            if widget:
+                self.Sizer.Add(widget, proportion, flags, border)
+        add(self._create_form_title(), 0, wx.ALIGN_CENTER | wx.ALL, 8)
+        add(self._create_form_controls(), 1, wx.EXPAND)
+        add(self._create_buttons(), 0, wx.ALIGN_CENTER)
+        add(self._create_status_bar(), 0, wx.EXPAND)
 
     def _create_form_title(self):
         # Create the title text as 'wxStaticText' instance.
@@ -3545,6 +3642,20 @@ class InputForm(_VirtualEditForm, PopupEditForm):
     pass
 
 
+class ResizableInputForm(InputForm):
+    """Resizable InputForm where the text field grows when the form is resized."""
+    # Now only used with app.input_text() with height > 1.
+
+    def _popup_frame_style(self):
+        return super(ResizableInputForm, self)._popup_frame_style() | wx.RESIZE_BORDER
+
+    def _create_group_panel(self, parent, group):
+        return super(ResizableInputForm, self)._create_group_panel(parent, group, growable=True)
+
+    def _create_form_title(self):
+        return None
+
+
 class QueryFieldsForm(_VirtualEditForm):
     """Virtual form to be used internally for query fields (see list.py)."""
 
@@ -3715,124 +3826,6 @@ class QueryFieldsForm(_VirtualEditForm):
             return self._row
         else:
             return None
-
-
-class ResizableEditForm(object):
-    """Mixin for resizable edit forms with fields expanded to the whole window.
-
-    The fields returned by _resizable_fields() will take the whole space of the
-    form and will expand with the form when its window is resized.  It is
-    mostly useful for forms which should look like a text editor.
-
-    """
-
-    def _popup_frame_style(self):
-        return super(ResizableEditForm, self)._popup_frame_style() | wx.RESIZE_BORDER
-
-    def _resizable_fields(self):
-        return self._view.layout().order()
-
-    def _create_form_parts(self):
-        panel = wx.Panel(self)
-        sizer = wx.BoxSizer()
-        panel.SetSizer(sizer)
-        for field_id in self._resizable_fields():
-            if self._view.field(field_id).width() != 0:
-                field = pytis.form.InputField.create(panel, self._row, field_id, guardian=self,
-                                                     readonly=self.readonly())
-                self._fields.append(field)
-                sizer.Add(field.widget(), 1, wx.EXPAND)
-        self.Sizer.Add(panel, 1, wx.EXPAND)
-        self.Sizer.Add(self._create_status_bar(), 0, wx.EXPAND)
-
-
-class ResizableInputForm(ResizableEditForm, InputForm):
-    """Resizable InputForm with fields expanded to the whole window."""
-    # Used within StructuredTextField.open_in_editor().
-    pass
-
-
-class StructuredTextEditor(ResizableEditForm, PopupEditForm):
-    """Text Editor of a single structured text field running outside transaction.
-
-    It is assumed that structured text editation may take a "long time" and it
-    is not desired to block the database by a long running transaction.  Thus
-    this form will run outside transaction and will perform a check for
-    conflicting changes in the text before saving the new value into the
-    database.
-
-    """
-
-    def _init_attributes(self, field_id, **kwargs):
-        """Process constructor keyword arguments and initialize the attributes.
-
-        Arguments:
-
-          field_id -- string identifier of the edited field.
-
-        """
-        super(StructuredTextEditor, self)._init_attributes(**kwargs)
-        self._editor_field_id = field_id
-
-    def _resizable_fields(self):
-        return (self._editor_field_id,)
-
-    def _default_transaction(self):
-        # Run editor outside transaction to prevent long transactions (the
-        # editation usually takes quite some time).
-        return None
-
-    def _lock_record(self, key):
-        # Locking is not possible as we don't use transactions here (see
-        # above).  Instead we rely on the check for conflicting changes before
-        # commit implemented below in _check_record.
-        return True
-
-    def _check_record(self, row):
-        success, field_id, msg = super(StructuredTextEditor, self)._check_record(row)
-        if success:
-            # Check for possible conflicting changes made since the record was
-            # last saved.  If the current value in database doesn't match the
-            # value before editation, someone else probably changed it.  The
-            # resolution is left up to the user.
-            data = pytis.util.data_object(self._name)
-            success, db_row = db_operation(data.row, self._current_key(),
-                                           columns=self._select_columns(),
-                                           arguments=self._current_arguments())
-            current_db_value = db_row[self._editor_field_id].value()
-            value_before_edits = row.original_row()[self._editor_field_id].value()
-            if current_db_value != value_before_edits:
-                diff = pytis.util.html_diff(value_before_edits, current_db_value,
-                                            _("Original text"), _("Concurrently changed version"))
-                answer = app.question(
-                    _("Someone else has changed the same text while you made your "
-                      "modifications. You can see the overview of the changes below.\n"
-                      "The safest resolution is to discard your changes and start "
-                      "over with the new version of the text. If your modifications\n"
-                      "were too extensive, you can try incorporating the below listed "
-                      "changes into your version."),
-                    title=_(u"Conflicting modifications"),
-                    content=pytis.util.content(diff, format=TextFormat.HTML),
-                    answers=(
-                        dict(label=_(u"Discard my changes"), icon='undo', value='revert',
-                             descr=_("Use the new version currently present in the database.")),
-                        # TODO: Add merge button.
-                        #dict(label=_(u"Merge"), icon='', value='merge'),
-                        dict(label=_(u"Ignore the concurrent changes"), icon='no', value='ignore',
-                             descr=_("Use my version overwriting the concurrent version.")),
-                    ),
-                )
-                if answer == 'merge':
-                    success, field_id = False, self._editor_field_id
-                elif answer == 'ignore':
-                    pass
-                elif answer == 'revert':
-                    value = pytis.data.Value(row.type(self._editor_field_id), current_db_value)
-                    row[self._editor_field_id] = value
-        return success, field_id, msg
-
-    def size(self):
-        return (700, 500)
 
 
 class PopupInsertForm(PopupEditForm):
