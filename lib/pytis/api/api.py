@@ -543,7 +543,8 @@ class Application(API):
         pass
 
     def input_text(self, title, label, default=None, not_null=False, width=20, height=1,
-                   descr=None, noselect=False, compact=False):
+                   descr=None, noselect=False, compact=False,
+                   text_format=pytis.presentation.TextFormat.PLAIN, attachment_storage=None):
         """Display a form for entering a single textual value and return this value.
 
         Arguments:
@@ -562,7 +563,9 @@ class Application(API):
             user starts typing.  Passing True here avoids this initial
             selection.
           compact -- if true, show field label above the field instead of on
-            the left.
+            the left (as in 'pytis.presentation.Field').
+          text_format -- as in 'pytis.presentation.Field'.
+          attachment_storage -- as in 'pytis.presentation.Field'.
 
         Returns the value entered into the field as a string or None if the
         form was escaped or the value was empty (only possible when not_null is
