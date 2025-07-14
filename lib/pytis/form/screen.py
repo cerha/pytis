@@ -1778,7 +1778,9 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler, KeyHandler):
             cls = pytis.form.MultiBrowseDualForm
         else:
             cls = pytis.form.BrowseForm
-        pytis.form.run_form(cls, path, **kwargs)
+        # Call outside current event handler.  Otherwise wx events emitted during form
+        # initialization (such as wx.aui.EVT_AUINOTEBOOK_PAGE_CHANGED) will be suppressed.
+        wx.CallAfter(pytis.form.run_form, cls, path, **kwargs)
 
     def _call_handler(self, uri, path, **kwargs):
         try:
@@ -1790,7 +1792,7 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler, KeyHandler):
             if not isinstance(proc, pytis.presentation.HelpProc):
                 raise ProgramError("Unable to call '%s' from help. "
                                    "Use the 'pytis.presentation.help_proc' decorator!" % uri[5:])
-            proc(**kwargs)
+            wx.CallAfter(proc, **kwargs)  # Call through CallAfter for the same reason as above.
         except Exception:
             top_level_exception()
 
