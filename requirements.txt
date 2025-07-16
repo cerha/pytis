@@ -13,7 +13,8 @@ pymupdf
 pygobject
 reportlab
 # RPyC 3.3.0 is needed in python 2.7, newest version works on Python 3
-rpyc
+rpyc==3.3.0; python_version < '3'
+rpyc; python_version >= '3'
 sqlalchemy==1.4
 # To use a binary wxPython wheel, it may be necessary to add -f and limit 
 # wxPython version to the one available in given source, such as:
