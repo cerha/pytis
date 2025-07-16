@@ -1,0 +1,79 @@
+name: Run Tests
+
+on:
+
+  push:
+    branches:
+      - '**'
+  pull_request:
+
+jobs:
+
+  test:
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: [3.11]
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: pytis
+          POSTGRES_PASSWORD: pytis
+          POSTGRES_DB: test
+        ports:
+          - 5432:5432
+
+    env:
+      PGHOST: localhost
+      PGPORT: 5432
+      PGUSER: pytis
+      PGPASSWORD: pytis
+      PYTIS_DBNAME: test
+      PYTHONPATH: lib:lcg/lib:wiking/lib
+      # The default github postgres service doesn't support plpython.
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y locales postgresql-client \
+            python3-dev pkg-config libgirepository1.0-dev libcairo2-dev \
+            libwxgtk-webview3.2-1t64 libsdl2-2.0-0 libtiff6
+          sudo sed -i '/\(cs_CZ\|en_US\).UTF-8/s/^# \+//g' /etc/locale.gen
+          sudo locale-gen
+
+      - name: Install Python dependencies
+        run: |
+          if [ -d lcg ]; then
+              git -C lcg pull
+          else
+              git clone https://github.com/cerha/lcg
+          fi
+          if [ -d wiking ]; then
+              git -C wiking pull
+          else
+              git clone https://github.com/cerha/wiking
+          fi
+          pip install --upgrade pip
+          pip install wxpython --only-binary=:all: --verbose \
+              -f https://extras.wxpython.org/wxPython4/extras/linux/gtk3/ubuntu-24.04/
+          pip install -r requirements.txt -r requirements-devel.txt
+
+      - name: Setup database
+        run: |
+          psql test -c "alter database test set default_text_search_config to 'simple'"
+
+      - name: Run tests
+        run: make test
