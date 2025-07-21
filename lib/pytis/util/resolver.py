@@ -278,7 +278,7 @@ class Resolver(object):
         else:
             from imp import reload
         self.clear()
-        for name in sys.modules:
+        for name in tuple(sys.modules):
             for prefix in self._search:
                 if ((not prefix.startswith('pytis.') and
                      (name == prefix or name.startswith(prefix + '.')) and
