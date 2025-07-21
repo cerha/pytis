@@ -8,11 +8,10 @@ psycopg2-binary
 pillow
 pycryptodome
 pymupdf
-# If building pygobject fails, this may help:
-# sudo apt-get install libgirepository1.0-dev
-# You may also need pygobject==3.50.0 to avoid dependency on libgirepository2.0
-# (which may not be availale).
-pygobject
+# If building pygobject fails, installing system library libgirepository1.0-dev may help.
+# However pygobject >= 3.51 depends on libgirepository2.0-dev, which is not yet
+# available on stable distributions, so fixing at 3.50 for now.
+pygobject<=3.50
 reportlab
 # RPyC 3.3.0 is needed in python 2.7, newest version works on Python 3
 rpyc==3.3.0; python_version < '3'
