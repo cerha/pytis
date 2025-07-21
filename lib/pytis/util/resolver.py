@@ -284,7 +284,7 @@ class Resolver(object):
         self.clear()
         for name in tuple(sys.modules):
             for prefix in self._search:
-                if ((not prefix.startswith('pytis.') and
+                if (((not prefix.startswith('pytis.') or prefix.startswith('pytis.demo')) and
                      (name == prefix or name.startswith(prefix + '.')) and
                      sys.modules[name] is not None)):
                     _reload(sys.modules[name])
