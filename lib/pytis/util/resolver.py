@@ -271,6 +271,12 @@ class Resolver(object):
     def reload(self):
         """Reload all specification modules and clear all caches."""
         # TODO: It only works when search path is set!
+        if sys.version_info[0] == 2:
+            reload = __builtins__['reload']
+        elif sys.version_info[:2] >= (3, 4):
+            from importlib import reload
+        else:
+            from imp import reload
         self.clear()
         for name in sys.modules:
             for prefix in self._search:
