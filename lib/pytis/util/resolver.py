@@ -270,6 +270,16 @@ class Resolver(object):
 
     def reload(self):
         """Reload all specification modules and clear all caches."""
+        try:
+            # Python 3.4+
+            from importlib import reload as _reload
+        except ImportError:
+            try:
+                # Python 3.0 to 3.3.
+                from imp import reload as _reload
+            except ImportError:
+                # Python 2 builtin.
+                _reload = reload
         # TODO: It only works when search path is set!
         self.clear()
         for name in sys.modules:
@@ -277,4 +287,4 @@ class Resolver(object):
                 if ((not prefix.startswith('pytis.') and
                      (name == prefix or name.startswith(prefix + '.')) and
                      sys.modules[name] is not None)):
-                    reload(sys.modules[name])
+                    _reload(sys.modules[name])
