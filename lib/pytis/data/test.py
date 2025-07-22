@@ -25,6 +25,7 @@ import copy
 import datetime
 import decimal
 import io
+import os
 import sys
 import time
 
@@ -55,6 +56,10 @@ _connection_data = {'database': 'test'}
 
 pytis.config.log_exclude = [DEBUG, OPERATIONAL, ACTION, EVENT]
 
+
+def plpython_test(test):
+    envvar = 'PYTIS_TEST_SKIP_PLPYTHON'
+    return pytest.mark.skipif(bool(os.getenv(envvar)), reason="{} is set".format(envvar))(test)
 
 #############
 # types_.py #
@@ -3515,7 +3520,7 @@ class DBSearchPath(_DBTest):
         test(['special'])
         test(['special', 'public'])
 
-
+@plpython_test
 class DBCrypto(_DBBaseTest):
     # Note: requires pgcrypto and db_pytis_crypto:
     # psql test -c 'create extension pgcrypto;'
