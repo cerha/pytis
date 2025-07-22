@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2019, 2024 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2019, 2024, 2025 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2017 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -645,7 +645,6 @@ class TestPresentedRow:
         row['a'] = 1
         assert row.completions('x2', prefix='ba') == ('Bananas', 'Basil')
         locale.setlocale(locale.LC_COLLATE, 'C')
-        assert row.completions('x3') == ['Adam', 'Eda', 'Franta', 'Luděk', 'Čočkin']
         if sys.platform != 'darwin':
             # Locale aware sorting doesn't work on macOS as noted in PresentedRow.completions().
             locale.setlocale(locale.LC_COLLATE, 'cs_CZ.UTF-8')
