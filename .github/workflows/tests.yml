@@ -110,6 +110,7 @@ jobs:
       PYTIS_DBNAME: test
       PYTHONPATH: lib:lcg/lib:wiking/lib
       # The default github postgres service doesn't support plpython.
+      PYTIS_TEST_SKIP_PLPYTHON: 1
 
     steps:
       - name: Checkout code

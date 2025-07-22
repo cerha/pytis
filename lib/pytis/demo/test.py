@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2019-2023 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2019-2023, 2025 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2012 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -32,6 +32,7 @@ import pytis.extensions
 import pytis.presentation
 import pytis.util
 from pytis.api import app
+from pytis.data.test import plpython_test
 
 _configuration_file = 'pytis-demo-config.py'
 _connection_data = {'database': 'pytis-demo'}
@@ -40,8 +41,8 @@ _parameters.update(dict(configuration_file=_configuration_file))
 _dmp_config = pytis.extensions.DMPConfiguration(configuration_file=_configuration_file)
 _resolver = _dmp_config.resolver()
 
-
-class _TestBase:
+@plpython_test
+class _DMPTestBase:
     _BACKUP_TABLES = ('c_pytis_menu_actions', 'e_pytis_action_rights', 'e_pytis_menu',)
 
     def setup(self):
@@ -183,14 +184,14 @@ class _TestBase:
         assert all([not c for c in changes])
 
 
-class TestBasic(_TestBase):
+class TestBasic(_DMPTestBase):
 
     def test_commit(self):
         pytis.extensions.dmp_commit(_parameters, False)
         self._check_no_change()
 
 
-class TestMenu(_TestBase):
+class TestMenu(_DMPTestBase):
 
     def test_add(self):
         pytis.extensions.dmp_add_action(_parameters, False,
@@ -219,11 +220,11 @@ class TestMenu(_TestBase):
         self._check_no_change()
 
 
-class TestForms(_TestBase):
+class TestForms(_DMPTestBase):
     pass
 
 
-class TestRights(_TestBase):
+class TestRights(_DMPTestBase):
 
     def test_reset(self):
         dbuser = pytis.config.dbuser
@@ -249,7 +250,7 @@ class TestRights(_TestBase):
                            "where not system and shortname='form/misc.Products'")[0][0] > 0
 
 
-class TestMix(_TestBase):
+class TestMix(_DMPTestBase):
     # The idea is to perform a lot of dmp operations randomly selected from a
     # predefined list.  Each operation should be performed reversely sooner or
     # later.  The test should finish in the same state as it started (and
