@@ -85,11 +85,13 @@ class Resolver(object):
             module = __import__(name)
         except ImportError as e:
             if sys.version_info[0] == 2:
-                template = "No module named %s"
+                template = "No module named {}"
             else:
-                template = "No module named '%s'"
+                template = "No module named '{}'"
             for i in range(len(components) + 1):
-                if str(e) == template % '.'.join(components[i:]):
+                msg = template.format('.'.join(components[i:]))
+                if ((sys.version_info[0] == 2 and str(e) == msg or
+                     sys.version_info[0] > 2 and str(e).startswith(msg))):
                     # Raise resolver error only if the import error actually
                     # related to importing the named module itself and not to some
                     # nested import within this module.
