@@ -352,10 +352,14 @@ Integer locale formátování nepodléhá.
 'cs_CZ.UTF-8'
 
 Po případné změně locales (v aplikaci se neděje) musíme obejít cache
-zformátovaných hodnot např. tím, že hodnotu přenastavíme.
+zformátovaných hodnot např. tím, že hodnotu přenastavíme.  Je třeba počítat s
+tím, že na různých systémech může locale formátování používat různé znaky, níže
+např. oddělovač tisíců může být \u202f (Narrow No-Break Space) nebo \xa0
+(No-Break Space) (např. na macOS).  Proto zde pro konzistentní výsledek unit
+testu provedeme replace.
 
 >>> record['x'] = pd.fval(1234.1234)
->>> record.format('x')  # doctest: +ALLOW_UNICODE
+>>> record.format('x').replace('\xa0', '\u202f')
 '1\u202f234,123400'
 
 Zde nastavíme locales zpět na en_US, protože s tím počítají ostatní testy,
