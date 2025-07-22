@@ -644,9 +644,10 @@ class TestPresentedRow:
         assert row.completions('x2', prefix='ba') == ('Bananas', 'Basil', 'Bacardi')
         row['a'] = 1
         assert row.completions('x2', prefix='ba') == ('Bananas', 'Basil')
-        locale.setlocale(locale.LC_COLLATE, 'C')
         if sys.platform != 'darwin':
             # Locale aware sorting doesn't work on macOS as noted in PresentedRow.completions().
+            locale.setlocale(locale.LC_COLLATE, 'C')
+            assert row.completions('x3') == ['Adam', 'Eda', 'Franta', 'Luděk', 'Čočkin']
             locale.setlocale(locale.LC_COLLATE, 'cs_CZ.UTF-8')
             assert row.completions('x3') == ['Adam', 'Čočkin', 'Eda', 'Franta', 'Luděk']
 
