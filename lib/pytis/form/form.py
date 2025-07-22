@@ -788,7 +788,7 @@ class InnerForm(Form):
         self._on_menu_button(self._get_print_menu())
 
     def _can_print_menu(self):
-        return bool(self._get_print_menu())
+        return app.has_access(self.name(), perm=pytis.data.Permission.PRINT)
 
 
 class Refreshable(object):
@@ -3598,6 +3598,9 @@ class _VirtualEditForm(EditForm):
 
     def _print_menu(self):
         return []
+
+    def _can_print_menu(self):
+        return False
 
     def _exit_check(self):
         if self._inserted_data:
