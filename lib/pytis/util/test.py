@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2024 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2025 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2018 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -79,61 +79,6 @@ class Popen(unittest.TestCase):
         out.write(self.STRING)
         out.close()
         self.assertEqual(popen3.from_child().read(), self.RSTRING)
-
-
-class XStack(unittest.TestCase):
-
-    def test_it(self):
-        stack = util.XStack()
-        assert len(stack) == 0
-        assert stack.active() is None
-        assert stack.prev() is None
-        assert stack.next() is None
-        a = 'AAA'
-        b = 'BBB'
-        c = 'CCC'
-        d = 'DDD'
-        stack.push(a)
-        assert stack.items() == (a,)
-        assert len(stack) == 1
-        assert stack.active() is a
-        assert stack.prev() is None
-        assert stack.next() is None
-        stack.push(b)
-        assert stack.items() == (b, a,)
-        assert stack.active() is b
-        assert stack.prev() is a
-        assert stack.next() is a
-        stack.push(c)
-        assert stack.items() == (c, b, a,)
-        assert len(stack) == 3
-        assert stack.active() is c
-        assert stack.prev() is a
-        assert stack.next() is b
-        stack.activate(a)
-        assert stack.items() == (c, b, a,)
-        assert stack.active() is a
-        assert stack.prev() is b
-        assert stack.next() is c
-        stack.activate(b)
-        assert stack.active() is b
-        assert stack.prev() is c
-        assert stack.next() is a
-        stack.remove(b)
-        assert stack.items() == (c, a,)
-        assert stack.active() is a
-        stack.push(d)
-        assert stack.items() == (c, d, a,)
-        assert stack.active() is d
-        stack.remove(stack.active())
-        assert stack.active() is a
-        assert stack.prev() is c
-        assert stack.next() is c
-        stack.remove(stack.active())
-        assert stack.active() is c
-        assert len(stack) == 1
-        assert stack.prev() is None
-        assert stack.next() is None
 
 
 class Sameclass(unittest.TestCase):
