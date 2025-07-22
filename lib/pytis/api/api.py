@@ -1602,6 +1602,10 @@ def test_api_definition():
         def api_side_form(self):
             return MyForm().provider()
 
+        @property
+        def api_title(self):
+            return 'My Form'
+
         def api_select_row(self, position):
             pass
 
@@ -1609,6 +1613,9 @@ def test_api_definition():
             return 'rows unselected'
 
         def api_refresh(self):
+            pass
+
+        def api_activate(self):
             pass
 
         def api_close(self, force=False):
