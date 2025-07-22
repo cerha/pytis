@@ -135,10 +135,15 @@ class ApplicationAPIProvider(APIProvider):
         self._instance = None
 
     def __getattr__(self, name):
-        if self._instance is None:
-            # This typically happens in scripts where no actuall application is
-            # running.  Thus initialize BaseApplication to get at least itself
-            # basic set of app methods (such as app.param, app.has_access, ...).
+        if self._instance is None and not name.startswith('__'):
+            # Automatically handle application initialization for scripts:
+            # Application attributes may be accessed here when no actual
+            # application is running.  Initializing BaseApplication will
+            # make the basic set of app methods (such as app.param,
+            # app.has_access, ...) available on the 'app' object.
+            # '__' prefixed attributes are ignored here because these
+            # may be examined during introspection, such as on pytest
+            # test collection.
             BaseApplication()  # Will call app.init() automatically.
         return super(ApplicationAPIProvider, self).__getattr__(name)
 
