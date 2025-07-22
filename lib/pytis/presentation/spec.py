@@ -4805,7 +4805,7 @@ class DbAttachmentStorage(AttachmentStorage):
         self._ticket = ticket = self._generate_ticket()
         self._base_uri = 'http://localhost:%d/%s' % (server.socket.getsockname()[1], ticket)
         import threading
-        threading.Thread(target=server.serve_forever).start()
+        threading.Thread(target=server.serve_forever, daemon=True).start()
 
     def __del__(self):
         # Shut down the server when the storage instance is being removed from

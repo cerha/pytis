@@ -1695,7 +1695,7 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler, KeyHandler):
         self.Bind(wx.EVT_WINDOW_DESTROY, self._on_destroy)
         KeyHandler.__init__(self, webview)
         self._resource_server = server = self.ResourceServer()
-        threading.Thread(target=server.serve_forever).start()
+        threading.Thread(target=server.serve_forever, daemon=True).start()
         self._navigation_timeout = time.time()
 
     def _on_destroy(self, event):
