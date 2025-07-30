@@ -862,7 +862,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
             MenuItem(_("Activate previous tab"),
                      command=Command(Application.activate_next_form, back=True),
                      help=_("Switch to the tab on left from the current tab.")),
-            MenuItem(_("Activte next tab"),
+            MenuItem(_("Activate next tab"),
                      command=Command(Application.activate_next_form),
                      help=_("Switch to the tab on right from the current tab.")),
             MenuItem(_("Activate recently active tab"),

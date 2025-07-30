@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: pytis 0.1\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
 "POT-Creation-Date: 2025-06-10 21:37+0200\n"
-"PO-Revision-Date: 2025-06-10 21:40+0200\n"
+"PO-Revision-Date: 2025-08-27 18:02-0500\n"
 "Language-Team: Czech <wiking@lists.freebsoft.org>\n"
 "Language: cs\n"
 "MIME-Version: 1.0\n"
@@ -201,8 +201,8 @@ msgstr "Aktivovat předchozí záložku"
 msgid "Switch to the tab on left from the current tab."
 msgstr "Přepnout do záložky vlevo od aktuální záložky."
 
-#: ../lib/pytis/form/application.py:869
-msgid "Activte next tab"
+#: ../lib/pytis/form/application.py:861
+msgid "Activate next tab"
 msgstr "Aktivovat následující záložku"
 
 #: ../lib/pytis/form/application.py:871
