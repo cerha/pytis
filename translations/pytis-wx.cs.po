@@ -202,7 +202,7 @@ msgid "Switch to the tab on left from the current tab."
 msgstr "Přepnout do záložky vlevo od aktuální záložky."
 
 #: ../lib/pytis/form/application.py:861
-msgid "Activte next tab"
+msgid "Activate next tab"
 msgstr "Aktivovat následující záložku"
 
 #: ../lib/pytis/form/application.py:863
