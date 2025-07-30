@@ -2496,7 +2496,8 @@ class DBDataDefault(_DBTest):
         transaction_2 = pd.DBTransactionDefault(connection_data=self._dconnection)
         try:
             assert v.lock_row(key, transaction=transaction) is None
-            assert isinstance(v.lock_row(key, transaction=transaction_2), basestring)
+            # We don't attempt to lock even simple views any more (we used to).
+            assert v.lock_row(key, transaction=transaction_2) is None
             assert v.lock_row(key3, transaction=transaction_2) is None
             assert v2.lock_row(key2, transaction=transaction) is None
             assert v2.lock_row(key2, transaction=transaction_2) is None
