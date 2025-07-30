@@ -361,10 +361,10 @@ class TestApp(DBTest):
 
     """
     def test_api_form(self):
-        import time
         assert app.form is None
-        f = app.run_form('UserParams')
+        app.run_form('UserParams')
         assert app.form is not None
+        assert app.form.name == 'UserParams'
         # TODO: Testing form attributes below is very fragile.  Sometimes it
         # works, but most often it causes SIGABRT, SIGSEGV or SIGTRAP.
         assert app.form.name == 'UserParams'
