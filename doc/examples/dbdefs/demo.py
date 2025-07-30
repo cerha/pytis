@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2019-2024 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2019-2025 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2012-2015 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -296,7 +296,8 @@ class FromSelect(sql.SQLView):
     def query(class_):
         foo = sql.t.Foo
         select = sqlalchemy.select([foo], from_obj=[foo]).alias('s(keycol)')
-        return sqlalchemy.select(['s.*'], from_obj=[select], whereclause='s.n > 0')
+        return sqlalchemy.select([sqlalchemy.text('s.*')], from_obj=[select],
+                                 whereclause=sqlalchemy.text('s.n > 0'))
 
 class LimitedView(sql.SQLView):
     name = 'limited_view'
