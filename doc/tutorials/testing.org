@@ -110,3 +110,9 @@ make test
 nebo spouštět testy jednotlivě:
 
 pytest lib/pytis/presentation/spec.py
+
+Ale pozor, filesystém není namountovaný z hostitelského systému, takže změny se
+zde neprojeví.  Je to pouze snapshot adresáře.  Přidáním argumentu -b při
+spuštění act lze vynutit mountování hostitelského adresáře, což umožňuje
+zdrojáky upravovat na hostiteli a spouštět testy v kontejneru s provedenými
+úpravami.
