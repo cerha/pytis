@@ -1,21 +1,22 @@
 # These reqirements apply to Pytis wx applications.
 # Use Wiking's requirements.txt for Wiking web apps
 cachetools
-file-magic
+file-magic; python_version >= '3.0'
 future
 gnupg
 psycopg2-binary
 pillow
 pycryptodome
-pymupdf
+pymupdf==1.14.20; python_version == '2.7'
+pymupdf; python_version >= '3.0'
 # If building pygobject fails, installing system library libgirepository1.0-dev may help.
 # However pygobject >= 3.51 depends on libgirepository2.0-dev, which is not yet
 # available on stable distributions, so fixing at 3.50 for now.
-pygobject<=3.50
+pygobject<=3.50; platform_system == "Linux"
 reportlab
 # RPyC 3.3.0 is needed in python 2.7, newest version works on Python 3
-rpyc==3.3.0; python_version < '3'
-rpyc; python_version >= '3'
+rpyc==3.3.0; python_version == '2.7'
+rpyc; python_version >= '3.9'
 sqlalchemy==1.4
 # To use a binary wxPython wheel, it may be necessary to add -f and limit 
 # wxPython version to the one available in given source, such as:
