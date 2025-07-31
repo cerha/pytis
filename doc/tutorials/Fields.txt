@@ -356,11 +356,12 @@ zformátovaných hodnot např. tím, že hodnotu přenastavíme.  Je třeba poč
 tím, že na různých systémech může locale formátování používat různé znaky, níže
 např. oddělovač tisíců může být \u202f (Narrow No-Break Space) nebo \xa0
 (No-Break Space) (např. na macOS).  Proto zde pro konzistentní výsledek unit
-testu provedeme replace.
+testu provedeme replace.  Převod na str je potom kvůli kompatibilitě testu s
+Pythonem 2 i 3 (v pythonu 2 by bylo potřeba přidat u'' prefix).
 
 >>> record['x'] = pd.fval(1234.1234)
->>> record.format('x').replace('\xa0', '\u202f')
-'1\u202f234,123400'
+>>> str(record.format('x').replace(u'\xa0', ' ').replace(u'\u202f', ' '))
+'1 234,123400'
 
 Zde nastavíme locales zpět na en_US, protože s tím počítají ostatní testy,
 které mohou být spouštěny po tomto.
