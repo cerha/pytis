@@ -5204,7 +5204,7 @@ class Command(object):
     'Form.select_row'
     >>> command.definer is Form
     True
-    >>> command.method is Form.select_row
+    >>> command.method == Form.select_row  # Using "is" instead of == fails on Python 2.
     True
     >>> command.args
     {'position': 3}
@@ -5459,22 +5459,25 @@ class Command(object):
         >>> Command(g.greet, 'Peter').args
         {'name': 'Peter'}
         >>> command = Command(g.greet, 'Peter', True, True)
-        >>> command.args
-        {'name': 'Peter', 'polite': True, 'shout': True}
+        >>> command.args == {'name': 'Peter', 'polite': True, 'shout': True}
+        True
         >>> command.invoke()
         'HELLO, PETER. HOW ARE YOU?'
         >>> command = Command(g.greet, 'Bob', shout=False)
-        >>> command.args
-        {'name': 'Bob', 'shout': False}
+        >>> command.args == {'name': 'Bob', 'shout': False}
+        True
         >>> command.invoke()
         'Hello, Bob. How are you?'
         >>> command = Command(g.greet_people, 'Hi', 'Peter', 'Ann', polite=False)
-        >>> command.args
-        {'greeting': 'Hi', '*names': ('Peter', 'Ann'), 'polite': False}
+        >>> command.args == {'greeting': 'Hi', '*names': ('Peter', 'Ann'), 'polite': False}
+        True
         >>> command.invoke()
         'Hi, Peter and Ann.'
 
         """
+        # TODO NOPY2: Transform the doctests with dictionaries.  Instead of
+        # comparison move the dict to the second line (expected output).
+        # This does not work in Python 2 due to non-deterministic key ordering.
         named_positionals = [(k, v) for k, v in zip(argument_names(self._method), self._args)]
         if len(named_positionals) < len(self._args):
             names = argument_names(self._method, var_positional=True)
