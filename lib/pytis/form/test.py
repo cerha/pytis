@@ -256,6 +256,11 @@ class user_params(sql.SQLTable):
 class UserParams(pp.Specification):
     table = user_params
     public = True
+    # This is here only in order to allow testing query fields API in TestApp
+    query_fields = pp.QueryFields((
+        pp.Field('min', "Min", type=pytis.data.Integer(not_null=True), default=10),
+        pp.Field('max', "Max", type=pytis.data.Integer(not_null=True), default=50),
+    ), autoinit=True)
 
 
 class square(sql.SQLPlFunction):
@@ -365,12 +370,12 @@ class TestApp(DBTest):
         app.run_form('UserParams')
         assert app.form is not None
         assert app.form.name == 'UserParams'
-        # TODO: Testing form attributes below is very fragile.  Sometimes it
-        # works, but most often it causes SIGABRT, SIGSEGV or SIGTRAP.
-        assert app.form.name == 'UserParams'
-        #assert app.form.query_fields is not None
-        #assert app.form.query_fields.row is not None
-        #assert app.form.query_fields.row['min'].value() == 10
+
+    def test_query_fields_api(self):
+        app.run_form('UserParams')
+        assert app.form.query_fields is not None
+        assert app.form.query_fields.row is not None
+        assert app.form.query_fields.row['min'].value() == 10
 
     def test_shared_params(self):
         assert app.param.user.name == 'Test User'
