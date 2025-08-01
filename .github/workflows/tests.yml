@@ -9,6 +9,75 @@ on:
 
 jobs:
 
+  test-py27:
+    # The base system is Ubuntu, but the Python 2.7 image actually runs Debian 10 (Buster).
+    runs-on: ubuntu-latest
+
+    container:
+      image: python:2.7
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: pytis
+          POSTGRES_PASSWORD: pytis
+          POSTGRES_DB: test
+
+    env:
+      PGHOST: postgres
+      PGPORT: 5432
+      PGUSER: pytis
+      PGPASSWORD: pytis
+      PYTIS_DBNAME: test
+      PYTHONPATH: lib:lcg/lib:wiking/lib
+      # The default github postgres service doesn't support plpython.
+      PYTIS_TEST_SKIP_PLPYTHON: 1
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Fix APT for archived Debian
+        run: |
+          sed -i 's|http://deb.debian.org/debian|http://archive.debian.org/debian|g' /etc/apt/sources.list
+          sed -i 's|http://security.debian.org/debian-security|http://archive.debian.org/debian-security|g' /etc/apt/sources.list
+          echo 'Acquire::Check-Valid-Until "false";' > /etc/apt/apt.conf.d/99no-check-valid-until
+
+      - name: Install system dependencies
+        run: |
+          apt-get update
+          apt-get install -y locales postgresql-client \
+            python-dev pkg-config libgirepository1.0-dev libmupdf-dev libfreetype6-dev \
+            libwebkit2gtk-4.0-37 libsdl2-2.0-0 libnotify4
+          sed -i '/\(cs_CZ\|en_US\).UTF-8/s/^# \+//g' /etc/locale.gen
+          locale-gen
+
+      - name: Install Python dependencies
+        run: |
+          if [ -d lcg ]; then
+              git -C lcg pull
+          else
+              git clone https://github.com/cerha/lcg
+          fi
+          if [ -d wiking ]; then
+              git -C wiking pull
+          else
+              git clone https://github.com/cerha/wiking
+          fi
+          pip install --upgrade pip
+          pip install wxpython --only-binary=:all: --verbose \
+              -f https://extras.wxpython.org/wxPython4/extras/linux/gtk3/debian-10/
+          pip install -r requirements.txt -r requirements-devel.txt
+
+      - name: Setup database
+        run: |
+          psql test -c "alter database test set default_text_search_config to 'simple'"
+          psql test -c "create role demo;"
+
+      - name: Run tests
+        run: make test
+
   test:
     runs-on: ubuntu-latest
 
