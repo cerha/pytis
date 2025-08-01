@@ -34,12 +34,6 @@ import pytis.util
 from pytis.api import app
 from pytis.data.test import plpython_test
 
-_configuration_file = 'pytis-demo-config.py'
-_connection_data = {'database': 'pytis-demo'}
-_parameters = copy.copy(_connection_data)
-_parameters.update(dict(configuration_file=_configuration_file))
-_dmp_config = pytis.extensions.DMPConfiguration(configuration_file=_configuration_file)
-_resolver = _dmp_config.resolver()
 
 @plpython_test
 class _DMPTestBase:
@@ -48,8 +42,12 @@ class _DMPTestBase:
     def setup(self):
         # When pytis.demo test runs in one pytest session after pytis.data
         # test, the DB connection must be reset to reflect the changed dbname.
+        configuration_file = 'pytis-demo-config.py'
+        self._connection_data = {'database': 'pytis-demo'}
+        self._parameters = dict(self._connection_data, configuration_file=configuration_file)
+        dmp_config = pytis.extensions.DMPConfiguration(configuration_file=configuration_file)
         pytis.config.option('dbconnection').reset()
-        self._resolver = _resolver
+        self._resolver = dmp_config.resolver()
         self._orig_rights = self._read_rights()
         self._orig_menu = self._read_menu()
         for table in self._BACKUP_TABLES:
@@ -77,7 +75,7 @@ class _DMPTestBase:
             self._commit()
 
     def _query(self, query):
-        connection = dbapi.connect(**_connection_data)
+        connection = dbapi.connect(**self._connection_data)
         cursor = connection.cursor()
         try:
             cursor.execute(query)
@@ -119,7 +117,7 @@ class _DMPTestBase:
         data = pytis.data.dbtable('e_pytis_menu',
                                   ('menuid', 'name', 'title', 'position', 'next_position',
                                    'fullname', 'help', 'hotkey', 'locked'),
-                                  pytis.data.DBConnection(**_connection_data))
+                                  pytis.data.DBConnection(**self._connection_data))
 
         def process(row):
             return (row['position'].value(), row['name'].value(), row['title'].value(),
@@ -187,21 +185,21 @@ class _DMPTestBase:
 class TestBasic(_DMPTestBase):
 
     def test_commit(self):
-        pytis.extensions.dmp_commit(_parameters, False)
+        pytis.extensions.dmp_commit(self._parameters, False)
         self._check_no_change()
 
 
 class TestMenu(_DMPTestBase):
 
     def test_add(self):
-        pytis.extensions.dmp_add_action(_parameters, False,
+        pytis.extensions.dmp_add_action(self._parameters, False,
                                         'form/pytis.form.BrowseForm/misc.YProducts//',
                                         "2.1111", None)
         self._check_no_change()
-        pytis.extensions.dmp_add_action(_parameters, False,
+        pytis.extensions.dmp_add_action(self._parameters, False,
                                         'form/pytis.form.BrowseForm/misc.XProducts//',
                                         "2.1112", None)
-        pytis.extensions.dmp_add_action(_parameters, False,
+        pytis.extensions.dmp_add_action(self._parameters, False,
                                         'form/pytis.form.BrowseForm/misc.XProducts//',
                                         '2.1112.11235', None)
         changes = self._compare_menu(self._orig_menu, self._read_menu())
@@ -209,12 +207,12 @@ class TestMenu(_DMPTestBase):
         assert len(changes[1]) == 2
 
     def test_delete(self):
-        pytis.extensions.dmp_delete_menu(_parameters, False, '99999')
+        pytis.extensions.dmp_delete_menu(self._parameters, False, '99999')
         self._check_no_change()
-        pytis.extensions.dmp_add_action(_parameters, False,
+        pytis.extensions.dmp_add_action(self._parameters, False,
                                         'form/pytis.form.BrowseForm/misc.XProducts//',
                                         "2.1112", None)
-        pytis.extensions.dmp_delete_menu(_parameters, False, '2.1112')
+        pytis.extensions.dmp_delete_menu(self._parameters, False, '2.1112')
         changes = self._compare_menu(self._orig_menu, self._read_menu())
         assert all([not c for c in changes])
         self._check_no_change()
@@ -228,21 +226,21 @@ class TestRights(_DMPTestBase):
 
     def test_reset(self):
         dbuser = pytis.config.dbuser
-        pytis.extensions.dmp_change_rights(_parameters, False,
+        pytis.extensions.dmp_change_rights(self._parameters, False,
                                            (('form/misc.Products', dbuser, 'update',
                                              False, None, False,),
                                             ('form/cb.Countries', dbuser, 'view',
                                              False, None, False,),))
-        pytis.extensions.dmp_commit(_parameters, False)
+        pytis.extensions.dmp_commit(self._parameters, False)
         self._read_rights()
         self._check_rights((('form/misc.Products', pytis.data.Permission.UPDATE, None, False),
                             ('form/cb.Countries', pytis.data.Permission.VIEW, None, False),))
-        pytis.extensions.dmp_reset_rights(_parameters, False, 'form/misc.Products')
-        pytis.extensions.dmp_reset_rights(_parameters, False, 'form/cb.Countries')
+        pytis.extensions.dmp_reset_rights(self._parameters, False, 'form/misc.Products')
+        pytis.extensions.dmp_reset_rights(self._parameters, False, 'form/cb.Countries')
         self._check_no_change()
 
     def test_system(self):
-        pytis.extensions.dmp_convert_system_rights(_parameters, False, 'form/misc.Products')
+        pytis.extensions.dmp_convert_system_rights(self._parameters, False, 'form/misc.Products')
         self._check_no_change()
         assert self._query("select count(*) from e_pytis_action_rights "
                            "where system and shortname='form/misc.Products'")[0][0] == 0
