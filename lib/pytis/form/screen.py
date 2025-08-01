@@ -1140,7 +1140,7 @@ class ProfileSelectorPopup(wx.ComboPopup):
     """
     def __init__(self):
         wx.ComboPopup.__init__(self)
-        self._selected_profile_id = None
+        self._selected_profile_index = None
         self._listctrl = None
 
     def _on_motion(self, event):
@@ -1695,7 +1695,7 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler, KeyHandler):
         self.Bind(wx.EVT_WINDOW_DESTROY, self._on_destroy)
         KeyHandler.__init__(self, webview)
         self._resource_server = server = self.ResourceServer()
-        threading.Thread(target=server.serve_forever).start()
+        threading.Thread(target=server.serve_forever, daemon=True).start()
         self._navigation_timeout = time.time()
 
     def _on_destroy(self, event):

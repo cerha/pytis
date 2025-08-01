@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2024 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2025 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2005 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -256,6 +256,11 @@ class user_params(sql.SQLTable):
 class UserParams(pp.Specification):
     table = user_params
     public = True
+    # This is here only in order to allow testing query fields API in TestApp
+    query_fields = pp.QueryFields((
+        pp.Field('min', "Min", type=pytis.data.Integer(not_null=True), default=10),
+        pp.Field('max', "Max", type=pytis.data.Integer(not_null=True), default=50),
+    ), autoinit=True)
 
 
 class square(sql.SQLPlFunction):
@@ -275,7 +280,7 @@ end;
 class Application(pp.Application):
     def params(self):
         return (
-            pp.SharedParams('user', 'test.UserParams',
+            pp.SharedParams('user', 'UserParams',
                             pd.EQ('login', pd.sval('test'))),
         )
 
@@ -360,16 +365,16 @@ class TestApp(DBTest):
 
     """
     def test_api_form(self):
-        import time
         assert app.form is None
-        f = app.run_form('test.UserParams')
+        app.run_form('UserParams')
         assert app.form is not None
-        # TODO: Testing form attributes below is very fragile.  Sometimes it
-        # works, but most often it causes SIGABRT, SIGSEGV or SIGTRAP.
-        assert app.form.name == 'test.UserParams'
-        #assert app.form.query_fields is not None
-        #assert app.form.query_fields.row is not None
-        #assert app.form.query_fields.row['min'].value() == 10
+        assert app.form.name == 'UserParams'
+
+    def test_query_fields_api(self):
+        app.run_form('UserParams')
+        assert app.form.query_fields is not None
+        assert app.form.query_fields.row is not None
+        assert app.form.query_fields.row['min'].value() == 10
 
     def test_shared_params(self):
         assert app.param.user.name == 'Test User'

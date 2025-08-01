@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2024 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2025 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2016 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -22,6 +22,9 @@ from __future__ import print_function
 import datetime
 import lcg
 import pytest
+import sys
+
+
 import pytis.data as pd
 import pytis.presentation as pp
 import pytis.util
@@ -93,7 +96,8 @@ def export_context(lang):
 
 @pytest.fixture(params=tests)
 def field_params(request):
-    fspec, *values = request.param
+    fspec = request.param[0]
+    values = request.param[1:]
     columns = [pd.ColumnSpec(fspec.id(), fspec.type())]
     data = pd.Data(columns, columns[0])
     row = pp.PresentedRow((fspec,), data, None, new=True)
@@ -108,7 +112,7 @@ def field_test(f):
         row, field, context, values = field_params
         for value, exported in values:
             f(row, field, context, value, exported)
-    return x
+    return pytest.mark.skipif(sys.version_info[0] == 2, reason="Not testing on Python 2")(x)
 
 
 @field_test

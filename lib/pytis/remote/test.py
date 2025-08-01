@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2024 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2025 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2011-2018 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -29,7 +29,7 @@ import pytis.remote
 
 def interactive(test):
     envvar = 'PYTIS_TEST_INTERACTIVE'
-    return pytest.mark.skipif(not os.getenv(envvar), reason="{} not set.".format(envvar))(test)
+    return pytest.mark.skipif(not os.getenv(envvar), reason="{} not set".format(envvar))(test)
 
 
 class TestRemote:

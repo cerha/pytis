@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2024 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2025 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2012-2016 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -3724,7 +3724,12 @@ class SQLPyFunction(SQLFunctional):
     def body(self):
         # The method itself
         main_method_name = self.name
-        arguments = inspect.getargspec(getattr(self, main_method_name)).args
+        method_callable = getattr(self, main_method_name)
+        if sys.version_info[0] == 2:
+            arguments = inspect.getargspec(method_callable).args
+        else:
+            arguments = [a.name for a in inspect.signature(method_callable).parameters.values()
+                         if a.kind in (a.POSITIONAL_ONLY, a.POSITIONAL_OR_KEYWORD)]
         arglist = ', '.join(arguments)
         lines = ['#def %s(%s):' % (self.name, arglist,)]
         if arglist:

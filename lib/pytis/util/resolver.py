@@ -85,11 +85,13 @@ class Resolver(object):
             module = __import__(name)
         except ImportError as e:
             if sys.version_info[0] == 2:
-                template = "No module named %s"
+                template = "No module named {}"
             else:
-                template = "No module named '%s'"
+                template = "No module named '{}'"
             for i in range(len(components) + 1):
-                if str(e) == template % '.'.join(components[i:]):
+                msg = template.format('.'.join(components[i:]))
+                if ((sys.version_info[0] == 2 and str(e) == msg or
+                     sys.version_info[0] > 2 and str(e).startswith(msg))):
                     # Raise resolver error only if the import error actually
                     # related to importing the named module itself and not to some
                     # nested import within this module.
@@ -271,10 +273,16 @@ class Resolver(object):
     def reload(self):
         """Reload all specification modules and clear all caches."""
         # TODO: It only works when search path is set!
+        if sys.version_info[0] == 2:
+            reload = __builtins__['reload']
+        elif sys.version_info[:2] >= (3, 4):
+            from importlib import reload
+        else:
+            from imp import reload
         self.clear()
-        for name in sys.modules:
+        for name in tuple(sys.modules):
             for prefix in self._search:
-                if ((not prefix.startswith('pytis.') and
+                if (((not prefix.startswith('pytis.') or prefix.startswith('pytis.demo')) and
                      (name == prefix or name.startswith(prefix + '.')) and
                      sys.modules[name] is not None)):
                     reload(sys.modules[name])

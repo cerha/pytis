@@ -224,17 +224,9 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         self._aggregated_views_manager = pytis.form.AggregatedViewsManager(
             pytis.config.dbconnection)
         # Initialize user action logger.
-        try:
-            from pytis.defs.logging import UserActionLog
-            self._user_action_logger = UserActionLog.Logger(pytis.config.dbconnection,
-                                                            pytis.config.dbuser)
-            log(OPERATIONAL, "Form action logging activated.")
-        except pd.DBException as e:
-            # DB logging is optional.  The application may choose not to include
-            # the logging table in the database schema and this will simply
-            # lead to action logging not being written into the database.
-            log(OPERATIONAL, "Form action logging not activated:", e)
-            self._user_action_logger = None
+        from pytis.defs.logging import UserActionLog
+        self._user_action_logger = UserActionLog.Logger(pytis.config.dbconnection,
+                                                        pytis.config.dbuser)
         # Read the stored configuration.
         for option, value in self._application_config_manager.load().items():
             if hasattr(pytis.config, option):
@@ -866,7 +858,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
             MenuItem(_("Activate previous tab"),
                      command=Command(Application.activate_next_form, back=True),
                      help=_("Switch to the tab on left from the current tab.")),
-            MenuItem(_("Activte next tab"),
+            MenuItem(_("Activate next tab"),
                      command=Command(Application.activate_next_form),
                      help=_("Switch to the tab on right from the current tab.")),
             MenuItem(_("Activate recently active tab"),
@@ -1362,9 +1354,29 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         return self._aggregated_views_manager
 
     def log_user_action(self, spec_name, form_name, action, data=None):
+        """Log user action to the database.
+
+        To activate database logging of user actions, include the table
+        'pytis.dbdefs.db_pytis_logging.EPytisActionLog' in the database schema.
+
+        If the logging table does not exist, the information will only be
+        written to server log.
+
+        """
         log(ACTION, "User action:", (spec_name, form_name, action, data))
         if self._user_action_logger:
-            self._user_action_logger.log(spec_name, form_name, action, data)
+            try:
+                self._user_action_logger.log(spec_name, form_name, action, data)
+            except pd.DBUserException as e:
+                if 'relation "e_pytis_action_log" does not exist' in str(e):
+                    # We get DBException if the logging table does not exist.
+                    # TODO: Test table presence in Logger constructor and avoid
+                    # exception handling here.  Successful data object creation
+                    # doesn't mean that the table actually exists.  The error
+                    # is already logged here, so we just ignore it.
+                    pass
+                else:
+                    raise
 
     def client_mode(self):
         """Return the client operation mode as one of 'remote', 'local' or None.
@@ -1783,20 +1795,38 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         return True
 
     def _input(self, type, title, label, default=None, width=None, height=None, descr=None,
-               noselect=False):
-        row = app.input_form(title=title, noselect=noselect, fields=(
-            Field('f', label, default=default, type=type, width=width, height=height,
-                  descr=descr),
-        ))
+               noselect=False, compact=False, resizable=False,
+               text_format=TextFormat.PLAIN, attachment_storage=None):
+        if resizable:
+            form = pytis.form.ResizableInputForm
+        else:
+            form = pytis.form.InputForm
+        row = run_form(
+            form,
+            title=title,
+            avoid_initial_selection=noselect,
+            fields=(
+                # Convert None in label to '' because it makes more sense
+                # to use None for unlabeled fields.  We historically used
+                # empty string for that in field specifications, but we don't
+                # want to propagate this unfortunate decision to Pytis API.
+                Field('f', label or '', default=default, type=type, width=width,
+                      height=height, descr=descr, compact=compact,
+                      text_format=text_format, attachment_storage=attachment_storage),
+            ),
+        )
         if row:
             return row['f'].value()
         else:
             return None
 
     def api_input_text(self, title, label, default=None, not_null=False, width=20, height=1,
-                       descr=None, noselect=False):
+                       descr=None, noselect=False, compact=False,
+                       text_format=TextFormat.PLAIN, attachment_storage=None):
         return self._input(pd.String(not_null=not_null), title, label, default=default,
-                           width=width, height=height, descr=descr, noselect=noselect)
+                           width=width, height=height, descr=descr, noselect=noselect,
+                           compact=compact, resizable=height > 1,
+                           text_format=text_format, attachment_storage=attachment_storage)
 
     def api_input_date(self, title, label=None, default=None, not_null=True, descr=None,
                        noselect=False):
