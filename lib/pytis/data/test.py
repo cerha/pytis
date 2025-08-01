@@ -209,6 +209,15 @@ class TestInteger(_TestType):
 class TestFloat(_TestType):
     _type = pd.Float
 
+    def setUp(self):
+        import locale
+        self._orig_locale = locale.getlocale(locale.LC_ALL)
+        locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
+
+    def tearDown(self):
+        import locale
+        locale.setlocale(locale.LC_ALL, self._orig_locale)
+
     def test_validation(self):
         t = pd.Float()
         assert self._validate(t, '3') == 3.0
