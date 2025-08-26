@@ -1082,7 +1082,7 @@ class ListForm(RecordForm, Refreshable):
             x = event.GetX() + self._scroll_x_offset()
             col = g.XToCol(x)
             if col != -1:
-                x1 = functools.reduce(lambda x, i: x + g.GetColSize(i), range(col), 0)
+                x1 = sum(g.GetColSize(i) for i in range(col))
                 x2 = x1 + g.GetColSize(col)
                 if x > x1 + 2 and x < x2 - 2:
                     self._column_to_move = col
