@@ -2065,7 +2065,7 @@ class ImageField(FileField):
         if self._value is not None:
             import PIL.Image
             img = self._value.image().copy()
-            img.thumbnail((self.width(), self.height()), PIL.Image.ANTIALIAS)
+            img.thumbnail((self.width(), self.height()), PIL.Image.LANCZOS)
             stream = io.BytesIO()
             img.save(stream, 'PNG')
             stream.seek(0)

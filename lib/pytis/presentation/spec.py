@@ -4247,7 +4247,7 @@ class AttachmentStorage(object):
         """
         import PIL.Image
         resized = image.copy()
-        resized.thumbnail(size, PIL.Image.ANTIALIAS)
+        resized.thumbnail(size, PIL.Image.LANCZOS)
         return resized
 
     def insert(self, filename, data, values, transaction=None):
