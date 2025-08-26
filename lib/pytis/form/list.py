@@ -1076,18 +1076,18 @@ class ListForm(RecordForm, Refreshable):
 
     def _on_label_left_down(self, event):
         g = self._grid
-        if event.GetY() > self._label_height:
-            return
-        x = event.GetX() + self._scroll_x_offset()
-        col = g.XToCol(x)
-        if col != -1:
-            x1 = functools.reduce(lambda x, i: x + g.GetColSize(i), range(col), 0)
-            x2 = x1 + g.GetColSize(col)
-            if x > x1 + 2 and x < x2 - 2:
-                self._column_to_move = col
+        if event.GetY() <= self._label_height:
+            # Start possible column move when mouse pressed within column label
+            # but not within aggregation results.
+            x = event.GetX() + self._scroll_x_offset()
+            col = g.XToCol(x)
+            if col != -1:
+                x1 = functools.reduce(lambda x, i: x + g.GetColSize(i), range(col), 0)
+                x2 = x1 + g.GetColSize(col)
+                if x > x1 + 2 and x < x2 - 2:
+                    self._column_to_move = col
         self._mouse_dragged = False
-        # We don't call event.Skip() since we want to suppress the default bahavior
-        # (eg. range selection when Shift is down).
+        event.Skip()
 
     def _on_label_left_up(self, event):
         if self._column_move_target is not None:
