@@ -288,3 +288,4 @@ class Resolver(object):
                      (name == prefix or name.startswith(prefix + '.')) and
                      sys.modules[name] is not None)):
                     _reload(sys.modules[name])
+                    break
