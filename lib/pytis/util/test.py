@@ -95,7 +95,7 @@ class Sameclass(unittest.TestCase):
                         'same classes not recognized')
         self.assertFalse(util.sameclass(Sameclass.A(), Sameclass.B()),
                          'different classes not recognized')
-        self.assertTrue(util.sameclass(1, 1), 'same inteeger classes not recognized')
+        self.assertTrue(util.sameclass(1, 1), 'same integer classes not recognized')
         self.assertFalse(util.sameclass(1, 1.0), 'different classes not recognized')
 
 
