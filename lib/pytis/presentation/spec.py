@@ -1686,7 +1686,7 @@ class ViewSpec(object):
             attempts to open an aggregated view of the form, she can select the
             columns used in the group by caluse.
 
-          aggregated_views -- specification of predefined agregated views as a
+          aggregated_views -- specification of predefined aggregated views as a
             sequence of 'AggregatedView' instances.
 
           bindings -- a sequence of binding specifications as 'Binding'

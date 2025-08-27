@@ -1005,7 +1005,7 @@ class ListForm(RecordForm, Refreshable):
                      MenuItem(_("Define new aggregated view"),
                               command=Command(ListForm.aggregated_view, aggregated_view_id=None))))
         if aggregated_views:
-            menu.append(Menu(_("Remove agregated view"), [MenuItem(
+            menu.append(Menu(_("Remove aggregated view"), [MenuItem(
                 v.name(),
                 command=Command(ListForm.delete_aggregated_view, aggregated_view_id=v.id()),
             ) for v in aggregated_views]))
@@ -1176,7 +1176,7 @@ class ListForm(RecordForm, Refreshable):
         if hasattr(window, 'GetToolTip'):
             tip = window.GetToolTip()
             # Setting to None doesn't remove the tooltip, so we at least set
-            # the tooltip to an ampty string.
+            # the tooltip to an empty string.
             if tip is None:
                 tip = wx.ToolTip(descr)
                 window.SetToolTip(tip)
@@ -2718,7 +2718,7 @@ class BrowseForm(FoldableForm):
                      help=_("Open a separate insert form with a copy of this record.")),
             MenuItem(_("Delete record"),
                      command=Command(RecordForm.delete_record),
-                     help=_("Delete the record parmanently from the database.")),
+                     help=_("Delete the record permanently from the database.")),
             MenuItem(_("Preview form"),
                      command=Command(ListForm.activate),
                      help=_("Open the preview form for browsing all records."),

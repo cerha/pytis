@@ -94,11 +94,11 @@ hlavně instalace balíků).
 Do běžícího kontejneru se potom lze přihlásit.  Nejprve si vypíšu seznam
 běžících kontejnerů pomocí 'docker ps' a potom zavolám
 
-docker exec -it CONTANER_ID bash
+docker exec -it CONTAINER_ID bash
 
 V jeho promptu potom mohu instalovat balíky nebo zkoumat a nastavovat systém,
 nebo také spouštět testy.  Takto spuštěný shell však nemá nastavené prostředí
-podle definice env v test.yaml, takže je nutné si ho nastavit ručně:
+podle definice env v test.yml, takže je nutné si ho nastavit ručně:
 
 export PGHOST=postgres
 export PGUSER=pytis
