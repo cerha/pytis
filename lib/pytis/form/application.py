@@ -142,7 +142,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         self._yield_lock = None
         self._yield_blocked = False
         self._last_echo = None
-        self._previous_form_index = None
+        self._previously_active_tab_index = None
         self._initialized = False
         self._in_cleanup = False
         self.keymap = Keymap()
@@ -834,7 +834,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
             new_form.Sizer.Layout()
             new_form.restore()
             new_form.focus()
-            self._previous_form_index = old_index
+            self._previously_active_tab_index = old_index
 
     # Callbacky
 
@@ -966,13 +966,13 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
 
     @Command.define
     def activate_recent_form(self):
-        self._activate_tab(self._previous_form_index)
+        self._activate_tab(self._previously_active_tab_index)
 
     def _can_activate_recent_form(self):
-        i = self._previous_form_index
+        i = self._previously_active_tab_index
         return not self._modals and (i is not None and i < self._notebook.PageCount)
 
-    def _next_form_index(self, back):
+    def _next_tab_index(self, back):
         if back:
             d = -1
         else:
@@ -981,10 +981,10 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
 
     @Command.define
     def activate_next_form(self, back=False):
-        self._activate_tab(self._next_form_index(back))
+        self._activate_tab(self._next_tab_index(back))
 
     def _can_activate_next_form(self, back=False):
-        return not self._modals and 0 <= self._next_form_index(back) < self._notebook.PageCount
+        return not self._modals and 0 <= self._next_tab_index(back) < self._notebook.PageCount
 
     @Command.define
     def move_tab(self, index, back=False):
