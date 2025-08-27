@@ -374,7 +374,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
                     initially_active_form_index = i
                     break
         if initially_active_form_index >= 0:
-            self._activate_form(initially_active_form_index)
+            self._notebook.SetSelection(initially_active_form_index)
 
         # Caching menu availibility must come after calling Application.init()
         # (here self._specification.init()) to allow the application defined
@@ -811,8 +811,12 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
             safelog(str(e))
         return None
 
-    def _activate_form(self, index):
-        self._notebook.SetSelection(index)
+    def _activate_tab(self, index):
+        notebook = self._notebook
+        old_index = notebook.Selection
+        notebook.SetSelection(index)
+        # Calling SetSelection does not trigger _on_page_change()...
+        self._switch_tabs(old_index, index)
 
     def _switch_tabs(self, old_index, new_index):
         notebook = self._notebook
@@ -952,7 +956,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
     def activate_form(self, form):
         index = self._notebook.GetPageIndex(form)
         if index != wx.NOT_FOUND:
-            self._activate_form(index)
+            self._notebook.SetSelection(index)
             return True
         else:
             return False
@@ -962,7 +966,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
 
     @Command.define
     def activate_recent_form(self):
-        self._activate_form(self._previous_form_index)
+        self._activate_tab(self._previous_form_index)
 
     def _can_activate_recent_form(self):
         i = self._previous_form_index
@@ -977,7 +981,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
 
     @Command.define
     def activate_next_form(self, back=False):
-        self._activate_form(self._next_form_index(back))
+        self._activate_tab(self._next_form_index(back))
 
     def _can_activate_next_form(self, back=False):
         return not self._modals and 0 <= self._next_form_index(back) < self._notebook.PageCount
