@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pytis 0.1\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2025-06-10 21:37+0200\n"
+"POT-Creation-Date: 2025-08-27 18:12-0500\n"
 "PO-Revision-Date: 2014-01-14 16:54+0100\n"
 "Last-Translator: Hynek Hanke <hanke@brailcom.org>\n"
 "Language-Team: Czech <wiking@lists.freebsoft.org>\n"
@@ -84,7 +84,7 @@ msgid "Zaškrtněte akce, které chcete zpřístupnit webovým uživatelům:"
 msgstr ""
 
 #: ../lib/pytis/cms/cms.py:204 ../lib/pytis/cms/cms.py:527
-#: ../lib/pytis/cms/cms.py:617 ../lib/pytis/defs/logging.py:90
+#: ../lib/pytis/cms/cms.py:617 ../lib/pytis/defs/logging.py:84
 #: ../lib/pytis/defs/menu.py:245 ../lib/pytis/defs/menu.py:260
 #: ../lib/pytis/defs/menu.py:358 ../lib/pytis/defs/menu.py:516
 #: ../lib/pytis/defs/menu.py:688 ../lib/pytis/defs/menu.py:791
@@ -440,7 +440,7 @@ msgid ""
 "Záznam informací o přístupu uživatelů k jednotlivým stránkám/modulům webu."
 msgstr ""
 
-#: ../lib/pytis/cms/cms.py:613 ../lib/pytis/defs/logging.py:123
+#: ../lib/pytis/cms/cms.py:613 ../lib/pytis/defs/logging.py:117
 msgid "Datum a čas"
 msgstr ""
 
@@ -448,8 +448,8 @@ msgstr ""
 msgid "Cesta"
 msgstr ""
 
-#: ../lib/pytis/cms/cms.py:615 ../lib/pytis/defs/logging.py:85
-#: ../lib/pytis/defs/logging.py:112 ../lib/pytis/defs/logging.py:124
+#: ../lib/pytis/cms/cms.py:615 ../lib/pytis/defs/logging.py:79
+#: ../lib/pytis/defs/logging.py:106 ../lib/pytis/defs/logging.py:118
 #: ../lib/pytis/defs/printing.py:80 ../lib/pytis/defs/profiles.py:37
 #: ../lib/pytis/defs/profiles.py:72
 msgid "User"
@@ -803,7 +803,7 @@ msgstr "Nápověda"
 msgid "Fullname"
 msgstr "Fullname"
 
-#: ../lib/pytis/defs/help.py:68 ../lib/pytis/defs/logging.py:86
+#: ../lib/pytis/defs/help.py:68 ../lib/pytis/defs/logging.py:80
 #: ../lib/pytis/defs/profiles.py:41 ../lib/pytis/defs/profiles.py:74
 msgid "Specification Name"
 msgstr "Název specifikace"
@@ -857,67 +857,67 @@ msgstr "Vedlejší formuláře"
 msgid "This item has no editable help."
 msgstr "Tato položka nemá editovatelnou nápovědu."
 
-#: ../lib/pytis/defs/logging.py:72
+#: ../lib/pytis/defs/logging.py:66
 #, fuzzy
 msgid "User Actions Log"
 msgstr "Akce"
 
-#: ../lib/pytis/defs/logging.py:77 ../lib/pytis/defs/logging.py:91
+#: ../lib/pytis/defs/logging.py:71 ../lib/pytis/defs/logging.py:85
 msgid "Data"
 msgstr ""
 
-#: ../lib/pytis/defs/logging.py:83
+#: ../lib/pytis/defs/logging.py:77
 msgid "Time"
 msgstr "Čas"
 
-#: ../lib/pytis/defs/logging.py:88 ../lib/pytis/defs/profiles.py:43
+#: ../lib/pytis/defs/logging.py:82 ../lib/pytis/defs/profiles.py:43
 #: ../lib/pytis/defs/statistics.py:33 ../lib/pytis/defs/statistics.py:54
 #: ../lib/pytis/defs/statistics.py:75 ../lib/pytis/defs/statistics.py:103
 #: ../lib/pytis/defs/statistics.py:119
 msgid "Form Class"
 msgstr "Třída formuláře"
 
-#: ../lib/pytis/defs/logging.py:98
+#: ../lib/pytis/defs/logging.py:92
 msgid "Overview of Changes"
 msgstr "Přehled změn"
 
-#: ../lib/pytis/defs/logging.py:108
+#: ../lib/pytis/defs/logging.py:102
 msgid "From"
 msgstr "Od"
 
-#: ../lib/pytis/defs/logging.py:110
+#: ../lib/pytis/defs/logging.py:104
 msgid "To"
 msgstr "Do"
 
-#: ../lib/pytis/defs/logging.py:113 ../lib/pytis/defs/logging.py:126
+#: ../lib/pytis/defs/logging.py:107 ../lib/pytis/defs/logging.py:120
 msgid "Tabulka"
 msgstr ""
 
-#: ../lib/pytis/defs/logging.py:114 ../lib/pytis/defs/logging.py:129
+#: ../lib/pytis/defs/logging.py:108 ../lib/pytis/defs/logging.py:123
 msgid "Klíč"
 msgstr ""
 
-#: ../lib/pytis/defs/logging.py:115
+#: ../lib/pytis/defs/logging.py:109
 msgid "Řádek obsahuje"
 msgstr ""
 
-#: ../lib/pytis/defs/logging.py:116 ../lib/pytis/defs/logging.py:125
+#: ../lib/pytis/defs/logging.py:110 ../lib/pytis/defs/logging.py:119
 msgid "Schema"
 msgstr ""
 
-#: ../lib/pytis/defs/logging.py:122
+#: ../lib/pytis/defs/logging.py:116
 msgid "ID"
 msgstr ""
 
-#: ../lib/pytis/defs/logging.py:127
+#: ../lib/pytis/defs/logging.py:121
 msgid "Operace"
 msgstr ""
 
-#: ../lib/pytis/defs/logging.py:128
+#: ../lib/pytis/defs/logging.py:122
 msgid "ID klíč"
 msgstr ""
 
-#: ../lib/pytis/defs/logging.py:130
+#: ../lib/pytis/defs/logging.py:124
 msgid "Řádek"
 msgstr ""
 
