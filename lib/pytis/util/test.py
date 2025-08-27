@@ -349,7 +349,7 @@ def test_compose_mail():
         r'Subject: Plain message\n'
         r'From: <bob@gnu.org>\n'
         r'To: hugo@gnu.org\n'
-        r'Date: [A-Z][a-z][a-z], \d\d [A-Z][a-z][a-z] \d\d\d\d \d\d:\d\d:\d\d \+\d\d\d\d\n\n'
+        r'Date: [A-Z][a-z][a-z], \d\d [A-Z][a-z][a-z] \d\d\d\d \d\d:\d\d:\d\d [\+\-]\d\d\d\d\n\n'
         r'--===+\d+==\n'
         r'Content-Type: text/plain; charset="utf-8"\n'
         r'MIME-Version: 1.0\n'
