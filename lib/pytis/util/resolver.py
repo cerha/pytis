@@ -107,8 +107,9 @@ class Resolver(object):
                         # Raise ResolverError only if the import error actually
                         # related to importing the named module itself and not to some
                         # nested import within this module.
+                        # TODO NOPY2: raise ResolverError(...) from e
                         raise ResolverError("Resolver error loading specification '{}': {}"
-                                            .format(name, e))
+                                            .format(name, e))  # noqa: B904  (raise ... from e)
             # The error inside the imported module (typically the imported
             # module attempts to import a python module which is not
             # installed) must raise the original exception so that we can
@@ -118,8 +119,9 @@ class Resolver(object):
             try:
                 module = getattr(module, component)
             except AttributeError as e:
+                # TODO NOPY2: raise ResolverError(...) from e
                 raise ResolverError("Resolver error loading specification '{}': {}"
-                                    .format(name, e))
+                                    .format(name, e))  # noqa: B904  (raise ... from e)
         return module
 
     def _get_object_by_name(self, name):
