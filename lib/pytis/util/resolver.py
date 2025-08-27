@@ -28,6 +28,7 @@ actual use.
 from __future__ import print_function
 
 from builtins import range
+import re
 import sys
 import pytis.util
 
@@ -84,18 +85,30 @@ class Resolver(object):
         try:
             module = __import__(name)
         except ImportError as e:
-            if sys.version_info[0] == 2:
-                template = "No module named {}"
+            if sys.version_info >= (3, 3):
+                # Prefer robust detection of the actually missing module in Python 3.3+
+                failed_import_name = getattr(e, 'name', None)
             else:
-                template = "No module named '{}'"
-            for i in range(len(components) + 1):
-                msg = template.format('.'.join(components[i:]))
-                if ((sys.version_info[0] == 2 and str(e) == msg or
-                     sys.version_info[0] > 2 and str(e).startswith(msg))):
-                    # Raise resolver error only if the import error actually
-                    # related to importing the named module itself and not to some
-                    # nested import within this module.
-                    raise ResolverError("Resolver error loading specification '%s': %s" % (name, e))
+                # Fall back to exception string matching for older Python versions.
+                if sys.version_info[0] == 2:
+                    matcher = re.compile("No module named (.*)")
+                else:
+                    matcher = re.compile("No module named '([^']*)'.*")
+                m = matcher.match(str(e))
+                if m:
+                    failed_import_name = m.group(1)
+                else:
+                    failed_import_name = None
+            if failed_import_name:
+                # Check the whole name or any suffix of the imported module name matches
+                # the module name which failed.
+                for i in range(len(components)):
+                    if failed_import_name == '.'.join(components[i:]):
+                        # Raise ResolverError only if the import error actually
+                        # related to importing the named module itself and not to some
+                        # nested import within this module.
+                        raise ResolverError("Resolver error loading specification '{}': {}"
+                                            .format(name, e))
             # The error inside the imported module (typically the imported
             # module attempts to import a python module which is not
             # installed) must raise the original exception so that we can
@@ -105,7 +118,8 @@ class Resolver(object):
             try:
                 module = getattr(module, component)
             except AttributeError as e:
-                raise ResolverError("Resolver error loading specification '%s': %s" % (name, e))
+                raise ResolverError("Resolver error loading specification '{}': {}"
+                                    .format(name, e))
         return module
 
     def _get_object_by_name(self, name):
