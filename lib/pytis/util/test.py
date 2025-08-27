@@ -278,6 +278,20 @@ class Caching(unittest.TestCase):
 
 class TestResolver:
 
+    # Test internals.
+
+    def test_import_module(self):
+        from .resolver import Resolver, ResolverError
+        import pytis.defs
+        resolver = Resolver()
+        assert pytis.defs == resolver._import_module('pytis.defs')
+        with pytest.raises(ResolverError):
+            resolver._import_module('foo_bar_xy')
+        # The resolved module exists, but imports invalid module.
+        with pytest.raises(ImportError):
+            resolver._import_module('pytis.util.import_error_test')
+
+    # Test public API.
     @pytest.fixture(scope="class")
     def resolver(self):
         from .resolver import Resolver
@@ -299,6 +313,16 @@ class TestResolver:
         assert ('pytis.defs.help.Help', Help) in resolver.walk()
         # Field is a class imported in pytis.defs.help, but not a specification subclass.
         assert ('pytis.defs.help.Field', Field) not in resolver.walk()
+
+    def test_exceptions(self, resolver):
+        from .resolver import ResolverError
+        with pytest.raises(ResolverError) as e:
+            resolver.get('foo.Bar', 'view_spec')
+        assert 'Not found within pytis.defs, pytis.defs.profiles' in str(e)
+        with pytest.raises(ResolverError) as e:
+            # Field is a class present in pytis.defs, but not a specification subclass.
+            resolver.get('Field', 'id')
+        assert ' is not a pytis.presentation.Specification subclass' in str(e)
 
 
 def test_compose_mail():
