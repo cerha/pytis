@@ -246,7 +246,7 @@ class UICommands(object):
     DESCRIBE = UICommand(
         Command(InnerForm.describe),
         _("Current form description"),
-        _("Display a breif description of the current form"))
+        _("Display a brief description of the current form"))
     AGGREGATION_MENU = UICommand(
         Command(InnerForm.aggregation_menu),
         _("Show aggregation functions menu"),

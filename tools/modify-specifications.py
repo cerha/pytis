@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2019 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2019-2025 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2015-2018 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -34,7 +34,7 @@ which were already needed.  These commands are defined as functions with name
 prefixed by 'cmd_'.  Several modifications can be run in one invocation of the
 script.  Some commands may not modify the source code, they just print warnings
 and let the user perform modifications manually.  The printed output is
-formatted to allow easy acces to the source code points in Emacs compilation
+formatted to allow easy access to the source code points in Emacs compilation
 mode.
 
 For example:
@@ -315,7 +315,7 @@ def cmd_set_explicit_ineditable(filename, lines):
 
 
 def cmd_type_kwargs(filename, lines, type_map=None):
-    """Convert type kwargs in field specifications to type instance aruments.
+    """Convert type kwargs in field specifications to type instance arguments.
 
     The optional argument 'type_map' may be used to supply type classes to fields
     where the type can not be determined from the field specification itself.

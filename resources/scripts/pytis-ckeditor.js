@@ -376,7 +376,7 @@ function ck_element (dialog, id) {
     /* Helper function to address a particular element in dialog definition by its id
      *
      * The function searches element definitions by their id among the elements
-     * of the first dialog tab. It also searches for childern inside any 'hbox'
+     * of the first dialog tab. It also searches for children inside any 'hbox'
      * and 'vbox' containers.
      *
      * Arguments:
@@ -504,12 +504,12 @@ function ck_set_protected_attribute(element, attribute, value) {
     /* Set protected attribute on HTML element in editor
      *
      * CKEditor protects some HTML element attributes as 'href' and
-     * 'src', because some broswers might change their value
+     * 'src', because some browsers might change their value
      * arbitrarily (e.g.  substitute relative links for absolute). For
      * this reason, CKEditor doesn't trust these attributes and in
      * processing prefers its own data attribute, carying a copy of
      * their value. Thus when changing a protected attribute, it is
-     * also necessary to update the coresponding CKEditor data
+     * also necessary to update the corresponding CKEditor data
      * attribute or otherwise the new value would be lost (this
      * happens e.g. when saving or switching between preview and
      * source modes in the editor).
@@ -569,7 +569,7 @@ pytis.HtmlField.attachment_dialog = function(editor, attachment_name, attachment
                            ck_dialog_update_attachment_list(editor, this, attachment_type, keep_value);
                        },
                        updatePreview: function(attachment) {
-                           // Update preview (to be overriden in children)
+                           // Update preview (to be overridden in children)
                            return undefined;
                        },
                        onChange: function(element) {
@@ -645,7 +645,7 @@ pytis.HtmlField.attachment_dialog = function(editor, attachment_name, attachment
                                 * limitations so it is submitted within the
                                 * iframe.  We must copy all hidden form fields
                                 * from the main edited form to mimic the
-                                * bahavior of pytis form AJAX updates and to get
+                                * behavior of pytis form AJAX updates and to get
                                 * the uploaded data within the Python code in
                                 * 'EditForm._attachment_storage_insert()'.
                                 */
@@ -1247,7 +1247,7 @@ pytis.HtmlField.mathml_dialog = function(editor) {
                 element.addClass('lcg-mathml');
                 // We do not setup the inner <math> element here because without
                 // a reliable support for .setHtml()/.getHtml() in CKEditor or
-                // innerHTML in browsers, we would have no way to acces its contents
+                // innerHTML in browsers, we would have no way to access its contents
                 this.insertMode = true;
             } else {
                 this.insertMode = false;

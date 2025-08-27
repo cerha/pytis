@@ -1318,7 +1318,7 @@ class ProfileSelector(wx.ComboCtrl, CommandHandler):
             MenuItem(_("Delete current profile"),
                      command=Command(pytis.form.LookupForm.delete_profile),
                      help=_("Delete the selected saved profile.")),
-            MenuItem(_("Use this profile automatically on form starup"),
+            MenuItem(_("Use this profile automatically on form startup"),
                      command=Command(pytis.form.LookupForm.set_initial_profile),
                      help=_("Automatically switch to this profile "
                             "when this form is opened next time.")),

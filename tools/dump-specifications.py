@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2019 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2019-2025 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2010-2018 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -19,7 +19,7 @@
 
 """Dump Pytis application specifications to STDOUT.
 
-Specifications, thier fields and properties are dumped to standard output in a
+Specifications, their fields and properties are dumped to standard output in a
 way, that allows comparing these outputs to detect changes caused by
 modifications of specification files or Pytis API changes (or both).
 

@@ -551,9 +551,9 @@ pytis.BrowseForm = Class.create(pytis.Form, {
         //    the form data area.
         // 'replace' ... the content replaces the current record on which
         //    the action was invoked.
-        // 'before' ... the content is inserted above the curent record on
+        // 'before' ... the content is inserted above the current record on
         //    which the action was invoked.
-        // 'after' ... the content is inserted below the curent record on
+        // 'after' ... the content is inserted below the current record on
         //    which the action was invoked.
         var content = this._form.down('.inline-form-container');
         if (content && !this._cancel_inline_action(content)) {
@@ -1621,7 +1621,7 @@ pytis.Calendar.prototype = {
                 if ([0, 6].indexOf(dayOfWeek) != -1) {
                     cell.addClassName('weekend');
                 }
-                // Set the date to tommorrow
+                // Set the date to tomorrow
                 date.setDate(day + 1);
             });
             // Hide the extra row if it contains only days from another month

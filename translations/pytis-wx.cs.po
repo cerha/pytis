@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: pytis 0.1\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
 "POT-Creation-Date: 2025-09-12 15:11-0400\n"
-"PO-Revision-Date: 2025-09-12 15:15-0400\n"
+"PO-Revision-Date: 2025-09-16 10:20+0200\n"
 "Language-Team: Czech <wiking@lists.freebsoft.org>\n"
 "Language: cs\n"
 "MIME-Version: 1.0\n"
@@ -23,7 +23,7 @@ msgstr "Databázové spojení bylo uzavřeno kvůli dlouhé neaktivitě."
 
 #: ../lib/pytis/extensions/email_.py:51
 msgid "Could not connect to SMTP server"
-msgstr "Připojení k SMPT serveru se nezdařilo"
+msgstr "Připojení k SMTP serveru se nezdařilo"
 
 #: ../lib/pytis/extensions/email_.py:52
 msgid "Recipient address refused"
@@ -146,7 +146,7 @@ msgstr "Chybné heslo"
 #: ../lib/pytis/form/application.py:648
 #, python-format
 msgid "Enter the password to unlock the encryption area %s."
-msgstr "Zadejte heslo pro odemčení šifrovacího klíče oblasti %s."
+msgstr "Zadejte heslo pro odemčení šifrovací oblasti %s."
 
 #: ../lib/pytis/form/application.py:650
 msgid "This is probably your old login password."
@@ -183,7 +183,7 @@ msgstr "Přesunout vpravo"
 
 #: ../lib/pytis/form/application.py:857
 msgid "Move this tab one position right (or drag by mouse)."
-msgstr "Přesunout tuto záložku o jednu pozici vpravu (nebo přetáhněte myší)."
+msgstr "Přesunout tuto záložku o jednu pozici vpravo (nebo přetáhněte myší)."
 
 #: ../lib/pytis/form/application.py:858 ../lib/pytis/form/search.py:82
 msgid "Close"
@@ -495,7 +495,7 @@ msgid "Current form description"
 msgstr "Popis aktuálního formuláře"
 
 #: ../lib/pytis/form/defaults.py:249
-msgid "Display a breif description of the current form"
+msgid "Display a brief description of the current form"
 msgstr "Zobrazit stručný popis aktuálního formuláře"
 
 #: ../lib/pytis/form/defaults.py:252
@@ -1418,7 +1418,7 @@ msgstr "neznámo"
 #: ../lib/pytis/form/form.py:3784
 #, python-format
 msgid "%s ago"
-msgstr "%s"
+msgstr "před %s"
 
 #: ../lib/pytis/form/form.py:3785
 msgid "Last refreshed:"
@@ -1667,7 +1667,7 @@ msgid "Clear value"
 msgstr "Vynulovat hodnotu"
 
 #: ../lib/pytis/form/inputfield.py:1995
-msgid "Set the field to an ampty value."
+msgid "Set the field to an empty value."
 msgstr "Nastavit prázdnou hodnotu."
 
 #: ../lib/pytis/form/inputfield.py:2018
@@ -1696,7 +1696,7 @@ msgstr "Ukládání souboru zrušeno."
 
 #: ../lib/pytis/form/inputfield.py:2116 ../lib/pytis/form/inputfield.py:2117
 #: ../lib/pytis/form/inputfield.py:2413 ../lib/pytis/form/inputfield.py:2414
-msgid "Error accessing attachment storrage"
+msgid "Error accessing attachment storage"
 msgstr "Chyba přístupu k úložišti příloh"
 
 #: ../lib/pytis/form/inputfield.py:2121
@@ -1747,7 +1747,7 @@ msgstr "Skloněné písmo"
 
 #: ../lib/pytis/form/inputfield.py:2286
 msgid "Insert markup for text emphasized by slanted font."
-msgstr "Vložit značku pro text zvýrazeněný skloněným písmem."
+msgstr "Vložit značku pro text zvýrazněný skloněným písmem."
 
 #: ../lib/pytis/form/inputfield.py:2288
 msgid "Underlined text"
@@ -1892,11 +1892,8 @@ msgid "Tooltip"
 msgstr "Tooltip"
 
 #: ../lib/pytis/form/inputfield.py:2631
-msgid ""
-"Enter the text displayed in baloon help above the image when the mouse moves "
-"over."
-msgstr ""
-"Zadejte text zobrazený jako bublinová nápověda při najetí myší na obrázek."
+msgid "Enter the text displayed above the image when the mouse moves over."
+msgstr "Zadejte text zobrazený při najetí myší na obrázek."
 
 #: ../lib/pytis/form/inputfield.py:2634 ../lib/pytis/form/inputfield.py:2678
 msgid "Insert new"
@@ -1909,17 +1906,14 @@ msgstr "Vložit obrázek"
 #: ../lib/pytis/form/inputfield.py:2672
 msgid ""
 "Enter the link label displayed within document text. Leave empty if you want "
-"to dispaly the file name directly."
+"to display the file name directly."
 msgstr ""
 "Zadejte název zobrazený v textu dokumentu. Ponechte prázdné, pokud chcete "
 "zobrazit přímo název souboru."
 
 #: ../lib/pytis/form/inputfield.py:2675 ../lib/pytis/form/inputfield.py:2708
-msgid ""
-"Enter the text displayed in baloon help above the link when the mouse moves "
-"over."
-msgstr ""
-"Zadejte text zobrazený jako bublinová nápověda při najetí myší na odkaz."
+msgid "Enter the text displayed above the link when the mouse moves over."
+msgstr "Zadejte text zobrazený při najetí myší na odkaz."
 
 #: ../lib/pytis/form/inputfield.py:2679
 msgid "Insert attachment"
@@ -1944,7 +1938,7 @@ msgstr ""
 #: ../lib/pytis/form/inputfield.py:2705
 msgid ""
 "Enter the link label displayed within the document text. Leave empty if you "
-"want to dispaly the target URL directly."
+"want to display the target URL directly."
 msgstr ""
 "Zadejte název zobrazený v textu dokumentu. Ponechte prázdné, pokud chcete "
 "zobrazit přímo URL zadané v předchozím políčku."
@@ -2048,7 +2042,7 @@ msgstr "Další záznam nenalezen"
 
 #: ../lib/pytis/form/list.py:953
 msgid "Display row headings"
-msgstr "Zobrazt záhlaví řádků"
+msgstr "Zobrazit záhlaví řádků"
 
 #: ../lib/pytis/form/list.py:958
 msgid "Hide this column"
@@ -2083,7 +2077,7 @@ msgid "Define new aggregated view"
 msgstr "Nový agregovaný náhled"
 
 #: ../lib/pytis/form/list.py:1008
-msgid "Remove agregated view"
+msgid "Remove aggregated view"
 msgstr "Smazat agregovaný náhled"
 
 #: ../lib/pytis/form/list.py:1016
@@ -2124,7 +2118,7 @@ msgstr "Autofiltr"
 
 #: ../lib/pytis/form/list.py:1043
 msgid "Cancel filtering"
-msgstr "Zruš filtrování"
+msgstr "Zrušit filtrování"
 
 #: ../lib/pytis/form/list.py:1064
 msgid "Copy the Result"
@@ -2189,7 +2183,7 @@ msgstr "Všechny řádky"
 
 #: ../lib/pytis/form/list.py:1914
 msgid "Selected rows only"
-msgstr "Pouze vybratné řádky"
+msgstr "Pouze vybrané řádky"
 
 #: ../lib/pytis/form/list.py:1915
 msgid "Select the extent of rows to be exported."
@@ -2221,9 +2215,7 @@ msgstr "Zvolte co se má s exportovaným souborem provést"
 
 #: ../lib/pytis/form/list.py:1924
 msgid "XLSX support not installed.  Ask your administrator."
-msgstr ""
-"Podpora XLSX exporu není nainstalována.  Požádejte správce aplikace o "
-"asistenci."
+msgstr "Podpora XLSX exportu není nainstalována.  Požádejte správce aplikace o asistenci."
 
 #: ../lib/pytis/form/list.py:1951
 msgid "Unable to open the file for writing!"
@@ -2237,7 +2229,7 @@ msgstr "Kódování %s není podporováno."
 #: ../lib/pytis/form/list.py:2009
 #, python-format
 msgid "Unable to encode data to %s."
-msgstr "Nebylo možné zadódovat data do %s."
+msgstr "Nebylo možné zakódovat data do %s."
 
 #: ../lib/pytis/form/list.py:2010
 msgid "Using UTF-8 instead."
@@ -2309,7 +2301,7 @@ msgid "Open a separate insert form with a copy of this record."
 msgstr "Otevřít formulář pro vložení kopie tohoto záznamu."
 
 #: ../lib/pytis/form/list.py:2721
-msgid "Delete the record parmanently from the database."
+msgid "Delete the record permanently from the database."
 msgstr "Trvale odstranit záznam z databáze."
 
 #: ../lib/pytis/form/list.py:2722
@@ -2558,7 +2550,7 @@ msgid "Delete the selected saved profile."
 msgstr "Smazat zvolený uložený profil."
 
 #: ../lib/pytis/form/screen.py:1321
-msgid "Use this profile automatically on form starup"
+msgid "Use this profile automatically on form startup"
 msgstr "Použít tento profil automaticky při startu formuláře"
 
 #: ../lib/pytis/form/screen.py:1323
@@ -2839,7 +2831,7 @@ msgstr "Zjistit"
 
 #: ../lib/pytis/form/search.py:719
 msgid "Compute the aggregation function result."
-msgstr "Spočti výsledek zvolené agrekační funkce."
+msgstr "Spočti výsledek zvolené agregační funkce."
 
 #: ../lib/pytis/form/search.py:738
 msgid "Operation not supported for the selected column type."
@@ -3187,8 +3179,8 @@ msgstr "Pouze pro interní použití."
 msgid "Exported data encoding."
 msgstr "Kódování exportovaných dat."
 
-#: ../lib/pytis/util/configuration.py:961
-msgid "Must be one of Pyhon supported encodings."
+#: ../lib/pytis/util/configuration.py:944
+msgid "Must be one of Python supported encodings."
 msgstr "Hodnota musí být jedním z podporovaných kódování v Pythonu."
 
 #: ../lib/pytis/util/configuration.py:978
@@ -3279,8 +3271,8 @@ msgid ""
 "same group.  Table background color is changing between the groups of rows, "
 "so that lighter colored rows are followed by darker colored rows and vice "
 "versa.  The color specification in this option determines the level and the "
-"tone of the darker rows.  When combined with white rows, the darker rows wil "
-"have the exactly same color as specified.  But some rows may be already "
+"tone of the darker rows.  When combined with white rows, the darker rows will "
+"have exactly the same color as specified.  But some rows may be already "
 "colored otherwise and in this case the two colors are combined."
 msgstr ""
 "Seskupování řádků může být použito k vizuálnímu rozlišení řádků které mají "
@@ -3317,9 +3309,6 @@ msgstr "Smazáno"
 
 #~ msgid "Original text"
 #~ msgstr "Původní text"
-
-#~ msgid "Concurrently changed version"
-#~ msgstr "Kolegova nová verze"
 
 #~ msgid "Discard my changes"
 #~ msgstr "Zahodit moje změny"

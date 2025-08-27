@@ -954,11 +954,11 @@ class Configuration(object):
         """Exported data encoding.
 
         The exported files in CSV format will be saved using this
-        encoding.  Must be one of Pyhon supported encodings.
+        encoding.  Must be one of Python supported encodings.
 
         """
         _DESCR = _("Exported data encoding.")
-        _DOC = _("Must be one of Pyhon supported encodings.")
+        _DOC = _("Must be one of Python supported encodings.")
         _DEFAULT = 'utf-8'
 
     class _Option_xlsx_export_author(StringOption):
@@ -1217,7 +1217,7 @@ class Configuration(object):
         of rows, so that lighter colored rows are followed by darker colored
         rows and vice versa.  The color specification in this option determines
         the level and the tone of the darker rows.  When combined with white
-        rows, the darker rows wil have the exactly same color as specified.
+        rows, the darker rows will have exactly the same color as specified.
         But some rows may be already colored otherwise and in this case the two
         colors are combined.
 
@@ -1229,7 +1229,7 @@ class Configuration(object):
                  "colored rows are followed by darker colored rows and vice "
                  "versa.  The color specification in this option determines "
                  "the level and the tone of the darker rows.  When combined "
-                 "with white rows, the darker rows wil have the exactly same "
+                 "with white rows, the darker rows will have exactly the same "
                  "color as specified.  But some rows may be already colored "
                  "otherwise and in this case the two colors are combined.")
         _DEFAULT = '#eceef0'

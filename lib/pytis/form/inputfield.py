@@ -1992,7 +1992,7 @@ class FileField(Invocable, InputField):
              UICommand(Command(FileField.save), _("Save to file"),
                        _("Save the current field value as file.")),
              UICommand(Command(FileField.clear), _("Clear value"),
-                       _("Set the field to an ampty value.")),
+                       _("Set the field to an empty value.")),
              )
 
     @Command.define
@@ -2113,8 +2113,8 @@ class StructuredTextField(TextField):
                 return [r.filename() for r in self._storage.resources(transaction=transaction)
                         if isinstance(r, lcg.Image) ^ (not self._images)]
             except AttachmentStorage.StorageError as e:
-                app.error(title=_("Error accessing attachment storrage"),
-                          message=_("Error accessing attachment storrage") + ':\n' + e)
+                app.error(title=_("Error accessing attachment storage"),
+                          message=_("Error accessing attachment storage") + ':\n' + e)
                 return []
 
     class ImageAlignments(Enumeration):
@@ -2410,8 +2410,8 @@ class StructuredTextField(TextField):
         except AttachmentStorage.InvalidImageFormat as e:
             app.echo(_("Invalid image format!"), kind='error')
         except AttachmentStorage.StorageError as e:
-            app.error(title=_("Error accessing attachment storrage"),
-                      message=_("Error accessing attachment storrage") + ":\n" + e)
+            app.error(title=_("Error accessing attachment storage"),
+                      message=_("Error accessing attachment storage") + ":\n" + e)
 
     @Command.define
     def search(self):
@@ -2628,8 +2628,7 @@ class StructuredTextField(TextField):
             #               u"prázdné, pokud chcete zobrazit přímo URL zadané v \n"
             #               u"předchozím políčku.")),
             Field('tooltip', _("Tooltip"), width=50,
-                  descr=_("Enter the text displayed in baloon help above "
-                          "the image when the mouse moves over.")),
+                  descr=_("Enter the text displayed above the image when the mouse moves over.")),
         )
         button = Button(_("Insert new"), self._load_new_file)
         row = app.input_form(title=_("Insert Image"), fields=fields,
@@ -2670,10 +2669,9 @@ class StructuredTextField(TextField):
                   selection_type=SelectionType.LISTBOX),
             Field('title', _(u"Title"), width=50,
                   descr=_("Enter the link label displayed within document text. "
-                          "Leave empty if you want to dispaly the file name directly.")),
+                          "Leave empty if you want to display the file name directly.")),
             Field('tooltip', _(u"Tooltip"), width=50,
-                  descr=_("Enter the text displayed in baloon help above the "
-                          "link when the mouse moves over.")),
+                  descr=_("Enter the text displayed above the link when the mouse moves over.")),
         )
         button = Button(_("Insert new"), self._load_new_file)
         row = app.input_form(title=_("Insert attachment"), fields=fields,
@@ -2703,10 +2701,9 @@ class StructuredTextField(TextField):
                           "a local link, such as an identifier of another page in the CMS.")),
             Field('title', _("Title"), width=50,
                   descr=_("Enter the link label displayed within the document text. "
-                          "Leave empty if you want to dispaly the target URL directly.")),
+                          "Leave empty if you want to display the target URL directly.")),
             Field('tooltip', _(u"Tooltip"), width=50,
-                  descr=_("Enter the text displayed in baloon help above the link "
-                          "when the mouse moves over.")),
+                  descr=_("Enter the text displayed above the link when the mouse moves over.")),
         ))
         if row:
             link.update(target=row['target'].value(),

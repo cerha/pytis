@@ -1,7 +1,7 @@
 Pytis Installation Instructions
 ===============================
 
-Prerequisities:
+Prerequisites:
 
   * Python 2.7 or Python 3.5 or later
   * PostgreSQL 9.4 or later

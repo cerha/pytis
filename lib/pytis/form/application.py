@@ -129,7 +129,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         """Arguments:
 
           headless -- Run the application without showing any windows/frames.
-            Experimantal mode for running tests which require the application
+            Experimental mode for running tests which require the application
             environment, but no user interaction.  Sample tests in Pytis Demo.
 
         """
@@ -155,7 +155,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         wx.Log.SetActiveTarget(wx.LogStderr())
 
         # Make sure menu icons are always displayed.  Without this, the icons are
-        # not displayed under certain contitions (sometimes within an x2go session,
+        # not displayed under certain conditions (sometimes within an x2go session,
         # sometimes on certain installations).
         gi.require_version('Gtk', '3.0')
         from gi.repository import Gtk as gtk
@@ -335,7 +335,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
             if isinstance(cls, basestring):
                 cls = getattr(pytis.form, cls)
             if ((issubclass(cls, pytis.form.Form) and
-                 # The check aginst menu_names was added probably to avoid reopening forms
+                 # The check against menu_names was added probably to avoid reopening forms
                  # which were opened by application code.  These forms may have special
                  # parameters, such as filters, which would not be recovered this way,
                  # so it looks safe to open only forms which are available through the
@@ -377,7 +377,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         if initially_active_form_index >= 0:
             self._notebook.SetSelection(initially_active_form_index)
 
-        # Caching menu availibility must come after calling Application.init()
+        # Caching menu availability must come after calling Application.init()
         # (here self._specification.init()) to allow the application defined
         # enabled() methods to refer things created Application.init().
         self._cache_menu_enabled(self._menu)
@@ -553,8 +553,8 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
 
         def on_invoke_command(event):
             # Invoke the command through CallAfter to finish menu event processing before
-            # command invocation.  Calling dirrectly for example resulted in disfunctional
-            # TAB traversal in a popup form which was opended through a popup menu command
+            # command invocation.  Calling directly for example resulted in dysfunctional
+            # TAB traversal in a popup form which was opened through a popup menu command
             # due to FindFocus() returning a wrong window.  Using CallAfter fixes this.
             wx.CallAfter(item.command.invoke)
 
@@ -750,7 +750,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
 
     def _cleanup(self, force=False):
         # Ignore all kinds of exceptions in order to be able to exit the
-        # application even in quite seriously dispair state.
+        # application even in quite seriously broken state.
         def safelog(msg, *args):
             try:
                 log(ACTION, msg, *args)
@@ -922,8 +922,8 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
             self._update_tab_titles(self._frame.Size.x)
 
     def on_key_down(self, event, dont_skip=False):
-        # Believe or not, wxWidgets crashes at various occassions when this
-        # handler is not defied.
+        # Believe it or not, wxWidgets crashes at various occasions when this
+        # handler is not defined.
         return KeyHandler.on_key_down(self, event)
 
     # Zpracování příkazů
@@ -1212,22 +1212,24 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         return self._menu
 
     def run_dialog(self, dialog_or_class_, *args, **kwargs):
-        """Zobraz dialog určené třídy s hlavním oknem aplikace jako rodičem.
+        """Display a given dialog above the application's main frame.
 
-        Argumenty:
-          dialog_or_class_ -- třída dialogu (odvozená od třídy 'Dialog'), nebo
-            přímo instance.  Pokud jde o třídu, bude vytvořena nová instance a
-            ta bude následně spuštěna.
+        Arguments:
 
-        Jako první argument konstruktoru dialogové třídy ('parent') bude
-        doplněno aktuální (vrchní) okno aplikace.  Ostatní argumenty jsou
-        předány tak, jak jsou.  Více o dialogových třídách a jejich argumentech
-        konstruktoru v modulu 'pytis.form.dialog'.
+          dialog_or_class_ -- a dialog class (derived from 'Dialog'), or a
+            dialog instance directly. If a class is provided, a new instance
+            will be created and then executed.
 
-        Pokud je argumentem instance, jsou argumenty předány metodě 'run()'.
+        The current (top-level) application frame will be supplied as the first
+        constructor argument ('parent'). Other arguments are passed through
+        unchanged. For more information about dialog classes and their
+        constructor arguments, see the 'pytis.form.dialog' module.
 
-        Dialog je spuštěn (metodou 'run()') a jeho návratová hodnota je také
-        návratovou hodnotou této metody.
+        If an instance is provided, the arguments are passed to its 'run()'
+        method.
+
+        The dialog is executed (via the 'run()' method) and its return value is
+        also the return value of this method.
 
         """
         if not isinstance(dialog_or_class_, pytis.form.Dialog):
@@ -1256,10 +1258,9 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         return result
 
     def run(self):
-        """Spusť běh uživatelského rozhraní.
+        """Start the user interface loop.
 
-        Nevracej se dříve, než je běh uživatelského rozhraní definitivně
-        ukončen.
+        Do not return until the user interface has been fully terminated.
 
         """
         if not self._headless:
@@ -1284,20 +1285,18 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         self.MainLoop()
 
     def top_window(self, allow_modal=True):
-        """Vrať momentálně aktivní okno aplikace.
-
-        """
+        """Return the currently active application window."""
         if allow_modal and self._modals:
             return self._top_modal()
         else:
             return self._notebook.CurrentPage
 
     def current_form(self, inner=True, allow_modal=True):
-        """Vrať právě aktivní formulář aplikace, pokud existuje.
+        """Return the currently active application form, if one exists.
 
-        Pokud není otevřen žádný formulář, nebo aktivním oknem není formulář,
-        vrací None.  Pokud je aktivním formulářem duální formulář, bude vrácen
-        jeho aktivní podformulář, právě pokud je argument 'inner' pravdivý.
+        If no form is open, or the active window is not a form, returns None.
+        If the active form is a dual form, its active subform will be returned,
+        but only if the 'inner' argument is True.
 
         """
         form = self.top_window(allow_modal=allow_modal)
@@ -1518,8 +1517,8 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         return wildcards
 
     def _splitpath(self, cmode, path):
-        # Quict hack: unistr makes a local string from rpyc netref obtained from fh.name.
-        # Othervise fails with RPyC AttributeError on p.rfind('/') in posixpath.py
+        # Quick hack: unistr makes a local string from rpyc netref obtained from fh.name.
+        # Otherwise fails with RPyC AttributeError on p.rfind('/') in posixpath.py
         path = unistr(path)
         if cmode == 'local':
             pathmod = os.path
@@ -1558,7 +1557,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         to those methods so we perform encoding in this class and pass bytes
         data to the underlying class.  For these always open remote files in
         binary mode and encode/decode the data in this class.
-        'make_selected_file()' on the othe hand does support text mode encoding
+        'make_selected_file()' on the other hand does support text mode encoding
         so we pass the data without encoding in this case ('encoding' passed to
         our constructor is None).
 
@@ -2511,7 +2510,7 @@ def db_operation(operation, *args, **kwargs):
     dialog and the supplied username and password is set before repeating the
     operation.
 
-    When the operation is performed successfully (regardles whether on the
+    When the operation is performed successfully (regardless whether on the
     first try or later), its result is returned.
 
     Arguments:
@@ -2521,7 +2520,7 @@ def db_operation(operation, *args, **kwargs):
         excluding the keyword arguments named below.
       allow_retry -- iff true, offer the user a chance for restoring the
         operation.  It is on by default when 'kwargs' contain a 'translation'.
-        Off othervise.
+        Off otherwise.
       quiet -- iff true, don't report errors to the user at all (regardless
         of 'allow_retry').
 

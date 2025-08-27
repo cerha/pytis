@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2024 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2025 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2007-2018 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -72,7 +72,7 @@ class Continents(Specification):
                 arguments=lambda r: {}),
     )
     prints = (
-        (_("Default"), 'output/None'),  # This spec doen't exist, so defaults are used.
+        (_("Default"), 'output/None'),  # This spec doesn't exist, so defaults are used.
         (_("Countries of the current continent"), 'cb.PrintContinentCountries'),
         PrintAction('p_countries_continents',
                     _("Countries of the current continent (as PrintAction)"),
@@ -100,7 +100,7 @@ class Countries(Specification):
     public = True
     title = _("Countries")
     table = dbdefs.Countries
-    _continents = 'cb.Continents'  # To be overriden in www/demo.py
+    _continents = 'cb.Continents'  # To be overridden in www/demo.py
 
     def _customize_fields(self, fields):
         fields.modify_many(('id', 'id3', 'num', 'continent',), column_width=6)
@@ -158,7 +158,7 @@ def pokus(message, x=None, y=None):
 
 
 class DisabledCountries(Countries):
-    """Just for testing the behavior of bindings with insufficient acceess rights."""
+    """Just for testing the behavior of bindings with insufficient access rights."""
     public = True
     access_rights = pd.AccessRights((None, (['xxx'], pd.Permission.VIEW)),)
 

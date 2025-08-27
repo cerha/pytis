@@ -1,4 +1,4 @@
-# These reqirements apply to Pytis wx applications.
+# These requirements apply to Pytis wx applications.
 # Use Wiking's requirements.txt for Wiking web apps
 cachetools
 file-magic; python_version >= '3.0'

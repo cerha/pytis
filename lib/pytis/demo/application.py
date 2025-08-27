@@ -158,7 +158,7 @@ class Application(pytis.presentation.Application):
 
     def dialog_test(self):
         # This test uses some Pytis internals which should not be used by standard
-        # Pytis applications as the APIs are not guaranted to stay.
+        # Pytis applications as the APIs are not guaranteed to stay.
         from pytis.presentation import Button, Field, FieldSet, HGroup
         import pytis.form.dialog as dialog
         import datetime
@@ -207,7 +207,7 @@ class Application(pytis.presentation.Application):
             FieldSet(_("Announcements with additional content"), (
                 button(_("Message with plain text"), app.message,
                        _("This is the HTML source code:"), content=html),
-                button(_("HTML cotnent without message"), app.message,
+                button(_("HTML content without message"), app.message,
                        content=pytis.util.content(html, format=TextFormat.HTML)),
                 button(_("LCG content"), app.message,
                        content=lcg.sec('Lorem ipsum', (lcg.p(p1), lcg.p(p2)))),

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2024 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2025 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2007-2016 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -167,7 +167,7 @@ class Images(Specification):
     values are interpreted as character sizes).  Cliking the thumbnail opens
     the image in an image viewer.
 
-    As oposed to the generic binary field, this field will not allow loading
+    As opposed to the generic binary field, this field will not allow loading
     data other than a valid image in one of the supported image formats.
 
     Practical examples of computers computing their values from various image

@@ -87,10 +87,10 @@ class InputFields(Specification):
     The following differences apply:
 
       * Since it is not possible to determine field data types automatically
-        from the data specification (or database introspection), the dafault
+        from the data specification (or database introspection), the default
         type is always `pd.String'
 
-      * If you need to pass a codebook type (it is differnt not `pd.String'),
+      * If you need to pass a codebook type (it is different not `pd.String'),
         you will also need to pass all its constructor arguments, including
         `enumerator'.  This makes it quite difficult, since you can't rely on
         automatic enumerator construction based on the `codebook' argument.
@@ -324,7 +324,7 @@ class Passwords(Specification):
     In practice, passwords will not be stored directly within the database.
     They will be typically protected by hashing.  This may be done by creating
     a virtual password field for the user interaction and a computed database
-    fiels which generates the hashed value based on the UI field's plain text
+    fields which generates the hashed value based on the UI field's plain text
     value.  This demo shpould be extended to give an example.
 
     """
