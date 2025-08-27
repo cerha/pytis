@@ -21,6 +21,7 @@ from __future__ import unicode_literals
 from __future__ import print_function
 
 import operator
+import pytest
 import re
 import unittest
 
@@ -275,20 +276,29 @@ class Caching(unittest.TestCase):
         self.assertLessEqual(len(c), 2)
 
 
-class Resolver(unittest.TestCase):
+class TestResolver:
 
-    def test_resolver(self):
+    @pytest.fixture(scope="class")
+    def resolver(self):
         from .resolver import Resolver
+        return Resolver(search=('pytis.defs', 'pytis.defs.profiles'))
+
+    def test_get(self, resolver):
         import pytis.presentation
-        r = Resolver(search=('pytis.defs', 'pytis.defs.profiles'))
-        view = r.get('help.Help', 'view_spec')
+        view = resolver.get('help.Help', 'view_spec')
         assert isinstance(view, pytis.presentation.ViewSpec)
+
+    def test_specification(self, resolver):
+        import pytis.presentation
         # Test top level specification name (from pytis.defs.profiles).
-        spec2 = r.specification('FormProfiles')
-        assert isinstance(spec2, pytis.presentation.Specification)
-        specifications = [spec_ for name, spec_ in r.walk()]
-        from pytis.defs.help import Help
-        assert Help in specifications
+        spec = resolver.specification('FormProfiles')
+        assert isinstance(spec, pytis.presentation.Specification)
+
+    def test_walk(self, resolver):
+        from pytis.defs.help import Help, Field
+        assert ('pytis.defs.help.Help', Help) in resolver.walk()
+        # Field is a class imported in pytis.defs.help, but not a specification subclass.
+        assert ('pytis.defs.help.Field', Field) not in resolver.walk()
 
 
 def test_compose_mail():
