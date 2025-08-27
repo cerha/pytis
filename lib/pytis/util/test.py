@@ -324,6 +324,16 @@ class TestResolver:
             resolver.get('Field', 'id')
         assert ' is not a pytis.presentation.Specification subclass' in str(e)
 
+    def test_reload(self, resolver):
+        p = resolver.specification('FormProfiles')
+        assert p.public is True
+        p.public = False
+        p2 = resolver.specification('FormProfiles')
+        assert p2.public is False
+        resolver.reload()
+        p3 = resolver.specification('FormProfiles')
+        assert p3.public is True
+
 
 def test_compose_mail():
     from .util import _compose_mail, Attachment
