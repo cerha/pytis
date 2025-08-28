@@ -950,11 +950,10 @@ class ExposedFileWrapper(object):
             data = data[:]
         elif self._encoding is not None and self._decrypted is None:
             data = data.encode(self._encoding)
-        if ((sys.version_info[0] > 2 and 'b' in self._f.mode
+        if ((sys.version_info[0] > 2 and (isinstance(self._f, io.BytesIO) or 'b' in self._f.mode)
              and not isinstance(data, (bytes, bytearray, memoryview)))):
-            # Even though pytis.data.Binary.Data is derived from bytes,
-            # when passed through RPyC, it becomes a netref and file.write()
-            # complains:
+            # Although pytis.data.Binary.Data is derived from bytes, over RPyC it
+            # may arrive as a netref and file.write() complains:
             # a bytes-like object is required, not 'pytis.data.types_.Data'
             data = data[:]
         self._f.write(data)
