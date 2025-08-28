@@ -135,10 +135,15 @@ class ApplicationAPIProvider(APIProvider):
         self._instance = None
 
     def __getattr__(self, name):
-        if self._instance is None:
-            # This typically happens in scripts where no actuall application is
-            # running.  Thus initialize BaseApplication to get at least itself
-            # basic set of app methods (such as app.param, app.has_access, ...).
+        if self._instance is None and not name.startswith('__'):
+            # Automatically handle application initialization for scripts:
+            # Application attributes may be accessed here when no actual
+            # application is running.  Initializing BaseApplication will
+            # make the basic set of app methods (such as app.param,
+            # app.has_access, ...) available on the 'app' object.
+            # '__' prefixed attributes are ignored here because these
+            # may be examined during introspection, such as on pytest
+            # test collection.
             BaseApplication()  # Will call app.init() automatically.
         return super(ApplicationAPIProvider, self).__getattr__(name)
 
@@ -543,13 +548,14 @@ class Application(API):
         pass
 
     def input_text(self, title, label, default=None, not_null=False, width=20, height=1,
-                   descr=None, noselect=False):
+                   descr=None, noselect=False, compact=False,
+                   text_format=pytis.presentation.TextFormat.PLAIN, attachment_storage=None):
         """Display a form for entering a single textual value and return this value.
 
         Arguments:
 
           title -- input form main title as a string.
-          label -- field label as a string.
+          label -- field label as a string or None for an unlabeled field.
           default -- initial field value as a string.
           not_null -- iff True, it will not be possible to submit the form without
             entering a value.
@@ -561,6 +567,10 @@ class Application(API):
             selected, which results in overwriting the whole value when the
             user starts typing.  Passing True here avoids this initial
             selection.
+          compact -- if true, show field label above the field instead of on
+            the left (as in 'pytis.presentation.Field').
+          text_format -- as in 'pytis.presentation.Field'.
+          attachment_storage -- as in 'pytis.presentation.Field'.
 
         Returns the value entered into the field as a string or None if the
         form was escaped or the value was empty (only possible when not_null is
@@ -600,7 +610,7 @@ class Application(API):
         Arguments:
 
           title -- input form main title as a string.
-          label -- field label as a string.
+          label -- field label as a string or None for an unlabeled field.
           default -- initial field value as int or float (float when
             precision is given).
           not_null -- iff True, it will not be possible to submit the form without
@@ -1592,6 +1602,10 @@ def test_api_definition():
         def api_side_form(self):
             return MyForm().provider()
 
+        @property
+        def api_title(self):
+            return 'My Form'
+
         def api_select_row(self, position):
             pass
 
@@ -1599,6 +1613,9 @@ def test_api_definition():
             return 'rows unselected'
 
         def api_refresh(self):
+            pass
+
+        def api_activate(self):
             pass
 
         def api_close(self, force=False):

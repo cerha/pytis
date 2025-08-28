@@ -28,6 +28,7 @@ actual use.
 from __future__ import print_function
 
 from builtins import range
+import re
 import sys
 import pytis.util
 
@@ -84,16 +85,31 @@ class Resolver(object):
         try:
             module = __import__(name)
         except ImportError as e:
-            if sys.version_info[0] == 2:
-                template = "No module named %s"
+            if sys.version_info >= (3, 3):
+                # Prefer robust detection of the actually missing module in Python 3.3+
+                failed_import_name = getattr(e, 'name', None)
             else:
-                template = "No module named '%s'"
-            for i in range(len(components) + 1):
-                if str(e) == template % '.'.join(components[i:]):
-                    # Raise resolver error only if the import error actually
-                    # related to importing the named module itself and not to some
-                    # nested import within this module.
-                    raise ResolverError("Resolver error loading specification '%s': %s" % (name, e))
+                # Fall back to exception string matching for older Python versions.
+                if sys.version_info[0] == 2:
+                    matcher = re.compile("No module named (.*)")
+                else:
+                    matcher = re.compile("No module named '([^']*)'.*")
+                m = matcher.match(str(e))
+                if m:
+                    failed_import_name = m.group(1)
+                else:
+                    failed_import_name = None
+            if failed_import_name:
+                # Check the whole name or any suffix of the imported module name matches
+                # the module name which failed.
+                for i in range(len(components)):
+                    if failed_import_name == '.'.join(components[i:]):
+                        # Raise ResolverError only if the import error actually
+                        # related to importing the named module itself and not to some
+                        # nested import within this module.
+                        # TODO NOPY2: raise ResolverError(...) from e
+                        raise ResolverError("Resolver error loading specification '{}': {}"
+                                            .format(name, e))  # noqa: B904  (raise ... from e)
             # The error inside the imported module (typically the imported
             # module attempts to import a python module which is not
             # installed) must raise the original exception so that we can
@@ -103,7 +119,9 @@ class Resolver(object):
             try:
                 module = getattr(module, component)
             except AttributeError as e:
-                raise ResolverError("Resolver error loading specification '%s': %s" % (name, e))
+                # TODO NOPY2: raise ResolverError(...) from e
+                raise ResolverError("Resolver error loading specification '{}': {}"
+                                    .format(name, e))  # noqa: B904  (raise ... from e)
         return module
 
     def _get_object_by_name(self, name):
@@ -270,11 +288,22 @@ class Resolver(object):
 
     def reload(self):
         """Reload all specification modules and clear all caches."""
+        if sys.version_info[0] == 2:
+            # Python 2.x: use builtin reload without referencing an undefined name in Py3.
+            from __builtin__ import reload
+        else:
+            try:
+                # Python 3.4+
+                from importlib import reload
+            except ImportError:
+                # Python 3.0 to 3.3.
+                from imp import reload
         # TODO: It only works when search path is set!
         self.clear()
-        for name in sys.modules:
+        for name in tuple(sys.modules):
             for prefix in self._search:
-                if ((not prefix.startswith('pytis.') and
+                if (((not prefix.startswith('pytis.') or prefix.startswith('pytis.demo')) and
                      (name == prefix or name.startswith(prefix + '.')) and
                      sys.modules[name] is not None)):
                     reload(sys.modules[name])
+                    break

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2024 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2025 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2018 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -21,6 +21,7 @@ from __future__ import unicode_literals
 from __future__ import print_function
 
 import operator
+import pytest
 import re
 import unittest
 
@@ -81,61 +82,6 @@ class Popen(unittest.TestCase):
         self.assertEqual(popen3.from_child().read(), self.RSTRING)
 
 
-class XStack(unittest.TestCase):
-
-    def test_it(self):
-        stack = util.XStack()
-        assert len(stack) == 0
-        assert stack.active() is None
-        assert stack.prev() is None
-        assert stack.next() is None
-        a = 'AAA'
-        b = 'BBB'
-        c = 'CCC'
-        d = 'DDD'
-        stack.push(a)
-        assert stack.items() == (a,)
-        assert len(stack) == 1
-        assert stack.active() is a
-        assert stack.prev() is None
-        assert stack.next() is None
-        stack.push(b)
-        assert stack.items() == (b, a,)
-        assert stack.active() is b
-        assert stack.prev() is a
-        assert stack.next() is a
-        stack.push(c)
-        assert stack.items() == (c, b, a,)
-        assert len(stack) == 3
-        assert stack.active() is c
-        assert stack.prev() is a
-        assert stack.next() is b
-        stack.activate(a)
-        assert stack.items() == (c, b, a,)
-        assert stack.active() is a
-        assert stack.prev() is b
-        assert stack.next() is c
-        stack.activate(b)
-        assert stack.active() is b
-        assert stack.prev() is c
-        assert stack.next() is a
-        stack.remove(b)
-        assert stack.items() == (c, a,)
-        assert stack.active() is a
-        stack.push(d)
-        assert stack.items() == (c, d, a,)
-        assert stack.active() is d
-        stack.remove(stack.active())
-        assert stack.active() is a
-        assert stack.prev() is c
-        assert stack.next() is c
-        stack.remove(stack.active())
-        assert stack.active() is c
-        assert len(stack) == 1
-        assert stack.prev() is None
-        assert stack.next() is None
-
-
 class Sameclass(unittest.TestCase):
 
     class A(object):
@@ -150,7 +96,7 @@ class Sameclass(unittest.TestCase):
                         'same classes not recognized')
         self.assertFalse(util.sameclass(Sameclass.A(), Sameclass.B()),
                          'different classes not recognized')
-        self.assertTrue(util.sameclass(1, 1), 'same inteeger classes not recognized')
+        self.assertTrue(util.sameclass(1, 1), 'same integer classes not recognized')
         self.assertFalse(util.sameclass(1, 1.0), 'different classes not recognized')
 
 
@@ -330,20 +276,63 @@ class Caching(unittest.TestCase):
         self.assertLessEqual(len(c), 2)
 
 
-class Resolver(unittest.TestCase):
+class TestResolver:
 
-    def test_resolver(self):
+    # Test internals.
+
+    def test_import_module(self):
+        from .resolver import Resolver, ResolverError
+        import pytis.defs
+        resolver = Resolver()
+        assert pytis.defs == resolver._import_module('pytis.defs')
+        with pytest.raises(ResolverError):
+            resolver._import_module('foo_bar_xy')
+        # The resolved module exists, but imports invalid module.
+        with pytest.raises(ImportError):
+            resolver._import_module('pytis.util.import_error_test')
+
+    # Test public API.
+    @pytest.fixture(scope="class")
+    def resolver(self):
         from .resolver import Resolver
+        return Resolver(search=('pytis.defs', 'pytis.defs.profiles'))
+
+    def test_get(self, resolver):
         import pytis.presentation
-        r = Resolver(search=('pytis.defs', 'pytis.defs.profiles'))
-        view = r.get('help.Help', 'view_spec')
+        view = resolver.get('help.Help', 'view_spec')
         assert isinstance(view, pytis.presentation.ViewSpec)
+
+    def test_specification(self, resolver):
+        import pytis.presentation
         # Test top level specification name (from pytis.defs.profiles).
-        spec2 = r.specification('FormProfiles')
-        assert isinstance(spec2, pytis.presentation.Specification)
-        specifications = [spec_ for name, spec_ in r.walk()]
-        from pytis.defs.help import Help
-        assert Help in specifications
+        spec = resolver.specification('FormProfiles')
+        assert isinstance(spec, pytis.presentation.Specification)
+
+    def test_walk(self, resolver):
+        from pytis.defs.help import Help, Field
+        assert ('pytis.defs.help.Help', Help) in resolver.walk()
+        # Field is a class imported in pytis.defs.help, but not a specification subclass.
+        assert ('pytis.defs.help.Field', Field) not in resolver.walk()
+
+    def test_exceptions(self, resolver):
+        from .resolver import ResolverError
+        with pytest.raises(ResolverError) as e:
+            resolver.get('foo.Bar', 'view_spec')
+        assert 'Not found within pytis.defs, pytis.defs.profiles' in str(e)
+        with pytest.raises(ResolverError) as e:
+            # Field is a class present in pytis.defs, but not a specification subclass.
+            resolver.get('Field', 'id')
+        assert ' is not a pytis.presentation.Specification subclass' in str(e)
+
+    def test_reload(self, resolver):
+        p = resolver.specification('FormProfiles')
+        assert p.public is True
+        p.public = False
+        p2 = resolver.specification('FormProfiles')
+        assert p2.public is False
+        resolver.reload()
+        p3 = resolver.specification('FormProfiles')
+        assert p3.public is True
 
 
 def test_compose_mail():
@@ -360,7 +349,7 @@ def test_compose_mail():
         r'Subject: Plain message\n'
         r'From: <bob@gnu.org>\n'
         r'To: hugo@gnu.org\n'
-        r'Date: [A-Z][a-z][a-z], \d\d [A-Z][a-z][a-z] \d\d\d\d \d\d:\d\d:\d\d \+\d\d\d\d\n\n'
+        r'Date: [A-Z][a-z][a-z], \d\d [A-Z][a-z][a-z] \d\d\d\d \d\d:\d\d:\d\d [\+\-]\d\d\d\d\n\n'
         r'--===+\d+==\n'
         r'Content-Type: text/plain; charset="utf-8"\n'
         r'MIME-Version: 1.0\n'

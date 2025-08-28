@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2019-2025 Tomáš Cerha <t.cerha@gmail.com>
-# Copyright (C) 2013 OUI Technology Ltd.
+# Copyright (C) 2018-2025 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2001-2018 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,4 +16,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from .special import Special  # noqa: F401
+"""Module with failing imports to test resolver error handling."""
+
+from __future__ import print_function
+from __future__ import unicode_literals
+
+import foo_bar_xy  # noqa: F401  (intentional failing import for tests)

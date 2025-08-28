@@ -1,5 +1,5 @@
 autoflake
-autopep8
+autopep8; python_version >= '3.0'
 Babel
 coverage
 coveralls

@@ -25,6 +25,7 @@ import copy
 import datetime
 import decimal
 import io
+import os
 import sys
 import time
 
@@ -55,6 +56,10 @@ _connection_data = {'database': 'test'}
 
 pytis.config.log_exclude = [DEBUG, OPERATIONAL, ACTION, EVENT]
 
+
+def plpython_test(test):
+    envvar = 'PYTIS_TEST_SKIP_PLPYTHON'
+    return pytest.mark.skipif(bool(os.getenv(envvar)), reason="{} is set".format(envvar))(test)
 
 #############
 # types_.py #
@@ -203,6 +208,15 @@ class TestInteger(_TestType):
 
 class TestFloat(_TestType):
     _type = pd.Float
+
+    def setUp(self):
+        import locale
+        self._orig_locale = locale.getlocale(locale.LC_ALL)
+        locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
+
+    def tearDown(self):
+        import locale
+        locale.setlocale(locale.LC_ALL, self._orig_locale)
 
     def test_validation(self):
         t = pd.Float()
@@ -2473,7 +2487,8 @@ class DBDataDefault(_DBTest):
         transaction_2 = pd.DBTransactionDefault(connection_data=self._dconnection)
         try:
             assert v.lock_row(key, transaction=transaction) is None
-            assert isinstance(v.lock_row(key, transaction=transaction_2), basestring)
+            # We don't attempt to lock even simple views any more (we used to).
+            assert v.lock_row(key, transaction=transaction_2) is None
             assert v.lock_row(key3, transaction=transaction_2) is None
             assert v2.lock_row(key2, transaction=transaction) is None
             assert v2.lock_row(key2, transaction=transaction_2) is None
@@ -3497,7 +3512,7 @@ class DBSearchPath(_DBTest):
         test(['special'])
         test(['special', 'public'])
 
-
+@plpython_test
 class DBCrypto(_DBBaseTest):
     # Note: requires pgcrypto and db_pytis_crypto:
     # psql test -c 'create extension pgcrypto;'

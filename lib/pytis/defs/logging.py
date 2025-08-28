@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2019, 2020, 2024 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2019, 2020, 2024, 2025 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2009-2015 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -30,7 +30,9 @@ import pytis.dbdefs.db_pytis_logging
 from pytis.presentation import (
     Binding, Editable, Field, QueryFields, Specification, HGroup, VGroup, procedure,
 )
-from pytis.form import BrowseForm, run_form
+
+from pytis.api import app
+
 
 _ = pytis.util.translations('pytis-defs')
 
@@ -43,10 +45,6 @@ class UserActionLog(Specification):
             factory = pytis.config.resolver.get('pytis.defs.logging.UserActionLog', 'data_spec')
             self._data = factory.create(connection_data=pytis.config.dbconnection)
             self._username = username
-
-        def _values(self, **kwargs):
-            return [(key, pd.Value(self._data.find_column(key).type(), value))
-                    for key, value in [('username', self._username)] + list(kwargs.items())]
 
         def log(self, spec_name, form_name, action, data=None):
             rdata = (
@@ -169,11 +167,12 @@ class ChangesLogUser(ChangesLog):
 
 @procedure
 def show_changes_in_row(key_value, tablename=None):
-    CHANGE_LOG_SPEC = 'logging.ChangesLog'
-    arguments = {"date_from": pd.dval(datetime.date(year=2000, month=1, day=1)),
-                 "date_to": pd.dval(datetime.date(year=2100, month=1, day=1)),
-                 "key_value_": pd.sval(key_value.export()),
-                 "search_path_": pd.sval(pytis.config.dbschemas)}
+    arguments = {
+        "date_from": pd.dval(datetime.date(year=2000, month=1, day=1)),
+        "date_to": pd.dval(datetime.date(year=2100, month=1, day=1)),
+        "key_value_": pd.sval(key_value.export()),
+        "search_path_": pd.sval(pytis.config.dbschemas),
+    }
     if tablename is not None:
         arguments["tablename_"] = pd.sval(tablename)
-    return run_form(BrowseForm, CHANGE_LOG_SPEC, arguments=arguments)
+    return app.run_form('logging.ChangesLog', arguments=arguments)

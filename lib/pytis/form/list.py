@@ -1005,7 +1005,7 @@ class ListForm(RecordForm, Refreshable):
                      MenuItem(_("Define new aggregated view"),
                               command=Command(ListForm.aggregated_view, aggregated_view_id=None))))
         if aggregated_views:
-            menu.append(Menu(_("Remove agregated view"), [MenuItem(
+            menu.append(Menu(_("Remove aggregated view"), [MenuItem(
                 v.name(),
                 command=Command(ListForm.delete_aggregated_view, aggregated_view_id=v.id()),
             ) for v in aggregated_views]))
@@ -1076,18 +1076,18 @@ class ListForm(RecordForm, Refreshable):
 
     def _on_label_left_down(self, event):
         g = self._grid
-        if event.GetY() > self._label_height:
-            return
-        x = event.GetX() + self._scroll_x_offset()
-        col = g.XToCol(x)
-        if col != -1:
-            x1 = functools.reduce(lambda x, i: x + g.GetColSize(i), range(col), 0)
-            x2 = x1 + g.GetColSize(col)
-            if x > x1 + 2 and x < x2 - 2:
-                self._column_to_move = col
+        if event.GetY() <= self._label_height:
+            # Start possible column move when mouse pressed within column label
+            # but not within aggregation results.
+            x = event.GetX() + self._scroll_x_offset()
+            col = g.XToCol(x)
+            if col != -1:
+                x1 = sum(g.GetColSize(i) for i in range(col))
+                x2 = x1 + g.GetColSize(col)
+                if x > x1 + 2 and x < x2 - 2:
+                    self._column_to_move = col
         self._mouse_dragged = False
-        # We don't call event.Skip() since we want to suppress the default bahavior
-        # (eg. range selection when Shift is down).
+        event.Skip()
 
     def _on_label_left_up(self, event):
         if self._column_move_target is not None:
@@ -1176,7 +1176,7 @@ class ListForm(RecordForm, Refreshable):
         if hasattr(window, 'GetToolTip'):
             tip = window.GetToolTip()
             # Setting to None doesn't remove the tooltip, so we at least set
-            # the tooltip to an ampty string.
+            # the tooltip to an empty string.
             if tip is None:
                 tip = wx.ToolTip(descr)
                 window.SetToolTip(tip)
@@ -2718,7 +2718,7 @@ class BrowseForm(FoldableForm):
                      help=_("Open a separate insert form with a copy of this record.")),
             MenuItem(_("Delete record"),
                      command=Command(RecordForm.delete_record),
-                     help=_("Delete the record parmanently from the database.")),
+                     help=_("Delete the record permanently from the database.")),
             MenuItem(_("Preview form"),
                      command=Command(ListForm.activate),
                      help=_("Open the preview form for browsing all records."),

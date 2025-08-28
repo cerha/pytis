@@ -1686,7 +1686,7 @@ class ViewSpec(object):
             attempts to open an aggregated view of the form, she can select the
             columns used in the group by caluse.
 
-          aggregated_views -- specification of predefined agregated views as a
+          aggregated_views -- specification of predefined aggregated views as a
             sequence of 'AggregatedView' instances.
 
           bindings -- a sequence of binding specifications as 'Binding'
@@ -4247,7 +4247,7 @@ class AttachmentStorage(object):
         """
         import PIL.Image
         resized = image.copy()
-        resized.thumbnail(size, PIL.Image.ANTIALIAS)
+        resized.thumbnail(size, PIL.Image.LANCZOS)
         return resized
 
     def insert(self, filename, data, values, transaction=None):
@@ -4805,7 +4805,11 @@ class DbAttachmentStorage(AttachmentStorage):
         self._ticket = ticket = self._generate_ticket()
         self._base_uri = 'http://localhost:%d/%s' % (server.socket.getsockname()[1], ticket)
         import threading
-        threading.Thread(target=server.serve_forever).start()
+        # TODO NOPY2: Pass deamon=True as Thread constructor argument.
+        thread = threading.Thread(target=server.serve_forever)
+        thread.daemon = True
+        thread.start()
+
 
     def __del__(self):
         # Shut down the server when the storage instance is being removed from
@@ -5200,7 +5204,7 @@ class Command(object):
     'Form.select_row'
     >>> command.definer is Form
     True
-    >>> command.method is Form.select_row
+    >>> command.method == Form.select_row  # Using "is" instead of == fails on Python 2.
     True
     >>> command.args
     {'position': 3}
@@ -5455,22 +5459,25 @@ class Command(object):
         >>> Command(g.greet, 'Peter').args
         {'name': 'Peter'}
         >>> command = Command(g.greet, 'Peter', True, True)
-        >>> command.args
-        {'name': 'Peter', 'polite': True, 'shout': True}
+        >>> command.args == {'name': 'Peter', 'polite': True, 'shout': True}
+        True
         >>> command.invoke()
         'HELLO, PETER. HOW ARE YOU?'
         >>> command = Command(g.greet, 'Bob', shout=False)
-        >>> command.args
-        {'name': 'Bob', 'shout': False}
+        >>> command.args == {'name': 'Bob', 'shout': False}
+        True
         >>> command.invoke()
         'Hello, Bob. How are you?'
         >>> command = Command(g.greet_people, 'Hi', 'Peter', 'Ann', polite=False)
-        >>> command.args
-        {'greeting': 'Hi', '*names': ('Peter', 'Ann'), 'polite': False}
+        >>> command.args == {'greeting': 'Hi', '*names': ('Peter', 'Ann'), 'polite': False}
+        True
         >>> command.invoke()
         'Hi, Peter and Ann.'
 
         """
+        # TODO NOPY2: Transform the doctests with dictionaries.  Instead of
+        # comparison move the dict to the second line (expected output).
+        # This does not work in Python 2 due to non-deterministic key ordering.
         named_positionals = [(k, v) for k, v in zip(argument_names(self._method), self._args)]
         if len(named_positionals) < len(self._args):
             names = argument_names(self._method, var_positional=True)
