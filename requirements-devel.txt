@@ -1,6 +1,6 @@
 autoflake
 autopep8; python_version >= '3.0'
-Babel
+babel
 coverage
 coveralls
 flake8
