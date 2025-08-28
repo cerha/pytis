@@ -2114,7 +2114,7 @@ class StructuredTextField(TextField):
                         if isinstance(r, lcg.Image) ^ (not self._images)]
             except AttachmentStorage.StorageError as e:
                 app.error(title=_("Error accessing attachment storage"),
-                          message=_("Error accessing attachment storage") + ':\n' + e)
+                          message=_("Error accessing attachment storage") + ':\n' + str(e))
                 return []
 
     class ImageAlignments(Enumeration):
@@ -2411,7 +2411,7 @@ class StructuredTextField(TextField):
             app.echo(_("Invalid image format!"), kind='error')
         except AttachmentStorage.StorageError as e:
             app.error(title=_("Error accessing attachment storage"),
-                      message=_("Error accessing attachment storage") + ":\n" + e)
+                      message=_("Error accessing attachment storage") + ":\n" + str(e))
 
     @Command.define
     def search(self):
