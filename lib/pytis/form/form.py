@@ -2827,6 +2827,12 @@ class EditForm(RecordForm, Refreshable):
         browser.SetMinSize(char2px(parent, 72, 18))
         return browser
 
+    def _add_to_sizer(self, sizer, item, flags=0, border=0, growable=False):
+        if growable:
+            sizer.Add(item, 1, flags | wx.EXPAND, border)
+        else:
+            sizer.Add(item, 0, flags, border)
+
     def _create_group(self, parent, group, aligned=False, growable=False):
         # Each continuous sequence of fields is first stored in an array and
         # finally packed into a grid sizer by self._pack_fields() and added to
@@ -2865,10 +2871,7 @@ class EditForm(RecordForm, Refreshable):
             if len(pack) != 0:
                 # Add the latest aligned pack into the sizer (if there was one).
                 packed = self._pack_fields(parent, pack, gap, growable=growable)
-                if growable:
-                    sizer.Add(packed, 1, wx.EXPAND | wx.ALIGN_TOP | wx.ALL, border)
-                else:
-                    sizer.Add(packed, 0, wx.ALIGN_TOP | wx.ALL, border)
+                self._add_to_sizer(sizer, packed, wx.ALIGN_TOP | wx.ALL, growable=growable)
                 pack = []
             if isinstance(item, GroupSpec):
                 x = self._create_group(parent, item, growable=growable)
@@ -2879,10 +2882,7 @@ class EditForm(RecordForm, Refreshable):
                     label = item.label()
                     if label:
                         x.Add(label, 0, wx.ALIGN_LEFT)
-                    if growable:
-                        x.Add(item.widget(), 1, wx.EXPAND)
-                    else:
-                        x.Add(item.widget())
+                    self._add_to_sizer(x, item.widget(), growable=growable)
                 else:
                     # Fields in a HORIZONTAL group are packed separately (label and ctrl).
                     x = self._pack_fields(parent, (item,), gap, growable=growable,
@@ -2899,25 +2899,15 @@ class EditForm(RecordForm, Refreshable):
                 border_style = wx.RIGHT
             else:
                 border_style = wx.ALL
-            if growable:
-                sizer.Add(x, 1, wx.EXPAND | wx.ALIGN_TOP | border_style, border)
-            else:
-                sizer.Add(x, 0, wx.ALIGN_TOP | border_style, border)
+            self._add_to_sizer(sizer, x, wx.ALIGN_TOP | border_style, border, growable=growable)
         if len(pack) != 0:
             # Add remaining fields pack, if any.
             packed = self._pack_fields(parent, pack, gap, growable=growable)
-            if growable:
-                sizer.Add(packed, 1, wx.EXPAND | wx.ALIGN_TOP | wx.ALL, border)
-            else:
-                sizer.Add(packed, 0, wx.ALIGN_TOP | wx.ALL, border)
+            self._add_to_sizer(sizer, packed, wx.ALIGN_TOP | wx.ALL, border, growable=growable)
         # If this is a labeled group, add small top margin, otherwise it is too tight.
         if group.label() is not None:
             s = wx.BoxSizer(orientation)
-            if growable:
-                s.Add(sizer, 1, wx.EXPAND | wx.TOP, 2)
-            else:
-                s.Add(sizer, 0, wx.TOP, 2)
-
+            self._add_to_sizer(s, sizer, wx.TOP, 2, growable=growable)
             sizer = s
         return sizer
 
@@ -2956,10 +2946,7 @@ class EditForm(RecordForm, Refreshable):
                     else:
                         style = wx.ALIGN_RIGHT | wx.ALIGN_CENTER_VERTICAL
                     grid.Add(label, 0, style, 2)
-                if growable:
-                    grid.Add(item.widget(), 1, wx.EXPAND)
-                else:
-                    grid.Add(item.widget())
+                self._add_to_sizer(grid, item.widget(), growable=growable)
         return grid
 
     def _signal_update(self):
