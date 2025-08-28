@@ -5,7 +5,7 @@ file-magic; python_version >= '3.0'
 future
 gnupg
 psycopg2-binary
-pillow
+pillow>=2.7.0
 pycryptodome
 pymupdf==1.14.20; python_version == '2.7'
 pymupdf; python_version >= '3.0'
