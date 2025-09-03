@@ -22,6 +22,7 @@ from __future__ import print_function
 from past.builtins import basestring
 from builtins import range
 
+import json
 import getpass
 import hashlib
 import os
@@ -56,7 +57,27 @@ class RPCInfo(object):
     connection_order = 0
     access_data = None
     access_data_version = 0
-    remote_client_version = None
+    client_info = None
+
+class ClientInfo(object):
+    """Container for information about the remote client."""
+
+    # Values initialized after connection.
+    client_version = None
+    display = None
+
+    # Values initialized through remote call (exposed_client_info in clientapi).
+    os_name = None
+    os_version = None
+    backend_name = None
+    python_version = None
+    rpyc_version = None
+
+    def __init__(self, **kwargs):
+        self.update(kwargs)
+
+    def update(self, dictionary):
+        self.__dict__.update(dictionary)
 
 
 class Connector(object):
@@ -168,6 +189,11 @@ def client_available():
     return client_ip() is not None and _rpc_access_data() is not None
 
 
+def client_info():
+    """Return client information as ClientInfo instance."""
+    return RPCInfo.client_info
+
+
 def client_connection_ok():
     """Return True, iff remote client connection is active.
 
@@ -198,7 +224,7 @@ def x2go_display():
     if session_id:
         match = re.match(r'^[^-]+-(\d+)-\d+_stR.+_dp\d+$', session_id)
         if match:
-            return match.group(1)
+            return ':' + match.group(1)
     return None
 
 
@@ -294,12 +320,16 @@ def _connect():
     connector = Connector(access_data.get('password'))
     RPCInfo.connection = connection = connector.connect('localhost', access_data.get('port'))
     RPCInfo.connection_order += 1
-    RPCInfo.remote_client_version = version = connection.root.x2goclient_version()
     RPCInfo.client_api_pushed = False
+    RPCInfo.client_info = ClientInfo(
+        client_version=connection.root.x2goclient_version(),
+        display=x2go_display(),
+    )
     log(OPERATIONAL, "Client connection {} ({}) established with version: {}".format(
         RPCInfo.connection_order,
         RPCInfo.access_data_version,
-        version
+        RPCInfo.client_info.client_version,
+
     ))
     try:
         connection.root.extend
@@ -312,7 +342,7 @@ def _connect():
         if _announce_obsolete_client_version:
             _announce_obsolete_client_version = False
             log(OPERATIONAL, "Obsolete client version {}: {} from {}"
-                .format(version, getpass.getuser(), client_ip()))
+                .format(RPCInfo.client_info.client_version, getpass.getuser(), client_ip()))
             app.warning(_("You are using an obsolete version of Pytis2Go.\n"
                           "Please, contact IT support to install a newer version.\n"
                           "Your current version will stop working soon."))
@@ -327,6 +357,12 @@ def _connect():
             else:
                 log(OPERATIONAL, "Client API pushed successfully.")
                 RPCInfo.client_api_pushed = True
+                try:
+                    client_info = json.loads(_request('client_info'))
+                except Exception as e:
+                    log(OPERATIONAL, "Reading client info failed:", e)
+                else:
+                    RPCInfo.client_info.update(client_info)
     return connection
 
 
@@ -513,33 +549,3 @@ def run_python(script):
         return _request('run_python', script)
     except Exception:
         return None
-
-
-def python_version():
-    try:
-        return _request('python_version')
-    except Exception:
-        return ()
-
-
-def backend_info():
-    try:
-        return _request('backend_info')
-    except Exception:
-        return None
-
-def _rpyc_version(version):
-    # The rpyc.__version__ contents is inconsistent across rpyc versions...
-    if isinstance(version, tuple):
-        return '.'.join(map(str, version))
-    else:
-        return version
-
-def rpyc_version():
-    try:
-        return _rpyc_version(_request('rpyc_version'))
-    except Exception:
-        return None
-
-def local_rpyc_version():
-    return _rpyc_version(rpyc.__version__)

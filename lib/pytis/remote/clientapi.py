@@ -46,6 +46,7 @@ import hashlib
 import io
 import json
 import os
+import platform
 import random
 import rpyc
 import socket
@@ -714,16 +715,8 @@ class MacUIBackend(ClientUIBackend):
                 else:
                     return None
 
-        def version(self):
-            info = dict([map(lambda x: x.strip(), line.split(':'))
-                         for line in self._run('sw_vers').decode('ascii').splitlines()])
-            return '{ProductName} {ProductVersion}'.format(**info)
-
     def init(self):
         self._app = self.App()
-
-    def name(self):
-        return '{} ({})'.format(self.__class__.__name__, self._app.version())
 
     def _enter_text(self, title, label, password):
         result = self._app.displayDialog(label or title,
@@ -1049,6 +1042,32 @@ class PytisClientAPIService(rpyc.Service):
                                   encrypt=self._encrypt(encrypt),
                                   decrypt=self._decrypt(decrypt))
 
+    def exposed_client_info(self):
+        os_name = platform.system()
+        if os_name == "Darwin":
+            os_name = 'macOS'
+            os_version = platform.mac_ver()[0]  # Works in both Python 2 and 3.
+        else:
+            os_version = platform.release()
+        rpyc_version = rpyc.__version__
+        if not isinstance(rpyc.__version__, (list, tuple)):
+            # Note: The rpyc.__version__ contents is inconsistent across rpyc versions.
+            def safeint(x):
+                try:
+                    return int(x)
+                except ValueError:
+                    return x
+            rpyc_version = tuple(map(safeint, rpyc.__version__.split('.')))
+        # Note: We are serializing the dict to prevent RPyC sending it as a netref,
+        # which seems to be the default with older RPyC versions (3.4.4).
+        return json.dumps(dict(
+            os_name=os_name,
+            os_version=os_version,
+            backend_name=self._client.name(),
+            python_version=sys.version_info[:3],
+            rpyc_version=rpyc_version,
+        ))
+
     def exposed_get_clipboard_text(self):
         """Return current clipboard text, as unicode.
 
@@ -1233,16 +1252,6 @@ class PytisClientAPIService(rpyc.Service):
         return self._client.select_file(filename=filename, directory=directory, title=title,
                                         patterns=patterns, pattern=pattern,
                                         save=save, multi=multi)
-
-    def exposed_backend_info(self):
-        return self._client.name()
-
-    def exposed_python_version(self):
-        return '.'.join(map(str, sys.version_info[:3]))
-
-    def exposed_rpyc_version(self):
-        return rpyc.__version__
-
 
 
 class PasswordAuthenticator(object):

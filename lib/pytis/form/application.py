@@ -35,6 +35,7 @@ import gi
 import io
 import lcg
 import os.path
+import rpyc
 import sys
 import _thread
 import threading
@@ -1412,24 +1413,34 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
             return ''
 
     def _get_remote_connection_info(self):
+        def version_str(version):
+            return '.'.join(map(str, version))
         if self._remote_connection_info is not None:
             return self._remote_connection_info
         if not pytis.remote.client_available():
             return ()
-        # Retrieve the info just once as soon as the connection is established.
-        display = pytis.remote.x2go_display()
-        self._remote_connection_info = info = (
-            (_("Client version"), pytis.remote.RPCInfo.remote_client_version),
-            (_("Remote display"), ':{}'.format(display) if display else None),
-            (_("X2Go session ID"), pytis.remote.x2go_session_id()),
-            (_("Local Python version"), '.'.join(map(str, sys.version_info[:3]))),
-            (_("Remote Python version"), pytis.remote.python_version()),
-            (_("Local RPyC version"), pytis.remote.local_rpyc_version()),
-            (_("Remote RPyC version"), pytis.remote.rpyc_version()),
-            (_("Backend"), pytis.remote.backend_info()),
+        client_info = pytis.remote.client_info()
+        fields = (
+            (_("Client version"), client_info.client_version, None),
+            (_("Client OS"), '{} {}'.format(client_info.os_name, client_info.os_version)
+             if client_info.os_name else None, None),
+            (_("Backend"), client_info.backend_name, None),
+            (_("Remote display"), client_info.display, None),
+            (_("X2Go session ID"), pytis.remote.x2go_session_id(), None),
+            (_("Local Python version"), sys.version_info[:3], version_str),
+            (_("Remote Python version"), client_info.python_version, version_str),
+            (_("Local RPyC version"), rpyc.__version__,
+             # Note: The rpyc.__version__ contents is inconsistent across rpyc versions.
+             version_str if isinstance(rpyc.__version__, tuple) else None),
+            (_("Remote RPyC version"), client_info.rpyc_version, version_str),
         )
+        self._remote_connection_info = info = [
+            (label, f(value) if f else value)
+            for label, value, f in fields
+            if value is not None
+        ]
         for label, value in info:
-            log(OPERATIONAL, "Remote connection info:", (label, value))
+            log(OPERATIONAL, "Remote connection info: {}: {}".format(label, value))
         return info
 
     def _refresh_remote_status(self):
