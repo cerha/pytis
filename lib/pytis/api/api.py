@@ -1246,6 +1246,10 @@ class Application(API):
             file. This should only be used in text mode. The default encoding
             is 'utf-8'.  Any text encoding supported by Python can be used.
 
+        May return None in case that a previously active remote connection was
+        lost and the user decides to abort the operation (refuses to fall back
+        to local/server-side file).
+
         """
         pass
 

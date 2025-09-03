@@ -2361,6 +2361,8 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
                 # Make sure encoding defaults to UTF-8, not the system default.
                 encoding = 'utf-8'
             f = io.open(filename, mode, encoding=encoding)
+        else:
+            f = None
         return f
 
     def api_write_file(self, data, filename, mode='w'):
@@ -2372,10 +2374,11 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
             # not Data" on remote write attempt.  See issue #2.
             data = buffer(data)
         f = self.api_open_file(filename, mode=mode)
-        try:
-            f.write(data)
-        finally:
-            f.close()
+        if f:
+            try:
+                f.write(data)
+            finally:
+                f.close()
 
     def api_decrypted_areas(self):
         return self._decrypted_areas
