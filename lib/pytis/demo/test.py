@@ -78,13 +78,20 @@ class _TestBase:
     def _query(self, query):
         connection = dbapi.connect(**_connection_data)
         cursor = connection.cursor()
-        cursor.execute(query)
-        if query.startswith("select "):
-            result = cursor.fetchall()
-        else:
-            result = None
-        connection.commit()
-        return result
+        try:
+            cursor.execute(query)
+            if query.lstrip().lower().startswith("select "):
+                result = cursor.fetchall()
+            else:
+                result = None
+            connection.commit()
+            return result
+        finally:
+            try:
+                cursor.close()
+            except Exception:
+                pass
+            connection.close()
 
     def _commit(self):
         for f in ('pytis_update_transitive_roles',
