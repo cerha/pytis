@@ -57,6 +57,7 @@ class RPCInfo(object):
     connection_order = 0
     access_data = None
     access_data_version = 0
+    client_api_pushed = False
     client_info = None
 
 class ClientInfo(object):
