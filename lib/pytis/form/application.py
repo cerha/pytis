@@ -1385,10 +1385,10 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
     def client_mode(self):
         """Return the client operation mode as one of 'remote', 'local' or None.
 
-        If the remote connection exists, 'remote' is returned.  If it existed at
-        the application startup, but doesn't exist now, the user is asked whether
-        to continue locally or cancel the operation.  If the user decides to
-        cancel, None is returned.  In all other cases 'local' is returned.
+        If the remote connection exists, 'remote' is returned.  If not and the
+        configuration option 'allow_local_file_dialogs' is set to true, 'local'
+        is returned.  If it is False, None is returned (the operation should be
+        aborted).
 
         """
         if pytis.remote.client_connection_ok():
