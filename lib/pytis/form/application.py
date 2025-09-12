@@ -1391,23 +1391,18 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         cancel, None is returned.  In all other cases 'local' is returned.
 
         """
-        if not pytis.remote.client_available():
-            return 'local'
-        elif pytis.remote.client_connection_ok():
+        if pytis.remote.client_connection_ok():
             return 'remote'
+        elif pytis.config.allow_local_file_dialogs:
+            return 'local'
         else:
-            cancel = _("Cancel")
-            answer = app.question(_("This operation requires remote client connection "
-                                    "which is currently broken.\nYou may complete the "
-                                    "operation with restriction to server's local "
-                                    "resources or cancel."),
-                                  #icon=dialog.Message.ICON_ERROR,
-                                  answers=(_("Continue"), cancel),
-                                  default=cancel)
-            if answer is None or answer == cancel:
-                return None
-            else:
-                return 'local'
+            app.qerror(_("This operation requires remote client connection "
+                         "which is currently not available.\n"
+                         "You may try to repeat the operation once you see "
+                         "a green dot in the connection status indicator (at "
+                         "the bottom bar).\n"
+                         "The operation will be canceled now."))
+            return None
 
     def _refresh_list_position(self):
         form = pytis.form.app.current_form(allow_modal=False)

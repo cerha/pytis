@@ -884,6 +884,23 @@ class Configuration(object):
         _DESCR = _("For internal use only.")
         _DEFAULT = None
 
+    class _Option_allow_local_file_dialogs(BooleanOption):
+        """If true, allow the user to open file dialogs on server-side filesystem.
+
+        When False, file operations will fail when it is not possible to open
+        file dialogs on the remote client's file system.  When True, file
+        operations will open dialogs on the server-side file system if the
+        remote connection is not available.
+
+        The default value is False when running within an X2Go session and True
+        otherwise.  It is supposed that server-side (local) dialogs are safe
+        when running the application locally or over X11.  On the other hand we
+        don't want to expose the server file system when runing remotely over
+        Pytis2Go/X2Go.
+
+        """
+        _DEFAULT = not os.getenv('X2GO_SESSION')
+
     # Ostatní konfigurační volby
 
     class _Option_application_name(StringOption):
