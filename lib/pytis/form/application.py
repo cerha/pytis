@@ -1396,12 +1396,12 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         elif pytis.config.allow_local_file_dialogs:
             return 'local'
         else:
-            app.qerror(_("This operation requires remote client connection "
-                         "which is currently not available.\n"
-                         "You may try to repeat the operation once you see "
-                         "a green dot in the connection status indicator (at "
-                         "the bottom bar).\n"
-                         "The operation will be canceled now."))
+            app.error(_("This operation requires remote client connection "
+                        "which is currently not available.\n"
+                        "You may try to repeat the operation once you see "
+                        "a green dot in the connection status indicator (at "
+                        "the bottom bar).\n"
+                        "The operation will be canceled now."))
             return None
 
     def _refresh_list_position(self):
