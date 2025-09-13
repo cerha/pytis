@@ -1104,8 +1104,10 @@ def data_object(spec, kwargs=None):
 
     Arguments:
 
-      spec -- specification name as a string or a 'pytis.data.DataFactory'
-        instance.
+      spec -- specification name as a string, 'pytis.data.DataFactory'
+        instance, or gensqlalchemy database object specification
+        (pytis.data.gensqlalchemy.SQLTable or pytis.data.gensqlalchemy.SQLView
+        instance).
       kwargs -- a dictionary of keyword arguments passed to the data object
         constructor.  The argument 'connection_data' is added automatically
         if the data class is derived from 'pytis.data.DBData'.
@@ -1115,11 +1117,19 @@ def data_object(spec, kwargs=None):
     """
     import pytis
     import pytis.data
+    import pytis.data.gensqlalchemy
     if isinstance(spec, basestring):
         factory = pytis.config.resolver.get(spec, 'data_spec')
+    elif isinstance(spec, type) and issubclass(spec,(pytis.data.gensqlalchemy.SQLTable,
+                                                     pytis.data.gensqlalchemy.SQLView)):
+        columns = [pytis.data.DBColumnBinding(c.id(), spec.name, c.id(), type_=c.type(),
+                                              crypto_name=c.crypto_name())
+                   for c in spec.specification_fields()]
+        factory = pytis.data.DataFactory(pytis.data.DBDataDefault, columns,
+                                         db_spec=spec, key=columns[0])
     else:
         factory = spec
-    assert isinstance(factory, pytis.data.DataFactory)
+    assert isinstance(factory, pytis.data.DataFactory), factory
 
     if kwargs is None:
         kwargs = {}

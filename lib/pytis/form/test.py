@@ -321,7 +321,8 @@ def initdb(execute):
 
 @pytest.fixture(scope='class')
 def initconfig(dbconnection):
-    pytis.config.resolver = pytis.util.Resolver(search=('pytis.form.test', 'pytis.form', 'pytis.defs'))
+    pytis.config.resolver = pytis.util.Resolver(search=('pytis.form.test', 'pytis.form',
+                                                        'pytis.defs', 'pytis.demo'))
     pytis.config.dbconnection = dbconnection
 
 
@@ -403,6 +404,36 @@ class TestApp(DBTest):
         assert pd.dbfunction(square, 5) == 25
         assert pd.dbfunction('square', 4) == 16
         assert pd.dbfunction('reverse', 'Hello World') == 'dlroW olleH'
+
+    def test_data_object_by_specification_name(self):
+        for spec_name, key in (
+                ('UserParams', 'id'),
+                ('misc.Products', 'product_id'),
+                ('misc.Tree', 'id'),
+        ):
+            data = pytis.util.data_object(spec_name)
+            assert isinstance(data, pd.DBData)
+            assert [c.id() for c in data.key()] == [key]
+
+    def test_data_object_by_data_specification(self):
+        import pytis.dbdefs.demo
+        for data_spec, key in (
+                (user_params, 'id'),
+                (pytis.dbdefs.demo.Products, 'product_id'),  # SQLTable
+                (pytis.dbdefs.demo.Tree, 'id'),  # SQLView
+        ):
+            data = pytis.util.data_object(data_spec)
+            assert isinstance(data, pd.DBData)
+            assert [c.id() for c in data.key()] == [key]
+
+    def test_data_object_columns(self):
+        import pytis.dbdefs.demo
+        data1 = pytis.util.data_object('misc.Tree')
+        data2 = pytis.util.data_object(pytis.dbdefs.demo.Tree)
+        for c1, c2 in zip(data1.columns(), data2.columns()):
+            # The column type in data1 should be a subtype of the matching column type
+            # in table/view specification.
+            assert isinstance(c1.type(), type(c2.type()))
 
     def test_write_and_read_file(self):
         filename = '/tmp/test.txt'
