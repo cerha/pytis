@@ -325,7 +325,6 @@ def _connect():
         RPCInfo.access_data_version,
         client_version,
     ))
-    client_info = {}
     try:
         connection.root.extend
     except AttributeError:
@@ -352,10 +351,11 @@ def _connect():
             else:
                 log(OPERATIONAL, "Client API pushed successfully.")
                 RPCInfo.client_api_pushed = True
-                try:
-                    client_info = json.loads(_request('client_info'))
-                except Exception as e:
-                    log(OPERATIONAL, "Failed reading client info:", e)
+    try:
+        client_info = json.loads(_request('client_info'))
+    except Exception as e:
+        log(OPERATIONAL, "Failed reading client info:", e)
+        client_info = {}
     RPCInfo.client_info = ClientInfo(
         client_version=client_version,
         display=x2go_display(),
