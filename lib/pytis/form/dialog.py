@@ -862,20 +862,12 @@ class BugReport(GenericDialog):
                    _("Your message (optional)"))
         sizer.Add(nb, 1, wx.EXPAND | wx.ALL, 6)
 
-        if not pytis.config.sender_address:
-            import subprocess
-            status, domain = subprocess.getstatusoutput('hostname -f')
-            if not status and domain != 'localhost':
-                addr = '%s@%s' % (pytis.config.dbconnection.user(), domain)
-            else:
-                addr = ''
-            email_ctrl = wx.TextCtrl(dialog, value=addr or '', name='from')  # size=(740, 30),
-            email_ctrl.SetToolTip(_('Set your address in form "%s" to '
-                                    'avoid being asked next time.',
-                                    _("User interface settings")))
-            sizer.Add(wx.StaticText(dialog, -1, _("Your email address:")), 0,
-                      wx.TOP | wx.LEFT | wx.RIGHT, 6)
-            sizer.Add(email_ctrl, 0, wx.EXPAND | wx.ALL, 6)
+        email_ctrl = wx.TextCtrl(dialog, value=pytis.config.sender_address or '', name='from')
+        email_ctrl.SetToolTip(_('Set your address in form "%s" to avoid being asked next time.',
+                                _("User interface settings")))
+        sizer.Add(wx.StaticText(dialog, -1, _("Your email address:")), 0,
+                  wx.TOP | wx.LEFT | wx.RIGHT, 6)
+        sizer.Add(email_ctrl, 0, wx.EXPAND | wx.ALL, 6)
 
         button = wx_button(dialog, label=_("Send error report"), icon='envelope',
                            callback=self._on_send_bug_report)

@@ -30,6 +30,7 @@ from future.utils import with_metaclass
 import getopt
 import os
 import stat
+import subprocess
 import sys
 import time
 
@@ -991,8 +992,13 @@ class Configuration(object):
         _DEFAULT = 100
 
     class _Option_sender_address(StringOption):
-        u"""E-mailová adresa odesílatele použitá např. jako odchozí adresa bug-reportů apod."""
-        _DEFAULT = None
+        """Sender’s e-mail address, used e.g. as the outgoing address for bug reports, etc."""
+        def default(self):
+            status, domain = subprocess.getstatusoutput("hostname -f")
+            if not status and domain != "localhost":
+                return "%s@%s" % (self._configuration.dbconnection.user(), domain)
+            else:
+                return None
 
     class _Option_form_statistics(BooleanOption):
         u"""Flag povolující ukládání statistických informací o otevírání formulářů.
