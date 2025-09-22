@@ -1416,9 +1416,9 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
             return '.'.join(map(str, version))
         if self._remote_connection_info is not None:
             return self._remote_connection_info
-        if not pytis.remote.client_available():
-            return ()
         client_info = pytis.remote.client_info()
+        if client_info is None:
+            return ()
         fields = (
             (_("Client version"), client_info.client_version, None),
             (_("Client OS"), '{} {}'.format(client_info.os_name, client_info.os_version)

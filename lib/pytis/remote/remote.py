@@ -75,10 +75,7 @@ class ClientInfo(object):
     rpyc_version = None
 
     def __init__(self, **kwargs):
-        self.update(kwargs)
-
-    def update(self, dictionary):
-        self.__dict__.update(dictionary)
+        self.__dict__ = kwargs
 
 
 class Connector(object):
@@ -322,16 +319,13 @@ def _connect():
     RPCInfo.connection = connection = connector.connect('localhost', access_data.get('port'))
     RPCInfo.connection_order += 1
     RPCInfo.client_api_pushed = False
-    RPCInfo.client_info = ClientInfo(
-        client_version=connection.root.x2goclient_version(),
-        display=x2go_display(),
-    )
+    client_version = connection.root.x2goclient_version()
     log(OPERATIONAL, "Client connection {} ({}) established with version: {}".format(
         RPCInfo.connection_order,
         RPCInfo.access_data_version,
-        RPCInfo.client_info.client_version,
-
+        client_version,
     ))
+    client_info = {}
     try:
         connection.root.extend
     except AttributeError:
@@ -343,7 +337,7 @@ def _connect():
         if _announce_obsolete_client_version:
             _announce_obsolete_client_version = False
             log(OPERATIONAL, "Obsolete client version {}: {} from {}"
-                .format(RPCInfo.client_info.client_version, getpass.getuser(), client_ip()))
+                .format(client_version, getpass.getuser(), client_ip()))
             app.warning(_("You are using an obsolete version of Pytis2Go.\n"
                           "Please, contact IT support to install a newer version.\n"
                           "Your current version will stop working soon."))
@@ -361,9 +355,12 @@ def _connect():
                 try:
                     client_info = json.loads(_request('client_info'))
                 except Exception as e:
-                    log(OPERATIONAL, "Reading client info failed:", e)
-                else:
-                    RPCInfo.client_info.update(client_info)
+                    log(OPERATIONAL, "Failed reading client info:", e)
+    RPCInfo.client_info = ClientInfo(
+        client_version=client_version,
+        display=x2go_display(),
+        **client_info
+    )
     return connection
 
 
