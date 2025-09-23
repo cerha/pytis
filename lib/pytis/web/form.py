@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2024 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2025 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2006-2017 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -1837,25 +1837,12 @@ class BrowseForm(LayoutForm):
         self._row.set_row(row)
 
     def _table_rows(self):
-        data = self._row.data()
-        self._row_count = data.select(columns=self._select_columns,
-                                      condition=self._conditions(),
-                                      arguments=self._arguments,
-                                      sort=self._data_sorting)
-
-        def generator():
-            try:
-                while True:
-                    row = data.fetchone()
-                    if row is None:
-                        break
-                    yield row
-            finally:
-                try:
-                    data.close()
-                except Exception:
-                    pass
-        return generator()
+        rows = self._row.data().rows(condition=self._conditions(),
+                                     arguments=self._arguments,
+                                     columns=self._select_columns,
+                                     sort=self._data_sorting)
+        self._row_count = len(rows)
+        return rows
 
     def _export_table(self, context):
         data = self._row.data()

@@ -263,11 +263,7 @@ class HelpUpdater(object):
     def update(self):
         """(Re)generate help for all menu items."""
         data = pd.dbtable('ev_pytis_help', ('help_id', 'fullname', 'spec_name', 'position'))
-        data.select(sort=(('position', pd.ASCENDENT),))
-        while True:
-            row = data.fetchone()
-            if row is None:
-                break
+        for row in data.rows(sort=(('position', pd.ASCENDENT),)):
             if row['fullname'].value():
                 self._update_menu_item_help(row['fullname'].value(), row['spec_name'].value())
 
@@ -599,17 +595,12 @@ class DmpHelpGenerator(HelpGenerator):
     def _load_descriptions(self, spec_name):
         data = pytis.data.dbtable('e_pytis_help_spec_items',
                                   ('spec_name', 'kind', 'identifier', 'content'))
-        data.select(condition=pytis.data.EQ('spec_name', pytis.data.sval(spec_name)))
         descriptions = dict([(x, {}) for x in
                              ('help', 'description', 'field', 'action', 'binding', 'profile')])
-        while True:
-            row = data.fetchone()
-            if row is None:
-                break
+        for row in data.rows(condition=pytis.data.EQ('spec_name', pytis.data.sval(spec_name))):
             content = row['content'].value()
             if content:
                 descriptions[row['kind'].value()][row['identifier'].value()] = content
-        data.close()
         data = pytis.data.dbtable('e_pytis_help_spec', ('spec_name', 'description', 'help'))
         row = data.row((pytis.data.Value(data.find_column('spec_name').type(), spec_name),))
         if row:
@@ -642,15 +633,10 @@ class DmpHelpGenerator(HelpGenerator):
                                     resource_provider=self._resource_provider,
                                     children=[node(r, children) for r in
                                               children.get(row['position'].value(), ())])
-        self._data.select(sort=(('position', pytis.data.ASCENDENT),))
         children = {}
-        while True:
-            row = self._data.fetchone()
-            if not row:
-                break
+        for row in self._data.rows(sort=(('position', pytis.data.ASCENDENT),)):
             parent = '.'.join(row['position'].value().split('.')[:-1]) or None
             children.setdefault(parent, []).append(row)
-        self._data.close()
         return [node(r, children) for r in children[None]]
 
     def _application_help_page_content(self, node, uri):

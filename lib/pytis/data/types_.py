@@ -3044,20 +3044,12 @@ class DataEnumerator(Enumerator, TransactionalEnumerator):
         if validity_condition is not None:
             the_condition = AND(the_condition, validity_condition)
         with Locked(self._data_lock):
-            data = self._data
-            try:
-                count = data.select(the_condition, transaction=transaction, arguments=arguments,
-                                    columns=self._non_big_columns)
-                if count > 1:
+            with self._data.rows(the_condition, transaction=transaction, arguments=arguments,
+                                 columns=self._non_big_columns) as rows:
+                if len(rows) > 1:
                     raise ProgramError('Insufficient runtime filter for DataEnumerator',
                                        str(the_condition))
-                row = data.fetchone()
-            finally:
-                try:
-                    data.close()
-                except Exception:
-                    pass
-            return row
+                return next(rows, None)
 
     # Enumerator interface
 
@@ -3074,24 +3066,12 @@ class DataEnumerator(Enumerator, TransactionalEnumerator):
             arguments = {}
         the_condition = self._condition(condition=condition)
         with Locked(self._data_lock):
-            result = []
-            try:
-                count = self._data.select(condition=the_condition, transaction=transaction,
-                                          sort=sort, arguments=arguments,
-                                          columns=(self._value_column,))
-                if max is not None and count > max:
+            with self._data.rows(condition=the_condition, transaction=transaction, sort=sort,
+                                 arguments=arguments, columns=(self._value_column,)) as rows:
+                if max is not None and len(rows) > max:
                     return None
-                while True:
-                    row = self._data.fetchone()
-                    if row is None:
-                        break
-                    result.append(row[self._value_column].value())
-            finally:
-                try:
-                    self._data.close()
-                except Exception:
-                    pass
-            return tuple(result)
+                else:
+                    return tuple(row[self._value_column].value() for row in rows)
 
     # Extended interface.
 
@@ -3150,12 +3130,14 @@ class DataEnumerator(Enumerator, TransactionalEnumerator):
         """
         if arguments is None:
             arguments = {}
-        the_condition = self._condition(condition=condition)
         with Locked(self._data_lock):
-            return self._data.select_map(identity, transaction=transaction,
-                                         condition=the_condition, arguments=arguments,
-                                         columns=self._non_big_columns,
-                                         sort=sort)
+            return list(self._data.rows(
+                self._condition(condition=condition),
+                transaction=transaction,
+                arguments=arguments,
+                columns=self._non_big_columns,
+                sort=sort,
+            ))
 
     def type(self, column):
         """Vrať datový typ daného sloupce v datovém objektu enumerátoru."""

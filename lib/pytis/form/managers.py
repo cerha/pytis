@@ -94,15 +94,7 @@ class UserSetttingsManager(object):
         return row
 
     def _rows(self, transaction=None, **kwargs):
-        rows = []
-        self._data.select(condition=self._condition(**kwargs), transaction=transaction)
-        while True:
-            row = self._data.fetchone()
-            if row is None:
-                break
-            rows.append(row)
-        self._data.close()
-        return rows
+        return self._data.rows(condition=self._condition(**kwargs), transaction=transaction)
 
     def _save(self, values, transaction=None, **key):
         row = self._row(transaction=transaction, **key)

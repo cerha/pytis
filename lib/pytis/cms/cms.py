@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2024 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2025 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2009-2017 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -179,15 +179,10 @@ class Modules(Specification):
         module = wiking.module(record['modname'].value())
         if module:
             data = pytis.util.data_object(self._name('Actions'))
-            data.select(condition=pd.EQ('mod_id', record['mod_id']))
-            existing_actions = {}
-            while True:
-                row = data.fetchone()
-                if row is None:
-                    break
-                else:
-                    existing_actions[row['name'].value()] = row['action_id']
-            data.close()
+            existing_actions = {
+                row['name'].value(): row['action_id']
+                for row in data.rows(condition=pd.EQ('mod_id', record['mod_id']))
+            }
             actions = [attr[7:] for attr in dir(module)
                        if attr.startswith('action_') and callable(getattr(module, attr))]
             default_actions = [a[0] for a in self._DEFAULT_ACTIONS]

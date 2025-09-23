@@ -1746,7 +1746,6 @@ class DBDataDefault(_DBTest):
             assert not rows._closed
         assert rows._closed
 
-
     def test_select_fetch_direction(self):
         self.data.select()
         F, B = pd.FORWARD, pd.BACKWARD

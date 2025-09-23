@@ -1923,17 +1923,13 @@ class RecordForm(LookupForm):
             success, result = db_operation(dbop)
         except pytis.data.Data.UnsupportedOperation:    # MemData
             key_value = row[key].value()
-            data.select(arguments=self._current_arguments())
-            success = False
-            result = 1
-            while True:
-                r = data.fetchone()
-                if r is None:
-                    return
-                if r[key].value() == key_value:
-                    success = True
-                    break
-                result += 1
+            with data.rows(arguments=self._current_arguments()) as rows:
+                for i, r in enumerate(rows):
+                    if r[key].value() == key_value:
+                        success, result = True, i + 1
+                        break
+                else:
+                    success, result = False, 0
         if not success or result == 0:
             return None
         else:
