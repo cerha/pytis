@@ -1450,8 +1450,7 @@ class PostgreSQLStandardBindingHandler(_DBTest):
 
 class DBDataDefault(_DBTest):
     ROW1 = (2, datetime.date(2001, 1, 2), 1000.0, 'U.S.A.', 'specialni')
-    ROW2 = (3, datetime.date(2001, 1, 2), 2000.0, 'Czech Republic',
-            'zvlastni')
+    ROW2 = (3, datetime.date(2001, 1, 2), 2000.0, 'Czech Republic', 'zvlastni')
     ROW3 = ('5', '2001-07-06', '9.9', 'U.S.A.', 'nove')
     NEWROW = ('5', '2001-07-06', '9.90', 'U.S.A.', 'specialni')
     NEWROW2 = ('6', '2001-07-08', '9.80', 'U.S.A.', 'divne')
@@ -1721,12 +1720,15 @@ class DBDataDefault(_DBTest):
         self.data.close()
 
     def test_select_map(self):
-        result = self.data.select_map(lambda row: (row, 'foo'))
-        for r, x in zip((self.ROW1, self.ROW2), result):
-            self.assertEqual(x[1], 'foo')
-            xx = x[0]
-            for i in range(len(r)):
-                self.assertEqual(r[i], xx[i].value(), ('invalid value', r[i], xx[i].value()))
+        result = self.data.select_map(lambda row: tuple(v.value() for v in row.values()))
+        for r1, r2 in zip((self.ROW1, self.ROW2), result):
+            assert r1 == r2
+
+    def test_rows(self):
+        rows = self.data.rows()
+        assert len(rows) == 2
+        for r1, r2 in zip((self.ROW1, self.ROW2), rows):
+            assert r1 == tuple(v.value() for v in r2.values())
 
     def test_select_fetch_direction(self):
         self.data.select()

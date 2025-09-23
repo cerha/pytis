@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2024 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2025 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2017 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -2670,7 +2670,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                 key_data, template=(self._pg_make_row_template[0],))
             keys = [key_row[0] for key_row in key_rows]
             self._pg_query(_Query("release _insert"), transaction=transaction)
-        return self.rows(keys, transaction=transaction)
+        return self._key_rows(keys, transaction=transaction)
 
     def _pg_update(self, condition, row, transaction=None):
         """Updatuj řádky identifikované 'condition'.
@@ -2891,7 +2891,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
             except KeyError:
                 return False
             keys.append(key)
-        return self.rows(keys, transaction=transaction)
+        return self._key_rows(keys, transaction=transaction)
 
     def _pg_already_present(self, row, transaction=None):
         rows = self._pg_already_present_any((row,), transaction)
@@ -2955,7 +2955,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
 
     # Veřejné metody a jimi přímo volané abstraktní metody
 
-    def rows(self, keys, columns=None, transaction=None, arguments={}):
+    def _key_rows(self, keys, columns=None, transaction=None, arguments={}):
         if self._arguments is not None and arguments is self.UNKNOWN_ARGUMENTS:
             return ()
         if __debug__:
@@ -2985,7 +2985,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         # kinds of keys.
         if is_sequence(key):
             key = key[0]
-        rows = self.rows((key,), columns, transaction, arguments)
+        rows = self._key_rows((key,), columns, transaction, arguments)
         if len(rows)==0:
             return None
         else:

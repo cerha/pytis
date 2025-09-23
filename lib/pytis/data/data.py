@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2024 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2025 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2017 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -291,6 +291,33 @@ class Data(object_2_5):
     class UnsupportedOperation(Exception):
         """Signalizuje, že byla žádána nepodporovaná operace."""
 
+    class Selection:
+        """Iterator over 'select()' rows."""
+        def __init__(self, data, count):
+            assert isinstance(count, int)
+            self._data = data
+            self._count = count
+
+        def __iter__(self):
+            return self
+
+        def __next__(self):
+            row = self._data.fetchone()
+            if row:
+                return row
+            else:
+                try:
+                    self._data.close()
+                except Exception:
+                    pass
+                raise StopIteration()
+
+        next = __next__  # TODO NOPY2: remove
+
+        def __len__(self):
+            return self._count
+
+
     def __init__(self, columns, key, ordering=None, condition=None, full_init=True, **kwargs):
         """
         Arguments:
@@ -455,21 +482,28 @@ class Data(object_2_5):
             operation environment, or `None` (to use the default environment).
           kwargs -- additional arguments passed to `select()`.
 
+        It is usually more readable to use list comprehension with `rows()`
+        rather than this method.
+
         """
-        result = []
-        try:
-            self.select(transaction=transaction, **kwargs)
-            while True:
-                row = self.fetchone()
-                if row is None:
-                    break
-                result.append(function(row))
-        finally:
-            try:
-                self.close()
-            except Exception:
-                pass
-        return result
+        return [function(row) for row in self.rows(transaction=transaction, **kwargs)]
+
+    def rows(self, condition=None, async_count=False, **kwargs):
+        """Return an iterator over all rows of the selection with given arguments.
+
+        Calls the `select()` method with the given `condition` and `kwargs`
+        arguments and returns an iterator over all returned rows.
+
+        Arguments:
+          condition -- condition limiting the set of resulting rows as an
+            'Operator' instance or 'None' (as in 'select()').  May be passed as
+            positional.
+          kwargs -- other arguments passed to `select()`.
+
+        """
+        if async_count:
+            raise ProgramError("Can't use `async_count` with `rows()`.")
+        return self.Selection(self, self.select(condition=condition, **kwargs))
 
     def select_aggregate(self, operation, condition=None, transaction=None):
         """Return the result of an aggregate function.
