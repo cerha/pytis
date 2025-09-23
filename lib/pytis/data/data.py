@@ -297,22 +297,35 @@ class Data(object_2_5):
             assert isinstance(count, int)
             self._data = data
             self._count = count
+            self._closed = False
+
+        def _close(self):
+            if not self._closed:
+                try:
+                    self._data.close()
+                except Exception as e:
+                    log(OPERATIONAL, "Selection close() failed: {}".format((e)))
+                finally:
+                    self._closed = True
 
         def __iter__(self):
             return self
 
         def __next__(self):
             row = self._data.fetchone()
-            if row:
+            if row is not None:
                 return row
             else:
-                try:
-                    self._data.close()
-                except Exception:
-                    pass
+                self._close()
                 raise StopIteration()
 
         next = __next__  # TODO NOPY2: remove
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, type, value, traceback):
+            self._close()
 
         def __len__(self):
             return self._count
@@ -499,6 +512,11 @@ class Data(object_2_5):
             'Operator' instance or 'None' (as in 'select()').  May be passed as
             positional.
           kwargs -- other arguments passed to `select()`.
+
+        The caller should either make sure to exhaust the returned iterator or
+        enclose the call in a `with` statement in order to ensure the select is
+        closed properly.  The third option, of course, is to call data object's
+        `close()` explicitly as with `select()`.
 
         """
         if async_count:

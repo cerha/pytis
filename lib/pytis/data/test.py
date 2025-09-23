@@ -1729,6 +1729,23 @@ class DBDataDefault(_DBTest):
         assert len(rows) == 2
         for r1, r2 in zip((self.ROW1, self.ROW2), rows):
             assert r1 == tuple(v.value() for v in r2.values())
+        # The iterator is not exhausted because zip only takes two items:
+        assert not rows._closed
+        row = next(rows, None)
+        assert row is None
+        assert rows._closed
+        # Make sure using the exhausted iterator doesn't fail.
+        row = next(rows, None)
+        assert row is None
+        assert rows._closed
+        # Ensure closing using as context manager:
+        with self.data.rows() as rows:
+            assert not rows._closed
+            row = next(rows, None)
+            assert row is not None
+            assert not rows._closed
+        assert rows._closed
+
 
     def test_select_fetch_direction(self):
         self.data.select()
