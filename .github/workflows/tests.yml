@@ -65,7 +65,8 @@ jobs:
           else
               git clone https://github.com/cerha/wiking
           fi
-          pip install --upgrade pip
+
+          pip install --upgrade 'pip<21' 'setuptools<45' 'wheel<0.34'
           pip install wxpython --only-binary=:all: --verbose \
               -f https://extras.wxpython.org/wxPython4/extras/linux/gtk3/debian-10/
           pip install -r requirements.txt -r requirements-devel.txt
