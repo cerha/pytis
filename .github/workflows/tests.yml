@@ -73,8 +73,13 @@ jobs:
 
       - name: Setup database
         run: |
-          psql test -c "alter database test set default_text_search_config to 'simple'"
-          psql test -c "create role demo;"
+          until psql -h "$PGHOST" -U "$PGUSER" -d "$PYTIS_DBNAME" -c 'select 1' >/dev/null 2>&1; do
+            echo "Waiting for postgres..."; sleep 1
+          done
+          psql -h "$PGHOST" -U "$PGUSER" -d "$PYTIS_DBNAME" -v ON_ERROR_STOP=1 \
+            -c "alter database $PYTIS_DBNAME set default_text_search_config to 'simple'"
+          psql -h "$PGHOST" -U "$PGUSER" -d "$PYTIS_DBNAME" -v ON_ERROR_STOP=1 \
+            -c "create role demo;"
 
       - name: Run tests
         run: make test
@@ -143,7 +148,11 @@ jobs:
 
       - name: Setup database
         run: |
-          psql test -c "alter database test set default_text_search_config to 'simple'"
+          until psql -h "$PGHOST" -U "$PGUSER" -d "$PYTIS_DBNAME" -c 'select 1' >/dev/null 2>&1; do
+            echo "Waiting for postgres..."; sleep 1
+          done
+          psql -h "$PGHOST" -U "$PGUSER" -d "$PYTIS_DBNAME" -v ON_ERROR_STOP=1 \
+            -c "alter database $PYTIS_DBNAME set default_text_search_config to 'simple'"
 
       - name: Run tests
         run: make test
