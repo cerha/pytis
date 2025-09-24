@@ -87,9 +87,12 @@ definované kontejnery pomocí:
 
 act --container-architecture linux/amd64
 
-Případně je možno přidat argument --reuse, aby se využil a restartoval
-stávající kontejner, čímž se vynechají některé kroky jeho inicializace (asi
-hlavně instalace balíků).
+Užitečné argumenty:
+
+  --reuse ... restartuj stávající kontejner, pokud existuje (vynechají některé
+              kroky jeho inicializace, např instalace balíků).
+  -j job ... spusť jen vybraný job (v našem případě 'test' nebo 'test-py27')
+  -W soubor ... spusť daný workflow (výchozí je .github/workflows/tests.yml)
 
 Do běžícího kontejneru se potom lze přihlásit.  Nejprve si vypíšu seznam
 běžících kontejnerů pomocí 'docker ps' a potom zavolám
