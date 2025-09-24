@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2024 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2025 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2017 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -291,6 +291,46 @@ class Data(object_2_5):
     class UnsupportedOperation(Exception):
         """Signalizuje, že byla žádána nepodporovaná operace."""
 
+    class Selection:
+        """Iterator over 'select()' rows."""
+        def __init__(self, data, count):
+            assert isinstance(count, int)
+            self._data = data
+            self._count = count
+            self._closed = False
+
+        def _close(self):
+            if not self._closed:
+                try:
+                    self._data.close()
+                except Exception as e:
+                    log(OPERATIONAL, "Selection close() failed: {}".format((e)))
+                finally:
+                    self._closed = True
+
+        def __iter__(self):
+            return self
+
+        def __next__(self):
+            row = self._data.fetchone()
+            if row is not None:
+                return row
+            else:
+                self._close()
+                raise StopIteration()
+
+        next = __next__  # TODO NOPY2: remove
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, type, value, traceback):
+            self._close()
+
+        def __len__(self):
+            return self._count
+
+
     def __init__(self, columns, key, ordering=None, condition=None, full_init=True, **kwargs):
         """
         Arguments:
@@ -424,17 +464,16 @@ class Data(object_2_5):
           limit -- limit maximum number of selected rows, integer or 'None' (no
             limit)
 
-        Je-li 'condition' různé od 'None', specifikuje podmínku pro výběr
-        řádků.  Podtřídy nejsou povinny podmínky implementovat (mohou je
-        neimplementovat vůbec nebo mohou implementovat pouze některé podmínky),
-        v takovém případě to musí být uvedeno v dokumentaci a při zadání
-        nepodporované podmínky musí metoda vyvolat výjimku
-        'UnsupportedOperation'.
+        If 'condition' is not None, it specifies a filter for row selection.
+        Subclasses are not required to support conditions; they may omit them
+        entirely or support only a subset.  In such cases, this must be
+        documented, and the method must raise UnsupportedOperation if an
+        unsupported condition is provided.
 
-        Třídění výběru se provádí podle sloupců uvedených v argumentu 'sort',
-        s prioritou dle jejich pořadí.  Třídění je taktéž nepovinná operace a
-        podtřídy nejsou povinny je implementovat; pokud je neimplementují, musí
-        to být uvedeno v jejich dokumentaci.
+        Sorting is controlled by the columns listed in the sort argument, in
+        the order of their priority.  Sorting is optional, and subclasses are
+        not required to implement it; if not supported, this must be stated in
+        the documentation.
 
         The method always returns 0 in this class.
 
@@ -443,63 +482,73 @@ class Data(object_2_5):
         return 0
 
     def select_map(self, function, transaction=None, **kwargs):
-        """Aplikuj 'function' na všechny řádky výběru a vrať výsledky.
+        """Apply `function` to all rows of the selection and return the results.
 
-        Zavolej metodu 'select()' s argumenty 'kwargs' a na všechny vrácené
-        řádky zavolej funkci 'function'.  Výsledky všech volání 'function' vrať
-        jako seznam s počtem a pořadím prvků odpovídajících vráceným datovým
-        řádkům.
+        Calls the `select()` method with the given `kwargs` arguments, then
+        applies `function` to each returned row. The results of all `function`
+        calls are returned as a list, with the same number and order of
+        elements as the returned data rows.
 
-        Argumenty:
+        Arguments:
+          function -- a callable taking a single argument, the `Row` instance.
+          transaction -- a transaction object encapsulating the database
+            operation environment, or `None` (to use the default environment).
+          kwargs -- additional arguments passed to `select()`.
 
-          function -- function of one argument -- the 'Row' instance
-          transaction -- transaction object encapsulating the database
-            operation environment or 'None' (meaning default environment)
-          kwargs -- remaining arguments passed to 'select()'
+        It is usually more readable to use list comprehension with `rows()`
+        rather than this method.
 
         """
-        result = []
-        try:
-            self.select(transaction=transaction, **kwargs)
-            while True:
-                row = self.fetchone()
-                if row is None:
-                    break
-                result.append(function(row))
-        finally:
-            try:
-                self.close()
-            except Exception:
-                pass
-        return result
+        return [function(row) for row in self.rows(transaction=transaction, **kwargs)]
+
+    def rows(self, condition=None, async_count=False, **kwargs):
+        """Return an iterator over all rows of the selection with given arguments.
+
+        Calls the `select()` method with the given `condition` and `kwargs`
+        arguments and returns an iterator over all returned rows.
+
+        Arguments:
+          condition -- condition limiting the set of resulting rows as an
+            'Operator' instance or 'None' (as in 'select()').  May be passed as
+            positional.
+          kwargs -- other arguments passed to `select()`.
+
+        The caller should either make sure to exhaust the returned iterator or
+        enclose the call in a `with` statement in order to ensure the select is
+        closed properly.  The third option, of course, is to call data object's
+        `close()` explicitly as with `select()`.
+
+        """
+        if async_count:
+            raise ProgramError("Can't use `async_count` with `rows()`.")
+        return self.Selection(self, self.select(condition=condition, **kwargs))
 
     def select_aggregate(self, operation, condition=None, transaction=None):
-        """Vrať výslednou hodnotu agregační funkce.
+        """Return the result of an aggregate function.
 
-        Metoda provádí select, jehož hodnotou je výsledek agregační funkce
-        kompletně vybraných dat.  Je-li vyvolána během neuzavřeného select,
-        tento select nepřerušuje a je-li podmínka její a aktuálního select
-        shodná, vrací výsledek odpovídající obsahu onoho selectu (například
-        zpracováním v jediné transakci).
+        Performs a `select` whose value is the result of the aggregate function
+        applied to the complete selection of data.  If invoked during an open
+        `select`, the selection is not interrupted; if its `condition` matches
+        the current selection, the result reflects the content of that
+        selection (e.g., by processing within a single transaction).
 
-        Argumenty:
-
-          operation -- dvojice (OPERATION, COLUMN), kde OPERATION je jednou
-            z 'AGG_*' konstant třídy a COLUMN je id sloupce, nad kterým má být
-            operace provedena.
-          condition -- shodné se stejnojmenným argumentem metody 'select()'
+        Arguments:
+          operation -- a pair (OPERATION, COLUMN), where OPERATION is one of the
+            class `AGG_*` constants and COLUMN is the ID of the column on which
+            the operation is to be performed.
+          condition -- same as the argument of the same name in `select()`
           transaction -- transaction object encapsulating the database
-            operation environment or 'None' (meaning default environment)
+            operation environment, or `None` (to use the default environment)
 
-        Vrací: Instanci 'Value' odpovídající požadované agregační funkci.
+        Returns:
+          A `Value` instance representing the requested aggregate function.
 
-        Podtřídy nejsou povinny tuto metodu implementovat (mohou ji
-        neimplementovat vůbec nebo mohou implementovat pouze některé podmínky),
-        v takovém případě to musí být uvedeno v dokumentaci a při zadání
-        nepodporované podmínky musí metoda vyvolat výjimku
-        'UnsupportedOperation'.
+        Subclasses are not required to implement this method; they may omit it
+        entirely or implement only some conditions.  In such cases this must be
+        documented, and if an unsupported condition is provided the method must
+        raise `UnsupportedOperation`.
 
-        V této třídě metoda vždy vyvolává výjimku 'UnsupportedOperation'.
+        In this class, the method always raises `UnsupportedOperation`.
 
         """
         raise self.UnsupportedOperation()

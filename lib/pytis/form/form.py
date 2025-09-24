@@ -788,7 +788,7 @@ class InnerForm(Form):
         self._on_menu_button(self._get_print_menu())
 
     def _can_print_menu(self):
-        return bool(self._get_print_menu())
+        return app.has_access(self.name(), perm=pytis.data.Permission.PRINT)
 
 
 class Refreshable(object):
@@ -1923,17 +1923,13 @@ class RecordForm(LookupForm):
             success, result = db_operation(dbop)
         except pytis.data.Data.UnsupportedOperation:    # MemData
             key_value = row[key].value()
-            data.select(arguments=self._current_arguments())
-            success = False
-            result = 1
-            while True:
-                r = data.fetchone()
-                if r is None:
-                    return
-                if r[key].value() == key_value:
-                    success = True
-                    break
-                result += 1
+            with data.rows(arguments=self._current_arguments()) as rows:
+                for i, r in enumerate(rows):
+                    if r[key].value() == key_value:
+                        success, result = True, i + 1
+                        break
+                else:
+                    success, result = False, 0
         if not success or result == 0:
             return None
         else:
@@ -3585,6 +3581,9 @@ class _VirtualEditForm(EditForm):
 
     def _print_menu(self):
         return []
+
+    def _can_print_menu(self):
+        return False
 
     def _exit_check(self):
         if self._inserted_data:

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2024 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2025 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2002-2017 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -234,27 +234,14 @@ class DBAccessRights(AccessRights):
 
     def _build_access_rights(self, object_name, connection_data):
         import pytis.data
-        access_rights = []
         bindings = [pytis.data.DBColumnBinding(name, 'pytis.access_rights', name)
                     for name in ('id', 'object', 'column_', 'group_', 'permission')]
         key = bindings[0]
-        data = pytis.data.DBDataDefault(bindings, key,
-                                        connection_data=connection_data)
-        try:
-            data.select(condition=EQ('object', sval(object_name)))
-            while True:
-                row = data.fetchone()
-                if row is None:
-                    break
-                access_rights.append((row['column_'].value(),
-                                      (row['group_'].value(),
-                                       row['permission'].value())))
-        finally:
-            try:
-                data.close()
-            except Exception:
-                pass
-        return access_rights
+        data = pytis.data.DBDataDefault(bindings, key, connection_data=connection_data)
+        return [
+            (row['column_'].value(), (row['group_'].value(), row['permission'].value()))
+            for row in data.rows(condition=EQ('object', sval(object_name)))
+        ]
 
 
 class RestrictedData(Data):

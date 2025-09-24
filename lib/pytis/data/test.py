@@ -25,6 +25,7 @@ import copy
 import datetime
 import decimal
 import io
+import os
 import sys
 import time
 
@@ -56,6 +57,10 @@ _connection_data = {'database': 'test'}
 pytis.config.log_exclude = [DEBUG, OPERATIONAL, ACTION, EVENT]
 
 
+def plpython_test(test):
+    envvar = 'PYTIS_TEST_SKIP_PLPYTHON'
+    return pytest.mark.skipif(bool(os.getenv(envvar)), reason="{} is set".format(envvar))(test)
+
 #############
 # types_.py #
 #############
@@ -69,23 +74,26 @@ class ValidationError(unittest.TestCase):
         self.assertEqual(ValidationError.e.message(), ValidationError.MESSAGE)
 
 
-class Value(unittest.TestCase):
+class TestValue:
 
     def test_values(self):
         t = pd.Type()
         v1 = pd.Value(t, None)
         v2 = pd.Value(t, 1)
         v3 = pd.Value(t, t)
-        self.assertTrue(v1.type() == t and v2.type() == t and v3.type() == t, 'type lost')
-        self.assertTrue(v1.value() is None and v2.value() == 1 and v3.value() == t, 'value lost')
+        assert v1.type() == t
+        assert v2.type() == t
+        assert v3.type() == t
+        assert v1.value() is None
+        assert v2.value() == 1
+        assert v3.value() == t
 
     def test_equality(self):
         t = pd.Type()
-        v1 = pd.Value(t, 1)
-        v2 = pd.Value(t, 1)
-        v3 = pd.Value(t, 2)
-        assert v1 == v2
-        assert v1 != v3
+        assert pd.Value(t, 1) == pd.Value(t, 1)
+        assert pd.Value(t, 1) != pd.Value(t, 2)
+        assert pd.sval('a') == pd.sval('a')
+        assert pd.sval('a') != pd.sval('b')
 
 
 class _TestType(object):
@@ -203,6 +211,15 @@ class TestInteger(_TestType):
 
 class TestFloat(_TestType):
     _type = pd.Float
+
+    def setUp(self):
+        import locale
+        self._orig_locale = locale.getlocale(locale.LC_ALL)
+        locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
+
+    def tearDown(self):
+        import locale
+        locale.setlocale(locale.LC_ALL, self._orig_locale)
 
     def test_validation(self):
         t = pd.Float()
@@ -751,60 +768,62 @@ class TestRange(_TestType):
         assert t.adjust_value(v2) == t2.adjust_value((1, 5))
 
 
-class DataEnumerator(unittest.TestCase):
+class TestDataEnumerator:
 
-    def setUp(self):
-        C = pd.ColumnSpec
-        S = pd.String()
-        B = pd.Boolean()
-        data = [pd.Row((('x', sval(x)), ('y', sval(y)), ('z', bval(z))))
-                for x, y, z in (('1', 'a', True), ('2', 'b', True), ('3', 'c', False))]
-        d = pd.DataFactory(pd.MemData, (C('x', S), C('y', S), C('z', B)), data=data)
-        e1 = pd.DataEnumerator(d)
-        e2 = pd.DataEnumerator(d, value_column='y')
-        e3 = pd.DataEnumerator(d, validity_column='z')
-        self.cb1 = pd.String(enumerator=e1)
-        self.cb2 = pd.String(enumerator=e2, not_null=True)
-        self.cb3 = pd.String(enumerator=e3)
+    @pytest.fixture
+    def data(self):
+        return pd.DataFactory(
+            pd.MemData,
+            (pd.ColumnSpec('x', pd.String()),
+             pd.ColumnSpec('y', pd.String()),
+             pd.ColumnSpec('z', pd.Boolean()),
+            ),
+            data=[pd.Row((('x', sval(x)), ('y', sval(y)), ('z', bval(z)))) for x, y, z in (
+                ('1', 'a', True),
+                ('2', 'b', True),
+                ('3', 'c', False),
+            )],
+        )
 
-    def _test_validate(self, cb, value, expected=None, invalid=False):
-        v, e = cb.validate(value)
-        if invalid:
-            self.assertIsNotNone(e)
-        else:
-            self.assertIsNone(e)
-            self.assertEqual(v.value(), expected)
+    @pytest.fixture
+    def t1(self, data):
+        return pd.String(enumerator=pd.DataEnumerator(data))
 
-    def _test_export(self, cb, value, expected):
-        result = self.cb1.export(value)
-        self.assertEqual(result, expected, ('Invalid exported value:', result))
+    @pytest.fixture
+    def t2(self, data):
+        return pd.String(enumerator=pd.DataEnumerator(data, value_column='y'), not_null=True)
 
-    def test_validate(self):
-        self._test_validate(self.cb1, '1', '1')
-        self._test_validate(self.cb1, '', None)
-        self._test_validate(self.cb1, '8', None, invalid=True)
-        self._test_validate(self.cb2, 'b', 'b')
-        self._test_validate(self.cb2, '', None, invalid=True)
-        self._test_validate(self.cb2, 'd', None, invalid=True)
-        self._test_validate(self.cb2, None, None, invalid=True)
-        self._test_validate(self.cb3, '1', '1')
-        self._test_validate(self.cb3, '3', None, invalid=True)
-        self._test_validate(self.cb3, None, None)
+    @pytest.fixture
+    def t3(self, data):
+        return pd.String(enumerator=pd.DataEnumerator(data, validity_column='z'))
 
-    def test_export(self):
-        self._test_export(self.cb1, '2', '2')
-        self._test_export(self.cb2, '8', '8')
-        self._test_export(self.cb2, '', '')
-        self._test_export(self.cb2, None, '')
+    def test_validate(self, t1, t2, t3):
+        assert pd.sval('a') == pd.sval('a')
+        assert t1.validate('1') == (pd.Value(t1, '1'), None)
+        assert t1.validate('') == (pd.Value(t1, None), None)
+        assert isinstance(t1.validate('8')[1], pd.ValidationError)
 
-    def test_values(self):
-        v = tuple(self.cb1.enumerator().values())
-        self.assertEqual(v, ('1', '2', '3'))
+        assert t2.validate('b') == (pd.Value(t2, 'b'), None)
+        assert isinstance(t2.validate('')[1], pd.ValidationError)
+        assert isinstance(t2.validate('d')[1], pd.ValidationError)
+        assert isinstance(t2.validate(None)[1], pd.ValidationError)
 
-    def test_get(self):
-        e = self.cb1.enumerator()
-        r = e.row('2')
-        self.assertEqual(r['y'].value(), 'b', ('Unexpected value', r['y'].value()))
+        assert t3.validate('1') == (pd.Value(t3, '1'), None)
+        assert t3.validate(None) == (pd.Value(t3, None), None)
+        assert isinstance(t3.validate('3')[1], pd.ValidationError)
+
+    def test_export(self, t1, t2):
+        assert t1.export('2') == '2'
+        assert t2.export('8') == '8'
+        assert t2.export('') == ''
+        assert t2.export(None) == ''
+
+    def test_values(self, t1):
+        assert tuple(t1.enumerator().values()) == ('1', '2', '3')
+
+    def test_row(self, t1):
+        row = t1.enumerator().row('2')
+        assert row['y'].value() == 'b'
 
 
 class FixedEnumerator(unittest.TestCase):
@@ -1450,8 +1469,7 @@ class PostgreSQLStandardBindingHandler(_DBTest):
 
 class DBDataDefault(_DBTest):
     ROW1 = (2, datetime.date(2001, 1, 2), 1000.0, 'U.S.A.', 'specialni')
-    ROW2 = (3, datetime.date(2001, 1, 2), 2000.0, 'Czech Republic',
-            'zvlastni')
+    ROW2 = (3, datetime.date(2001, 1, 2), 2000.0, 'Czech Republic', 'zvlastni')
     ROW3 = ('5', '2001-07-06', '9.9', 'U.S.A.', 'nove')
     NEWROW = ('5', '2001-07-06', '9.90', 'U.S.A.', 'specialni')
     NEWROW2 = ('6', '2001-07-08', '9.80', 'U.S.A.', 'divne')
@@ -1701,32 +1719,50 @@ class DBDataDefault(_DBTest):
         self.data.select(columns=('castka', 'stat-nazev',))
         for r in (self.ROW1, self.ROW2):
             result = self.data.fetchone()
-            self.assertIsNotNone(result, 'missing lines')
+            assert result is not None
             for orig_col, result_col in ((2, 0,), (3, 1,),):
-                self.assertEqual(r[orig_col], result[result_col].value())
-        self.assertIsNone(self.data.fetchone(), 'too many lines')
-        self.assertIsNone(self.data.fetchone(), 'data reincarnation')
+                assert r[orig_col] == result[result_col].value()
+        assert self.data.fetchone() is None
+        assert self.data.fetchone() is None
         self.data.close()
         # Search in limited select OK?
         self.dosnova.select(columns=('id', 'synt', 'anal', 'danit',))
         result = self.dosnova.search(pd.EQ('popis', sval('efgh')))
-        self.assertEqual(result, 3, ('Invalid search result', result))
+        assert result == 3
         self.dosnova.close()
         # .row in limited search still working?
         self.data.select(columns=('castka', 'stat-nazev',))
         result = self.data.row((pd.Integer().validate('2')[0],))
         for i in range(len(result) - 1):
-            v = result[i].value()
-            self.assertEqual(v, self.ROW1[i], ('row doesn\'t match', v, r[i]))
+            assert result[i].value() == self.ROW1[i]
         self.data.close()
 
     def test_select_map(self):
-        result = self.data.select_map(lambda row: (row, 'foo'))
-        for r, x in zip((self.ROW1, self.ROW2), result):
-            self.assertEqual(x[1], 'foo')
-            xx = x[0]
-            for i in range(len(r)):
-                self.assertEqual(r[i], xx[i].value(), ('invalid value', r[i], xx[i].value()))
+        result = self.data.select_map(lambda row: tuple(v.value() for v in row.values()))
+        for r1, r2 in zip((self.ROW1, self.ROW2), result):
+            assert r1 == r2
+
+    def test_rows(self):
+        rows = self.data.rows()
+        assert len(rows) == 2
+        for r1, r2 in zip((self.ROW1, self.ROW2), rows):
+            assert r1 == tuple(v.value() for v in r2.values())
+        # The iterator is not exhausted because zip only takes two items:
+        assert not rows._closed
+        row = next(rows, None)
+        assert row is None
+        assert rows._closed
+        # Make sure using the exhausted iterator doesn't fail.
+        row = next(rows, None)
+        assert row is None
+        assert rows._closed
+        # Ensure closing using as context manager:
+        with self.data.rows() as rows:
+            assert not rows._closed
+            row = next(rows, None)
+            assert row is not None
+            assert not rows._closed
+        assert rows._closed
 
     def test_select_fetch_direction(self):
         self.data.select()
@@ -2200,7 +2236,7 @@ class DBDataDefault(_DBTest):
         assert error is None
         assert isinstance(data2.value(), pd.Binary.Buffer)
         row2 = pd.Row([('id', key,), ('data', data2,)])
-        result, succes = self.dbin.update(key, row2)
+        result, success = self.dbin.update(key, row2)
         assert success
         assert result[1].value() == data2.value()
         result = self.dbin.row(key)[1].value()
@@ -2473,7 +2509,8 @@ class DBDataDefault(_DBTest):
         transaction_2 = pd.DBTransactionDefault(connection_data=self._dconnection)
         try:
             assert v.lock_row(key, transaction=transaction) is None
-            assert isinstance(v.lock_row(key, transaction=transaction_2), basestring)
+            # We don't attempt to lock even simple views any more (we used to).
+            assert v.lock_row(key, transaction=transaction_2) is None
             assert v.lock_row(key3, transaction=transaction_2) is None
             assert v2.lock_row(key2, transaction=transaction) is None
             assert v2.lock_row(key2, transaction=transaction_2) is None
@@ -3497,7 +3534,7 @@ class DBSearchPath(_DBTest):
         test(['special'])
         test(['special', 'public'])
 
-
+@plpython_test
 class DBCrypto(_DBBaseTest):
     # Note: requires pgcrypto and db_pytis_crypto:
     # psql test -c 'create extension pgcrypto;'
