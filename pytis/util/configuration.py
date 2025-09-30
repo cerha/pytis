@@ -548,9 +548,8 @@ class Configuration(object):
         _ENVIRONMENT = ('PYTIS_HELP_DIR', 'PYTISHELPDIR',)
 
         def _search_default(self):
-            from os.path import dirname
             return [os.path.join(d, 'help')
-                    for d in (dirname(dirname(dirname(pytis.__file__))), os.getcwd())]
+                    for d in (os.path.join(os.path.dirname(pytis.__file__), 'assets'), os.getcwd())]
 
     class _Option_resource_path(PathOption):
         """Sequence of directory names containing browser resources.
@@ -566,19 +565,8 @@ class Configuration(object):
         _ENVIRONMENT = ('PYTIS_RESOURCE_PATH',)
 
         def default(self):
-            from os.path import dirname
-            modules = (pytis,)
-            try:
-                import lcg
-            except ImportError:
-                # We don't want to establish a hard LCG dependency just for this
-                # config option.  When LCG is actually used, the import will fail
-                # later anyway.
-                pass
-            else:
-                modules += (lcg,)
-            path = [os.path.join(dirname(dirname(dirname(m.__file__))), 'resources')
-                    for m in modules]
+            # Note: LCG 'resources' dir is added by LCG automatically.
+            path = [os.path.join(os.path.dirname(pytis.__file__), 'resources')]
             if self._configuration.help_dir:
                 path.append(os.path.join(self._configuration.help_dir, 'img'))
             return path
@@ -604,9 +592,7 @@ class Configuration(object):
 
         """
         def default(self):
-            d = os.path.dirname
-            return os.path.join(d(d(d(pytis.__file__))), 'icons')
-
+            return os.path.join(os.path.dirname(pytis.__file__), 'assets', 'icons')
 
     class _Option_icon_path(PathOption):
         u"""Sequence of directory names to look for icon files.

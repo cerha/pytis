@@ -7,8 +7,6 @@ import rpyc.utils.authenticators
 import socket
 import sys
 
-sys.path.append(os.path.normpath(os.path.join(sys.path[0], '..', 'lib')))
-
 import pytis.remote  # noqa: E402
 
 

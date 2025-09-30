@@ -45,7 +45,7 @@ connection_data = {'database': 'test'}
 
 Run this test in local mode like:
 
-  pytest lib/pytis/form/test.py -v --disable-warnings
+  pytest pytis/form/test.py -v --disable-warnings
 
 or in remote mode similarly through a Pytis2Go terminal.
 
@@ -362,7 +362,7 @@ class TestApp(DBTest):
 
     To debug:
     gdb python (in the appropriate venv)
-    (gdb) run -m pytest src/pytis/lib/pytis/form/test.py::TestApp -v --disable-warnings
+    (gdb) run -m pytest pytis/form/test.py::TestApp -v --disable-warnings
 
     """
     def test_api_form(self):

@@ -9,10 +9,9 @@ testy zvyšující pokrytí.
 
 * Zprovoznění testovacího prostředí
 
-pip install pytest
-pip install pytest-benchmark
+pip install -r requirements-devel.txt
 
-PYTHONPATH=lib ./tools/gsql.py pytis.dbdefs.db_pytis_crypto > /tmp/pytis-crypto.sql
+./tools/gsql.py pytis.dbdefs.db_pytis_crypto > /tmp/pytis-crypto.sql
 
 sudo -u postgres createdb test
 sudo -u postgres psql test -f /tmp/pytis-crypto.sql
@@ -31,9 +30,7 @@ make test
 Některé testy jsou také součástí aplikace Pytis Demo.  Vyžadují funkční
 konfigurační soubor pytis-demo-config-local.py nebo pytis-demo-config.py
 (použije se první nalezený).  Potom lze spustit v příslušném virtuálním
-prostředí zhruba takto:
-
-PYTHONPATH=../lcg/lib:lib:../wiking/lib venv ~/.venv/pytis-demo-wx4-py3 pytest lib/pytis/demo/
+prostředí pomocí =pytest pytis/demo/=
 
 
 * Pokrytí
@@ -85,17 +82,23 @@ brew install act
 Potom mohu v adresáři pytis, kde je .github/workflows/tests.yml, spustit zde
 definované kontejnery pomocí:
 
-act --container-architecture linux/amd64
+act
 
 Užitečné argumenty:
 
-  --reuse ... restartuj stávající kontejner, pokud existuje (vynechají některé
-              kroky jeho inicializace, např instalace balíků).
-  -j job ... spusť jen vybraný job (v našem případě 'test' nebo 'test-py27')
+  --reuse   ... restartuj stávající kontejner, pokud existuje (vynechají
+                některé kroky jeho inicializace, např instalace balíků).
+  -j job    ... spusť jen vybraný job (v našem případě 'test' nebo 'test-py27')
   -W soubor ... spusť daný workflow (výchozí je .github/workflows/tests.yml)
+  -b        ... namountuj filesystém přímo z hostitelského systému. Výchozí
+                chování je pouze vytvoření snapshotu adresáře, ve kterém se
+                případné změny neprojevují.  Hodí se zejména při spouštění
+                příkazů přímo v běžícím kontejneru (viz dále).
+  --container-architecture linux/amd64 ... potřebné pokud nespouštíme na Linuxu
+                (lepší zapsat do .actrc na samostatný řádek).
 
-Do běžícího kontejneru se potom lze přihlásit.  Nejprve si vypíšu seznam
-běžících kontejnerů pomocí 'docker ps' a potom zavolám
+Do běžícího kontejneru (pokud běh neskonší úspěšně) se potom lze přihlásit.
+Nejprve si vypíšu seznam běžících kontejnerů pomocí 'docker ps' a potom zavolám
 
 docker exec -it CONTANER_ID bash
 
@@ -107,15 +110,9 @@ export PGHOST=postgres
 export PGUSER=pytis
 export PGPASSWORD=pytis
 export PYTIS_TEST_SKIP_PLPYTHON=1
-export PYTHONPATH=lib:lcg/lib:wiking/lib
 make test
 
 nebo spouštět testy jednotlivě:
 
-pytest lib/pytis/presentation/spec.py
+pytest pytis/presentation/spec.py
 
-Ale pozor, filesystém není namountovaný z hostitelského systému, takže změny se
-zde neprojeví.  Je to pouze snapshot adresáře.  Přidáním argumentu -b při
-spuštění act lze vynutit mountování hostitelského adresáře, což umožňuje
-zdrojáky upravovat na hostiteli a spouštět testy v kontejneru s provedenými
-úpravami.

@@ -1,10 +1,12 @@
 *.pyc
 *.pyo
-*.mo
 *~
 *_flymake.py
+/config.py
 /TAGS
 /doc/html/
+/dist/
+/pytis/assets/
+/pytis/resources/
+/pytis/translations/
 /translations/*.pot
-/translations/*.d
-/resources/translations/
