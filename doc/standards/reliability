@@ -215,7 +215,7 @@ Primitivní příklad interaktivního testu:
                          'Vypsalo se "Ahoj" dle popisu')
 </example>
 
-Další příklady lze nalézt v souboru =src/lib/form/_test.py=.
+Další příklady lze nalézt v souboru =pytis/form/test.py=.
 
 ** Korespondence testů a dokumentačních řetězců
 

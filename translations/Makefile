@@ -1,11 +1,12 @@
 # This Makefile is created according to the LCG's Makefile for translations.
 # See the original for comments...
 
+mo_dir := ../pytis/translations
 mo_files := $(foreach d, pytis-data pytis-defs pytis-web pytis-wx pytis-demo, \
-	      $(patsubst $(d).%.po,%/LC_MESSAGES/$(d).mo,$(wildcard $(d).*.po)))
-resource_po_files := $(patsubst %.po,../resources/translations/%.po, $(wildcard pytis-web.*.po))
+	      $(patsubst $(d).%.po,$(mo_dir)/%/LC_MESSAGES/$(d).mo, \
+              $(wildcard $(d).*.po)))
 
-all: $(mo_files) $(resource_po_files)
+all: $(mo_files)
 extract: $(wildcard *.po) $(mo_files)
 
 ifeq ($(MAKECMDGOALS),extract)
@@ -30,23 +31,18 @@ $(wildcard *.po):
 
 endif
 
-%/LC_MESSAGES:
-	mkdir -p $*/LC_MESSAGES/
-%/LC_MESSAGES/pytis-data.mo: pytis-data.%.po %/LC_MESSAGES
+$(mo_dir)/%/LC_MESSAGES:
+	mkdir -p $(mo_dir)/$*/LC_MESSAGES/
+$(mo_dir)/%/LC_MESSAGES/pytis-data.mo: pytis-data.%.po $(mo_dir)/%/LC_MESSAGES
 	msgfmt -v $< -o $@
-%/LC_MESSAGES/pytis-defs.mo: pytis-defs.%.po %/LC_MESSAGES
+$(mo_dir)/%/LC_MESSAGES/pytis-defs.mo: pytis-defs.%.po $(mo_dir)/%/LC_MESSAGES
 	msgfmt -v $< -o $@
-%/LC_MESSAGES/pytis-web.mo: pytis-web.%.po %/LC_MESSAGES
+$(mo_dir)/%/LC_MESSAGES/pytis-web.mo: pytis-web.%.po $(mo_dir)/%/LC_MESSAGES
 	msgfmt -v $< -o $@
-%/LC_MESSAGES/pytis-wx.mo: pytis-wx.%.po %/LC_MESSAGES
+$(mo_dir)/%/LC_MESSAGES/pytis-wx.mo: pytis-wx.%.po $(mo_dir)/%/LC_MESSAGES
 	msgfmt -v $< -o $@
-%/LC_MESSAGES/pytis-demo.mo: pytis-demo.%.po %/LC_MESSAGES
+$(mo_dir)/%/LC_MESSAGES/pytis-demo.mo: pytis-demo.%.po $(mo_dir)/%/LC_MESSAGES
 	msgfmt -v $< -o $@
-
-../resources/translations:
-	mkdir -p ../resources/translations/
-../resources/translations/pytis-web.%.po: pytis-web.%.po ../resources/translations
-	cp $< $@
 
 clean:
-	rm -f *.d *.pot
+	rm -rf *.pot $(mo_dir)/*

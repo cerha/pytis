@@ -42,7 +42,7 @@ _PROFILE_RESULTS = '%s.results' % _PROFILE
 
 def _usage(optexception=None):
     _USAGE = """
-Usage: pytis [OPTION ...]
+Usage: python -m pytis.run [OPTION ...]
 
 Options:
 
