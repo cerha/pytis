@@ -406,7 +406,6 @@ class Products(Specification):
         app.launch_file(data=result.getvalue(), suffix='.pdf')
 
     def _content(self, record):
-        pardir = os.path.pardir
         return pytis.util.lcg_node(
             (
                 lcg.fieldset((
@@ -417,8 +416,7 @@ class Products(Specification):
                 if record['notes'].value() else lcg.Content(),
             ),
             title=record['product'].value(),
-            resource_path=(os.path.normpath(os.path.join(os.path.dirname(pytis.__file__),
-                                                         pardir, pardir, 'resources')),),
+            resource_path=((os.path.join(os.path.dirname(pytis.__file__), 'resources')),),
             resources=('pytis-demo-product.css',),
         )
 
