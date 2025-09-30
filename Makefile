@@ -1,23 +1,40 @@
-.PHONY: translations doc test
+.PHONY: doc test translations resources assets
 
-all: compile translations
+all: doc compile translations resources assets
 
 doc:
-	LCGDIR=../lcg lcgmake doc/tutorials/Fields.txt doc/html
+	python -m lcg.make doc/tutorials/Fields.txt doc/html
 
 compile:
-	@echo "Compiling Python libraries from source..."
-	@python -c "import compileall; compileall.compile_dir('lib')" >/dev/null
-	@python -O -c "import compileall; compileall.compile_dir('lib')" >/dev/null
+	python -m compileall -d . pytis
+	python -O -m compileall -d . pytis
 
 translations:
 	make -C translations
+
 extract:
 	make -C translations extract
 
+resources:
+	git ls-files resources | rsync -av --delete --files-from=- ./ pytis/
+
+assets:
+	git ls-files icons help | rsync -av --delete --files-from=- ./ pytis/assets/
+
 test:
-	pytest doc lib
+	python -m pytest doc pytis -v
+
+build: translations resources assets
+	flit build
+
+install:
+        # Only for development installs.  Use pip for production/user installs.
+	flit install --symlink
+
+clean:
+	rm -rf dist pytis/resources doc/html
+	make -C translations clean
 
 coverage:
-	PYTHONPATH="./lib:${PYTHONPATH}" coverage run --source lib/pytis -m pytest doc lib
+	coverage run --source=pytis -m pytest doc pytis
 	coverage report
