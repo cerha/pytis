@@ -3,6 +3,7 @@
 cachetools
 file-magic; python_version >= '3.0'
 future
+lcg-framework[all]
 gnupg
 psycopg2-binary
 pillow>=2.7.0
@@ -18,6 +19,7 @@ reportlab
 rpyc==3.3.0; python_version == '2.7'
 rpyc; python_version >= '3.9'
 sqlalchemy==1.4
+wiking
 # To use a binary wxPython wheel, it may be necessary to add -f and limit 
 # wxPython version to the one available in given source, such as:
 # pip install -f https://extras.wxpython.org/wxPython4/extras/linux/gtk3/debian-10/ wxPython==4.2.1

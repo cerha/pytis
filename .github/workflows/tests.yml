@@ -30,7 +30,7 @@ jobs:
       PGUSER: pytis
       PGPASSWORD: pytis
       PYTIS_DBNAME: test
-      PYTHONPATH: lib:lcg/lib:wiking/lib
+      PYTHONPATH: lib
       # The default github postgres service doesn't support plpython.
       PYTIS_TEST_SKIP_PLPYTHON: 1
 
@@ -55,17 +55,6 @@ jobs:
 
       - name: Install Python dependencies
         run: |
-          if [ -d lcg ]; then
-              git -C lcg pull
-          else
-              git clone https://github.com/cerha/lcg
-          fi
-          if [ -d wiking ]; then
-              git -C wiking pull
-          else
-              git clone https://github.com/cerha/wiking
-          fi
-
           pip install --upgrade 'pip<21' 'setuptools<45' 'wheel<0.34'
           pip install wxpython --only-binary=:all: --verbose \
               -f https://extras.wxpython.org/wxPython4/extras/linux/gtk3/debian-10/
@@ -108,7 +97,7 @@ jobs:
       PGUSER: pytis
       PGPASSWORD: pytis
       PYTIS_DBNAME: test
-      PYTHONPATH: lib:lcg/lib:wiking/lib
+      PYTHONPATH: lib
       # The default github postgres service doesn't support plpython.
       PYTIS_TEST_SKIP_PLPYTHON: 1
 
@@ -132,16 +121,6 @@ jobs:
 
       - name: Install Python dependencies
         run: |
-          if [ -d lcg ]; then
-              git -C lcg pull
-          else
-              git clone https://github.com/cerha/lcg
-          fi
-          if [ -d wiking ]; then
-              git -C wiking pull
-          else
-              git clone https://github.com/cerha/wiking
-          fi
           pip install --upgrade pip
           pip install wxpython --only-binary=:all: --verbose \
               -f https://extras.wxpython.org/wxPython4/extras/linux/gtk3/ubuntu-24.04/
