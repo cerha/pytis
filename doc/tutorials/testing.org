@@ -63,7 +63,7 @@ pycoverage-mode
 
 * Github Action Workflow
 
-Soubor .github/workflows/test.yml definuje prostředí pro automatické spouštění
+Soubor .github/workflows/tests.yml definuje prostředí pro automatické spouštění
 testů v Pythonu 2.7 a 3.11 na githubu.  Tyto testy však lze v docker
 kontejnerech spouštět také lokálně pomocí act.  Výhoda je, že definice
 kompletně popisuje systém a jeho nastavení a prostředí pro spouštění testů je
@@ -82,7 +82,7 @@ Instalace na macOS:
 Nainstalovat Docker Desktop z https://www.docker.com/products/docker-desktop a spustit.
 brew install act
 
-Potom mohu v adresáři pytis, kde je .github/workflows/test.yml, spustit zde
+Potom mohu v adresáři pytis, kde je .github/workflows/tests.yml, spustit zde
 definované kontejnery pomocí:
 
 act --container-architecture linux/amd64
@@ -101,7 +101,7 @@ docker exec -it CONTANER_ID bash
 
 V jeho promptu potom mohu instalovat balíky nebo zkoumat a nastavovat systém,
 nebo také spouštět testy.  Takto spuštěný shell však nemá nastavené prostředí
-podle definice env v test.yaml, takže je nutné si ho nastavit ručně:
+podle definice env v tests.yml, takže je nutné si ho nastavit ručně:
 
 export PGHOST=postgres
 export PGUSER=pytis
