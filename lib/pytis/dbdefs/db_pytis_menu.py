@@ -1341,6 +1341,7 @@ class PytisActionRightsFoldable(Base_PyFunction):
     @staticmethod
     def pytis_action_rights_foldable(shortname, column):
         shortname, column = args
+        import string
         if column is None:
             column = 'roleid'
         tree = {}
