@@ -4,6 +4,7 @@ babel
 coverage
 coveralls
 flake8
+flit
 gnureadline
 jsonschema
 mock
