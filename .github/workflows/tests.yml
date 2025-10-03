@@ -47,7 +47,7 @@ jobs:
       - name: Install system dependencies
         run: |
           apt-get update
-          apt-get install -y locales postgresql-client \
+          apt-get install -y locales postgresql-client python3-pip rsync gettext \
             python-dev pkg-config libgirepository1.0-dev libmupdf-dev libfreetype6-dev \
             libwebkit2gtk-4.0-37 libsdl2-2.0-0 libnotify4
           sed -i '/\(cs_CZ\|en_US\).UTF-8/s/^# \+//g' /etc/locale.gen
@@ -58,7 +58,16 @@ jobs:
           pip install --upgrade 'pip<21' 'setuptools<45' 'wheel<0.34'
           pip install wxpython --only-binary=:all: --verbose \
               -f https://extras.wxpython.org/wxPython4/extras/linux/gtk3/debian-10/
-          pip install -r requirements.txt -r requirements-devel.txt
+          # There's no flit in Pyton 2.7 so we install and use flit from Python 3.
+          grep -v '^flit' requirements-devel.txt | pip install -r /dev/stdin
+          python3 -m pip install flit
+          # Beware: 'make build' duplication here, but we need python3 to run flit.
+          make translations
+          make resources
+          python3 -m flit build
+          # This is mainly to install the dependencies.  The code will run form
+          # the current directory anyway.
+          pip install $(echo dist/pytis-*-any.whl)[wx]
 
       - name: Setup database
         run: |
@@ -113,7 +122,7 @@ jobs:
       - name: Install system dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y locales postgresql-client \
+          sudo apt-get install -y locales postgresql-client gettext rsync \
             python3-dev pkg-config libgirepository1.0-dev libcairo2-dev \
             libwxgtk-webview3.2-1t64 libsdl2-2.0-0 libtiff6
           sudo sed -i '/\(cs_CZ\|en_US\).UTF-8/s/^# \+//g' /etc/locale.gen
@@ -124,7 +133,9 @@ jobs:
           pip install --upgrade pip
           pip install wxpython --only-binary=:all: --verbose \
               -f https://extras.wxpython.org/wxPython4/extras/linux/gtk3/ubuntu-24.04/
-          pip install -r requirements.txt -r requirements-devel.txt
+          pip install -r requirements-devel.txt
+          make build
+          pip install $(echo dist/pytis-*-any.whl)[wx]
 
       - name: Setup database
         run: |
@@ -133,6 +144,8 @@ jobs:
           done
           psql -h "$PGHOST" -U "$PGUSER" -d "$PYTIS_DBNAME" -v ON_ERROR_STOP=1 \
             -c "alter database $PYTIS_DBNAME set default_text_search_config to 'simple'"
+          psql -h "$PGHOST" -U "$PGUSER" -d "$PYTIS_DBNAME" -v ON_ERROR_STOP=1 \
+            -c "create role demo;"
 
       - name: Run tests
         run: make test
