@@ -466,7 +466,7 @@ function ck_dialog_update_attachment_list (editor, field, attachment_type, keep_
      */
 
     // Construct a list of Wiking attachments for this page
-    var pytis_field = $(editor.config.pytisFieldId)._pytis_field_instance;
+    var pytis_field = lcg.widget_instance($(editor.config.pytisFieldId));
     var attachments = pytis_field.list_attachments();
     var options = field.getInputElement().$.options;
     // Save field value before options update
@@ -576,7 +576,7 @@ pytis.HtmlField.attachment_dialog = function(editor, attachment_name, attachment
                            var filename = this.getValue();
                            var i;
                            if (filename) {
-                               var field = $(editor.config.pytisFieldId)._pytis_field_instance;
+                               var field = lcg.widget_instance($(editor.config.pytisFieldId));
                                var attachment = field.get_attachment(filename);
                                if (attachment) {
                                    this.attachment = attachment;
@@ -635,7 +635,7 @@ pytis.HtmlField.attachment_dialog = function(editor, attachment_name, attachment
                            frame.on('load', this.onIFrameLoaded, this);
                        },
                        onFormLoaded: function() {
-                           var field = $(editor.config.pytisFieldId)._pytis_field_instance;
+                           var field = lcg.widget_instance($(editor.config.pytisFieldId));
                            var frameDocument = CKEDITOR.document.getById(this._.frameId).getFrameDocument();
                            if (frameDocument.$.forms.length > 0) {
                                /* This is a little tricky as the file upload
@@ -677,7 +677,7 @@ pytis.HtmlField.attachment_dialog = function(editor, attachment_name, attachment
                        onIFrameLoaded: function() {
                            var dialog = CKEDITOR.dialog.getCurrent();
                            var body_childs = $(this._.frameId).contentWindow.document.body.childNodes;
-                           var field = $(editor.config.pytisFieldId)._pytis_field_instance;
+                           var field = lcg.widget_instance($(editor.config.pytisFieldId));
                            if (body_childs.length === 1 && body_childs[0].tagName.toLowerCase() === 'pre') {
                                // This is a JSON reply
                                var reply = body_childs[0].innerHTML.evalJSON();
@@ -693,7 +693,7 @@ pytis.HtmlField.attachment_dialog = function(editor, attachment_name, attachment
                                    msg = reply.message;
                                    cls = "ckeditor-error";
                                }
-                               $('ckeditor-upload-result').update("<p class=\""+cls+"\">"+msg+"</p>");
+                               $('#ckeditor-upload-result').update("<p class=\""+cls+"\">"+msg+"</p>");
                            }
                        }
                       },
@@ -703,7 +703,7 @@ pytis.HtmlField.attachment_dialog = function(editor, attachment_name, attachment
                        'for': ['main', 'upload'],
                        onClick: function() {
                            var dialog = CKEDITOR.dialog.getCurrent();
-                           var field = $(editor.config.pytisFieldId)._pytis_field_instance;
+                           var field = lcg.widget_instance($(editor.config.pytisFieldId));
                            if (dialog.getContentElement('main', 'upload').getValue()) {
                                // We can't simply call form.submit(), because Wiking
                                // uses a hidden field named 'submit' for its internal
@@ -711,7 +711,7 @@ pytis.HtmlField.attachment_dialog = function(editor, attachment_name, attachment
                                // (not really clever...).
                                document.createElement('form').submit.call(field._file_upload_form);
                            } else {
-                               $('ckeditor-upload-result').update(pytis._("First select a file to be uploaded."));
+                               $('#ckeditor-upload-result').update(pytis._("First select a file to be uploaded."));
                            }
                            return false;
                        }
@@ -765,7 +765,7 @@ pytis.HtmlField.attachment_dialog = function(editor, attachment_name, attachment
             // Update attachment attributes
             var dialog = CKEDITOR.dialog.getCurrent();
             var filename = dialog.getValueOf('main', 'identifier');
-            var field = $(editor.config.pytisFieldId)._pytis_field_instance;
+            var field = lcg.widget_instance($(editor.config.pytisFieldId));
             var attributes = {};
             var i, value;
             for (i=0; i<=attachment_properties.length; i++) {
@@ -798,11 +798,11 @@ pytis.HtmlField.image_dialog = function(editor) {
     ck_element(dialog, 'identifier').updatePreview = function(attachment) {
         if (attachment) {
             if (attachment.thumbnail) {
-                $('image-preview').src = attachment.thumbnail.uri;
+                $('#image-preview').src = attachment.thumbnail.uri;
             } else {
-                $('image-preview').src = attachment.uri;
+                $('#image-preview').src = attachment.uri;
             }
-            $('image-preview').alt = attachment.description;
+            $('#image-preview').alt = attachment.description;
         }
     };
 
@@ -1153,11 +1153,11 @@ pytis.HtmlField.exercise_dialog = function(editor) {
         for (j=0; j<editor.config.lcgExerciseTypes.length; j++) {
             jtem = editor.config.lcgExerciseTypes[j];
             if (jtem[0] === this.getValue()) {
-                $('exercise-help').update(jtem[2]);
+                $('#exercise-help').update(jtem[2]);
                 return;
             }
         }
-        $('exercise-help').update('');
+        $('#exercise-help').html('');
     };
 
     ck_element(dialog, 'src').setup = function(element) {
@@ -1169,7 +1169,7 @@ pytis.HtmlField.exercise_dialog = function(editor) {
     };
 
     ck_element(dialog, 'help').setup = function(element) {
-        $('exercise-help').update('');
+        $('#exercise-help').html('');
     };
 
     return dialog;
@@ -1318,7 +1318,7 @@ pytis.HtmlField.mathml_dialog = function(editor) {
     };
 
     ck_element(dialog, 'source-mathml').onChange = function(element) {
-        $('math-preview').innerHTML = clean_mathml(this.getValue(), "", false);
+        $('math-preview').html(clean_mathml(this.getValue(), "", false));
     };
 
     ck_element(dialog, 'source-ascii').setup = function(element) {

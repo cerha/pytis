@@ -242,8 +242,8 @@ class Form(lcg.Content):
             # Javascript dependencies must be allocated before the form is
             # exported because form field export may rely on these dependencies
             # to be available.
-            context.resource('prototype.js')
-            context.resource('gettext.js')
+            context.resource('jquery.min.js')
+            context.resource('jed.min.js')
             context.resource('pytis.js')
             if context.lang() != 'en':
                 # Translations for Javascript
@@ -785,8 +785,7 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
             help_id = field_id + '-help'
             # Set through a script to avoid invalid HTML ('aria-describedby' in not valid HTML).
             return (g.div(descr, id=help_id, cls="help") +
-                    g.script("$('%s').setAttribute('aria-describedby', '%s');" %
-                             (field_id, help_id)))
+                    g.script("$('#%s').attr('aria-describedby', '%s');" % (field_id, help_id)))
         else:
             return None
 
@@ -1117,9 +1116,11 @@ class QueryFieldsForm(VirtualForm):
         if self._immediate_filters and not self._async_load:
             # When the form is loaded asynchronously, the change handlers are assigned
             # in pytis.js (bind_controls)!
-            script += ("$('%s').select('select, checkbox, radio').each(function (element) { "
-                       "element.onchange = function (e) { this.form.submit(); return true; }; "
-                       "});" % self._form_id)
+            g = context.generator()
+            script = g.concat(script, g.noescape(
+                "$('#%s').find('select, checkbox, radio')"
+                ".on('change', e => $(e.target).closest('form').submit())" % self._form_id
+            ))
         return script
 
     def fields(self):
@@ -1138,9 +1139,9 @@ class InlineEditForm(EditForm):
 
     def _export_submit(self, context):
         g = context.generator()
-        return [g.button(g.span('', cls='icon') + g.span(_("Save"), cls='label'),
-                         type='submit', name='save-edited-cell', value='1',
-                         cls='save-edited-cell')]
+        return [g.hidden(name='save-edited-cell', value='1'),
+                g.button(g.span('', cls='icon') + g.span(_("Save"), cls='label'),
+                         type='submit', cls='save-edited-cell')]
 
     def _export_error(self, context, fid, message):
         return message
@@ -1695,7 +1696,7 @@ class BrowseForm(LayoutForm):
                        if enabled and action.id() == 'update']
             if actions:
                 uri = self._uri_provider(row, UriType.ACTION, actions[0])
-                attr['data-pytis-row-update-uri'] = uri
+                attr['data-pytis-row-update-url'] = uri
         attr['data-pytis-row-key'] = row[self._key].export()
         return attr
 
@@ -2265,7 +2266,9 @@ class BrowseForm(LayoutForm):
 
         """
         if ((req.param('_pytis_form_update_request') and
-             (req.param('_pytis_edit_cell') or req.param('_pytis_expand_row')))):
+             (req.param('_pytis_edit_cell') or
+              req.param('_pytis_expand_row') or
+              req.param('_pytis_insert_new_row')))):
             return True
         elif self._query_fields_form:
             return self._query_fields_form.is_ajax_request(req)

@@ -453,9 +453,12 @@ class Field:
     def javascript(self, context, form_id, layout_fields):
         """Return JavaScript code for creation of field handler instance."""
         g = context.generator()
+        return g.js_call("new %s" % self._JS_CLASS,
+                         *self._javascript_constructor_args(context, form_id, layout_fields))
+
+    def _javascript_constructor_args(self, context, form_id, layout_fields):
         active = self._row.depends(self.id, layout_fields)
-        return g.js_call("new %s" % self._JS_CLASS, form_id, self.html_id(),
-                         self.id, self.state(), active, self.indicate_not_null())
+        return (form_id, self.html_id(), self.id, self.state(), active, self.indicate_not_null())
 
 
 class TextField(Field):
@@ -750,33 +753,16 @@ class DateTimeField(TextField):
         # TODO: Respect date format!
         return 19
 
-    def _editor(self, context, **kwargs):
-        g = context.generator()
+    def _javascript_constructor_args(self, context, form_id, layout_fields):
         locale_data = context.locale_data()
-        return (
-            super()._editor(context, **kwargs) +
-            g.button('...', id='%s-button' % kwargs['id'], type='button',
-                     cls='selection-invocation calendar-invocation',
-                     disabled=kwargs['disabled']) +
-            g.script("""
-              pytis.Calendar.setup({dateField: '%(id)s',
-                                    triggerElement: '%(id)s-button',
-                                    dateFormat: '%(format)s'});
-              pytis.Calendar.TODAY = '%(today)s';
-              pytis.Calendar.SHORT_DAY_NAMES = %(day_names)s;
-              pytis.Calendar.MONTH_NAMES = %(month_names)s;
-              pytis.Calendar.FIRST_WEEK_DAY = %(first_week_day)d;
-            """ % dict(
-                id=kwargs['id'],
-                format=self.datetime_format(locale_data),
-                today=context.localize(_(u"today")),
-                day_names=g.js_value([context.localize(lcg.week_day_name(i, abbrev=True))
-                                      for i in (6, 0, 1, 2, 3, 4, 5)]),
-                month_names=g.js_value([context.localize(lcg.month_name(i))
-                                        for i in range(12)]),
-                first_week_day=(locale_data.first_week_day + 1) % 7,
-            ))
-        )
+        return super()._javascript_constructor_args(context, form_id, layout_fields) + (dict(
+            format=self.datetime_format(locale_data),
+            day_names=[context.localize(lcg.week_day_name(i)) for i in range(7)],
+            short_day_names=[context.localize(lcg.week_day_name(i, abbrev=True)) for i in range(7)],
+            month_names=[context.localize(lcg.month_name(i)) for i in range(12)],
+            short_month_names=[context.localize(lcg.month_name(i, abbrev=True)) for i in range(12)],
+            first_week_day=locale_data.first_week_day,
+        ),)
 
     def _validate(self, value, locale_data, **kwargs):
         return super()._validate(value, locale_data,

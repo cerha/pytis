@@ -58,6 +58,7 @@
 .pytis-form.query-fields-form > .body {
     display: inline-block;
     margin-right: 0.8em;
+    position: relative;
 }
 .pytis-form.query-fields-form > .submit-buttons {
     display: inline-block;
@@ -564,81 +565,130 @@
     border-width: 1px 0;
 } */
 
-/* Calendar */
+/* Date picker dialog */
 
-.pytis-calendar {
-  font-size: smaller;
-  color: #000;
-}
-.pytis-calendar.popup {
-  z-index: 1000;
-}
-.pytis-calendar table
-{
-  background-color: #eee;
-  border: 1px solid #aaa;
-  border-collapse: collapse;
+.datepicker {
+    position: absolute;
+    width: 320px;
+    clear: both;
+    border: 1px solid #ddd;
+    margin-top: 0.15em;
+    border-radius: 5px;
+    padding: 0;
+    background-color: #fff;
+    box-shadow: 1px 1px 12px rgba(0, 0, 0, .6);
 }
 
-.pytis-calendar thead {
-  background-color: white;
+.datepicker .header {
+    cursor: default;
+    background-color: #eee;
+    padding: 7px;
+    font-weight: bold;
+    text-transform: uppercase;
+    display: flex;
+    justify-content: space-around;
+    border-radius: 5px 5px 0 0;
 }
 
-.pytis-calendar td,
-.pytis-calendar th
-{
-  padding: 3px;
-  text-align: center;
+.datepicker h2 {
+    margin: 0;
+    padding: 8px;
+    display: inline-block;
+    font-size: 1em;
+    text-transform: none;
+    font-weight: bold;
+    border: none;
 }
 
-.pytis-calendar td.title
-{
-  font-weight: bold;
+.datepicker .dates {
+    width: 320px;
 }
 
-.pytis-calendar th
-{
-  background: #ddd;
-  border-bottom: 1px solid #ccc;
-  border-top: 1px solid #ccc;
-  font-weight: bold;
-  color: #555;
+.datepicker .prev-year,
+.datepicker .prev-month,
+.datepicker .next-month,
+.datepicker .next-year {
+    padding: 4px 6px;
+    width: 44px;
+    margin: 1px;
 }
 
-.pytis-calendar tr.days td {
-  width: 2em;
-  color: #555;
-  text-align: center;
-  cursor: pointer;
+.datepicker .dialog-ok-cancel-group {
+    text-align: right;
+    margin-top: 1em;
+    margin-bottom: 1em;
+    margin-right: 1em;
 }
 
-.pytis-calendar tr.days td:hover,
-.pytis-calendar td.button:hover
-{
-  background-color: #34ABFA;
-  cursor: pointer;
+.datepicker .dialog-ok-cancel-group button {
+    min-width: 4.2em;
+    margin-left: .5em;
+}
+.datepicker button[value="ok"] {
 }
 
-.pytis-calendar tr.days td:active
-.pytis-calendar td.button:active
-{
-  background-color: #cde;
+.datepicker .month-year {
+    display: inline-block;
+    width: 12em;
+    text-align: center;
 }
 
-.pytis-calendar tr.days td.selected
-{
-  font-weight: bold;
-  background-color: #fff;
-  color: #000;
+.datepicker table.dates {
+    padding-left: 1em;
+    padding-right: 1em;
+    padding-top: 1em;
 }
 
-.pytis-calendar tr.days td.today
-{
-  font-weight: bold;
-  color: #D50000;
+.datepicker table.dates th,
+.datepicker table.dates td {
+    text-align: center;
 }
 
-.pytis-calendar tr.days td.otherDay
-{
-  color: #bbb;
+
+.datepicker table.dates td {
+    padding: 3px;
+    margin: 0;
+    line-height: inherit;
+    height: 40px;
+    width: 40px;
+    border-radius: 5px;
+    font-size: 15px;
+    background: #eee;
+    cursor: pointer;
+}
+
+.datepicker table.dates td.disabled {
+    padding: 2px;
+    border: none;
+    height: 41px;
+    width: 41px;
+}
+
+.datepicker table.dates td[tabindex="0"] {
+    background-color: #444;
+    color: white;
+}
+
+.datepicker table.dates td:not(.disabled):hover {
+    padding: 2px;
+    border: 1px solid #bbb;
+    background-color: #f8f8f8;
+}
+
+.datepicker table.dates td[tabindex="0"]:hover {
+    background-color: #555;
+    border: 1px solid #222;
+}
+
+
+.datepicker table.dates td[aria-selected] {
+    padding: 1px;
+    border: 1px solid #555;
+}
+
+.datepicker .echo {
+    padding: 0.25em 1em;
+    height: 1em;
+    background-color: #eee;
+    border-radius: 0 0 5px 5px;
 }
