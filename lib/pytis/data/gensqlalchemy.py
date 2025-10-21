@@ -4547,7 +4547,15 @@ def gsql_module(module_name, regexp=None, no_deps=False, views=False, functions=
 
     """
     def loader(module_name=module_name):
-        pytis.util.load_module(module_name)
+        module = pytis.util.load_module(module_name)
+        if module_name == 'pytis.dbdefs':
+            # Hack: pytis.dbdefs intentionally doesn't import any of its submodules.  It is left
+            # up to the application to import what it needs (because that implies what gets to
+            # its database schema).  But if we want to generate SQL for 'pytis.dbdefs' itself,
+            # we need to import all its submodules.
+            for filename in os.listdir(os.path.dirname(module.__file__)):
+                if filename.endswith('.py'):
+                    pytis.util.load_module(module_name + '.' + filename[:-3])
     _gsql_process(loader, regexp, no_deps, views, functions, names_only, pretty, schema, source,
                   config_file, upgrade, plpython3, debug, (module_name if limit_module else None),
                   limit_class)
