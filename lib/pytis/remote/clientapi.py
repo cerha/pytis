@@ -1066,6 +1066,7 @@ class PytisClientAPIService(rpyc.Service):
             backend_name=self._client.name(),
             python_version=sys.version_info[:3],
             rpyc_version=rpyc_version,
+            x2go_version=os.getenv('X2GO_VERSION'),
         ))
 
     def exposed_get_clipboard_text(self):

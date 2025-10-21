@@ -73,6 +73,7 @@ class ClientInfo(object):
     backend_name = None
     python_version = None
     rpyc_version = None
+    x2go_version = None
 
     def __init__(self, **kwargs):
         self.__dict__ = kwargs

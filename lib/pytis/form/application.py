@@ -1432,6 +1432,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
              # Note: The rpyc.__version__ contents is inconsistent across rpyc versions.
              version_str if isinstance(rpyc.__version__, tuple) else None),
             (_("Remote RPyC version"), client_info.rpyc_version, version_str),
+            (_("X2Go version"), client_info.x2go_version, None),
         )
         self._remote_connection_info = info = [
             (label, f(value) if f else value)
