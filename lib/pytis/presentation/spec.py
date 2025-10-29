@@ -3146,7 +3146,7 @@ class Enumeration(object):
     why you may group them into this class and refer to the same class several
     times.  When a class derived from 'Enumeration' is passed to the
     'enumerator' attribute of a 'Field' specification, all the above named
-    attributes (when nor redefined explicitly for given field) will default to
+    attributes (when not redefined explicitly for given field) will default to
     values defined by this enumeration.  Note, that the default values of some
     attributes may be different in this class than the default values of the
     same 'Field' specification attributes.  See the documentation of individual
