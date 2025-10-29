@@ -224,7 +224,8 @@ class GenericDialog(Dialog):
                 content_format = None
             text_view = wx_text_view(dialog, self._content, format=content_format)
             if content_format == TextFormat.PLAIN:
-                text_view.SetMinSize((300, text_view.MinSize.height))
+                text_view.SetMinSize((max(400, text_view.MinSize.width),
+                                      max(200, text_view.MinSize.height)))
             sizer.Add(text_view, 1, wx.EXPAND)
         buttons = self._buttons()
         default_button = self._default_button(buttons)
