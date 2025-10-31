@@ -33,12 +33,14 @@ is irrelevant with deferred constraints).
 """
 
 import os
+import re
 import sys
 import getpass
 import argparse
 import collections
 import psycopg2
 import psycopg2.extras
+from psycopg2.extensions import quote_ident as qi
 
 
 def get_foreign_keys(connection):
@@ -68,12 +70,16 @@ def get_foreign_keys(connection):
         cur.execute(sql)
         return cur.fetchall()
 
+def split_table(table):
+    if '.' in table:
+        schema, name = table.split('.', 1)
+    else:
+        schema, name = 'public', table
+    return schema, name
+
 def table_exists(connection, table):
     """Return True if the given schema.table exists."""
-    if "." in table:
-        schema, name = table.split(".", 1)
-    else:
-        schema, name = "public", table
+    schema, name = split_table(table)
     with connection.cursor() as cur:
         cur.execute("""
             SELECT 1
@@ -81,6 +87,20 @@ def table_exists(connection, table):
             WHERE table_schema = %s AND table_name = %s;
         """, (schema, name))
         return cur.fetchone() is not None
+
+def get_table_columns(connection, table):
+    """Return ordered, quoted column identifiers for SELECT/COPY."""
+    schema, name = split_table(table)
+    with connection.cursor() as cur:
+        cur.execute("""
+            SELECT column_name
+            FROM information_schema.columns
+            WHERE table_schema = %s AND table_name = %s
+            ORDER BY ordinal_position
+        """, (schema, name))
+        cols = [r[0] for r in cur]
+    # quote each identifier
+    return [f"{qi(c, connection)}" for c in cols]
 
 def build_parent_graph(fks_rows):
     """Return:
@@ -143,20 +163,211 @@ def dfs_postorder_ancestors(start, parents):
     visit(start)
     return out  # parents first, start last
 
+def get_primary_key(connection, table):
+    """Return list of PK columns in order, or [] if no PK."""
+    schema, name = split_table(table)
+    with connection.cursor() as cur:
+        cur.execute("""
+            SELECT a.attname
+            FROM pg_index i
+            JOIN pg_class c ON c.oid = i.indrelid
+            JOIN pg_namespace n ON n.oid = c.relnamespace
+            JOIN unnest(i.indkey) WITH ORDINALITY AS k(attnum, ord) ON TRUE
+            JOIN pg_attribute a ON a.attrelid = c.oid AND a.attnum = k.attnum
+            WHERE i.indisprimary AND n.nspname = %s AND c.relname = %s
+            ORDER BY k.ord;
+        """, (schema, name))
+        return [r[0] for r in cur.fetchall()]
+
+def build_fk_map_grouped(connection, foreign_keys):
+    """
+    Return child_fks: child -> list of dicts:
+      { 'parent': 'schema.table', 'child_cols': [...], 'parent_cols': [...], 'cons': 'name' }
+    Multi-column FKs are grouped and ordered by col_order.
+    """
+    import collections
+    tmp = collections.defaultdict(lambda: collections.defaultdict(list))
+    for fk in foreign_keys:
+        child  = f"{fk['child_schema']}.{fk['child_table']}"
+        parent = f"{fk['parent_schema']}.{fk['parent_table']}"
+        tmp[child][(parent, fk['constraint_name'])].append(
+            (fk['child_col'], fk['parent_col'], fk['col_order'])
+        )
+    child_fks = collections.defaultdict(list)
+    for child, groups in tmp.items():
+        for (parent, cons), cols in groups.items():
+            cols_sorted = sorted(cols, key=lambda x: x[2])
+            child_fks[child].append({
+                'parent': parent,
+                'child_cols': [c for c, _, _ in cols_sorted],
+                'parent_cols': [p for _, p, _ in cols_sorted],
+                'cons': cons
+            })
+    return child_fks
+
+def copy_command(connection, table, where_clause=None, with_header=False):
+    """
+    Return a server-side COPY TO STDOUT statement selecting explicit columns,
+    optionally with a WHERE clause string (e.g. 'id IN (..)' or 'id = 42').
+    """
+    schema, name = [qi(x, connection) for x in split_table(table)]
+    cols = ', '.join(get_table_columns(connection, table))
+    where   = f' WHERE {where_clause}' if where_clause else ''
+    header  = ' HEADER' if with_header else ''
+    return f'COPY (SELECT {cols} FROM {schema}.{name}{where}) TO STDOUT WITH CSV{header};'
+
+def build_selection_ctes(connection, ordered_tables, start_table, seed_where, child_fks, pk_by_table):
+    """
+    Return a single string like:
+      WITH sel_schema_table(pk1, pk2, ...) AS (...),
+           sel_parent(...) AS (...),
+           ...
+    CTE order is from child to parent (reverse of insertion order) so dependencies are defined.
+    """
+    def cte_name(t):  # stable, readable CTE identifier
+        return 'sel_' + re.sub(r'[^a-zA-Z0-9_]', '_', t)
+
+    parts = []
+    # Build in reverse: start first, then its parents, etc.
+    for t in reversed(ordered_tables):
+        schema, name = [qi(x, connection) for x in split_table(t)]
+        cols = pk_by_table.get(t)
+        if not cols:
+            raise ValueError(f"Table has no primary key: {t}")
+        cte_cols = ', '.join(qi(c, connection) for c in cols)
+        pk = ', '.join(f'{t}.{qi(c, connection)}' for c in cols)
+
+        if t == start_table:
+            parts.append(
+                f'{cte_name(t)} ({cte_cols}) AS (\n'
+                f'  SELECT DISTINCT ({pk}) FROM {schema}.{name}\n'
+                + (f'  WHERE {seed_where}\n' if seed_where else '') +
+                f')'
+            )
+        else:
+            # derive from all children that reference this parent (and are in the plan)
+            derivations = []
+            for child, fks in ((ch, fks) for ch, fks in child_fks.items() if ch in pk_by_table):
+                for fk in fks:
+                    if fk['parent'] != t:
+                        continue
+                    if child not in set(ordered_tables):
+                        continue
+
+                    child_schema, child_name = [qi(x, connection) for x in split_table(child)]
+
+                    # build equality join: child.fk_cols = parent.ref_cols
+                    on_pairs = [
+                        f'{child_schema}.{child_name}.{qi(c, connection)}'
+                        f' = {schema}.{name}.{qi(p, connection)}'
+                        for c, p in zip(fk['child_cols'], fk['parent_cols'])
+                    ]
+                    on_sql = ' AND '.join(on_pairs)
+
+                    child_pk = pk_by_table.get(child, [])
+                    # tuple of child PK columns qualified with table alias
+                    child_pk_qualified = ', '.join(
+                        f"{child_schema}.{child_name}.{qi(c, connection)}" for c in child_pk
+                    )
+                    # child PK columns qualified with the child's CTE
+                    child_pk_cte = ', '.join(
+                        f'{cte_name(child)}.{qi(c, connection)}' for c in child_pk
+                    )
+                    derivations.append(
+                        f'SELECT DISTINCT ({pk}) FROM {schema}.{name} '
+                        f'JOIN {child_schema}.{child_name} ON {on_sql} '
+                        f'JOIN {cte_name(child)} ON ({child_pk_qualified}) = ({child_pk_cte})'
+                    )
+
+            if not derivations:
+                # No child inside the required plan references this table -> nothing is needed
+                parts.append(f'{cte_name(t)} ({cte_cols}) AS (SELECT {pk} FROM {schema}.{name} WHERE FALSE)')
+            else:
+                parts.append(
+                    f'{cte_name(t)} ({cte_cols}) AS (\n  ' +
+                    '\n  UNION\n  '.join(derivations) + '\n)'
+                )
+    return 'WITH\n' + ',\n'.join(parts), {t: cte_name(t) for t in ordered_tables}
+
+def dump_subset(connection, table, seed_where, binary=False, debug=False, debug_sql=False):
+    foreign_keys = get_foreign_keys(connection)
+    parents, deps = build_parent_graph(foreign_keys)
+    required = ancestors_only(table, parents)  # table ∪ transitive parents
+    dep_sub = subgraph_edges(required, deps)
+    tables, has_cycles = topo_sort(required, dep_sub)
+
+    # prepare PKs and FK map
+    pk_by_table = {t: get_primary_key(connection, t) for t in tables}
+    child_fks   = build_fk_map_grouped(connection, get_foreign_keys(connection))
+    ctes, cte_names = build_selection_ctes(connection, tables, table, seed_where, child_fks, pk_by_table)
+
+    fmt = ('BINARY' if binary else 'CSV')
+
+    if has_cycles:
+        if debug:
+            print("WARNING: Dependency graph cycles detected — deferred constraints necessary!\n",
+                  file=sys.stderr)
+        print('BEGIN;\nSET CONSTRAINTS ALL DEFERRED;')
+        tables = dfs_postorder_ancestors(table, parents)  # deterministic fallback
+
+    for t in tables:
+        if t in required:
+            if debug:
+                print(t, file=sys.stderr)
+                for fk in foreign_keys:
+                    parent = f"{fk['parent_schema']}.{fk['parent_table']}"
+                    child  = f"{fk['child_schema']}.{fk['child_table']}"
+                    if parent == t and child in required:
+                        print(f" * {child}.{fk['child_col']} → {parent}.{fk['parent_col']}",
+                              file=sys.stderr)
+                print(file=sys.stderr)
+
+            schema, name = [qi(x, connection) for x in split_table(t)]
+            cols = ', '.join(get_table_columns(connection, t))
+            if t == table:
+                where = f' WHERE {seed_where}' if seed_where else ''
+            else:
+                pk = ', '.join(qi(c, connection) for c in pk_by_table[t])
+                where = f' WHERE ({pk}) IN (SELECT * FROM {cte_names[t]})'
+            copy = (
+                f'COPY (\n{ctes}\nSELECT {cols} FROM {schema}.{name}{where}\n) '
+                f'TO STDOUT WITH {fmt};'
+            )
+            if debug_sql:
+                print(copy + '\n', file=sys.stderr)
+            print(f'COPY {schema}.{name} ({cols}) FROM STDIN WITH {fmt};')
+            with connection.cursor() as cur:
+                cur.copy_expert(copy, sys.stdout)
+            print('\.\n')
+    if has_cycles:
+        print('COMMIT;')
+
 
 def main():
     parser = argparse.ArgumentParser(description=(
-        "Starting from the specified table find all tables that it depends "
-        "on through foreign key references and prints them in the correct "
-        "insertion order (parents first, start table last). It also shows "
-        "which child tables reference each parent."
+        "Starting from the specified table find all tables that it depends on "
+        "through foreign key references and dump all data needed to restore "
+        "the subset of the specified (start) table data matching the given "
+        "condition. The tables are dumped in the correct insertion order "
+        "(parents first, start table last) and only records needed by the "
+        "start table subset are present."
     ))
     parser.add_argument("--dbname", required=True, help="Database name")
-    parser.add_argument("--user", default=getpass.getuser(), help="Database user (default: current user)")
+    parser.add_argument("--user", default=getpass.getuser(),
+                        help="Database user (default: current system user)")
     parser.add_argument("--password", help="Database password (default: $PGPASSWORD)")
     parser.add_argument("--host", help="Database host (default: localhost)")
     parser.add_argument("--port", type=int, default=5432, help="Database port (default: 5432)")
-    parser.add_argument("table", help="Start table (schema.table or table; default schema = public)")
+    parser.add_argument("table",
+                        help="Start table (schema.table or table; default schema = public)")
+    parser.add_argument("--where",
+                        help="SQL condition limiting the records dumped from the start table.")
+    parser.add_argument("--binary", action='store_true',
+                        help="Dump data in BINARY COPY format (default: CSV).")
+    parser.add_argument("--debug", action='store_true',
+                        help="Print information about table relations to STDERR.")
+    parser.add_argument("--debug-sql", action='store_true',
+                        help="Print the SQL commands gathering the data subsets to STDERR.")
     args = parser.parse_args()
     table = args.table if "." in args.table else f"public.{args.table}"
     password = args.password or os.getenv("PGPASSWORD")
@@ -173,7 +384,8 @@ def main():
                 if not table_exists(connection, table):
                     print(f"[ERROR] Table '{table}' does not exist.", file=sys.stderr)
                     sys.exit(3)
-                foreign_keys = get_foreign_keys(connection)
+                dump_subset(connection, table, args.where, binary=args.binary,
+                            debug=args.debug, debug_sql=args.debug_sql)
             break
         except psycopg2.OperationalError as e:
             msg = str(e).lower()
@@ -189,24 +401,6 @@ def main():
                     sys.exit(1)
             print(f"[ERROR] PostgreSQL: {e}", file=sys.stderr)
             sys.exit(2)
-
-    parents, deps = build_parent_graph(foreign_keys)
-    required = ancestors_only(table, parents)  # table ∪ transitive parents
-    dep_sub = subgraph_edges(required, deps)
-    tables, has_cycles = topo_sort(required, dep_sub)
-
-    if has_cycles:
-        print("WARNING: Dependency graph cycles detected — deferred constraints necessary!\n\n")
-        tables = dfs_postorder_ancestors(table, parents)  # deterministic fallback
-
-    for t in tables:
-        if t in required:
-            print(t)
-            for fk in foreign_keys:
-                parent = f"{fk['parent_schema']}.{fk['parent_table']}"
-                child  = f"{fk['child_schema']}.{fk['child_table']}"
-                if parent == t and child in required:
-                    print(f" - {child}.{fk['child_col']} → {parent}.{fk['parent_col']}")
 
 
 if __name__ == "__main__":
