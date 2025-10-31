@@ -1980,12 +1980,10 @@ _translation_path = None
 def translation_path():
     """Return the current translation path as a list of strings.
 
-    Individual strings are names of directories containing translations.  The
-    list is currently created from the environment variable
-    PYTIS_TRANSLATION_MODULES.  It contains names of python modules separated
-    by colons.  These modules are imported and translations are searched in
-    directory 'translations' relative to module installation directory.
-    Default value is 'pytis:lcg'.
+    The list consists of the names of directories containing translations.  The
+    list is based on the environment variable PYTIS_TRANSLATION_PATH (which
+    contains the directory names separated by colons).  Pytis and LCG
+    translation directories are added automatically.
 
     """
     # Note: We can't make this a configuration option, because we need the value
@@ -1994,11 +1992,14 @@ def translation_path():
     global _translation_path
     if _translation_path is None:
         _translation_path = []
-        for modname in os.getenv('PYTIS_TRANSLATION_MODULES', 'pytis:lcg').split(':'):
+        env_var = os.getenv('PYTIS_TRANSLATION_PATH')
+        if env_var:
+            _translation_path.extend(d for d in env_var.split(':'))
+        for modname in ('pytis', 'lcg'):
             try:
                 module = __import__(modname)
             except ImportError as e:
-                print("Invalid module in PYTIS_TRANSLATION_MODULES:", e, file=sys.stderr)
+                print(e, file=sys.stderr)
             else:
                 directory = os.path.dirname(module.__file__)
                 _translation_path.append(os.path.join(directory, 'translations'))
