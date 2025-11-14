@@ -1,0 +1,13 @@
+# -*- coding: utf-8; mode: structured-text -*-
+# Copyright (c) 2019-2025 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (c) 2006-2018 OUI Technology Ltd.
+# This is part of the Pytis User Manual.
+# See the file pytis.cs.txt for copying conditions.
+
+= Vícenásobný duální formulář =
+ 
+Vícenásobný duální formulář je typem [help:pytis/DualForm duálního formuláře],
+který umožňuje přepínat mezi několika veldejšími formuláři pomocí záložek.
+Stejně jako u ostatních duálních formulářů, je aktuálně zobrazený vedlejší
+formulář závislý na aktuálním řádku hlavního [help:pytis/BrowseForm řádkového
+formuláře].

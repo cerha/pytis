@@ -1,4 +1,8 @@
 # -*- coding: utf-8; mode: structured-text -*-
+# Copyright (c) 2019-2025 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (c) 2006-2012 OUI Technology Ltd.
+# This is part of the Pytis User Manual.
+# See the file pytis.cs.txt for copying conditions.
 
 = Často kaldené dotazy =
 
@@ -42,7 +46,7 @@ Chybový dialog má ve spodní části tři tlačítka:
 Pokud použijete tlačítko „Odešli hlášení o chybě“, bude otevřeno okno, do
 kterého zadáte /svou/ e-mailovou adresu (nikoli adresu administrátora, ta už je
 v systému pevně zadaná).  Tím vývojáři uvidí kdo chybové hlášení zasílá a mohou
-případně odpovědět.  
+případně odpovědět.
 
 Pokud chybu jednou odešlete a podaří se vám stejnou chybu (způsobenou ve
 stejném místě programu se stejnými příznaky a stejným popisem), není nutné
@@ -53,7 +57,7 @@ aplikaci uzavřít a spustit ji znovu.
 
 Ve výjimečných případech se může stát, že se aplikace zcela zhroutí bez
 zobrazení chybového dialogu.  V takovém případě je nutné zaslat zprávu na
-adresu bugs@ebas.cz ručně (s použitím běžného poštovního programu).  Ve zprávě
+adresu bugs@is-it.eu ručně (s použitím běžného poštovního programu).  Ve zprávě
 se pokuste co nejpřesněji popsat jak ke zhroucení došlo.  Také se pokuste
 aplikaci spustit znovu a chybu zreprodukovat.  Pokud se podaří jednoznačně
 určit postup, při kterém se aplikace hroutí, je pravděpodobné, že chybu bude

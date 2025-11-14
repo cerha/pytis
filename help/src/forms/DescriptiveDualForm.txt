@@ -1,16 +1,11 @@
 # -*- coding: utf-8; mode: structured-text -*-
-# Copyright (c) 2019 Tomáš Cerha <t.cerha@gmail.com>
-# Copyright (c) 2006, 2012 OUI Technology Ltd.
+# Copyright (c) 2019-2025 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (c) 2006-2012 OUI Technology Ltd.
 # This is part of the Pytis User Manual.
 # See the file pytis.cs.txt for copying conditions.
 
 == Duální náhled ==
 
-Duální náhled je typem [help:pytis/DualForm duálního formuláře], který ve své horní části
-obsahuje běžný řádkový formulář.  V dolní části formuláře je však navíc
-zobrazen detailní náhled aktuálního záznamu -- právě vybraného řádku horního
-formuláře.
-
-Více také viz:
- * [help:pytis/BrowseForm] 
- * [help:pytis/ShowForm]
+Duální náhled je typem [help:pytis/DualForm duálního formuláře], kde hlavním
+formulářem je běžný [help:pytis/BrowseForm] a vedlejší formulář zobrazuje
+detail aktuálního záznamu hlavního formuláře ([help:pytis/ShowForm]).

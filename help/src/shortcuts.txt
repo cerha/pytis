@@ -1,5 +1,5 @@
 # -*- coding: utf-8; mode: structured-text -*-
-# Copyright (c) 2018-2024 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (c) 2018-2025 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (c) 2006-2017 OUI Technology Ltd.
 # This is part of the Pytis User Manual.
 # See the file pytis.cs.txt for copying conditions.
@@ -39,13 +39,13 @@ V zápisu zkratek je používána následující notace:
 
 Následující klávesové zkratky platí v rámci celé aplikace.
 
-| =F1=        | Nápověda |
-| =Ctrl-g=    | Přerušení (např. při déle trvající akci, jako je formátování tisku apod.) |
-| =Ctrl-Down= | Přepnutí na následující formulář v pořadí (viz. [help:pytis/stack]) |
-| =Ctrl-Up=   | Přepnutí na předchozí formulář v pořadí (viz. [help:pytis/stack]) |
-| =Ctrl-w=    | Přepnutí na posledně aktivní formulář (viz. [help:pytis/stack]) |
-| =Ctrl-l=    | Aktualizace zobrazení (překreslení obrazovky) |
-| =Alt-x=     | Ukončení běhu aplikace |
+| =F1=             | Nápověda |
+| =Ctrl-g=         | Přerušení (např. při déle trvající akci, jako je formátování tisku apod.) |
+| =Ctrl-Alt-Right= | Přepnutí na následující formulář (záložka vpravo od aktuálního) |
+| =Ctrl-Alt-Left=  | Přepnutí na předchozí formulář (záložka vlevo od aktuálního) |
+| =Ctrl-w=         | Přepnutí na posledně aktivní formulář |
+| =Ctrl-l=         | Aktualizace zobrazení (překreslení obrazovky) |
+| =Alt-x=          | Ukončení běhu aplikace |
 
 Pro přístup do menu jsou definovány tyto zkratky:
 
@@ -54,16 +54,6 @@ Pro přístup do menu jsou definovány tyto zkratky:
 | =Alt-Down=   | Otevření [help:pytis/context-menu kontextového menu] |
 
 V otevřeném menu se lze dále pohybovat šipkami.  Více také viz [help:pytis/menu].
-
-== Příkazy při práci se stromem ==
-
-Ve formulářích se stromovým uspořádáním navíc fungují následující příkazy.
-
-| =+= 		  | Otevřít/Zavřít strom |
-| =Ctrl-+= 	  | Otevřít/Zavřít podstrom |
-| =Shift-+= 	  | Otevřít celý strom |
-| =Shift--= 	  | Zavřít celý strom |
-| =Ctrl-Shift-+=  | Zvolit úroveň otevření stromu |
 
 == Příkazy v rámci formuláře ==
 
@@ -117,10 +107,21 @@ V režimu in-line editace lze navíc použít následující příkazy:
 | =Enter=    | Potvrzení zeditované hodnoty buňky |
 | =Escape=   | Ukončení editace buňky se zahozením případných změn |
 
+== Příkazy při práci se stromem ==
+
+Ve formulářích se stromovým uspořádáním navíc fungují následující příkazy.
+
+| =+= 		  | Otevřít/Zavřít strom |
+| =Ctrl-+= 	  | Otevřít/Zavřít podstrom |
+| =Shift-+= 	  | Otevřít celý strom |
+| =Shift--= 	  | Zavřít celý strom |
+| =Ctrl-Shift-+=  | Zvolit úroveň otevření stromu |
+
 == Příkazy v rámci dialogových oken a vyskakovacích formulářů ==
 
 Dialogová okna a vyskakovací formuláře se zobrazují jako samostatná okna,
-nejsou tedy součástí hlavního aplikačního okna a [help:pytis/stack zásobníku oken].
+nejsou tedy součástí hlavního aplikačního okna jako formuláře zobrazené v jeho
+záložkách.
 
 | =Escape=      | Opuštění formuláře nebo dialogu |
 | =Ctrl-Enter=  | Potvrzení formuláře nebo dialogu (odpovídá stisku výchozího tlačítka) |
