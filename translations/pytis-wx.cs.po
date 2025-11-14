@@ -232,7 +232,7 @@ msgstr "Spouštím formulář..."
 #: ../lib/pytis/form/application.py:1054
 #, python-format
 msgid "Form \"%s\" found between open windows."
-msgstr "Formulář \"%s\" nalezen na zásobníku oken."
+msgstr "Formulář \"%s\" nalezen mezi otevřenými okny."
 
 #: ../lib/pytis/form/application.py:1080
 #, python-format
