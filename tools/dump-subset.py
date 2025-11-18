@@ -289,7 +289,8 @@ def build_selection_ctes(connection, ordered_tables, start_table, seed_where, ch
                 )
     return 'WITH\n' + ',\n'.join(parts), {t: cte_name(t) for t in ordered_tables}
 
-def dump_subset(connection, table, seed_where, binary=False, debug=False, debug_sql=False):
+def dump_subset(connection, table, seed_where, binary=False, debug=False, debug_sql=False,
+                on_conflict_do_nothing=False):
     foreign_keys = get_foreign_keys(connection)
     parents, deps = build_parent_graph(foreign_keys)
     required = ancestors_only(table, parents)  # table ∪ transitive parents
@@ -323,22 +324,37 @@ def dump_subset(connection, table, seed_where, binary=False, debug=False, debug_
                 print(file=sys.stderr)
 
             schema, name = [qi(x, connection) for x in split_table(t)]
-            cols = ', '.join(get_table_columns(connection, t))
+            cols = get_table_columns(connection, t)
+            cols_list = ', '.join(cols)
+            pk = pk_by_table[t]
+            pk_list = ', '.join(qi(c, connection) for c in pk)
+            # Construct the SELECT that defines which rows to insert.
             if t == table:
                 where = f' WHERE {seed_where}' if seed_where else ''
             else:
-                pk = ', '.join(qi(c, connection) for c in pk_by_table[t])
-                where = f' WHERE ({pk}) IN (SELECT * FROM {cte_names[t]})'
-            copy = (
-                f'COPY (\n{ctes}\nSELECT {cols} FROM {schema}.{name}{where}\n) '
-                f'TO STDOUT WITH {fmt};'
-            )
+                where = f' WHERE ({pk_list}) IN (SELECT * FROM {cte_names[t]})'
+            select = f'{ctes}\nSELECT {cols_list} FROM {schema}.{name}{where}'
             if debug_sql:
-                print(copy + '\n', file=sys.stderr)
-            print(f'COPY {schema}.{name} ({cols}) FROM STDIN WITH {fmt};')
-            with connection.cursor() as cur:
-                cur.copy_expert(copy, sys.stdout)
-            print('\.\n')
+                print(select + ';\n', file=sys.stderr)
+
+            if on_conflict_do_nothing:
+                if not pk:
+                    raise ValueError(f"Table has no primary key for ON CONFLICT: {t}")
+                insert = f'INSERT INTO {schema}.{name} ({cols_list}) VALUES '
+                placeholders = '(' + ', '.join(['%s'] * len(cols)) + ')'
+                on_conflict = f' ON CONFLICT ({pk_list}) DO NOTHING;'
+                with connection.cursor() as cur:
+                    cur.execute(select)
+                    for row in cur:
+                        values = cur.mogrify(placeholders, row).decode('utf-8')
+                        print(insert + values + on_conflict)
+            else:
+                # Dump as COPY.
+                print(f'COPY {schema}.{name} ({cols_list}) FROM STDIN WITH {fmt};')
+                with connection.cursor() as cur:
+                    cur.copy_expert(f'COPY (\n{select}\n) TO STDOUT WITH {fmt};', sys.stdout)
+                print('\.\n')
+
     if has_cycles:
         print('COMMIT;')
 
@@ -364,6 +380,9 @@ def main():
                         help="SQL condition limiting the records dumped from the start table.")
     parser.add_argument("--binary", action='store_true',
                         help="Dump data in BINARY COPY format (default: CSV).")
+    parser.add_argument("--on-conflict-do-nothing", "-i", action='store_true',
+                        help=("Output INSERT statements with ON CONFLICT (pk) DO NOTHING "
+                              "instead of COPY, allowing safe merges into an existing database."))
     parser.add_argument("--debug", action='store_true',
                         help="Print information about table relations to STDERR.")
     parser.add_argument("--debug-sql", action='store_true',
@@ -385,7 +404,8 @@ def main():
                     print(f"[ERROR] Table '{table}' does not exist.", file=sys.stderr)
                     sys.exit(3)
                 dump_subset(connection, table, args.where, binary=args.binary,
-                            debug=args.debug, debug_sql=args.debug_sql)
+                            debug=args.debug, debug_sql=args.debug_sql,
+                            on_conflict_do_nothing=args.on_conflict_do_nothing)
             break
         except psycopg2.OperationalError as e:
             msg = str(e).lower()
