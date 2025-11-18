@@ -235,7 +235,7 @@ def build_selection_ctes(connection, ordered_tables, start_table, seed_where, ch
         if not cols:
             raise ValueError(f"Table has no primary key: {t}")
         cte_cols = ', '.join(qi(c, connection) for c in cols)
-        pk = ', '.join(f'{t}.{qi(c, connection)}' for c in cols)
+        pk = ', '.join(f'{schema}.{name}.{qi(c, connection)}' for c in cols)
 
         if t == start_table:
             parts.append(
