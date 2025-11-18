@@ -392,7 +392,7 @@ def main():
             if password is None and ("password authentication failed" in msg
                                      or "no password supplied" in msg
                                      or "authentication failed" in msg
-                                     or getattr(err, "pgcode", None) in ("28P01", "28000")):
+                                     or getattr(e, "pgcode", None) in ("28P01", "28000")):
                 try:
                     password = getpass.getpass("Password: ")
                     continue
