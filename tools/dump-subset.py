@@ -16,19 +16,21 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""List tables needed to preserve foreign key integrity on insertion.
+"""Dump a minimal, dependency-complete subset of a PostgreSQL table.
 
-Starting from the specified table, the script finds all tables
-that it depends on through foreign key references and prints them
-in the correct insertion order (parents first, start table last).
-It also shows which child tables reference each parent.
+Given a starting table and an optional WHERE condition, this tool finds all
+rows in that table matching the condition, and all rows in other tables that
+are required to satisfy foreign-key references (recursively).  The result is
+a minimal, self-contained subset of the database that preserves referential
+integrity.
 
-Use this to copy or export a subset of data into a new database
-while keeping all required referenced records.
+Tables are emitted in the correct insertion order (parents first).  Output can
+be generated either as COPY ... FROM STDIN blocks or as INSERT statements with
+ON CONFLICT DO NOTHING, depending on the selected options.
 
-If the reachable subgraph is acyclic, output topological order (parents →
-children).  If cycles exist, warn and output BFS order (insertion order
-is irrelevant with deferred constraints).
+This makes it possible to export a consistent data slice from one database and
+import it into another, or to merge multiple subsets safely into the same target
+database.
 
 """
 
@@ -361,32 +363,37 @@ def dump_subset(connection, table, seed_where, binary=False, debug=False, debug_
 
 def main():
     parser = argparse.ArgumentParser(description=(
-        "Starting from the specified table find all tables that it depends on "
-        "through foreign key references and dump all data needed to restore "
-        "the subset of the specified (start) table data matching the given "
-        "condition. The tables are dumped in the correct insertion order "
-        "(parents first, start table last) and only records needed by the "
-        "start table subset are present."
+        "Export a minimal, referentially-complete subset of a PostgreSQL database. "
+        "Starting from a given table (and optional WHERE condition), the tool finds "
+        "all required rows in that table and all recursively referenced parent tables. "
+        "The result is emitted in insertion-safe order so it can be imported into a "
+        "clean database or merged into an existing one."
     ))
-    parser.add_argument("--dbname", required=True, help="Database name")
+    parser.add_argument("--dbname", required=True,
+                        help="Database name")
     parser.add_argument("--user", default=getpass.getuser(),
                         help="Database user (default: current system user)")
-    parser.add_argument("--password", help="Database password (default: $PGPASSWORD)")
-    parser.add_argument("--host", help="Database host (default: localhost)")
-    parser.add_argument("--port", type=int, default=5432, help="Database port (default: 5432)")
+    parser.add_argument("--password",
+                        help="Database password (default: $PGPASSWORD)")
+    parser.add_argument("--host",
+                        help="Database host (default: localhost)")
+    parser.add_argument("--port", type=int, default=5432,
+                        help="Database port (default: 5432)")
+
     parser.add_argument("table",
-                        help="Start table (schema.table or table; default schema = public)")
+                        help="Start table (schema.table or just table; default schema = public)")
     parser.add_argument("--where",
-                        help="SQL condition limiting the records dumped from the start table.")
+                        help="SQL condition limiting the rows selected from the start table.")
     parser.add_argument("--binary", action='store_true',
-                        help="Dump data in BINARY COPY format (default: CSV).")
+                        help="Use BINARY COPY format instead of CSV.")
     parser.add_argument("--on-conflict-do-nothing", "-i", action='store_true',
                         help=("Output INSERT statements with ON CONFLICT (pk) DO NOTHING "
                               "instead of COPY, allowing safe merges into an existing database."))
     parser.add_argument("--debug", action='store_true',
-                        help="Print information about table relations to STDERR.")
+                        help="Print table dependency information to STDERR.")
     parser.add_argument("--debug-sql", action='store_true',
-                        help="Print the SQL commands gathering the data subsets to STDERR.")
+                        help="Print the internally generated SQL queries to STDERR.")
+
     args = parser.parse_args()
     table = args.table if "." in args.table else f"public.{args.table}"
     password = args.password or os.getenv("PGPASSWORD")
