@@ -301,7 +301,7 @@ def dump_subset(connection, table, seed_where, binary=False, debug=False, debug_
 
     # prepare PKs and FK map
     pk_by_table = {t: get_primary_key(connection, t) for t in tables}
-    child_fks   = build_fk_map_grouped(connection, get_foreign_keys(connection))
+    child_fks   = build_fk_map_grouped(connection, foreign_keys)
     ctes, cte_names = build_selection_ctes(connection, tables, table, seed_where, child_fks, pk_by_table)
 
     fmt = ('BINARY' if binary else 'CSV')
