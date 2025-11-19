@@ -345,7 +345,11 @@ def dump_subset(connection, table, seed_where, binary=False, debug=False, debug_
                 with connection.cursor() as cur:
                     cur.execute(select)
                     for row in cur:
-                        values = cur.mogrify(placeholders, row).decode('utf-8')
+                        values = cur.mogrify(
+                            placeholders,
+                            [psycopg2.extras.Json(v) if isinstance(v, (dict, list)) else v
+                             for v in row],
+                        ).decode('utf-8')
                         print(insert + values + on_conflict)
             else:
                 # Dump as COPY.
