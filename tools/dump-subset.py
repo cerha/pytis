@@ -299,64 +299,68 @@ def dump_subset(connection, table, seed_where, binary=False, debug=False, debug_
     dep_sub = subgraph_edges(required, deps)
     tables, has_cycles = topo_sort(required, dep_sub)
     if has_cycles:
-        if debug:
-            print("WARNING: Dependency graph cycles detected — deferred constraints necessary!\n",
-                  file=sys.stderr)
-        print('BEGIN;\nSET CONSTRAINTS ALL DEFERRED;')
         tables = dfs_postorder_ancestors(table, parents)  # deterministic fallback
+    required_tables = [t for t in tables if t in required]
     # prepare PKs and FK map
     pk_by_table = {t: get_primary_key(connection, t) for t in tables}
     child_fks   = build_fk_map_grouped(connection, foreign_keys)
     ctes, cte_names = build_selection_ctes(connection, tables, table, seed_where, child_fks, pk_by_table)
 
     fmt = ('BINARY' if binary else 'CSV')
-    for t in tables:
-        if t in required:
-            if debug:
-                print(t, file=sys.stderr)
-                for fk in foreign_keys:
-                    parent = f"{fk['parent_schema']}.{fk['parent_table']}"
-                    child  = f"{fk['child_schema']}.{fk['child_table']}"
-                    if parent == t and child in required:
-                        print(f" * {child}.{fk['child_col']} → {parent}.{fk['parent_col']}",
-                              file=sys.stderr)
-                print(file=sys.stderr)
 
-            schema, name = [qi(x, connection) for x in split_table(t)]
-            cols = get_table_columns(connection, t)
-            cols_list = ', '.join(cols)
-            pk = pk_by_table[t]
-            pk_list = ', '.join(qi(c, connection) for c in pk)
-            # Construct the SELECT that defines which rows to insert.
-            if t == table:
-                where = f' WHERE {seed_where}' if seed_where else ''
-            else:
-                where = f' WHERE ({pk_list}) IN (SELECT * FROM {cte_names[t]})'
-            select = f'{ctes}\nSELECT {cols_list} FROM {schema}.{name}{where}'
-            if debug_sql:
-                print(select + ';\n', file=sys.stderr)
+    if debug:
+        # Print dependencies first - if dumping fails, we may track the problem better
+        # when we see the full graph.
+        if has_cycles:
+            print("WARNING: Dependency graph cycles detected — deferred constraints necessary!",
+                  file=sys.stderr)
+        for t in required_tables:
+            print(t, file=sys.stderr)
+            for fk in foreign_keys:
+                parent = f"{fk['parent_schema']}.{fk['parent_table']}"
+                child  = f"{fk['child_schema']}.{fk['child_table']}"
+                if parent == t and child in required:
+                    print(f" • {child}.{fk['child_col']} → {parent}.{fk['parent_col']}",
+                          file=sys.stderr)
+            print(file=sys.stderr)
+    if has_cycles:
+        print('BEGIN;\nSET CONSTRAINTS ALL DEFERRED;')
+    for t in required_tables:
+        schema, name = [qi(x, connection) for x in split_table(t)]
+        cols = get_table_columns(connection, t)
+        cols_list = ', '.join(cols)
+        pk = pk_by_table[t]
+        pk_list = ', '.join(qi(c, connection) for c in pk)
+        # Construct the SELECT that defines which rows to insert.
+        if t == table:
+            where = f' WHERE {seed_where}' if seed_where else ''
+        else:
+            where = f' WHERE ({pk_list}) IN (SELECT * FROM {cte_names[t]})'
+        select = f'{ctes}\nSELECT {cols_list} FROM {schema}.{name}{where}'
+        if debug_sql:
+            print(select + ';\n', file=sys.stderr)
 
-            if on_conflict_do_nothing:
-                if not pk:
-                    raise ValueError(f"Table has no primary key for ON CONFLICT: {t}")
-                insert = f'INSERT INTO {schema}.{name} ({cols_list}) VALUES '
-                placeholders = '(' + ', '.join(['%s'] * len(cols)) + ')'
-                on_conflict = f' ON CONFLICT ({pk_list}) DO NOTHING;'
-                with connection.cursor() as cur:
-                    cur.execute(select)
-                    for row in cur:
-                        values = cur.mogrify(
-                            placeholders,
-                            [psycopg2.extras.Json(v) if isinstance(v, (dict, list)) else v
-                             for v in row],
-                        ).decode('utf-8')
-                        print(insert + values + on_conflict)
-            else:
-                # Dump as COPY.
-                print(f'COPY {schema}.{name} ({cols_list}) FROM STDIN WITH {fmt};')
-                with connection.cursor() as cur:
-                    cur.copy_expert(f'COPY (\n{select}\n) TO STDOUT WITH {fmt};', sys.stdout)
-                print('\.\n')
+        if on_conflict_do_nothing:
+            if not pk:
+                raise ValueError(f"Table has no primary key for ON CONFLICT: {t}")
+            insert = f'INSERT INTO {schema}.{name} ({cols_list}) VALUES '
+            placeholders = '(' + ', '.join(['%s'] * len(cols)) + ')'
+            on_conflict = f' ON CONFLICT ({pk_list}) DO NOTHING;'
+            with connection.cursor() as cur:
+                cur.execute(select)
+                for row in cur:
+                    values = cur.mogrify(
+                        placeholders,
+                        [psycopg2.extras.Json(v) if isinstance(v, (dict, list)) else v
+                         for v in row],
+                    ).decode('utf-8')
+                    print(insert + values + on_conflict)
+        else:
+            # Dump as COPY.
+            print(f'COPY {schema}.{name} ({cols_list}) FROM STDIN WITH {fmt};')
+            with connection.cursor() as cur:
+                cur.copy_expert(f'COPY (\n{select}\n) TO STDOUT WITH {fmt};', sys.stdout)
+            print('\.\n')
 
     if has_cycles:
         print('COMMIT;')
