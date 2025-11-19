@@ -298,21 +298,18 @@ def dump_subset(connection, table, seed_where, binary=False, debug=False, debug_
     required = ancestors_only(table, parents)  # table ∪ transitive parents
     dep_sub = subgraph_edges(required, deps)
     tables, has_cycles = topo_sort(required, dep_sub)
-
-    # prepare PKs and FK map
-    pk_by_table = {t: get_primary_key(connection, t) for t in tables}
-    child_fks   = build_fk_map_grouped(connection, foreign_keys)
-    ctes, cte_names = build_selection_ctes(connection, tables, table, seed_where, child_fks, pk_by_table)
-
-    fmt = ('BINARY' if binary else 'CSV')
-
     if has_cycles:
         if debug:
             print("WARNING: Dependency graph cycles detected — deferred constraints necessary!\n",
                   file=sys.stderr)
         print('BEGIN;\nSET CONSTRAINTS ALL DEFERRED;')
         tables = dfs_postorder_ancestors(table, parents)  # deterministic fallback
+    # prepare PKs and FK map
+    pk_by_table = {t: get_primary_key(connection, t) for t in tables}
+    child_fks   = build_fk_map_grouped(connection, foreign_keys)
+    ctes, cte_names = build_selection_ctes(connection, tables, table, seed_where, child_fks, pk_by_table)
 
+    fmt = ('BINARY' if binary else 'CSV')
     for t in tables:
         if t in required:
             if debug:
