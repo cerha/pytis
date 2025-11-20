@@ -106,17 +106,18 @@ def get_table_columns(connection, table):
 
 def build_parent_graph(fks_rows):
     """Return:
-       - parents[child] -> [(parent, child_col, parent_col, constraint_name, col_order)]
-       - deps[parent] -> {child}  (for topo-sort when restricted to ancestors)
+       - parents_by_child[child] -> [...]
+       - children_by_parent[parent] -> {child}
     """
-    parents, deps = collections.defaultdict(list), collections.defaultdict(set)
+    parents_by_child = collections.defaultdict(list)
+    children_by_parent = collections.defaultdict(set)
     for fk in fks_rows:
         child = f"{fk['child_schema']}.{fk['child_table']}"
         parent = f"{fk['parent_schema']}.{fk['parent_table']}"
-        parents[child].append((parent, fk['child_col'], fk['parent_col'],
-                               fk['constraint_name'], fk['col_order']))
-        deps[parent].add(child)
-    return parents, deps
+        parents_by_child[child].append((parent, fk['child_col'], fk['parent_col'],
+                                        fk['constraint_name'], fk['col_order']))
+        children_by_parent[parent].add(child)
+    return parents_by_child, children_by_parent
 
 def ancestors_only(start, parents):
     seen, q = set([start]), collections.deque([start])
@@ -128,8 +129,8 @@ def ancestors_only(start, parents):
                 q.append(p)
     return seen
 
-def subgraph_edges(nodes, deps):
-    sub = {u: {v for v in deps.get(u, set()) if v in nodes} for u in nodes}
+def subgraph_edges(nodes, children_map):
+    sub = {u: {v for v in children_map.get(u, set()) if v in nodes} for u in nodes}
     for u in nodes:
         sub.setdefault(u, set())
     return sub
@@ -147,22 +148,7 @@ def topo_sort(nodes, deps):
             indeg[v] -= 1
             if indeg[v] == 0:
                 q.append(v)
-    return order, len(order) != len(nodes)
-
-def dfs_postorder_ancestors(start, parents):
-    sys.setrecursionlimit(10000)
-    seen, visiting, out = set(), set(), []
-    def visit(t):
-        if t in seen or t in visiting:
-            return
-        visiting.add(t)
-        for p, *_ in parents.get(t, []):
-            visit(p)
-        visiting.remove(t)
-        seen.add(t)
-        out.append(t)
-    visit(start)
-    return out  # parents first, start last
+    return order
 
 def get_primary_key(connection, table):
     """Return list of PK columns in order, or [] if no PK."""
@@ -180,9 +166,9 @@ def get_primary_key(connection, table):
         """, (schema, name))
         return [r[0] for r in cur.fetchall()]
 
-def build_fk_map_grouped(connection, foreign_keys):
+def build_child_fk_map(connection, foreign_keys):
     """
-    Return child_fks: child -> list of dicts:
+    Return child_fk_map: child -> list of dicts:
       { 'parent': 'schema.table', 'child_cols': [...], 'parent_cols': [...], 'cons': 'name' }
     Multi-column FKs are grouped and ordered by col_order.
     """
@@ -193,31 +179,20 @@ def build_fk_map_grouped(connection, foreign_keys):
         tmp[child][(parent, fk['constraint_name'])].append(
             (fk['child_col'], fk['parent_col'], fk['col_order'])
         )
-    child_fks = collections.defaultdict(list)
+    child_fk_map = collections.defaultdict(list)
     for child, groups in tmp.items():
         for (parent, cons), cols in groups.items():
             cols_sorted = sorted(cols, key=lambda x: x[2])
-            child_fks[child].append({
+            child_fk_map[child].append({
                 'parent': parent,
                 'child_cols': [c for c, _, _ in cols_sorted],
                 'parent_cols': [p for _, p, _ in cols_sorted],
                 'cons': cons
             })
-    return child_fks
-
-def copy_command(connection, table, where_clause=None, with_header=False):
-    """
-    Return a server-side COPY TO STDOUT statement selecting explicit columns,
-    optionally with a WHERE clause string (e.g. 'id IN (..)' or 'id = 42').
-    """
-    schema, name = [qi(x, connection) for x in split_table(table)]
-    cols = ', '.join(get_table_columns(connection, table))
-    where = f' WHERE {where_clause}' if where_clause else ''
-    header = ' HEADER' if with_header else ''
-    return f'COPY (SELECT {cols} FROM {schema}.{name}{where}) TO STDOUT WITH CSV{header};'
+    return child_fk_map
 
 def build_selection_ctes(connection, ordered_tables, start_table, seed_where,
-                         child_fks, pk_by_table):
+                         child_fk_map, pk_by_table):
     """
     Return a single string like:
       WITH sel_schema_table(pk1, pk2, ...) AS (...),
@@ -248,7 +223,7 @@ def build_selection_ctes(connection, ordered_tables, start_table, seed_where,
         else:
             # derive from all children that reference this parent (and are in the plan)
             derivations = []
-            for child, fks in ((ch, fks) for ch, fks in child_fks.items() if ch in pk_by_table):
+            for child, fks in ((ch, fks) for ch, fks in child_fk_map.items() if ch in pk_by_table):
                 for fk in fks:
                     if fk['parent'] != t:
                         continue
@@ -333,36 +308,33 @@ def dump_subset(connection, table, seed_where, binary=False, debug=False, debug_
                 on_conflict_do_nothing=False, full_dump_on_cycles=False):
     foreign_keys = get_foreign_keys(connection)
     parents, deps = build_parent_graph(foreign_keys)
-    required = ancestors_only(table, parents)  # table ∪ transitive parents
-    dep_sub = subgraph_edges(required, deps)
-    tables, has_cycles = topo_sort(required, dep_sub)
+    reachable_tables = ancestors_only(table, parents)  # table ∪ transitive parents
+    children_sub = subgraph_edges(reachable_tables, deps)
+    # Order: acyclic tables from topo_sort first, then the rest from reachable_tables (cycles)
+    ordered_tables = list(topo_sort(reachable_tables, children_sub))
+    ordered_tables += [t for t in reachable_tables if t not in set(ordered_tables)]
 
-    # Order: acyclic tables from topo_sort first, then the rest from required (cycles)
-    tables_set = set(tables)
-    ordered_required = list(tables) + [t for t in required if t not in tables_set]
-    required_tables = ordered_required
-
-    # detect SCCs on the required subgraph
-    sccs = strongly_connected_components(required, dep_sub)
+    # detect SCCs on the reachable_tables subgraph
+    sccs = strongly_connected_components(reachable_tables, children_sub)
     cyclic_tables = set()
     for scc in sccs:
         if len(scc) > 1:
             cyclic_tables.update(scc)
         else:
             v = next(iter(scc))
-            if v in dep_sub and v in dep_sub[v]:
+            if v in children_sub and v in children_sub[v]:
                 cyclic_tables.add(v)
 
-    subset_tables = [t for t in required_tables if t not in cyclic_tables]
-    full_tables = [t for t in required_tables if t in cyclic_tables]
+    subset_tables = [t for t in ordered_tables if t not in cyclic_tables]
+    full_tables = [t for t in ordered_tables if t in cyclic_tables]
 
     if debug:
-        for t in required_tables:
+        for t in ordered_tables:
             print(t, file=sys.stderr)
             for fk in foreign_keys:
                 parent = f"{fk['parent_schema']}.{fk['parent_table']}"
                 child = f"{fk['child_schema']}.{fk['child_table']}"
-                if parent == t and child in required:
+                if parent == t and child in reachable_tables:
                     print(f" • {child}.{fk['child_col']} → {parent}.{fk['parent_col']}",
                           file=sys.stderr)
             if t in cyclic_tables:
@@ -380,12 +352,12 @@ def dump_subset(connection, table, seed_where, binary=False, debug=False, debug_
         sys.exit(4)
 
     # prepare PKs and FK map
-    pk_by_table = {t: get_primary_key(connection, t) for t in required_tables}
-    child_fks = build_fk_map_grouped(connection, foreign_keys)
+    pk_by_table = {t: get_primary_key(connection, t) for t in ordered_tables}
+    child_fk_map = build_child_fk_map(connection, foreign_keys)
 
     if subset_tables:
         ctes, cte_names = build_selection_ctes(connection, subset_tables, table, seed_where,
-                                               child_fks, pk_by_table)
+                                               child_fk_map, pk_by_table)
     else:
         ctes, cte_names = '', {}
 
@@ -393,7 +365,7 @@ def dump_subset(connection, table, seed_where, binary=False, debug=False, debug_
         print('BEGIN;\nSET CONSTRAINTS ALL DEFERRED;')
 
     fmt = ('BINARY' if binary else 'CSV')
-    for t in required_tables:
+    for t in ordered_tables:
         schema, name = [qi(x, connection) for x in split_table(t)]
         cols = get_table_columns(connection, t)
         cols_list = ', '.join(cols)
