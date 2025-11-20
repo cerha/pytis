@@ -372,17 +372,17 @@ def dump_subset(connection, table, seed_where, binary=False, debug=False, debug_
         pk = pk_by_table[t]
         pk_list = ', '.join(qi(c, connection) for c in pk)
 
-        if t in full_tables:
-            # Full dump for cyclic tables when allowed.
-            where = ''
-        elif t == table:
-            # Use the given connection for the start table.
-            where = f' WHERE {seed_where}' if seed_where else ''
-        else:
-            # Construct the SELECT that defines which rows to insert.
-            where = f' WHERE ({pk_list}) IN (SELECT * FROM {cte_names[t]})'
-        select = f'{ctes}SELECT {cols_list} FROM {schema}.{name}{where}'
-
+        # Construct the SELECT that defines which rows to insert.
+        select = f'SELECT {cols_list} FROM {schema}.{name}'
+        # Use unconditional SELECT for the start table without a seed condition
+        # and for tables that are not in subset_tables (e.g. cyclic tables
+        # when --full-dump-on-cycles is used).
+        if t == table and seed_where:
+            # Apply the user-specified condition on the start table.
+            select += f' WHERE {seed_where}'
+        elif t != table and t in subset_tables:
+            # For subsetted tables, restrict rows via CTE-derived primary keys.
+            select = f'{ctes}{select} WHERE ({pk_list}) IN (SELECT * FROM {cte_names[t]})'
         if debug_sql:
             print(select + ';\n', file=sys.stderr)
 
