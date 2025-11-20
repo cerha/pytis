@@ -289,6 +289,46 @@ def build_selection_ctes(connection, ordered_tables, start_table, seed_where,
                              '\n  UNION\n  '.join(derivations) + '\n)')
     return 'WITH\n' + ',\n'.join(parts) + '\n', {t: cte_name(t) for t in ordered_tables}
 
+def strongly_connected_components(nodes, deps):
+    """Return list of SCCs, each as a set of nodes, using Tarjan's algorithm."""
+    index = 0
+    stack = []
+    on_stack = set()
+    indices = {}
+    lowlink = {}
+    sccs = []
+
+    def strongconnect(v):
+        nonlocal index
+        indices[v] = index
+        lowlink[v] = index
+        index += 1
+        stack.append(v)
+        on_stack.add(v)
+
+        for w in deps.get(v, ()):
+            if w not in indices:
+                strongconnect(w)
+                lowlink[v] = min(lowlink[v], lowlink[w])
+            elif w in on_stack:
+                lowlink[v] = min(lowlink[v], indices[w])
+
+        if lowlink[v] == indices[v]:
+            scc = set()
+            while True:
+                w = stack.pop()
+                on_stack.remove(w)
+                scc.add(w)
+                if w == v:
+                    break
+            sccs.append(scc)
+
+    for v in nodes:
+        if v not in indices:
+            strongconnect(v)
+
+    return sccs
+
 def dump_subset(connection, table, seed_where, binary=False, debug=False, debug_sql=False,
                 on_conflict_do_nothing=False, full_dump_on_cycles=False):
     foreign_keys = get_foreign_keys(connection)
@@ -296,35 +336,25 @@ def dump_subset(connection, table, seed_where, binary=False, debug=False, debug_
     required = ancestors_only(table, parents)  # table ∪ transitive parents
     dep_sub = subgraph_edges(required, deps)
     tables, has_cycles = topo_sort(required, dep_sub)
-    if has_cycles:
-        tables = dfs_postorder_ancestors(table, parents)  # deterministic fallback
-    required_tables = [t for t in tables if t in required]
-    # prepare PKs and FK map
-    pk_by_table = {t: get_primary_key(connection, t) for t in tables}
-    child_fks = build_fk_map_grouped(connection, foreign_keys)
-    ctes, cte_names = build_selection_ctes(connection, tables, table, seed_where,
-                                           child_fks, pk_by_table)
 
-    fmt = ('BINARY' if binary else 'CSV')
+    # Order: acyclic tables from topo_sort first, then the rest from required (cycles)
+    tables_set = set(tables)
+    ordered_required = list(tables) + [t for t in required if t not in tables_set]
+    required_tables = ordered_required
 
-    if has_cycles:
-        # Here we know we hit a real CTE ordering problem.
-        if full_dump_on_cycles:
-            # Fall back to full-table dumps for all reachable tables.
-            print("WARNING: Foreign-key cycles prevent CTE-based subsetting; "
-                  "falling back to full-table dumps for all reachable tables.\n",
-                  file=sys.stderr)
-            ctes = ''
+    # detect SCCs on the required subgraph
+    sccs = strongly_connected_components(required, dep_sub)
+    cyclic_tables = set()
+    for scc in sccs:
+        if len(scc) > 1:
+            cyclic_tables.update(scc)
         else:
-            print("ERROR: Foreign-key cycles cause CTE ordering problems; "
-                  "a minimal subset cannot be safely computed for these tables:",
-                  file=sys.stderr)
-            for t in sorted(required):
-                print(f"  - {t}", file=sys.stderr)
-            print("Re-run with --full-dump-on-cycles to dump these tables in full "
-                  "instead of a minimal subset.",
-                  file=sys.stderr)
-            sys.exit(4)
+            v = next(iter(scc))
+            if v in dep_sub and v in dep_sub[v]:
+                cyclic_tables.add(v)
+
+    subset_tables = [t for t in required_tables if t not in cyclic_tables]
+    full_tables = [t for t in required_tables if t in cyclic_tables]
 
     if debug:
         for t in required_tables:
@@ -335,11 +365,34 @@ def dump_subset(connection, table, seed_where, binary=False, debug=False, debug_
                 if parent == t and child in required:
                     print(f" • {child}.{fk['child_col']} → {parent}.{fk['parent_col']}",
                           file=sys.stderr)
+            if t in cyclic_tables:
+                print("   (in cyclic dependency group; may be dumped in full)",
+                      file=sys.stderr)
             print(file=sys.stderr)
 
-    if has_cycles:
+    if cyclic_tables and not full_dump_on_cycles:
+        print("ERROR: Some tables participate in circular foreign-key dependencies "
+              "and cannot be safely subsetted:", file=sys.stderr)
+        for t in sorted(full_tables):
+            print(f" • {t}", file=sys.stderr)
+        print("Re-run with --full-dump-on-cycles to dump these tables in full instead "
+              "of a minimal subset.", file=sys.stderr)
+        sys.exit(4)
+
+    # prepare PKs and FK map
+    pk_by_table = {t: get_primary_key(connection, t) for t in required_tables}
+    child_fks = build_fk_map_grouped(connection, foreign_keys)
+
+    if subset_tables:
+        ctes, cte_names = build_selection_ctes(connection, subset_tables, table, seed_where,
+                                               child_fks, pk_by_table)
+    else:
+        ctes, cte_names = '', {}
+
+    if cyclic_tables and full_dump_on_cycles:
         print('BEGIN;\nSET CONSTRAINTS ALL DEFERRED;')
 
+    fmt = ('BINARY' if binary else 'CSV')
     for t in required_tables:
         schema, name = [qi(x, connection) for x in split_table(t)]
         cols = get_table_columns(connection, t)
@@ -347,13 +400,14 @@ def dump_subset(connection, table, seed_where, binary=False, debug=False, debug_
         pk = pk_by_table[t]
         pk_list = ', '.join(qi(c, connection) for c in pk)
 
-        # Construct the SELECT that defines which rows to insert.
-        if t == table:
-            where = f' WHERE {seed_where}' if seed_where else ''
-        elif has_cycles:
-            # --full-dump-on-cycles was passed – dump entire table.
+        if t in full_tables:
+            # Full dump for cyclic tables when allowed.
             where = ''
+        elif t == table:
+            # Use the given connection for the start table.
+            where = f' WHERE {seed_where}' if seed_where else ''
         else:
+            # Construct the SELECT that defines which rows to insert.
             where = f' WHERE ({pk_list}) IN (SELECT * FROM {cte_names[t]})'
         select = f'{ctes}SELECT {cols_list} FROM {schema}.{name}{where}'
 
@@ -382,7 +436,7 @@ def dump_subset(connection, table, seed_where, binary=False, debug=False, debug_
                 cur.copy_expert(f'COPY (\n{select}\n) TO STDOUT WITH {fmt};', sys.stdout)
             print('\.\n')
 
-    if has_cycles:
+    if cyclic_tables and full_dump_on_cycles:
         print('COMMIT;')
 
 
