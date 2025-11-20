@@ -305,7 +305,7 @@ def strongly_connected_components(nodes, deps):
     return sccs
 
 def dump_subset(connection, table, seed_where, binary=False, debug=False, debug_sql=False,
-                on_conflict_do_nothing=False, full_dump_on_cycles=False):
+                on_conflict_do_nothing=False, full_dump_on_cycles=False, disable_triggers=False):
     foreign_keys = get_foreign_keys(connection)
     parents, deps = build_parent_graph(foreign_keys)
     reachable_tables = ancestors_only(table, parents)  # table ∪ transitive parents
@@ -364,6 +364,13 @@ def dump_subset(connection, table, seed_where, binary=False, debug=False, debug_
     if cyclic_tables and full_dump_on_cycles:
         print('BEGIN;\nSET CONSTRAINTS ALL DEFERRED;')
 
+    # Disable user triggers before inserting data (if requested).
+    if disable_triggers:
+        for t in ordered_tables:
+            schema, name = split_table(t)
+            print(f'ALTER TABLE {qi(schema, connection)}.{qi(name, connection)} '
+                  f'DISABLE TRIGGER USER;')
+
     fmt = ('BINARY' if binary else 'CSV')
     for t in ordered_tables:
         schema, name = [qi(x, connection) for x in split_table(t)]
@@ -408,6 +415,13 @@ def dump_subset(connection, table, seed_where, binary=False, debug=False, debug_
                 cur.copy_expert(f'COPY (\n{select}\n) TO STDOUT WITH {fmt};', sys.stdout)
             print('\.\n')
 
+    # Re-enable triggers after the dump (if disabled earlier).
+    if disable_triggers:
+        for t in ordered_tables:
+            schema, name = split_table(t)
+            print(f'ALTER TABLE {qi(schema, connection)}.{qi(name, connection)} '
+                  f'ENABLE TRIGGER USER;')
+
     if cyclic_tables and full_dump_on_cycles:
         print('COMMIT;')
 
@@ -445,6 +459,10 @@ def main():
                               "prevent extracting a minimal subset. Without this option the "
                               "program aborts and shows which tables are affected. Using this "
                               "option may add extra rows to the output."))
+    parser.add_argument("--disable-triggers", "-T", action='store_true',
+                        help=("Temporarily disable all USER triggers on affected tables "
+                              "during data import. Useful when ON INSERT triggers "
+                              "would otherwise reject or mutate rows."))
     parser.add_argument("--debug", action='store_true',
                         help="Print table dependency information to STDERR.")
     parser.add_argument("--debug-sql", action='store_true',
@@ -469,7 +487,8 @@ def main():
                 dump_subset(connection, table, args.where, binary=args.binary,
                             debug=args.debug, debug_sql=args.debug_sql,
                             on_conflict_do_nothing=args.on_conflict_do_nothing,
-                            full_dump_on_cycles=args.full_dump_on_cycles)
+                            full_dump_on_cycles=args.full_dump_on_cycles,
+                            disable_triggers=args.disable_triggers)
             break
         except psycopg2.OperationalError as e:
             msg = str(e).lower()
