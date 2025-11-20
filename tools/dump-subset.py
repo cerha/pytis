@@ -109,7 +109,6 @@ def build_parent_graph(fks_rows):
        - parents[child] -> [(parent, child_col, parent_col, constraint_name, col_order)]
        - deps[parent] -> {child}  (for topo-sort when restricted to ancestors)
     """
-    import collections
     parents, deps = collections.defaultdict(list), collections.defaultdict(set)
     for fk in fks_rows:
         child = f"{fk['child_schema']}.{fk['child_table']}"
@@ -187,10 +186,9 @@ def build_fk_map_grouped(connection, foreign_keys):
       { 'parent': 'schema.table', 'child_cols': [...], 'parent_cols': [...], 'cons': 'name' }
     Multi-column FKs are grouped and ordered by col_order.
     """
-    import collections
     tmp = collections.defaultdict(lambda: collections.defaultdict(list))
     for fk in foreign_keys:
-        child  = f"{fk['child_schema']}.{fk['child_table']}"
+        child = f"{fk['child_schema']}.{fk['child_table']}"
         parent = f"{fk['parent_schema']}.{fk['parent_table']}"
         tmp[child][(parent, fk['constraint_name'])].append(
             (fk['child_col'], fk['parent_col'], fk['col_order'])
@@ -214,11 +212,12 @@ def copy_command(connection, table, where_clause=None, with_header=False):
     """
     schema, name = [qi(x, connection) for x in split_table(table)]
     cols = ', '.join(get_table_columns(connection, table))
-    where   = f' WHERE {where_clause}' if where_clause else ''
-    header  = ' HEADER' if with_header else ''
+    where = f' WHERE {where_clause}' if where_clause else ''
+    header = ' HEADER' if with_header else ''
     return f'COPY (SELECT {cols} FROM {schema}.{name}{where}) TO STDOUT WITH CSV{header};'
 
-def build_selection_ctes(connection, ordered_tables, start_table, seed_where, child_fks, pk_by_table):
+def build_selection_ctes(connection, ordered_tables, start_table, seed_where,
+                         child_fks, pk_by_table):
     """
     Return a single string like:
       WITH sel_schema_table(pk1, pk2, ...) AS (...),
@@ -283,16 +282,15 @@ def build_selection_ctes(connection, ordered_tables, start_table, seed_where, ch
 
             if not derivations:
                 # No child inside the required plan references this table -> nothing is needed
-                parts.append(f'{cte_name(t)} ({cte_cols}) AS (SELECT {pk} FROM {schema}.{name} WHERE FALSE)')
+                parts.append(f'{cte_name(t)} ({cte_cols}) AS (SELECT {pk} FROM {schema}.{name} '
+                             f'WHERE FALSE)')
             else:
-                parts.append(
-                    f'{cte_name(t)} ({cte_cols}) AS (\n  ' +
-                    '\n  UNION\n  '.join(derivations) + '\n)'
-                )
-    return 'WITH\n' + ',\n'.join(parts), {t: cte_name(t) for t in ordered_tables}
+                parts.append(f'{cte_name(t)} ({cte_cols}) AS (\n  ' +
+                             '\n  UNION\n  '.join(derivations) + '\n)')
+    return 'WITH\n' + ',\n'.join(parts) + '\n', {t: cte_name(t) for t in ordered_tables}
 
 def dump_subset(connection, table, seed_where, binary=False, debug=False, debug_sql=False,
-                on_conflict_do_nothing=False):
+                on_conflict_do_nothing=False, full_dump_on_cycles=False):
     foreign_keys = get_foreign_keys(connection)
     parents, deps = build_parent_graph(foreign_keys)
     required = ancestors_only(table, parents)  # table ∪ transitive parents
@@ -303,40 +301,62 @@ def dump_subset(connection, table, seed_where, binary=False, debug=False, debug_
     required_tables = [t for t in tables if t in required]
     # prepare PKs and FK map
     pk_by_table = {t: get_primary_key(connection, t) for t in tables}
-    child_fks   = build_fk_map_grouped(connection, foreign_keys)
-    ctes, cte_names = build_selection_ctes(connection, tables, table, seed_where, child_fks, pk_by_table)
+    child_fks = build_fk_map_grouped(connection, foreign_keys)
+    ctes, cte_names = build_selection_ctes(connection, tables, table, seed_where,
+                                           child_fks, pk_by_table)
 
     fmt = ('BINARY' if binary else 'CSV')
 
-    if debug:
-        # Print dependencies first - if dumping fails, we may track the problem better
-        # when we see the full graph.
-        if has_cycles:
-            print("WARNING: Dependency graph cycles detected — deferred constraints necessary!",
+    if has_cycles:
+        # Here we know we hit a real CTE ordering problem.
+        if full_dump_on_cycles:
+            # Fall back to full-table dumps for all reachable tables.
+            print("WARNING: Foreign-key cycles prevent CTE-based subsetting; "
+                  "falling back to full-table dumps for all reachable tables.\n",
                   file=sys.stderr)
+            ctes = ''
+        else:
+            print("ERROR: Foreign-key cycles cause CTE ordering problems; "
+                  "a minimal subset cannot be safely computed for these tables:",
+                  file=sys.stderr)
+            for t in sorted(required):
+                print(f"  - {t}", file=sys.stderr)
+            print("Re-run with --full-dump-on-cycles to dump these tables in full "
+                  "instead of a minimal subset.",
+                  file=sys.stderr)
+            sys.exit(4)
+
+    if debug:
         for t in required_tables:
             print(t, file=sys.stderr)
             for fk in foreign_keys:
                 parent = f"{fk['parent_schema']}.{fk['parent_table']}"
-                child  = f"{fk['child_schema']}.{fk['child_table']}"
+                child = f"{fk['child_schema']}.{fk['child_table']}"
                 if parent == t and child in required:
                     print(f" • {child}.{fk['child_col']} → {parent}.{fk['parent_col']}",
                           file=sys.stderr)
             print(file=sys.stderr)
+
     if has_cycles:
         print('BEGIN;\nSET CONSTRAINTS ALL DEFERRED;')
+
     for t in required_tables:
         schema, name = [qi(x, connection) for x in split_table(t)]
         cols = get_table_columns(connection, t)
         cols_list = ', '.join(cols)
         pk = pk_by_table[t]
         pk_list = ', '.join(qi(c, connection) for c in pk)
+
         # Construct the SELECT that defines which rows to insert.
         if t == table:
             where = f' WHERE {seed_where}' if seed_where else ''
+        elif has_cycles:
+            # --full-dump-on-cycles was passed – dump entire table.
+            where = ''
         else:
             where = f' WHERE ({pk_list}) IN (SELECT * FROM {cte_names[t]})'
-        select = f'{ctes}\nSELECT {cols_list} FROM {schema}.{name}{where}'
+        select = f'{ctes}SELECT {cols_list} FROM {schema}.{name}{where}'
+
         if debug_sql:
             print(select + ';\n', file=sys.stderr)
 
@@ -394,6 +414,11 @@ def main():
     parser.add_argument("--on-conflict-do-nothing", "-i", action='store_true',
                         help=("Output INSERT statements with ON CONFLICT (pk) DO NOTHING "
                               "instead of COPY, allowing safe merges into an existing database."))
+    parser.add_argument("--full-dump-on-cycles", "-F", action='store_true',
+                        help=("Allow dumping whole tables when circular foreign-key references "
+                              "prevent extracting a minimal subset. Without this option the "
+                              "program aborts and shows which tables are affected. Using this "
+                              "option may add extra rows to the output."))
     parser.add_argument("--debug", action='store_true',
                         help="Print table dependency information to STDERR.")
     parser.add_argument("--debug-sql", action='store_true',
@@ -417,7 +442,8 @@ def main():
                     sys.exit(3)
                 dump_subset(connection, table, args.where, binary=args.binary,
                             debug=args.debug, debug_sql=args.debug_sql,
-                            on_conflict_do_nothing=args.on_conflict_do_nothing)
+                            on_conflict_do_nothing=args.on_conflict_do_nothing,
+                            full_dump_on_cycles=args.full_dump_on_cycles)
             break
         except psycopg2.OperationalError as e:
             msg = str(e).lower()
