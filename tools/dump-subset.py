@@ -216,7 +216,7 @@ def build_selection_ctes(connection, ordered_tables, start_table, seed_where,
         if t == start_table:
             parts.append(
                 f'{cte_name(t)} ({cte_cols}) AS (\n'
-                f'  SELECT DISTINCT ({pk}) FROM {schema}.{name}\n'
+                f'  SELECT DISTINCT {pk} FROM {schema}.{name}\n'
                 + (f'  WHERE {seed_where}\n' if seed_where else '') +
                 f')'
             )
@@ -250,7 +250,7 @@ def build_selection_ctes(connection, ordered_tables, start_table, seed_where,
                         f'{cte_name(child)}.{qi(c, connection)}' for c in child_pk
                     )
                     derivations.append(
-                        f'SELECT DISTINCT ({pk}) FROM {schema}.{name} '
+                        f'SELECT DISTINCT {pk} FROM {schema}.{name} '
                         f'JOIN {child_schema}.{child_name} ON {on_sql} '
                         f'JOIN {cte_name(child)} ON ({child_pk_qualified}) = ({child_pk_cte})'
                     )
