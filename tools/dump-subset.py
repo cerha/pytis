@@ -368,8 +368,11 @@ def dump_subset(connection, table, seed_where, binary=False, debug=False, debug_
     if disable_triggers:
         for t in ordered_tables:
             schema, name = split_table(t)
+            type_trigger = "USER"
+            if cyclic_tables and full_dump_on_cycles:
+                type_trigger = "ALL"
             print(f'ALTER TABLE {qi(schema, connection)}.{qi(name, connection)} '
-                  f'DISABLE TRIGGER USER;')
+                  f'DISABLE TRIGGER {type_trigger};')
 
     fmt = ('BINARY' if binary else 'CSV')
     for t in ordered_tables:
@@ -419,8 +422,11 @@ def dump_subset(connection, table, seed_where, binary=False, debug=False, debug_
     if disable_triggers:
         for t in ordered_tables:
             schema, name = split_table(t)
+            type_trigger = "USER"
+            if cyclic_tables and full_dump_on_cycles:
+                type_trigger = "ALL"
             print(f'ALTER TABLE {qi(schema, connection)}.{qi(name, connection)} '
-                  f'ENABLE TRIGGER USER;')
+                  f'ENABLE TRIGGER {type_trigger};')
 
     if cyclic_tables and full_dump_on_cycles:
         print('COMMIT;')
