@@ -319,6 +319,38 @@ def get_constraint_defs(connection, constraint_oids):
         """, (list(constraint_oids),))
         return {row[0]: row[1] for row in cur}
 
+def get_owned_sequences_for_tables(connection, tables):
+    """Return list of dicts for sequences owned by columns of given tables.
+
+    Each dict has the following keys: 'schema', 'name', 'value', 'is_called'.
+
+    """
+    sql = """
+        SELECT
+            ps.schemaname AS schema,
+            ps.sequencename AS name,
+            ps.last_value AS value,
+            CASE WHEN ps.is_called THEN 'true' ELSE 'false' END AS is_called
+        FROM pg_class s
+             JOIN pg_namespace sn ON sn.oid = s.relnamespace
+             JOIN pg_depend d ON d.objid = s.oid
+             JOIN pg_class c ON c.oid = d.refobjid
+             JOIN pg_namespace n ON n.oid = c.relnamespace
+             JOIN pg_sequences ps
+               ON ps.schemaname = sn.nspname
+              AND ps.sequencename = s.relname
+        WHERE
+            s.relkind = 'S'
+            AND d.classid = 'pg_class'::regclass
+            AND d.refclassid = 'pg_class'::regclass
+            AND d.deptype = 'a'
+            AND (n.nspname || '.' || c.relname) = ANY(%s)
+        ORDER BY n.nspname, c.relname, ps.schemaname, ps.sequencename;
+    """
+    with connection.cursor(cursor_factory=psycopg2.extras.DictCursor) as cur:
+        cur.execute(sql, (tables,))
+        return cur.fetchall()
+
 def dump_subset(connection, table, seed_where, binary=False, debug=False, debug_sql=False,
                 on_conflict_do_nothing=False, full_dump_on_cycles=False, disable_triggers=False,
                 force_defer=False):
@@ -509,6 +541,11 @@ def dump_subset(connection, table, seed_where, binary=False, debug=False, debug_
             schema, tname, cname = [qi(fk[k], connection)
                                     for k in ('child_schema', 'child_table', 'constraint_name')]
             print(f'ALTER TABLE {schema}.{tname} ADD CONSTRAINT {cname} {constraint_defs[oid]};')
+
+    # Adjust sequences for affected tables so that future inserts do not collide.
+    for seq in get_owned_sequences_for_tables(connection, list(ordered_tables)):
+        schema, name = [qi(seq[k], connection) for k in ('schema', 'name')]
+        print(f"SELECT pg_catalog.setval({schema}.{name}, {seq['value']}, {seq['is_called']});")
 
     if cyclic_tables and full_dump_on_cycles:
         print('COMMIT;')
