@@ -329,16 +329,13 @@ def get_owned_sequences_for_tables(connection, tables):
         SELECT
             ps.schemaname AS schema,
             ps.sequencename AS name,
-            ps.last_value AS value,
-            CASE WHEN ps.is_called THEN 'true' ELSE 'false' END AS is_called
+            ps.last_value AS value
         FROM pg_class s
              JOIN pg_namespace sn ON sn.oid = s.relnamespace
              JOIN pg_depend d ON d.objid = s.oid
              JOIN pg_class c ON c.oid = d.refobjid
              JOIN pg_namespace n ON n.oid = c.relnamespace
-             JOIN pg_sequences ps
-               ON ps.schemaname = sn.nspname
-              AND ps.sequencename = s.relname
+             JOIN pg_sequences ps ON ps.schemaname = sn.nspname AND ps.sequencename = s.relname
         WHERE
             s.relkind = 'S'
             AND d.classid = 'pg_class'::regclass
@@ -545,7 +542,7 @@ def dump_subset(connection, table, seed_where, binary=False, debug=False, debug_
     # Adjust sequences for affected tables so that future inserts do not collide.
     for seq in get_owned_sequences_for_tables(connection, list(ordered_tables)):
         schema, name = [qi(seq[k], connection) for k in ('schema', 'name')]
-        print(f"SELECT pg_catalog.setval({schema}.{name}, {seq['value']}, {seq['is_called']});")
+        print(f"SELECT pg_catalog.setval({schema}.{name}, {seq['value']}, true);")
 
     if cyclic_tables and full_dump_on_cycles:
         print('COMMIT;')
