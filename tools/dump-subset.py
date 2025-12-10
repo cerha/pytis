@@ -541,8 +541,7 @@ def dump_subset(connection, table, seed_where, binary=False, debug=False, debug_
 
     # Adjust sequences for affected tables so that future inserts do not collide.
     for seq in get_owned_sequences_for_tables(connection, list(ordered_tables)):
-        schema, name = [qi(seq[k], connection) for k in ('schema', 'name')]
-        print(f"SELECT pg_catalog.setval({schema}.{name}, {seq['value']}, true);")
+        print(f"SELECT pg_catalog.setval('{seq['schema']}.{seq['name']}', {seq['value']}, true);")
 
     if cyclic_tables and full_dump_on_cycles:
         print('COMMIT;')
