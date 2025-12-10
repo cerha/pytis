@@ -55,6 +55,9 @@ def get_foreign_keys(connection):
         c_parent.relname   AS parent_table,
         a_parent.attname   AS parent_col,
         con.conname        AS constraint_name,
+        con.condeferrable  AS condeferrable,
+        con.condeferred    AS condeferred,
+        con.oid            AS constraint_oid,
         ck.ord             AS col_order
     FROM pg_constraint con
     JOIN pg_class c_child   ON c_child.oid = con.conrelid
@@ -101,7 +104,6 @@ def get_table_columns(connection, table):
             ORDER BY ordinal_position
         """, (schema, name))
         cols = [r[0] for r in cur]
-    # quote each identifier
     return [f"{qi(c, connection)}" for c in cols]
 
 def build_parent_graph(fks_rows):
@@ -140,7 +142,8 @@ def topo_sort(nodes, deps):
     for u, vs in deps.items():
         for v in vs:
             indeg[v] += 1
-    q, order = collections.deque([u for u in nodes if indeg[u] == 0]), []
+    q = collections.deque([u for u in nodes if indeg[u] == 0])
+    order = []
     while q:
         u = q.popleft()
         order.append(u)
@@ -187,7 +190,7 @@ def build_child_fk_map(connection, foreign_keys):
                 'parent': parent,
                 'child_cols': [c for c, _, _ in cols_sorted],
                 'parent_cols': [p for _, p, _ in cols_sorted],
-                'cons': cons
+                'cons': cons,
             })
     return child_fk_map
 
@@ -304,8 +307,21 @@ def strongly_connected_components(nodes, deps):
 
     return sccs
 
+def get_constraint_defs(connection, constraint_oids):
+    """Return mapping oid -> constraint definition string for given oids."""
+    if not constraint_oids:
+        return {}
+    with connection.cursor() as cur:
+        cur.execute("""
+            SELECT oid, pg_get_constraintdef(oid, true)
+            FROM pg_constraint
+            WHERE oid = ANY(%s)
+        """, (list(constraint_oids),))
+        return {row[0]: row[1] for row in cur}
+
 def dump_subset(connection, table, seed_where, binary=False, debug=False, debug_sql=False,
-                on_conflict_do_nothing=False, full_dump_on_cycles=False, disable_triggers=False):
+                on_conflict_do_nothing=False, full_dump_on_cycles=False, disable_triggers=False,
+                force_defer=False):
     foreign_keys = get_foreign_keys(connection)
     parents, deps = build_parent_graph(foreign_keys)
     reachable_tables = ancestors_only(table, parents)  # table ∪ transitive parents
@@ -351,6 +367,43 @@ def dump_subset(connection, table, seed_where, binary=False, debug=False, debug_
               "of a minimal subset.", file=sys.stderr)
         sys.exit(4)
 
+    nondeferrable_cycle_constraints = {}
+    constraint_defs = {}
+    if cyclic_tables:
+        for fk in foreign_keys:
+            child = f"{fk['child_schema']}.{fk['child_table']}"
+            parent = f"{fk['parent_schema']}.{fk['parent_table']}"
+            if child in cyclic_tables or parent in cyclic_tables:
+                if not fk['condeferrable']:
+                    oid = fk['constraint_oid']
+                    if oid not in nondeferrable_cycle_constraints:
+                        nondeferrable_cycle_constraints[oid] = fk
+
+    if (cyclic_tables and full_dump_on_cycles and
+            nondeferrable_cycle_constraints and not force_defer):
+        print("ERROR: Some foreign-key constraints on cyclic tables are "
+              "NOT DEFERRABLE and would still be checked immediately, even "
+              "with SET CONSTRAINTS ALL DEFERRED:", file=sys.stderr)
+        for fk in sorted(
+            nondeferrable_cycle_constraints.values(),
+            key=lambda r: (
+                r['child_schema'], r['child_table'], r['constraint_name']
+            ),
+        ):
+            table_name = f"{fk['child_schema']}.{fk['child_table']}"
+            print(f" • {table_name}: {fk['constraint_name']}", file=sys.stderr)
+        print("Re-run with --force-defer to temporarily drop and recreate "
+              "these constraints around the import.",
+              file=sys.stderr)
+        sys.exit(5)
+
+    if (cyclic_tables and full_dump_on_cycles and
+            nondeferrable_cycle_constraints and force_defer):
+        constraint_defs = get_constraint_defs(
+            connection,
+            list(nondeferrable_cycle_constraints.keys()),
+        )
+
     # prepare PKs and FK map
     pk_by_table = {t: get_primary_key(connection, t) for t in ordered_tables}
     child_fk_map = build_child_fk_map(connection, foreign_keys)
@@ -362,17 +415,31 @@ def dump_subset(connection, table, seed_where, binary=False, debug=False, debug_
         ctes, cte_names = '', {}
 
     if cyclic_tables and full_dump_on_cycles:
-        print('BEGIN;\nSET CONSTRAINTS ALL DEFERRED;')
+        print('BEGIN;')
+        print('SET CONSTRAINTS ALL DEFERRED;')
+        if nondeferrable_cycle_constraints and force_defer:
+            for oid, fk in sorted(
+                nondeferrable_cycle_constraints.items(),
+                key=lambda item: (
+                    item[1]['child_schema'],
+                    item[1]['child_table'],
+                    item[1]['constraint_name'],
+                ),
+            ):
+                schema = qi(fk['child_schema'], connection)
+                name = qi(fk['child_table'], connection)
+                consname = qi(fk['constraint_name'], connection)
+                print(
+                    f'ALTER TABLE {schema}.{name} '
+                    f'DROP CONSTRAINT {consname};'
+                )
 
     # Disable user triggers before inserting data (if requested).
     if disable_triggers:
         for t in ordered_tables:
             schema, name = split_table(t)
-            type_trigger = "USER"
-            if cyclic_tables and full_dump_on_cycles:
-                type_trigger = "ALL"
             print(f'ALTER TABLE {qi(schema, connection)}.{qi(name, connection)} '
-                  f'DISABLE TRIGGER {type_trigger};')
+                  f'DISABLE TRIGGER USER;')
 
     fmt = ('BINARY' if binary else 'CSV')
     for t in ordered_tables:
@@ -418,7 +485,7 @@ def dump_subset(connection, table, seed_where, binary=False, debug=False, debug_
                 cur.copy_expert(f'COPY (\n{select}\n) TO STDOUT WITH {fmt};', sys.stdout)
             print('\.\n')
 
-    # Re-enable triggers after the dump (if disabled earlier).
+    # Re-enable triggers after the dump (disabled earlier).
     if disable_triggers:
         for t in ordered_tables:
             schema, name = split_table(t)
@@ -427,6 +494,21 @@ def dump_subset(connection, table, seed_where, binary=False, debug=False, debug_
                 type_trigger = "ALL"
             print(f'ALTER TABLE {qi(schema, connection)}.{qi(name, connection)} '
                   f'ENABLE TRIGGER {type_trigger};')
+
+    # Re-create the non-deferrable constraints after the dump (dropped earlier).
+    if (cyclic_tables and full_dump_on_cycles and
+            nondeferrable_cycle_constraints and force_defer):
+        for oid, fk in sorted(
+            nondeferrable_cycle_constraints.items(),
+            key=lambda item: (
+                item[1]['child_schema'],
+                item[1]['child_table'],
+                item[1]['constraint_name'],
+            ),
+        ):
+            schema, tname, cname = [qi(fk[k], connection)
+                                    for k in ('child_schema', 'child_table', 'constraint_name')]
+            print(f'ALTER TABLE {schema}.{tname} ADD CONSTRAINT {cname} {constraint_defs[oid]};')
 
     if cyclic_tables and full_dump_on_cycles:
         print('COMMIT;')
@@ -473,6 +555,11 @@ def main():
                         help="Print table dependency information to STDERR.")
     parser.add_argument("--debug-sql", action='store_true',
                         help="Print the internally generated SQL queries to STDERR.")
+    parser.add_argument("--force-defer", "-D", action='store_true',
+                        help=("When used with --full-dump-on-cycles, temporarily drop "
+                              "non-deferrable foreign-key constraints on cyclic tables "
+                              "during import and recreate them afterwards. Data integrity "
+                              "is still validated when the constraints are added back."))
 
     args = parser.parse_args()
     table = args.table if "." in args.table else f"public.{args.table}"
@@ -485,7 +572,7 @@ def main():
                 user=args.user,
                 host=args.host,
                 port=args.port,
-                password=password
+                password=password,
             ) as connection:
                 if not table_exists(connection, table):
                     print(f"[ERROR] Table '{table}' does not exist.", file=sys.stderr)
@@ -494,7 +581,8 @@ def main():
                             debug=args.debug, debug_sql=args.debug_sql,
                             on_conflict_do_nothing=args.on_conflict_do_nothing,
                             full_dump_on_cycles=args.full_dump_on_cycles,
-                            disable_triggers=args.disable_triggers)
+                            disable_triggers=args.disable_triggers,
+                            force_defer=args.force_defer)
             break
         except psycopg2.OperationalError as e:
             msg = str(e).lower()
