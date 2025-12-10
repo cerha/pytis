@@ -554,16 +554,18 @@ def main():
         "all required rows in that table and all recursively referenced parent tables. "
         "The result is emitted in insertion-safe order so it can be imported into a "
         "clean database or merged into an existing one."
-    ))
-    parser.add_argument("--dbname", required=True,
+    ), add_help=False)
+    parser.add_argument('--help', action='help', help='Show help and exit')
+
+    parser.add_argument("--dbname", "-d", required=True,
                         help="Database name")
-    parser.add_argument("--user", default=getpass.getuser(),
+    parser.add_argument("--user", "-U", "-u", default=getpass.getuser(),
                         help="Database user (default: current system user)")
-    parser.add_argument("--password",
+    parser.add_argument("--password", "-W",
                         help="Database password (default: $PGPASSWORD)")
-    parser.add_argument("--host",
+    parser.add_argument("--host", "-h",
                         help="Database host (default: localhost)")
-    parser.add_argument("--port", type=int, default=5432,
+    parser.add_argument("--port", "-p", type=int, default=5432,
                         help="Database port (default: 5432)")
 
     parser.add_argument("table",
