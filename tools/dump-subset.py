@@ -340,7 +340,7 @@ def get_owned_sequences_for_tables(connection, tables):
             s.relkind = 'S'
             AND d.classid = 'pg_class'::regclass
             AND d.refclassid = 'pg_class'::regclass
-            AND d.deptype = 'a'
+            AND d.deptype in ('a', 'i')
             AND (n.nspname || '.' || c.relname) = ANY(%s)
         ORDER BY n.nspname, c.relname, ps.schemaname, ps.sequencename;
     """
