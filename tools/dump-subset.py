@@ -194,79 +194,6 @@ def build_child_fk_map(connection, foreign_keys):
             })
     return child_fk_map
 
-def build_selection_ctes(connection, ordered_tables, start_table, seed_where,
-                         child_fk_map, pk_by_table):
-    """
-    Return a single string like:
-      WITH sel_schema_table(pk1, pk2, ...) AS (...),
-           sel_parent(...) AS (...),
-           ...
-    CTE order is from child to parent (reverse of insertion order) so dependencies are defined.
-    """
-    def cte_name(t):  # stable, readable CTE identifier
-        return 'sel_' + re.sub(r'[^a-zA-Z0-9_]', '_', t)
-
-    parts = []
-    # Build in reverse: start first, then its parents, etc.
-    for t in reversed(ordered_tables):
-        schema, name = [qi(x, connection) for x in split_table(t)]
-        cols = pk_by_table.get(t)
-        if not cols:
-            raise ValueError(f"Table has no primary key: {t}")
-        cte_cols = ', '.join(qi(c, connection) for c in cols)
-        pk = ', '.join(f'{schema}.{name}.{qi(c, connection)}' for c in cols)
-
-        if t == start_table:
-            parts.append(
-                f'{cte_name(t)} ({cte_cols}) AS (\n'
-                f'  SELECT DISTINCT {pk} FROM {schema}.{name}\n'
-                + (f'  WHERE {seed_where}\n' if seed_where else '') +
-                f')'
-            )
-        else:
-            # derive from all children that reference this parent (and are in the plan)
-            derivations = []
-            for child, fks in ((ch, fks) for ch, fks in child_fk_map.items() if ch in pk_by_table):
-                for fk in fks:
-                    if fk['parent'] != t:
-                        continue
-                    if child not in set(ordered_tables):
-                        continue
-
-                    child_schema, child_name = [qi(x, connection) for x in split_table(child)]
-
-                    # build equality join: child.fk_cols = parent.ref_cols
-                    on_pairs = [
-                        f'{child_schema}.{child_name}.{qi(c, connection)}'
-                        f' = {schema}.{name}.{qi(p, connection)}'
-                        for c, p in zip(fk['child_cols'], fk['parent_cols'])
-                    ]
-                    on_sql = ' AND '.join(on_pairs)
-
-                    child_pk = pk_by_table.get(child, [])
-                    # tuple of child PK columns qualified with table alias
-                    child_pk_qualified = ', '.join(
-                        f"{child_schema}.{child_name}.{qi(c, connection)}" for c in child_pk
-                    )
-                    # child PK columns qualified with the child's CTE
-                    child_pk_cte = ', '.join(
-                        f'{cte_name(child)}.{qi(c, connection)}' for c in child_pk
-                    )
-                    derivations.append(
-                        f'SELECT DISTINCT {pk} FROM {schema}.{name} '
-                        f'JOIN {child_schema}.{child_name} ON {on_sql} '
-                        f'JOIN {cte_name(child)} ON ({child_pk_qualified}) = ({child_pk_cte})'
-                    )
-
-            if not derivations:
-                # No child inside the required plan references this table -> nothing is needed
-                parts.append(f'{cte_name(t)} ({cte_cols}) AS (SELECT {pk} FROM {schema}.{name} '
-                             f'WHERE FALSE)')
-            else:
-                parts.append(f'{cte_name(t)} ({cte_cols}) AS (\n  ' +
-                             '\n  UNION\n  '.join(derivations) + '\n)')
-    return 'WITH\n' + ',\n'.join(parts) + '\n', {t: cte_name(t) for t in ordered_tables}
-
 def strongly_connected_components(nodes, deps):
     """Return list of SCCs, each as a set of nodes, using Tarjan's algorithm."""
     index = 0
@@ -348,9 +275,115 @@ def get_owned_sequences_for_tables(connection, tables):
         cur.execute(sql, (tables,))
         return cur.fetchall()
 
+def _selection_table_name(table):
+    """Return a stable temporary table name for storing selected PKs."""
+    return 'tmp_sel_' + re.sub(r'[^a-zA-Z0-9_]', '_', table)
+
+def build_selection_sets(connection, foreign_keys, reachable_tables, start_table,
+                         seed_where, pk_by_table, child_fk_map):
+    """Create temp selection tables and populate them with PKs to be dumped.
+
+    For each table in reachable_tables, a TEMP table tmp_sel_* is created with the
+    same PK columns and types, and filled iteratively so that for every selected
+    child row all referenced parent rows are also selected (recursively).
+
+    """
+    selection_tables = {}
+    with connection.cursor() as cur:
+        # Create selection tables for all reachable tables.
+        for t in reachable_tables:
+            pk_cols = pk_by_table.get(t)
+            if not pk_cols:
+                raise ValueError(f"Table has no primary key: {t}")
+            schema, name = split_table(t)
+            cur.execute("""
+                SELECT a.attname, format_type(a.atttypid, a.atttypmod)
+                FROM pg_attribute a
+                     JOIN pg_class c ON c.oid = a.attrelid
+                     JOIN pg_namespace n ON n.oid = c.relnamespace
+                WHERE n.nspname = %s
+                  AND c.relname = %s
+                  AND a.attname = ANY(%s)
+            """, (schema, name, pk_cols))
+            types = {row[0]: row[1] for row in cur.fetchall()}
+            col_defs = ', '.join(f'{qi(cn, connection)} {types[cn]}' for cn in pk_cols)
+            pk_list = ', '.join(qi(cn, connection) for cn in pk_cols)
+            sel_name = _selection_table_name(t)
+            cur.execute(f'CREATE TEMP TABLE {sel_name} ({col_defs}, PRIMARY KEY ({pk_list})) '
+                        f'ON COMMIT DROP;')
+            selection_tables[t] = sel_name
+
+        # Seed start table.
+        start_pk = pk_by_table[start_table]
+        start_sel = selection_tables[start_table]
+        schema, name = split_table(start_table)
+        qschema = qi(schema, connection)
+        qname = qi(name, connection)
+        pk_list = ', '.join(qi(cn, connection) for cn in start_pk)
+        pk_qualified = ', '.join(
+            f'{qschema}.{qname}.{qi(cn, connection)}' for cn in start_pk
+        )
+        seed_sql = (
+            f'INSERT INTO {start_sel} ({pk_list}) '
+            f'SELECT DISTINCT {pk_qualified} '
+            f'FROM {qschema}.{qname}'
+        )
+        if seed_where:
+            seed_sql += f' WHERE {seed_where}'
+        seed_sql += ' ON CONFLICT DO NOTHING;'
+        cur.execute(seed_sql)
+
+        # Iterative closure: propagate from selected child rows to their parents.
+        changed = True
+        while changed:
+            changed = False
+            for child, fks in child_fk_map.items():
+                if child not in reachable_tables:
+                    continue
+                child_pk = pk_by_table[child]
+                child_sel = selection_tables[child]
+                child_schema, child_name = split_table(child)
+                q_child_schema = qi(child_schema, connection)
+                q_child_name = qi(child_name, connection)
+                child_pk_cols = ', '.join(
+                    f'c.{qi(cn, connection)}' for cn in child_pk
+                )
+                child_sel_pk_cols = ', '.join(
+                    f'sc.{qi(cn, connection)}' for cn in child_pk
+                )
+                for fk in fks:
+                    parent = fk['parent']
+                    if parent not in reachable_tables:
+                        continue
+                    parent_pk = pk_by_table[parent]
+                    parent_sel = selection_tables[parent]
+                    parent_schema, parent_name = split_table(parent)
+                    q_parent_schema = qi(parent_schema, connection)
+                    q_parent_name = qi(parent_name, connection)
+                    parent_pk_cols = ', '.join('p.' + qi(cn, connection) for cn in parent_pk)
+                    parent_pk_target = ', '.join(qi(cn, connection) for cn in parent_pk)
+                    on_sql = ' AND '.join([
+                        f'c.{qi(c_col, connection)} = p.{qi(p_col, connection)}'
+                        for c_col, p_col in zip(fk['child_cols'], fk['parent_cols'])
+                    ])
+                    if not on_sql:
+                        continue
+                    insert_sql = (
+                        f'INSERT INTO {parent_sel} ({parent_pk_target}) '
+                        f'SELECT DISTINCT {parent_pk_cols} '
+                        f'FROM {q_parent_schema}.{q_parent_name} p '
+                        f'JOIN {q_child_schema}.{q_child_name} c ON {on_sql} '
+                        f'JOIN {child_sel} sc ON ({child_pk_cols}) = ({child_sel_pk_cols}) '
+                        f'ON CONFLICT DO NOTHING;'
+                    )
+                    cur.execute(insert_sql)
+                    if cur.rowcount:
+                        changed = True
+
+    return selection_tables
+
 def dump_subset(connection, table, seed_where, binary=False, debug=False, debug_sql=False,
-                on_conflict_do_nothing=False, full_dump_on_cycles=False, disable_triggers=False,
-                force_defer=False):
+                on_conflict_do_nothing=False, disable_triggers=False, force_defer=False):
     foreign_keys = get_foreign_keys(connection)
     parents, deps = build_parent_graph(foreign_keys)
     reachable_tables = ancestors_only(table, parents)  # table ∪ transitive parents
@@ -370,9 +403,6 @@ def dump_subset(connection, table, seed_where, binary=False, debug=False, debug_
             if v in children_sub and v in children_sub[v]:
                 cyclic_tables.add(v)
 
-    subset_tables = [t for t in ordered_tables if t not in cyclic_tables]
-    full_tables = [t for t in ordered_tables if t in cyclic_tables]
-
     if debug:
         for t in ordered_tables:
             print(t, file=sys.stderr)
@@ -383,18 +413,8 @@ def dump_subset(connection, table, seed_where, binary=False, debug=False, debug_
                     print(f" • {child}.{fk['child_col']} → {parent}.{fk['parent_col']}",
                           file=sys.stderr)
             if t in cyclic_tables:
-                print("   (in cyclic dependency group; may be dumped in full)",
-                      file=sys.stderr)
+                print("   (in cyclic dependency group)", file=sys.stderr)
             print(file=sys.stderr)
-
-    if cyclic_tables and not full_dump_on_cycles:
-        print("ERROR: Some tables participate in circular foreign-key dependencies "
-              "and cannot be safely subsetted:", file=sys.stderr)
-        for t in sorted(full_tables):
-            print(f" • {t}", file=sys.stderr)
-        print("Re-run with --full-dump-on-cycles to dump these tables in full instead "
-              "of a minimal subset.", file=sys.stderr)
-        sys.exit(4)
 
     nondeferrable_cycle_constraints = {}
     constraint_defs = {}
@@ -408,8 +428,7 @@ def dump_subset(connection, table, seed_where, binary=False, debug=False, debug_
                     if oid not in nondeferrable_cycle_constraints:
                         nondeferrable_cycle_constraints[oid] = fk
 
-    if (cyclic_tables and full_dump_on_cycles and
-            nondeferrable_cycle_constraints and not force_defer):
+    if cyclic_tables and nondeferrable_cycle_constraints and not force_defer:
         print("ERROR: Some foreign-key constraints on cyclic tables are "
               "NOT DEFERRABLE and would still be checked immediately, even "
               "with SET CONSTRAINTS ALL DEFERRED:", file=sys.stderr)
@@ -421,13 +440,12 @@ def dump_subset(connection, table, seed_where, binary=False, debug=False, debug_
         ):
             table_name = f"{fk['child_schema']}.{fk['child_table']}"
             print(f" • {table_name}: {fk['constraint_name']}", file=sys.stderr)
-        print("Re-run with --force-defer to temporarily drop and recreate "
+        print("Re-run with --force-defer (-D) to temporarily drop and recreate "
               "these constraints around the import.",
               file=sys.stderr)
         sys.exit(5)
 
-    if (cyclic_tables and full_dump_on_cycles and
-            nondeferrable_cycle_constraints and force_defer):
+    if cyclic_tables and nondeferrable_cycle_constraints and force_defer:
         constraint_defs = get_constraint_defs(
             connection,
             list(nondeferrable_cycle_constraints.keys()),
@@ -437,13 +455,19 @@ def dump_subset(connection, table, seed_where, binary=False, debug=False, debug_
     pk_by_table = {t: get_primary_key(connection, t) for t in ordered_tables}
     child_fk_map = build_child_fk_map(connection, foreign_keys)
 
-    if subset_tables:
-        ctes, cte_names = build_selection_ctes(connection, subset_tables, table, seed_where,
-                                               child_fk_map, pk_by_table)
-    else:
-        ctes, cte_names = '', {}
+    # build temp selection tables and fill them iteratively
+    selection_tables = build_selection_sets(
+        connection,
+        foreign_keys,
+        reachable_tables,
+        table,
+        seed_where,
+        pk_by_table,
+        child_fk_map,
+    )
 
-    if cyclic_tables and full_dump_on_cycles:
+    # For cyclic tables, wrap the import in a transaction and (optionally) drop FKs.
+    if cyclic_tables:
         print('BEGIN;')
         print('SET CONSTRAINTS ALL DEFERRED;')
         if nondeferrable_cycle_constraints and force_defer:
@@ -478,17 +502,14 @@ def dump_subset(connection, table, seed_where, binary=False, debug=False, debug_
         pk = pk_by_table[t]
         pk_list = ', '.join(qi(c, connection) for c in pk)
 
-        # Construct the SELECT that defines which rows to insert.
-        select = f'SELECT {cols_list} FROM {schema}.{name}'
-        # Use unconditional SELECT for the start table without a seed condition
-        # and for tables that are not in subset_tables (e.g. cyclic tables
-        # when --full-dump-on-cycles is used).
-        if t == table and seed_where:
-            # Apply the user-specified condition on the start table.
-            select += f' WHERE {seed_where}'
-        elif t != table and t in subset_tables:
-            # For subsetted tables, restrict rows via CTE-derived primary keys.
-            select = f'{ctes}{select} WHERE ({pk_list}) IN (SELECT * FROM {cte_names[t]})'
+        # Construct the SELECT that defines which rows to insert: always via
+        # per-table selection temp table.
+        sel_table = selection_tables[t]
+        select = (
+            f'SELECT {cols_list} FROM {schema}.{name} '
+            f'WHERE ({pk_list}) IN '
+            f'(SELECT {pk_list} FROM {sel_table})'
+        )
         if debug_sql:
             print(select + ';\n', file=sys.stderr)
 
@@ -519,14 +540,13 @@ def dump_subset(connection, table, seed_where, binary=False, debug=False, debug_
         for t in ordered_tables:
             schema, name = split_table(t)
             type_trigger = "USER"
-            if cyclic_tables and full_dump_on_cycles:
+            if cyclic_tables:
                 type_trigger = "ALL"
             print(f'ALTER TABLE {qi(schema, connection)}.{qi(name, connection)} '
                   f'ENABLE TRIGGER {type_trigger};')
 
     # Re-create the non-deferrable constraints after the dump (dropped earlier).
-    if (cyclic_tables and full_dump_on_cycles and
-            nondeferrable_cycle_constraints and force_defer):
+    if cyclic_tables and nondeferrable_cycle_constraints and force_defer:
         for oid, fk in sorted(
             nondeferrable_cycle_constraints.items(),
             key=lambda item: (
@@ -543,7 +563,7 @@ def dump_subset(connection, table, seed_where, binary=False, debug=False, debug_
     for seq in get_owned_sequences_for_tables(connection, list(ordered_tables)):
         print(f"SELECT pg_catalog.setval('{seq['schema']}.{seq['name']}', {seq['value']}, true);")
 
-    if cyclic_tables and full_dump_on_cycles:
+    if cyclic_tables:
         print('COMMIT;')
 
 
@@ -577,11 +597,6 @@ def main():
     parser.add_argument("--on-conflict-do-nothing", "-i", action='store_true',
                         help=("Output INSERT statements with ON CONFLICT (pk) DO NOTHING "
                               "instead of COPY, allowing safe merges into an existing database."))
-    parser.add_argument("--full-dump-on-cycles", "-F", action='store_true',
-                        help=("Allow dumping whole tables when circular foreign-key references "
-                              "prevent extracting a minimal subset. Without this option the "
-                              "program aborts and shows which tables are affected. Using this "
-                              "option may add extra rows to the output."))
     parser.add_argument("--disable-triggers", "-T", action='store_true',
                         help=("Temporarily disable all USER triggers on affected tables "
                               "during data import. Useful when ON INSERT triggers "
@@ -591,10 +606,11 @@ def main():
     parser.add_argument("--debug-sql", action='store_true',
                         help="Print the internally generated SQL queries to STDERR.")
     parser.add_argument("--force-defer", "-D", action='store_true',
-                        help=("When used with --full-dump-on-cycles, temporarily drop "
-                              "non-deferrable foreign-key constraints on cyclic tables "
-                              "during import and recreate them afterwards. Data integrity "
-                              "is still validated when the constraints are added back."))
+                        help=("When cyclic tables participate in foreign-key cycles with "
+                              "NOT DEFERRABLE constraints, temporarily drop those "
+                              "constraints around the import and recreate them afterwards. "
+                              "Data integrity is still validated when the constraints are "
+                              "added back."))
 
     args = parser.parse_args()
     table = args.table if "." in args.table else f"public.{args.table}"
@@ -615,7 +631,6 @@ def main():
                 dump_subset(connection, table, args.where, binary=args.binary,
                             debug=args.debug, debug_sql=args.debug_sql,
                             on_conflict_do_nothing=args.on_conflict_do_nothing,
-                            full_dump_on_cycles=args.full_dump_on_cycles,
                             disable_triggers=args.disable_triggers,
                             force_defer=args.force_defer)
             break
