@@ -249,7 +249,9 @@ def get_constraint_defs(connection, constraint_oids):
 def get_owned_sequences_for_tables(connection, tables):
     """Return list of dicts for sequences owned by columns of given tables.
 
-    Each dict has the following keys: 'schema', 'name', 'value', 'is_called'.
+    Each dict has the following keys: 'schema', 'name', 'value'.
+
+    Only sequences that have a non-null value (have ever been called) are returned.
 
     """
     sql = """
@@ -269,6 +271,7 @@ def get_owned_sequences_for_tables(connection, tables):
             AND d.refclassid = 'pg_class'::regclass
             AND d.deptype in ('a', 'i')
             AND (n.nspname || '.' || c.relname) = ANY(%s)
+            AND ps.last_value IS NOT NULL
         ORDER BY n.nspname, c.relname, ps.schemaname, ps.sequencename;
     """
     with connection.cursor(cursor_factory=psycopg2.extras.DictCursor) as cur:
