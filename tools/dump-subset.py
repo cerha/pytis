@@ -37,12 +37,32 @@ database.
 import os
 import re
 import sys
+import functools
 import getpass
 import argparse
 import collections
 import psycopg2
 import psycopg2.extras
-from psycopg2.extensions import quote_ident as qi
+import psycopg2.extensions
+from collections.abc import Iterable
+
+def split_table(table):
+    if '.' in table:
+        schema, name = table.split('.', 1)
+    else:
+        schema, name = 'public', table
+    return schema, name
+
+def quote_ident(connection, *parts: str) -> str:
+    return '.'.join(psycopg2.extensions.quote_ident(ident, connection) for ident in parts)
+
+def quote_list(connection, idents: Iterable[str | list[str] | tuple[str, ...]]) -> str:
+    return ', '.join(quote_ident(connection, *ident) if isinstance(ident, (list, tuple))
+                     else quote_ident(connection, ident)
+                     for ident in idents)
+
+def quote_table(connection, table: str) -> str:
+    return quote_ident(connection, *split_table(table))
 
 
 def get_foreign_keys(connection):
@@ -75,13 +95,6 @@ def get_foreign_keys(connection):
         cur.execute(sql)
         return cur.fetchall()
 
-def split_table(table):
-    if '.' in table:
-        schema, name = table.split('.', 1)
-    else:
-        schema, name = 'public', table
-    return schema, name
-
 def table_exists(connection, table):
     """Return True if the given schema.table exists."""
     schema, name = split_table(table)
@@ -94,7 +107,7 @@ def table_exists(connection, table):
         return cur.fetchone() is not None
 
 def get_table_columns(connection, table):
-    """Return ordered, quoted column identifiers for SELECT/COPY."""
+    """Return ordered column names for SELECT/COPY."""
     schema, name = split_table(table)
     with connection.cursor() as cur:
         cur.execute("""
@@ -103,8 +116,7 @@ def get_table_columns(connection, table):
             WHERE table_schema = %s AND table_name = %s
             ORDER BY ordinal_position
         """, (schema, name))
-        cols = [r[0] for r in cur]
-    return [f"{qi(c, connection)}" for c in cols]
+        return [r[0] for r in cur]
 
 def build_parent_graph(fks_rows):
     """Return:
@@ -169,10 +181,15 @@ def get_primary_key(connection, table):
         """, (schema, name))
         return [r[0] for r in cur.fetchall()]
 
-def build_child_fk_map(connection, foreign_keys):
-    """
-    Return child_fk_map: child -> list of dicts:
-      { 'parent': 'schema.table', 'child_cols': [...], 'parent_cols': [...], 'cons': 'name' }
+def build_child_fk_map(foreign_keys):
+    """Return child foreign key map: child -> list of dicts.
+
+    dict = {'parent': 'schema.table',
+       'child_cols': [...],
+       'parent_cols': [...],
+       'cons': 'name',
+    }
+
     Multi-column FKs are grouped and ordered by col_order.
     """
     tmp = collections.defaultdict(lambda: collections.defaultdict(list))
@@ -278,12 +295,8 @@ def get_owned_sequences_for_tables(connection, tables):
         cur.execute(sql, (tables,))
         return cur.fetchall()
 
-def _selection_table_name(table):
-    """Return a stable temporary table name for storing selected PKs."""
-    return 'tmp_sel_' + re.sub(r'[^a-zA-Z0-9_]', '_', table)
-
-def build_selection_sets(connection, foreign_keys, reachable_tables, start_table,
-                         seed_where, pk_by_table, child_fk_map):
+def build_selection_sets(connection, reachable_tables, start_table, seed_where,
+                         pk_by_table, child_fk_map):
     """Create temp selection tables and populate them with PKs to be dumped.
 
     For each table in reachable_tables, a TEMP table tmp_sel_* is created with the
@@ -291,12 +304,15 @@ def build_selection_sets(connection, foreign_keys, reachable_tables, start_table
     child row all referenced parent rows are also selected (recursively).
 
     """
+    qi = functools.partial(quote_ident, connection)
+    ql = functools.partial(quote_list, connection)
+    qt = functools.partial(quote_table, connection)
     selection_tables = {}
     with connection.cursor() as cur:
         # Create selection tables for all reachable tables.
         for t in reachable_tables:
-            pk_cols = pk_by_table.get(t)
-            if not pk_cols:
+            pk = pk_by_table.get(t)
+            if not pk:
                 raise ValueError(f"Table has no primary key: {t}")
             schema, name = split_table(t)
             cur.execute("""
@@ -307,34 +323,33 @@ def build_selection_sets(connection, foreign_keys, reachable_tables, start_table
                 WHERE n.nspname = %s
                   AND c.relname = %s
                   AND a.attname = ANY(%s)
-            """, (schema, name, pk_cols))
+            """, (schema, name, pk))
             types = {row[0]: row[1] for row in cur.fetchall()}
-            col_defs = ', '.join(f'{qi(cn, connection)} {types[cn]}' for cn in pk_cols)
-            pk_list = ', '.join(qi(cn, connection) for cn in pk_cols)
-            sel_name = _selection_table_name(t)
-            cur.execute(f'CREATE TEMP TABLE {sel_name} ({col_defs}, PRIMARY KEY ({pk_list})) '
-                        f'ON COMMIT DROP;')
-            selection_tables[t] = sel_name
+            selection_tables[t] = 'tmp_sel_' + re.sub(r'[^a-zA-Z0-9_]', '_', t)
+            cur.execute((
+                'CREATE TEMP TABLE {table} ({columns}, PRIMARY KEY ({pk})) ON COMMIT DROP;'
+            ).format(
+                table=qi(selection_tables[t]),
+                columns=', '.join(qi(c) + ' ' + types[c] for c in pk),
+                pk=ql(pk),
+            ))
 
         # Seed start table.
-        start_pk = pk_by_table[start_table]
-        start_sel = selection_tables[start_table]
         schema, name = split_table(start_table)
-        qschema = qi(schema, connection)
-        qname = qi(name, connection)
-        pk_list = ', '.join(qi(cn, connection) for cn in start_pk)
-        pk_qualified = ', '.join(
-            f'{qschema}.{qname}.{qi(cn, connection)}' for cn in start_pk
-        )
-        seed_sql = (
-            f'INSERT INTO {start_sel} ({pk_list}) '
-            f'SELECT DISTINCT {pk_qualified} '
-            f'FROM {qschema}.{qname}'
-        )
-        if seed_where:
-            seed_sql += f' WHERE {seed_where}'
-        seed_sql += ' ON CONFLICT DO NOTHING;'
-        cur.execute(seed_sql)
+        pk = pk_by_table[start_table]
+        cur.execute("""
+            INSERT INTO {target_table} ({target_columns})
+            SELECT DISTINCT {columns}
+            FROM {source_table}
+            WHERE {where}
+            ON CONFLICT DO NOTHING;
+        """.format(
+            target_table=qi(selection_tables[start_table]),
+            target_columns=ql(pk),
+            columns=ql([(schema, name, c) for c in pk]),
+            source_table=qi(schema, name),
+            where=seed_where,
+        ))
 
         # Iterative closure: propagate from selected child rows to their parents.
         changed = True
@@ -344,42 +359,30 @@ def build_selection_sets(connection, foreign_keys, reachable_tables, start_table
                 if child not in reachable_tables:
                     continue
                 child_pk = pk_by_table[child]
-                child_sel = selection_tables[child]
-                child_schema, child_name = split_table(child)
-                q_child_schema = qi(child_schema, connection)
-                q_child_name = qi(child_name, connection)
-                child_pk_cols = ', '.join(
-                    f'c.{qi(cn, connection)}' for cn in child_pk
-                )
-                child_sel_pk_cols = ', '.join(
-                    f'sc.{qi(cn, connection)}' for cn in child_pk
-                )
                 for fk in fks:
                     parent = fk['parent']
-                    if parent not in reachable_tables:
+                    if not (parent in reachable_tables and fk['child_cols'] and fk['parent_cols']):
                         continue
                     parent_pk = pk_by_table[parent]
-                    parent_sel = selection_tables[parent]
-                    parent_schema, parent_name = split_table(parent)
-                    q_parent_schema = qi(parent_schema, connection)
-                    q_parent_name = qi(parent_name, connection)
-                    parent_pk_cols = ', '.join('p.' + qi(cn, connection) for cn in parent_pk)
-                    parent_pk_target = ', '.join(qi(cn, connection) for cn in parent_pk)
-                    on_sql = ' AND '.join([
-                        f'c.{qi(c_col, connection)} = p.{qi(p_col, connection)}'
-                        for c_col, p_col in zip(fk['child_cols'], fk['parent_cols'])
-                    ])
-                    if not on_sql:
-                        continue
-                    insert_sql = (
-                        f'INSERT INTO {parent_sel} ({parent_pk_target}) '
-                        f'SELECT DISTINCT {parent_pk_cols} '
-                        f'FROM {q_parent_schema}.{q_parent_name} p '
-                        f'JOIN {q_child_schema}.{q_child_name} c ON {on_sql} '
-                        f'JOIN {child_sel} sc ON ({child_pk_cols}) = ({child_sel_pk_cols}) '
-                        f'ON CONFLICT DO NOTHING;'
-                    )
-                    cur.execute(insert_sql)
+                    cur.execute("""
+                        INSERT INTO {target_table} ({target_columns})
+                        SELECT DISTINCT {columns}
+                        FROM {p} p
+                        JOIN {c} c ON ({c_fk}) = ({p_fk})
+                        JOIN {s} s ON ({s_pk}) = ({c_pk})
+                        ON CONFLICT DO NOTHING;
+                    """.format(
+                        target_table=qi(selection_tables[parent]),
+                        target_columns=ql(parent_pk),
+                        columns=ql(('p', c) for c in parent_pk),
+                        p=qt(parent),
+                        c=qt(child),
+                        s=qi(selection_tables[child]),
+                        c_fk=ql(('c', c) for c in fk['child_cols']),
+                        p_fk=ql(('p', c) for c in fk['parent_cols']),
+                        c_pk=ql(('c', c) for c in child_pk),
+                        s_pk=ql(('s', c) for c in child_pk),
+                    ))
                     if cur.rowcount:
                         changed = True
 
@@ -398,6 +401,9 @@ def dump_subset(connection, table, seed_where, binary=False, debug=False, debug_
     # detect SCCs on the reachable_tables subgraph
     sccs = strongly_connected_components(reachable_tables, children_sub)
     cyclic_tables = set()
+    qi = functools.partial(quote_ident, connection)
+    ql = functools.partial(quote_list, connection)
+    qt = functools.partial(quote_table, connection)
     for scc in sccs:
         if len(scc) > 1:
             cyclic_tables.update(scc)
@@ -456,22 +462,22 @@ def dump_subset(connection, table, seed_where, binary=False, debug=False, debug_
 
     # prepare PKs and FK map
     pk_by_table = {t: get_primary_key(connection, t) for t in ordered_tables}
-    child_fk_map = build_child_fk_map(connection, foreign_keys)
+    child_fk_map = build_child_fk_map(foreign_keys)
 
     # build temp selection tables and fill them iteratively
     selection_tables = build_selection_sets(
         connection,
-        foreign_keys,
         reachable_tables,
         table,
-        seed_where,
+        seed_where or 'true',
         pk_by_table,
         child_fk_map,
     )
 
+    print('BEGIN;')
+
     # For cyclic tables, wrap the import in a transaction and (optionally) drop FKs.
     if cyclic_tables:
-        print('BEGIN;')
         print('SET CONSTRAINTS ALL DEFERRED;')
         if nondeferrable_cycle_constraints and force_defer:
             for oid, fk in sorted(
@@ -482,36 +488,26 @@ def dump_subset(connection, table, seed_where, binary=False, debug=False, debug_
                     item[1]['constraint_name'],
                 ),
             ):
-                schema = qi(fk['child_schema'], connection)
-                name = qi(fk['child_table'], connection)
-                consname = qi(fk['constraint_name'], connection)
-                print(
-                    f'ALTER TABLE {schema}.{name} '
-                    f'DROP CONSTRAINT {consname};'
-                )
+                print('ALTER TABLE {table} DROP CONSTRAINT {name};'.format(
+                    table=qi(fk['child_schema'], fk['child_table']),
+                    name=qi(fk['constraint_name']),
+                ))
 
     # Disable user triggers before inserting data (if requested).
     if disable_triggers:
+        trigger = "ALL" if cyclic_tables else "USER"
         for t in ordered_tables:
-            schema, name = split_table(t)
-            print(f'ALTER TABLE {qi(schema, connection)}.{qi(name, connection)} '
-                  f'DISABLE TRIGGER USER;')
+            print(f'ALTER TABLE {qt(t)} DISABLE TRIGGER {trigger};')
 
-    fmt = ('BINARY' if binary else 'CSV')
     for t in ordered_tables:
-        schema, name = [qi(x, connection) for x in split_table(t)]
-        cols = get_table_columns(connection, t)
-        cols_list = ', '.join(cols)
         pk = pk_by_table[t]
-        pk_list = ', '.join(qi(c, connection) for c in pk)
-
-        # Construct the SELECT that defines which rows to insert: always via
-        # per-table selection temp table.
-        sel_table = selection_tables[t]
-        select = (
-            f'SELECT {cols_list} FROM {schema}.{name} '
-            f'WHERE ({pk_list}) IN '
-            f'(SELECT {pk_list} FROM {sel_table})'
+        columns = get_table_columns(connection, t)
+        # SELECT the rows to insert via per-table selection temp table.
+        select = ('SELECT {cols} FROM {table} WHERE ({pk}) IN (SELECT {pk} FROM {sel})').format(
+            cols=ql(columns),
+            table=qt(t),
+            pk=ql(pk),
+            sel=qi(selection_tables[t]),
         )
         if debug_sql:
             print(select + ';\n', file=sys.stderr)
@@ -519,55 +515,54 @@ def dump_subset(connection, table, seed_where, binary=False, debug=False, debug_
         if on_conflict_do_nothing:
             if not pk:
                 raise ValueError(f"Table has no primary key for ON CONFLICT: {t}")
-            insert = f'INSERT INTO {schema}.{name} ({cols_list}) VALUES '
-            placeholders = '(' + ', '.join(['%s'] * len(cols)) + ')'
-            on_conflict = f' ON CONFLICT ({pk_list}) DO NOTHING;'
             with connection.cursor() as cur:
                 cur.execute(select)
                 for row in cur:
-                    values = cur.mogrify(
-                        placeholders,
-                        [psycopg2.extras.Json(v) if isinstance(v, (dict, list)) else v
-                         for v in row],
-                    ).decode('utf-8')
-                    print(insert + values + on_conflict)
+                    print(('INSERT INTO {table} ({cols}) VALUES ({values}) '
+                           'ON CONFLICT ({pk}) DO NOTHING;').format(
+                               table=qt(t),
+                               cols=ql(columns),
+                               values=cur.mogrify(
+                                   ', '.join(['%s'] * len(columns)),
+                                   [psycopg2.extras.Json(v) if isinstance(v, (dict, list)) else v
+                                    for v in row],
+                               ).decode('utf-8'),
+                               pk=ql(pk),
+                           ))
         else:
             # Dump as COPY.
-            print(f'COPY {schema}.{name} ({cols_list}) FROM STDIN WITH {fmt};')
+            fmt = 'BINARY' if binary else 'CSV'
+            print('COPY {table} ({cols}) FROM STDIN WITH {fmt};'.format(
+                table=qt(t),
+                cols=ql(columns),
+                fmt=fmt,
+            ))
             with connection.cursor() as cur:
                 cur.copy_expert(f'COPY (\n{select}\n) TO STDOUT WITH {fmt};', sys.stdout)
             print('\.\n')
 
     # Re-enable triggers after the dump (disabled earlier).
     if disable_triggers:
+        trigger = "ALL" if cyclic_tables else "USER"
         for t in ordered_tables:
-            schema, name = split_table(t)
-            type_trigger = "USER"
-            if cyclic_tables:
-                type_trigger = "ALL"
-            print(f'ALTER TABLE {qi(schema, connection)}.{qi(name, connection)} '
-                  f'ENABLE TRIGGER {type_trigger};')
+            print(f'ALTER TABLE {qt(t)} ENABLE TRIGGER {trigger};')
 
     # Re-create the non-deferrable constraints after the dump (dropped earlier).
     if cyclic_tables and nondeferrable_cycle_constraints and force_defer:
-        for oid, fk in sorted(
-            nondeferrable_cycle_constraints.items(),
-            key=lambda item: (
-                item[1]['child_schema'],
-                item[1]['child_table'],
-                item[1]['constraint_name'],
-            ),
-        ):
-            schema, tname, cname = [qi(fk[k], connection)
-                                    for k in ('child_schema', 'child_table', 'constraint_name')]
-            print(f'ALTER TABLE {schema}.{tname} ADD CONSTRAINT {cname} {constraint_defs[oid]};')
-
+        for oid, fk in sorted(nondeferrable_cycle_constraints.items(),
+                              key=lambda item: (item[1]['child_schema'],
+                                                item[1]['child_table'],
+                                                item[1]['constraint_name'])):
+            print('ALTER TABLE {table} ADD CONSTRAINT {cname} {cdef};'.format(
+                table=qi(fk['child_schema'], fk['child_table']),
+                cname=qi(fk['constraint_name']),
+                cdef=constraint_defs[oid],
+            ))
     # Adjust sequences for affected tables so that future inserts do not collide.
     for seq in get_owned_sequences_for_tables(connection, list(ordered_tables)):
-        print(f"SELECT pg_catalog.setval('{seq['schema']}.{seq['name']}', {seq['value']}, true);")
+        print("SELECT pg_catalog.setval('{schema}.{name}', {value}, true);".format(**seq))
 
-    if cyclic_tables:
-        print('COMMIT;')
+    print('COMMIT;')
 
 
 def main():
