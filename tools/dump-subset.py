@@ -577,6 +577,8 @@ def dump_subset(connection, table, seed_where, binary=False, debug=False, debug_
 
     # Re-create the non-deferrable constraints after the dump (dropped earlier).
     if cyclic_tables and nondeferrable_cycle_constraints and force_defer:
+        # Finish all deferred constraint checks so there are no pending trigger events.
+        print('SET CONSTRAINTS ALL IMMEDIATE;')
         for oid, fk in sorted(
             nondeferrable_cycle_constraints.items(),
             key=lambda item: (
