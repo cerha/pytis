@@ -46,6 +46,7 @@ import psycopg2.extras
 import psycopg2.extensions
 from collections.abc import Iterable
 
+
 def split_table(table):
     if '.' in table:
         schema, name = table.split('.', 1)
@@ -53,13 +54,16 @@ def split_table(table):
         schema, name = 'public', table
     return schema, name
 
+
 def quote_ident(connection, *parts: str) -> str:
     return '.'.join(psycopg2.extensions.quote_ident(ident, connection) for ident in parts)
+
 
 def quote_list(connection, idents: Iterable[str | list[str] | tuple[str, ...]]) -> str:
     return ', '.join(quote_ident(connection, *ident) if isinstance(ident, (list, tuple))
                      else quote_ident(connection, ident)
                      for ident in idents)
+
 
 def quote_table(connection, table: str) -> str:
     return quote_ident(connection, *split_table(table))
@@ -95,6 +99,7 @@ def get_foreign_keys(connection):
         cur.execute(sql)
         return cur.fetchall()
 
+
 def table_exists(connection, table):
     """Return True if the given schema.table exists."""
     schema, name = split_table(table)
@@ -105,6 +110,7 @@ def table_exists(connection, table):
             WHERE table_schema = %s AND table_name = %s;
         """, (schema, name))
         return cur.fetchone() is not None
+
 
 def get_table_columns(connection, table):
     """Return ordered column names for SELECT/COPY."""
@@ -117,6 +123,7 @@ def get_table_columns(connection, table):
             ORDER BY ordinal_position
         """, (schema, name))
         return [r[0] for r in cur]
+
 
 def build_parent_graph(fks_rows):
     """Return:
@@ -133,6 +140,7 @@ def build_parent_graph(fks_rows):
         children_by_parent[parent].add(child)
     return parents_by_child, children_by_parent
 
+
 def ancestors_only(start, parents):
     seen, q = set([start]), collections.deque([start])
     while q:
@@ -143,11 +151,13 @@ def ancestors_only(start, parents):
                 q.append(p)
     return seen
 
+
 def subgraph_edges(nodes, children_map):
     sub = {u: {v for v in children_map.get(u, set()) if v in nodes} for u in nodes}
     for u in nodes:
         sub.setdefault(u, set())
     return sub
+
 
 def topo_sort(nodes, deps):
     indeg = {u: 0 for u in nodes}
@@ -165,6 +175,7 @@ def topo_sort(nodes, deps):
                 q.append(v)
     return order
 
+
 def get_primary_key(connection, table):
     """Return list of PK columns in order, or [] if no PK."""
     schema, name = split_table(table)
@@ -180,6 +191,7 @@ def get_primary_key(connection, table):
             ORDER BY k.ord;
         """, (schema, name))
         return [r[0] for r in cur.fetchall()]
+
 
 def build_child_fk_map(foreign_keys):
     """Return child foreign key map: child -> list of dicts.
@@ -210,6 +222,7 @@ def build_child_fk_map(foreign_keys):
                 'cons': cons,
             })
     return child_fk_map
+
 
 def strongly_connected_components(nodes, deps):
     """Return list of SCCs, each as a set of nodes, using Tarjan's algorithm."""
@@ -251,6 +264,7 @@ def strongly_connected_components(nodes, deps):
 
     return sccs
 
+
 def get_constraint_defs(connection, constraint_oids):
     """Return mapping oid -> constraint definition string for given oids."""
     if not constraint_oids:
@@ -262,6 +276,7 @@ def get_constraint_defs(connection, constraint_oids):
             WHERE oid = ANY(%s)
         """, (list(constraint_oids),))
         return {row[0]: row[1] for row in cur}
+
 
 def get_owned_sequences_for_tables(connection, tables):
     """Return list of dicts for sequences owned by columns of given tables.
@@ -294,6 +309,7 @@ def get_owned_sequences_for_tables(connection, tables):
     with connection.cursor(cursor_factory=psycopg2.extras.DictCursor) as cur:
         cur.execute(sql, (tables,))
         return cur.fetchall()
+
 
 def build_selection_sets(connection, reachable_tables, start_table, seed_where,
                          pk_by_table, child_fk_map):
@@ -387,6 +403,7 @@ def build_selection_sets(connection, reachable_tables, start_table, seed_where,
                         changed = True
 
     return selection_tables
+
 
 def dump_subset(connection, table, seed_where, binary=False, debug=False, debug_sql=False,
                 on_conflict_do_nothing=False, disable_triggers=False, force_defer=False):
