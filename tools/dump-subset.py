@@ -69,6 +69,11 @@ def quote_table(connection, table: str) -> str:
     return quote_ident(connection, *split_table(table))
 
 
+def error(*messages):
+    print(os.path.basename(sys.argv[0]), ' '.join(sys.argv[1:]), file=sys.stderr)
+    print('ERROR:', "\n".join(messages), file=sys.stderr)
+
+
 def get_foreign_keys(connection):
     sql = """
     SELECT
@@ -455,20 +460,19 @@ def dump_subset(connection, table, seed_where, binary=False, debug=False, debug_
                         nondeferrable_cycle_constraints[oid] = fk
 
     if cyclic_tables and nondeferrable_cycle_constraints and not force_defer:
-        print("ERROR: Some foreign-key constraints on cyclic tables are "
-              "NOT DEFERRABLE and would still be checked immediately, even "
-              "with SET CONSTRAINTS ALL DEFERRED:", file=sys.stderr)
-        for fk in sorted(
-            nondeferrable_cycle_constraints.values(),
-            key=lambda r: (
-                r['child_schema'], r['child_table'], r['constraint_name']
-            ),
-        ):
-            table_name = f"{fk['child_schema']}.{fk['child_table']}"
-            print(f" • {table_name}: {fk['constraint_name']}", file=sys.stderr)
-        print("Re-run with --force-defer (-D) to temporarily drop and recreate "
-              "these constraints around the import.",
-              file=sys.stderr)
+        error(
+            "Some foreign-key constraints on cyclic tables are "
+            "NOT DEFERRABLE and would still be checked immediately, even "
+            "with SET CONSTRAINTS ALL DEFERRED:",
+            '\n'.join([
+                f" • {fk['child_schema']}.{fk['child_table']}: {fk['constraint_name']}"
+                for fk in sorted(nondeferrable_cycle_constraints.values(),
+                                 key=lambda r: (r['child_schema'], r['child_table'],
+                                                r['constraint_name']))
+            ]),
+            "Re-run with --force-defer (-D) to temporarily drop and recreate "
+            "these constraints around the import.",
+        )
         sys.exit(5)
 
     if cyclic_tables and nondeferrable_cycle_constraints and force_defer:
@@ -566,10 +570,14 @@ def dump_subset(connection, table, seed_where, binary=False, debug=False, debug_
 
     # Re-create the non-deferrable constraints after the dump (dropped earlier).
     if cyclic_tables and nondeferrable_cycle_constraints and force_defer:
-        for oid, fk in sorted(nondeferrable_cycle_constraints.items(),
-                              key=lambda item: (item[1]['child_schema'],
-                                                item[1]['child_table'],
-                                                item[1]['constraint_name'])):
+        for oid, fk in sorted(
+            nondeferrable_cycle_constraints.items(),
+            key=lambda item: (
+                item[1]['child_schema'],
+                item[1]['child_table'],
+                item[1]['constraint_name'],
+            ),
+        ):
             print('ALTER TABLE {table} ADD CONSTRAINT {cname} {cdef};'.format(
                 table=qi(fk['child_schema'], fk['child_table']),
                 cname=qi(fk['constraint_name']),
@@ -641,7 +649,7 @@ def main():
                 password=password,
             ) as connection:
                 if not table_exists(connection, table):
-                    print(f"[ERROR] Table '{table}' does not exist.", file=sys.stderr)
+                    error(f"Table '{table}' does not exist.")
                     sys.exit(3)
                 dump_subset(connection, table, args.where, binary=args.binary,
                             debug=args.debug, debug_sql=args.debug_sql,
@@ -659,9 +667,9 @@ def main():
                     password = getpass.getpass("Password: ")
                     continue
                 except (EOFError, KeyboardInterrupt):
-                    print("\n[!] Password not provided.", file=sys.stderr)
+                    error("Password not provided.")
                     sys.exit(1)
-            print(f"[ERROR] PostgreSQL: {e}", file=sys.stderr)
+            error(f"PostgreSQL: {e}")
             sys.exit(2)
 
 
