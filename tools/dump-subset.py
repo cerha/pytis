@@ -317,7 +317,7 @@ def get_owned_sequences_for_tables(connection, tables):
 
 
 def build_selection_sets(connection, reachable_tables, start_table, seed_where,
-                         pk_by_table, child_fk_map):
+                         pk_by_table, child_fk_map, debug_sql=False):
     """Create temp selection tables and populate them with PKs to be dumped.
 
     For each table in reachable_tables, a TEMP table tmp_sel_* is created with the
@@ -325,6 +325,12 @@ def build_selection_sets(connection, reachable_tables, start_table, seed_where,
     child row all referenced parent rows are also selected (recursively).
 
     """
+    def dbg_sql(lines, **kwargs):
+        sql = "\n".join(lines).format(**kwargs)
+        if debug_sql:
+            print(sql, file=sys.stderr)
+        return sql
+
     qi = functools.partial(quote_ident, connection)
     ql = functools.partial(quote_list, connection)
     qt = functools.partial(quote_table, connection)
@@ -347,9 +353,8 @@ def build_selection_sets(connection, reachable_tables, start_table, seed_where,
             """, (schema, name, pk))
             types = {row[0]: row[1] for row in cur.fetchall()}
             selection_tables[t] = 'tmp_sel_' + re.sub(r'[^a-zA-Z0-9_]', '_', t)
-            cur.execute((
-                'CREATE TEMP TABLE {table} ({columns}, PRIMARY KEY ({pk})) ON COMMIT DROP;'
-            ).format(
+            cur.execute(dbg_sql(
+                ('CREATE TEMP TABLE {table} ({columns}, PRIMARY KEY ({pk})) ON COMMIT DROP;',),
                 table=qi(selection_tables[t]),
                 columns=', '.join(qi(c) + ' ' + types[c] for c in pk),
                 pk=ql(pk),
@@ -358,13 +363,12 @@ def build_selection_sets(connection, reachable_tables, start_table, seed_where,
         # Seed start table.
         schema, name = split_table(start_table)
         pk = pk_by_table[start_table]
-        cur.execute("""
-            INSERT INTO {target_table} ({target_columns})
-            SELECT DISTINCT {columns}
-            FROM {source_table}
-            WHERE {where}
-            ON CONFLICT DO NOTHING;
-        """.format(
+        cur.execute(dbg_sql(
+            ("INSERT INTO {target_table} ({target_columns})",
+             "SELECT DISTINCT {columns}",
+             "FROM {source_table}",
+             "WHERE {where}",
+             "ON CONFLICT DO NOTHING;"),
             target_table=qi(selection_tables[start_table]),
             target_columns=ql(pk),
             columns=ql([(schema, name, c) for c in pk]),
@@ -385,14 +389,13 @@ def build_selection_sets(connection, reachable_tables, start_table, seed_where,
                     if not (parent in reachable_tables and fk['child_cols'] and fk['parent_cols']):
                         continue
                     parent_pk = pk_by_table[parent]
-                    cur.execute("""
-                        INSERT INTO {target_table} ({target_columns})
-                        SELECT DISTINCT {columns}
-                        FROM {p} p
-                        JOIN {c} c ON ({c_fk}) = ({p_fk})
-                        JOIN {s} s ON ({s_pk}) = ({c_pk})
-                        ON CONFLICT DO NOTHING;
-                    """.format(
+                    cur.execute(dbg_sql(
+                        ("INSERT INTO {target_table} ({target_columns})",
+                         "SELECT DISTINCT {columns}",
+                         "FROM {p} p",
+                         "JOIN {c} c ON ({c_fk}) = ({p_fk})",
+                         "JOIN {s} s ON ({s_pk}) = ({c_pk})",
+                         "ON CONFLICT DO NOTHING;"),
                         target_table=qi(selection_tables[parent]),
                         target_columns=ql(parent_pk),
                         columns=ql(('p', c) for c in parent_pk),
@@ -493,6 +496,7 @@ def dump_subset(connection, table, seed_where, binary=False, debug=False, debug_
         seed_where or 'true',
         pk_by_table,
         child_fk_map,
+        debug_sql=debug_sql,
     )
 
     print('BEGIN;')
