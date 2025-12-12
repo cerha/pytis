@@ -59,7 +59,7 @@ def quote_ident(connection, *parts: str) -> str:
     return '.'.join(psycopg2.extensions.quote_ident(ident, connection) for ident in parts)
 
 
-def quote_list(connection, idents: Iterable[str | list[str] | tuple[str, ...]]) -> str:
+def quote_list(connection, idents: Iterable) -> str:
     return ', '.join(quote_ident(connection, *ident) if isinstance(ident, (list, tuple))
                      else quote_ident(connection, ident)
                      for ident in idents)
