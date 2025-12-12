@@ -326,11 +326,10 @@ def build_selection_sets(connection, reachable_tables, start_table, seed_where,
 
     """
     def dbg_sql(lines, **kwargs):
-        sql = "\n".join(lines).format(**kwargs)
+        sql = ("\n".join(lines) if isinstance(lines, (tuple, list)) else lines).format(**kwargs)
         if debug_sql:
             print(sql, file=sys.stderr)
         return sql
-
     qi = functools.partial(quote_ident, connection)
     ql = functools.partial(quote_list, connection)
     qt = functools.partial(quote_table, connection)
@@ -354,11 +353,12 @@ def build_selection_sets(connection, reachable_tables, start_table, seed_where,
             types = {row[0]: row[1] for row in cur.fetchall()}
             selection_tables[t] = 'tmp_sel_' + re.sub(r'[^a-zA-Z0-9_]', '_', t)
             cur.execute(dbg_sql(
-                ('CREATE TEMP TABLE {table} ({columns}, PRIMARY KEY ({pk})) ON COMMIT DROP;',),
+                'CREATE TEMP TABLE {table} ({columns}, PRIMARY KEY ({pk})) ON COMMIT DROP;',
                 table=qi(selection_tables[t]),
                 columns=', '.join(qi(c) + ' ' + types[c] for c in pk),
                 pk=ql(pk),
             ))
+        dbg_sql('-----------------------------')
 
         # Seed start table.
         schema, name = split_table(start_table)
@@ -380,6 +380,7 @@ def build_selection_sets(connection, reachable_tables, start_table, seed_where,
         changed = True
         while changed:
             changed = False
+            dbg_sql('-----------------------------')
             for child, fks in child_fk_map.items():
                 if child not in reachable_tables:
                     continue
@@ -409,7 +410,9 @@ def build_selection_sets(connection, reachable_tables, start_table, seed_where,
                     ))
                     if cur.rowcount:
                         changed = True
-
+                    if debug_sql:
+                        print('-- Inserted:', cur.rowcount, file=sys.stderr)
+    dbg_sql('-----------------------------')
     return selection_tables
 
 
