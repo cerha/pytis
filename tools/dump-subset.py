@@ -581,11 +581,7 @@ def dump_subset(connection, table, seed_where, binary=False, debug=False, debug_
         print('SET CONSTRAINTS ALL IMMEDIATE;')
         for oid, fk in sorted(
             nondeferrable_cycle_constraints.items(),
-            key=lambda item: (
-                item[1]['child_schema'],
-                item[1]['child_table'],
-                item[1]['constraint_name'],
-            ),
+            key=lambda x: [x[1][k] for k in ('child_schema', 'child_table', 'constraint_name')],
         ):
             print('ALTER TABLE {table} ADD CONSTRAINT {cname} {cdef};'.format(
                 table=qi(fk['child_schema'], fk['child_table']),
