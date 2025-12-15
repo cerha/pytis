@@ -569,6 +569,11 @@ def dump_subset(connection, table, seed_where, binary=False, debug=False, debug_
                 cur.copy_expert(f'COPY (\n{select}\n) TO STDOUT WITH {fmt};', sys.stdout)
             print('\.\n')
 
+
+    if disable_triggers or (cyclic_tables and nondeferrable_cycle_constraints and force_defer):
+        # Finish all deferred constraint checks so there are no pending trigger events.
+        print('SET CONSTRAINTS ALL IMMEDIATE;')
+
     # Re-enable triggers after the dump (disabled earlier).
     if disable_triggers:
         trigger = "ALL" if cyclic_tables else "USER"
@@ -577,8 +582,6 @@ def dump_subset(connection, table, seed_where, binary=False, debug=False, debug_
 
     # Re-create the non-deferrable constraints after the dump (dropped earlier).
     if cyclic_tables and nondeferrable_cycle_constraints and force_defer:
-        # Finish all deferred constraint checks so there are no pending trigger events.
-        print('SET CONSTRAINTS ALL IMMEDIATE;')
         for oid, fk in sorted(
             nondeferrable_cycle_constraints.items(),
             key=lambda x: [x[1][k] for k in ('child_schema', 'child_table', 'constraint_name')],
