@@ -527,6 +527,7 @@ def dump_subset(connection, table, seed_where, binary=False, debug=False, debug_
         for t in ordered_tables:
             print(f'ALTER TABLE {qt(t)} DISABLE TRIGGER {trigger};')
 
+    fmt = 'BINARY' if binary else 'CSV'
     for t in ordered_tables:
         pk = pk_by_table[t]
         columns = get_table_columns(connection, t)
@@ -543,32 +544,22 @@ def dump_subset(connection, table, seed_where, binary=False, debug=False, debug_
         if on_conflict_do_nothing:
             if not pk:
                 raise ValueError(f"Table has no primary key for ON CONFLICT: {t}")
-            with connection.cursor() as cur:
-                cur.execute(select)
-                for row in cur:
-                    print(('INSERT INTO {table} ({cols}) VALUES ({values}) '
-                           'ON CONFLICT ({pk}) DO NOTHING;').format(
-                               table=qt(t),
-                               cols=ql(columns),
-                               values=cur.mogrify(
-                                   ', '.join(['%s'] * len(columns)),
-                                   [psycopg2.extras.Json(v) if isinstance(v, (dict, list)) else v
-                                    for v in row],
-                               ).decode('utf-8'),
-                               pk=ql(pk),
-                           ))
+            copy_target = qi('tmp_load_' + re.sub(r'[^a-zA-Z0-9_]', '_', t))
+            print(f'CREATE TEMP TABLE {copy_target} '
+                  f'(LIKE {qt(t)} INCLUDING DEFAULTS) ON COMMIT DROP;')
         else:
-            # Dump as COPY.
-            fmt = 'BINARY' if binary else 'CSV'
-            print('COPY {table} ({cols}) FROM STDIN WITH {fmt};'.format(
-                table=qt(t),
-                cols=ql(columns),
-                fmt=fmt,
-            ))
-            with connection.cursor() as cur:
-                cur.copy_expert(f'COPY (\n{select}\n) TO STDOUT WITH {fmt};', sys.stdout)
-            print('\.\n')
+            copy_target = qt(t)
 
+        print(f'COPY {copy_target} ({ql(columns)}) FROM STDIN WITH {fmt};')
+        with connection.cursor() as cur:
+            cur.copy_expert(f'COPY (\n{select}\n) TO STDOUT WITH {fmt};', sys.stdout)
+        print('\.')
+
+        if on_conflict_do_nothing:
+            print(f'INSERT INTO {qt(t)} ({ql(columns)}) '
+                  f'SELECT {ql(columns)} FROM {copy_target} '
+                  f'ON CONFLICT ({ql(pk)}) DO NOTHING;')
+        print()
 
     if disable_triggers or (cyclic_tables and nondeferrable_cycle_constraints and force_defer):
         # Finish all deferred constraint checks so there are no pending trigger events.
