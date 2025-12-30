@@ -3731,6 +3731,16 @@ class DBPostgreSQLTransaction(DBDataPostgreSQL):
     'set_point' method and calling the 'cut' method to rollback to a previously
     set transaction point.
 
+    The transaction can also be used as a context manager:
+
+        with DBPostgreSQLTransaction(...) as transaction:
+            ...
+            # Explicit transaction.commit() or transaction.rollback() is optional.
+
+    If neither 'commit()' nor 'rollback()' is called explicitly inside the
+    context, the transaction is committed on normal exit from the 'with'
+    block and rolled back if an exception is raised.
+
     """
 
     REPEATABLE_READ = 'repeatable read'
@@ -3781,6 +3791,23 @@ class DBPostgreSQLTransaction(DBDataPostgreSQL):
                 self._pg_close_transaction()
             except Exception:
                 pass
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc, tb):
+        try:
+            if self._open:
+                if exc_type is not None:
+                    try:
+                        self.rollback()
+                    except Exception as e:
+                        log(OPERATIONAL, "Error on rollback: {}: {}".format(type(e).__name__, e))
+                else:
+                    self.commit()
+        finally:
+            self.close()
+        return False  # re-raise exceptions
 
     def _db_bindings_to_column_spec(self, __bindings):
         return (), ()
