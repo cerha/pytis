@@ -3371,9 +3371,7 @@ class PopupEditForm(PopupForm, EditForm):
             connection_name = pytis.config.resolver.get(self._name, 'data_spec').connection_name()
         except ResolverError:
             connection_name = None
-        return pytis.data.DBTransactionDefault(pytis.config.dbconnection,
-                                               connection_name=connection_name,
-                                               ok_rollback_closed=True)
+        return pytis.data.transaction(connection_name=connection_name, ok_rollback_closed=True)
 
     def _init_attributes(self, multi_insert=True, **kwargs):
         """Process constructor keyword arguments and initialize the attributes.

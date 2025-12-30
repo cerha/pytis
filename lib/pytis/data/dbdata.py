@@ -937,7 +937,10 @@ def dbfunction(fspec, *args, **kwargs):
         return result[0][0].value()
 
 
-def transaction():
+REPEATABLE_READ = 'repeatable read'
+"""Repeatable read transaction isolation level."""
+
+def transaction(**kwargs):
     """Create a new database transaction for current connection and return it.
 
     Returns a 'DBTransactionDefault' instance.  Aims to simplyfy new
@@ -945,4 +948,4 @@ def transaction():
     pytis.config (requiring importing it).
 
     """
-    return pytis.data.DBTransactionDefault(pytis.config.dbconnection)
+    return pytis.data.DBTransactionDefault(pytis.config.dbconnection, **kwargs)
