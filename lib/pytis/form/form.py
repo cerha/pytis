@@ -3512,7 +3512,7 @@ class PopupEditForm(PopupForm, EditForm):
 
     def set_row(self, row):
         if self._transaction is None:
-            self._transaction = pytis.data.DBTransactionDefault(pytis.config.dbconnection)
+            self._transaction = pytis.data.transaction()
         super(PopupEditForm, self).set_row(row)
 
 

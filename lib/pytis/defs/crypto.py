@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2019-2023 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2019-2023, 2025 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2014-2015 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -193,7 +193,7 @@ class Users(Specification):
         if not record:
             return
         if not transaction:
-            transaction = pytis.data.DBTransactionDefault(pytis.config.dbconnection)
+            transaction = pytis.data.transaction()
         error = pytis.extensions.add_crypto_user(
             area,
             record['username'].value(),

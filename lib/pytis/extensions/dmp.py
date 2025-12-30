@@ -449,9 +449,6 @@ class DMPObject(object):
             self._logger.enable()
         return dbfunction
 
-    def _transaction(self):
-        return pd.DBTransactionDefault(self._configuration.connection_data())
-
     def _b_(self, value):
         return pd.Value(pd.Boolean(), value)
 
@@ -531,7 +528,7 @@ class DMPObject(object):
         """
         messages = []
         if transaction is None:
-            transaction_ = self._transaction()
+            transaction_ = pd.transaction()
         else:
             transaction_ = transaction
         success = self._store_data(transaction_, specifications)
@@ -563,7 +560,7 @@ class DMPObject(object):
         """
         messages = []
         if transaction is None:
-            transaction_ = self._transaction()
+            transaction_ = pd.transaction()
         else:
             transaction_ = transaction
         condition = self._delete_condition(transaction_, specifications)
@@ -971,7 +968,7 @@ class DMPMenu(DMPObject):
         data.close()
         if present:
             if transaction is None:
-                transaction_ = self._transaction()
+                transaction_ = pd.transaction()
             else:
                 transaction_ = transaction
             self._logger.clear()
@@ -1201,7 +1198,7 @@ class DMPRights(DMPObject):
 
         """
         messages = []
-        transaction = self._transaction()
+        transaction = pd.transaction()
         self._disable_triggers(transaction=transaction)
         messages += self.delete_data(fake, transaction=transaction, specifications=specifications)
         self.load_specifications()
@@ -1215,7 +1212,7 @@ class DMPRights(DMPObject):
         return messages
 
     def dmp_change_rights(self, fake, requests):
-        transaction = self._transaction()
+        transaction = pd.transaction()
         self._disable_triggers(transaction=transaction)
         rights = DMPRights(self._configuration)
         rights.retrieve_data(transaction=transaction)
@@ -1254,7 +1251,7 @@ class DMPRights(DMPObject):
         return messages
 
     def dmp_copy_rights(self, fake, from_shortname, to_shortname):
-        transaction = self._transaction()
+        transaction = pd.transaction()
         row = pd.Row((('copy_from', pd.sval(from_shortname),),
                       ('copy_to', pd.sval(to_shortname),),))
         dbfunction = self._dbfunction('pytis_copy_rights')
@@ -1275,7 +1272,7 @@ class DMPRights(DMPObject):
 
         """
         if transaction is None:
-            transaction_ = self._transaction()
+            transaction_ = pd.transaction()
         else:
             transaction_ = transaction
         dbfunctions = [self._dbfunction(f) for f in ('pytis_update_transitive_roles',
@@ -1464,7 +1461,7 @@ class DMPRoles(DMPObject):
                 ('member', member_value,),
                 ('roleid', role_value,),
             ))
-            transaction = self._transaction()
+            transaction = pd.transaction()
             self._logger.clear()
             data.insert(row, transaction=transaction)
             if fake:
@@ -1781,7 +1778,7 @@ class DMPActions(DMPObject):
         data.delete_many(condition, transaction=transaction)
 
     def dmp_update_forms(self, fake, specification, new_fullname=None):
-        transaction = self._transaction()
+        transaction = pd.transaction()
         self._disable_triggers(transaction=transaction)
         result = self.update_forms(fake, specification, new_fullname=new_fullname,
                                    transaction=transaction)
@@ -1825,7 +1822,7 @@ class DMPActions(DMPObject):
         rights.load_specifications()
         self.load_specifications(dmp_menu=menu, dmp_rights=rights)
         if transaction is None:
-            transaction_ = self._transaction()
+            transaction_ = pd.transaction()
         else:
             transaction_ = transaction
         self._logger.clear()
@@ -1888,7 +1885,7 @@ class DMPActions(DMPObject):
             shortname = row['shortname'].value()
             menu = DMPMenu(self._configuration)
             rights = DMPRights(self._configuration)
-            transaction = self._transaction()
+            transaction = pd.transaction()
             self._disable_triggers(transaction=transaction)
             self._logger.clear()
             messages += menu.delete_data(fake, transaction=transaction, specifications=(shortname,))
@@ -2082,7 +2079,7 @@ class DMPImport(DMPObject):
 
     def delete_data(self, fake, transaction=None):
         if transaction is None:
-            transaction_ = self._transaction()
+            transaction_ = pd.transaction()
         else:
             transaction_ = transaction
         messages = []
@@ -2099,7 +2096,7 @@ class DMPImport(DMPObject):
 
     def store_data(self, fake, transaction=None):
         if transaction is None:
-            transaction_ = self._transaction()
+            transaction_ = pd.transaction()
         else:
             transaction_ = transaction
         messages = []
@@ -2125,7 +2122,7 @@ class DMPImport(DMPObject):
             of SQL commands (basestrings) that would do so
 
         """
-        transaction = self._transaction()
+        transaction = pd.transaction()
         self._disable_triggers(transaction=transaction, disable_import=True)
         messages = []
         messages += self.load_specifications()
@@ -2161,7 +2158,7 @@ class DMPImport(DMPObject):
         if not specification and action.kind() in ('form', 'action',):
             add_message(messages, DMPMessage.ERROR_MESSAGE, "Action without specification")
             return messages
-        transaction = self._transaction()
+        transaction = pd.transaction()
         if position is True and self._dmp_actions.registered(fullname, transaction=transaction):
             add_message(messages, DMPMessage.ERROR_MESSAGE, "Action already present")
             transaction.rollback()
@@ -2225,7 +2222,7 @@ class DMPImport(DMPObject):
         return messages
 
     def dmp_rename_specification(self, fake, old_name, new_name):
-        transaction = self._transaction()
+        transaction = pd.transaction()
         row = pd.Row((('old_name', pd.sval(old_name),),
                       ('new_name', pd.sval(new_name),),))
         dbfunction = self._dbfunction('pytis_change_specification_name')

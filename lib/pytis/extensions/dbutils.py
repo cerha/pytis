@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2024 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2025 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2002-2017 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -66,7 +66,7 @@ def dbinsert(spec, row, transaction=None):
         insert.
       row -- sekvence dvouprvkových sekvencí (id, value) nebo instance
         pd.Row
-      transaction -- instance pd.DBTransactionDefault
+      transaction -- database transaction instance
 
     Vrací počet vložených řádků.
 
@@ -100,7 +100,7 @@ def dbupdate(row, values=(), transaction=None):
       values -- sekvence dvouprvkových sekvencí ('id', value) ,
         kde 'id' je řetězcový identifikátor políčka a value je
         instance, kterou se bude políčko aktualizovat
-      transaction -- instance pd.DBTransactionDefault
+      transaction -- database transaction instance
 
     """
     import pytis.form
@@ -128,7 +128,7 @@ def dbupdate_many(spec, condition=None, update_row=None,
         select; string'
       condition -- podmínka updatovaní.
       update_row -- řádek kterým se provede update,
-      transaction -- instance pd.DBTransactionDefault
+      transaction -- database transaction instance
 
     Vrací počet updatovaných řádků.
 
