@@ -248,8 +248,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         recent_directories = self._get_state_param(self._STATE_RECENT_DIRECTORIES, {}, dict)
         self._recent_directories.update(recent_directories)
         # Initialize the menubar.
-        mb = self._create_menubar()
-        if mb is None:
+        if not self._init_menubar():
             return False
         # Initialize the toolbar.
         self._toolbar = wx_toolbar(frame, pytis.form.TOOLBAR_COMMANDS)
@@ -424,18 +423,8 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
             else:
                 return False
 
-    def _create_menubar(self):
-        # TODO: Temporary backwards compatilility hack.  Rely solely on self._specification.menu()
-        # as soon as all DMP applications define menu by calling pytis.extensions.dmp_menu().
-        import pytis.extensions
-        try:
-            menu = pytis.extensions.dmp_menu()
-            if not menu:
-                menu = list(self._specification.menu())
-        except pd.DBException:
-            menu = list(self._specification.menu())
-        self._menu = menu
-
+    def _init_menubar(self):
+        self._menu = menu = list(self._specification.menu())
         command_menu_items = []
         for group in pytis.form.FORM_MENU_COMMANDS:
             if command_menu_items:
@@ -461,9 +450,9 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
             if success:
                 menubar.Append(result, item.title)
             else:
-                return None
+                return False
         self._frame.SetMenuBar(menubar)
-        return menubar
+        return True
 
     def _create_menu(self, parent, spec, keymap):
         def on_highlight_item(event):
@@ -1170,7 +1159,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
     def reload_rights(self):
         """Reload application rights and menu from the database."""
         self._init_access_rights()
-        self._create_menubar()
+        self._init_menubar()
         self._cache_menu_enabled(self._menu)
 
     @Command.define
