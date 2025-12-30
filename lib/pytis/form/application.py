@@ -218,12 +218,10 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
             for o in configurable_options + ('initial_keyboard_layout',)]
         self._saved_state = {}
         # Initialize all needed user settings managers.
-        self._application_config_manager = pytis.form.ApplicationConfigManager(
-            pytis.config.dbconnection)
-        self._form_settings_manager = pytis.form.FormSettingsManager(pytis.config.dbconnection)
-        self._form_profile_manager = pytis.form.FormProfileManager(pytis.config.dbconnection)
-        self._aggregated_views_manager = pytis.form.AggregatedViewsManager(
-            pytis.config.dbconnection)
+        self._application_config_manager = pytis.form.ApplicationConfigManager()
+        self._form_settings_manager = pytis.form.FormSettingsManager()
+        self._form_profile_manager = pytis.form.FormProfileManager()
+        self._aggregated_views_manager = pytis.form.AggregatedViewsManager()
         # Initialize user action logger.
         from pytis.defs.logging import UserActionLog
         self._user_action_logger = UserActionLog.Logger(pytis.config.dbconnection,
