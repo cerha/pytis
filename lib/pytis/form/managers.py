@@ -419,7 +419,7 @@ class FormProfileManager(UserSetttingsManager):
 
     def _in_transaction(self, transaction, operation, *args, **kwargs):
         if transaction is None:
-            transaction = pytis.data.DBTransactionDefault(self._dbconnection)
+            transaction = pytis.data.transaction()
             kwargs['transaction'] = transaction
             try:
                 operation(*args, **kwargs)
