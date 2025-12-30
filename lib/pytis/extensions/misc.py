@@ -267,26 +267,24 @@ def check_crypto_password(key, password, connection_data):
 
 def add_crypto_user(area, user, admin_user, admin_password, admin_address, connection_data,
                     transaction=None, user_password=None):
-    """Add new crypto user for the given area.
-
-    If the action succeeds, return 'None'.  Otherwise return an error
-    description (basestring).
-
-    Arguments:
-
-      area -- name of the crypto area; basestring
-      user -- login name of the user to get the access to the area; basestring
-      admin_user -- login name of the crypto area administrator; basestring
-      admin_password -- password to the admin key; basestring
-      admin_address -- e-mail address of the admin user, to be used as the
-        sender of the notification e-mail; basestring
-      connection_data -- database connection data; 'pytis.data.DBConnection'
-        instance
-      transaction -- transaction to use
-      user_password -- string to use as the password for given login name; in such a case
-        password will not be sent by email.
-
     """
+                    Create and install a new cryptographic key entry for `user` in the specified `area`.
+                    
+                    Attempts to copy the area's admin key for `user`, optionally generates a new user password and emails it to the user, and marks the new key as fresh when appropriate. Returns `None` on success or a descriptive error message on failure.
+                    
+                    Parameters:
+                        area (str): Name of the cryptographic area.
+                        user (str): Login name of the user to grant access.
+                        admin_user (str): Login name of the area's administrator.
+                        admin_password (str): Password for the administrator's crypto key.
+                        admin_address (str): Email address used as the sender for notification messages.
+                        connection_data: Database connection object used for DB operations.
+                        transaction: Optional transaction to use; when omitted the function creates and manages its own transaction.
+                        user_password (str, optional): If provided, this password is used for the new user and will not be emailed.
+                    
+                    Returns:
+                        None if the operation succeeds, otherwise a string describing the error.
+                    """
     key_id, key = crypto_admin_key(area, admin_user, connection_data)
     if key_id is None:
         return "admin key not found for the area: %s" % (area,)

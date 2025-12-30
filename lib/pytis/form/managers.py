@@ -64,11 +64,26 @@ class UserSetttingsManager(object):
     _COLUMNS = ()
 
     def __init__(self, username=None):
+        """
+        Initialize the settings manager for a specific user and prepare its database table handle.
+        
+        Parameters:
+        	username (str | None): Username whose settings are managed; if None, use the global database user.
+        """
         log(OPERATIONAL, "Initializing on {}({}).".format(self._TABLE, ', '.join(self._COLUMNS)))
         self._username = username or pytis.config.dbuser
         self._data = pytis.data.dbtable(self._TABLE, self._COLUMNS, pytis.config.dbconnection)
 
     def _values(self, **kwargs):
+        """
+        Build a list of (column_name, Value) pairs for the current user and provided fields.
+        
+        Parameters:
+            **kwargs: Column names and their raw values to include.
+        
+        Returns:
+            A list of tuples (column_name, pytis.data.Value) containing an initial ('username', self._username) entry followed by entries for each provided keyword argument; values are wrapped in pytis.data.Value using the column's declared type.
+        """
         return [(key, pytis.data.Value(self._data.find_column(key).type(), value))
                 for key, value in [('username', self._username)] + list(kwargs.items())]
 
@@ -276,10 +291,39 @@ class FormProfileManager(UserSetttingsManager):
 
     """
     def __init__(self, username=None):
+        """
+        Initialize the FormProfileManager for a specific user.
+        
+        Parameters:
+            username (str | None): Username to scope stored profiles and parameters; if None, the global/default database user is used.
+        """
         super(FormProfileManager, self).__init__(username=username)
         self._params_manager = FormProfileParamsManager(username=username)
 
     def _pack_filter(self, something):
+        """
+        Pack a filter component into a JSON-serializable representation for storage/export.
+        
+        This converts supported filter parts (IN operators, Operator instances, typed Values, WMValue, and plain strings)
+        into a nested structure of lists, dicts, and primitive values suitable for serialization and later unpacking.
+        
+        Parameters:
+            something: A filter component which may be one of:
+                - pytis.presentation.IN
+                - pytis.data.Operator
+                - pytis.data.Value (including typed Date/Time/DateTime/Float)
+                - pytis.data.WMValue
+                - basestring
+        
+        Returns:
+            A packed representation:
+                - For operators: [operator_name, [packed_arg, ...], kwargs_dict]
+                - For Values/WMValue: a list or primitive representing the exported value with any format hints applied
+                - For plain strings: the original string
+        
+        Raises:
+            pytis.util.ProgramError: If `something` is an unsupported type.
+        """
         if isinstance(something, pytis.presentation.IN):
             args = list(something.original_args())
             # Pack the additonal condition of pytis.presentation.IN.
@@ -417,6 +461,17 @@ class FormProfileManager(UserSetttingsManager):
                 )
 
     def _in_transaction(self, transaction, operation, *args, **kwargs):
+        """
+        Run the given operation with a database transaction, creating and managing a new transaction when none is provided.
+        
+        If `transaction` is None, a new transaction is created and injected into the operation's keyword arguments as `transaction`; the transaction is committed if the operation completes successfully or rolled back if the operation raises. If a `transaction` is provided, it is passed through to the operation unchanged and no commit/rollback is performed here.
+        
+        Parameters:
+            transaction: An existing transaction object or `None` to create a new one.
+            operation (callable): The function to execute. It will receive `transaction` as a keyword argument.
+            *args: Positional arguments forwarded to `operation`.
+            **kwargs: Keyword arguments forwarded to `operation`; the `transaction` key will be set/overwritten.
+        """
         if transaction is None:
             transaction = pytis.data.transaction()
             kwargs['transaction'] = transaction

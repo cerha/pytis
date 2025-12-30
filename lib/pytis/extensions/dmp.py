@@ -441,6 +441,15 @@ class DMPObject(object):
         return data
 
     def _dbfunction(self, function):
+        """
+        Create a DBFunctionDefault instance configured with this object's connection data and SQL logger.
+        
+        Parameters:
+        	function: Identifier or descriptor of the database function to wrap; passed to DBFunctionDefault.
+        
+        Returns:
+        	pd.DBFunctionDefault: A DBFunctionDefault bound to this instance's connection data and using this instance's SQL logger. The logger's enabled/disabled state is preserved.
+        """
         logger_active = self._logger.active()
         self._logger.disable()
         dbfunction = pd.DBFunctionDefault(function, self._configuration.connection_data(),
@@ -450,6 +459,15 @@ class DMPObject(object):
         return dbfunction
 
     def _b_(self, value):
+        """
+        Wrap a Python value into a DMP boolean Value wrapper.
+        
+        Parameters:
+            value: A boolean or truthy/falsy value to be represented as a DMP boolean.
+        
+        Returns:
+            A pd.Value containing a pd.Boolean type initialized with `value`.
+        """
         return pd.Value(pd.Boolean(), value)
 
     def _i_(self, value):
@@ -513,18 +531,16 @@ class DMPObject(object):
         pass
 
     def store_data(self, fake, transaction=None, specifications=None):
-        """Store DMP data into the database.
-
-        Arguments:
-
-          fake -- iff True, don't actually store the data but return sequence
-            of SQL commands (basestrings) that would do so
-          transaction -- transaction object to use or 'None'; if not 'None' no
-            commit nor rollback is performed in this method regardless 'fake'
-            argument value
-          specifications -- if not 'None' then it is a sequence of specification
-            names to restrict the operation to
-
+        """
+        Persist DMP data to the database.
+        
+        Parameters:
+            fake (bool): If True, do not execute changes; collect and return the SQL commands that would be executed.
+            transaction (optional): Transaction object to use. If None, a new transaction is created and committed on success or rolled back on failure; if provided, this function will not commit or roll back it.
+            specifications (optional): Sequence of specification names to restrict which data is stored.
+        
+        Returns:
+            list: A list of formatted messages produced during the operation. When `fake` is True this list includes the SQL commands that would be executed; otherwise it may be empty or contain informational messages.
         """
         messages = []
         if transaction is None:
@@ -545,18 +561,18 @@ class DMPObject(object):
         return False
 
     def delete_data(self, fake, transaction=None, specifications=None):
-        """Delete DMP data from the database.
-
-        Arguments:
-
-          fake -- iff True, don't actually delete the data but return sequence
-            of SQL commands (basestrings) that would do so
-          transaction -- transaction object to use or 'None'; if not 'None' no
-            commit nor rollback is performed in this method regardless 'fake'
-            argument value
-          specifications -- if not 'None' then it is a sequence of specification
-            names to restrict the operation to
-
+        """
+        Remove DMP data from the database according to optional specification filters.
+        
+        If `fake` is True, no changes are applied and the SQL commands that would be executed are returned as messages. If `transaction` is provided, this method uses it and does not commit or roll back; otherwise it creates and manages its own transaction, committing only when the deletion succeeded and `fake` is False, and rolling back otherwise.
+        
+        Parameters:
+            fake (bool): If True, do not perform deletions and return the SQL commands that would run.
+            transaction (optional): An explicit transaction object to use; when provided, this method will not commit or roll back it.
+            specifications (optional, sequence): If provided, restrict deletion to the given specification names.
+        
+        Returns:
+            list: Messages produced during the operation; when `fake` is True this contains the SQL commands that would have been executed, otherwise it contains logger messages describing the performed actions.
         """
         messages = []
         if transaction is None:
@@ -962,6 +978,18 @@ class DMPMenu(DMPObject):
         data.delete_many(condition, transaction=transaction)
 
     def delete_menu(self, fake, condition, position, transaction=None):
+        """
+        Delete the menu entry (and its subtree) identified by `condition` and return operation messages.
+        
+        Parameters:
+            fake (bool): If True, perform a dry run without committing database changes; generated SQL/messages are returned and the transaction is rolled back.
+            condition: A database selection condition identifying the menu rows to remove.
+            position: Human-readable position identifier used in error messages when no matching rows exist.
+            transaction: Optional database transaction to use; if omitted, a new transaction is created for the operation.
+        
+        Returns:
+            list: A list of formatted message strings describing the outcome, errors, and any generated SQL.
+        """
         messages = []
         data = self._data('e_pytis_menu')
         present = (data.select(condition=condition) > 0)
@@ -1182,20 +1210,15 @@ class DMPRights(DMPObject):
         return lines
 
     def dmp_restore(self, fake, specifications):
-        """Restore access rights of the given specification.
-
-        Access rights of the specification in the database are deleted and
-        initialized again from application specifications.
-
-        Arguments:
-
-          fake -- iff True, don't actually change the data but return sequence
-            of SQL commands (basestrings) that would do so
-          def_directory -- directory containing application specifications,
-            string or 'None'
-          specifications -- sequence of specification names to restrict the
-            operation to
-
+        """
+        Restore access rights for the given specifications by removing current rights from the database and reinitializing them from application specifications.
+        
+        Parameters:
+            fake (bool): If True, do not modify the database and instead collect SQL commands that would be executed.
+            specifications (sequence[str]): Names of specifications to limit the restore operation to.
+        
+        Returns:
+            list[str]: Collected formatted message strings describing actions taken and any warnings or errors.
         """
         messages = []
         transaction = pd.transaction()
@@ -1212,6 +1235,23 @@ class DMPRights(DMPObject):
         return messages
 
     def dmp_change_rights(self, fake, requests):
+        """
+        Apply a batch of rights change requests and persist the resulting rights updates.
+        
+        Parameters:
+        	fake (bool): If True, produce SQL and messages without applying changes to the database.
+        	requests (Iterable[tuple]): Sequence of requests where each tuple is
+        		(shortname, roleid, rightid, granted, colname, system).
+        		- shortname: action shortname to modify
+        		- roleid: target role name or '*' for all roles
+        		- rightid: identifier of the right
+        		- granted: truthy to grant the right, falsy to remove it, or None to only remove existing matching entries
+        		- colname: optional column name associated with the right
+        		- system: boolean indicating a system right
+        
+        Returns:
+        	list: A list of formatted DMP messages describing applied changes, errors, warnings, and any generated SQL. On success the transaction is committed; on any error the transaction is rolled back and an error message is included.
+        """
         transaction = pd.transaction()
         self._disable_triggers(transaction=transaction)
         rights = DMPRights(self._configuration)
@@ -1251,6 +1291,17 @@ class DMPRights(DMPObject):
         return messages
 
     def dmp_copy_rights(self, fake, from_shortname, to_shortname):
+        """
+        Copy access rights from one action shortname to another.
+        
+        Parameters:
+            fake (bool): If true, perform a dry run (the database changes are rolled back and logged messages are returned).
+            from_shortname (str): Source action shortname whose rights will be copied.
+            to_shortname (str): Destination action shortname to receive the copied rights.
+        
+        Returns:
+            list[str]: Logged messages produced during the operation; when `fake` is false this is an empty list.
+        """
         transaction = pd.transaction()
         row = pd.Row((('copy_from', pd.sval(from_shortname),),
                       ('copy_to', pd.sval(to_shortname),),))
@@ -1265,11 +1316,15 @@ class DMPRights(DMPObject):
         return messages
 
     def commit(self, fake, transaction=None):
-        """Commit changes in access rights stored in the database.
-
-        This makes access rights being prepared in the database tables actually
-        effective.
-
+        """
+        Trigger recalculation of role and rights state in the database and optionally commit the changes.
+        
+        Parameters:
+            fake (bool): If True, do not commit changes; capture and return the SQL/log messages instead.
+            transaction (Optional[object]): Transaction to use for database calls. When None, a new transaction is created and committed or rolled back by this function.
+        
+        Returns:
+            list[str]: Captured logger messages when `fake` is True, otherwise an empty list.
         """
         if transaction is None:
             transaction_ = pd.transaction()
@@ -1435,15 +1490,21 @@ class DMPRoles(DMPObject):
         data.select_map(process)
 
     def dmp_add_member(self, fake, member, role):
-        """Add new member to role.
-
-        Arguments:
-
-          fake -- iff True, don't actually change the data but return sequence
-            of SQL commands (basestrings) that would do so
-          member -- name of the member to be added, string
-          role -- name of the target role, string
-
+        """
+        Add a member to a role.
+        
+        If the member is already assigned to the role, records an error message and makes no change.
+        Otherwise inserts the membership into the database. If `fake` is True, the insertion is rolled
+        back and the SQL/operation messages produced during the attempt are returned instead of committing.
+        
+        Parameters:
+            fake (bool): If True, do not commit changes; return messages describing the SQL/operations.
+            member (str): Name of the member to add.
+            role (str): Name of the target role.
+        
+        Returns:
+            list[DMPMessage]: Messages describing the outcome — an error if the member was already present,
+            or SQL/operation messages produced during the insertion (when `fake` is True) or during the commit.
         """
         messages = []
         member_value = pd.sval(member)
@@ -1774,10 +1835,30 @@ class DMPActions(DMPObject):
         return True
 
     def _delete_data(self, transaction, condition):
+        """
+        Delete action records from the c_pytis_menu_actions table that match the given condition.
+        
+        Parameters:
+            transaction: Active database transaction used to execute the deletion.
+            condition: Condition or predicate used to select rows to delete (passed to data.delete_many).
+        """
         data = self._data('c_pytis_menu_actions')
         data.delete_many(condition, transaction=transaction)
 
     def dmp_update_forms(self, fake, specification, new_fullname=None):
+        """
+        Update form bindings and actions for a specification while temporarily disabling import triggers and managing a transaction.
+        
+        Performs the update by calling update_forms inside a transaction with import triggers disabled; triggers are re-enabled afterwards and the transaction is committed unless `fake` is true, in which case the transaction is rolled back.
+        
+        Parameters:
+            fake (bool): If true, perform a dry run and do not persist changes.
+            specification (str): The name of the specification to update.
+            new_fullname (str|None): Optional new fullname to rename the specification's form actions.
+        
+        Returns:
+            list: A list of DMPMessage-like objects describing operations, warnings, and errors produced during the update.
+        """
         transaction = pd.transaction()
         self._disable_triggers(transaction=transaction)
         result = self.update_forms(fake, specification, new_fullname=new_fullname,
@@ -1791,25 +1872,21 @@ class DMPActions(DMPObject):
 
     def update_forms(self, fake, specification, new_fullname=None, transaction=None,
                      keep_old=False):
-        """Check given form specifications and update the database.
-
-        For given form specification name, load the specification and check
-        its bindings and actions.  Delete old bindings and actions from the
-        database and insert the new ones.
-
-        Arguments:
-
-          fake -- iff True, don't actually change the data but return sequence
-            of SQL commands (basestrings) that would do so
-          specification -- specification name, string
-          new_fullname -- if not 'None', it defines new fullname of the
-            specification, string
-          transaction -- transaction object to use or 'None'; if not 'None' no
-            commit nor rollback is performed in this method regardless 'fake'
-            argument value
-          keep_old -- iff true, don't delete old bindings and actions
-
         """
+                     Update the database bindings and actions for a given form specification.
+                     
+                     Loads the specification, computes its bindings and actions, removes previous bindings/actions (unless keep_old is True), and writes the new bindings/actions to the database. When transaction is None this method creates and commits or rolls back a transaction; if a transaction is provided the caller is responsible for commit/rollback.
+                     
+                     Parameters:
+                         fake (bool): If True, do not modify the database and instead collect SQL commands/messages describing the changes.
+                         specification (str): Name of the form specification to update.
+                         new_fullname (str | None): If provided, rename the specification's action fullname to this value.
+                         transaction (object | None): Database transaction to use; if None a new transaction is created and managed by this method.
+                         keep_old (bool): If True, preserve existing bindings and actions instead of deleting them before inserting new ones.
+                     
+                     Returns:
+                         list: A list of formatted message strings describing performed actions, warnings, or errors.
+                     """
         messages = []
         if not specification:
             add_message(messages, DMPMessage.ERROR_MESSAGE, "Empty specification")
@@ -1873,6 +1950,19 @@ class DMPActions(DMPObject):
         return messages
 
     def dmp_delete_name(self, fake, name, action_type):
+        """
+        Remove a named action and its associated menu and rights entries from the database.
+        
+        Attempts to find the action by the given name and action_type (column name); if found, deletes matching rows from actions, menu, and rights tables within a transaction and returns messages describing the outcome. The function disables/enables DMP triggers around the operation. When `fake` is True, the transaction is rolled back so no changes are committed.
+        
+        Parameters:
+            fake (bool): If True, perform a dry run and do not commit changes.
+            name (str): The action identifier to remove (value looked up in the column specified by `action_type`).
+            action_type (str): The column name to match the `name` against (for example, 'shortname' or 'fullname').
+        
+        Returns:
+            list: A list of messages (DMPMessage instances and/or formatted message strings) describing errors, warnings, and SQL/log output produced during the operation.
+        """
         messages = []
         data = self._data('c_pytis_menu_actions')
         condition = pd.EQ(action_type, pd.sval(name))
@@ -2078,6 +2168,16 @@ class DMPImport(DMPObject):
         return messages
 
     def delete_data(self, fake, transaction=None):
+        """
+        Delete all DMP data (menu, rights, roles, actions) from the database by delegating to component delete operations.
+        
+        Parameters:
+        	fake (bool): If True, perform a dry run; database changes will be rolled back.
+        	transaction (optional): Database transaction to use; if omitted a new transaction is created and committed or rolled back by this function.
+        
+        Returns:
+        	list: Collected messages from the component delete operations.
+        """
         if transaction is None:
             transaction_ = pd.transaction()
         else:
@@ -2095,6 +2195,18 @@ class DMPImport(DMPObject):
         return messages
 
     def store_data(self, fake, transaction=None):
+        """
+        Store all DMP components (actions, roles, rights, menu) into the database.
+        
+        If no transaction is supplied, a new transaction is created and committed on success or rolled back on failure; when `fake` is True the transaction is rolled back instead of committed. Each component's store operation is invoked in sequence: actions, roles, rights, then menu.
+        
+        Parameters:
+            fake (bool): If True, perform a dry run (do not persist changes).
+            transaction (optional): Database transaction object to use; if omitted a new transaction is created and managed by this function.
+        
+        Returns:
+            list: Accumulated messages produced by the component store operations (formatted DMP message strings).
+        """
         if transaction is None:
             transaction_ = pd.transaction()
         else:
@@ -2112,15 +2224,14 @@ class DMPImport(DMPObject):
         return messages
 
     def dmp_import(self, fake):
-        """Import data from specifications and store them to a database.
-
-        Original database data are deleted.
-
-        Arguments:
-
-          fake -- iff True, don't actually change the data but return sequence
-            of SQL commands (basestrings) that would do so
-
+        """
+        Import DMP data from specifications into the database, replacing existing DMP data.
+        
+        Parameters:
+            fake (bool): If True, do not apply changes to the database; instead return the SQL commands (strings) that would be executed.
+        
+        Returns:
+            list: Sequence of messages (strings) describing actions taken and any errors or warnings.
         """
         transaction = pd.transaction()
         self._disable_triggers(transaction=transaction, disable_import=True)
@@ -2136,18 +2247,21 @@ class DMPImport(DMPObject):
         return messages
 
     def dmp_add_action(self, fake, fullname, position, title):
-        """Add new action to the menu.
-
-        Arguments:
-
-          fake -- iff True, don't actually change the data but return sequence
-            of SQL commands (basestrings) that would do so
-          fullname -- fullname of the action, string
-          position -- menu position of the action or preceding item title,
-            basestring, or True (in such a case the action is added to actions
-            but no menu item is created)
-          title -- title of the menu item; unicode or 'None'
-
+        """
+        Add a new action to the application's DMP menu and related data (actions, rights, and form bindings).
+        
+        Parameters:
+            fake (bool): If True, do not persist changes; return the SQL/messages that would result.
+            fullname (str): Full identifier of the action to add.
+            position (str|bool): Menu insertion position. May be:
+                - a numeric position string (e.g., "1.2"),
+                - an existing menu item title to insert after,
+                - True to register the action without creating a menu item,
+                - None to skip adding a menu item.
+            title (str|None): Title for the new menu item; if None, the action's title will be used.
+        
+        Returns:
+            list: A list of DMPMessage instances describing results, errors, warnings, and generated SQL.
         """
         resolver = self._resolver()
         messages = []
@@ -2222,6 +2336,17 @@ class DMPImport(DMPObject):
         return messages
 
     def dmp_rename_specification(self, fake, old_name, new_name):
+        """
+        Rename a specification in the database.
+        
+        Parameters:
+            fake (bool): If True, perform a dry run and do not commit changes.
+            old_name (str): Current specification name to be renamed.
+            new_name (str): New specification name to assign.
+        
+        Returns:
+            list: Formatted log messages captured during a dry run when `fake` is True; an empty list when the change is committed.
+        """
         transaction = pd.transaction()
         row = pd.Row((('old_name', pd.sval(old_name),),
                       ('new_name', pd.sval(new_name),),))

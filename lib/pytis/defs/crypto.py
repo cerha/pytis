@@ -176,6 +176,15 @@ class Users(Specification):
         row['user_password'] = pytis.data.sval(password)
 
     def on_new_record(self, prefill=None, transaction=None):
+        """
+        Open a form to create a new user for the currently selected encryption area and persist it to the database.
+        
+        Collects input for username, admin password, admin address and optional user password, then calls the extension to add the crypto user. Uses the provided transaction; if none is supplied a new transaction is created. If the add operation reports an error the transaction is rolled back and an error is shown; on success the transaction is committed.
+        
+        Parameters:
+            prefill (dict|None): Optional initial values for the input form (currently unused by caller).
+            transaction (pytis.data.Transaction|None): Transaction to use for the database operation; if None a new transaction is created.
+        """
         main_form_row = app.main_form.row
         if not main_form_row:
             return

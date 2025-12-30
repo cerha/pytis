@@ -150,6 +150,24 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         super(Application, self).__init__()
 
     def OnInit(self):
+        """
+        Perform application startup: initialize UI (main frame, notebook, status bar, toolbar), load configuration and access rights, prepare managers and recent-state, build menus and toolbars, unlock crypto keys, and schedule asynchronous post-initialization.
+        
+        Initializes:
+        - main wx.Frame and AUI notebook with tab handling,
+        - keymap and keyboard handler,
+        - status bar and status field access,
+        - application/form settings, profile, and aggregated-views managers,
+        - user action logger and stored configuration,
+        - recent forms and recent directories memory,
+        - menubar and toolbar,
+        - frame size/position.
+        
+        Aborts early and returns `False` on critical failures (database table lookup failure, menubar initialization failure); on success schedules self._init() to run after the event loop starts and returns `True`.
+        
+        Returns:
+            True if initialization completed successfully, False otherwise.
+        """
         import pytis.extensions
         pytis.remote.write_python_version()
         wx.Log.SetActiveTarget(wx.LogStderr())
@@ -413,6 +431,15 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
             return spec_class.public
 
     def _has_bindings(self, name):
+        """
+        Determine whether the named specification defines any bindings.
+        
+        Parameters:
+            name (str): Specification name to check.
+        
+        Returns:
+            bool: `True` if the specification has one or more bindings, `False` otherwise (also `False` if the specification cannot be resolved).
+        """
         try:
             specification = pytis.config.resolver.specification(name)
         except ResolverError:
@@ -424,6 +451,17 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
                 return False
 
     def _init_menubar(self):
+        """
+        Initialize and attach the application's menu bar from the current specification.
+        
+        Builds the top-level menu list (including a Commands group and a Help menu when absent),
+        creates a wx.MenuBar from that specification, and sets it on the main frame. Updates
+        self._menu and self._menubar as part of the operation.
+        
+        Returns:
+            bool: `True` if the menu bar was successfully created and attached to the frame,
+            `False` if menu construction failed.
+        """
         self._menu = menu = list(self._specification.menu())
         command_menu_items = []
         for group in pytis.form.FORM_MENU_COMMANDS:
@@ -455,6 +493,20 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         return True
 
     def _create_menu(self, parent, spec, keymap):
+        """
+        Create a wx.Menu from a menu specification and wire its items to the application's keymap and event handlers.
+        
+        Parameters:
+        	parent (wx.Window): Parent window or control used to measure text extents and as the menu's UI parent.
+        	spec (Menu): Menu specification object containing Menu, MenuItem, and MenuSeparator entries.
+        	keymap (Keymap | None): Optional keymap used to resolve, define, and validate hotkeys for menu items.
+        
+        Returns:
+        	menu (wx.Menu): A constructed wx.Menu populated according to `spec`.
+        
+        Notes:
+        	This registers the created menu in self._menu_by_id when `spec.id` is present, attaches a highlight handler to echo item help text, and may define or validate hotkeys on the provided `keymap`.
+        """
         def on_highlight_item(event):
             if event.GetMenuId() != -1:
                 item = menu.FindItemById(event.GetMenuId())

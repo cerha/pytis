@@ -3365,6 +3365,14 @@ class PopupEditForm(PopupForm, EditForm):
         pass
 
     def _default_transaction(self):
+        """
+        Create a default transaction appropriate for this form's data.
+        
+        If the form's data backend is an in-memory dataset, no transaction is created and None is returned. Otherwise, attempt to resolve a connection name for this form and return a transaction obtained from pytis.data.transaction using that connection name; if resolver lookup fails, request a transaction with no explicit connection.
+        
+        Returns:
+            A transaction object from pytis.data.transaction, or `None` when the data is an instance of pytis.data.MemData.
+        """
         if isinstance(self._data, pytis.data.MemData):
             return None
         try:
@@ -3374,15 +3382,13 @@ class PopupEditForm(PopupForm, EditForm):
         return pytis.data.transaction(connection_name=connection_name, ok_rollback_closed=True)
 
     def _init_attributes(self, multi_insert=True, **kwargs):
-        """Process constructor keyword arguments and initialize the attributes.
-
-        Arguments:
-
-          multi_insert -- boolean flag indicating whether inserting multiple values is permitted.
-            This option is only relevant in insert mode.  False value will disable this feature and
-            the `Next' button will not be present on the form.
-          kwargs -- arguments passed to the parent class
-
+        """
+        Initialize attributes for an edit form and configure multi-insert behavior.
+        
+        Parameters:
+            multi_insert (bool): If True, allow inserting multiple records in sequence (enables the Next button).
+                If False, disable multi-insert behavior and hide the Next button. Only used in insert mode.
+            **kwargs: Additional keyword arguments forwarded to the base class initializer.
         """
         EditForm._init_attributes(self, **kwargs)
         assert isinstance(multi_insert, bool), multi_insert
@@ -3509,6 +3515,14 @@ class PopupEditForm(PopupForm, EditForm):
             return False
 
     def set_row(self, row):
+        """
+        Set the form's current row and ensure a transaction is available for popup editing.
+        
+        If no active transaction exists for the popup form, create one before selecting the specified row.
+        
+        Parameters:
+            row: Position, key, or row-like object identifying the record to select.
+        """
         if self._transaction is None:
             self._transaction = pytis.data.transaction()
         super(PopupEditForm, self).set_row(row)

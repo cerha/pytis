@@ -2994,7 +2994,25 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
     def select(self, condition=None, sort=(), reuse=False, columns=None, transaction=None,
                arguments={}, async_count=False, stop_check=None, timeout_callback=None,
                limit=None):
-        if __debug__:
+        """
+               Prepare and execute a selection against the underlying table and populate the internal row buffer.
+               
+               Parameters:
+               	condition: Optional filter expression used to restrict selected rows; semantics follow the binding's query format.
+               	sort (tuple): Sort specification applied to the selection.
+               	reuse (bool): If True, attempt to reuse the previously fetched buffer when the selection parameters match the last select.
+               	columns: Optional iterable of column names to limit the fetched columns; when provided, a reduced row template is used.
+               	transaction: Optional transaction object to run the select in; when None, a new transaction is created for the select.
+               	arguments (dict): Mapping of named query arguments to values for parameterized conditions.
+               	async_count (bool): If True, request asynchronous/incremental row counting when supported.
+               	stop_check: Optional callable checked periodically to allow interruption of long-running selects.
+               	timeout_callback: Optional callable invoked on transaction timeout.
+               	limit: Optional integer to cap the number of rows returned.
+               
+               Returns:
+               	int or _PgRowCounting: The number of rows available in the buffer as an integer, or a _PgRowCounting instance representing an in-progress/async count.
+               """
+               if __debug__:
             log(DEBUG, 'Select started:', condition)
         if __debug__:
             self._pg_check_arguments(arguments)
@@ -3751,21 +3769,24 @@ class DBPostgreSQLTransaction(DBDataPostgreSQL):
     def __init__(self, connection_data, isolation=None, read_only=False, timeout_callback=None,
                  ok_rollback_closed=False, **kwargs):
         """
-        Arguments:
-
-          connection_data -- instance třídy 'DBConnection' definující
-            parametry připojení, nebo funkce bez argumentů vracející takovou
-            instanci 'DBConnection'
-          isolation -- transaction isolation level, either 'None' (default
-            isolation level, i.e. read commited) or constant 'pytis.data.REPEATABLE_READ'
-            (repeatable read isolation level)
-          read_only -- whether the transaction is read-only; boolean
-          timeout_callback -- function to be called on transaction timeout or 'None';
-            the function is called with no arguments
-          ok_rollback_closed -- iff true, don't complain about rollbacking
-            closed transactions
-
-        """
+                 Initialize a PostgreSQL transaction and start it with the requested isolation and read-only settings.
+                 
+                 Parameters:
+                     connection_data: DBConnection or callable
+                         A DBConnection instance (or a zero-argument callable that returns one) that provides connection parameters for this transaction.
+                     isolation: optional
+                         Transaction isolation level; use None for the default (read committed) or the module constant REPEATABLE_READ for repeatable-read semantics.
+                     read_only: bool
+                         If True, mark the transaction as read-only.
+                     timeout_callback: callable or None
+                         Optional function to invoke with no arguments if the transaction times out. If provided, the transaction will be registered for timeout watching.
+                     ok_rollback_closed: bool
+                         If True, allow rollbacks of already-closed transactions without raising an error.
+                 
+                 Side effects:
+                     - Starts the database transaction on the underlying connection.
+                     - If a timeout_callback is provided, registers the transaction for timeout monitoring.
+                 """
         super(DBPostgreSQLTransaction, self).__init__(
             bindings=(), key=(), connection_data=connection_data,
             **kwargs)
@@ -3785,6 +3806,11 @@ class DBPostgreSQLTransaction(DBDataPostgreSQL):
             DBPostgreSQLTransaction._watched_transactions.add(self)
 
     def __del__(self):
+        """
+        Ensure an open transaction is closed when the object is garbage-collected.
+        
+        If the transaction is still open, attempts to close it via the internal close method; any exceptions raised during close are suppressed.
+        """
         if self._open:
             try:
                 self._pg_close_transaction()
@@ -3792,9 +3818,26 @@ class DBPostgreSQLTransaction(DBDataPostgreSQL):
                 pass
 
     def __enter__(self):
+        """
+        Enter the transaction context and provide the transaction instance for use in a `with` statement.
+        
+        Returns:
+            The transaction instance.
+        """
         return self
 
     def __exit__(self, exc_type, exc, tb):
+        """
+        Handle context-manager exit: commit if no exception occurred, otherwise attempt rollback, then always close the transaction.
+        
+        Parameters:
+            exc_type (type|None): Exception class if an exception was raised inside the context, otherwise None.
+            exc (BaseException|None): Exception instance raised inside the context, otherwise None.
+            tb (traceback|None): Traceback object for the exception, otherwise None.
+        
+        Returns:
+            bool: `False` to indicate any exception should be re-raised by the context manager.
+        """
         try:
             if self._open:
                 if exc_type is not None:
@@ -3809,6 +3852,17 @@ class DBPostgreSQLTransaction(DBDataPostgreSQL):
         return False  # re-raise exceptions
 
     def _db_bindings_to_column_spec(self, __bindings):
+        """
+        Generate a pair of tuples representing SQL column specifications and their parameter values derived from the provided bindings.
+        
+        Parameters:
+            __bindings: An iterable of binding descriptors (such as column-binding objects or (name, value) pairs) that describe which columns and values to produce for an SQL statement.
+        
+        Returns:
+            (column_specs, params): 
+                column_specs (tuple): Tuple of SQL column specification strings suitable for inclusion in a query (e.g., column names or expressions).
+                params (tuple): Tuple of parameter values corresponding to placeholders referenced by `column_specs`.
+        """
         return (), ()
 
     def _pdbb_create_sql_commands(self):

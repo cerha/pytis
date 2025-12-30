@@ -58,18 +58,16 @@ def dbselect(spec, condition=None, sort=(), transaction=None, arguments={}):
 
 
 def dbinsert(spec, row, transaction=None):
-    """Provede insert do tabulky dané specifikací.
-
-    Argumenty:
-
-      spec -- název specifikace datového objektu nad kterým má být proveden
-        insert.
-      row -- sekvence dvouprvkových sekvencí (id, value) nebo instance
-        pd.Row
-      transaction -- database transaction instance
-
-    Vrací počet vložených řádků.
-
+    """
+    Insert a row into the table described by the given data specification.
+    
+    Parameters:
+        spec: Data specification (name or object) for the target table.
+        row: Either a `pd.Row` or a sequence of two-element sequences `(column_id, value)` where `column_id` is a string and `value` is a `pd.Value`.
+        transaction: Optional database transaction instance.
+    
+    Returns:
+        int: The number of rows inserted as returned by the underlying database operation.
     """
     assert isinstance(row, (pd.Row, tuple, list)), row
     import pytis.form
@@ -92,16 +90,16 @@ def dbinsert(spec, row, transaction=None):
 
 
 def dbupdate(row, values=(), transaction=None):
-    """Provede update nad předaným řádkem.
-
-    Argumenty:
-
-      row -- předaná instance aktuálního PresentedRow
-      values -- sekvence dvouprvkových sekvencí ('id', value) ,
-        kde 'id' je řetězcový identifikátor políčka a value je
-        instance, kterou se bude políčko aktualizovat
-      transaction -- database transaction instance
-
+    """
+    Update the provided PresentedRow with the given column values.
+    
+    Parameters:
+        row: PresentedRow instance to update.
+        values: Sequence of (column_id, value) pairs where `column_id` is the column identifier and `value` is the new value to set.
+        transaction: Optional database transaction instance to use for the operation.
+    
+    Returns:
+        The result of the underlying database update operation (typically the number of affected rows or operation-specific result).
     """
     import pytis.form
     data = row.data()
@@ -120,19 +118,21 @@ row_update = dbupdate
 
 def dbupdate_many(spec, condition=None, update_row=None,
                   transaction=None):
-    """Provede update nad tabulkou danou specifikací.
-
-    Argumenty:
-
-      spec -- specifikace datového objektu nad kterým má být proveden
-        select; string'
-      condition -- podmínka updatovaní.
-      update_row -- řádek kterým se provede update,
-      transaction -- database transaction instance
-
-    Vrací počet updatovaných řádků.
-
     """
+                  Update multiple rows in the table identified by the given data specification.
+                  
+                  Parameters:
+                      spec: Data specification identifying the target table (resolved to a data object).
+                      condition (pd.Operator): Condition selecting which rows to update.
+                      update_row (pd.Row): Row containing values to apply to matched rows.
+                      transaction: Database transaction instance (optional).
+                  
+                  Returns:
+                      int: Number of rows updated.
+                  
+                  Raises:
+                      ProgramError: If `condition` is not a `pd.Operator` or `update_row` is not a `pd.Row`.
+                  """
     if not isinstance(condition, pd.Operator):
         errmsg = "Nebyla předána podmínka pro update_many."
         raise ProgramError(errmsg)

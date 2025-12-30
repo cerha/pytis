@@ -516,6 +516,14 @@ class Formatter(object):
         return parameters
 
     def _pdf(self):
+        """
+        Build and return the rendered PDF document for the current formatter configuration.
+        
+        This method prepares LCG globals and presentation settings, iterates presented form rows to create per-row subdocuments when a row template is configured, starts a database transaction for consistent reads, and invokes the LCG PDF exporter to produce the final PDF bytes. The transaction is committed if possible before returning.
+        
+        Returns:
+            bytes: The generated PDF document. Returns an empty bytes object (`b''`) if a substitution/iterator error occurs during template evaluation.
+        """
         start_time = pytis.data.DateTime.now()
         transaction = pytis.data.transaction(isolation=pytis.data.REPEATABLE_READ)
         template_nodes = []

@@ -845,46 +845,33 @@ def dbtable(table, columns, connection_data=None, arguments=None, connection_nam
 
 
 def dbfunction(fspec, *args, **kwargs):
-    """Call database function and return the result as a Python value.
-
-    If the database call fails, return None.
-
-    Arguments:
-
-      function -- name of the function (string) or database specification
-        ('pytis.data.gensqlalchemy.SQLFunctional' subclass) corresponding to
-        the function.  Passing string name allows calling any DB function
-        directly without specification, but lacks argument and result type
-        safety so it should only be used for legacy purposes.  Passing function
-        by specification should be preferred where possible.
-
-      args, kwargs -- function call arguments.  Positional arguments are passed
-        in given order.  Keyword arguments must match the argument names
-        defined in function specification.  Note, that arguments are not
-        optional.  You must always pass all arguments defined by function
-        specification.  You may only choose to pass them as positional or as
-        keywords.  Argument values are Python "internal" values corresponding
-        to the argument's Pytis data type given by specification (TypeError is
-        raised if not).  The rules are somewhat different when the function is
-        passed by name and the specification is not available - see below.
-
-      transaction -- database transaction as a 'DBTransactionDefault' instance.
-        Transaction is popped out of kwargs, so this makes it impossible to pass
-        the argument of the same name as a keyword argument (pass as positional if
-        needed).
-
-    Returns the Python value of the function call result or a sequence of
-    'pytis.data.Row' instances for functions with multirow = True in
-    specification (calling multirow functions by name is not supported).
-
-    If the function is passed by name, the specification is not available.
-    Argument types are thus not checked, but inferred from values.  The types
-    str, int, float, bool, datetime.date, datetime.datetime simply map to the
-    corresponding Pytis data types.  Value instances can also be used directly
-    to define the argument type explicitly.  Keyword arguments are not
-    supported in this case.  You may get database errors if you pass arguments
-    incorrectly (but extra arguments are ignored silently!).
-
+    """
+    Invoke a database function and convert its result to native Python values.
+    
+    When `fspec` is a string, the function named by `fspec` is called with positional
+    arguments only; argument types are inferred from Python values (strings, ints,
+    floats, bools, date/time) or passed as pytis.data.Value instances. When `fspec`
+    is a function specification object, argument names and types are validated
+    against that specification; keyword arguments may be used in this case.
+    The optional `transaction` keyword argument may be supplied to execute the call
+    within a specific DB transaction.
+    
+    Parameters:
+        fspec: Function identifier — either a function name string or a function
+            specification object describing argument names/types and result shape.
+        *args: Positional arguments for the function.
+        **kwargs: Keyword arguments for the function; `transaction` may be included
+            and will be consumed as the transaction to use.
+    
+    Returns:
+        A Python scalar value for single-result functions, a sequence of
+        pytis.data.Row for multirow functions, or `None` for functions whose result
+        type is specified as `None`.
+    
+    Raises:
+        TypeError: if an unsupported Python value type is passed, if the argument
+            count does not match the specification, or if unexpected keyword
+            arguments are provided.
     """
     def argument(value):
         if isinstance(value, pytis.data.Value):
@@ -941,11 +928,14 @@ REPEATABLE_READ = 'repeatable read'
 """Repeatable read transaction isolation level."""
 
 def transaction(**kwargs):
-    """Create a new database transaction for current connection and return it.
-
-    Returns a 'DBTransactionDefault' instance.  Aims to simplyfy new
-    transaction creation in applications and avoid the need to access
-    pytis.config (requiring importing it).
-
+    """
+    Create a DBTransactionDefault bound to the configured database connection.
+    
+    Any keyword arguments are forwarded to DBTransactionDefault and control transaction options.
+    Parameters:
+        **kwargs: Additional transaction options forwarded to DBTransactionDefault.
+    
+    Returns:
+        DBTransactionDefault: A new transaction object using the module-configured DB connection.
     """
     return pytis.data.DBTransactionDefault(pytis.config.dbconnection, **kwargs)

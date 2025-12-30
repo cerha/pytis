@@ -34,6 +34,15 @@ cache = {}
 
 
 def run():
+    """
+    Validate and optionally fix saved form profiles across all users and specifications.
+    
+    Parses command-line options (including --config, -d/--delete-column SPEC:COL, and -r/--rename-column SPEC:OLD:NEW),
+    loads every user's saved profiles, validates each profile against its view and data specifications, and writes
+    updated profile error state back to the database. Prints per-profile validation errors and a final summary of
+    total/valid/invalid profiles processed. May prompt for a database password if required; exits with status 1 on
+    argument parsing errors or unrecoverable database authentication failure.
+    """
     parser = argparse.ArgumentParser(
         description="Validate and optionally fix saved form profiles",
         epilog=("Additionally, you can pass other valid Pytis command line arguments, "
