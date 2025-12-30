@@ -49,7 +49,7 @@ from pytis.data import (
     Float, FullTextIndex, Inet, Integer, LTree, Macaddr, Number, Range,
     Uuid, JSON, JSONB, Serial, String, Time, TimeInterval, ival, sval,
     Type, Value, Operator, AND, OR, EQ, NE, GT, LT, FORWARD, BACKWARD,
-    ASCENDENT, DESCENDANT,
+    ASCENDENT, DESCENDANT, REPEATABLE_READ
 )
 import pytis.util
 from pytis.util import (
@@ -3015,7 +3015,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
             self._pg_select_transaction = \
                 DBTransactionDefault(self._pg_connection_data(),
                                      connection_name=self._connection_name,
-                                     isolation=DBPostgreSQLTransaction.REPEATABLE_READ,
+                                     isolation=REPEATABLE_READ,
                                      timeout_callback=timeout_callback)
             self._pg_select_user_transaction = False
             self._pg_select_set_read_only = self._pg_ro_select
@@ -3742,8 +3742,7 @@ class DBPostgreSQLTransaction(DBDataPostgreSQL):
     block and rolled back if an exception is raised.
 
     """
-
-    REPEATABLE_READ = 'repeatable read'
+    REPEATABLE_READ = REPEATABLE_READ  # Deprecated: left for backwards compatibility.
 
     _watched_transactions = weakref.WeakSet()
     _trans_last_check = {}
@@ -3758,8 +3757,8 @@ class DBPostgreSQLTransaction(DBDataPostgreSQL):
             parametry připojení, nebo funkce bez argumentů vracející takovou
             instanci 'DBConnection'
           isolation -- transaction isolation level, either 'None' (default
-            isolation level, i.e. read commited) or 'REPEATABLE_READ' constant of
-            this class (repeatable read isolation level)
+            isolation level, i.e. read commited) or constant 'pytis.data.REPEATABLE_READ'
+            (repeatable read isolation level)
           read_only -- whether the transaction is read-only; boolean
           timeout_callback -- function to be called on transaction timeout or 'None';
             the function is called with no arguments
