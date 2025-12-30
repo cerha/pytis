@@ -63,11 +63,10 @@ class UserSetttingsManager(object):
     _TABLE = None
     _COLUMNS = ()
 
-    def __init__(self, dbconnection, username=None):
+    def __init__(self, username=None):
         log(OPERATIONAL, "Initializing on {}({}).".format(self._TABLE, ', '.join(self._COLUMNS)))
-        self._dbconnection = dbconnection
         self._username = username or pytis.config.dbuser
-        self._data = pytis.data.dbtable(self._TABLE, self._COLUMNS, dbconnection)
+        self._data = pytis.data.dbtable(self._TABLE, self._COLUMNS, pytis.config.dbconnection)
 
     def _values(self, **kwargs):
         return [(key, pytis.data.Value(self._data.find_column(key).type(), value))
@@ -276,9 +275,9 @@ class FormProfileManager(UserSetttingsManager):
     specifications) by this prefix.
 
     """
-    def __init__(self, dbconnection, username=None):
-        super(FormProfileManager, self).__init__(dbconnection, username=username)
-        self._params_manager = FormProfileParamsManager(dbconnection, username=username)
+    def __init__(self, username=None):
+        super(FormProfileManager, self).__init__(username=username)
+        self._params_manager = FormProfileParamsManager(username=username)
 
     def _pack_filter(self, something):
         if isinstance(something, pytis.presentation.IN):
