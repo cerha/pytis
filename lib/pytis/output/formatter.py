@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2019-2024 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2019-2025 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2002-2015 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -517,8 +517,7 @@ class Formatter(object):
 
     def _pdf(self):
         start_time = pytis.data.DateTime.now()
-        T = pytis.data.DBTransactionDefault
-        transaction = T(connection_data=pytis.config.dbconnection, isolation=T.REPEATABLE_READ)
+        transaction = pytis.data.transaction(isolation=pytis.data.REPEATABLE_READ)
         template_nodes = []
         if self._form is not None and self._row_template is not None:
             i = 1
