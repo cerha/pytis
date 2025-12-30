@@ -31,6 +31,12 @@ import time
 
 import pytest
 import unittest
+try:
+    import unittest.mock as mock
+except ImportError:  # pragma: no cover (py2)
+    import mock
+
+
 
 import pytis
 from pytis.util import DEBUG, OPERATIONAL, ACTION, EVENT, ProgramError
@@ -3682,6 +3688,60 @@ class JSONDBTest(_DBBaseTest):
         assert self._get(4) == [True, False]
 
 
+class TestTransactionContextManager:
+
+    @pytest.fixture
+    def transaction(self):
+        transaction = pytis.data.DBTransactionDefault.__new__(pytis.data.DBTransactionDefault)
+        transaction._open = True
+        transaction._ok_rollback_closed = False
+        transaction._trans_notifications = []
+        def _mark_closed():
+            transaction._open = False
+        transaction.commit = mock.Mock(side_effect=_mark_closed)
+        transaction.rollback = mock.Mock(side_effect=_mark_closed)
+        transaction.close = mock.Mock()
+        return transaction
+
+    def test_commits_on_normal_exit(self, transaction):
+        with transaction:
+            pass
+        transaction.commit.assert_called_once_with()
+        transaction.rollback.assert_not_called()
+        transaction.close.assert_called_once_with()
+
+    def test_rolls_back_on_exception(self, transaction):
+        with pytest.raises(RuntimeError):
+            with transaction:
+                raise RuntimeError("boom")
+        transaction.rollback.assert_called_once_with()
+        transaction.commit.assert_not_called()
+        transaction.close.assert_called_once_with()
+
+    def test_does_not_autocommit_if_committed_inside_block(self, transaction):
+        with transaction:
+            transaction.commit()
+        transaction.commit.assert_called_once_with()
+        transaction.rollback.assert_not_called()
+        transaction.close.assert_called_once_with()
+
+    def test_does_not_autorollback_if_rolled_back_inside_block(self, transaction):
+        with transaction:
+            transaction.rollback()
+        transaction.rollback.assert_called_once_with()
+        transaction.commit.assert_not_called()
+        transaction.close.assert_called_once_with()
+
+    def test_logs_rollback_error_and_still_closes(self, transaction, monkeypatch):
+        def _raise_on_rollback():
+            raise ValueError("rollback failed")
+        transaction.rollback = mock.Mock(side_effect=_raise_on_rollback)
+        with pytest.raises(RuntimeError):
+            with transaction:
+                raise RuntimeError("boom")
+        transaction.rollback.assert_called_once_with()
+        transaction.commit.call_count == 0
+        transaction.close.assert_called_once_with()
 
 
 ###################

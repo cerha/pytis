@@ -6,6 +6,7 @@ coveralls
 flake8
 gnureadline
 jsonschema
+mock
 pep8
 pyflakes
 pytest
