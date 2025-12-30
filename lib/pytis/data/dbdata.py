@@ -941,11 +941,12 @@ REPEATABLE_READ = 'repeatable read'
 """Repeatable read transaction isolation level."""
 
 def transaction(**kwargs):
-    """Create a new database transaction for current connection and return it.
+    """Return a new database transaction bound to the configured DB connection.
 
-    Returns a 'DBTransactionDefault' instance.  Aims to simplyfy new
-    transaction creation in applications and avoid the need to access
-    pytis.config (requiring importing it).
+    Arguments:
+        **kwargs: Additional transaction options forwarded to DBTransactionDefault.
 
+    Returns:
+        DBTransactionDefault instance.
     """
     return pytis.data.DBTransactionDefault(pytis.config.dbconnection, **kwargs)
