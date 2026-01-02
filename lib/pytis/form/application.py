@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2025 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2026 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2017 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -1999,7 +1999,8 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
 
     @Command.define
     def api_run_form(self, specification, select_row=None, multi=True, preview=False, sorting=None,
-                     filter=None, condition=None, profile=None, binding=None, transaction=None):
+                     filter=None, condition=None, arguments=None, profile=None, binding=None,
+                     transaction=None):
         name = self._spec_name(specification)
         kwargs = {}
         if '::' in name:
@@ -2012,8 +2013,8 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         else:
             form_class = pytis.form.BrowseForm
         return run_form(form_class, name, select_row=select_row, sorting=sorting,
-                        filter=filter, condition=condition, profile_id=profile,
-                        transaction=transaction, **kwargs)
+                        filter=filter, condition=condition, arguments=arguments,
+                        profile_id=profile, transaction=transaction, **kwargs)
 
     def _can_api_run_form(self, name, *args, **kwargs):
         return app.has_access(name)
