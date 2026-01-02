@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2024 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2026 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2018 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -34,7 +34,7 @@ import wx.grid
 import pytis.data
 import pytis.output
 import pytis.presentation
-from pytis.presentation import PresentedRow
+from pytis.presentation import PresentedRow, Command
 from pytis.util import DEBUG, log
 
 from .application import db_operation
