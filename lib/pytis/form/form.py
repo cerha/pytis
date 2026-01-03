@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2025 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2026 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2018 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -2300,51 +2300,59 @@ class RecordForm(LookupForm):
         separator = result['separator'].value()
         if separator == 'other':
             separator = result['custom'].value()
-        fh = app.open_selected_file(mode='r', filetypes=('csv', 'txt'))
+        fh = app.open_selected_file(mode='rb', filetypes=('csv', 'txt'))
         if not fh:
             app.echo(_(u"No file given. Import aborted."), kind='warning')
             return False
-        # Make a local copy of the remote file as long as transparent remote file buffering
-        # is deactivated in Application._ExposedFileWrapper.__init__().
-        if pytis.remote.client_connection_ok():
-            import tempfile
-            flocal = tempfile.NamedTemporaryFile()
-            filename = flocal.name
-            flocal.write(fh.read())
-            fh.close()
-            fh = flocal
-            fh.seek(0)
         with fh:
-            columns = [cid.strip() for cid in fh.readline().rstrip('\r\n').split(separator)]
-            try:
-                types = [self._row[cid].type() for cid in columns]
-            except KeyError as e:
-                app.error(_("Invalid column id in CSV file, line 1: '{}'").format(e))
-                return
+            # Read the entire file into memory. This is required in remote
+            # mode for efficiency (line-by-line reads are slow), and doing
+            # otherwise in local mode is not worth the added complexity,
+            # since the operation is not intended for large datasets — the
+            # user confirms each row interactively — so this should be safe.
+            # Decoding all lines upfront also ensures that encoding errors
+            # are detected before data entry begins, not in the middle of it.
+            data = fh.read()
+        try:
+            lines = data.decode('utf-8').splitlines()
+        except UnicodeDecodeError:
+            app.error(_("The file is not encoded in UTF-8.\n"
+                        "Please save the file using UTF-8 encoding and try again."))
+            return
+        if not lines:
+            app.error(_("The file is empty."))
+            return
 
-            class Continue(Exception):
-                pass
+        columns = [cid.strip() for cid in lines[0].rstrip('\r\n').split(separator)]
+        try:
+            types = [self._row[cid].type() for cid in columns]
+        except KeyError as e:
+            app.error(_("Invalid column id in CSV file, line 1: '{}'").format(e))
+            return
 
-            def validate(cid, t, value, line_number):
-                kwargs = {'format': t.DEFAULT_FORMAT} if isinstance(t, pytis.data.DateTime) else {}
-                result, error = t.validate(value, strict=False, **kwargs)
-                if error:
-                    app.error(_("Invalid data in CSV file, line {}, column {}:")
-                              .format(line_number, cid)
-                              + '\n' + value + ': ' + error.message() + '\n' +
-                              _("Skipping line {}.").format(line_number))
-                    raise Continue()
-                return result.value()
+        class Continue(Exception):
+            pass
 
-            def inserted_data():
-                for i, line in enumerate(fh):
-                    values = line.rstrip('\r\n').split(separator)
-                    try:
-                        yield {cid: validate(cid, t, value, i + 2)  # i is 0 at line 2...
-                               for cid, t, value in zip(columns, types, values)}
-                    except Continue:
-                        continue
-            app.new_record(self._name, prefill=self._prefill, inserted_data=inserted_data())
+        def validate(cid, t, value, line_number):
+            kwargs = {'format': t.DEFAULT_FORMAT} if isinstance(t, pytis.data.DateTime) else {}
+            result, error = t.validate(value, strict=False, **kwargs)
+            if error:
+                app.error(_("Invalid data in CSV file, line {}, column {}:")
+                          .format(line_number, cid)
+                          + '\n' + value + ': ' + error.message() + '\n' +
+                          _("Skipping line {}.").format(line_number))
+                raise Continue()
+            return result.value()
+
+        def inserted_data():
+            for i, line in enumerate(lines[1:]):
+                values = line.rstrip('\r\n').split(separator)
+                try:
+                    yield {cid: validate(cid, t, value, i + 2)  # i is 0 at line 2...
+                           for cid, t, value in zip(columns, types, values)}
+                except Continue:
+                    continue
+        app.new_record(self._name, prefill=self._prefill, inserted_data=inserted_data())
 
     @Command.define
     def open_editor(self, field_id):
