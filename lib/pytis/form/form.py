@@ -46,10 +46,10 @@ import pytis.util
 
 from pytis.api import app
 from pytis.presentation import (
-    ActionContext, Button, Computer, Editable, Field, GroupSpec,
+    ActionContext, Button, Computer, Editable, Field, FieldSet, GroupSpec,
     Orientation, PresentedRow, PrintAction, Profile, Specification,
     TabGroup, Text, TextFormat, ViewSpec, Menu, MenuItem, MenuSeparator,
-    Command,
+    Command, computer,
 )
 from pytis.util import (
     ACTION, EVENT, OPERATIONAL, ProgramError, ResolverError, UNDEFINED,
@@ -2037,10 +2037,10 @@ class RecordForm(LookupForm):
                 fspec = self._view.field(cid)
                 if cid in keys or fspec.nocopy():
                     continue
-                computer = fspec.computer()
-                if computer:
+                comp = fspec.computer()
+                if comp:
                     skip = False
-                    for dep in computer.depends():
+                    for dep in comp.depends():
                         if dep in keys:
                             skip = True
                             break
@@ -2249,11 +2249,11 @@ class RecordForm(LookupForm):
         """Interactively import data from a CSV file (confirm each record in an edit form)."""
         class Separators(pytis.presentation.Enumeration):
             enumeration = (
-                ('|', _("Pipe '|'")),
-                (',', _("Comma ','")),
-                (';', _("Semicolon ';'")),
-                ('\t', _("TAB")),
-                ('other', _.pgettext('custom', "Other")),
+                ('|', _("Pipe")),
+                (',', _("Comma")),
+                (';', _("Semicolon")),
+                ('TAB', _("TAB")),
+                ('OTHER', _("Other")),
             )
             default = '|'
             selection_type = pytis.presentation.SelectionType.RADIO
@@ -2281,25 +2281,17 @@ class RecordForm(LookupForm):
             )),
         )
         result = app.input_form(title=_(u"Batch import"), fields=(
-            Field('separator', _("Common separators"), enumerator=Separators,
-                  not_null=True,
-                  descr=_("The character used to separate column values "
-                          "in each input file row.")),
-            Field('custom', _("Custom separator"),
-                  check=pytis.presentation.computer(
-                      lambda r, separator, custom:
-                      _("The value is mandatory when 'Other' is selected above.")
-                      if separator == 'other' and not custom else None
-                  ),
-                  editable=pytis.presentation.computer(
-                      lambda e, separator: separator == 'other'
-                )),
-        ), layout=(content, 'separator', 'custom'))
+            Field('sel', '', enumerator=Separators, not_null=True),
+            Field('separator', _("Separator"), not_null=True,
+                  computer=computer(lambda r, sel: '' if sel == 'OTHER' else sel),
+                  editable=computer(lambda e, sel: sel == 'OTHER'),
+                  descr=_("The character used to separate column values in each input row. "
+                          "Select one of the predefined options, "
+                          "or choose Other to enter a custom character.")),
+        ), layout=(content, FieldSet(_("Separator character selection"), ('sel', 'separator'))))
         if not result:
             return False
-        separator = result['separator'].value()
-        if separator == 'other':
-            separator = result['custom'].value()
+        separator = '\t' if result['separator'].value() == 'TAB' else result['separator'].value()
         fh = app.open_selected_file(mode='rb', filetypes=('csv', 'txt'))
         if not fh:
             app.echo(_(u"No file given. Import aborted."), kind='warning')
