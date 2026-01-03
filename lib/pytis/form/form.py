@@ -2321,29 +2321,40 @@ class RecordForm(LookupForm):
         except KeyError as e:
             app.error(_("Invalid column id in CSV file, line 1: '{}'").format(e))
             return
-
-        class Continue(Exception):
-            pass
-
-        def validate(cid, t, value, line_number):
-            kwargs = {'format': t.DEFAULT_FORMAT} if isinstance(t, pytis.data.DateTime) else {}
-            result, error = t.validate(value, strict=False, **kwargs)
-            if error:
-                app.error(_("Invalid data in CSV file, line {}, column {}:")
-                          .format(line_number, cid)
-                          + '\n' + value + ': ' + error.message() + '\n' +
-                          _("Skipping line {}.").format(line_number))
-                raise Continue()
-            return result.value()
+        labels = [self._view.field(cid).column_label() for cid in columns]
 
         def inserted_data():
             for i, line in enumerate(lines[1:]):
-                values = line.rstrip('\r\n').split(separator)
-                try:
-                    yield {cid: validate(cid, t, value, i + 2)  # i is 0 at line 2...
-                           for cid, t, value in zip(columns, types, values)}
-                except Continue:
-                    yield None
+                values, errors = {}, []
+                for cid, t, label, val in zip(columns, types, labels,
+                                              line.rstrip('\r\n').split(separator)):
+                    kwargs = {'format': t.DEFAULT_FORMAT} if isinstance(t, pytis.data.DateTime) else {}
+                    value, error = t.validate(val, strict=False, **kwargs)
+                    if error:
+                        errors.append((label, val[:30] + ('...' if len(val) > 30 else ''),
+                                       error.message()))
+                    else:
+                        values[cid] = value
+                if errors:
+                    answer = app.question(
+                        _("Invalid data in CSV file line {}:").format(i + 2) + '\n' +
+                        '\n'.join(_("• {}: {}: {}").format(label, val, err)
+                                  for label, val, err in errors),
+                        answers=(
+                            dict(label=_("Insert anyway"), icon='ok', value='insert',
+                                 descr=_("Insert this row despite validation errors.")),
+                            dict(label=_("Skip row"), icon='go-forward', value='skip',
+                                 descr=_("Do not import this row and continue.")),
+                            dict(label=_("Abort"), icon='cancel', value='abort',
+                                 descr=_("Stop the import process.")),
+                        )
+                    )
+                    if answer == 'abort':
+                        return 'aborted'
+                    elif answer == 'skip':
+                        yield None
+                        continue #
+                yield values
         app.new_record(self._name, prefill=self._prefill,
                        inserted_data=SizedIterator(inserted_data(), len(lines) - 1))
 
@@ -3009,12 +3020,16 @@ class EditForm(RecordForm, Refreshable):
                 i, item = next(self._inserted_data)
                 while item is None:
                     i, item = next(self._inserted_data)
-            except StopIteration:
+            except StopIteration as e:
                 self.set_status('progress', '')
-                app.message('\n\n'.join([m for m in (
-                    success,
-                    _("All records have been processed.")
-                ) if m]))
+                status = getattr(e, 'value', None)
+                if status is None and e.args:
+                    status = e.args[0] # TODO NOPY2: Remove this Python 2 compatibility hack.
+                if status != 'aborted':
+                    app.message('\n\n'.join([m for m in (
+                        success,
+                        _("All records have been processed.")
+                    ) if m]))
                 self._inserted_data = None
                 self.close()
             else:
