@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2025 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2026 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2013 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -21,7 +21,7 @@ from __future__ import print_function
 from .util import (  # noqa: F401
     UNDEFINED, ProgramError, InvalidAccessError,
     FileError, NotImplementedException, Counter, Popen,
-    Attribute, Structure, DBParams,
+    Attribute, Structure, SizedIterator, DBParams,
     object_2_5, identity, is_, xor, xtuple, xlist,
     position, find, assoc, rassoc, remove_duplicates, flatten,
     nreverse, strxfrm, sameclass, public_attributes,
