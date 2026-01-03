@@ -52,8 +52,8 @@ from pytis.presentation import (
     Command, computer,
 )
 from pytis.util import (
-    ACTION, EVENT, OPERATIONAL, ProgramError, ResolverError, UNDEFINED,
-    find, format_traceback, log, xlist, xtuple,
+    ACTION, EVENT, OPERATIONAL, ProgramError, ResolverError, SizedIterator,
+    UNDEFINED, find, format_traceback, log, xlist, xtuple,
 )
 
 from .event import UserBreakException, wx_callback
@@ -2343,8 +2343,9 @@ class RecordForm(LookupForm):
                     yield {cid: validate(cid, t, value, i + 2)  # i is 0 at line 2...
                            for cid, t, value in zip(columns, types, values)}
                 except Continue:
-                    continue
-        app.new_record(self._name, prefill=self._prefill, inserted_data=inserted_data())
+                    yield None
+        app.new_record(self._name, prefill=self._prefill,
+                       inserted_data=SizedIterator(inserted_data(), len(lines) - 1))
 
     @Command.define
     def open_editor(self, field_id):
@@ -3006,6 +3007,8 @@ class EditForm(RecordForm, Refreshable):
                 success = None
             try:
                 i, item = next(self._inserted_data)
+                while item is None:
+                    i, item = next(self._inserted_data)
             except StopIteration:
                 self.set_status('progress', '')
                 app.message('\n\n'.join([m for m in (
