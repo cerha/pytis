@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2025 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2026 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2017 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -360,6 +360,23 @@ class Structure (object):
         return not self.__eq__(other)
 
     __hash__ = None
+
+
+class SizedIterator:
+    """Simple wrapper for an iterable of a known length."""
+
+    def __init__(self, iterable, length):
+        self._iter = iter(iterable)
+        self._len = length
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        return next(self._iter)
+
+    def __len__(self):
+        return self._len
 
 
 class DBParams(object):
