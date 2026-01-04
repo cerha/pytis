@@ -375,6 +375,8 @@ class SizedIterator:
     def __next__(self):
         return next(self._iter)
 
+    next = __next__ # TODO NOPY2: remove
+
     def __len__(self):
         return self._len
 
