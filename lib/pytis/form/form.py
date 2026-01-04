@@ -36,6 +36,7 @@ import contextlib
 import copy
 import functools
 import lcg
+import sys
 import time
 import wx
 
@@ -2367,10 +2368,13 @@ class RecordForm(LookupForm):
                         )
                     )
                     if answer == 'abort':
-                        return 'aborted'
+                        # TODO NOPY2: return 'aborted' (Syntax error in Python 2)
+                        # See _load_next_row()...
+                        yield 'aborted'
+                        return
                     elif answer == 'skip':
                         yield None
-                        continue #
+                        continue
                 yield values
         app.new_record(self._name, prefill=self._prefill,
                        inserted_data=SizedIterator(inserted_data(), len(lines) - 1))
@@ -3037,12 +3041,14 @@ class EditForm(RecordForm, Refreshable):
                 i, item = next(self._inserted_data)
                 while item is None:
                     i, item = next(self._inserted_data)
+                # TODO NOPY2: Remove when import_interactive() does return 'abort'
+                # (Syntax error in Python 2) instead of yield 'abort'.
+                if item == 'aborted':
+                    raise StopIteration('aborted')
             except StopIteration as e:
                 self.set_status('progress', '')
-                status = getattr(e, 'value', None)
-                if status is None and e.args:
-                    status = e.args[0] # TODO NOPY2: Remove this Python 2 compatibility hack.
-                if status != 'aborted':
+                # TODO NOPY2: Replace by: if e.value != 'aborted' (see above).
+                if not (e.args and e.args[0] == 'aborted'):
                     app.message('\n\n'.join([m for m in (
                         success,
                         _("All records have been processed.")
