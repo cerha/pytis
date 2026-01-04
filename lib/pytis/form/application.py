@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2025 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2026 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2017 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -218,12 +218,10 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
             for o in configurable_options + ('initial_keyboard_layout',)]
         self._saved_state = {}
         # Initialize all needed user settings managers.
-        self._application_config_manager = pytis.form.ApplicationConfigManager(
-            pytis.config.dbconnection)
-        self._form_settings_manager = pytis.form.FormSettingsManager(pytis.config.dbconnection)
-        self._form_profile_manager = pytis.form.FormProfileManager(pytis.config.dbconnection)
-        self._aggregated_views_manager = pytis.form.AggregatedViewsManager(
-            pytis.config.dbconnection)
+        self._application_config_manager = pytis.form.ApplicationConfigManager()
+        self._form_settings_manager = pytis.form.FormSettingsManager()
+        self._form_profile_manager = pytis.form.FormProfileManager()
+        self._aggregated_views_manager = pytis.form.AggregatedViewsManager()
         # Initialize user action logger.
         from pytis.defs.logging import UserActionLog
         self._user_action_logger = UserActionLog.Logger(pytis.config.dbconnection,
@@ -250,8 +248,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         recent_directories = self._get_state_param(self._STATE_RECENT_DIRECTORIES, {}, dict)
         self._recent_directories.update(recent_directories)
         # Initialize the menubar.
-        mb = self._create_menubar()
-        if mb is None:
+        if not self._init_menubar():
             return False
         # Initialize the toolbar.
         self._toolbar = wx_toolbar(frame, pytis.form.TOOLBAR_COMMANDS)
@@ -426,18 +423,8 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
             else:
                 return False
 
-    def _create_menubar(self):
-        # TODO: Temporary backwards compatilility hack.  Rely solely on self._specification.menu()
-        # as soon as all DMP applications define menu by calling pytis.extensions.dmp_menu().
-        import pytis.extensions
-        try:
-            menu = pytis.extensions.dmp_menu()
-            if not menu:
-                menu = list(self._specification.menu())
-        except pd.DBException:
-            menu = list(self._specification.menu())
-        self._menu = menu
-
+    def _init_menubar(self):
+        self._menu = menu = list(self._specification.menu())
         command_menu_items = []
         for group in pytis.form.FORM_MENU_COMMANDS:
             if command_menu_items:
@@ -463,9 +450,9 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
             if success:
                 menubar.Append(result, item.title)
             else:
-                return None
+                return False
         self._frame.SetMenuBar(menubar)
-        return menubar
+        return True
 
     def _create_menu(self, parent, spec, keymap):
         def on_highlight_item(event):
@@ -1172,7 +1159,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
     def reload_rights(self):
         """Reload application rights and menu from the database."""
         self._init_access_rights()
-        self._create_menubar()
+        self._init_menubar()
         self._cache_menu_enabled(self._menu)
 
     @Command.define
@@ -2012,7 +1999,8 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
 
     @Command.define
     def api_run_form(self, specification, select_row=None, multi=True, preview=False, sorting=None,
-                     filter=None, condition=None, profile=None, binding=None, transaction=None):
+                     filter=None, condition=None, arguments=None, profile=None, binding=None,
+                     transaction=None):
         name = self._spec_name(specification)
         kwargs = {}
         if '::' in name:
@@ -2025,8 +2013,8 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         else:
             form_class = pytis.form.BrowseForm
         return run_form(form_class, name, select_row=select_row, sorting=sorting,
-                        filter=filter, condition=condition, profile_id=profile,
-                        transaction=transaction, **kwargs)
+                        filter=filter, condition=condition, arguments=arguments,
+                        profile_id=profile, transaction=transaction, **kwargs)
 
     def _can_api_run_form(self, name, *args, **kwargs):
         return app.has_access(name)

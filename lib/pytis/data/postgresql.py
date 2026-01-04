@@ -49,7 +49,7 @@ from pytis.data import (
     Float, FullTextIndex, Inet, Integer, LTree, Macaddr, Number, Range,
     Uuid, JSON, JSONB, Serial, String, Time, TimeInterval, ival, sval,
     Type, Value, Operator, AND, OR, EQ, NE, GT, LT, FORWARD, BACKWARD,
-    ASCENDENT, DESCENDANT,
+    ASCENDENT, DESCENDANT, REPEATABLE_READ
 )
 import pytis.util
 from pytis.util import (
@@ -3015,7 +3015,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
             self._pg_select_transaction = \
                 DBTransactionDefault(self._pg_connection_data(),
                                      connection_name=self._connection_name,
-                                     isolation=DBPostgreSQLTransaction.REPEATABLE_READ,
+                                     isolation=REPEATABLE_READ,
                                      timeout_callback=timeout_callback)
             self._pg_select_user_transaction = False
             self._pg_select_set_read_only = self._pg_ro_select
@@ -3731,9 +3731,18 @@ class DBPostgreSQLTransaction(DBDataPostgreSQL):
     'set_point' method and calling the 'cut' method to rollback to a previously
     set transaction point.
 
-    """
+    The transaction can also be used as a context manager:
 
-    REPEATABLE_READ = 'repeatable read'
+        with DBPostgreSQLTransaction(...) as transaction:
+            ...
+            # Explicit transaction.commit() or transaction.rollback() is optional.
+
+    If neither 'commit()' nor 'rollback()' is called explicitly inside the
+    context, the transaction is committed on normal exit from the 'with'
+    block and rolled back if an exception is raised.
+
+    """
+    REPEATABLE_READ = REPEATABLE_READ  # Deprecated: left for backwards compatibility.
 
     _watched_transactions = weakref.WeakSet()
     _trans_last_check = {}
@@ -3748,8 +3757,8 @@ class DBPostgreSQLTransaction(DBDataPostgreSQL):
             parametry připojení, nebo funkce bez argumentů vracející takovou
             instanci 'DBConnection'
           isolation -- transaction isolation level, either 'None' (default
-            isolation level, i.e. read commited) or 'REPEATABLE_READ' constant of
-            this class (repeatable read isolation level)
+            isolation level, i.e. read commited) or constant 'pytis.data.REPEATABLE_READ'
+            (repeatable read isolation level)
           read_only -- whether the transaction is read-only; boolean
           timeout_callback -- function to be called on transaction timeout or 'None';
             the function is called with no arguments
@@ -3781,6 +3790,23 @@ class DBPostgreSQLTransaction(DBDataPostgreSQL):
                 self._pg_close_transaction()
             except Exception:
                 pass
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc, tb):
+        try:
+            if self._open:
+                if exc_type is not None:
+                    try:
+                        self.rollback()
+                    except Exception as e:
+                        log(OPERATIONAL, "Error on rollback: {}: {}".format(type(e).__name__, e))
+                else:
+                    self.commit()
+        finally:
+            self.close()
+        return False  # re-raise exceptions
 
     def _db_bindings_to_column_spec(self, __bindings):
         return (), ()
