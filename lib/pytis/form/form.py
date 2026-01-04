@@ -31,6 +31,7 @@ from past.builtins import basestring
 from builtins import object
 from future.utils import python_2_unicode_compatible
 
+import codecs
 import contextlib
 import copy
 import functools
@@ -2257,6 +2258,12 @@ class RecordForm(LookupForm):
             )
             default = '|'
             selection_type = pytis.presentation.SelectionType.RADIO
+        def is_valid_encoding(encoding):
+            try:
+                codecs.lookup(encoding)
+            except (LookupError, TypeError):
+                return False
+            return True
 
         if not self._data.permitted(None, pytis.data.Permission.INSERT):
             app.echo(_(u"Insufficient permissions to insert records to this table."),
@@ -2288,10 +2295,18 @@ class RecordForm(LookupForm):
                   descr=_("The character used to separate column values in each input row. "
                           "Select one of the predefined options, "
                           "or choose Other to enter a custom character.")),
-        ), layout=(content, FieldSet(_("Separator character selection"), ('sel', 'separator'))))
+            Field('encoding', _("Encoding"), default='UTF-8', not_null=True,
+                  check=computer(lambda r, encoding: _("Unsupported encoding.")
+                                 if not is_valid_encoding(encoding) else None)),
+        ), layout=(
+            content,
+            FieldSet(_("Separator character selection"), ('sel', 'separator')),
+            'encoding',
+        ))
         if not result:
             return False
         separator = '\t' if result['separator'].value() == 'TAB' else result['separator'].value()
+        encoding = result['encoding'].value()
         fh = app.open_selected_file(mode='rb', filetypes=('csv', 'txt'))
         if not fh:
             app.echo(_(u"No file given. Import aborted."), kind='warning')
@@ -2306,10 +2321,12 @@ class RecordForm(LookupForm):
             # are detected before data entry begins, not in the middle of it.
             data = fh.read()
         try:
-            lines = data.decode('utf-8').splitlines()
+            lines = data.decode(encoding).splitlines()
         except UnicodeDecodeError:
-            app.error(_("The file is not encoded in UTF-8.\n"
-                        "Please save the file using UTF-8 encoding and try again."))
+            app.error(_("The file is not encoded in {encoding}.\n"
+                        "Please choose the correct encoding for this file,\n"
+                        "or save it using {encoding} and try again.")
+                      .format(encoding=encoding))
             return
         if not lines:
             app.error(_("The file is empty."))
