@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2019, 2021, 2023 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2019-2026 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2010-2014 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -27,17 +27,17 @@ _ = pytis.util.translations('pytis-defs')
 class FormShortStatistics(Specification):
     public = True
     table = 'ev_pytis_form_short_summary'
-    title = _(u"Přehled používaných formulářů")
+    title = _("Overview of used forms")
     fields = (
-        Field('form', _(u"Jméno formuláře")),
+        Field('form', _("Form name")),
         Field('class', _("Form Class")),
-        Field('n_users', _(u"Počet uživatelů")),
-        Field('n_open', _(u"Počet otevření")),
-        Field('avg_start', _(u"Průměrná doba startu")),
-        Field('last_used', _(u"Poslední spuštění")),
+        Field('n_users', _("Number of users")),
+        Field('n_open', _("Number of opens")),
+        Field('avg_start', _("Average startup time")),
+        Field('last_used', _("Last used")),
     )
     bindings = (
-        Binding('users', _(u"Uživatelé"), 'statistics.FormUsers',
+        Binding('users', _("Users"), 'statistics.FormUsers',
                 condition=(lambda row: pytis.data.AND(
                     pytis.data.EQ('form', row['form']),
                     pytis.data.EQ('class', row['class'])
@@ -48,17 +48,17 @@ class FormShortStatistics(Specification):
 class FormStatistics(Specification):
     public = True
     table = 'ev_pytis_form_summary'
-    title = _(u"Podrobný přehled používaných formulářů")
+    title = _("Detailed overview of used forms")
     fields = (
-        Field('form', _(u"Jméno formuláře")),
+        Field('form', _("Form name")),
         Field('class', _("Form Class")),
-        Field('info', _(u"Parametry formuláře")),
-        Field('n_users', _(u"Počet uživatelů")),
-        Field('n_open', _(u"Počet otevření")),
-        Field('avg_start', _(u"Průměrná doba startu")),
-        Field('last_used', _(u"Poslední spuštění")),
+        Field('info', _("Form parameters")),
+        Field('n_users', _("Number of users")),
+        Field('n_open', _("Number of opens")),
+        Field('avg_start', _("Average startup time")),
+        Field('last_used', _("Last used")),
     )
-    bindings = (Binding('users', _(u"Uživatelé"), 'statistics.FormUsers',
+    bindings = (Binding('users', _("Users"), 'statistics.FormUsers',
                         condition=(lambda row: pytis.data.AND(pytis.data.EQ('form', row['form']),
                                                               pytis.data.EQ('class', row['class']),
                                                               pytis.data.EQ('info', row['info'])))),
@@ -68,14 +68,14 @@ class FormStatistics(Specification):
 class FormUsers(Specification):
     public = True
     table = 'ev_pytis_form_users'
-    title = _(u"Uživatelé formuláře")
+    title = _("Form users")
     fields = (
-        Field('login', _(u"Login")),
-        Field('form', _(u"Jméno formuláře")),
+        Field('login', _("Login")),
+        Field('form', _("Form name")),
         Field('class', _("Form Class")),
-        Field('info', _(u"Parametry formuláře")),
-        Field('n_open', _(u"Počet otevření")),
-        Field('last_used', _(u"Poslední spuštění")),
+        Field('info', _("Form parameters")),
+        Field('n_open', _("Number of opens")),
+        Field('last_used', _("Last used")),
     )
     columns = ('login', 'info', 'n_open', 'last_used',)
 
@@ -83,11 +83,11 @@ class FormUsers(Specification):
 class FormUserList(Specification):
     public = True
     table = 'ev_pytis_form_user_list'
-    title = _(u"Uživatelé")
+    title = _("Users")
     fields = (
-        Field('login', _(u"Login")),
+        Field('login', _("Login")),
     )
-    bindings = (Binding('users', _(u"Formuláře"), 'statistics.FormUserStatistics',
+    bindings = (Binding('users', _("Forms"), 'statistics.FormUserStatistics',
                         condition=(lambda row: pytis.data.EQ('login', row['login']))),
                 Binding('profiles', _("Profiles"), 'profiles.FormProfiles', 'username'),
                 )
@@ -96,14 +96,14 @@ class FormUserList(Specification):
 class FormUserStatistics(Specification):
     public = True
     table = 'ev_pytis_form_users'
-    title = _(u"Formuláře uživatele")
+    title = _("User forms")
     fields = (
-        Field('login', _(u"Login")),
-        Field('form', _(u"Jméno formuláře")),
+        Field('login', _("Login")),
+        Field('form', _("Form name")),
         Field('class', _("Form Class")),
-        Field('info', _(u"Parametry formuláře")),
-        Field('n_open', _(u"Počet otevření")),
-        Field('last_used', _(u"Poslední spuštění")),
+        Field('info', _("Form parameters")),
+        Field('n_open', _("Number of opens")),
+        Field('last_used', _("Last used")),
     )
     columns = ('form', 'class', 'info', 'n_open', 'last_used',)
 
@@ -111,13 +111,13 @@ class FormUserStatistics(Specification):
 class FormUserStatisticsNoinfo(Specification):
     public = True
     table = 'ev_pytis_form_users_noinfo'
-    title = _(u"Formuláře uživatele")
+    title = _("User forms")
     fields = (
         Field('shortname', _("Action")),
-        Field('login', _(u"Login")),
-        Field('form', _(u"Jméno formuláře")),
+        Field('login', _("Login")),
+        Field('form', _("Form name")),
         Field('class', _("Form Class")),
-        Field('n_open', _(u"Počet otevření")),
-        Field('last_used', _(u"Poslední spuštění")),
+        Field('n_open', _("Number of opens")),
+        Field('last_used', _("Last used")),
     )
     columns = ('login', 'class', 'n_open', 'last_used',)

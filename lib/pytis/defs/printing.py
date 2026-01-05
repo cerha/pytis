@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2019-2024 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2019-2026 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2010-2015 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -34,14 +34,14 @@ _ = pytis.util.translations('pytis-defs')
 class GlobalOutputTemplates(pytis.presentation.Specification):
     public = True
     table = 'ev_pytis_global_output_templates'
-    title = _("Předdefinované tiskové šablony")
+    title = _("Predefined print templates")
     fields = (
-        Field('id', _("Identifikátor řádku"), editable=Editable.NEVER),
-        Field('module', _("Formulář"), editable=Editable.NEVER),
-        Field('specification', _("Název šablony")),
-        Field('template', _("Šablona"), text_format=pytis.presentation.TextFormat.LCG,
+        Field('id', _("Row identifier"), editable=Editable.NEVER),
+        Field('module', _("Form"), editable=Editable.NEVER),
+        Field('specification', _("Template name")),
+        Field('template', _("Template"), text_format=pytis.presentation.TextFormat.LCG,
               width=80, height=20, compact=True),
-        Field('rowtemplate', _("Šablona pro jednotlivé řádky"),
+        Field('rowtemplate', _("Row template"),
               text_format=pytis.presentation.TextFormat.LCG,
               width=80, height=20, compact=True),
         Field('help', _("Help"), virtual=True, editable=Editable.NEVER,
@@ -55,27 +55,27 @@ class GlobalOutputTemplates(pytis.presentation.Specification):
 class UserOutputTemplates(pytis.presentation.Specification):
     public = True
     table = 'ev_pytis_user_output_templates'
-    title = _("Uživatelské tiskové šablony")
+    title = _("User print templates")
     fields = (
-        Field('id', _("Identifikátor řádku"), default=nextval('e_pytis_output_templates_id_seq'),
+        Field('id', _("Row identifier"), default=nextval('e_pytis_output_templates_id_seq'),
               editable=Editable.NEVER),
-        Field('module', _("Formulář")),
-        Field('specification', _("Název šablony")),
-        Field('template', _("Šablona"), text_format=pytis.presentation.TextFormat.LCG,
+        Field('module', _("Form")),
+        Field('specification', _("Template name")),
+        Field('template', _("Template"), text_format=pytis.presentation.TextFormat.LCG,
               width=80, height=25, compact=True),
-        Field('rowtemplate', _("Šablona pro jednotlivé řádky"),
+        Field('rowtemplate', _("Row template"),
               text_format=pytis.presentation.TextFormat.LCG,
               width=80, height=25, compact=True),
-        Field('header', _("Hlavička"),
+        Field('header', _("Header"),
               text_format=pytis.presentation.TextFormat.LCG,
               width=80, height=10, compact=True),
-        Field('first_page_header', _("Odlišná hlavička první stránky"),
+        Field('first_page_header', _("First-page header (different)"),
               text_format=pytis.presentation.TextFormat.LCG,
               width=80, height=10, compact=True),
-        Field('footer', _("Patička"),
+        Field('footer', _("Footer"),
               text_format=pytis.presentation.TextFormat.LCG,
               width=80, height=10, compact=True),
-        Field('style', _("Styl"),
+        Field('style', _("Style"),
               width=80, height=25, compact=True),
         Field('username', _("User")),
         Field('help', _("Help"), virtual=True, editable=Editable.NEVER,
@@ -83,19 +83,19 @@ class UserOutputTemplates(pytis.presentation.Specification):
               width=80, height=25, compact=True),
     )
     columns = ('module', 'specification', 'username', 'template',)
-    layout = pytis.presentation.TabGroup((_("Šablona"), ('module', 'specification', 'template',)),
-                                         (_("Řádková šablona"), ('rowtemplate',)),
-                                         (_("Hlavičky a patičky"),
+    layout = pytis.presentation.TabGroup((_("Template"), ('module', 'specification', 'template',)),
+                                         (_("Row template"), ('rowtemplate',)),
+                                         (_("Headers and footers"),
                                           ('header', 'first_page_header', 'footer',)),
-                                         (_("Styl"), ('style',)),
+                                         (_("Style"), ('style',)),
                                          (_("Help"), ('help',)))
 
     def on_delete_record(self, row):
         if not row['username'].value():
-            app.warning(_("Můžete mazat pouze své vlastní záznamy."))
+            app.warning(_("You can delete only your own records."))
             return None
         template = row['specification'].value()
-        if not app.question(_("Opravdu chcete vymazat tiskovou sestavu %s?") % (template,)):
+        if not app.question(_("Do you really want to delete the print report %s?") % (template,)):
             return None
         return pytis.data.EQ(row.keys()[0], row.key()[0])
 
@@ -104,7 +104,7 @@ class UserOutputTemplates(pytis.presentation.Specification):
                                    pytis.data.EQ('module', row['module']),
                                    pytis.data.NE('id', row['id']))
         if pytis.extensions.dbselect('printing.UserOutputTemplates', condition=condition):
-            app.echo(_("Tento název šablony již existuje"))
+            app.echo(_("This template name already exists"))
             return 'specification'
 
 
@@ -122,11 +122,11 @@ class DirectUserOutputTemplates(UserOutputTemplates):
         condition = pytis.data.AND(pytis.data.EQ('module', s(module)),
                                    pytis.data.EQ('specification', s(specification)))
         if not data.select(condition):
-            app.error(_("Tisková sestava neexistuje: ") + specification)
+            app.error(_("Print report does not exist: ") + specification)
             return
         row = data.fetchone()
         if data.fetchone() is not None:
-            app.error(_("Tisková sestava se vyskytuje ve více exemplářích: ") + specification)
+            app.error(_("Print report exists in multiple copies: ") + specification)
             return
         if app.delete_record(self, row):
             # Update the printing button of the current form
