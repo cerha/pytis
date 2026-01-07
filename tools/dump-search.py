@@ -363,14 +363,15 @@ def search(args):
                         for m in regex.finditer(v):
                             pattern = group_to_pattern[m.lastgroup]
                             counts[pattern] += 1
-                            hits[pattern].append((
-                                meta['schema'], meta['table'], col, formatted_key,
-                                format_snippet(v, m.start(), m.end(), args.context),
-                            ))
+                            if not args.summary_only:
+                                hits[pattern].append((
+                                    meta['schema'], meta['table'], col, formatted_key,
+                                    format_snippet(v, m.start(), m.end(), args.context),
+                                ))
 
         # Sort by matches desc; stable tie-breaker by casefolded pattern.
         for pattern in sorted(patterns, key=lambda t: (-counts[t], t.casefold())):
-            print(f'{pattern}: {counts[pattern]}', file=output)
+            print(f"{pattern}: {counts[pattern]}", file=output)
             for schema, table, col, key, snippet in hits[pattern]:
                 print(f"  • {schema}.{table}.{col}, {key}: '{snippet}'", file=output)
 
@@ -412,6 +413,8 @@ def main():
                      help=("Treat search patterns as regular expressions "
                            "(otherwise fixed substrings). Matches are "
                            "case-insensitive.")),
+            argument('--summary-only', action='store_true',
+                     help="Print only per-pattern match counts (do not list individual hits)."),
         )),
     )
     parser = argparse.ArgumentParser(
@@ -423,7 +426,7 @@ def main():
     subparsers.required = True
     for command, help, arguments in commands:
         p = subparsers.add_parser(command.__name__, help=help, add_help=False)
-        p.add_argument('--help', action='help', help='Show help and exit')
+        p.add_argument('--help', action='help', help="Show help and exit")
         arguments(p.add_argument)
         p.set_defaults(command=command)
     args = parser.parse_args()
