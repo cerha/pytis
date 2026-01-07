@@ -235,15 +235,19 @@ def get_columns(connection, schema: str, table: str):
 
 
 def sanitize(expr: str) -> str:
-    # Replacements:
-    # - ANSI ESC (\x1b) -> space
-    # - VT (\x0b) -> space
-    # - FF (\x0c) -> space
-    # - double quote -> single quote
-    # - tabs/CR/LF -> space(s)
-    return ("regexp_replace(translate({e}::text, "
-            "chr(27) || chr(11) || chr(12) || '\"', '   '''), "
-            "E'[\\t\\r\\n]+', ' ', 'g')").format(e=expr)
+    # Replacements (done in SQL):
+    # - ESC (chr(27)) -> ' '
+    # - VT  (chr(11)) -> ' '
+    # - FF  (chr(12)) -> ' '
+    # - "   (chr(34)) -> '
+    # - tabs/CR/LF -> ' ' (via regexp_replace)
+    from_chars = 'chr(27) || chr(11) || chr(12) || chr(34)'
+    to_chars = "'   '''"  # SQL literal: 3 spaces + single quote (4 chars total)
+    return (
+        'regexp_replace('
+        f'translate({expr}::text, {from_chars}, {to_chars}), '
+        "E'[\\t\\r\\n]+', ' ', 'g')"
+    )
 
 
 def dump(args):
