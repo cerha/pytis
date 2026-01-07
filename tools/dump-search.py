@@ -52,7 +52,7 @@ import psycopg2.extras
 import psycopg2.extensions
 
 
-SYSTEM_SCHEMAS = ("pg_catalog", "information_schema", "pg_toast")
+SYSTEM_SCHEMAS = set(('pg_catalog', 'information_schema', 'pg_toast'))
 
 
 def quote_ident(connection, *parts: str) -> str:
@@ -180,7 +180,7 @@ def iter_tables(connection, include_schemas=None, exclude_schemas=None):
     include_schemas = set(include_schemas or ())
     exclude_schemas = set(exclude_schemas or ())
     if not include_schemas:
-        exclude_schemas |= set(SYSTEM_SCHEMAS)
+        exclude_schemas |= SYSTEM_SCHEMAS
 
     sql = """
         SELECT n.nspname AS schema_name,
@@ -337,7 +337,7 @@ def search(args):
     hits = {p: [] for p in patterns}
 
     with fopen(args.input, 'r', encoding='utf-8') as fh, fopen(args.output, 'w') as output:
-        meta, meta_line = None, None
+        meta, meta_line, key = None, None, None
         for line in fh:
             if line.startswith('{'):
                 meta, meta_line = None, line
@@ -348,9 +348,9 @@ def search(args):
             line = line.rstrip('\n')
             if meta is None:
                 meta = json.loads(meta_line)
-            columns = meta['columns']
+                key = set(meta['key'])
+                columns = meta['columns']
             row = dict(zip(columns, line.split('\t')))
-            key = set(meta['key'])
             formatted_key = format_key(meta['key'], row)
             for col in columns:
                 if col not in key:
