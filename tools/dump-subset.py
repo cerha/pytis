@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2025 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2025-2026 Tomáš Cerha <t.cerha@gmail.com>
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -617,8 +617,8 @@ def main():
     parser.add_argument("--binary", action='store_true',
                         help="Use BINARY COPY format instead of CSV.")
     parser.add_argument("--on-conflict-do-nothing", "-i", action='store_true',
-                        help=("Output INSERT statements with ON CONFLICT (pk) DO NOTHING "
-                              "instead of COPY, allowing safe merges into an existing database."))
+                        help=("INSERT records to target table with ON CONFLICT (pk) DO NOTHING, "
+                              "allowing safe merges into an existing database."))
     parser.add_argument("--disable-triggers", "-T", action='store_true',
                         help=("Temporarily disable all USER triggers on affected tables "
                               "during data import. Useful when ON INSERT triggers "
