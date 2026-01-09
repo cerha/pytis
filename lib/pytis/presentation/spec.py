@@ -423,9 +423,8 @@ class ActionContext(object):
     a dialog).  The handler will receive no positional argument.
 
     """
-    # TODO: Zde by ještě mohla být jedna hodnota, která by umožnila definovat
-    # univerzální akce, které pracují implicitně s aktuálním řádkem, ale pokud
-    # existuje výběr, tak s výběrem.
+    # TODO: There could be another value here to define universal actions that
+    # operate implicitly on the current row, but on the selection if it exists.
 
 
 class Action(object):
@@ -442,7 +441,7 @@ class Action(object):
                  secondary_context=None, enabled=True, visible=True, access_groups=None,
                  descr=None, hotkey=None, icon=None, kwargs=None, form_content=None,
                  **kwargs_):
-        """Inicializuj instanci.
+        """Initialize the instance.
 
         Argumenty:
 
@@ -1182,7 +1181,7 @@ class GroupSpec(object):
 
           flexible -- this option currently only makes a difference in web
             forms.  When False (the default), the layout is enforced using
-            tables.  Such layouts are fixed and can not accommodate to
+            tables.  Such layouts are fixed and cannot accommodate to
             different screen sizes.  When True, tables are avoided which makes
             the layout more flexible.  Horizontal groups will be automatically
             wrapped when there is not enough space to fit the items side by
@@ -1231,19 +1230,19 @@ class GroupSpec(object):
         return fields
 
     def label(self):
-        """Vrať název skupiny."""
+        """Return the group label."""
         return self._label
 
     def orientation(self):
-        """Vrať orientaci skládání prvků; konstanta třídy 'Orientation'."""
+        """Return the orientation of item layout; a constant from 'Orientation'."""
         return self._orientation
 
     def gap(self):
-        """Vrať šířku mezery vertikální mezi políčky v du."""
+        """Return the vertical gap between items (in dialog units)."""
         return self._gap
 
     def border(self):
-        """Vrať šířku mezery kolem celé skupiny v du."""
+        """Return the border size around the whole group (in dialog units)."""
         return self._border
 
     def align_hgroups(self):
@@ -1457,24 +1456,24 @@ class QueryFields(object):
 
 
 class ViewSpec(object):
-    """Kompletující specifikace prezentačních vlastností pro formuláře.
+    """Complete specification of presentational properties for forms.
 
-    Instance této třídy zná veškeré prezentační vlasnosti určité entity
-    (tabulky z pohledu aplikace).  Třída definuje API pro přístup k těmto
-    vlastnostem.  Toto API je využíváno formulářovými třídami.
+    An instance of this class knows all presentational properties of a given entity
+    (a table from the application's point of view). The class defines an API for
+    accessing these properties. This API is used by the form classes.
 
-    Každá instance této třídy definuje vlastnosti pro všechny způsoby
-    zobrazení (editační formulář, editační seznam, apod.).
+    Each instance of this class defines properties for all presentation modes
+    (edit form, editable list, etc.).
 
-    Každý typ formuláře potom využívá ze specifikace pouze tu část, která je
-    pro něj relevantní.
+    Each form backend then uses only the part of the specification that is relevant
+    to it.
 
     """
 
     def __init__(self, title, fields, **kwargs):
-        """Inicializuj instanci.
+        """Initialize the instance.
 
-        Argumenty:
+        Arguments:
 
           title -- the title of this view as a (unicode) string.  The title is
             used in browse form headings and in other contexts, where the
@@ -1565,7 +1564,7 @@ class ViewSpec(object):
             access the values before any user changes throught the
             'original_row()' method on the second argument.  The cleanup
             function is run after comitting the edit/insert form (using the
-            ``Ok'' button) or after committing inline editation/insert
+            ``Ok'' button) or after committing inline edit/insert
             regardless whether the record has been changed or not.  Note, that
             unlike 'check', 'cleanup' is called after the database operation,
             but you can still abort the operation by rollback of the
@@ -1610,7 +1609,7 @@ class ViewSpec(object):
             transaction is passed through this argument.  Otherwise the
             transaction may be also accessed through 'row.transaction()'.  The
             function will receive an additional keyword argument 'prefill' in
-            case that row editation is invoked from within a ListField
+            case that row editing is invoked from within a ListField
             (codebook field with selection_type='SelectionType.LIST') which
             defines 'codebook_update_prefill' (see 'Field' constructor
             arguments).  The function's return value is ignored.
@@ -1631,7 +1630,7 @@ class ViewSpec(object):
             instance is returned, all records matching given condition are
             deleted without further prompting.
 
-          redirect -- redirection for single record view/editation specified as
+          redirect -- redirection for single record view/editing specified as
             a callable object (function) of one argument - the 'PresentedRow'
             instance.  The function should return the name of the specification
             to use for given record.  If the function is not defined or it
@@ -1778,7 +1777,7 @@ class ViewSpec(object):
         self._kwargs = dict(kwargs, title=title, fields=fields)
         self._init(**self._kwargs)
 
-    # Note, the list of available arguments is also duplicated in Specification.__init__,
+    # Note: The list of available arguments is also duplicated in Specification.__init__,
     # so any changes here must be reflected there!
 
     def _init(self, title, fields, singular=None, layout=None, list_layout=None, columns=None,
@@ -1792,7 +1791,7 @@ class ViewSpec(object):
               query_fields=None, referer=None, spec_name='', public=None):
         import lcg
         def err(msg, *args):
-            """Return assertion error message."""
+            """Return an assertion error message."""
             return spec_name + ": " + msg % args
         assert isinstance(title, basestring)
         if singular is None:
@@ -1895,11 +1894,11 @@ class ViewSpec(object):
                         assert arg in self._field_dict, \
                             err("Unknown field '%s' in check function arguments: %s", arg, c)
         if filters:
-            # `filters' are for backwards compatibility.
+            # 'filters' are for backwards compatibility.
             # Filters are compatible with profiles (they only define the
             # 'filter' property of the profile) so we can use them as
             # profiles directly.
-            assert not profiles, "When using 'profiles', 'filters' can not be used."
+            assert not profiles, "When using 'profiles', 'filters' cannot be used."
             profiles = Profiles(*filters, **{'default': default_filter})
         else:
             assert default_filter is None, default_filter
@@ -1990,11 +1989,11 @@ class ViewSpec(object):
         self._referer = referer
 
     def clone(self, other):
-        """Clone this instance by another 'ViewSpec' instance and return the cloned instance.
+        """Clone this instance with another 'ViewSpec' instance and return the cloned instance.
 
-        The cloned instance will inherit all attributes of this instance and
-        the other instance passed as argument, where the attributes of the
-        later instance take precedence.
+        The cloned instance inherits all attributes from this instance and from the
+        other instance passed as an argument, where the attributes of the latter
+        instance take precedence.
 
         """
         assert isinstance(other, ViewSpec), other
@@ -2002,11 +2001,11 @@ class ViewSpec(object):
         return ViewSpec(**kwargs)
 
     def title(self):
-        """Vrať název náhledu jako řetězec."""
+        """Return the view title as a string."""
         return self._title
 
     def singular(self):
-        """Vrať název pro jednu položku náhledu jako řetězec."""
+        """Return the singular title (one item/record) as a string."""
         return self._singular
 
     def fields(self):
@@ -2014,9 +2013,9 @@ class ViewSpec(object):
         return self._fields
 
     def field(self, id):
-        """Vrať specifikaci políčka daného 'id' jako instanci 'Field'.
+        """Return the field specification for the given 'id' as a 'Field' instance.
 
-        Pokud takové políčko neexistuje, vrať 'None'.
+        If no such field exists, return None.
 
         """
         return self._field_dict.get(id)
@@ -2034,66 +2033,66 @@ class ViewSpec(object):
         return self._columns
 
     def actions(self, unnest=False):
-        """Vrať specifikaci akcí."""
+        """Return the action specification."""
         if unnest:
             return ActionGroup.unnest(self._actions)
         else:
             return self._actions
 
     def sorting(self):
-        """Vrať specifikaci výchozího řazení."""
+        """Return the default sorting specification."""
         return self._sorting
 
     def grouping(self):
-        """Vrať tuple id sloupců výchozího vizuálního seskupování."""
+        """Return a tuple of column ids used for default visual grouping."""
         return self._grouping
 
     def group_heading(self):
-        """Vrať id sloupce záhlaví skupiny."""
+        """Return the group heading column id (or None)."""
         return self._group_heading
 
     def cleanup(self):
-        """Vrať funkci provádějící akce při uzavření formuláře."""
+        """Return the function performing final actions when committing the form."""
         return self._cleanup
 
     def check(self):
-        """Vrať tuple funkcí provádějících kontrolu integrity záznamu."""
+        """Return a tuple of functions performing record integrity checks."""
         return self._check
 
     def on_new_record(self):
-        """Vrať funkci provádějící vložení nového záznamu, nebo None."""
+        """Return the function implementing insertion of a new record, or None."""
         return self._on_new_record
 
     def on_copy_record(self):
-        """Vrať funkci provádějící vložení zkopírovaného záznamu, nebo None."""
+        """Return the function implementing insertion of a copied record, or None."""
         return self._on_copy_record
 
     def on_edit_record(self):
-        """Vrať funkci provádějící editaci záznamu, nebo None."""
+        """Return the function implementing record editing, or None."""
         return self._on_edit_record
 
     def on_delete_record(self):
-        """Vrať funkci provádějící mazání záznamu, nebo None."""
+        """Return the function implementing record deletion, or None."""
         return self._on_delete_record
 
     def redirect(self):
-        """Vrať funkci zajišťující přesměrování na jiný název specifikace."""
+        """Return the function providing redirection to an alternative specification name."""
         return self._redirect
 
     def focus_field(self):
-        """Vrať řetězec nebo funkci, určující políčko formuláře s fokusem."""
+        """Return a field id or a function determining which form field gets initial focus."""
         return self._focus_field
 
     def description(self):
-        """Vrať stručný popis náhledu."""
+        """Return the brief view description."""
         return self._description
 
     def help(self):
-        """Vrať podrobnou nápovědu."""
+        """Return the detailed help text."""
         return self._help
 
     def row_style(self):
-        """Vrať výchozí styl řádku, nebo funkci, která jej vypočte."""
+        """Return the default row style, or a function computing it."""
         return self._row_style
 
     def profiles(self):
@@ -2108,7 +2107,7 @@ class ViewSpec(object):
         return self._grouping_functions
 
     def aggregated_views(self):
-        """Return default aggregation functions as a tuple."""
+        """Return predefined aggregated views as a tuple."""
         return self._aggregated_views
 
     def bindings(self):
@@ -2123,15 +2122,15 @@ class ViewSpec(object):
         return self._folding
 
     def arguments(self):
-        """Return 'None' or a sequence of table function arguments."""
+        """Return None or a sequence of table function arguments."""
         return self._arguments
 
     def argument_provider(self):
-        """Return 'None' or a function generating database table function arguments."""
+        """Return None or a function generating database table function arguments."""
         return self._argument_provider
 
     def condition_provider(self):
-        """Return 'None' or a function generating database table function arguments."""
+        """Return None or a function generating the additional form filtering condition."""
         return self._condition_provider
 
     def query_fields(self):
@@ -2139,11 +2138,11 @@ class ViewSpec(object):
         return self._query_fields
 
     def referer(self):
-        """Return the id of the referer column as a string or 'None'."""
+        """Return the id of the referer column as a string or None."""
         return self._referer
 
     def spec_name(self):
-        """Return name of the corresponding specification as a basestring.
+        """Return the name of the corresponding specification as a basestring.
 
         An empty string may be returned if the name is unknown.
 
@@ -2154,19 +2153,20 @@ class ViewSpec(object):
 class BindingSpec(object):
     """DEPRECATED: Use 'Binding' instead.
 
-    Definuje vlastnosti napojení dvou formulářů při jejich spojení do duálního
-    formuláře.  Definována je jak datová vazba, tak některé prezentační
-    vlastnosti spojení.
+    Defines the properties of binding two forms when combined into a dual
+    form.  Both the data binding and some presentation properties of the
+    connection are defined.
 
-    Použití je následující:
+    Usage is as follows:
 
-    Funkce 'binding_spec' ve specifikaci libovolného náhledu vrací slovník
-    všech možných spojení tohoto náhledu s dalšími jinými náhledy.  Slovník je
-    klíčován názvy specifikací a hodnotou je právě instance 'BindingSpec'.
+    The 'binding_spec' function in the specification of any view returns a
+    dictionary of all possible bindings of this view with other views.  The
+    dictionary is keyed by specification names and the value is the
+    'BindingSpec' instance.
 
-    Když je tedy například vytvářen duální formulář 'A::B', bude ve specifikaci
-    náhledu 'A' (v roli hlavního formuláře) získána z 'binding_spec' položka
-    pro náhled 'B' (v roli vedlejšího formuláře).
+    For example, when creating a dual form 'A::B', the 'binding_spec' entry
+    for view 'B' (in the role of the side form) is retrieved from view 'A'
+    (in the role of the main form).
 
     """
 
@@ -2476,22 +2476,21 @@ class SelectionType(object):
 
 
 class PostProcess(object):
-    "Výčtová třída definující konstanty pro způsob zpracování uživ. vstupu."
+    """Enumeration class defining constants for post-processing of user input."""
     UPPER = 'UPPER'
-    """Převeď veškerá písmena na velká."""
+    """Convert all letters to uppercase."""
     LOWER = 'LOWER'
-    """Převeď veškerá písmena na malá."""
+    """Convert all letters to lowercase."""
 
 
 class TextFilter(object):
-    """Výčtová třída definující konstanty pro způsob filtrování uživ. vstupu.
-    """
+    """Enumeration class defining constants for filtering of user input."""
     ASCII = 'ASCII'
     """Non-ASCII characters are filtered out."""
     ALPHA = 'ALPHA'
-    """Non-alpha characters are filtered out."""
+    """Non-alphabetic characters are filtered out."""
     FLOAT = 'FLOAT'
-    """Non-alpha characters exclude '.' are filtered out."""
+    """All non-numeric characters except '.' are filtered out."""
     ALPHANUMERIC = 'ALPHANUMERIC'
     """Non-alphanumeric characters are filtered out."""
     NUMERIC = 'NUMERIC'
@@ -2499,14 +2498,14 @@ class TextFilter(object):
     INCLUDE_LIST = 'INCLUDE_LIST'
     """Use an include list.
 
-    The validator checks if the user input is on the list, complaining if
-    not.
+    The validator checks whether the user input is contained in the list and
+    reports an error if it is not.
     """
     EXCLUDE_LIST = 'EXCLUDE_LIST'
     """Use an exclude list.
 
-    The validator checks if the user input is on the list, complaining if it
-    is.
+    The validator checks whether the user input is contained in the list and
+    reports an error if it is.
     """
 
 
@@ -2514,38 +2513,39 @@ class TextFilter(object):
 class Computer(object):
     """Specification of a function computing a value based on row values.
 
-    Computer functions compute a value which depends on values of fields within
-    a 'PresentedRow' instance and possibly also other properties of the row.
-    This class simply wraps the function (any callable object) and keeps track
-    of the fields (their identifiers) on which the result depends.  This makes
-    Pytis able to decide when it is necessary to recompute the value (by
-    calling the function again).
+    Computer functions compute a value that depends on values of fields within
+    a 'PresentedRow' instance and possibly also on other properties of the row.
+    This class wraps the function (any callable object) and keeps track of the
+    fields (their identifiers) on which the result depends. This allows Pytis
+    to decide when it is necessary to recompute the value (by calling the
+    function again).
 
-    Computer functions are used at many places throughout Pytis specifications.
-    They can compute for example:
+    Computer functions are used in many places throughout Pytis specifications.
+    They can compute, for example:
 
       - values of virtual fields,
       - dynamic editability and visibility of form fields,
       - dynamic filters and runtime arguments for codebook field enumerators,
-      - checking the integrity of the row.
+      - integrity checks of the row.
 
-    The computer function is invoked on changes of the fields it depends on.
-    The Computer specification allows defining the computer function to wait
-    for its input values to become valid or running it on every change even if
-    the field is not valid according to the constraints defined by their data
-    type.  If some (or all) inputs are defined to be validated (using the
-    'validate' and 'novalidate' arguments), the computer function is not called
-    until all the validated fields become valid and the value defined by the
-    'fallback' argument is used instead of the result of the computation.  This
-    saves handling invalid values inside the computer function, because the
-    function implementation may rely on the inputs to be valid (match the
-    constraints defined by the types of the relevant fields).
+    The computer function is invoked when fields it depends on change.
+    The Computer specification allows defining whether the computer function
+    should wait for its input values to become valid or whether it should be
+    executed on every change even if the field values are currently invalid
+    according to the constraints defined by their data types.
+
+    If some (or all) inputs are defined to be validated (using the 'validate'
+    and 'novalidate' arguments), the computer function is not called until all
+    validated fields become valid and the value defined by the 'fallback'
+    argument is used instead of the computed result. This avoids the need to
+    handle invalid values inside the computer function, because the function
+    implementation may rely on the inputs being valid.
 
     Note: When using validated inputs, validation may cause infinite recursion
-    because of circular dependencies.  Pytis will automatically detect
-    computers with such circular dependencies and force the developer to avoid
-    the circular dependency by excluding certain fields from validation (adding
-    to 'novalidate') when necessary.
+    because of circular dependencies. Pytis automatically detects computers
+    with such circular dependencies and forces the developer to avoid them by
+    excluding certain fields from validation (adding them to 'novalidate') when
+    necessary.
 
     """
 
@@ -2553,36 +2553,34 @@ class Computer(object):
                  novalidate=()):
         """Arguments:
 
-          function -- callable object taking one argument - the 'PresentedRow'
-            instance and returning the computed value.  The meaning of the
+          function -- callable object taking one argument, the 'PresentedRow'
+            instance, and returning the computed value. The meaning of the
             returned value depends on the purpose for which the computer is
             used.
 
-          depends -- sequence of field identifiers (strings), on which the
-            function result depends.  It should contain all fields which are
-            used in the computation.  The computed value will only be
-            recomputed when the value of one of the listed fields changes.
-            Empty sequence leads to no recomputations (the value is computed
-            only once on initialization).
+          depends -- sequence of field identifiers (strings) on which the
+            function result depends. It should contain all fields used in the
+            computation. The computed value will only be recomputed when the
+            value of one of these fields changes. An empty sequence means no
+            recomputation (the value is computed only once during
+            initialization).
 
           validate -- specifies which input fields from 'depends' should be
-            validated before running the computer function.  Passing False (the
-            default) means no fields are validated.  Passing True means all
-            fields are validated except for the fields listed in 'novalidate'.
-            Passing a sequence means only the listed fields are validated.
+            validated before running the computer function. Passing False (the
+            default) means no fields are validated. Passing True means all
+            fields are validated except those listed in 'novalidate'. Passing a
+            sequence means only the listed fields are validated.
 
           novalidate -- sequence of fields excluded from computer input
-            validation.  Only relevant when 'validate' is set to True.  In this
-            case, all except for the here listed fields will be validated.
+            validation. Only relevant when 'validate' is True. In that case,
+            all fields except those listed here are validated.
 
-          fallback -- value used instead of function result in case that at
-            least one of the validated input fields (as specified by
-            'validate'/'novalidate') contains an invalid value.  The computer
-            function is not called at all in this case and the fallback value
-            is returned instead.  If 'fallback' is undefined, the previously
-            computed value remains the result until all input values become
-            valid again (if they were not valid before, the result remains on
-            the default/initial value).
+          fallback -- value used instead of the function result when at least
+            one of the validated input fields contains an invalid value. The
+            computer function is not called in this case and the fallback value
+            is returned instead. If 'fallback' is undefined, the previously
+            computed value remains in effect until all input values become
+            valid again.
 
         """
         assert callable(function), function
@@ -2617,45 +2615,43 @@ class Computer(object):
                                        self._depends)
 
     def function(self):
-        """Return the value of 'function' as passed to the constructor."""
+        """Return the function passed to the constructor."""
         return self._function
 
     def depends(self):
-        """Return the value of 'depends' as passed to the constructor converted to a tuple."""
+        """Return the dependency field identifiers as a tuple."""
         return self._depends
 
     def validate(self):
-        """Return the tuple of columns which should be validated."""
+        """Return the tuple of fields that should be validated."""
         return self._validate
 
     def fallback(self):
-        """Return the value of 'fallback' as passed to the constructor."""
+        """Return the fallback value passed to the constructor."""
         return self._fallback
 
 
 def computer(function=None, validate=False, novalidate=(), fallback=UNDEFINED):
-    """Return a 'Computer' instance for given function.
+    """Return a 'Computer' instance for the given function.
 
-    If necessary, wrap 'function' converting row values to named arguments.
+    If necessary, wrap 'function' so that row values are converted to named
+    arguments.
 
-    Computer functions are functions of one argument which is a 'PresentedRow'
-    instance and return a result based on a computation which typically uses
-    current row values and/or other row properties.  This wrapper makes it
-    simple to define computer functions working with field values by passing
-    these values as function arguments.
+    Computer functions take one argument, a 'PresentedRow' instance, and return
+    a result based on a computation that typically uses current row values
+    and/or other row properties. This wrapper makes it easy to define computer
+    functions that work directly with field values by passing them as function
+    arguments.
 
     If 'function' is None or if it already is a Computer instance, it is
-    returned unchanged.  Otherwise it must be a function of one positional
+    returned unchanged. Otherwise it must be a function of one positional
     argument and zero or more additional arguments (positional or keyword).
-    The first positional argument is a 'PresentedRow' instance.  If the
-    function defines any additional arguments, it will be wrapped by a function
-    which passes row values of fields matching the argument names as those
-    arguments.  If no such additional arguemnts are defined, the 'function' is
-    used as is.
+    The first positional argument is the 'PresentedRow' instance. If the
+    function defines additional arguments, it is wrapped so that row values of
+    fields matching the argument names are passed as those arguments.
 
-    The arguments 'validate', 'novalidate' and 'fallback' correspond to the
-    same arguments of 'Computer' constructor.  If used, they are simply passed
-    on to the instance.
+    The arguments 'validate', 'novalidate', and 'fallback' correspond to the
+    arguments of the 'Computer' constructor and are passed through unchanged.
 
     For example:
 
@@ -2716,55 +2712,52 @@ def computer(function=None, validate=False, novalidate=(), fallback=UNDEFINED):
 
 
 def procedure(function):
-    """Decorator to mark procedures to be invoked through 'app.run_procedure()'.
+    """Decorator marking procedures intended to be invoked via 'app.run_procedure()'.
 
-    Currently only used to mark procedures just for the information that a
-    function or method actually is a "pytis procedure".
+    Currently this is only informational, indicating that a function or method
+    represents a "pytis procedure".
 
-    It may be used in future to impose restrictions (only allow marked
-    procedures to be run through 'app.run_procedure()') or add any other
+    In the future it may be used to impose restrictions (for example, allowing
+    only marked procedures to be run via 'app.run_procedure()') or to add other
     functionality.
 
-    Either way, it is advised to avoid running code through
-    'app.run_procedure()' as it seems much more straightforward to just import
-    that code and call it directly.  'app.run_procedure()' remains mainly just
-    for backwards compatibility.
+    In general, it is recommended to avoid running code through
+    'app.run_procedure()' and instead import and call it directly.
+    'app.run_procedure()' remains mainly for backwards compatibility.
 
     """
     return function
 
 
-
 class CbComputer(Computer):
-    """Specializovaný computer, který získává hodnotu z číselníku.
+    """Specialized computer that retrieves values from a codebook.
 
-    Tento computer automaticky poskytuje dopočítávací funkci, která získává
-    hodnotu z některého sloupce číselníku navázaného na jiné políčko stejného
-    náhledu.  Toho lze využít u políček, která ve skutečnosti jen zobrazují
-    doplňující informace z číselníku.
+    This computer automatically provides a computation function that retrieves
+    a value from a column of a codebook bound to another field of the same view.
+    This is useful for fields that merely display supplementary information
+    derived from a related codebook.
 
-    Stejného efektu by sice šlo dosáhnout i použitím standardního computeru s
-    příslušnou dopočítávací funkcí, ale tím by se uživatelské rozhraní
-    nedozvědělo nic o vazbě dopočítávaného políčka na políčko s enumerátorem a
-    nebylo by schopno poskytnout další užitečné funkce, jako například otevření
-    náhledu číselníku jako akce kontextového menu buňky, zobrazení klíče
-    číselníku při aktivaci buňky, automatické určení datového typu virtuálního
-    políčka apod.
+    Although the same effect could be achieved using a standard Computer with
+    a custom computation function, the user interface would then have no
+    knowledge of the relationship between the computed field and the codebook
+    field. As a result, it would not be able to provide additional useful
+    features such as opening the codebook view from a context menu, displaying
+    the codebook key when a cell is activated, automatically determining the
+    data type of the virtual field, etc.
 
     """
 
     def __init__(self, field, column, default=None):
-        """Inicialize the instance.
+        """Initialize the instance.
 
         Arguments:
 
-          field -- identifier of a field in the same specification, which provides codebook
-            values.  This field must have an enumerator of type 'DataEnumerator' (must be a
-            codebook field).
+          field -- identifier of a field in the same specification that provides
+            codebook values. This field must have an enumerator of type
+            'DataEnumerator' (i.e. it must be a codebook field).
 
-          column -- identifier of a column within the enumerator data object.  The computer will
-            return the value of this column as its result.
-
+          column -- identifier of a column within the enumerator's data object.
+            The computer returns the value of this column as its result.
 
         """
         assert isinstance(field, basestring)
@@ -2790,21 +2783,22 @@ class CbComputer(Computer):
         return self._default
 
     def field(self):
-        """Vrať id políčka, jehož enumerátor je použit."""
+        """Return the id of the field whose enumerator is used."""
         return self._field
 
     def column(self):
-        """Vrať id sloupce datového objektu enumerátoru, který udává hodnotu."""
+        """Return the id of the enumerator data column providing the value."""
         return self._column
 
 
 class CodebookSpec(object):
-    """Specification of codebook properties of given view.
+    """Specification of codebook-related properties of a view.
 
-    The specification of any view may define the properties of the view, when used as a codebook
-    (see the 'codebook' argument of 'Field' for more information about codebooks).
+    A view specification may define how the view behaves when used as a
+    codebook (see the 'codebook' argument of the 'Field' specification).
 
-    'CodebookSpec' may be defined as the 'cb' attribute of a 'Specification'.
+    A 'CodebookSpec' instance may be defined as the 'cb' attribute of a
+    'Specification'.
 
     """
 
@@ -2812,46 +2806,43 @@ class CodebookSpec(object):
                  display_size=20, enable_autocompletion=True, begin_search=None):
         """Arguments:
 
-          display -- defines the method of retrieving the user visible value of
-            the codebook item (see below for more information about user
-            visible values).  None (the default value) means to use the
-            codebook code as the user visible value (no conversion).  A string
-            value refers to a column in the *data* object of the codebook.  The
-            user visible value is retrieved from given column.  You may also
-            pass a function (callable object).  The user visible value is then
-            computed by invoking the function, passing it the code (internal
-            Python value of the codebook field) as an argument.  The returned
-            value must be a string.  If a function is passed and this function
-            has just one argument named 'row', the function will receive the
-            data row of the corresponding codebook data object as an argument
-            (instead of just the internal codebook value).
-          prefer_display -- If true, the user interface will show the display
-            value instead of the codebook internal value wherever possible.
-            For example the browse from will show the display value instead of
-            the code (the display is normally only shown in the status line or
-            tooltip).  See below for more details
+          display -- defines how the user-visible value of a codebook item is
+            obtained. None (the default) means the internal codebook value is
+            used directly. A string refers to a column in the codebook data
+            object whose value will be displayed. A callable may also be used;
+            it receives the internal codebook value and must return a string.
+            If the callable defines a single argument named 'row', it will
+            receive the full data row instead of just the code value.
+
+          prefer_display -- if True, the user interface will prefer displaying
+            the user-visible value over the internal code wherever possible.
+
           display_size -- width of the codebook display field in characters.
             It is possible to override this value by the argument of the same
             name within the field specification (for particular field).
-          enable_autocompletion -- enable autocompletion (True by default).  If
-            false, autocompletion will be disabled for all codebook fields
-            refering to this codebook.  This may be practical for example for
+
+          enable_autocompletion -- enable or disable autocompletion for fields
+            referring to this codebook.  This may be practical for example for
             slow codebooks where autocompletion queries would slow down user
             interaction within the codebook field.
-          begin_search -- None or an identifier of a column, where incremental
-            search would be automatically started when a codebook form is
-            invoked (GUI only).
 
-        The user visible value of the codebook is used in several situations.  The codebook field
-        ('SelectionType.CODEBOOK') will show it in a display next to the form control for entering
-        the codebook value.  Other fields (such as 'CHOICE' or 'RADIO') will directly shoe the user
-        value (id 'display' was defined) and the internal value is not visible.  Another usage is
-        in browse forms (tables), where the value of the display is shown in the application status
-        line (GUI) or in a tooltip (web).  If 'prefer_display' is true, however, the display value
-        will be used in browse forms directly.
+          begin_search -- identifier of a column where incremental search
+            should automatically start when a codebook form is opened (GUI
+            only).
 
-        Arguments 'columns' and 'sorting' are deprecated.  Use a derived specification if you need
-        to modify the parameters of the underlying view.
+        The user visible value of the codebook is used in several situations.
+        The codebook field ('SelectionType.CODEBOOK') will show it in a display
+        next to the form control for entering the codebook value.  Other fields
+        (such as 'CHOICE' or 'RADIO') will directly show the user value (if
+        'display' was defined) and the internal value is not visible.  Another
+        usage is in browse forms (tables), where the value of the display is
+        shown in the application status line (GUI) or in a tooltip (web).  If
+        'prefer_display' is true, however, the display value will be used in
+        browse forms directly.
+
+        Arguments 'columns' and 'sorting' are deprecated.  Use a derived
+        specification if you need to modify the parameters of the underlying
+        view.
 
         """
         assert columns is None or is_sequence(columns)
@@ -2878,11 +2869,11 @@ class CodebookSpec(object):
         return self._sorting
 
     def display(self):
-        """Return the 'display' specification as passed to the constructor."""
+        """Return the display specification."""
         return self._display
 
     def prefer_display(self):
-        """Return true if the display should be preferred over the internal codebook value."""
+        """Return True if the display value should be preferred."""
         return self._prefer_display
 
     def display_size(self):
@@ -2890,7 +2881,7 @@ class CodebookSpec(object):
         return self._display_size
 
     def begin_search(self):
-        """Return the identifier of the column where incremental search should be started."""
+        """Return the column identifier for incremental search."""
         return self._begin_search
 
     def enable_autocompletion(self):
@@ -2898,37 +2889,36 @@ class CodebookSpec(object):
 
 
 class FormType(object):
-    """Specifikace abstraktního typu formuláře podle účelu jeho otevření.
+    """Specification of an abstract form type based on its opening purpose.
 
-    Tyto konstanty slouží k určení způsobu otevření náhledu.  Díky této
-    abstrakci je specifikace nezávislá na použitých třídách uživatelského
-    rozhraní.  Definujeme pouze účel, za kterým je formulář otevírán a necháme
-    uživatelské rozhraní rozhodnout, který konkrétní formulář je v dané situaci
-    nejvhodnější.
+    These constants define how a view should be opened. Thanks to this
+    abstraction, specifications are independent of concrete user interface
+    classes. Only the purpose of opening the form is defined, and the user
+    interface decides which concrete form implementation is most suitable.
 
     """
 
     BROWSE = 'BROWSE'
-    """Otevření řádkového náhledu v podobě tabulky."""
+    """Open a tabular browse view."""
 
     VIEW = 'VIEW'
-    """Otevření needitovatelného náhledu jednoho záznamu."""
+    """Open a non-editable single-record view."""
 
     BROWSABLE_VIEW = 'BROWSABLE_VIEW'
-    """Otevření needitovatelného náhledu jednoho záznamu s možností procházení záznamů."""
+    """Open a non-editable single-record view with record navigation."""
 
     EDIT = 'EDIT'
-    """Otevření editačního formuláře jednoho záznamu."""
+    """Open an editable form for an existing record."""
 
     INSERT = 'INSERT'
-    """Otevření editačního formuláře pro vložení nového záznamu."""
+    """Open an editable form for inserting a new record."""
 
 
 @python_2_unicode_compatible
 class Link(object):
-    """Specification of a link from field to a different view.
+    """Specification of a link from a field to a different view.
 
-    Used as a value of 'Field' constructor argument  'link'.
+    Used as the value of the 'link' argument in the 'Field' constructor.
 
     """
 
@@ -2936,41 +2926,34 @@ class Link(object):
                  enabled=True, filter=None, arguments=None):
         """Arguments:
 
-          name -- name of the referred specification as a string.
+          name -- name of the referenced specification.
 
-          column -- column identifier in the referred specification.  This
+          column -- column identifier in the referenced specification. This
             column is used to locate the record corresponding to the current
-            value of the refering field.
+            value of the referring field.
 
-          type -- type of the form used to display the referred view/record as
-            one of 'FormType' constants.  The default type is
-            'FormType.BROWSE'.  This argument may also be used as positional.
+          type -- type of the form used to display the referenced view or
+            record, as one of the 'FormType' constants.  This argument may also
+            be used as positional.
 
-          binding -- 'Binding' specification identifier (string) determining
-            the current side view shown along with the referred record.  A
-            binding with given identifier must exist in the 'bindings'
-            specification of 'name'.
+          binding -- identifier of a 'Binding' specification determining the
+            side view shown together with the referenced record.
 
-          label -- titulek odkazu v menu.  Pokud není uveden, bude odkaz
-            pojmenován automaticky a zařazen mezi automaticky generované
-            odkazy.  Pokud je titulek uveden, bude v uživatelském rozhraní
-            odkaz uveden samostatně před všemi automaticky generovanými odkazy.
+          label -- link label shown in the menu. If omitted, the link is named
+            automatically and grouped among automatically generated links. If
+            specified, the link is shown separately before automatic links.
 
-          enabled -- function of one argument ('PresentedRow' instance)
-            returning True when the link is active for given record or False
-            otherwise.  A boolean value may also be used directly instead of a
-            function when the state can be defined statically (or determined in
-            advance).
+          enabled -- boolean or function taking a 'PresentedRow' instance and
+            returning True if the link is active for the given record.
 
-          filter -- function of one argument ('PresentedRow' instance)
-            returning a filtering condition ('pytis.data.Operator' instance) to
-            be used for filtering the newly opened form.  Only relevant for
-            links with 'type'='FormType.BROWSE'.
+          filter -- function taking a 'PresentedRow' instance and returning a
+            filtering condition ('pytis.data.Operator' instance) for the newly
+            opened form. Only relevant for 'FormType.BROWSE'.
 
-          arguments -- function of one argument ('PresentedRow' instance)
-            returning a dictionary of table function arguments to be passed to
-            the form.  Only relevant for links with 'type'='FormType.BROWSE'
-            where the target specifiation is based on a table function.
+          arguments -- function taking a 'PresentedRow' instance and returning
+            a dictionary of table function arguments. Only relevant for
+            'FormType.BROWSE' when the target specification is based on a table
+            function.
 
         """
         assert isinstance(name, basestring)
@@ -3023,12 +3006,11 @@ class Link(object):
 class ListLayout(object):
     """Specification of list layout.
 
-    Currently only implemented in web forms.
+    Currently implemented only in web forms.
 
-    This layout defines an alternative presentation of lists of records.  The
-    records are not presented as a table, but as sections, where each record
-    has its own heading, meta information and text (description, annotation,
-    message...).
+    This layout defines an alternative presentation of record lists. Records
+    are not displayed as a table but as sections, where each record has its own
+    heading, meta information, and content.
 
     """
 
@@ -3036,48 +3018,43 @@ class ListLayout(object):
                  meta_labels=False, columns=1, allow_index=False, popup_actions=False):
         """Arguments:
 
-          title -- identifier of a field which will be used as a title for each
-            item in the list (a string).  An 'lcg.TranslatableText' instance
-            can also be passed as an interpolation template.  In this case the
-            title will be produced by interpolation of formatted row values
-            within given string (with python string formatting syntax).
+          title -- identifier of a field used as the title for each list item.
+            An 'lcg.TranslatableText' instance may also be used as an
+            interpolation template (with python string formatting syntax
+            replacing variables by formatted row values).
 
-          meta -- a sequence of field identifiers (strings) which will be
-            printed underneath each item's title as records meta information.
-            A single item may be passed as a string directly.
+          meta -- sequence of field identifiers shown as meta information below
+            the item title.  A single item may be passed as a string directly.
 
-          layout -- 'GroupSpec' instance describing the layout of a fields
-            within each item's section.  If used (not None), the fields will be
+          layout -- 'GroupSpec' instance describing the layout of fields within
+            each item section.  If used (not None), the fields will be
             displayed for each record in a manner simillar to a show form.
             Similarly as for the 'layout' argument in 'ViewSpec', it is also
             possible to pass a sequence of fields (or 'GroupFpec' instances)
             which will be turned into a vertical group automatically.
 
-          content -- free content provider a field identifier or a function.
-            If a function is used it must accept one argument (a PresentedRow
-            instance) and return 'lcg.Content' or None.  If a field identifier
-            is used, the field value must be a string formatted as LCG
-            structured text.  The field text is parsed to produce the content.
-            A sequence of functions or field identifiers may also be used to
-            provide more pieces of content concatenated together on the output.
+          content -- content provider: a field identifier or a function.  A
+            function receives a PresentedRow instance and returns 'lcg.Content'
+            or None.  If a field identifier is used, the field value must be a
+            string formatted as LCG structured text.  The field text is parsed
+            to produce the content.  A sequence of functions or field
+            identifiers may also be used to provide more pieces of content
+            concatenated together on the output.
 
-          image -- identifier of a field which provides an image to be
-            displayed along with each record.
+          image -- identifier of a field providing an image to be displayed
+            along with each record.
 
-          meta_labels -- boolean flag indicating, whether 'meta' fields should
-            be labeled.  If a sequence is passed, only meta fields with
-            identifiers contained within the sequence will be babeled.
+          meta_labels -- boolean or sequence specifying whether meta fields
+            should be labeled.  A sequence specifies identifiers of labeled
+            fields.
 
-          columns -- number of columns; integer.
+          columns -- number of columns.
 
-          allow_index -- boolean flag indicating, whether an index of all
-            displayed records should be displayed at the top of the list.  Each
-            item in this index makes it possible to jump directly to the
-            record.
+          allow_index -- whether to show an index of all records at the top.
 
-          popup_actions -- display row actions (if enabled) as a popup menu of
-            record title heading, rather than action buttons below the item
-            content.
+          popup_actions -- whether row actions should be displayed as a popup
+            menu attached to the record title (rather than action buttons below
+            the item content).
 
         """
         if isinstance(layout, (list, tuple)):
@@ -3133,11 +3110,11 @@ class ListLayout(object):
 
 
 class Enumeration(object):
-    """Specification of an enumeration.
+    """Specification of a code-based enumeration.
 
-    This class defines a code based enumeration (as oposed to database based
-    enumeration typically implemented using a codebook with its own pytis
-    'Specification').
+    This class defines an enumeration based directly on code, as opposed to
+    database-based enumerations typically implemented using codebooks with
+    their own specifications.
 
     You can define an enumeration directly within 'Field' specification by
     defining 'enumerator', 'display', 'selection_type', 'prefer_display' and,
@@ -3147,19 +3124,15 @@ class Enumeration(object):
     times.  When a class derived from 'Enumeration' is passed to the
     'enumerator' attribute of a 'Field' specification, all the above named
     attributes (when not redefined explicitly for given field) will default to
-    values defined by this enumeration.  Note, that the default values of some
-    attributes may be different in this class than the default values of the
-    same 'Field' specification attributes.  See the documentation of individual
-    attributes below.
+    values defined by this enumeration.
 
-    Code based enumerations are typically practical when the application logic
-    depends on the knowledge of enumeration values. They can also define
-    translatable labels (the translations are often easier to manage within the
-    code than in the database).
+    Enumerations can define translatable labels and are useful when application
+    logic depends on knowing the enumeration values.
 
     """
+
     enumeration = ()
-    """Sequence of pairs (value, label) determining inner values and displayed labels.
+    """Sequence of (value, label) pairs defining internal values and displayed labels.
 
     The inner values must correspond to the python value of the data type of
     the 'Field' specification where the enumeration is used (typically python
@@ -3173,22 +3146,23 @@ class Enumeration(object):
     """
 
     default = None
-    """Overrides Field's 'default' attribute.
+    """Overrides the Field 'default' attribute.
 
     Must be one of the enumeration's inner values.
+
     """
 
     selection_type = SelectionType.CHOICE
-    """Overrides Field's 'selection_type' attribute."""
+    """Overrides the Field 'selection_type' attribute."""
 
     orientation = Orientation.VERTICAL
-    """Overrides Field's 'orientaion' attribute."""
+    """Overrides the Field 'orientation' attribute."""
 
     null_display = None
-    """Overrides Field's 'null_display' attribute."""
+    """Overrides the Field 'null_display' attribute."""
 
     prefer_display = True
-    """Overrides Field's 'prefer_display' attribute.
+    """Overrides the Field 'prefer_display' attribute.
 
     Note, that the default value is True here, while the default value of the
     Field attribute is False, so when Enumeration is used, the default is to
@@ -3198,7 +3172,7 @@ class Enumeration(object):
 
     @classmethod
     def label(cls, value):
-        """Return the label of the enumeration item with given value."""
+        """Return the label corresponding to the given enumeration value."""
         return dict(cls.enumeration).get(value)
 
 
@@ -3206,374 +3180,333 @@ class Enumeration(object):
 class Field(object):
     """Specification of a generic form field representing a data value.
 
-    This specification is used for all kinds of situations where fields are
-    used to display and/or edit values, such as screen forms, tables, print
-    reports etc.
+    This specification is used in all situations where fields are used to
+    display and/or edit values, such as screen forms, tables, print reports,
+    etc.
 
-    Only certain subset of information defined here is relevant for each
-    situation.  The exact way of interpretation of this specification depends
-    on classes implementing the user interface and the details also depend on
-    the kind of user interface (GUI forms, web forms, printed reports).  Not
-    all features may be supported by all user interface implementations.
+    Only a certain subset of the information defined here is relevant for each
+    situation. The exact interpretation of this specification depends on the
+    classes implementing the user interface, and the details also depend on
+    the kind of user interface (GUI forms, web forms, printed reports). Not all
+    features may be supported by all user interface implementations.
 
     """
 
     def __init__(self, id=None, label=None, column_label=None, inherit=None, **kwargs):
         """Arguments:
 
-          id -- field identifier as a string.  This identifier is used to refer
-            to the field within all pytis operations.  The identifier is also
-            used as the name of the related column in the underlying data
-            object by default, but this may be overriden by the 'dbcolumn'
-            argument.  This argument is typically passed as positional.
-          label -- user visible field label as a string or unicode.  This
-            argument is also typically passed as positional.
-          column_label -- optional field label in the column view.  The column
-            label is the same as 'label' by default, but may be overriden by
-            passing a string or unicode value.  This argument (unlike the
-            remaining arguments) may also be passed as positional.
-          inherit -- deprecated - use the method 'clone()' to implement field
+          id -- field identifier as a string. This identifier is used to refer
+            to the field within all pytis operations. It is also used as the
+            name of the related column in the underlying data object by
+            default, but this may be overridden by the 'dbcolumn' argument.
+            This argument is typically passed positionally.
+
+          label -- user-visible field label as a string or unicode. This
+            argument is also typically passed positionally.
+
+          column_label -- optional field label used in column views. By default
+            it is the same as 'label', but it may be overridden by passing a
+            string or unicode value. This argument (unlike most others) may
+            also be passed positionally.
+
+          inherit -- deprecated; use the 'clone()' method to implement field
             inheritance.
-          descr -- brief field description in the extent of approx. one
-            sentence, suitable for example for tooltip text.
+
+          descr -- brief field description, typically one sentence, suitable
+            for use as tooltip text.
+
           virtual -- boolean flag indicating that the field is not bound to the
-            underlying data object.  The value of a virtual field will most
-            often be computed on the fly by a 'Computer'.  See the argument
-            'computer' for more information.  Since the data type of a virtual
-            field cannot be obtained from the data object, the hardcoded
-            default type of virtual fields is 'pytis.data.String'.  Use the
-            'type' argument to override it.
+            underlying data object. The value of a virtual field is most often
+            computed on the fly using a 'Computer' (see the 'computer'
+            argument). Since the data type of a virtual field cannot be
+            obtained from the data object, the default type of virtual fields
+            is 'pytis.data.String'. Use the 'type' argument to override it.
+
           dbcolumn -- name of the related column in the underlying data object.
-            The name is the same as the field identifier by default.  It is not
-            recommended to use different column name than the field identifier
-            unless there is a serious reason for it.
+            By default this is the same as the field identifier. Using a
+            different column name is discouraged unless there is a strong
+            reason.
+
           type -- explicit data type as a 'pytis.data.Type' class or instance.
-            None value means to use the default type determined from the
-            underlying data object (or the default type 'pytis.data.String'
-            for virtual fields not present in the data object).  If a class is
-            passed, the instance of this class will be created automatically
-            and the system will pass it all arguments which it is able to
-            determine.  If an instance is passed it is used as is even if the
-            system would create it with other arguments.  So by passing a class
-            you leave the system to do its best, while by passing an instance,
-            you can force whatever you want.  In any case, the specified type
-            must be compatible with the type determined by the underlying data
-            object.  If None or if a class is specified, individual type
-            constructor arguments may be passed separately as additional
-            'Field' keyword arguments and they take precedence over the
-            arguments determined by system.  Thus this is a more gentle way to
-            force specific properties of the field data type individually.  The
-            arguments 'codebook' and 'enumerator' determine the constructed
-            type's enumerator.
-          width -- field width in characters (integer).  Default width is
-            determined automatically if not specified here.  Certain types of
-            input fields may interpret the value differently (e.g. as a number
-            of columns) when number of characters doesn't make sense.
-          height -- field height in characters (integer).  Certain types of
-            input fields may interpret the value differently (e.g. as a number
-            of rows) when number of characters doesn't make sense.
-          column_width -- table column width in characters (integer).  If not
-            defined, defaults to 'width'.
-          disable_column -- If true, it is not possible to display the field as
-            a table column.  The field does not appear in the selection of
-            columns to display and presence of such field in default columns
-            ('ViewSpec' argument 'columns') is announced as an error.
-          fixed -- passing True value will disable automatic scaling of column
-            width when the table size is changed.  The default behavaior is to
-            accommodate column widths to new form size, so that the available
-            space is used evenly between all columns.  Fixed columns, however
-            will be left out during these recomputations and will keep their
-            prevoius widths.
-          editable -- one of 'Editable' constants or a 'Computer' instance.
-            The constants determine field editability statically, the computer
-            may be used to compute editability dynamically (returning a boolean
-            result) based on the values of other fields of a record and return
-            true iff the field is editable (see also notes about computer
-            specifications below).  The default value is 'Editable.ALWAYS'.
-          visible -- boolean value or a 'Computer' instance returning the
-            visibility dynamically (returning a boolean result).  Returning
-            false will exclude the field from all kinds of forms (table columns
-            or or form layout).  Note that for table columns the visibility is
-            not computed separately for each row.  The computer function is
-            called just once with an initialized PresentedRow instance without
-            particular row values.  Currently only implemented in web forms.
-          compact -- true value results in the field label being displayed
-            above the field, not on the left which is the default.  This way
-            the field will span to the full width of the field group.
-          nocopy -- iff true, the field's value will be omitted during record
-            copying (user command for creation of a new record as a copy of an
-            existing record).  Key columns and computed fields depending on key
-            columns are omitted automatically.
-          default -- default value or a function for computing the default
-            value.  The default value is used when a new record is initialized.
-            Please note, that if computer is defined, it has higher precedence
-            than the default value.  You may pass a value directly or a
-            callable object.  The callable object will be called with no
-            arguments when the default value is needed and its returned value
-            will be used.  In any case, the default value must be compatible
-            with the internal Python representation for the data type of the
-            field.  If not defined, the default value is determined by the data
-            type (usually 'None').
-          computer -- a 'Computer' instance for computing the field value based
-            on the values of other fields of the same record.  See below for
-            more details about computed fields.
-          null_display -- display value (string) to use for the unselected
-            state of an enumeration field (null field value).  Null value is
-            not part of the enumeration, but if the field is not 'not_null', it
-            is a valid field value, but as it is not within the enumeration,
-            'display' may not be used.
-          inline_display -- name of the codebook display column in the current
-            table (string).  The 'display' column refers to a column in the
-            codebook table.  Retrieving codebook values from the codebook table
-            when 'prefer_display' is true would cause nested database queries
-            for each row in the list.  To optimize such inefficiency, it is
-            possible to specify the name of the display column in the current
-            table (where the current codebook field is used).  The application
-            developer is responsible to include the display column in the
-            underlying database view (typically by joining it with the codebook
-            table).  The inline_display column doesn't need to be explicitly
-            defined in 'fields' specification -- it is appended automatically if
-            not present.
-          inline_referer -- name of the codebook referer column in the current
-            table (string).  The 'referer' specification in the codebook's
-            'ViewSpec' refers to a column in the codebook table.  Retrieving
-            referer values from the codebook table would cause nested database
-            queries for each row in the list in cases, where the referer column
-            is not the same column as the 'value_column'.  To optimize such
-            inefficiency, it is possible to specify the name of the referer
-            column in the current table (where the current codebook field is
-            used).  The application developer is responsible to include the
-            referer column in the underlying database view (typically by
-            joining it with the codebook table).
-          formatter -- a function used to format the field value for
-            presentation purposes.  The function will get the current field
-            inner value as argument and must return a basestring.  The
-            formatter function actually replaces field type's export method.
-            It is applied by the method 'PresentedRow.format()' so it should be
-            used for all read-only occurences of the field in the user
-            interface.  Editable fields, on the other hand, work with the
-            internally exported value, not the formatted one.
-          line_separator -- line separator in single line field value
-            presentation.  The method 'PresentedRow.format()' will concatenate
-            multiline values into a single line using this string.  If
-            'formatter' is defined, 'line_separator' is applied to its result
-            if needed.
-          codebook -- name (string) of the specification which acts as a
-            codebook for this field.  This argument has two effects.  It is
-            used as the default value of 'enumerator' (if 'enumerator is not
-            set explicitly) and it determines the name of the specification
-            used for codebook form invocation for 'SelectionType.CODEBOOK'.
-            Specifying 'codebook' causes 'selection_type' to default to
-            'SelectionType.CODEBOOK'.  From the other perspective
-            'SelectionType.CODEBOOK' requires 'codebook' to be defined.
-          enumerator -- determines the field'd data type enumerator.  You can
-            pass a 'pytis.data.Enumerator' instance directly, a string
-            specification name, which will be automatically converted to the
-            corresponding 'pytis.data.DataEnumerator' instance,
-            'pytis.data.DataFactory' instance (also converted to
-            'pytis.data.DataEnumerator'), a list or tuple which will be
-            converted to a 'pytis.data.FixedEnumerator' instance or a class
-            derived from 'Enumeration'.  When an 'Enumeration' class is used,
-            it will be converted to a 'pytis.data.FixedEnumerator' instance and
-            other attributes, such as 'display', 'prefer_display' etc. of this
-            field will be influenced as described in the 'Enumeration' class
-            docstring.  If None, the enumerator will default to the value of
-            'codebook'.
-          display -- overrides the same 'CodebookSpec' option for this
-            particular field.  If not defined, the value defaults to the value
-            defined by the related codebook.
-          prefer_display -- overrides the same 'CodebookSpec' option for this
-            particular field.  If not defined, the value defaults to the value
-            defined by the related codebook.
-          display_size -- overrides the same 'CodebookSpec' option for this
-            particular field.  If not defined, the value defaults to the value
-            defined by the related codebook.
-          allow_codebook_insert -- true value enables a button for codebook new
-            record insertion.  This button is displayed next to the codebook
-            field.
+            A value of None means that the default type determined from the
+            underlying data object is used (or 'pytis.data.String' for virtual
+            fields not present in the data object). If a class is passed, an
+            instance of that class is created automatically and the system
+            supplies all arguments it can determine. If an instance is passed,
+            it is used as-is, even if the system would normally construct it
+            with different arguments. In all cases, the specified type must be
+            compatible with the type determined by the underlying data object.
+            If None or a class is specified, individual constructor arguments
+            may be passed as additional keyword arguments to 'Field' and they
+            take precedence over values determined by the system. The
+            'codebook' and 'enumerator' arguments determine the enumerator of
+            the constructed type.
+
+          width -- field width in characters (integer). If not specified, the
+            default width is determined automatically. Some field types may
+            interpret this differently (e.g. as number of columns).
+
+          height -- field height in characters (integer). Some field types may
+            interpret this differently (e.g. as number of rows).
+
+          column_width -- table column width in characters (integer). Defaults
+            to 'width' if not specified.
+
+          disable_column -- if True, the field cannot be displayed as a table
+            column. Such fields do not appear in column selection and their
+            presence in default columns ('ViewSpec.columns') is reported as an
+            error.
+
+          fixed -- if True, automatic scaling of column width when the table
+            size changes is disabled. By default, column widths are adjusted
+            so that available space is evenly distributed. Fixed columns keep
+            their previous widths.
+
+          editable -- one of the 'Editable' constants or a 'Computer' instance.
+            Constants define static editability; a computer may compute it
+            dynamically based on other field values and must return True if the
+            field is editable. The default is 'Editable.ALWAYS'.
+
+          visible -- boolean or a 'Computer' instance computing visibility
+            dynamically. Returning False excludes the field from all forms
+            (tables and layouts). For table columns, visibility is not computed
+            per row; the computer is called once with an empty initialized
+            'PresentedRow' instance. Currently implemented only in web forms.
+
+          compact -- if True, the field label is displayed above the field
+            instead of on the left, allowing the field to span the full width
+            of its group.
+
+          nocopy -- if True, the field value is omitted when copying a record
+            (creating a new record as a copy of an existing one). Key columns
+            and computed fields depending on key columns are omitted
+            automatically.
+
+          default -- default value or a function computing the default value.
+            Used when initializing a new record. If 'computer' is defined, it
+            takes precedence over the default. A callable is invoked with no
+            arguments and its return value is used. The value must be
+            compatible with the field's data type. If not defined, the default
+            is determined by the data type (usually None).
+
+          computer -- a 'Computer' instance computing the field value from
+            other fields of the same record.  The computation is only performed
+            when necessary (if the value is not available from the data source
+            or if one of this field’s dependencies changes).  Dependencies
+            between computed fields may be transitive, but the dependency graph
+            must be acyclic.
+
+          null_display -- display value (string) used for the unselected state
+            of an enumeration field.  Enumerations don't define null values,
+            but if the field is nullable, it will contain an item represinting
+            the null value.  This will be its label.
+
+          inline_display -- name of the codebook display column available in
+            the current table. If 'prefer_display' is true, this prevents
+            nested database queries by using already joined data instead of
+            querying the codebook table for each row.  The application
+            developer must ensure that this column is present in the underlying
+            database view (typically via a join with the codebook table). The
+            inline_display column does not need to be explicitly defined in
+            'fields'; it is appended automatically if not present.
+
+          inline_referer -- name of the codebook referer column available in
+            the current table. When the referer is different from the value
+            column, this avoids nested database queries by using already joined
+            data instead of querying the codebook table. The application
+            developer must ensure that this column is present in the underlying
+            database view (typically via a join with the codebook table).
+
+          formatter -- function used to format the field value for presentation.
+            The function receives the field's internal value and must return a
+            basestring. It replaces the field type's export method and is applied
+            by 'PresentedRow.format()', i.e. for all read-only presentations of
+            the field in the user interface. Editable fields always work with the
+            internally exported (unformatted) value.
+
+          line_separator -- string used to join multiline values into a single
+            line for presentation. 'PresentedRow.format()' concatenates lines
+            using this separator. If 'formatter' is defined, the separator is
+            applied to its result when needed.
+
+          codebook -- name (string) of the specification acting as a codebook for
+            this field. It is used as the default value of 'enumerator' (if not
+            set explicitly) and determines the specification used for codebook
+            form invocation when 'selection_type' is 'SelectionType.CODEBOOK'.
+            Setting 'codebook' causes 'selection_type' to default to
+            'SelectionType.CODEBOOK'; conversely, 'SelectionType.CODEBOOK'
+            requires 'codebook' to be defined.
+
+          enumerator -- determines the field's data enumerator. It may be an
+            instance of 'pytis.data.Enumerator', a specification name (converted
+            to 'pytis.data.DataEnumerator'), a 'pytis.data.DataFactory' instance,
+            a list or tuple (converted to 'pytis.data.FixedEnumerator'), or a
+            class derived from 'Enumeration'. When an 'Enumeration' class is
+            used, it is converted to 'FixedEnumerator' and may also influence
+            other field attributes (such as 'display', 'prefer_display', etc.)
+            as described in the class documentation. If None, the enumerator
+            defaults to the value of 'codebook'.
+
+          display -- overrides the corresponding 'CodebookSpec' option for this
+            field. If not defined, the value from the related codebook is used.
+
+          prefer_display -- overrides the corresponding 'CodebookSpec' option
+            for this field. If not defined, the value from the related codebook
+            is used.
+
+          display_size -- overrides the corresponding 'CodebookSpec' option for
+            this field. If not defined, the value from the related codebook is
+            used.
+
+          allow_codebook_insert -- if True, enables a button for inserting new
+            records into the codebook. The button is displayed next to the
+            codebook field.
+
           codebook_insert_spec -- name of the specification to use for codebook
-            insertion when 'allow_codebook_insert' is true.  If none, the value
+            insertion when 'allow_codebook_insert' is True. If None, the value
             defined by 'codebook' is used.
-          codebook_insert_prefill -- function returning a dictionary of values
-            to prefill into a new codebook row when the new codebook record is
-            created in the context of the current field.  The function will get
-            a PresentedRow instance as an argument representing the current
-            record.  Only relevant when 'allow_codebook_insert' is true.
-          codebook_update_prefill -- function returning a dictionary of values
-            to set on codebook row editation when a codebook record is updated
-            from within an active value of a ListField.  The function will get
-            a PresentedRow instance as an argument representing the current
-            record.  If the codebook specification defines 'on_edit_record',
-            the result is passed to 'on_edit_record' function as a keyword
-            argument 'set_values'.  Otherwise it is directly prefilled within
-            the edit form.
-          runtime_filter -- provider of enumeration runtime filter as a
-            'Computer' instance.  The computer function computes the filtering
-            condition based on the current row data.  This condition is used to
-            filter out enumerator data for codebook fields as well as available
-            completions when autocompletion is enabled.  This is mostly useful
-            for modification of available codebook values based on the current
-            values of other fields within the form.  The returned value is a
-            'pytis.data.Operator' instance when the enumerator is a
-            'pytis.data.DataEnumerator' (enumeration values are in a database
-            table) or a function otherwise (typically for static enumerations
-            using 'pytis.data.FixedEnumerator').  None may be returned in both
-            cases when no filtering is to be done.  The function in the later
-            case must accept the enumeration value as an argument and return
-            True when the value is valid or False if the value is to be
-            filtered out.
-          runtime_arguments -- provider of codebook table function arguments as a
-            'Computer' instance.  This is similar to 'runtime_filter' argument,
-            except that the computer function returns dictionary of table
-            function arguments.  'runtime_arguments' may be provided only when the
-            field is a codebook field and the codebook is actually a row
-            returning function.  Otherwise 'runtime_arguments' must be 'None'.
-          completer -- enumerator used for automatic completion.  The available
-            completions are taken from an enumerator object.  If the field has
-            an enumerator (defined by 'enumerator' or 'codebook'), it will be
-            used for completions automatically (unless autocompletion is
-            disabled by the relevant 'CodebookSpec').  This argument, however,
-            makes it possible to specify a completer even for fields, which
-            don't have an enumerator (the validation constraints imposed by
-            enumerator are not desirable).  The value of this argument may be
-            an enumerator instance directly (e.g. 'pytis.data.FixedEnumerator')
-            or a name of the specification used to create a
-            'pytis.data.DataEnumerator'.  Also a sequence (list or tuple) is
-            accepted and converted to a 'FixedEnumerator' instance.
-          selection_type -- one of 'SelectionType' constants defining the type
-            of user interface element used to present the related enumeration.
-            Only relevant for fields with an enumerator (specified either by
-            'codebook' or 'enumerator').  If 'codebook' is not None,
-            selection_type defaults to 'SelectionType.CODEBOOK'.  Also if
-            selection_type is set to 'SelectionType.CODEBOOK', 'codebook' must
-            be defined.
-          orientation -- field orientation as one of 'Orientation' class
-            constants; relevant only for certain field types, such as radio
+
+          codebook_insert_prefill -- function returning a dictionary of values to
+            prefill a new codebook record when it is created from the context of
+            this field. The function receives a 'PresentedRow' instance
+            representing the current record. Only relevant when
+            'allow_codebook_insert' is True.
+
+          codebook_update_prefill -- function returning a dictionary of values to
+            set when a codebook record is edited from an active value of a
+            ListField. The function receives a 'PresentedRow' instance
+            representing the current record. If the codebook specification
+            defines 'on_edit_record', the result is passed to it as the
+            'set_values' keyword argument; otherwise, the values are directly
+            prefilled in the edit form.
+
+          runtime_filter -- provider of a runtime enumeration filter as a
+            'Computer' instance. The computer computes a filtering condition
+            based on the current row data. The condition is used to filter
+            enumerator values for codebook fields and available completions
+            when autocompletion is enabled. It is typically used to restrict
+            available codebook values based on other field values in the form.
+            The function must return a 'pytis.data.Operator' when the enumerator
+            is a 'pytis.data.DataEnumerator', or a predicate function otherwise.
+            In both cases, None may be returned to indicate that no filtering
+            should be applied.
+
+          runtime_arguments -- provider of arguments for a codebook table
+            function as a 'Computer' instance. Similar to 'runtime_filter', but
+            the computer returns a dictionary of table function arguments. This
+            may be used only when the field is a codebook field and the
+            codebook is implemented as a row-returning function; otherwise it
+            must be None.
+
+          completer -- enumerator used for automatic completion. If the field
+            has an enumerator (defined by 'enumerator' or 'codebook'), it is
+            used automatically unless disabled by the related 'CodebookSpec'.
+            This option allows a completer to be specified even for fields
+            without an enumerator, where validation constraints are not
+            desirable. The value may be an enumerator instance, a specification
+            name, or a list or tuple converted to 'FixedEnumerator'.
+
+          selection_type -- one of the 'SelectionType' constants defining the
+            user interface control used to present the enumeration. Only
+            relevant for fields with an enumerator (defined by 'codebook' or
+            'enumerator'). If 'codebook' is not None, this defaults to
+            'SelectionType.CODEBOOK'. If set to 'SelectionType.CODEBOOK',
+            'codebook' must be defined.
+
+          orientation -- field orientation as one of the 'Orientation' class
+            constants. Relevant only for certain field types, such as radio
             buttons, which may be arranged vertically or horizontally.
-          post_process -- funkce upravující vkládaný text během psaní.  Jedná
-            se o funkci jednoho argumentu, kterým je řetězcová hodnota políčka.
-            Vrácená hodnota je potom nastavena jako nová hodnota políčka.  Tato
-            funkce je volána při každé změně hodnoty textového políčka.
-            Příkladem postprocessingu může být změna velikosti písmen, pokud
-            chceme, aby textové políčko mohlo obsahovat jen velká písmena.
-            Hodnotou tohoto argumentu může být také některá z konstant třídy
-            'PostProcess', čímž je ušetřeno psaní některých často používaných
-            funkcí.
-          filter -- one of 'TextFilter' class constants for filtering the user
+
+          post_process -- function applied to the text value while the user is
+            typing. It receives the current string value and returns the value
+            to be stored. The function is called on every change of a text
+            field. Typical uses include automatic case conversion or other
+            input normalization. The value may also be one of the constants of
+            the 'PostProcess' class, representing commonly used functions.
+
+          filter -- one of the 'TextFilter' class constants used to filter user
             input.
-          filter_list -- sequence of included/excluded characters for 'filter'
-            using 'TextFilter.INCLUDE_LIST' or 'TextFilter.EXCLUDE_LIST'.
+
+          filter_list -- sequence of included or excluded characters for
+            'filter', used with 'TextFilter.INCLUDE_LIST' or
+            'TextFilter.EXCLUDE_LIST'.
+
           style -- visual field appearance as a 'Style' instance or a function
-            of one argument ('PresentedRow' instance) returning the 'Style'
-            instance dynamically.  If not None, it overrides the row level
-            style defined by 'row_style' argument of 'ViewSpec'.  Useful for
-            highlighting cells in a table view depending on their values (such
-            as negative numbers in red).
-          link -- specification of a link, or a series of links to other forms
-            related to the current field value.  The value is a 'Link' instance
-            or their sequence.  The links will be presented as separate menu
-            items in the context menu of a record in the GUI.  The web forms
-            currently only support one link per field and present it as a
-            hypertext link on field's value.  The links will open the related
-            form and locate the record corresponding to the value of the
-            referring field.
-          filename -- provides the file name for downloading/saving the field
-            value into a file.  The value of this argument may be a function of
-            one argument (a PresentedRow instance representing the current row)
-            or a string identifier of the field, which contains the filename.
-            This is relevant for binary fields, but may be also used for string
-            fields, where it forces the user interface to provide controls for
-            downloading/saving the content of the field as a file.
-          inline -- set to True to force downloadable fields (binary or with
-            'filename'), to be displayed inline.  Otherwise they are downloaded
+            of one argument (a 'PresentedRow' instance) returning a 'Style'
+            dynamically. If not None, it overrides the row-level style defined
+            by 'ViewSpec.row_style'. Useful for conditional highlighting of
+            cells (e.g. negative numbers in red).
+
+          link -- specification of one or more links to other forms related to
+            the current field value. The value is a 'Link' instance or a
+            sequence of them. Links are presented as menu items in the GUI
+            context menu; web forms currently support only one link per field
+            and present it as a hyperlink on the field value. The links open
+            the related form and locate the record corresponding to the field
+            value.
+
+          filename -- provides the filename for downloading or saving the field
+            value. The value may be a function of one argument (a
+            'PresentedRow' instance representing the current row) or the name
+            of another field containing the filename. Relevant primarily for
+            binary fields, but may also be used for string fields to force the
+            user interface to offer download/save controls.
+
+          inline -- if True, forces downloadable fields (binary or with
+            'filename') to be displayed inline. Otherwise they are downloaded
             and saved.
-          filename_extensions -- sequence of allowed filename extensions to be
-            used for filtering a file open dialog contents when selecting a
-            file to be used as field value.  Relevant for binary fields, but
-            may be also used for string fields with 'filename' set (see above).
-          text_format -- One of the available 'TextFormat' constants defining
-            the format of the field text.  Only relevant for textual fields (of
-            type 'pytis.data.String').  The default format 'TextFormat.PLAIN'
-            denotes that the field contains just ordinary text.  The format
-            'TextFormat.LCG' may be used to indicate that the field contains a
-            text with special formatting (see 'TextFormat.LCG' documentation
-            for more information about the format) and the user interface
-            should respect this (field editation may offer some extended
-            controls, the field text is processed by LCG before displayed).
-            Other formats are currently unsupported.
-          attachment_storage -- instance of 'AttachmentStorage' subclass, None
-            or a function of row (a 'PresentedRow' instance representing the
-            current row), returning one of those.  Attachments are used with
-            rich text fields to represent external resources used within the
-            text, such as images or other media files.  This argument is
-            currently supported by wx forms for fields with
+
+          filename_extensions -- sequence of allowed filename extensions used
+            to filter the file selection dialog when choosing a file as a
+            field value. Relevant for binary fields, but may also be used for
+            string fields with 'filename' set.
+
+          text_format -- one of the 'TextFormat' constants defining the format
+            of the field text. Relevant only for textual fields of type
+            'pytis.data.String'. The default 'TextFormat.PLAIN' denotes ordinary
+            text. 'TextFormat.LCG' indicates specially formatted text processed
+            by LCG before display, and the user interface may provide extended
+            editing controls. Other formats are currently unsupported.
+
+          attachment_storage -- instance of an 'AttachmentStorage' subclass,
+            None, or a function of one argument (a 'PresentedRow' instance)
+            returning one of those. Attachments are used with rich text fields
+            to represent external resources such as images or media files.
+            Currently supported by wx forms for fields with
             text_format='TextFormat.LCG'.
-          printable -- iff True, the user interface should allow the value of
-            this field to be printed as a separate document.  This is most
-            often useful with fields containing structured text content, which
-            may be directly exported into PDF.
-          slider -- set to True to add a slider control to a numeric field.
-            The slider can be dragged by mouse (or keyboard) to set the value
-            instead of typing it.  Use 'minimum' and 'maximum' type constructor
-            arguments (see 'pytis.data.Number') to set the slider range.  The
-            default range when 'minimum' and 'maximum' are unset is 0..100.
-          crypto_name -- if not 'None' then the field column values are stored
-            encrypted in the database and the argument value is a string
-            identifier of the protection area.  There can be defined several
-            different protection areas identified by corresponding crypto names
-            in the application, protected by different passwords.  Not all data
-            types support encryption, it is an error to set encryption here for
-            field types which don't support it.
-          check -- 'Computer' instance to verify the integrity of the whole
-            record.  May also be specified as a function in which case it will
-            be automatically turned into a 'Computer' instance using
-            'computer()'.  In contrast to "validation" which only verifies
-            whether a single value matches its data type and constraints
-            (values of other fields are not available during validation), the
-            check function verifies mutual compatibility of all form values and
-            is called only after successful validation.  The check function
-            returns None in case of success or an error message as a string in
-            case of failure.
-          encrypt_empty -- if True (default) then encrypt also None values (and
-            empty values when they are represented by None values).  Otherwise
-            store empty values as NULLs in the database.  Empty values should
-            be commonly encrypted in the databases so that there is no
-            information about secret data.  But when you want to allow
-            unauthorized users to work with encrypted data in a limited way,
-            e.g. to insert new records with empty secret values, then setting
-            this argument to False is useful.
-          **kwargs -- all the remaining keyword arguments are passed to the
-            constructor of field's data type instance.  These arguments
-            override the values of arguments, that the system would normally
-            use for data type construction, so you can override certain data
-            type properties this way.  It is preferred to overriding the type
-            completely by passing a 'pytis.data.Type' instance as the 'type'
-            argument.  See also 'type' argument's documentation.
 
-        Je-li specifikován argument 'computer' a jeho hodnota není 'None', pak
-        hodnota sloupce, pokud ji nelze převzít z datového objektu, je
-        počítána.  Takový sloupec může být plně \"virtuální\", tj. není
-        přítomen v datovém objektu a jeho hodnota je vždy počítána, nebo může
-        být v datovém objektu, avšak hodnota je dopočítávána v průběhu editace
-        (i nově vytvořeného) záznamu.  Použití plně virtuálních sloupců není
-        doporučováno z důvodu výkonnostních problémů v rozsáhlejších
-        tabulkových náhledech.  U plně virtuálních políček je také nutné určit
-        explicitně datový typ pomocí specifikátoru 'type', protože není možné
-        jej převzít automaticky z datového objektu.  Jedinou výjimkou jsou
-        dopočítávaná virtuální políčka typu 'CbComputer', kde je typ převzat z
-        datového objektu enumerátoru.
+          printable -- if True, the user interface allows the field value to be
+            printed as a separate document. Most useful for fields containing
+            structured text that can be directly exported to PDF.
 
-        Dopočítávání pomocí 'computer' nelze zaměňovat s výpočtem výchozí
-        hodnoty (specifikátor 'default').  Výpočet výchozí hodnoty je proveden
-        pouze jednou při vytváření nového řádku.  Funkce pro výpočet výchozí
-        hodnoty nezná hodnotu ostatních políček a v průběhu editace se již
-        neuplatňuje.  Computer naproti tomu přepočítává hodnotu políčka vždy,
-        když dojde ke změně hodnoty políčka, na kterém je závislý (viz
-        dokumentace třídy 'Computer').
+          slider -- if True, adds a slider control to a numeric field. The slider
+            allows setting the value interactively instead of typing it. Use
+            the 'minimum' and 'maximum' type constructor arguments to define
+            the slider range. If unset, the default range is 0..100.
 
-        Závislosti počítaných políček mohou být i tranzitivní (počítaná políčka
-        mohou záviset na jiných počítaných políčkách), ale graf závislostí musí
-        tvořit strom (nesmí vzniknout cyklus).
+          crypto_name -- if not None, the field values are stored encrypted in
+            the database and the argument specifies the name of the protection
+            area. Multiple protection areas with different passwords may be
+            defined in the application. Not all data types support encryption;
+            setting this option for unsupported types is an error.
+
+          check -- 'Computer' instance (or a function automatically converted
+            to one) used to verify the integrity of the whole record. Unlike
+            validation, which checks only a single value, this function
+            verifies mutual consistency of all form values and is called only
+            after successful validation. It must return None on success or an
+            error message string on failure.
+
+          encrypt_empty -- if True (default), None and empty values are also
+            encrypted. If False, empty values are stored as NULL in the
+            database. Encrypting empty values hides the presence of secret
+            data, but setting this to False may be useful when allowing
+            unauthorized users to insert records with empty protected fields.
+
+          **kwargs -- remaining keyword arguments are passed to the field data
+            type constructor, overriding automatically determined values.  It
+            is preferred to overriding the type completely by passing a
+            'pytis.data.Type' instance as the 'type' argument.
 
         """
         for key, value in (('id', id), ('label', label), ('column_label', column_label)):
@@ -4646,7 +4579,7 @@ class HttpAttachmentStorage(AttachmentStorage):
             response.close()
         if not response.info().getheader('Content-Type') == 'application/json':
             log(OPERATIONAL, "Invalid server response:", response_text)
-            # TODO: Ošetřit "Přístup odepřen"
+            # TODO: Handle "Access denied"
             raise self.StorageError('Invalid server response')
         return json.loads(response_text)
 
@@ -5021,7 +4954,7 @@ class StatusField(object):
             be updated periodically.  Such fields may be updated imperatively
             by calling 'app.statusbar.field.id.update()'.
           refresh_interval -- minimal delay between two successive calls of the
-            'refresh' function in miliseconds.  If None, refresh is called in
+            'refresh' function in milliseconds.  If None, refresh is called in
             repeatedly during UI refreshes.  If zero, refresh will be called
             just once.
           width -- field width as a number of characters.  Add 4 characters if
@@ -5639,8 +5572,8 @@ class MenuItem(object):
           title -- menu item title, non-empty string
           command -- defines the command invoked when this menu item is
             activated as a 'Command' instance.
-          state -- funkce (volaná bez argumentů), která vrací True/False podle
-            toho, zda je stav této položky 'zapnuto', nebo 'vypnuto'.
+          state -- function (called without arguments) that returns True/False
+            depending on whether this item is in the 'on' or 'off' state.
           help -- string describing the menu item's action in more detail,
              but still not longer than one line.  May be displayed for example
              in status line or as a tooltip.
@@ -5846,36 +5779,35 @@ class _SpecificationMetaclass(type):
 
 
 class Specification(with_metaclass(_SpecificationMetaclass, SpecificationBase)):
-    """Souhrnná specifikační třída sestavující specifikace automaticky.
+    """Aggregate specification class that assembles specifications automatically.
 
-    Tato třída zjednodušuje vytváření specifikací tím, že definuje vlastní
-    pravidla pro sestavování jak prezentační tak datové specifikace pouze na
-    základě jediné specifikace políček a některých dalších vlastností.
+    This class simplifies specification creation by defining its own rules for
+    assembling both the presentation and data specification based solely on a
+    single field specification and a few other attributes.
 
-    Použití: Specifikaci vytvoříme odvozením specifikační třídy náhledu od této
-    třídy a předefinováním jejich veřejných atributů.  To ulehčuje tvorbu
-    variant náhledů s využitím dědičnosti.
+    Usage: Create a specification by deriving the view specification class from
+    this class and overriding its public attributes. This makes it easier to
+    create view variants using inheritance.
 
-    Význam atributů: Některé atrubuty jsou definovány přímo touto třídou --
-    jejich význam je zdokumentován v rámci jejich dokumentačních řetězců.  Dále
-    může třída definovat také atributy, které odpovídají argumentům
-    konstruktoru třídy 'ViewSpec'.  Výchozí hodnotou argumentu 'help' pro
-    'ViewSpec' je dokumentační řetězec specifikační třídy.
+    Meaning of attributes: Some attributes are defined directly by this class
+    and their meaning is documented in their docstrings. The class may also
+    define attributes corresponding to the constructor arguments of 'ViewSpec'.
+    The default value of the 'help' argument for 'ViewSpec' is the docstring of
+    the specification class.
 
-    Set 'public' attribute to True in specifications intended to serve for
-    making forms or running procedures in the user interface.
+    Set the 'public' attribute to True in specifications intended to be used
+    for opening forms or running procedures in the user interface.
 
     """
     public = False
     """Flag indicating whether the specification may be used in interactive calls.
 
-    Specifications can be either public or private.  Public specifications can
-    be used by forms and procedures run by the user.  Private specifications
+    Specifications can be either public or private. Public specifications can
+    be used by forms and procedures run by the user. Private specifications
     are only available to internal procedures.
 
-    Each specification should explicitly set this attribute in order to make
-    the status of the specification clear.  Set it to True iff the
-    specification is public.
+    Each specification should explicitly set this attribute to make the status
+    of the specification clear. Set it to True iff the specification is public.
 
     Note: This attribute is currently ignored in web applications based on
     Wiking.
@@ -5888,106 +5820,126 @@ class Specification(with_metaclass(_SpecificationMetaclass, SpecificationBase)):
     It must be a subclass of 'pytis.sqlalchemy.SQLObject'.
 
     For backward compatibility the value of this attribute may also be a
-    string, the name of the database object.  In such a case there is no
-    database specification available and all the fields must be defined
-    explicitly and database introspection is used to define some of their
-    attributes."""
+    string, the name of the database object. In such a case there is no
+    database specification available and all fields must be defined explicitly,
+    while database introspection is used to define some of their attributes.
+
+    """
 
     key = None
-    """Data object key column identifier as a string or their sequence.
+    """Data object key column identifier as a string or a sequence of strings.
 
-    Sequence may be used if the data object has a multicolumn key.  In any case all named columns
-    must exist in the 'fields' specification.  In 'key' is not defined, the first column form
-    'fields' is used."""
+    A sequence may be used if the data object has a multi-column key. In any
+    case, all named columns must exist in the 'fields' specification. If 'key'
+    is not defined, the first column from 'fields' is used.
+
+    """
 
     fields = ()
     """Field specification as a sequence of 'Field' instances.
 
     Default fields are created from the underlying database specification given
-    in 'table' attribute.  You can specify here additional (virtual) fields and
-    add or override attributes of fields made from database specifications.
-    All the fields and attributes are merged together, with fields specified
-    here taking precedence.
+    by the 'table' attribute. You can specify here additional (virtual) fields
+    and add or override attributes of fields created from the database
+    specification. All fields and attributes are merged together, with fields
+    specified here taking precedence.
 
-    May be also defined as a method of the same name.
+    May also be defined as a method of the same name.
 
     """
 
     arguments = None
     """Specification of all table arguments as a sequence of 'Field' instances.
 
-    Useful only when the table is actually a row returning function, otherwise
-    it must be 'None'.
+    Useful only when the table is actually a row-returning function; otherwise
+    it must be None.
 
-    May be also defined as a method of the same name."""
+    May also be defined as a method of the same name.
+
+    """
 
     argument_provider = None
     """Function generating database table function arguments.
 
-    It is a function of a single argument returning a dictionary of database
-    function argument names (strings) as keys and 'pytis.data.Value' instances
-    as corresponding database function argument values.  If it is 'None', no
-    arguments are provided.  If it returns 'None', the select should be
-    cancelled.  The function argument is the current dictionary of arguments,
-    it is useful e.g. when updating previously supplied arguments.  This
-    specification makes sense only for database table functions, it should be
-    'None' for standard tables and views."""
+    It is a function of a single argument returning a dictionary mapping
+    database function argument names (strings) to 'pytis.data.Value' instances.
+    If it is None, no arguments are provided. If it returns None, the select
+    should be cancelled. The function argument is the current dictionary of
+    arguments; this is useful, e.g. when updating previously supplied
+    arguments.
+
+    This specification makes sense only for database table functions; it should
+    be None for standard tables and views.
+
+    """
 
     access_rights = None
     """Access rights for the view as an 'AccessRights' instance.
 
-    May be also defined as a method of the same name."""
+    May also be defined as a method of the same name.
+
+    """
 
     crypto_names = ()
     """Sequence of crypto names (strings) required by the table.
 
-    Field crypto names are added to this sequence automatically.  Explicitly
+    Field crypto names are added to this sequence automatically. Explicitly
     setting other crypto names here is useful when the underlying database
     table is actually a view or a function performing decryption (and possibly
     also encryption) transparently, assuming the passwords for given crypto
-    names are already given.
+    names are already provided.
+
     """
 
     condition = None
     """A hardcoded condition filtering data of the underlying data object.
 
-    This condition is used permanently and the user is not able to switch it
-    off or know that it exists.  It has the same effect as implementing the
-    condition in the underlying data source.  The value is a
-    'pytis.data.Operator' instance."""
+    This condition is applied permanently and the user cannot switch it off or
+    even know that it exists. It has the same effect as implementing the
+    condition in the underlying data source. The value is a
+    'pytis.data.Operator' instance.
+
+    """
 
     distinct_on = None
-    """Sequence of column names to filter distinct rows of the underlying data object."""
+    """Sequence of column names used to filter distinct rows of the underlying data object."""
 
     data_cls = pytis.data.DBDataDefault
-    """Datová třída použitá pro vytvoření datového objektu."""
+    """Data class used to create the data object."""
 
     connection = None
     """Name of the database connection to use.
 
-    If None, the default database connection is used.  If not None, the value is a string
-    identifier of connection options defined within 'dbconnections' configuration option.
+    If None, the default database connection is used. Otherwise the value is a
+    string identifier of connection options defined in the 'dbconnections'
+    configuration option.
 
     """
 
     bindings = {}
     """Specification of bindings for use in dual forms.
 
-    A dictionary, where the key is the name of the side form specification and the value is a
-    'BindingSpec' instance which determines how the current view interconnects with given side form
-    in a dual form.
+    A dictionary where the key is the name of the side form specification and
+    the value is a 'BindingSpec' instance describing how the current view is
+    connected to the given side form in a dual form.
 
-    May be also defined as a method of the same name."""
+    May also be defined as a method of the same name.
+
+    """
 
     cb = CodebookSpec()
     """'CodebookSpec' instance defining properties of the view when used as a codebook.
 
-    May be also defined as a method of the same name."""
+    May also be defined as a method of the same name.
+
+    """
 
     sorting = None
     """Default sorting specification.
 
-    May be also defined as a method of the same name."""
+    May also be defined as a method of the same name.
+
+    """
 
     prints = None
     """A sequence of print specifications as pairs (TITLE, NAME)."""
@@ -5995,43 +5947,45 @@ class Specification(with_metaclass(_SpecificationMetaclass, SpecificationBase)):
     folding = None
     """Initial folding state as a 'Folding' instance.
 
-    'None' means use the standard folding.
+    None means use the standard folding.
 
     Obviously useful only in foldable forms.
 
     """
 
     ro_select = True
-    """Iff true then database select operations are set read only if possible.
+    """If true, database select operations are set to read-only if possible.
 
-    This is useful to lessen burden on the database server and avoid various
-    problems.  But it doesn't work when the underlying database object performs
-    read-write operations, e.g. creates temporary tables for its operation; in
-    such a case this property must be set to false.
+    This reduces load on the database server and avoids various problems. It
+    does not work if the underlying database object performs write operations,
+    e.g. creates temporary tables; in such cases this property must be set to
+    False.
 
     """
+
     data = None
     """MemData object initial data rows.
 
     May contain initial data for a MemData data object as a sequence of
-    'pytis.data.Row' instances or a sequence of tuples of internal python
-    values.  In the later case the values appear in the order of 'columns' and
+    'pytis.data.Row' instances or a sequence of tuples of internal Python
+    values. In the latter case the values appear in the order of 'columns' and
     must match their types ('TypeError' is raised if not).
 
     """
+
     _specifications_by_db_spec_name = {}
     _access_rights = None
 
     class _Fields(list):
-        """Wrapper around field list.
+        """Wrapper around a field list.
 
-        It behaves as normal field list with additional methods for retrieving,
-        setting, removing and modifying the fields in the list.
+        Behaves like a normal field list but adds helper methods for
+        retrieving, setting, removing and modifying fields.
 
         """
 
         def get(self, id_):
-            """Return field with id 'id_' from the field list.
+            """Return the field with id 'id_' from the field list.
 
             Arguments:
 
@@ -6046,12 +6000,12 @@ class Specification(with_metaclass(_SpecificationMetaclass, SpecificationBase)):
             raise KeyError(id_)
 
         def set(self, id_, field):
-            """Replace field with id 'id_' by 'field' in the field list.
+            """Replace the field with id 'id_' by 'field' in the field list.
 
             Arguments:
 
               id_ -- id of the replaced field; basestring
-              field -- new field to be put at the given place; 'Field' instance
+              field -- new field to be put at the given position; 'Field' instance
 
             If no such field exists, raise 'KeyError'.
 
@@ -6073,8 +6027,7 @@ class Specification(with_metaclass(_SpecificationMetaclass, SpecificationBase)):
             Arguments:
 
               field_id -- id of the field to modify; basestring
-              properties -- dictionary of property names (strings) as keys and
-                their values as values
+              properties -- dictionary mapping property names (strings) to their values
 
             If field_id is not found, raise 'KeyError'.
 
@@ -6086,10 +6039,8 @@ class Specification(with_metaclass(_SpecificationMetaclass, SpecificationBase)):
 
             Arguments:
 
-              field_ids -- sequence of ids (basestrings) of the fields to
-                modify
-              properties -- dictionary of property names (strings) as keys and
-                their values as values
+              field_ids -- sequence of field ids (basestrings) to modify
+              properties -- dictionary mapping property names (strings) to their values
 
             If any of the field_ids is not found, raise 'KeyError'.
 
@@ -6097,32 +6048,29 @@ class Specification(with_metaclass(_SpecificationMetaclass, SpecificationBase)):
             self._modify(field_ids, **properties)
 
         def modify_except(self, field_ids, **properties):
-            """Modify properties of all fields except of those with 'field_ids'.
+            """Modify properties of all fields except those with 'field_ids'.
 
             Arguments:
 
-              field_ids -- sequence of ids (basestrings) of the fields to
-                exclude from modification
-              properties -- dictionary of property names (strings) as keys and
-                their values as values
+              field_ids -- sequence of field ids (basestrings) to exclude from modification
+              properties -- dictionary mapping property names (strings) to their values
 
-            If you want to modify properties of all fields, use an empty
-            sequence as 'field_ids' argument.
+            If you want to modify properties of all fields, pass an empty
+            sequence as 'field_ids'.
 
             """
             field_ids_to_modify = set([f.id() for f in self]) - set(field_ids)
             self._modify(field_ids_to_modify, **properties)
 
         def set_property(self, property_, **settings):
-            """Set field 'property' of several fields to given values.
+            """Set the field property named 'property_' on several fields.
 
             Arguments:
 
               property_ -- name of the field property to set; basestring
-              settings -- dictionary with field ids (basestrings) as keys and
-                property values as values
+              settings -- dictionary mapping field ids (basestrings) to property values
 
-            If any of the field_ids is not found, raise 'KeyError'.
+            If any of the field ids is not found, raise 'KeyError'.
 
             """
             for id_, value in settings.items():
@@ -6133,10 +6081,9 @@ class Specification(with_metaclass(_SpecificationMetaclass, SpecificationBase)):
 
             Arguments:
 
-              field_ids -- sequence of field ids (basestrings) identifying the
-                fields to remove
+              field_ids -- sequence of field ids (basestrings) identifying fields to remove
 
-            If any of the field_ids is not found, raise 'KeyError'.
+            If any of the field ids is not found, raise 'KeyError'.
 
             """
             fields_to_remove = [self.get(id_) for id_ in field_ids]
@@ -6155,7 +6102,7 @@ class Specification(with_metaclass(_SpecificationMetaclass, SpecificationBase)):
           connection_data -- 'pytis.data.DBConnection' instance
 
         This is actually a public method, but pytis doesn't allow its name to
-        start with something else than underscore.
+        start with anything other than an underscore.
 
         """
         # Read in and check roles
@@ -6182,7 +6129,7 @@ class Specification(with_metaclass(_SpecificationMetaclass, SpecificationBase)):
                 columns = columns_string.split(' ')
             else:
                 # This trick sets default permissions without adding them to
-                # column specific permissions in AccessRights
+                # column-specific permissions in AccessRights
                 columns = ['__pytis_magic_column']
             shortname_rights = access_rights.get(shortname)
             if shortname_rights is None:
@@ -6252,7 +6199,7 @@ class Specification(with_metaclass(_SpecificationMetaclass, SpecificationBase)):
                     value = value()
                 self._view_spec_kwargs[attr] = value
         if isinstance(self.bindings, (tuple, list)):
-            # Only pass new style bindings to ViewSpec, old style bindings are accessed through the
+            # Only pass new style bindings to ViewSpec; old style bindings are accessed through the
             # 'binding_spec' resolver function.
             self._view_spec_kwargs['bindings'] = self.bindings
         else:
@@ -6509,7 +6456,7 @@ class Specification(with_metaclass(_SpecificationMetaclass, SpecificationBase)):
         return self._inherited_fields(self.__class__, **kwargs)
 
     def view_spec(self):
-        """Vrať prezentační specifikaci jako instanci 'ViewSpec'."""
+        """Return the presentation specification as a 'ViewSpec' instance."""
         try:
             spec = self._view_spec
         except AttributeError:
@@ -6519,7 +6466,7 @@ class Specification(with_metaclass(_SpecificationMetaclass, SpecificationBase)):
         return spec
 
     def data_spec(self):
-        """Vrať datovou specifikaci jako instanci datové třídy."""
+        """Return the data specification as an instance of the data class."""
         try:
             spec = self._data_spec
         except AttributeError:
@@ -6527,15 +6474,15 @@ class Specification(with_metaclass(_SpecificationMetaclass, SpecificationBase)):
         return spec
 
     def cb_spec(self):
-        """Vrať specifikaci číselníku jako instanci 'CodebookSpec'."""
+        """Return the codebook specification as a 'CodebookSpec' instance."""
         return self.cb
 
     def binding_spec(self):
-        """Vrať specifikaci navázání v duálním formuláři jako slovník."""
+        """Return the dual-form binding specification as a dictionary."""
         return self.bindings
 
     def print_spec(self):
-        """Vrať sekvenci specifikací tiskových náhledů."""
+        """Return a sequence of print view specifications."""
         prints = self.prints or ()
         if callable(prints):
             prints = prints()
@@ -6592,7 +6539,7 @@ class Specification(with_metaclass(_SpecificationMetaclass, SpecificationBase)):
     @classmethod
     def add_specification_by_db_spec_name(class_, db_spec_name, specification):
         if specification.cb is not None:
-            # Note, we can not store specification classes here
+            # Note, we cannot store specification classes here
             # because they may become obsolete after reloading the
             # resolver.  We are only interested in specification
             # names, so we store just the names.

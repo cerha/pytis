@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2025 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2026 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2018 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -16,12 +16,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Prvky uživatelského rozhraní související s vyhledáváním.
+"""User interface elements related to searching.
 
-Modul obsahuje podporu dialogů s funkcionalitou více či méně odpovídající
-základnímu vyhledávacímu dialogu.  Základem je společná třída 'Dialog', která
-je míněna jako abstraktní.  Z ní jsou pak odvozeny dialogové třídy pro
-konkrétní použití.
+The module provides support for dialogs with functionality more or less
+corresponding to a basic search dialog.  The core is the common base class
+'Dialog', which is intended to be abstract.  Concrete dialog classes for
+specific use cases are derived from it.
 
 """
 from __future__ import print_function
@@ -52,10 +52,10 @@ class SFSColumn(object):
 
         Arguments:
 
-          id -- datový identifikátor sloupce jako string
-          type -- datový typ sloupce jako instance třídy
+          id -- column data identifier as a string
+          type -- column data type as an instance of
             'pytis.data.types_.Type'
-          label -- jméno sloupce pro uživatele jako string
+          label -- column name presented to the user as a string
 
         """
         self._id = id
@@ -63,20 +63,20 @@ class SFSColumn(object):
         self._label = label
 
     def id(self):
-        """Vrať id zadané v konstruktoru."""
+        """Return the id given in the constructor."""
         return self._id
 
     def type(self):
-        """Vrať type zadaný v konstruktoru."""
+        """Return the type given in the constructor."""
         return self._type
 
     def label(self):
-        """Vrať label zadaný v konstruktoru."""
+        """Return the label given in the constructor."""
         return self._label
 
 
 class SFSDialog(GenericDialog):
-    """Common ancestor of all sorting/filtering/searching dialogs."""
+    """Common ancestor of all sorting, filtering, and searching dialogs."""
 
     _TITLE = None
     BUTTON_CLOSE = GenericDialog.Button(_("Close"), icon='cancel', value=None)
@@ -156,11 +156,11 @@ class SFSDialog(GenericDialog):
 
 
 class SortingDialog(SFSDialog):
-    """Dialog pro volbu parametrů řazení.
+    """Dialog for selecting sorting parameters.
 
-    Metoda 'run()' vrací specifikaci řazení, kterou používá formulář
-    `pytis.form.LookupForm'.  Je-li dialog opuštěn jiným způsobem než stiskem
-    tlačítka, je vráceno 'None'.
+    The 'run()' method returns a sorting specification used by
+    `pytis.form.LookupForm`.  If the dialog is closed in any way other than by
+    clicking a button, 'None' is returned.
 
     """
 
@@ -184,7 +184,7 @@ class SortingDialog(SFSDialog):
 
           parent -- wx parent of the dialog window
           columns -- a sequence of 'SFSColumn' instances
-          sorting -- current sorting specification in the form of the `sort'
+          sorting -- current sorting specification in the form of the 'sort'
             argument of 'pytis.data.Data.select()'
           direction -- default sorting direction, one of
             'pytis.data.ASCENDENT', 'pytis.data.DESCENDANT'
@@ -235,7 +235,7 @@ class SortingDialog(SFSDialog):
 
 
 class SFDialog(SFSDialog):
-    """Společný základ všech vyhledávacích a filtrovacích dialogů."""
+    """Common base class for all searching and filtering dialogs."""
 
     _OPERATORS = (pytis.data.EQ,
                   pytis.data.NE,
@@ -354,7 +354,7 @@ class SFDialog(SFSDialog):
     def _create_controls(self):
         choice, spin, label, field, button = self._create_choice, self._create_spin_ctrl, \
             self._create_label, self._create_text_ctrl, self._create_button
-        # Construct the ui controls based on the current condition.
+        # Construct the UI controls based on the current condition.
 
         def create_logical_operator(i, n, operator, level):
             # Make all controls in this row slightly higher to avoid GTK warnings
@@ -446,7 +446,7 @@ class SFDialog(SFSDialog):
         sizer.Add(bsizer, 0, wx.CENTER)
 
     def _selected_condition(self, omit=None):
-        # Construct the operator from the current dialog ui controls.
+        # Construct the operator from the current dialog UI controls.
 
         def logical_operator(i):
             wop, wlabel, wweight = self._controls[i]
@@ -612,7 +612,7 @@ class SFDialog(SFSDialog):
 
 
 class SearchDialog(SFDialog):
-    """Dialog for manipulation of the current searching condition.
+    """Dialog for manipulation of the current search condition.
 
     The 'run()' method of this dialog returns a pair (DIRECTION, CONDITION).
 
@@ -647,9 +647,9 @@ class SearchDialog(SFDialog):
 
 
 class FilterDialog(SFDialog):
-    """Dialog for manipulation of the filtering condition and aggregations.
+    """Dialog for manipulation of the filter condition and aggregations.
 
-    This dialog edits the current filtering condition.  In addition it has a
+    This dialog edits the current filter condition.  In addition it has a
     simple aggregation panel, where the user can display the result of a
     selected aggregation function.  These aggregations work with the data
     filtered by the current selected condition without the need to actually
@@ -759,11 +759,11 @@ class FilterDialog(SFDialog):
 
 
 def sfs_columns(fields, data, labelfunc=Field.label):
-    """Return a list of 'SFSColumn' instances for SFS dialog constructor.
+    """Return a list of 'SFSColumn' instances for SFS dialog construction.
 
     (SFS = Search, Filter, Sort)
 
-    Argumenty:
+    Arguments:
 
       fields -- sequence of 'Field' instances from specification
       data -- related data object

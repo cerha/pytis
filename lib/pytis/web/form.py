@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2025 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2026 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2006-2017 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -1337,14 +1337,15 @@ class BrowseForm(LayoutForm):
             rows is part of the initial form data (regardless whether the
             initial form data is loaded synchronously or asynchronously).
           on_update_row -- callback to perform the row update operation after
-            cell editation.  If None, the row is saved using the the standard
-            'update()' method on forms's data object.  If not None, it must be
-            a function of one argument -- the PresentedRow instance.  This
-            function is called instead of of the standard update and is
+            the cell has been edited.  If None, the row is saved using the the
+            standard 'update()' method on forms's data object.  If not None, it
+            must be a function of one argument -- the PresentedRow instance.
+            This function is called instead of of the standard update and is
             responsible for saving the changed row.  The return value is None
             on success or a tuple (FIELD_ID, ERROR) on error, where FIELD_ID is
             the id of the field causing the error or None when the error is not
-            related to a particular field and ERROR is the error message string.
+            related to a particular field and ERROR is the error message
+            string.
           inline_editable -- allow editing table rows inline.  If True, the
             'update' action will not open the 'EditForm' on a separate page (by
             following the 'update' action URI retrieved form the URI provider),

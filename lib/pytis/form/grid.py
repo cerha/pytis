@@ -20,9 +20,9 @@
 
 from __future__ import print_function
 
-# Note on terminology: Identifiers named `row' usually refer to row number
-# (starting from zero) as this is what wxWidgets use.  When refering to
-# data rows, we usually use 'the_row' for 'PresentedRow' instances.
+# Terminology note: Identifiers named `row` usually refer to a row number
+# (0-based), as wxWidgets does. When referring to data rows, we typically
+# use `the_row` for `PresentedRow` instances.
 
 from builtins import object
 import copy
@@ -44,12 +44,14 @@ from .event import top_level_exception
 
 
 class DataTable(object):
-    """Access database table as a grid of numbered rows and columns.
+    """Access a database table as a grid of numbered rows and columns.
 
-    This class allows accessing table data as a visual grid of cells with
-    numeric row and column numbers.  Grid requests are translated into database
-    requests.  It doesn't cache database rows, but it caches displayed values
-    and cell styles for a limited number of rows (a window roughly matching the
+    This class exposes table data as a visual grid of cells addressed by
+    numeric row and column indices. Grid requests are translated into database
+    requests.
+
+    Database rows are not cached, but displayed values and computed cell styles
+    are cached for a limited number of rows (an LRU window roughly matching the
     currently visible portion of the table).
 
     """
@@ -65,13 +67,13 @@ class DataTable(object):
                  sorting=(), grouping=(), row_style=None):
         """Arguments:
 
-          data -- 'pytis.data.Data' instance representing the data object, whose
-            current selection is displayed in the table.  Its 'select()' method
+          data -- 'pytis.data.Data' instance representing the data object whose
+            current selection is displayed in the table. Its 'select()' method
             must have been called.
           presented_row -- 'pytis.presentation.PresentedRow' instance
-          columns, row_count, sorting, grouping -- as descripen in 'update()'
-          row_style -- row style as 'pytis.presentation.Style()' instance,
-            callable returning a Style instance or None
+          columns, row_count, sorting, grouping -- as described in 'update()'
+          row_style -- row style as a 'pytis.presentation.Style()' instance,
+            a callable returning a Style instance, or None
 
         """
         self._data = data
@@ -118,13 +120,13 @@ class DataTable(object):
         return the_row.format(cid, secure=True)
 
     def _cached_value(self, row, col, style=False):
-        # Return the cached value for given row and column id.
+        # Return the cached value for the given row and column index.
         #
-        # The value returned is the formatted cell value by default or a
-        # computed style, when the keyword argument style is true.
-        # This is a little tricky, but the reason is to cache everithing
-        # once we read the row value, because we can not cache the rows
-        # inside the 'row()' method.
+        # By default this returns the formatted cell value. If `style` is True,
+        # it returns the computed Style for the cell.
+        #
+        # This caches "everything at once" when a row is accessed, because we
+        # deliberately do not cache database rows inside row().
         #
         try:
             values, styles = self._cache[row]
@@ -132,7 +134,7 @@ class DataTable(object):
             the_row = self.row(row)
             if the_row is None:
                 return None
-            # If row_style is defined, lets compute it.
+            # If row_style is defined, compute it.
             row_style = self._row_style
             if self._row_style_callable:
                 protected_row = the_row.protected()
@@ -141,7 +143,7 @@ class DataTable(object):
                 except protected_row.ProtectionError:
                     row_style = None
             values, styles = [], []
-            # Cache the values and styles for all columns at once.
+            # Cache values and styles for all columns at once.
             for cid, cstyle in self._columns:
                 values.append(self._format(the_row, cid))
                 if cid in self._secret_columns:
@@ -177,14 +179,14 @@ class DataTable(object):
         self._row_count = row_count
         self._sorting = sorting
         self._columns = [(c.id(), c.style()) for c in columns]
-        # We construct a list of grouping column indexes from given list of column ids.
+        # Construct grouping column indices from the given list of column ids.
         self._grouping = []
         for cid in grouping:
             try:
                 i = [cid_ for cid_, style in self._columns].index(cid)
             except ValueError:
-                # Grouping columns may not be present in 'columns' so we append them,
-                # but need to remember, that self._column_count may not be equal to
+                # Grouping columns may be absent from `columns`. Append them,
+                # but note that self._column_count may then differ from
                 # len(self._columns).
                 i = len(self._columns)
                 self._columns.append((cid, None))
@@ -200,9 +202,9 @@ class DataTable(object):
         self._group_value_cache = {}
 
     def current_row(self):
-        """Return the number of the current row of table's data object.
+        """Return the number of the current row of the table's data object.
 
-        Rows are numbered from 0.  If the current row number is not known,
+        Rows are numbered from 0. If the current row number is not known,
         return None.
 
         """
@@ -222,23 +224,23 @@ class DataTable(object):
             return count
 
     def row(self, row):
-        """Return the row number 'row' as a 'PresentedRow' instance.
+        """Return row number `row` as a `PresentedRow` instance.
 
         Arguments:
 
-          row -- row number within the *database select*, starting from 0
+          row -- row number within the *database select*, starting from 0
 
-        None is returned when given row number does not exist in the data table.
+        Returns None if the given row number does not exist in the data table.
 
         """
         return self._retrieve_row(row)
 
     def cell_value(self, row, col):
-        """Return the formatted value for table cell at given 'row' and 'col'.
+        """Return the formatted value for the cell at (row, col).
 
-        'row' and 'col' are numbered from 0.
+        `row` and `col` are 0-based.
 
-        None is returned when given cell does not exist in the data table.
+        Returns None if the given cell does not exist in the data table.
 
         """
         if self._data is not None and col < self._column_count:
@@ -247,17 +249,16 @@ class DataTable(object):
             return None
 
     def cell_style(self, row, col):
-        """Return style for table cell at given 'row' and 'col' as 'Style' instance.
+        """Return the Style for the cell at (row, col).
 
-        'row' and 'col' are numbered from 0.
+        `row` and `col` are 0-based.
 
-        None is returned when given cell does not exist in the data table.
+        Returns None if the given cell does not exist in the data table.
 
-        The returned style doesn't take grouping highlighting into account.
-        Grouping highlighting may be queried using the method 'group()' and
-        applied to the cell style afterwards.  This is necessary because
-        grouping is not deterministic while cell style is (it always returns
-        the same values for the same row and col).
+        Note: the returned style does not include grouping highlighting.
+        Grouping highlighting can be queried via `group()` and then applied
+        afterwards. This is necessary because grouping is not deterministic
+        (it depends on the recent access window), while cell styles are.
 
         """
         if row >= self.number_of_rows(min_value=(row + 1)) or col >= self._column_count:
@@ -266,19 +267,19 @@ class DataTable(object):
             return self._cached_value(row, col, style=True)
 
     def rewind(self, position):
-        """Move data pointer to given position."""
+        """Move the underlying data pointer to the given position."""
         if self._current_row is not None and -1 <= position < self.number_of_rows() - 1:
             # Rely on _retrieve_row() side effect setting self._current_row.
             if not self._retrieve_row(position):
                 raise Exception('Missing row', position)
 
     def group(self, row):
-        """Return true, if given row belongs to a highlighted group or False otherwise.
+        """Return True if `row` belongs to a highlighted group, otherwise False.
 
-        The returned values are deterministic only for a limited range of most
-        recently queried rows.  Group (True/False) assignment may be be
-        restarted for a more distant range of rows and getting back to a
-        previously queried row may thus return different results next time.
+        The result is deterministic only within a limited window of most
+        recently queried rows. Group assignment may be restarted for a distant
+        range of rows, and revisiting an old row may therefore return a
+        different result.
 
         """
         grouping = self._grouping
@@ -295,21 +296,20 @@ class DataTable(object):
                 if nearest is None:
                     near = [x for x in self._group_cache.keys() if abs(x - row) < 80]
                     if not near:
-                        # There is no cached group near enough (up to 80 rows away),
-                        # so start again with an empty cache.
+                        # No cached group close enough (within 80 rows). Restart.
                         self._group_cache = {}
                         self._group_value_cache = {}
                         return False
                     # Find the nearest cached row.
                     nearest = min(near, key=lambda x: abs(x - row))
-                # Query the neighbour row in the dirtection to the nearest cached row.
+                # Query the neighbour row in the direction of the nearest cached row.
                 neighbour_row = row + 1 if nearest > row else row - 1
                 neighbour_values = group_values(neighbour_row)
                 if neighbour_row == nearest:
-                    # If the neighbour row is the nearerst cached row, return its cached group.
+                    # Neighbour is the nearest cached row: reuse its cached group.
                     neighbour_group = self.group(neighbour_row)
                 else:
-                    # If we are not yet there, recursively get to the nearest cached row one by one.
+                    # Otherwise walk recursively towards the nearest cached row.
                     neighbour_group = get_group(neighbour_row, neighbour_values, nearest)
                 if values == neighbour_values:
                     result = neighbour_group
@@ -325,13 +325,12 @@ class DataTable(object):
         return result
 
     def close(self):
-        # This method is necessary because of some wierd wxWidgets behavior,
-        # where the table is being accessed even after the form is closed.
+        # This is necessary due to some weird wxWidgets behavior: the table may
+        # still be accessed after the form has been closed.
         self._data = None
-        # TODO: The following (and maybe the previous too) operations are in
-        # principal useless, but we try to remove all data of the instance
-        # manually because some data seem not to be destroyed when the form
-        # is closed.
+        # TODO: The following cleanups are theoretically unnecessary, but we try
+        # to clear references manually because some data appears to survive form
+        # closure.
         self._fields = None
         self._columns = None
         self._cache = None
@@ -402,10 +401,9 @@ class GridTable(wx.grid.GridTableBase, DataTable):
     # Mandatory wx grid methods.
 
     def GetNumberRows(self):
-        # We have to get only approximate number of rows here.  The reason is
-        # that wx functions call this method on form creation.  Hopefully this
-        # doesn't break anything.  Our code should use `number_of_rows'
-        # directly anyway.
+        # We intentionally return only an approximate row count here. wxWidgets
+        # calls this during form creation, before we can afford a full count.
+        # Our code should use `number_of_rows()` directly.
         return self.number_of_rows(timeout=0)
 
     def GetNumberCols(self):
@@ -420,12 +418,12 @@ class GridTable(wx.grid.GridTableBase, DataTable):
     # Optional wx grid methods.
 
     # def GetColLabelValue(self, col):
-    # Now implemented in `ListForm._on_column_header_paint()'.
+    # Now implemented in `ListForm._on_column_header_paint()`.
 
     def GetTypeName(self, row, col):
-        # We pretend that everyting is a string in order to use our own
-        # formatting for floats, dates, etc.  Also using wx.grid.GRID_VALUE_BOOL
-        # causes a segfault on doubleclicking.
+        # We pretend everything is a string to use our own formatting for
+        # floats, dates, etc. Also, using wx.grid.GRID_VALUE_BOOL can cause a
+        # segfault on double-click.
         return wx.grid.GRID_VALUE_STRING
 
     def GetAttr(self, row, col, kind):
@@ -455,20 +453,17 @@ class GridTable(wx.grid.GridTableBase, DataTable):
                         return attr
             return None
         except Exception:
-            # Calling top_level_exception() synchronously fails with a C++ traceback
-            # at least on macOS.
+            # Calling top_level_exception() synchronously may fail with a C++
+            # traceback (at least on macOS).
             wx.CallAfter(top_level_exception, sys.exc_info())
 
 
 class TableRowIterator(object):
-    """Create a table iterator which gradually returns given rows.
+    """Iterator yielding `PresentedRow` instances for a given list of row numbers.
 
-    Argumenty konstruktoru:
+    Constructor arguments:
       table -- GridTable instance.
-      row_numbers -- sequence of integers containing the row numbers to be iterated.
-
-    The iteration returns PresentedRow instances corresponding to given row
-    numbers.
+      row_numbers -- sequence of integers containing the row numbers to iterate.
 
     """
     def __init__(self, table, row_numbers):
@@ -493,23 +488,22 @@ class TableRowIterator(object):
 
     @property
     def form(self):
-        """Returns pytis.api.Form representation of the form from which the rows come.
+        """Return the `pytis.api.Form` representation of the originating form.
 
-        Allows access to form API from the action handler function (which
-        receives this iterator as an argument when action context is
-        ActionContext.SELECTION).
+        This allows action handlers to access the form API when this iterator is
+        passed as an argument (e.g. for ActionContext.SELECTION).
 
         """
         return self._table.form().provider()
 
 
 class CustomCellRenderer(wx.grid.GridCellRenderer):
-    """Custom renderer which highlights the current row using a rectangle.
+    """Custom renderer that highlights the current row with a rectangle.
 
-    The base class doesn't allow using the default behavior and only add the
-    rectangle, so we must drow everything ourselves as the default renderer
-    would draw it.  Than we additionally drow the rectangle around the current
-    row (where the grid cursor is located).
+    The base renderer cannot be easily extended to keep the default behavior
+    and only add a border, so we draw everything ourselves as the default
+    renderer would, and then additionally draw a rectangle around the current
+    row (the row containing the grid cursor).
 
     """
 

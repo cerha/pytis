@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2025 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2026 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2018 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Implementation of common UI elements for the wx Widgets application."""
+"""Implementation of common UI elements for the wxWidgets application."""
 
 from __future__ import print_function
 
@@ -118,21 +118,21 @@ if wx.version().split(' ')[1] == 'gtk2':
 
 
 def field_size(parent, width, height):
-    """Return pixel size of a wx.TextCtrl fitting text of given character width/height.
+    """Return the pixel size of a wx.TextCtrl that fits text of the given character width/height.
 
     Text fields are the most common fields so some other widgets, such as
     buttons etc. may also use 'field_size()' to match text field sizes and
     align with them nicely.
 
-    Note, that the width computation can not exactly suit to any text when
+    Note that the width computation cannot exactly suit any text when
     proportional fonts are used.  It usually suits an average text with even
-    occurence of wide and narrow letters.  The computation is tuned to make
+    occurrence of wide and narrow letters.  The computation is tuned to make
     small fields (up to three chars) wide enough to fit exactly the given
     number of letters even if these are the widest possible capital letters,
     such as G.  With higher width values (4 and above) the wide letters will
     stop to fit but the field size will match well for numbers.  So if wide
-    letters are expected in field values, their width must be proportionally
-    set higher than the number of characters intended to fit.
+    letters are expected in field values, their width should be set
+    proportionally higher than the number of characters intended to fit.
 
     Returns: Pixel size as a tuple of two integers (width, height)
 
@@ -144,25 +144,25 @@ def field_size(parent, width, height):
 
 
 def beep():
-    """Pípni."""
+    """Beep."""
     wx.Bell()
 
 
 def microsleep(miliseconds=100):
-    """Čekej a nic nedělej po dobu 'miliseconds'."""
+    """Sleep for 'milliseconds' without doing anything."""
     wx.MicroSleep(miliseconds)
 
 
 def busy_cursor(enable):
-    """Zapni nebo vypni busy cursor.
+    """Enable or disable the busy cursor.
 
-    Argumenty:
+    Arguments:
 
-      enable -- je-li pravdivé, bude kurzor zapnut, v opačném případě bude
-        vypnut
+      enable -- if true, the cursor will be enabled; otherwise it will be
+        disabled.
 
-    Poznámka: Hlavní okno aplikace automaticky busy cursor vypíná v idle
-    handleru.
+    Note: The application's main window automatically disables the busy cursor
+    in the idle handler.
 
     """
     if enable:
@@ -174,15 +174,15 @@ def busy_cursor(enable):
 
 
 def is_busy_cursor():
-    """Vrať pravdu, právě když je nastaven busy cursor."""
+    """Return true iff the busy cursor is currently enabled."""
     return wx.IsBusy()
 
 
 def modal(window):
-    """Vrať pravdu právě když je 'window' modálním oknem.
+    """Return true iff 'window' is a modal window.
 
-    'window' je považováno za modální, jestliže je instancí třídy 'PopupForm'
-    nebo 'Dialog'.
+    'window' is considered modal if it is an instance of 'PopupForm' or
+    'Dialog'.
 
     """
     return (window and
@@ -202,7 +202,7 @@ def copy_to_clipboard(text):
     #     clipboard.SetData(wx.TextDataObject(text))
     #     clipboard.Flush()
     #     clipboard.Close()
-    # The following solution is is quite a hack, but it works consistently...
+    # The following solution is quite a hack, but it works consistently...
     ctrl = wx.TextCtrl(pytis.form.app.GetTopWindow(), -1, text)
     ctrl.SetSelection(0, len(text))
     ctrl.Copy()
@@ -305,10 +305,10 @@ def file_menu_items(fields, row, select_arguments):
 
 
 class WxKey(object):
-    """Práce s reprezentací kláves.
+    """Keyboard representation utilities.
 
-    Třída umožňuje porovnat událost s definicí klávesy.  V budoucnu mohou být
-    její funkce rozšířeny.
+    This class can compare an event with a key definition.  Its functionality
+    may be extended in the future.
 
     """
     _M_ALT = 'ALT'
@@ -318,7 +318,7 @@ class WxKey(object):
     _RTRANS_TABLE = None
 
     def __init__(self):
-        # Musí to být až tady, kvůli (ne)importům wx na serveru
+        # Must be defined here because wx may not be importable on the server.
         table = (
             ('Insert', wx.WXK_INSERT),
             ('Delete', wx.WXK_DELETE),
@@ -407,18 +407,18 @@ class WxKey(object):
         return result
 
     def is_true_key(self, event):
-        """Vrať pravdu, práve když 'event' neodpovídá jen modifikátoru."""
+        """Return true iff 'event' is not just a modifier key."""
         code = event.GetKeyCode()
-        # Chybí symboly pro Meta a Alt, takže natvrdo 307...
+        # Meta/Alt key codes are not available in wx here, so we hardcode 307...
         return code not in (wx.WXK_SHIFT, wx.WXK_CONTROL, 307)
 
     def is_event_of_key(self, event, key):
-        """Vrať pravdu, právě když 'event' byla vyvolána 'key'.
+        """Return true iff 'event' was triggered by 'key'.
 
-        Argument:
+        Arguments:
 
           event -- instance wx.Event
-          key -- string definující klávesu dle specifikace v modulu 'command'
+          key -- string defining the key according to the specification in module 'command'
 
         """
         if not isinstance(event, wx.KeyEvent) or key is None:
@@ -434,17 +434,17 @@ class WxKey(object):
             else:
                 raise ProgramError('Unhandled modifier', modifier)
         else:
-            # zde nepoužívat event.HasModifiers(), protože ta vrací
-            # při zapnutém NumLocku vždy pravdu.
+            # Don't use event.HasModifiers() here because it always returns
+            # true when NumLock is enabled.
             if event.AltDown() or event.ControlDown():
                 return False
         return code == event.GetKeyCode()
 
     def event_key(self, event):
-        """Vrať stringovou podobu klávesové události 'event'.
+        """Return the string representation of the key event 'event'.
 
-        Ne všechny události musí vracet rozumnou nebo správnou stringovou
-        podobu, podporovány jsou pouze rozeznávané klávesové události.
+        Not all events necessarily return a reasonable or correct string
+        representation; only recognized key events are supported.
 
         """
         prefix = ''
@@ -480,7 +480,7 @@ class Keymap(object):
 
           parent -- parent key map as a 'Keymap' instance or None.  If not
             None, all assignments from the parent map are inherited if not
-            overriden.
+            overridden.
 
         """
         if parent is None:
@@ -569,7 +569,7 @@ class Keymap(object):
             return None
 
     def lookup_command(self, command):
-        """Return the kyeboard shortcut associated with given 'command'.
+        """Return the keyboard shortcut associated with given 'command'.
 
         Arguments:
 
@@ -598,16 +598,14 @@ class Keymap(object):
 
 
 class KeyHandler(object):
-    """Třída schopná převádět klávesové události na příkazy.
+    """Class capable of translating key events into commands.
 
-    Třída v konstruktoru registruje pro zpracování kláves metodu
-    'on_key_down()', která zajišťuje převod na klávesy na příkaz a vyvolání
-    jeho obslužné metody.  Ve třídě se vytvoří klávesová mapa poskládaná
-    z kláves příkazů instance oné třídy plus všech jejích poručníků.  Při
-    konfliktu kláves mají přednost ty bližší dané třídě.
+    The constructor registers 'on_key_down()' as the key handler, which
+    translates key presses into commands and invokes their handlers.  A keymap
+    is created from this instance's commands plus all of its guardians'.  When
+    keys conflict, those closer to the current class take precedence.
 
-    Třída je určena k \"přidědění\" ve všech třídách, které chtějí samy
-    odchytávat klávesové události.
+    Intended to be mixed into classes that want to handle key events.
 
     """
 
@@ -670,33 +668,33 @@ class KeyHandler(object):
         return self.keymap
 
     def define_key(self, key, command):
-        """Definuj klávesovou zkratku v klávesové mapě této instance.
+        """Define a keyboard shortcut in this instance's keymap.
 
-        Klávesová mapa nemusí být dostupná v době inicializace instance, takže
-        není možné definovat klávesové zkratky přímo.  Tato metoda zaručuje, že
-        předané klávesové zkratky budou dříve nebo později správně uplatněny.
+        The keymap may not be available at instance initialization time, so
+        shortcuts cannot always be defined immediately. This method ensures
+        that the provided shortcuts will be applied sooner or later.
 
-        Argumenty jsou shodé jako v metodě 'Keymap.define_key()'.
+        Arguments are the same as in 'Keymap.define_key()'.
 
         """
         keymap = self._get_keymap()
         keymap.define_key(key, command)
 
     def on_key_down(self, event, dont_skip=False):
-        """Zpracuj klávesovou událost 'event'.
+        """Process key event 'event'.
 
-        Pokud existuje v instanci příkaz napojený na danou klávesu, zavolej
-        jeho obslužnou metodu.  Pokud takový příkaz neexistuje nebo pokud
-        obslužná metoda odmítne příkaz zpracovat (vrátí nepravdu), ponech
-        'event' k dalšímu zpracování.
+        If there is a command bound to the given key in this instance, invoke
+        its handler. If there is no such command, or if the handler refuses
+        to handle it, leave 'event' for further processing.
 
-        Argumenty:
+        Arguments:
 
-          event -- klávesová wx událost
-          dont_skip -- právě když je pravdivé, není proveden skip události,
-            i když neodpovídá žádnému příkazu
+          event -- wx key event
+          dont_skip -- if true, the event is not skipped even when it does not
+            match any command
 
-        Vrací: Pravdu, právě když událost byla úspěšně převedena na příkaz.
+        Returns: True iff the event was successfully translated into a command.
+
 
         """
         if __debug__:
@@ -724,7 +722,7 @@ class KeyHandler(object):
             self._current_keymap = keydef
             return True
         else:
-            # Pozor, wxWidgets je debilní a ne vždy předává události rodičům!
+            # Beware: wxWidgets does not always propagate events to parents.
             self._current_keymap = None
             self._prefix_key_sequence = []
             if keydef is not None:
@@ -746,36 +744,35 @@ class KeyHandler(object):
 
 
 class CallbackHandler(object):
-    """Mixin třída pro prvky podporující nastavování a spouštění callbacků.
+    """Mixin class for elements that support registering and running callbacks.
 
-    Třída, která podědí 'CallbackHandler', získá metody 'set_callback()' a
-    '_run_callback()'.  Metoda 'set_callback()' je určena pro použití ze
-    strany uživatele odvozené třídy -- nastavuje funkci, která má být vyvolána
-    pro ošetření určité akce.  Naproti tomu metoda '_run_callback()' je určena
-    pro použití uvnitř odvozené třídy v místech, kde má být tato funkce
-    vyvolána.
+    A class inheriting 'CallbackHandler' gets 'set_callback()' and
+    '_run_callback()'.  'set_callback()' is intended for users of the derived
+    class and sets the function to be invoked for a particular action.
+    '_run_callback()' is intended for internal use in places where the
+    callback should be invoked.
 
-    Odvozená třída musí definovat konstanty s prefixem 'CALL_', jejichž hodnoty
-    slouží k rozlišení jednotlivých druhů callbacků.
+    The derived class must define constants with the 'CALL_' prefix, whose
+    values distinguish the different callback kinds.
 
     """
     def __init__(self):
         self._callbacks = {}
 
     def set_callback(self, kind, function):
-        # Toto musí být samostatná metoda a nejen parametr konstruktoru mimo
-        # jiné kvůli cyklickým callbackovým závislostem v duálním formuláři.
-        """Nastav 'function' pro callback 'kind'.
+        # This must be a standalone method (not just a constructor argument),
+        # among other reasons due to cyclic callback dependencies in dual forms.
+        """Set 'function' for callback kind 'kind'.
 
-        Pokud byla pro callback 'kind' předtím nastavena jiná funkce, je toto
-        předchozí nastavení zrušeno.
+        If another function was previously set for callback kind 'kind', the
+        previous setting is replaced.
 
-        Argumenty:
+        Arguments:
 
-          kind -- druh callbacku, jedna z 'CALL_*' konstant třídy
-          function -- funkce, která má být vyvolána.  Počet a význam argumentů
-            je dán odvozenou třídou a měl by být zdokumentovám v rámci
-            její dokumentace.
+          kind -- callback kind, one of the class 'CALL_*' constants
+          function -- function to be invoked. The number and meaning of
+            arguments is defined by the derived class and should be documented
+            in its documentation.
 
         """
         assert kind[:5] == 'CALL_' and hasattr(self, kind), kind
@@ -788,19 +785,18 @@ class CallbackHandler(object):
         return self._callbacks.get(kind)
 
     def _run_callback(self, kind, *args, **kwargs):
-        """Vyvolej funkci pro ošetření callbacku 'kind'.
+        """Invoke the function registered for callback kind 'kind'.
 
-        Pokud nebyla funkce pro ošetření daného callbacku předtím nastavena
-        metodou 'set_callback()', nedělej nic a vrať 'False', jinak vracej
-        'True'.
+        If no function was registered for this callback kind via
+        'set_callback()', do nothing and return False; otherwise return True.
 
-        Argumenty:
+        Arguments:
 
-          kind -- druh callbacku, jedna z 'CALL_*' konstant třídy
+          kind -- callback kind, one of the class 'CALL_*' constants
 
-          args, kwargs -- argumenty volané funkce.  Počet a význam argumentů je
-            dán odvozenou třídou a měl by být zdokumentovám v rámci dokumentace
-            callbackové konstanty.
+          args, kwargs -- arguments passed to the callback. The number and
+            meaning of arguments is defined by the derived class and should be
+            documented with the callback constant.
 
         """
         try:
@@ -878,7 +874,7 @@ class ToolTip(supertooltip.SuperToolTip):
 # Status bar
 
 class StatusBar(object):
-    """Pytis application main frame status bar.
+    """Main application frame status bar.
 
     The status bar is located at the bottom of the main application window and
     may be used to display global application status information in a set of
@@ -1111,7 +1107,7 @@ class StatusBar(object):
 
 
 class InfoWindow(object):
-    """Nemodální okno pro zobrazení textových informací."""
+    """Non-modal window for displaying textual information."""
 
     def __init__(self, title, text, format=TextFormat.PLAIN, parent=None, _name='info', **kwargs):
         """Display information window in a standalone frame.
@@ -1137,8 +1133,8 @@ class InfoWindow(object):
 class ProfileSelectorPopup(wx.ComboPopup):
     """Profile selection menu implemented using wx.ListCtrl.
 
-    This class implements the 'wx.ComboPopup' API and thus can be used as
-    a popup selection of the 'ProfileSelector' control, which is derived form
+    This class implements the 'wx.ComboPopup' API and thus can be used as a
+    popup selection of the 'ProfileSelector' control, which is derived from
     'wx.ComboCtrl'.
 
     """
@@ -1568,21 +1564,21 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler, KeyHandler):
     CALL_TITLE_CHANGED = 'CALL_TITLE_CHANGED'
     """Callback called when the document title changes (called with the title as the argument)."""
     CALL_URI_CHANGED = 'CALL_URI_CHANGED'
-    """Callback called when the current uri changes (called with the uri as the argument)."""
+    """Callback called when the current URI changes (called with the uri as the argument)."""
 
     class ResourceServer(socketserver.TCPServer):
         """HTTP server to handle external resources for the current browser document.
 
         An instance of HTTP server is run for each browser instance.  The
-        server runs in a separate thread and is shutdown when the browser is
+        server runs in a separate thread and is shut down when the browser is
         deallocated (see Browser.__del__).  Its purpose is to serve external
         resources (images, scripts, css, ...) for the current document loaded
         within the browser.  The resources are part of the 'lcg.Content'
-        instance when the document is loaded throuch 'load_content()' or may be
-        passed separately through 'resource_provider' argument when the
+        instance when the document is loaded through 'load_content()' or may be
+        passed separately through the 'resource_provider' argument when the
         document is loaded through 'load_html'.  Resources are not handled when
         a document is loaded through 'load_uri()' as it is assumed that network
-        document's resources are loaded through their network URIs.
+        document resources are loaded through their network URIs.
 
         Note, it would seem reasonable to load resources through a custom
         scheme handler derived from 'wx.html2.WebViewHandler' (registered by
@@ -1699,7 +1695,7 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler, KeyHandler):
         self.Bind(wx.EVT_WINDOW_DESTROY, self._on_destroy)
         KeyHandler.__init__(self, webview)
         self._resource_server = server = self.ResourceServer()
-        # TODO NOPY2: Pass deamon=True as Thread constructor argument.
+        # TODO NOPY2: Pass daemon=True as Thread constructor argument.
         thread = threading.Thread(target=server.serve_forever)
         thread.daemon = True
         thread.start()
@@ -1755,7 +1751,7 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler, KeyHandler):
         if ':' in uri and (uri != self._webview.GetCurrentURL()
                            or time.time() > self._navigation_timeout):
             # TODO: It would seem nice to implement custom schemes using wx.WebView
-            # sheme handlers (WebView.RegisterHandler()), but they don't allow
+            # scheme handlers (WebView.RegisterHandler()), but they don't allow
             # handling the action without actually loading some content into the
             # browser (which we need in form: and call: handlers).
             scheme, path, kwargs = self._parse_uri(uri)
@@ -1940,7 +1936,7 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler, KeyHandler):
             loaded into the browser.  The node content will be exported into
             HTML and displayed.  Can also be 'lcg.Content' which will be
             automatically wrapped by untitled 'lcg.ContentNode'.
-          base_uri -- base uri of the document.  Relative URIs within the
+          base_uri -- base URI of the document.  Relative URIs within the
             document are relative to this URI.  Browser policies may also
             restrict loading further resources according to this URI.
           exporter_class -- 'pytis.form.Browser.Exporter' is used by default
@@ -2020,7 +2016,7 @@ class mupdfProcessor(wx.lib.pdfviewer.viewer.mupdfProcessor):
         # The change in PyMuPDF>=1.15.0 made also previous fix
         # unusable. Now it is necessary to make another fix:
         # (see https://github.com/wxWidgets/Phoenix/issues/1350)
-        """Render the set of pagedrawings into gc for specified page """
+        """Render the set of page drawings into gc for specified page """
         page = self.pdfdoc.load_page(pageno)
         if self.pymupdf_obsolete:
             page.get_pixmap = page.getPixmap
@@ -2132,7 +2128,7 @@ class FileViewer(wx.lib.pdfviewer.viewer.pdfViewer):
         self.ShowLoadProgress = False
 
     def LoadFile(self, pdf_file):
-        # Override this method use the overriden version of 'mupdfProcessor' (defined above).
+        # Override this method use the overridden version of 'mupdfProcessor' (defined above).
         if isinstance(pdf_file, basestring):
             # a filename/path string, save its name
             self.pdfpathname = pdf_file
@@ -2144,8 +2140,8 @@ class FileViewer(wx.lib.pdfviewer.viewer.pdfViewer):
         self.pageheight = self.pdfdoc.pageheight
         self.pagesizes = [self.pdfdoc.GetPageSize(i) for i in range(self.numpages)]
         self.page_buffer_valid = False
-        self.Scroll(0, 0)               # in case this is a re-LoadFile
-        self.CalculateDimensions()      # to get initial visible page range
+        self.Scroll(0, 0)  # in case this is a re-LoadFile
+        self.CalculateDimensions()  # to get initial visible page range
         # draw and display the minimal set of pages
         self.pdfdoc.DrawFile(self.frompage, self.topage)
         self.have_file = True
@@ -2221,7 +2217,7 @@ def make_in_operator(column_id, spec_name, table_column_id, profile_id,
                      profile_name=None, condition=None, arguments=None):
     """Return pytis.presentation.IN operator instance for given args.
 
-    Arguemnts match the arguments of 'pytis.presentation.IN' constructor.
+    Arguments match the arguments of the 'pytis.presentation.IN' constructor.
 
     User defined profiles (managed by 'FormProfileManager', recognized by
     'profile_id' prefix) are resolved to 'profile_name' and 'condition' and
@@ -2242,7 +2238,7 @@ def make_in_operator(column_id, spec_name, table_column_id, profile_id,
                                  arguments=arguments)
 
 
-# Převodní funkce
+# Conversion helpers
 
 def char2px(window, x, y):
     """Return dimension in pixels for given dimension in characters.
@@ -2302,7 +2298,7 @@ def acceskey_prefix(i):
 
 
 def orientation2wx(orientation):
-    """Převeď konstantu třídy 'Orientation' na wx reprezentaci."""
+    """Convert an 'Orientation' constant to a wx representation."""
     if orientation == Orientation.VERTICAL:
         return wx.VERTICAL
     elif orientation == Orientation.HORIZONTAL:
@@ -2310,7 +2306,7 @@ def orientation2wx(orientation):
     else:
         raise ProgramError("Neplatná hodnota Orientation:", orientation)
 
-# Pomocné funkce
+# Helper functions
 
 
 def make_fullname(form_class, spec_name):
@@ -2321,7 +2317,7 @@ def make_fullname(form_class, spec_name):
       spec_name -- string name of a pytis specification (for resolver)
 
     The fullname string is used to refer to a form in DMP and other places
-    where python objects (form instances) can not be refered directly (the
+    where python objects (form instances) cannot be referred to directly (the
     reference is stored in the database).
 
     """
@@ -2380,9 +2376,9 @@ def command_icon(command):
     if ((not icon and command.name == 'RecordForm.context_action'
          and command.args['action'].context() == 'SELECTION')):
         # Use 'selection' icon as the default for actions which operate on selection
-        # in order to distingush these actions for the user.  This is not perfect, as
-        # the distinction will disapear for actions which define their icons, but
-        # icons are actually asigned quite rarely so it mostly works in practice.
+        # in order to distinguish these actions for the user.  This is not perfect, as
+        # the distinction will disappear for actions which define their icons, but
+        # icons are actually assigned quite rarely so it mostly works in practice.
         icon = 'selection'
     return icon
 
@@ -2444,7 +2440,7 @@ def get_icon(icon_id, type=wx.ART_MENU, size=(16, 16)):
 
 
 def wx_focused_window():
-    """Vrať aktuálně zaostřené wx okno, jako instanci 'wx.Window'."""
+    """Return the currently focused wx window as a 'wx.Window' instance."""
     return wx.Window.FindFocus()
 
 
@@ -2475,23 +2471,27 @@ def wx_button(parent, label=None, icon=None, bitmap=None, id=-1, noborder=False,
     Arguments:
 
       parent -- wx parent window
-      label -- button label; the label is only used when no icon was specified or if the specified
-        icon was not found.  Label should be always specified when using named icons (not stock
-        icons), since it must be available in case the icon can not be found
-      icon -- button icon identifier as used with 'get_icon'; if the icon is found, the label is
-        ignored
+      label -- button label; the label is only used when no icon was specified
+        or if the specified icon was not found.  Label should be always
+        specified when using named icons (not stock icons), since it must be
+        available in case the icon cannot be found
+      icon -- button icon identifier as used with 'get_icon'; if the icon is
+        found, the label is ignored
       bitmap -- button bitmap; overrides both label and icon
-      id -- wx id of the button; integer; may be useful for creating ``stock buttons''
+      id -- wx id of the button; integer; may be useful for creating ``stock
+        buttons''
       noborder -- if true, the button will not have the visible border
-      command -- pytis command to invoke when button is pressed.  If defined, 'callback' must
-        be None
-      callback -- if specified, the given function will be associated with button press event.  The
-        function will be called with `wx.Event' instance as first argument
+      command -- pytis command to invoke when button is pressed.  If defined,
+        'callback' must be None
+      callback -- if specified, the given function will be associated with
+        button press event.  The function will be called with `wx.Event'
+        instance as first argument
       enabled -- if false, the button will be disabled
       update -- CURRENTLY IGNORED!
-        if true the button availability will be periodically checked and the changes will
-        be reflected by enabling/disabling the button when the 'command' becomes enabled/disabled.
-        Currently not supported if 'callback' is used instead of 'command'.
+        if true the button availability will be periodically checked and the
+        changes will be reflected by enabling/disabling the button when the
+        'command' becomes enabled/disabled.  Currently not supported if
+        'callback' is used instead of 'command'.
       tooltip -- tooltip string
       size -- button size in pixels as a two-tuple (width, height)
       width -- width in pixels, overrides the width given by 'size'
@@ -2510,9 +2510,9 @@ def wx_button(parent, label=None, icon=None, bitmap=None, id=-1, noborder=False,
     kwargs = dict(size=size, style=style)
     if bitmap:
         if label:
-            # wx Widgets don't have a standard button with both text and icon.  There is
+            # wxWidgets don't have a standard button with both text and icon.  There is
             # wx.lib.buttons.ThemedGenBitmapTextButton, but is does not work in many ways
-            # (does not indicate keyboerd focus, does not set the default button, ...)
+            # (does not indicate keyboard focus, does not set the default button, ...)
             # So we rather draw the icon and the label into a new bitmap and use it
             # with BitmapButton.
             hmargin, vmargin, gap = 14, 6, 4
@@ -2680,7 +2680,7 @@ def wx_text_view(parent, content, format=None, width=None, height=None, resource
 
       content -- text content to be displayed as a string or a 'lcg.Content'
         instance.  If string, its formatting must be further specified by the
-        arguemnt 'format' (see below).
+        argument 'format' (see below).
       format -- input format of the text content as one of 'TextFormat'
         constants.  In case of plain text ('TextFormat.PLAIN'), the text is
         displayed as is in a 'wx.TextCtrl' widget.  In case of
@@ -2721,7 +2721,7 @@ def wx_text_view(parent, content, format=None, width=None, height=None, resource
         content = pytis.util.content(content, format=format, resources=resources)
         browser = Browser(parent)
         browser.load_content(content)
-        # We can' adjust the default size according to the content size, but since
+        # We can't adjust the default size according to the content size, but since
         browser.SetInitialSize(char2px(browser, width or 90, height or 30))
         return browser
 

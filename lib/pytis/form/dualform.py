@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2025 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2026 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2018 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -16,11 +16,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Duální formuláře.
+"""Dual forms.
 
-Duální formuláře rozdělují okno na dvě části, z nichž každá obsahuje jeden
-jednoduchý formulář, přičemž data horního a dolního formuláře jsou nějakým
-způsobem závislá.  Blíže viz dokumentace jednotlivých tříd.
+Dual forms consist of two interconnected forms.  See the documentation of
+individual classes for details.
 
 """
 from __future__ import print_function
@@ -56,48 +55,25 @@ _ = translations('pytis-wx')
 
 
 class DualForm(Form, Refreshable):
-    """Formulář složený ze dvou spolupracujících formulářů.
+    """A form composed of two cooperating forms.
 
-    Duální formulář je rozdělen na dvě části umístěné nad sebou.  V horní části
-    je hlavní (řídící) formulář, v dolní části je vedlejší (podřízený)
-    formulář.  Kromě vzájemné spolupráce jsou formuláře nezávislé, mají vlastní
-    aktivační kategorii a sadu tlačítek.  Mezi formuláři lze libovolně
-    přecházet.
+    A dual form consists of two forms composed vertically or horizontally.  The
+    upper (or left) is the main (controlling) form, while the lower (or right)
+    is the side (dependent) form.  Apart from the cooperation, the forms are
+    independent.  User can switch between them freely.  From the perspective of
+    the application, the dual form behaves as a single unit.
 
-    Duální formulář funguje jako celek, nerealizuje obecné dělení okna aplikace
-    dvě samostatné části.  Pokud některý podformulářú duálního formuláře vyvolá
-    nový formulář, který má být vložen do okna aplikace,  je tento nový
-    formulář vložen do stejného okna, ve kterém je uložen duální formulář.
-
-    Hlavní a vedlejší formuláře o své přítomnosti v duálním formuláři ani o své
-    spolupráci neví.  Duální formulář je z jejich pohledu zcela transparentní.
-
-    Tato třída je základem všech konfigurací dvojice formulářů.  Předpokládá se
-    využití následujících konfigurací:
-
-    - Hlavní formulář je 'BrowseForm', vedlejší formulář je 'EditForm'.
-      Příkladem této konfigurace je listování seznamem položek (hlavní
-      formulář) s editací aktuálně vybrané položky (vedlejší formulář).
-
-    - Hlavní formulář je 'EditForm', vedlejší formulář je 'BrowseForm'.
-      Příkladem této konfigurace je editace faktury, kde celkové údaje
-      o faktuře jsou v hlavním formuláři, zatímco seznam fakturovaných položek
-      je ve vedlejším formuláři.
-
-    - Oba formuláře jsou typu 'BrowseForm'.  Příkladem této konfigurace je
-      editace seznamu faktur (v hlavním formuláři) kombinovaná s editací
-      položek (ve vedlejším formuláři) aktuálně vybrané faktury.
-
-    Tyto konkrétní konfigurace jsou realizovány potomky této třídy.
+    This class is the base for all dual-form configurations.  These concrete
+    configurations are implemented by subclasses of this class.
 
     """
     DESCR = _("dual form")
 
     def _full_init(self, *args, **kwargs):
-        """Inicializuj duální formulář.
+        """Initialize the dual form.
 
-        Argumenty jsou stejné jako v předkovi, specifikují však hlavní formulář
-        duálního formuláře.
+        The arguments are the same as in the parent, but they specify the main
+        form of the dual form.
 
         """
         super(DualForm, self)._full_init(*args, **kwargs)
@@ -105,10 +81,9 @@ class DualForm(Form, Refreshable):
         wx_callback(wx.EVT_SIZE, self, self._on_size)
 
     def _init_attributes(self, **kwargs):
-        """Zpracuj klíčové argumenty konstruktoru a inicializuj atributy.
+        """Process constructor keyword arguments and initialize attributes.
 
-        Všechny klíčové argumenty jsou posléze předány konstruktoru hlavního
-        formuláře.
+        All keyword arguments are then passed to the main form constructor.
 
         """
         super(DualForm, self)._init_attributes()
@@ -131,16 +106,16 @@ class DualForm(Form, Refreshable):
         return self._resolver.get(main, 'binding_spec')[side]
 
     def _create_data_object(self):
-        # Hlavní i vedlejší formulář mají svůj datový objekt.
+        # Both the main and the side form have their own data object.
         return None
 
     def _create_form_parts(self):
-        # Vytvoř rozdělené okno
+        # Create the splitter window.
         self._splitter = splitter = wx.SplitterWindow(self, -1, style=wx.SP_LIVE_UPDATE)
         self.Sizer.Add(splitter, 1, wx.EXPAND)
         wx_callback(wx.EVT_SPLITTER_DOUBLECLICKED, splitter, lambda e: True)
         wx_callback(wx.EVT_SPLITTER_SASH_POS_CHANGED, splitter, self._on_sash_changed)
-        # Vytvoř formuláře
+        # Create the forms.
         self._main_form = self._create_main_form(splitter, **self._unprocessed_kwargs)
         self._side_form = self._create_side_form(splitter)
         orientation = self._initial_orientation()
@@ -196,7 +171,7 @@ class DualForm(Form, Refreshable):
         self._active_form = form
 
     def title(self):
-        """Vrať název formuláře jako řetězec."""
+        """Return the form title as a string."""
         return self._view.title() or ' / '.join((self._main_form.title(), self._side_form.title()))
 
     def select_row(self, *args, **kwargs):
@@ -214,7 +189,7 @@ class DualForm(Form, Refreshable):
 
     @Command.define
     def other_form(self):
-        """Přechod mezi podformuláři duálního formuláře"""
+        """Switch between the dual form subforms."""
         self._select_form(self._other_form(self._active_form))
 
     @Command.define
@@ -240,11 +215,11 @@ class DualForm(Form, Refreshable):
         return self._side_form
 
     def active_form(self):
-        """Vrať aktivní formulář tohoto duálního formuláře."""
+        """Return the active form within this dual form."""
         return self._active_form
 
     def inactive_form(self):
-        """Vrať neaktivní formulář tohoto duálního formuláře."""
+        """Return the inactive form within this dual form."""
         return self._other_form(self._active_form)
 
     def is_vertical(self):
@@ -252,8 +227,8 @@ class DualForm(Form, Refreshable):
         return self._splitter.GetSplitMode() == 2
 
     def show(self):
-        # Musíme volat show obou podformulářů, protože splitter je nevolá a
-        # přitom v nich mohou být inicializační či ukončovací akce.
+        # We must call show() on both subforms, because the splitter does not,
+        # and they may contain initialization/cleanup actions.
         self.Enable(True)
         self.Show(True)
         self._splitter.Enable(True)
@@ -278,7 +253,6 @@ class DualForm(Form, Refreshable):
         self._main_form.save()
         self._side_form.save()
         super(DualForm, self).save()
-
 
     def restore(self):
         if not self._restored:
@@ -362,7 +336,7 @@ class DualForm(Form, Refreshable):
             self._side_form.refresh(interactive=interactive)
 
     def close(self, force=False):
-        # Prevent _on_page_change() and _on_idle() to be run in side form
+        # Prevent _on_page_change() and _on_idle() from running in the side form
         # while the form is being closed.
         self._side_form.Show(False)
         self._side_form.Unbind(wx.EVT_IDLE)
@@ -381,7 +355,7 @@ class DualForm(Form, Refreshable):
 
 
 class ImmediateSelectionDualForm(DualForm):
-    """Duální formulář s okamžitou obnovou vedlejšího formuláře."""
+    """Dual form with immediate refresh of the side form."""
 
     def _full_init(self, *args, **kwargs):
         self._selection_data = None
@@ -399,7 +373,7 @@ class ImmediateSelectionDualForm(DualForm):
 
 
 class PostponedSelectionDualForm(ImmediateSelectionDualForm):
-    """Duální formulář se zpožděnou obnovou vedlejšího formuláře."""
+    """Dual form with postponed refresh of the side form."""
 
     _SELECTION_TICK = 2
 
@@ -434,7 +408,7 @@ class PostponedSelectionDualForm(ImmediateSelectionDualForm):
 
 
 class SideBrowseDualForm(PostponedSelectionDualForm):
-    """Duální formulář s vedlejším formulářem 'SideBrowseForm'."""
+    """Dual form with a 'SideBrowseForm' as the side form."""
 
     def _create_side_form(self, parent):
         return SideBrowseForm(parent, self._resolver, self._side_name, guardian=self,
@@ -471,11 +445,11 @@ class SideBrowseDualForm(PostponedSelectionDualForm):
 
 
 class BrowseDualForm(SideBrowseDualForm):
-    """Duální formulář s hlavním formulářem 'BrowseForm'.
+    """Dual form with a 'BrowseForm' as the main form.
 
-    Hlavním formulářem je instance třídy 'BrowseForm', vedlejším formulářem je
-    instance třídy 'SideBrowseForm'.  Formuláře jsou vzájemně propojeny
-    prostřednictvím vazebních sloupců daných specifikací `BindingSpec'.
+    The main form is an instance of 'BrowseForm' and the side form is an
+    instance of 'SideBrowseForm'.  The forms are linked via binding columns
+    given by the `BindingSpec' specification.
 
     """
 
@@ -568,7 +542,7 @@ class AggregationDualForm(PostponedSelectionDualForm):
 
 
 class ShowDualForm(SideBrowseDualForm):
-    """Duální formulář s hlavním formulářem 'BrowsableShowForm'.
+    """Dual form with a 'BrowsableShowForm' as the main form.
 
     """
     def _full_init(self, *args, **kwargs):
@@ -589,11 +563,13 @@ class ShowDualForm(SideBrowseDualForm):
 
 
 class BrowseShowDualForm(ImmediateSelectionDualForm):
-    """Duální formulář s řádkovým seznamem nahoře a náhledem dole.
+    """Dual form with a row list on top and a preview below.
 
-    Tento formulář slouží k současnému zobrazení přehledu položek a formuláře s rozšiřujícími
-    informacemi.  Podle specifikace vazby a dolního formuláře může jít jak o detaily k aktuálnímu
-    záznamu, tak o souhrnné informace (např. výsledky agregací nad daty horního formuláře atd.).
+    This form is used to show an overview of items together with a form
+    providing additional information. Depending on the binding specification
+    and the lower form, this can be either details of the current record or
+    aggregate information (e.g. results of aggregations over the upper form
+    data, etc.).
 
     """
     DESCR = _("dual view")
@@ -621,12 +597,12 @@ class BrowseShowDualForm(ImmediateSelectionDualForm):
 
 
 class DescriptiveDualForm(BrowseShowDualForm):
-    """Duální formulář s řádkovým seznamem nahoře a náhledem dole.
+    """Dual form with a row list on top and a preview below.
 
-    Tento formulář slouží k současnému zobrazení přehledu položek a podrobnému
-    zobrazení aktuální položky.  Náhled není určen k editaci této položky.  Jde
-    vlastně o speciální případ formuláře rodičovské řídy, kdy náhled v dolním
-    formuláři je dán stejnou specifikací, jako horní formulář.
+    This form is used to show an overview of items together with a detailed
+    view of the current item. The preview is not meant for editing the item.
+    This is effectively a special case of the parent class where the preview
+    in the lower form uses the same specification as the upper form.
 
     """
     class _SideForm(ShowForm):
@@ -640,8 +616,8 @@ class DescriptiveDualForm(BrowseShowDualForm):
 
         def _apply_profile(self, profile, **kwargs):
             # It makes little sense to apply profiles in this form.
-            # What is more important: Disabling this method fixes the problem
-            # of choosing wrong row in the side form when
+            # More importantly, disabling this method fixes the problem
+            # of selecting the wrong row in the side form when
             # _apply_initial_profile gets called in _on_idle after a row has
             # been selected in the main form but still before the other row
             # gets replaced in the side form.
@@ -717,11 +693,11 @@ class MultiForm(Form, Refreshable):
         raise NotImplemented()  # Override in derived class.
 
     def _subform(self, i):
-        # Returns subform at given index.
+        # Return the subform at the given index.
         return self._notebook.GetPage(i)
 
     def _subforms(self):
-        # Returns a list of all subforms in the order of their tabs.
+        # Return a list of all subforms in the order of their tabs.
         return [self._subform(i) for i in range(self._notebook.GetPageCount())]
 
     def _create_form(self):
@@ -768,8 +744,8 @@ class MultiForm(Form, Refreshable):
             try:
                 if form.initialized():
                     # This check is not redundant!  Even when the form is reported
-                    # as unitialized in the first call, it may be already
-                    # initialized here.  Don't ask me why, I suspect busy_cursor
+                    # as uninitialized in the first call, it may already be
+                    # initialized here.  Don't ask me why; I suspect busy_cursor
                     # may invoke some event that causes form initialization, but
                     # who knows...
                     return form
@@ -880,11 +856,11 @@ class MultiForm(Form, Refreshable):
         super(MultiForm, self)._cleanup()
 
     def _on_size(self, event):
-        # The active_form() call below is necessary to finish active
-        # form initialization before resizing the notebook.  Otherwise
-        # some forms in some cases don't size properly.  It was unclear
-        # which forms under which conditions make troubles, but it was
-        # often the case with web forms.
+        # The active_form() call below is necessary to finish active form
+        # initialization before resizing the notebook. Otherwise some forms
+        # in some cases don't size properly. It was unclear which forms under
+        # which conditions cause trouble, but it was often the case with web
+        # forms.
         self.active_form()
         self._notebook.SetSize(event.Size)
 
@@ -1088,7 +1064,7 @@ class MultiSideForm(MultiForm):
 
     def _subform_bindings(self):
         # TODO: Remove the filtering below to include inactive tabs in the
-        # multi form.  The originaly used 'wx.Notebook' did not support
+        # multi form.  The originally used 'wx.Notebook' did not support
         # inactive tabs so we simply filtered out the inactive bindings
         # here, but now we are using 'wx.aui.AuiNotebook', where inactive
         # tabs might work.
@@ -1184,8 +1160,8 @@ class MultiSideForm(MultiForm):
         self._run_callback(self.CALL_BINDING_SELECTED, binding)
 
     def _save_tab_order(self):
-        # Remember also hidden bindings in order to be able to recognize bindings
-        # newly added to the specification in future run (see _create_subforms()).
+        # Remember also hidden bindings in order to recognize bindings newly
+        # added to the specification in a future run (see _create_subforms()).
         all_bindings = [binding.id() for binding in self._subform_bindings()]
         binding_order = [form.binding().id() for form in self._subforms()]
         hidden_bindings = list(set(all_bindings) - set(binding_order))
@@ -1206,8 +1182,8 @@ class MultiSideForm(MultiForm):
         try:
             index = [f.binding().id() for f in self._subforms()].index(binding.id())
         except ValueError:
-            # Add form to the last position.  Note, that attempts to insert a
-            # page to a given position using nb.InsertPage() failed as the page
+            # Add the form to the last position. Note that attempts to insert a
+            # page at a given position using nb.InsertPage() failed, as the page
             # indexes seemed to change unreliably.
             form = self._create_subform(nb, binding)
             form.full_init()
@@ -1218,7 +1194,7 @@ class MultiSideForm(MultiForm):
                 form.on_selection(row)
             form.focus()
         else:
-            # Remove form of given 'index'.
+            # Remove the form at the given 'index'.
             if nb.GetPageCount() <= 1:
                 app.echo(_("Unable to close the last form."), kind='error')
                 return
@@ -1253,13 +1229,13 @@ class MultiSideForm(MultiForm):
         return isinstance(form, SideBrowseForm) and form.side_form_in_condition() is not None
 
     def select_binding(self, id):
-        """Raise the side form tab corresponfing to the binding of given identifier.
+        """Raise the side form tab corresponding to the binding with given identifier.
 
         The argument 'id' is a string identifier of a 'Binding' instance which must appear in the
-        main form 'bindings' specification.  If there is no binding of given id, an 'AssertError'
-        is raised.  If the corresponding form is not active (e.g. the user has no access rights for
-        the form), False is returned and an error message is displayed.  Otherwise the form is
-        raised and 'True' is returned.
+        main form 'bindings' specification. If there is no binding with the given id, an
+        'AssertError' is raised. If the corresponding form is not active (e.g. the user has no
+        access rights for the form), False is returned and an error message is displayed.
+        Otherwise the form is raised and True is returned.
 
         """
         for i, form in enumerate(self._subforms()):
@@ -1298,9 +1274,9 @@ class MultiBrowseDualForm(BrowseDualForm):
         @Command.define
         def edit_record(self):
             BrowseForm.edit_record(self)
-            # This will update the side form prefill after main form editation.  Without it, the
-            # prefill would use the original row values until the main form row selection is
-            # changed.
+            # This updates the side form prefill after the main form is edited. Without it,
+            # the prefill would use the original row values until the main form row selection
+            # changes.
             self._update_selection()
 
         def apply_filter(self, *args, **kwargs):

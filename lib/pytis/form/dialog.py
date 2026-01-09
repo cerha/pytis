@@ -373,13 +373,12 @@ class GenericDialog(Dialog):
 
 
 class Message(GenericDialog):
-    """Dialog zobrazující zprávu a vracející odpověď.
+    """Dialog showing a message and returning a response.
 
-    Tato třída pouze zobrazuje zprávu a tlačítko pro akceptování dialogu.
+    This class only displays a message and a button to accept the dialog.
 
-    Vrácená hodnota metody 'run()' je jednoduše nápis tlačítka, kterým byl
-    dialog ukončen (None v případě, že byl ukončen jiným způsobem než
-    tlačítkem).
+    The return value of 'run()' is simply the label of the button used to end
+    the dialog (None if it was closed in another way than by the button).
 
     """
     ICON_INFO = 'information'
@@ -735,18 +734,18 @@ class Calendar(GenericDialog):
         Arguments:
 
           parent, title -- as in the parent class.
-          date -- přednastavený datum jako instance 'datetime.datetime'.
-          enable_year -- když je pravda, zobrazí výběr roku; boolean
-          enable_month -- když je pravda, zobrazí výběr měsíce; boolean
-          monday_first -- když je pravda, bude pondělí prvním dnem v týdnu;
+          date -- preset date as a 'datetime.datetime' instance.
+          enable_year -- if true, show the year selector; boolean
+          enable_month -- if true, show the month selector; boolean
+          monday_first -- if true, Monday is the first day of the week;
             boolean
 
-        Pokud argument date neobsahuje řetězec, který je možné zpracovat pomocí
-        'wx.DateTime.ParseDate()', bude datum nastaven na dnešní datum.
+        If the date argument does not contain a string that can be parsed using
+        'wx.DateTime.ParseDate()', the date will be set to today's date.
 
         """
         super(Calendar, self).__init__(parent, title=title)
-        # vytvoř kalendář
+        # create the calendar
         style = (wx.adv.CAL_SHOW_HOLIDAYS |
                  wx.adv.CAL_SHOW_SURROUNDING_WEEKS)
         if not enable_year:
@@ -1169,12 +1168,11 @@ class FileDialog(Dialog):
           dir -- preselected directory name as a string or None.
           file -- preselected file name as a string or None.
           mode -- one of class constants 'OPEN' or 'SAVE'.
-          wildcards -- seznam masek souborů a popisů, podle kterých bude možno
-            filtrovat; jedná se o sekvenci, kde každý lichý prvek určuje popis
-            a každý sudý prvek je wildcard řetězcem, podle kterého budou
-            soubory filtrovány, pokud je zvolen; výchozí filtrování je podle
-            první dvojice. příklad: ("BMP soubory (*.bmp)", "*.bmp",
-                                     "GIF soubory (*.gif)", "*.gif")
+          wildcards -- list of file masks and descriptions to filter by; a
+            sequence where each odd element is a description and each even
+            element is a wildcard string used for filtering when selected;
+            the default filtering is by the first pair. Example:
+            ("BMP files (*.bmp)", "*.bmp", "GIF files (*.gif)", "*.gif")
           multi -- if true, allow selection of multiple files at once (will be
             returned as a tuple); only relevant when 'mode' is 'OPEN'
           overwrite_prompt -- if true, selection of an existing file for save
@@ -1255,10 +1253,10 @@ class DirDialog(Dialog):
         self._path = path
 
     def run(self):
-        """Zobraz dialog a vrať cestu k vybranému souboru jeko řetězec.
+        """Show the dialog and return the selected directory path as a string.
 
-        Pokud je argument konstruktoru 'multi' pravdivý, bude vrácen tuple
-        řetězců.
+        If the constructor argument 'multi' is true, a tuple of strings is
+        returned.
 
         """
         dialog = wx.DirDialog(self._parent,

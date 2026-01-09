@@ -16,16 +16,16 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Práce s formuláři se seznamovým zobrazením.
+"""Working with forms that display data in a list view.
 
-Modul jednak interpretuje specifikaci formulářů (viz modul 'spec') pro
-seznamové zobrazení a jednak zajišťuje práci s ní prostřednictvím objektů
-wxWidgets.
+This module interprets the form specification (see the 'spec' module) for
+list views and provides access to it through wxWidgets objects.
 
 """
-# Terminologická poznámka: Proměnné s názvem `row' obvykle značí číslo řádku
-# (číslováno od 0).  Jedná-li se o obsah řádku, nazývá se příslušná proměnná
-# obvykle `the_row'.  Matoucí jméno `row' bylo převzato z wxWidgets.
+# Terminology note: Variables named `row` usually denote a row number
+# (0-based).  If it is the row contents, the corresponding variable is usually
+# named `the_row`. The potentially confusing name `row` comes from wxWidgets.
+
 
 from __future__ import unicode_literals
 from __future__ import print_function
@@ -85,27 +85,27 @@ unistr = type(u'')  # Python 2/3 transition hack.
 # Forms
 
 class ListForm(RecordForm, Refreshable):
-    """Společná nadtřída pro formuláře se seznamovým zobrazením.
+    """Common base class for forms with a list view.
 
-    Tyto formuláře zobrazují seznam řádků, rozdělených do několika sloupců,
-    tedy v podstatě tabulku.  Třída definuje společné vlastnosti, jako možnosti
-    navigace, vyhledávání, řazení apod.
+    These forms display a list of rows split into several columns, i.e. a
+    table. The class defines common features such as navigation, searching,
+    sorting, etc.
 
-    Třída je 'CallbackHandler' a jako argument callbackové funkce předává
-    slovník, jehož klíče jsou id sloupců (stringy) a hodnoty jsou hodnoty
-    těchto sloupců (opět stringy) řádku, jehož se callback týká.
+    The class is a 'CallbackHandler' and passes a dictionary to the callback
+    function, where keys are column ids (strings) and values are the values of
+    those columns (also strings) for the row the callback concerns.
 
-    Tato třída obvykle není používána přímo, nýbrž slouží jako základ pro
-    specializované třídy.
+    This class is typically not used directly; it serves as a base for
+    specialized classes.
 
     """
     CALL_ACTIVATION = 'CALL_ACTIVATION'
-    """Konstanta callbacku aktivace řádku."""
+    """Callback constant for row activation."""
     CALL_MODIFICATION = 'CALL_MODIFICATION'
-    """Konstanta callbacku modifikace řádku."""
+    """Callback constant for row modification."""
 
-    _REFRESH_PERIOD = 60   # sekund
-    _SELECTION_CALLBACK_DELAY = 3   # desítky milisekund
+    _REFRESH_PERIOD = 60   # seconds
+    _SELECTION_CALLBACK_DELAY = 3   # tens of milliseconds
     _ROW_LABEL_WIDTH = 85
     _ALLOW_TOOLBAR = False
     _SINGLE_LINE = True
@@ -120,11 +120,11 @@ class ListForm(RecordForm, Refreshable):
     def _full_init(self, *args, **kwargs):
         self._grid = None
         super(ListForm, self)._full_init(*args, **kwargs)
-        # Nastav klávesové zkratky z kontextových menu.
+        # Define keyboard shortcuts from context menus.
         for action in self._view.actions(unnest=True):
             if action.hotkey():
                 self.define_key(action.hotkey(), Command(self.context_action, action=action))
-        # Závěrečné akce
+        # Final actions.
         self._data.add_callback_on_change(self.on_data_change)
         wx_callback(wx.EVT_SIZE, self, self._on_size)
         self._select_cell(row=self._get_row_number(self._row.row()))
@@ -287,7 +287,7 @@ class ListForm(RecordForm, Refreshable):
         self._update_colors()
         self._update_label_height()
         g.SetDefaultRowSize(row_height)
-        # Event handlery
+        # Event handlers
         labels = g.GetGridColLabelWindow()
         corner = g.GetGridCornerLabelWindow()
         wx_callback(wx.grid.EVT_GRID_SELECT_CELL, g, self._on_select_cell)
@@ -322,7 +322,7 @@ class ListForm(RecordForm, Refreshable):
             original_key = self._current_key()
         else:
             original_key = None
-        # Uprav velikost gridu
+        # Adjust grid size.
         g.BeginBatch()
         try:
             if init_columns:
@@ -353,12 +353,12 @@ class ListForm(RecordForm, Refreshable):
                 self._init_col_attr()
         finally:
             g.EndBatch()
-        # Skip to the former line
+        # Restore previous position.
         if retain_row and original_key is not None:
             if self._current_key() != original_key:
                 self.select_row(original_key, quiet=True)
-            # Pokud se nepodařilo nastavit pozici na předchozí klíč,
-            # pokusíme se nastavit pozici na předchozí číslo řádku v gridu.
+            # If we failed to set the position to the previous key, try to set
+            # the position to the previous grid row number.
             if self._current_key() != original_key:
                 row = original_row_number
                 if ((row is not None and
@@ -368,7 +368,7 @@ class ListForm(RecordForm, Refreshable):
                     self._select_cell(row=0)
         else:
             self._select_cell(row=original_row_number)
-        # Závěrečné úpravy
+        # Final adjustments.
         self._update_colors()
         self._resize_columns()
         if row_count != old_row_count or insert_column is not None or delete_column is not None \
@@ -546,12 +546,12 @@ class ListForm(RecordForm, Refreshable):
             panel.GetToolTip().Enable(False)  # Doesn't seem to work, thus the line above...
 
     def _context_menu(self):
-        """Vrať specifikaci \"kontextového\" popup menu vybrané buňky seznamu.
+        """Return the specification of the context popup menu for the selected cell.
 
-        Vrací: Sekvenci instancí 'MenuItem'.
+        Returns: A sequence of 'MenuItem' instances.
 
-        Tuto metodu nechť odvozené třídy předefinují, pokud chtějí zobrazovat
-        kontextové menu.
+        Derived classes should override this method if they want to display a
+        context menu.
 
         """
         return ()
@@ -643,7 +643,7 @@ class ListForm(RecordForm, Refreshable):
             stext = '*' + stext
         wmvalue = pytis.data.WMValue(pytis.data.String(), stext)
         condition = pytis.data.WM(column.id(), wmvalue, ignore_case=not case.IsChecked())
-        # TODO: Předhledání v aktuálním selectu
+        # TODO: Search within the current select.
         found = self._search(condition, direction, row_number=row, report_failure=False,
                              initial_shift=newtext)
         if found is None:
@@ -672,10 +672,10 @@ class ListForm(RecordForm, Refreshable):
                 the_row = self._table.row(row)
                 self._run_callback(self.CALL_SELECTION, the_row)
 
-    # Pomocné metody
+    # Helper methods
 
     def _current_cell(self):
-        """Vrať dvojici souřadnic (ROW, COL) aktuální buňky."""
+        """Return a pair of coordinates (ROW, COL) of the current cell."""
         g = self._grid
         return g.GetGridCursorRow(), g.GetGridCursorCol()
 
@@ -712,7 +712,7 @@ class ListForm(RecordForm, Refreshable):
         self._grid.ClearSelection()
 
     def _select_cell(self, row=None, col=None, invoke_callback=True):
-        # Vrací pravdu, pokud může být událost provedena (viz _on_select_cell).
+        # Returns True if the event can be performed (see _on_select_cell).
         if self._in_select_cell:
             return True
         self._in_select_cell = True
@@ -742,11 +742,9 @@ class ListForm(RecordForm, Refreshable):
                         self._selection_callback_candidate = row
                         delay = self._SELECTION_CALLBACK_DELAY
                         self._selection_callback_tick = delay
-                # TODO: tady to způsobuje špatné zobrazování pozice v
-                #       dualform. Nahrazeno voláním _update_list_position v
-                #       _post_selection_hook.
-                #       Jiné řešení?
-                # self._update_list_position()
+                # TODO: This causes incorrect position display in dualform.
+                #       Replaced by calling _update_list_position in
+                #       _post_selection_hook.  Another solution?
             elif col is not None and col != current_col:
                 g.SetGridCursor(current_row, col)
                 g.MakeCellVisible(current_row, col)
@@ -782,17 +780,17 @@ class ListForm(RecordForm, Refreshable):
         col = self._current_cell()[1]
         return self._columns[col].id()
 
-    # Callbacky
+    # Callbacks
 
     def on_data_change(self):
-        """Callback, který lze zavolat při změně dat v datovém zdroji.
+        """Callback that can be called when data in the data source changes.
 
-        Metoda je určena pro registraci pomocí metody
+        This method is intended to be registered via
         'pytis.data.Data.add_callback_on_change'.
 
-        Metoda naopak není určena pro žádost o okamžitý update, protože pouze
-        zadá požadavek na update, který je zpracován až za blíže neurčenou
-        dobu.  K přímým updatům slouží metody 'reset()' a 'refresh()'.
+        The method is not meant for requesting an immediate update; it only
+        schedules an update request that is processed at an unspecified later
+        time. For direct updates use 'reset()' and 'refresh()'.
 
         """
         log(EVENT, 'List data change notification')
@@ -836,7 +834,7 @@ class ListForm(RecordForm, Refreshable):
                 # the mouse over cells.  The unpleasant effect is that tooltips
                 # take longer to appear (the tooltip delay adds to the 10ms delay
                 # and also to the idle event delay), which is sometimes noticable.
-                # The delay might be also usefull when implementing tooltips by a
+                # The delay might be also useful when implementing tooltips by a
                 # custom widget...
                 row, col = self._grid.XYToCell(x, y)
                 if (row, col) != self._last_cell_tooltip_position:
@@ -860,7 +858,7 @@ class ListForm(RecordForm, Refreshable):
         if self._last_updated_row_count != self._table.number_of_rows(timeout=0.3):
             self._update_grid()
             self._update_list_position()
-        # V budoucnu by zde mohlo být přednačítání dalších řádků nebo dat
+        # In the future, we could prefetch additional rows or data here.
         event.Skip()
 
     def _get_cell_tooltip_string(self, row, col):
@@ -874,7 +872,7 @@ class ListForm(RecordForm, Refreshable):
             # Despite the above checks we've seen "Not within select" tracebacks so the
             # checks are probably insufficient or there is a race condition.  The question
             # is whether it is not enough to handle the exception here and remove the
-            # checks alltogether.
+            # checks altogether.
             record = self._table.row(row)
         except pytis.data.NotWithinSelect:
             return True
@@ -901,7 +899,7 @@ class ListForm(RecordForm, Refreshable):
 
     def _post_selection_hook(self, the_row):
         if Form.focused_form() is self:
-            # TODO: viz poznámka v _select_cell.
+            # TODO: See the note in _select_cell.
             self._update_list_position()
             # Show display value in status line (this is also shown in tooltips,
             # but tooltips are not useful when using keyboard only).
@@ -911,16 +909,15 @@ class ListForm(RecordForm, Refreshable):
 
     def _on_select_cell(self, event):
         if not self._in_select_cell and self._grid.GetBatchCount() == 0:
-            # GetBatchCount zjišťujeme proto, aby nedhocházelo k volání
-            # callbacku při změnách v rámci _update_grid(), které nejsou
-            # interaktivní.
+            # We check GetBatchCount to avoid invoking the callback during
+            # non-interactive changes within _update_grid().
             self._run_callback(self.CALL_USER_INTERACTION)
             if self._last_updated_row_count != self._table.number_of_rows(timeout=0):
                 self._update_grid()
         if self._select_cell(row=max(0, event.GetRow()), col=event.GetCol()):
-            # SetGridCursor vyvolá tento handler.  Aby SetGridCursor mělo
-            # vůbec nějaký účinek, musíme zde zavolat originální handler, který
-            # požadované nastavení buňky zajistí.
+            # SetGridCursor triggers this handler.  For SetGridCursor to have
+            # any effect at all, we must call the original handler here, which
+            # performs the requested cell selection.
             event.Skip()
         else:
             event.Veto()
@@ -1186,7 +1183,7 @@ class ListForm(RecordForm, Refreshable):
     def _on_label_drag_size(self, event):
         self._remember_column_width(event.GetRowOrCol())
         self._grid.FitInside()
-        # Mohli bychom rozšířit poslední sloupec, ale jak ho potom zase zúžit?
+        # We could stretch the last column, but how would we shrink it back?
         # if pytis.config.stretch_tables:
         #     g = self._grid
         #     n = g.GetNumberCols()
@@ -1230,8 +1227,7 @@ class ListForm(RecordForm, Refreshable):
         filtered_columns = self._filtered_columns()
         for i, column in enumerate(self._columns):
             if i >= g.GetNumberCols():
-                # This should not happen, but we have seen wxAssertionError
-                # tracebacks on g.GetColSize(i).
+                # This should not happen, but wxAssertionError tracebacks have been observed.
                 log(OPERATIONAL, "Unexpected situation in _on_label_paint:",
                     (g.GetNumberCols(), i, self._columns))
                 continue
@@ -1248,7 +1244,7 @@ class ListForm(RecordForm, Refreshable):
                 dc.SetBrush(wx.Brush('GRAY', wx.BRUSHSTYLE_TRANSPARENT))
             # Draw the rectangle around.
             dc.DrawRectangle(x - dx, y, width + dx, label_height)
-            # Indicate when the column is being moved (before we clip the active refion).
+            # Indicate when the column is being moved (before we clip the active region).
             move_target = self._column_move_target
             if self._column_to_move is not None and move_target is not None:
                 if i == move_target:
@@ -1403,11 +1399,11 @@ class ListForm(RecordForm, Refreshable):
             self.select_row(0, quiet=True)
 
     def select_row(self, position, **kwargs):
-        # Během editace může `position' obsahovat nevyhledatelná data.
+        # During editing, `position` may contain non-searchable data.
         if ((isinstance(position, int) and
              position < self._table.number_of_rows(min_value=(position + 1)))):
-            # Pro číslo voláme rovnou _select_cell a nezdržujeme se převodem na
-            # row a zpět, který probíhá v rodičovské metodě...
+            # For an integer, call _select_cell directly and avoid converting
+            # to a row and back as done in the parent method...
             self._select_cell(row=position)
             return True
         else:
@@ -1487,9 +1483,9 @@ class ListForm(RecordForm, Refreshable):
     def _cleanup(self):
         super(ListForm, self)._cleanup()
         if self._grid is not None:
-            # Musíme tabulce zrušit datový objekt, protože jinak do něj bude šahat
-            # i po kompletním uzavření starého gridu (!!) a rozhodí nám tak data
-            # v novém gridu.
+            # The data object must be detached from the table; otherwise it will
+            # keep touching it even after the old grid is fully closed (!!),
+            # which would corrupt data in the new grid.
             if self._table is not None:
                 self._table.close()
 
@@ -1509,8 +1505,8 @@ class ListForm(RecordForm, Refreshable):
                 self._select_cell(row=r)
             elif r > 0:
                 self._select_cell(row=(r - 1))
-            # Uděláme raději refresh celé aplikace, protože jinak se
-            # nerefreshne horní formulář po vymazání záznamu ze sideformu.
+            # Refresh the whole application; otherwise the upper form would
+            # not refresh after deleting a record from the sideform.
             app.refresh()
 
     @Command.define
@@ -2013,7 +2009,7 @@ class ListForm(RecordForm, Refreshable):
 
     def _export_xlsx(self, update, only_selected=False):
         def writefunc(cid, ctype, vfunc=pytis.util.identity):
-            """Return a closure writing formatted value of given column to the spreadcheet.
+            """Return a closure writing the formatted value of a given column to the spreadsheet.
 
             Returns a function of arguments (x, y, r, v), where:
               x -- worksheet column number
@@ -2135,7 +2131,7 @@ class ListForm(RecordForm, Refreshable):
 
 
 class FoldableForm(ListForm):
-    """Form able to expand or collapse sets of rows.
+    """Form that can expand or collapse sets of rows.
 
     Its typical use is for tree structured data such as menus or file system
     objects.
@@ -2330,8 +2326,8 @@ class FoldableForm(ListForm):
                 level = self._folding.level(parent)
                 if level == 0:
                     self._folding.expand(parent, level=1)
-        # Any better way to display the form with initial folding than to
-        # refresh it?
+        # Is there a better way to display the form with initial folding than
+        # refreshing it?
         self._refresh_folding()
 
     def _init_folding(self, folding_state=None):
@@ -2542,9 +2538,9 @@ class FoldableForm(ListForm):
                 self._refresh_folding()
 
     def folding_level(self, row):
-        """Return current folding level of 'row'.
+        """Return the current folding level of 'row'.
 
-        If 'None' is returned then the node is completely expanded.  If 0 is
+        If 'None' is returned, the node is completely expanded.  If 0 is
         returned then the node is completely folded.  If N, N > 0, is returned
         then the node is expanded up to level N.  If an empty string is
         returned, folding is not enabled.
@@ -2563,15 +2559,16 @@ class FoldableForm(ListForm):
 
 
 class CodebookForm(PopupForm, FoldableForm, KeyHandler):
-    """Formulář pro zobrazení výběrového seznamu (číselníku).
+    """Form for displaying a selection list (codebook).
 
-    Výběrový seznam zobrazuje řádky dat, z nichž uživatel některý řádek
-    vybere.  Uživatel kromě výběru a listování nemůže s řádky nijak
-    manipulovat.
+    The selection list shows data rows from which the user selects one row.
+    Apart from selecting and browsing, the user cannot otherwise manipulate
+    the rows.
 
-    Formulář je zobrazen jako modální okno pomocí metody 'run()', která skončí
-    po výběru položky a vrátí instanci PresentedRow pro vybraný řádek.  Pokud
-    byl formulář ukončen jinak než výběrem záznamu, je vrácena hodnota 'None'.
+    The form is displayed as a modal window using the 'run()' method. It
+    finishes after an item is selected and returns a PresentedRow instance for
+    the selected row. If the form was closed in any other way than selecting a
+    record, 'None' is returned.
 
     """
     DESCR = _("codebook")
@@ -2640,7 +2637,7 @@ class CodebookForm(PopupForm, FoldableForm, KeyHandler):
             self._grid.SetFocus()
             self._focus_forced_to_grid = True
         # Starting incremental on a table with just one row freezes the
-        # application, thus the aditional condition below as a work around.
+        # application, thus the additional condition below as a workaround.
         if self._begin_search and self._table.number_of_rows(min_value=1) > 1:
             begin_search = self._begin_search
             self._begin_search = None
@@ -2680,7 +2677,7 @@ class CodebookForm(PopupForm, FoldableForm, KeyHandler):
         return (MenuItem(_("Select"), command=Command(ListForm.activate)),)
 
     def _on_activation(self, alternate=False):
-        """Nastav návratovou hodnotu a ukonči modální dialog."""
+        """Set the return value and close the modal dialog."""
         self._result = self.current_row()
         self.Parent.EndModal(1)
         return True
@@ -2690,7 +2687,7 @@ class CodebookForm(PopupForm, FoldableForm, KeyHandler):
 
 
 class SelectRowsForm(CodebookForm):
-    """Řádkový pop-up formulář vracející tuple všech vybraných řádků."""
+    """Row popup form returning a tuple of all selected rows."""
 
     def _on_activation(self, alternate=False):
         self._result = tuple(self.selected_rows(fallback_to_current_row=True))
@@ -2699,7 +2696,7 @@ class SelectRowsForm(CodebookForm):
 
 
 class BrowseForm(FoldableForm):
-    """Formulář pro prohlížení dat s možností editace."""
+    """Form for browsing data in a tabular view."""
     def _init_attributes(self, **kwargs):
         super(BrowseForm, self)._init_attributes(**kwargs)
         menu = (
@@ -3076,7 +3073,7 @@ class SideBrowseForm(BrowseForm):
           row -- main form selected row as a PresentedRow instance.
 
         """
-        # log(EVENT, 'Filtrace obsahu formuláře:', (self._name, row))
+        # log(EVENT, 'Filtering form contents:', (self._name, row))
         self._main_form_row = row
         if self._xarguments is not None:
             self._selection_arguments = self._xarguments(row)

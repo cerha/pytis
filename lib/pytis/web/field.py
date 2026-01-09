@@ -1032,7 +1032,7 @@ class ArrayField(EnumerationField):
         return None
 
     def _editor(self, context, **kwargs):
-        raise NotImplementedError("Array field editation unsupported.")
+        raise NotImplementedError("Array field editing unsupported.")
 
     def hidden(self, context):
         g = context.generator()
