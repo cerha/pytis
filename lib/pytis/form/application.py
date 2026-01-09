@@ -82,20 +82,20 @@ unistr = type(u'')  # Python 2/3 transition hack.
 
 @pytis.api.implements(pytis.api.Application)
 class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler):
-    """Aplikace systému Pytis.
+    """Pytis system application.
 
-    Pro každou aplikaci systému Pytis existuje po celou dobu jejího běhu jedno
-    hlavní aplikační okno.  To se sestává jednak ze statických prvků a jednak z
-    vyměnitelného vnitřku okna (vlastních formulářů).  Statickými prvky jsou
-    pull-down menu a stavový řádek.
+    Each Pytis application has exactly one main application window for the
+    entire lifetime of the process. It consists of static UI elements and a
+    replaceable inner part (the actual forms). The static elements are the
+    pull-down menu and the status bar.
 
     The application may be customized by defining a class named 'Application'
-    within aplication's resolver modules.  This class must be derived from
+    within application's resolver modules. This class must be derived from
     'pytis.presentation.Application' and customizations may be done by
     overriding its methods and attributes (see the base class docstring).
 
-    Start uživatelského rozhraní spočívá ve vytvoření instance této třídy a
-    volání její metody 'run()'.
+    Starting the user interface consists of creating an instance of this class
+    and calling its 'run()' method.
 
     """
     _STATE_RECENT_FORMS = 'recent_forms'
@@ -154,7 +154,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         pytis.remote.write_python_version()
         wx.Log.SetActiveTarget(wx.LogStderr())
 
-        # Make sure menu icons are always displayed.  Without this, the icons are
+        # Ensure menu icons are always displayed.  Without this, the icons are
         # not displayed under certain conditions (sometimes within an x2go session,
         # sometimes on certain installations).
         gi.require_version('Gtk', '3.0')
@@ -162,7 +162,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         settings = gtk.Settings.get_default()
         settings.set_property('gtk-menu-images', True)
 
-        # Create the main application frame (set frame title later on).
+        # Create the main application frame. The title is set later.
         frame = self._frame = wx.Frame(None, -1, '', style=wx.DEFAULT_FRAME_STYLE)
         wx_callback(wx.EVT_CLOSE, frame, self._on_frame_close)
         wx_callback(wx.EVT_SIZE, frame, self._on_frame_size)
@@ -327,8 +327,8 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         saved_forms = []
         menu_names = pytis.extensions.get_menu_defs()
         for cls, name in self._get_state_param(self._STATE_STARTUP_FORMS, [], list, list):
-            # TODO: This probably ramained after legacy support for configurantion
-            # saved in picked objects.  Now with JSON, we will always get a string.
+            # TODO: This probably remained after legacy support for configuration
+            # saved in pickled objects. Now with JSON, we will always get a string.
             if isinstance(cls, basestring):
                 cls = getattr(pytis.form, cls)
             if ((issubclass(cls, pytis.form.Form) and
@@ -472,7 +472,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
             else:
                 return None
 
-        # At first, compute the maximal width of hotkey string in this menu.
+        # First, compute the maximum width of the hotkey string in this menu.
         max_hotkey_width = 0
         hotkey_strings = {}
         for item in spec.items:
@@ -650,7 +650,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         data.close()
         pd.dbfunction(PytisCryptoUnlockCurrentUserPasswords, crypto_password)
 
-    # Ostatní metody
+    # Other methods
 
     def _form_menu_item_title(self, form):
         title = form.title()
@@ -824,12 +824,12 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
             new_form.focus()
             self._previously_active_tab_index = old_index
 
-    # Callbacky
+    # Callbacks
 
     def _on_page_change(self, event):
-        # Strangely, we need to check whether this event belongs to the main
-        # form notebook, because wx sends side form notebook events to this
-        # event handler too.
+        # Surprisingly, we need to check whether this event belongs to the
+        # main form notebook, because wx also sends side form notebook events
+        # to this handler.
         if event.EventObject is self._notebook and not self._in_cleanup:
             self._switch_tabs(event.OldSelection, event.Selection)
         event.Skip()
@@ -909,11 +909,11 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
             self._update_tab_titles(self._frame.Size.x)
 
     def on_key_down(self, event, dont_skip=False):
-        # Believe it or not, wxWidgets crashes at various occasions when this
+        # Surprisingly, wxWidgets crashes in various situations when this
         # handler is not defined.
         return KeyHandler.on_key_down(self, event)
 
-    # Zpracování příkazů
+    # Command handling
 
     @Command.define
     def stop(self):
@@ -1018,7 +1018,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
 
     @Command.define
     def run_form(self, form_class, name, activate=True, **kwargs):
-        # Dokumentace viz funkce run_form().
+        # See run_form() function docstring for documentation.
         result = None
         try:
             if callable(name):
@@ -1187,7 +1187,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
     def _can_nothing(self, enabled=True):
         return enabled
 
-    # Veřejné atributy a metody
+    # Public attributes and methods
 
     @property
     def headless(self):
@@ -1234,7 +1234,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         finally:
             self._modals.pop()
             busy_cursor(False)
-        # Tento yield zaručí správné předání focusu oken.
+        # This yield ensures correct focus handover between windows.
         self.wx_yield()
         top = self.top_window()
         if top is not None:
@@ -1299,7 +1299,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
 
         Arguments:
 
-          full -- iff true, process also user events.
+          full -- if true, process also user events.
 
         """
         if self._yield_blocked:
@@ -1533,7 +1533,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         self._recent_directories[':'.join((cmode, context))] = directory
 
     class _ExposedFileWrapper(object):
-        """Wrapper over wrapper to hide difficiencies of legacy ExposedFileWrapper.
+        """Wrapper over wrapper to hide deficiencies of legacy ExposedFileWrapper.
 
         ExposedFileWrapper implementations from older Pytis2Go versions (which
         don't load remote clientapi.py) don't support some features we want in
@@ -1542,16 +1542,16 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         ExposedFileWrapper instance.
 
         Older Pytis2Go clients always open the file in binary mode with
-        'open_file()' and 'open_selected_file()'.  Encoding can not be passed
+        'open_file()' and 'open_selected_file()'.  Encoding cannot be passed
         to those methods so we perform encoding in this class and pass bytes
-        data to the underlying class.  For these always open remote files in
+        data to the underlying class.  For these, we always open remote files in
         binary mode and encode/decode the data in this class.
         'make_selected_file()' on the other hand does support text mode encoding
         so we pass the data without encoding in this case ('encoding' passed to
         our constructor is None).
 
-        Temporarily disabled: Also, because reading and writing data in small
-        chunks (such as using readline()) over a remote connection is really
+        # Temporarily disabled: Also, because reading and writing data in small
+        # chunks (such as using readline()) over a remote connection is really
         slow, we implement buffering through
         'io.BufferedReader'/'io.BufferedWriter' which significantly improves
         performance.
@@ -1621,7 +1621,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
                 self._buffer = buffer_class(self.BufferingWrapper(instance), self._BUFFER_SIZE)
             else:
                 # TODO: Apply buffering in all situations (also for app.make_selected_file(),
-                # which doesn't pass mode here?
+                # which doesn't pass mode here?)
                 self._buffer = instance
 
         def __getattr__(self, name):
@@ -1680,7 +1680,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
             return self._buffer.write(data)
 
         def close(self):
-            # způsobuje: BlockingIOError: [Errno 11] write could not complete without blocking
+            # Causes: BlockingIOError: [Errno 11] write could not complete without blocking
             if self._buffer is not self._instance:
                 self._buffer.close()
             self._instance.close()
@@ -1688,8 +1688,8 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
     def _wrap_exposed_file_wrapper(self, f, mode=None, encoding=None):
         if f:
             # Further wrap the ExposedFileWrapper instance to provide
-            # compatibility layer which can not be implemented in
-            # ExposedFileWrapper itself as long as we have old Pytis2go
+            # a compatibility layer which cannot be implemented in
+            # ExposedFileWrapper itself as long as we have old Pytis2Go
             # clients which don't load clientapi.py
             f = self._ExposedFileWrapper(f, mode=mode, encoding=encoding)
         return f
@@ -1757,8 +1757,8 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         if isinstance(form, pytis.form.Form) and form.set_status('message', message):
             return
         if not hasattr(self, '_status_fields'):
-            # Suppress errors during opening DB login input form, which needs
-            # to come up sooner than the status bar is initialized.
+            # Suppress errors while opening the DB login input form, which needs
+            # to appear before the status bar is initialized.
             return
         if kind == 'warning':
             app.status.message.icon = wx.ART_WARNING
@@ -2036,8 +2036,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         try:
             app.echo(_("Running procedure..."))
             log(ACTION, 'Running procedure:', (spec_name, proc_name, args, kwargs))
-            # Kvůli wx.SafeYield() se ztrácí focus, takže
-            # si ho uložíme a pak zase obnovíme.
+            # wx.SafeYield() causes focus to be lost, so we store it and restore it afterwards.
             focused = wx_focused_window()
             self.wx_yield()
             proc = pytis.config.resolver.get_object(spec_name, proc_name)
@@ -2286,17 +2285,17 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
             if ((sys.version_info[0] == 2 and isinstance(data, bytes)
                  and self.client_mode() == 'remote')):
                 # TODO: The older version of P2Go's pytisproc.py currently distributed
-                # between users doesn't handle text encoding quite well.  It attempts
-                # to encode everything which is not a 'buffer'.  We can remove this
-                # hack once all clients have a newer P2Go version.  As this doesn't
-                # even work in Python 3 (which doesn't have buffer) old clients will
+                # among users doesn't handle text encoding very well.  It tries
+                # to encode everything that is not a 'buffer'.  We can remove this
+                # hack once all clients have a newer P2Go version.  Since this doesn't
+                # even work in Python 3 (which doesn't have buffer), old clients will
                 # not work with Python3 at all.
                 data = buffer(data)
             # TODO: This is a temporary hack to avoid "TypeError: write()
             # argument must be str, not bytes" when the application passes
-            # invalid type due to insufficient Python 2/3 transition.  The
-            # logs should be observed and this hack should be removed
-            # once the problem does not occur for "some" time.
+            # an invalid type due to incomplete Python 2/3 transition.  The
+            # logs should be monitored and this hack should be removed
+            # once the problem has not occurred for "some" time.
             if 'b' not in mode and isinstance(data, bytes):
                 log(OPERATIONAL, "TypeError: write_selected_file() 'data' argument must be str, "
                     "not bytes when mode is '{}'.".format(mode), pytis.util.stack_info())
@@ -2358,7 +2357,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         # TODO: Add 'encoding' argument.
         if sys.version_info[0] == 2 and isinstance(data, bytes):
             # Maybe the same problem as described in write_selected_file() may apply
-            # here?  Morover RPyC doesn't seem to pass pd.Binary.Data correctly
+            # here?  Moreover, RPyC doesn't seem to pass pd.Binary.Data correctly
             # and leads to "TypeError: argument 1 must be convertible to a buffer,
             # not Data" on remote write attempt.  See issue #2.
             data = buffer(data)
@@ -2456,29 +2455,29 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         return self._OutputFormatter(pytis.config.resolver, resolvers, template_id, **kwargs)
 
 
-# Funkce odpovídající příkazům aplikace.
+# Functions corresponding to application commands.
 
 def run_form(form_class, name=None, **kwargs):
-    """Vytvoř formulář a spusť jej v aplikaci.
+    """Create a form and run it in the application.
 
-    Argumenty:
+    Arguments:
 
-      form_class -- třída vytvářeného formuláře (odvozená od třídy 'Form').
+      form_class -- class of the created form (derived from 'Form').
 
-      name -- název specifikace pro resolverů řetězec.
+      name -- specification name for the resolver as a string.
 
-      kwargs -- klíčové arguementy, které mají být předány konstruktoru
-        formuláře.  Argumenty 'parent' a 'resolver' budou doplněny automaticky.
+      kwargs -- keyword arguments to be passed to the form constructor.
+        The 'parent' and 'resolver' arguments will be supplied automatically.
 
-    Vytvořený formulář bude zobrazen v okně aplikace, nebo v novém modálním
-    okně (pokud jde o modální formulář odvozený od třídy 'PopupForm').  Okno
-    nemodálního formuláře zůstává po návratu této funkce v aplikaci otevřeno
-    (lze jej odstranit příkazem 'Form.leave_form').  V případě
-    modálního formuláře se funkce vrací až po jeho uzavření.
+    The created form will be displayed in the application window, or in a new
+    modal window (if it is a modal form derived from 'PopupForm').  The window
+    of a non-modal form remains open in the application after this function
+    returns (it can be removed with the 'Form.leave_form' command).  For a
+    modal form, the function returns only after the form is closed.
 
-    Vrací: Návratovou hodnotu metody 'run()' v případě modálního formuláře,
-    nebo None v případě nemodálního formuláře.  Pokud formulář nelze spustit
-    (např. nedostatečná přístupová práva) , vrací False.
+    Returns: The return value of the 'run()' method in case of a modal form,
+    or None in case of a non-modal form.  If the form cannot be run
+    (e.g. insufficient access rights), returns False.
 
     """
     command = Command(Application.run_form, form_class=form_class, name=name, **kwargs)
@@ -2488,19 +2487,19 @@ def run_form(form_class, name=None, **kwargs):
     return command.invoke()
 
 def db_operation(operation, *args, **kwargs):
-    """Invoke database operation with handling possible DB errors.
+    """Invoke a database operation with handling of possible DB errors.
 
-    'operation' is called with given arguments.  If 'pd.dbdata.DBException' is
-    raised during the operation, an error dialog is displayed with exception
+    'operation' is called with the given arguments.  If 'pd.dbdata.DBException' is
+    raised during the operation, an error dialog is displayed with the exception
     description and a question asking whether the user wishes to re-invoke the
     operation.  The operation is repeated as long as the user answers the
     question positively.
 
-    The exceptions of type 'DBLoginException' result in displaying a login
+    Exceptions of type 'DBLoginException' result in displaying a login
     dialog and the supplied username and password is set before repeating the
     operation.
 
-    When the operation is performed successfully (regardless whether on the
+    When the operation is performed successfully (regardless of whether on the
     first try or later), its result is returned.
 
     Arguments:
@@ -2508,10 +2507,10 @@ def db_operation(operation, *args, **kwargs):
         and returning its result.
       args, kwargs -- arguments and keyword arguments passed to the function,
         excluding the keyword arguments named below.
-      allow_retry -- iff true, offer the user a chance for restoring the
+      allow_retry -- if true, offer the user a chance to retry the
         operation.  It is on by default when 'kwargs' contain a 'translation'.
         Off otherwise.
-      quiet -- iff true, don't report errors to the user at all (regardless
+      quiet -- if true, don't report errors to the user at all (regardless
         of 'allow_retry').
 
     Returns: Pair (SUCCESS, RESULT), where SUCCESS is a boolean flag indicating
@@ -2519,7 +2518,7 @@ def db_operation(operation, *args, **kwargs):
     'operation' (if SUCCESS is false, RESULT is not defined).
 
     """
-    # Don't offer the user a chance for restoring the operation when inside transaction.
+    # Don't offer the user a chance to retry the operation when inside a transaction.
     allow_retry = kwargs.pop('allow_retry', kwargs.get('transaction') is None)
     quiet = kwargs.pop('quiet', False)
     FAILURE = False, None
