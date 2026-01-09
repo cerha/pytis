@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2025 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2026 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2013 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -16,12 +16,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Práce s uživatelským rozhraním.
+"""User interface implementation.
 
-Modul obsahuje vše co souvisí s uživatelským rozhraním a vše co má něco
-společného s wxWidgets.  Všechny obslužné záležitosti uživatelského rozhraní
-jsou implementovány v tomto modulu, mimo tento modul se definují pouze
-specifikace jednotlivých prvků rozhraní.
+The module contains everything related to the user interface and everything
+related to wxWidgets.  All UI handling is implemented in this module; only
+generic specifications of individual UI elements are defined outside this
+module.
 
 """
 
