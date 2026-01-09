@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2025 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2026 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2002-2016 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -1177,10 +1177,10 @@ class Configuration(object):
     class _Option_row_highlight_edited_color(ColorOption):
         """Edited table row highlight color.
 
-        The current row border has a different color during inline editation.
+        The current row border has a different color during inline editing.
 
         """
-        _DESCR = _("Current row highlight color in table forms during inline editation.")
+        _DESCR = _("Current row highlight color in table forms during inline editing.")
         _DEFAULT = '#ff0000'
 
     class _Option_row_highlight_unfocused_color(ColorOption):
