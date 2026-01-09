@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2025 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2026 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2016 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -28,7 +28,7 @@ _ = pytis.util.translations('pytis-wx')
 
 FIELDS = (
     Field('row_highlight_color', _("Default")),
-    Field('row_highlight_edited_color', _("During inline editation")),
+    Field('row_highlight_edited_color', _("During inline editing")),
     Field('row_highlight_unfocused_color', _("Inactive form")),
     Field('row_highlight_width', _("Border width"), width=2, slider=True),
     Field('cell_highlight_color', _("Current cell highlight")),
@@ -36,7 +36,7 @@ FIELDS = (
     Field('grouping_background_downgrade', _("Grouping background change")),
     Field('show_splash', _("Show start-up dialog")),
     Field('show_tooltips', _("Show tooltips")),
-    Field('auto_menu_accel', _("Automatically numbered menus with accellerator keys")),
+    Field('auto_menu_accel', _("Automatically numbered menus with accelerator keys")),
     Field('stretch_tables', _("Automatically stretch tables to full window width")),
     Field('sender_address', _("E-mail address"), width=45),
     Field('export_encoding', _("Character encoding")),
