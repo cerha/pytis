@@ -86,7 +86,7 @@ class DataTable(object):
 
     def _panic(self):
         if __debug__:
-            log(DEBUG, 'Zpanikaření gridové tabulky')
+            log(DEBUG, 'Grid table panic')
 
     def _retrieve_row(self, row):
         def fetch(row):

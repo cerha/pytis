@@ -829,7 +829,7 @@ class Refreshable(object):
         if level == 0:
             self._refresh(interactive=interactive)
         elif level > 0:
-            log(OPERATIONAL, "Refresh bloked:", level)
+            log(OPERATIONAL, "Refresh blocked:", level)
         else:
             raise ProgramError("Invalid _block_refresh level:", level)
 
@@ -3841,7 +3841,7 @@ class QueryFieldsForm(_VirtualEditForm):
         return super(QueryFieldsForm, self).restore()
 
     def run(self):
-        raise Exception("This form can not be run.")
+        raise Exception("This form cannot be run.")
 
     def row(self):
         if self._initialized:
