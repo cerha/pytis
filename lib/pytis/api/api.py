@@ -1477,9 +1477,9 @@ class BaseApplication(object):
 
     def _output_formatter(self, template_id, **kwargs):
         import pytis.output
-        output_resover = pytis.output.OutputResolver(pytis.config.print_spec_dir,
+        output_resolver = pytis.output.OutputResolver(pytis.config.print_spec_dir,
                                                      pytis.config.resolver)
-        return pytis.output.Formatter(pytis.config.resolver, (output_resover,),
+        return pytis.output.Formatter(pytis.config.resolver, (output_resolver,),
                                       template_id, **kwargs)
 
     def api_printout(self, spec_name, template_id, row=None,

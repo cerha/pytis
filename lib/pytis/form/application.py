@@ -2445,7 +2445,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         # the reaction to some errors in the wx application and launch a PDF viewer
         # automatically when output_file is not specified, so we use a customized
         # self._OutputResolver and self._OutputFormatter.
-        output_resovers = (
+        resolvers = (
             pytis.output.DatabaseResolver('ev_pytis_user_output_templates',
                                           ('template', 'rowtemplate', 'header',
                                            'first_page_header', 'footer', 'style'),
@@ -2453,7 +2453,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
                                            'first_page_header', 'page_footer', 'style')),
             self._OutputResolver(pytis.config.print_spec_dir, pytis.config.resolver),
         )
-        return self._OutputFormatter(pytis.config.resolver, output_resovers, template_id, **kwargs)
+        return self._OutputFormatter(pytis.config.resolver, resolvers, template_id, **kwargs)
 
 
 # Funkce odpovídající příkazům aplikace.

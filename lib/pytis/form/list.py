@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2025 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2026 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2017 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -1571,10 +1571,10 @@ class ListForm(RecordForm, Refreshable):
     def toggle_row_labels(self):
         g = self._grid
         if g.GetRowLabelSize() == 0:
-            widht = self._ROW_LABEL_WIDTH
+            width = self._ROW_LABEL_WIDTH
         else:
-            widht = 0
-        g.SetRowLabelSize(widht)
+            width = 0
+        g.SetRowLabelSize(width)
         g.FitInside()
         self.refresh()
 
