@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2024 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2026 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2006-2017 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -312,9 +312,9 @@ class Field:
         return self._row[self.id]
 
     def _editor_kwargs(self, context):
-        """Return editor field keyword arguemnts as a dictionary.
+        """Return editor field keyword arguments as a dictionary.
 
-        In this class the method returns the basic set of arguemnts common to
+        In this class the method returns the basic set of arguments common to
         all fields types.  Derived classes will usually just add field specific
         arguments (or may return completely different arguments when the field
         type requires it).
