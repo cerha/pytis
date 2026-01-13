@@ -41,11 +41,11 @@ class EPytisCryptoKeys(Base_LogSQLTable):
     fields = (sql.PrimaryColumn('key_id', pytis.data.Serial()),
               sql.Column('name', pytis.data.String(not_null=True), label=_("Šifrovací oblast"),
                          references=sql.a(sql.r.CPytisCryptoNames.name, onupdate='CASCADE')),
-              sql.Column('username', pytis.data.String(not_null=True), label=_("Uživatel"),
-                         doc="Arbitrary user identifier."),
+              sql.Column('username', pytis.data.String(not_null=True), label=_("User"),
+                         doc=_("Arbitrary user identifier.")),
               sql.Column('key', pytis.data.Binary(not_null=True)),
-              sql.Column('fresh', pytis.data.Boolean(not_null=True), label=_("Nový"),
-                         doc="Flag indicating the key is encrypted by a non-login password. ",
+              sql.Column('fresh', pytis.data.Boolean(not_null=True), label=_("New"),
+                         doc=_("Flag indicating the key is encrypted by a non-login password."),
                          default=False),
               )
     inherits = (XChanges,)

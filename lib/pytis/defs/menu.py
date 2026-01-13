@@ -96,7 +96,8 @@ class ApplicationRoles(_ApplicationRolesSpecification):
               descr=_("A short role name or database username.")),
         Field('description', "Popis",
               descr=_("Role description.")),
-        Field('purposeid', _("Purpose"), not_null=True, codebook='menu.CommonApplicationRolePurposes',
+        Field('purposeid', _("Purpose"), not_null=True,
+              codebook='menu.CommonApplicationRolePurposes',
               fixed=True, selection_type=pytis.presentation.SelectionType.CHOICE,
               descr=_("Role purpose: normal, user account, administrator.")),
         Field('purpose', _("Purpose"),
@@ -125,8 +126,9 @@ class ApplicationRoles(_ApplicationRolesSpecification):
 
     def actions(self):
         return (
-            pytis.presentation.Action('copy_roles', _("Copy roles from..."), self._copy_roles,
-                                      descr=("Nastavení aplikačních rolí dle jiného uživatele.")),
+            pytis.presentation.Action(
+                'copy_roles', _("Copy roles from..."), self._copy_roles,
+                descr=_("Configure application roles based on another user.")),
         )
     bindings = (pytis.presentation.Binding('members', _("Contains roles"),
                                            'menu.ApplicationRolesMembers',
@@ -426,11 +428,11 @@ class ApplicationMenuM(pytis.presentation.Specification):
     def actions(self):
         return (
             pytis.presentation.Action('copy_rights', _("Copy rights from..."), self._copy_rights,
-                                      descr=("Zkopírování práv z jiné položky.")),
+                                      descr=_("Copy permissions from another item.")),
             pytis.presentation.Action('a_odstranit_nadbytecna_prava',
                                       _("Remove redundant rights"), self._remove_redundant,
-                                      descr=("Odstranění položek práv, které nemají vliv "
-                                             "na výsledná práva.")),
+                                      descr=_("Remove permission entries that have no effect "
+                                              "on the resulting permissions.")),
         )
     access_rights = pytis.data.AccessRights((None, (['admin_menu'],
                                                     pytis.data.Permission.VIEW,
@@ -663,8 +665,8 @@ class _ApplicationMenuRightsBase(pytis.presentation.Specification):
         errors = (menu_checker.check_codebook_rights(spec_name, new=True) +
                   menu_checker.check_reverse_codebook_rights(spec_name, new=True))
         if errors:
-            message = ('\n'.join(errors)) + '\n\n\n'
-            app.warning("Rozporuplná přístupová práva k číselníku", content=message)
+            app.warning(_("Contradictory codebook access rights."),
+                        content=('\n'.join(errors)) + '\n\n\n')
 
     def _before_edit_checks(self):
         self._multiaction_check()
@@ -753,7 +755,7 @@ class ApplicationMenuRights(_ApplicationMenuRightsBase):
         if result:
             self._after_edit_checks()
         else:
-            result = "Řádek se nepodařilo vymazat"
+            result = _("Failed to delete the row.")
         return result
 
     @procedure
@@ -856,7 +858,7 @@ class ApplicationMenuRightsFoldable(_ApplicationMenuRightsBase):
         if result:
             self._after_edit_checks()
         else:
-            result = "Řádek se nepodařilo vymazat"
+            result = _("Failed to delete the row.")
         return 1
 
 
