@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2025 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2026 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2012-2017 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -373,7 +373,7 @@ class HelpGenerator(object):
     def _spec_help_content(self, spec_name):
         if not app.has_access(spec_name):
             return (_("Access Denied"),
-                    lcg.p(_("You don't have permissions for specification „%s“.") % spec_name))
+                    lcg.p(_("You don't have permissions for specification '%s'.") % spec_name))
         resolver = pytis.config.resolver
         try:
             view_spec = resolver.get(spec_name, 'view_spec')

@@ -1377,14 +1377,7 @@ class ProfileSelector(wx.ComboCtrl, CommandHandler):
 
 class TextHeadingSelector(wx.Choice):
     """Toolbar control for structured text heading level selection."""
-    _CHOICES = ("Běžný text",
-                "Nadpis úrovně 1",
-                "Nadpis úrovně 2",
-                "Nadpis úrovně 3",
-                "Nadpis úrovně 4",
-                "Nadpis úrovně 5",
-                "Nadpis úrovně 6",
-                )
+    _CHOICES = (_("Regular text"),) + tuple(_("Heading level {}").format(i + 1) for i in range(6))
 
     def __init__(self, parent, command, size=None):
         self._command = command
@@ -2304,7 +2297,7 @@ def orientation2wx(orientation):
     elif orientation == Orientation.HORIZONTAL:
         return wx.HORIZONTAL
     else:
-        raise ProgramError("Neplatná hodnota Orientation:", orientation)
+        raise ProgramError("Invalid Orientation value:", orientation)
 
 # Helper functions
 
