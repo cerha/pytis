@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2025 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2026 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2017 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -5237,7 +5237,7 @@ class Command(object):
     place determined by availability of an instance to invoke the command on.
     In addition it can be limited by defining the instance method
     '_can_<name>', where '<name>' is the command method name, which accepts the
-    same arguemnts as the command method.
+    same arguments as the command method.
 
     >>> class MorningGreeter(Greeter):
     ...     def _can_greet(self, greeting):
@@ -5365,11 +5365,11 @@ class Command(object):
 
         Arguments passed to the constructor as positional are mapped to
         corresponding argument names by inspecting the command method
-        definition, so whwther the arguemnts are passed as positional or
+        definition, so whwther the arguments are passed as positional or
         keyword can't be distinguished.
 
-        When the command method accepts variable positional arguemnts, such as
-        '*args', and these arguemnts will appear in the returned dictionary as
+        When the command method accepts variable positional arguments, such as
+        '*args', and these arguments will appear in the returned dictionary as
         a tuple keyed by the argument name including the initial '*'.
 
         >>> class Greeter(CommandHandler):
@@ -5450,7 +5450,7 @@ class Command(object):
 
     @property
     def enabled(self):
-        """Return True if the command is enabled with its arguemnts."""
+        """Return True if the command is enabled with its arguments."""
         handler = self.handler
         if handler and handler.command_enabled(self):
             return True
@@ -5461,7 +5461,7 @@ class Command(object):
         """Invoke the command if enabled.
 
         Invokes the command method on command handler instance, passing it all
-        positional and keyword arguemnts from the constructor.
+        positional and keyword arguments from the constructor.
 
         Availability of the command is first checked using the 'enabled'
         property and if it returns True, the method is invoked and its return

@@ -341,7 +341,7 @@ class SFDialog(SFSDialog):
                 else:
                     value = arg2.export()
             else:
-                raise Exception("Invalid operand type: " + repr(arg))
+                raise Exception("Invalid operand type: " + repr(arg2))
             return (op, col1, col2, value),
         elif name == 'IN' and isinstance(operator, pytis.presentation.IN):
             return ((operator,),)
