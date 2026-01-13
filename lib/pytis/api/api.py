@@ -196,7 +196,7 @@ class Form(API):
     """Current filtering condition as a 'pytis.data.Operator' instance or None."""
 
     arguments = property()
-    """Current arguemnts as a dictionary of 'pytis.data.Value' instances or None."""
+    """Current arguments as a dictionary of 'pytis.data.Value' instances or None."""
 
     sorting = property()
     """Current sorting as in 'pytis.data.Data.select()' or None."""
