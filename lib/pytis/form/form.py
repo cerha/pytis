@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2025 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2026 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2018 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -31,10 +31,12 @@ from past.builtins import basestring
 from builtins import object
 from future.utils import python_2_unicode_compatible
 
+import codecs
 import contextlib
 import copy
 import functools
 import lcg
+import sys
 import time
 import wx
 
@@ -46,14 +48,14 @@ import pytis.util
 
 from pytis.api import app
 from pytis.presentation import (
-    ActionContext, Button, Computer, Editable, Field, GroupSpec,
+    ActionContext, Button, Computer, Editable, Field, FieldSet, GroupSpec,
     Orientation, PresentedRow, PrintAction, Profile, Specification,
     TabGroup, Text, TextFormat, ViewSpec, Menu, MenuItem, MenuSeparator,
-    Command,
+    Command, computer,
 )
 from pytis.util import (
-    ACTION, EVENT, OPERATIONAL, ProgramError, ResolverError, UNDEFINED,
-    find, format_traceback, log, xlist, xtuple,
+    ACTION, EVENT, OPERATIONAL, ProgramError, ResolverError, SizedIterator,
+    UNDEFINED, find, format_traceback, log, xlist, xtuple,
 )
 
 from .event import UserBreakException, wx_callback
@@ -2037,10 +2039,10 @@ class RecordForm(LookupForm):
                 fspec = self._view.field(cid)
                 if cid in keys or fspec.nocopy():
                     continue
-                computer = fspec.computer()
-                if computer:
+                comp = fspec.computer()
+                if comp:
                     skip = False
-                    for dep in computer.depends():
+                    for dep in comp.depends():
                         if dep in keys:
                             skip = True
                             break
@@ -2249,14 +2251,20 @@ class RecordForm(LookupForm):
         """Interactively import data from a CSV file (confirm each record in an edit form)."""
         class Separators(pytis.presentation.Enumeration):
             enumeration = (
-                ('|', _("Pipe '|'")),
-                (',', _("Comma ','")),
-                (';', _("Semicolon ';'")),
-                ('\t', _("TAB")),
-                ('other', _.pgettext('custom', "Other")),
+                ('|', _("Pipe")),
+                (',', _("Comma")),
+                (';', _("Semicolon")),
+                ('TAB', _("TAB")),
+                ('OTHER', _("Other")),
             )
             default = '|'
             selection_type = pytis.presentation.SelectionType.RADIO
+        def is_valid_encoding(encoding):
+            try:
+                codecs.lookup(encoding)
+            except (LookupError, TypeError):
+                return False
+            return True
 
         if not self._data.permitted(None, pytis.data.Permission.INSERT):
             app.echo(_(u"Insufficient permissions to insert records to this table."),
@@ -2281,70 +2289,95 @@ class RecordForm(LookupForm):
             )),
         )
         result = app.input_form(title=_(u"Batch import"), fields=(
-            Field('separator', _("Common separators"), enumerator=Separators,
-                  not_null=True,
-                  descr=_("The character used to separate column values "
-                          "in each input file row.")),
-            Field('custom', _("Custom separator"),
-                  check=pytis.presentation.computer(
-                      lambda r, separator, custom:
-                      _("The value is mandatory when 'Other' is selected above.")
-                      if separator == 'other' and not custom else None
-                  ),
-                  editable=pytis.presentation.computer(
-                      lambda e, separator: separator == 'other'
-                )),
-        ), layout=(content, 'separator', 'custom'))
+            Field('sel', '', enumerator=Separators, not_null=True),
+            Field('separator', _("Separator"), not_null=True,
+                  computer=computer(lambda r, sel: '' if sel == 'OTHER' else sel),
+                  editable=computer(lambda e, sel: sel == 'OTHER'),
+                  descr=_("The character used to separate column values in each input row. "
+                          "Select one of the predefined options, "
+                          "or choose Other to enter a custom character.")),
+            Field('encoding', _("Encoding"), default='UTF-8', not_null=True,
+                  check=computer(lambda r, encoding: _("Unsupported encoding.")
+                                 if not is_valid_encoding(encoding) else None)),
+        ), layout=(
+            content,
+            FieldSet(_("Separator character selection"), ('sel', 'separator')),
+            'encoding',
+        ))
         if not result:
             return False
-        separator = result['separator'].value()
-        if separator == 'other':
-            separator = result['custom'].value()
-        fh = app.open_selected_file(mode='r', filetypes=('csv', 'txt'))
+        separator = '\t' if result['separator'].value() == 'TAB' else result['separator'].value()
+        encoding = result['encoding'].value()
+        fh = app.open_selected_file(mode='rb', filetypes=('csv', 'txt'))
         if not fh:
             app.echo(_(u"No file given. Import aborted."), kind='warning')
             return False
-        # Make a local copy of the remote file as long as transparent remote file buffering
-        # is deactivated in Application._ExposedFileWrapper.__init__().
-        if pytis.remote.client_connection_ok():
-            import tempfile
-            flocal = tempfile.NamedTemporaryFile()
-            filename = flocal.name
-            flocal.write(fh.read())
-            fh.close()
-            fh = flocal
-            fh.seek(0)
         with fh:
-            columns = [cid.strip() for cid in fh.readline().rstrip('\r\n').split(separator)]
-            try:
-                types = [self._row[cid].type() for cid in columns]
-            except KeyError as e:
-                app.error(_("Invalid column id in CSV file, line 1: '{}'").format(e))
-                return
+            # Read the entire file into memory. This is required in remote
+            # mode for efficiency (line-by-line reads are slow), and doing
+            # otherwise in local mode is not worth the added complexity,
+            # since the operation is not intended for large datasets — the
+            # user confirms each row interactively — so this should be safe.
+            # Decoding all lines upfront also ensures that encoding errors
+            # are detected before data entry begins, not in the middle of it.
+            data = fh.read()
+        try:
+            lines = data.decode(encoding).splitlines()
+        except UnicodeDecodeError:
+            app.error(_("The file is not encoded in {encoding}.\n"
+                        "Please choose the correct encoding for this file,\n"
+                        "or save it using {encoding} and try again.")
+                      .format(encoding=encoding))
+            return
+        if not lines:
+            app.error(_("The file is empty."))
+            return
 
-            class Continue(Exception):
-                pass
+        columns = [cid.strip() for cid in lines[0].rstrip('\r\n').split(separator)]
+        try:
+            types = [self._row[cid].type() for cid in columns]
+        except KeyError as e:
+            app.error(_("Invalid column id in CSV file, line 1: '{}'").format(e))
+            return
+        labels = [self._view.field(cid).column_label() for cid in columns]
 
-            def validate(cid, t, value, line_number):
-                kwargs = {'format': t.DEFAULT_FORMAT} if isinstance(t, pytis.data.DateTime) else {}
-                result, error = t.validate(value, strict=False, **kwargs)
-                if error:
-                    app.error(_("Invalid data in CSV file, line {}, column {}:")
-                              .format(line_number, cid)
-                              + '\n' + value + ': ' + error.message() + '\n' +
-                              _("Skipping line {}.").format(line_number))
-                    raise Continue()
-                return result.value()
-
-            def inserted_data():
-                for i, line in enumerate(fh):
-                    values = line.rstrip('\r\n').split(separator)
-                    try:
-                        yield {cid: validate(cid, t, value, i + 2)  # i is 0 at line 2...
-                               for cid, t, value in zip(columns, types, values)}
-                    except Continue:
+        def inserted_data():
+            for i, line in enumerate(lines[1:]):
+                values, errors = {}, []
+                for cid, t, label, val in zip(columns, types, labels,
+                                              line.rstrip('\r\n').split(separator)):
+                    kwargs = {'format': t.DEFAULT_FORMAT} if isinstance(t, pytis.data.DateTime) else {}
+                    value, error = t.validate(val, strict=False, **kwargs)
+                    if error:
+                        errors.append((label, val[:30] + ('...' if len(val) > 30 else ''),
+                                       error.message()))
+                    else:
+                        values[cid] = value
+                if errors:
+                    answer = app.question(
+                        _("Invalid data in CSV file line {}:").format(i + 2) + '\n' +
+                        '\n'.join(_("• {}: {}: {}").format(label, val, err)
+                                  for label, val, err in errors),
+                        answers=(
+                            dict(label=_("Insert anyway"), icon='ok', value='insert',
+                                 descr=_("Insert this row despite validation errors.")),
+                            dict(label=_("Skip row"), icon='go-forward', value='skip',
+                                 descr=_("Do not import this row and continue.")),
+                            dict(label=_("Abort"), icon='cancel', value='abort',
+                                 descr=_("Stop the import process.")),
+                        )
+                    )
+                    if answer == 'abort':
+                        # TODO NOPY2: return 'aborted' (Syntax error in Python 2)
+                        # See _load_next_row()...
+                        yield 'aborted'
+                        return
+                    elif answer == 'skip':
+                        yield None
                         continue
-            app.new_record(self._name, prefill=self._prefill, inserted_data=inserted_data())
+                yield values
+        app.new_record(self._name, prefill=self._prefill,
+                       inserted_data=SizedIterator(inserted_data(), len(lines) - 1))
 
     @Command.define
     def open_editor(self, field_id):
@@ -3006,12 +3039,20 @@ class EditForm(RecordForm, Refreshable):
                 success = None
             try:
                 i, item = next(self._inserted_data)
-            except StopIteration:
+                while item is None:
+                    i, item = next(self._inserted_data)
+                # TODO NOPY2: Remove when import_interactive() does return 'abort'
+                # (Syntax error in Python 2) instead of yield 'abort'.
+                if item == 'aborted':
+                    raise StopIteration('aborted')
+            except StopIteration as e:
                 self.set_status('progress', '')
-                app.message('\n\n'.join([m for m in (
-                    success,
-                    _("All records have been processed.")
-                ) if m]))
+                # TODO NOPY2: Replace by: if e.value != 'aborted' (see above).
+                if not (e.args and e.args[0] == 'aborted'):
+                    app.message('\n\n'.join([m for m in (
+                        success,
+                        _("All records have been processed.")
+                    ) if m]))
                 self._inserted_data = None
                 self.close()
             else:
@@ -3371,9 +3412,7 @@ class PopupEditForm(PopupForm, EditForm):
             connection_name = pytis.config.resolver.get(self._name, 'data_spec').connection_name()
         except ResolverError:
             connection_name = None
-        return pytis.data.DBTransactionDefault(pytis.config.dbconnection,
-                                               connection_name=connection_name,
-                                               ok_rollback_closed=True)
+        return pytis.data.transaction(connection_name=connection_name, ok_rollback_closed=True)
 
     def _init_attributes(self, multi_insert=True, **kwargs):
         """Process constructor keyword arguments and initialize the attributes.
@@ -3512,7 +3551,7 @@ class PopupEditForm(PopupForm, EditForm):
 
     def set_row(self, row):
         if self._transaction is None:
-            self._transaction = pytis.data.DBTransactionDefault(pytis.config.dbconnection)
+            self._transaction = pytis.data.transaction()
         super(PopupEditForm, self).set_row(row)
 
 

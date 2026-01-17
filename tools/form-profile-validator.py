@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2019-2023 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2019-2023, 2025 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2010-2018 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -85,7 +85,7 @@ def run():
     usernames = [v.value() for v in data.distinct('username')]
     resolver = pytis.config.resolver
     for username in usernames:
-        manager = FormProfileManager(pytis.config.dbconnection, username=username)
+        manager = FormProfileManager(username=username)
         for spec_name in manager.list_spec_names():
             try:
                 view_spec, data_object, error = cache[spec_name]

@@ -218,7 +218,7 @@ class TestPresentedRow:
         # so we can't create a real transaction here.  Using 'x' is invalid for
         # real use but it stil verifies that set_transaction works as long as
         # set_transaction doesn't validate its argument.
-        transaction = 'x'  # pd.DBTransactionDefault(pytis.config.dbconnection)
+        transaction = 'x'  # pd.transaction()
         row.set_transaction(transaction)
         assert row.transaction() == transaction
 

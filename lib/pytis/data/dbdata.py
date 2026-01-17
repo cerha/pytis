@@ -937,12 +937,16 @@ def dbfunction(fspec, *args, **kwargs):
         return result[0][0].value()
 
 
-def transaction():
-    """Create a new database transaction for current connection and return it.
+REPEATABLE_READ = 'repeatable read'
+"""Repeatable read transaction isolation level."""
 
-    Returns a 'DBTransactionDefault' instance.  Aims to simplyfy new
-    transaction creation in applications and avoid the need to access
-    pytis.config (requiring importing it).
+def transaction(**kwargs):
+    """Return a new database transaction bound to the configured DB connection.
 
+    Arguments:
+        **kwargs: Additional transaction options forwarded to DBTransactionDefault.
+
+    Returns:
+        DBTransactionDefault instance.
     """
-    return pytis.data.DBTransactionDefault(pytis.config.dbconnection)
+    return pytis.data.DBTransactionDefault(pytis.config.dbconnection, **kwargs)

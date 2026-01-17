@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2024 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2025 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2002-2014 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -293,7 +293,7 @@ def add_crypto_user(area, user, admin_user, admin_password, admin_address, conne
     try:
         transaction_ = transaction
         if transaction_ is None:
-            transaction_ = pytis.data.DBTransactionDefault(connection_data)
+            transaction_ = pytis.data.transaction()
         condition = pytis.data.AND(pytis.data.EQ('name', pytis.data.sval(area)),
                                    pytis.data.EQ('username', pytis.data.sval(user)))
         data = pytis.data.dbtable('e_pytis_crypto_keys', ('name', 'username',), connection_data)
