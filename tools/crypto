@@ -28,6 +28,7 @@ import optparse
 import os
 import string
 import sys
+import random
 
 import psycopg2 as dbapi
 
@@ -138,7 +139,7 @@ def command_new_key(configuration, args):
     if password is None:
         print("Error: passwords do not match")
         return
-    key = string.join(['%02x' % (ord(b),) for b in os.urandom((bits + 7) // 8)], '')
+    key = ''.join(random.choice('0123456789abcdef') for _ in range((bits + 7) // 8))
     function = pytis.data.DBFunctionDefault('pytis_crypto_insert_key', connection_data)
     row = pytis.data.Row((
         ('name_', pytis.data.sval(area),),
