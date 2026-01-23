@@ -46,12 +46,16 @@ import sys
 import json
 import getpass
 import argparse
+import shutil
+import subprocess
+import tempfile
 
 import psycopg2
 import psycopg2.extras
 import psycopg2.extensions
 
 
+META_PREFIX = '# META = '
 SYSTEM_SCHEMAS = set(('pg_catalog', 'information_schema', 'pg_toast'))
 
 
@@ -268,7 +272,7 @@ def dump(args):
                                       if c['typcategory'] == 'S' or c['typname'] == 'citext']
             dump_columns = list(key) + [c for c in searchable_columns if c not in key]
 
-            print(json.dumps({
+            print(META_PREFIX + json.dumps({
                 'schema': schema,
                 'table': table,
                 'key': key,
@@ -327,9 +331,49 @@ def format_snippet(value: str, start: int, end: int, context: int):
     return prefix + value[start:end] + suffix
 
 
+@contextlib.contextmanager
+def prefilter_input(input_path, patterns, prefilter='grep', regex=False):
+    with tempfile.NamedTemporaryFile(mode='w', encoding='utf-8', delete=True) as pf:
+        # Save patterns for grep -f (empty lines and comments dropped earlier in load_patterns()).
+        pf.write('\n'.join(patterns) + '\n')
+        pf.flush()
+
+        # In fixed-string mode (-F) we cannot anchor to line start; '^' would be literal.
+        # META_PREFIX + '{' makes accidental matches in TSV unlikely, and we still validate
+        # meta lines in Python (startswith(META_PREFIX)) before json.loads().
+        meta = META_PREFIX + '{'
+        if regex:
+            meta = '^' + re.escape(meta)
+
+        if prefilter == 'grep':
+            argv = ['grep', '-E' if regex else '-F', '-i', '-e', meta, '-f', pf.name]
+        else:
+            argv = ['rg', '-i', '-e', meta, '-f', pf.name]
+            if not regex:
+                argv.insert(1, '-F')
+
+        if input_path == '-':
+            kwargs = dict(stdin=sys.stdin)
+        else:
+            argv.append(input_path)
+            kwargs = dict()
+        proc = subprocess.Popen(argv, stdout=subprocess.PIPE, text=True, bufsize=1, **kwargs)
+        try:
+            yield proc.stdout
+        finally:
+            if proc.stdout is not None:
+                proc.stdout.close()
+            status = proc.wait()
+            if status not in (0, 1):
+                raise RuntimeError(f'{argv[0]} failed with exit status {status}')
+
+
 def search(args):
     if args.input == '-' and args.patterns_file == '-':
         error("Patterns file and input dump cannot both be read from stdin ('-').")
+        sys.exit(2)
+    if args.prefilter != 'none' and not shutil.which(args.prefilter):
+        error(f'"{args.prefilter}" not found in PATH.')
         sys.exit(2)
     patterns = load_patterns(args.patterns_file)
     if not patterns:
@@ -340,18 +384,22 @@ def search(args):
     counts = {p: 0 for p in patterns}
     hits = {p: [] for p in patterns}
 
-    with fopen(args.input, 'r', encoding='utf-8') as fh, fopen(args.output, 'w') as output:
-        meta, meta_line, key = None, None, None
+    if args.prefilter != 'none':
+        input_file = prefilter_input(args.input, patterns, args.prefilter, args.regex)
+    else:
+        input_file = fopen(args.input, 'r', encoding='utf-8')
+
+    with input_file as fh, fopen(args.output, 'w') as output_file:
+        meta, meta_json, key = None, None, None
         for line in fh:
-            if line.startswith('{'):
-                meta, meta_line = None, line
+            if line.startswith(META_PREFIX + '{'):
+                meta, meta_json = None, line[len(META_PREFIX):]
                 continue
             if regex.search(line) is None:
-                # Fast prefilter: if no pattern matches anywhere in the TSV line, skip splitting.
                 continue
             line = line.rstrip('\n')
             if meta is None:
-                meta = json.loads(meta_line)
+                meta = json.loads(meta_json)
                 key = set(meta['key'])
                 columns = meta['columns']
             row = dict(zip(columns, line.split('\t')))
@@ -371,9 +419,9 @@ def search(args):
 
         # Sort by matches desc; stable tie-breaker by casefolded pattern.
         for pattern in sorted(patterns, key=lambda t: (-counts[t], t.casefold())):
-            print(f"{pattern}: {counts[pattern]}", file=output)
+            print(f"{pattern}: {counts[pattern]}", file=output_file)
             for schema, table, col, key, snippet in hits[pattern]:
-                print(f"  • {schema}.{table}.{col}, {key}: '{snippet}'", file=output)
+                print(f"  • {schema}.{table}.{col}, {key}: '{snippet}'", file=output_file)
 
 
 def main():
@@ -413,6 +461,10 @@ def main():
                      help=("Treat search patterns as regular expressions "
                            "(otherwise fixed substrings). Matches are "
                            "case-insensitive.")),
+            argument('--prefilter', choices=('none', 'grep', 'rg'), default='none',
+                     help=("Prefilter dumped rows using grep or ripgrep (rg) to speed up "
+                           "searching large dumps. Default: none. For correct Unicode "
+                           "matching, run under UTF-8 locale (e.g. LANG=en_US.UTF-8).")),
             argument('--summary-only', action='store_true',
                      help="Print only per-pattern match counts (do not list individual hits)."),
         )),
