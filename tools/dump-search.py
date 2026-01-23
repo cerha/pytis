@@ -319,8 +319,8 @@ def format_key_value(v: str):
         return f"'{v}'"
 
 
-def format_key(key, row):
-    return ', '.join(k + '=' + format_key_value(row.get(k, '')) for k in key)
+def format_key(keyidx, row):
+    return ', '.join(k + '=' + format_key_value(row[i]) for i, k in keyidx)
 
 
 def format_snippet(value: str, start: int, end: int, context: int):
@@ -400,22 +400,23 @@ def search(args):
             line = line.rstrip('\n')
             if meta is None:
                 meta = json.loads(meta_json)
-                key = set(meta['key'])
                 columns = meta['columns']
-            row = dict(zip(columns, line.split('\t')))
-            formatted_key = format_key(meta['key'], row)
-            for col in columns:
-                if col not in key:
-                    v = row.get(col, '')
-                    if v:
-                        for m in regex.finditer(v):
-                            pattern = group_to_pattern[m.lastgroup]
-                            counts[pattern] += 1
-                            if not args.summary_only:
-                                hits[pattern].append((
-                                    meta['schema'], meta['table'], col, formatted_key,
-                                    format_snippet(v, m.start(), m.end(), args.context),
-                                ))
+                column_index = list(enumerate(columns))
+                rindex = {c: i for i, c in column_index}
+                key_index = [(rindex[k], k) for k in meta['key']]
+            row = line.split('\t')
+            formatted_key = format_key(key_index, row)
+            for i, col in column_index:
+                v = row[i]
+                if v:
+                    for m in regex.finditer(v):
+                        pattern = group_to_pattern[m.lastgroup]
+                        counts[pattern] += 1
+                        if not args.summary_only:
+                            hits[pattern].append((
+                                meta['schema'], meta['table'], col, formatted_key,
+                                format_snippet(v, m.start(), m.end(), args.context),
+                            ))
 
         # Sort by matches desc; stable tie-breaker by casefolded pattern.
         for pattern in sorted(patterns, key=lambda t: (-counts[t], t.casefold())):
