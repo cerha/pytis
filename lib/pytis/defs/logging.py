@@ -106,9 +106,9 @@ class ChangesLog(Specification):
                 Field('date_to', _("To"), type=pd.Date, not_null=True,
                       default=lambda: pd.Date.now().value()),
                 Field('username_', _("User"), type=pd.String),
-                Field('tablename_', _("Tabulka"), type=pd.String),
-                Field('key_value_', _("Klíč"), type=pd.String),
-                Field('detail_', _("Řádek obsahuje"), type=pd.String),
+                Field('tablename_', _("Table"), type=pd.String),
+                Field('key_value_', _("Key"), type=pd.String),
+                Field('detail_', _("Row contains"), type=pd.String),
                 Field('search_path_', _("Schema"), type=pd.String, not_null=True,
                       default=self._df_search_path_)
                 )
@@ -116,14 +116,14 @@ class ChangesLog(Specification):
     def fields(self):
         return (
             Field("id", _("ID"), width=10, type=pd.Integer),
-            Field("timestamp", _("Datum a čas"), width=17, type=pd.DateTime),
+            Field("timestamp", _("Date and time"), width=17, type=pd.DateTime),
             Field("username", _("User"), width=20, type=pd.String),
             Field("schemaname", _("Schema"), width=20, type=pd.String),
-            Field("tablename", _("Tabulka"), width=20, type=pd.String),
-            Field("operation", _("Operace"), width=10, type=pd.String),
-            Field("key_column", _("ID klíč"), width=20, type=pd.String),
-            Field("key_value", _("Klíč"), width=20, type=pd.String),
-            Field("detail", _("Řádek"), width=40, height=20, type=pd.String),
+            Field("tablename", _("Table"), width=20, type=pd.String),
+            Field("operation", _("Operation"), width=10, type=pd.String),
+            Field("key_column", _("Key column ID"), width=20, type=pd.String),
+            Field("key_value", _("Key"), width=20, type=pd.String),
+            Field("detail", _("Row"), width=40, height=20, type=pd.String),
         )
 
 

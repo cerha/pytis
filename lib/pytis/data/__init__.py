@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2024 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2025 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2013 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -60,7 +60,7 @@ from .dbdata import (  # noqa: F401
     DBConnection, DBData, DBBinding, DBColumnBinding, DBException,
     DBSystemException, DBUserException, DBLoginException, DBInsertException,
     DBLockException, DBRetryException, NotWithinSelect, DBConnectionPool,
-    dbtable, dbfunction, transaction,
+    dbtable, dbfunction, transaction, REPEATABLE_READ
 )
 from .defaults import (  # noqa: F401
     DBDataDefault, DBCounterDefault, DBFunctionDefault, DBTransactionDefault,

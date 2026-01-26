@@ -781,7 +781,7 @@ pytis.EditableBrowseForm = Class.create(pytis.BrowseForm, {
 
 
 pytis.EditForm = Class.create(pytis.Form, {
-    /* This class implements AJAX updates during EditForm editation.
+    /* This class implements AJAX updates during EditForm editing.
      *
      * The form is periodically checked for changes and the values are sent to the
      * server as asynchronous requests.  Based on the server response, the user
