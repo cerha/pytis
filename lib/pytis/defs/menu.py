@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2019-2024 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2019-2026 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2009-2015 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -91,20 +91,17 @@ class ApplicationRoles(_ApplicationRolesSpecification):
         Field('member', _("Included Role"),     # to allow binding of ApplicationRolesOwners
               virtual=True, editable=Editable.NEVER,
               computer=pytis.presentation.computer(lambda row, name: name)),
-        Field('name', _("Title"),
-              fixed=True,
+        Field('name', _("Title"), fixed=True,
               descr=_("A short role name or database username.")),
-        Field('description', "Popis",
+        Field('description', _("Description"),
               descr=_("Role description.")),
         Field('purposeid', _("Purpose"), not_null=True,
               codebook='menu.CommonApplicationRolePurposes',
               fixed=True, selection_type=pytis.presentation.SelectionType.CHOICE,
               descr=_("Role purpose: normal, user account, administrator.")),
-        Field('purpose', _("Purpose"),
-              fixed=True,
+        Field('purpose', _("Purpose"), fixed=True,
               descr=_("Purpose meaning: normal, user account, administrator.")),
-        Field('deleted', _("Deactivation Date"),
-              fixed=True,
+        Field('deleted', _("Deactivation Date"), fixed=True,
               descr=_("If set, the role is inactive from that date.")),
     )
     columns = ('name', 'description', 'purpose', 'deleted',)
@@ -189,7 +186,7 @@ class CommonApplicationRoles(ApplicationRoles):
 class ApplicationRolesMembership(_ApplicationRolesSpecification):
     public = True
     table = 'ev_pytis_valid_role_members'
-    title = "Členství v rolích"
+    title = _("Role membership")
     fields = (
         Field('id', _("Id"), default=nextval('e_pytis_role_members_id_seq')),
         Field('roleid', _("Group"), fixed=True, not_null=True,
@@ -552,10 +549,10 @@ class ApplicationMenuPositions(pytis.presentation.Specification):
 class ApplicationRights(pytis.presentation.Specification):
     public = True
     table = 'c_pytis_access_rights'
-    title = "Seznam práv"
+    title = _("Rights list")
     fields = (
-        Field('rightid', "Právo", fixed=True),
-        Field('description', "Popis"),
+        Field('rightid', _("Right"), fixed=True),
+        Field('description', _("Description")),
     )
     columns = ('rightid', 'description',)
     layout = ('rightid', 'description',)
