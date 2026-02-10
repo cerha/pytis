@@ -22,7 +22,7 @@ from __future__ import print_function
 
 # Terminology note: Identifiers named `row` usually refer to a row number
 # (0-based), as wxWidgets does. When referring to data rows, we typically
-# use `the_row` for `PresentedRow` instances.
+# use `record` for `PresentedRow` instances.
 
 from builtins import object
 import copy
@@ -57,27 +57,27 @@ class DataTable(object):
     """
     class _CurrentRow(object):
 
-        def __init__(self, row, the_row):
+        def __init__(self, row, record):
             assert isinstance(row, int)
-            assert isinstance(the_row, PresentedRow)
+            assert isinstance(record, PresentedRow)
             self.row = row
-            self.the_row = the_row
+            self.record = record
 
-    def __init__(self, data, presented_row, columns, row_count,
+    def __init__(self, data, record, columns, row_count,
                  sorting=(), grouping=(), row_style=None):
         """Arguments:
 
           data -- 'pytis.data.Data' instance representing the data object whose
             current selection is displayed in the table. Its 'select()' method
             must have been called.
-          presented_row -- 'pytis.presentation.PresentedRow' instance
+          record -- 'pytis.presentation.PresentedRow' instance
           columns, row_count, sorting, grouping -- as described in 'update()'
           row_style -- row style as a 'pytis.presentation.Style()' instance,
             a callable returning a Style instance, or None
 
         """
         self._data = data
-        self._presented_row = copy.copy(presented_row)
+        self._record = copy.copy(record)
         self._row_style = row_style
         self._row_style_callable = callable(row_style)
         self._plain_style = pytis.presentation.Style()
@@ -102,22 +102,15 @@ class DataTable(object):
                         continue
                     else:
                         raise
-        current = self._current_row
-        if not current or current.row != row:
-            success, data_row = db_operation(fetch, row)
-            if not success:
-                self._panic()
-            if data_row:
-                self._presented_row.set_row(data_row)
-                current = self._current_row = self._CurrentRow(row, copy.copy(self._presented_row))
-            else:
-                if 0 <= row < self.number_of_rows(min_value=(row + 1)):
-                    log(DEBUG, "Missing grid row:", row)
-                return None
-        return current.the_row
+        success, data_row = db_operation(fetch, row)
+        if not success:
+            self._panic()
+        if not data_row and 0 <= row < self.number_of_rows(min_value=(row + 1)):
+            log(DEBUG, "Missing grid row:", row)
+        return data_row
 
-    def _format(self, the_row, cid):
-        return the_row.format(cid, secure=True)
+    def _format(self, record, cid):
+        return record.format(cid, secure=True)
 
     def _cached_value(self, row, col, style=False):
         # Return the cached value for the given row and column index.
@@ -131,13 +124,13 @@ class DataTable(object):
         try:
             values, styles = self._cache[row]
         except KeyError:
-            the_row = self.row(row)
-            if the_row is None:
+            record = self.record(row)
+            if record is None:
                 return None
             # If row_style is defined, compute it.
             row_style = self._row_style
             if self._row_style_callable:
-                protected_row = the_row.protected()
+                protected_row = record.protected()
                 try:
                     row_style = row_style(protected_row)
                 except protected_row.ProtectionError:
@@ -145,13 +138,13 @@ class DataTable(object):
             values, styles = [], []
             # Cache values and styles for all columns at once.
             for cid, cstyle in self._columns:
-                values.append(self._format(the_row, cid))
+                values.append(self._format(record, cid))
                 if cid in self._secret_columns:
                     field_style = self._plain_style
                 else:
                     field_style = cstyle
                     if callable(field_style):
-                        field_style = field_style(the_row)
+                        field_style = field_style(record)
                 styles.append((field_style or self._plain_style) + row_style)
             self._cache[row] = values, styles
         if style:
@@ -191,7 +184,7 @@ class DataTable(object):
                 i = len(self._columns)
                 self._columns.append((cid, None))
             self._grouping.append(i)
-        self._is_bool = [self._presented_row.type(c.id()).__class__ == pytis.data.Boolean
+        self._is_bool = [self._record.type(c.id()).__class__ == pytis.data.Boolean
                          for c in columns]
         self._column_count = len(columns)
         self._secret_columns = [c.id() for c in columns
@@ -223,8 +216,8 @@ class DataTable(object):
         else:
             return count
 
-    def row(self, row):
-        """Return row number `row` as a `PresentedRow` instance.
+    def data_row(self, row):
+        """Return the data row for given row number as a 'pytis.data.Row' instance.
 
         Arguments:
 
@@ -234,6 +227,26 @@ class DataTable(object):
 
         """
         return self._retrieve_row(row)
+
+    def record(self, row):
+        """Return the record for given `row` number as a `PresentedRow` instance.
+
+        Arguments:
+
+          row -- row number within the *database select*, starting from 0
+
+        Returns None if the given row number does not exist in the data table.
+
+        """
+        current = self._current_row
+        if not current or current.row != row:
+            data_row = self._retrieve_row(row)
+            if data_row:
+                self._record.set_row(data_row)
+                current = self._current_row = self._CurrentRow(row, copy.copy(self._record))
+            else:
+                return None
+        return current.record
 
     def cell_value(self, row, col):
         """Return the formatted value for the cell at (row, col).
@@ -269,8 +282,8 @@ class DataTable(object):
     def rewind(self, position):
         """Move the underlying data pointer to the given position."""
         if self._current_row is not None and -1 <= position < self.number_of_rows() - 1:
-            # Rely on _retrieve_row() side effect setting self._current_row.
-            if not self._retrieve_row(position):
+            # Rely on .record() side effect setting self._current_row.
+            if not self.record(position):
                 raise Exception('Missing row', position)
 
     def group(self, row):
@@ -336,7 +349,7 @@ class DataTable(object):
         self._cache = None
         self._group_cache = None
         self._group_value_cache = None
-        self._presented_row = None
+        self._record = None
         self._current_row = None
         self._row_style = None
         self._group_bg_color = None
@@ -359,8 +372,8 @@ class GridTable(wx.grid.GridTableBase, DataTable):
         DataTable._panic(self)
         Command(Form.leave_form).invoke()
 
-    def _format(self, the_row, cid):
-        return the_row.format(cid, pretty=True, form=self._form, secure=True)
+    def _format(self, record, cid):
+        return record.format(cid, pretty=True, form=self._form, secure=True)
 
     def _make_attr(self, style):
         fg = style.foreground() or self._DEFAULT_FOREGROUND_COLOR
@@ -456,45 +469,6 @@ class GridTable(wx.grid.GridTableBase, DataTable):
             # Calling top_level_exception() synchronously may fail with a C++
             # traceback (at least on macOS).
             wx.CallAfter(top_level_exception, sys.exc_info())
-
-
-class TableRowIterator(object):
-    """Iterator yielding `PresentedRow` instances for a given list of row numbers.
-
-    Constructor arguments:
-      table -- GridTable instance.
-      row_numbers -- sequence of integers containing the row numbers to iterate.
-
-    """
-    def __init__(self, table, row_numbers):
-        self._pointer = -1
-        self._table = table
-        self._row_numbers = row_numbers
-
-    def __iter__(self):
-        return self
-
-    def __len__(self):
-        return len(self._row_numbers)
-
-    def __next__(self):
-        self._pointer += 1
-        if self._pointer >= len(self._row_numbers):
-            raise StopIteration
-        else:
-            return self._table.row(self._row_numbers[self._pointer])
-
-    next = __next__  # for Python 2
-
-    @property
-    def form(self):
-        """Return the `pytis.api.Form` representation of the originating form.
-
-        This allows action handlers to access the form API when this iterator is
-        passed as an argument (e.g. for ActionContext.SELECTION).
-
-        """
-        return self._table.form().provider()
 
 
 class CustomCellRenderer(wx.grid.GridCellRenderer):
