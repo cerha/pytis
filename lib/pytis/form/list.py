@@ -24,7 +24,7 @@ list views and provides access to it through wxWidgets objects.
 """
 # Terminology note: Variables named `row` usually denote a row number
 # (0-based).  If it is the row contents, the corresponding variable is usually
-# named `the_row`. The potentially confusing name `row` comes from wxWidgets.
+# named `record`. The potentially confusing name `row` comes from wxWidgets.
 
 
 from __future__ import unicode_literals
@@ -74,7 +74,7 @@ from .screen import (
 )
 from .search import sfs_columns
 from .application import Application, run_form
-from .grid import TableRowIterator, GridTable
+from .grid import GridTable
 
 
 _ = pytis.util.translations('pytis-wx')
@@ -669,8 +669,8 @@ class ListForm(RecordForm, Refreshable):
         if not rollback:
             row = self._table.current_row()
             if row is not None:
-                the_row = self._table.row(row)
-                self._run_callback(self.CALL_SELECTION, the_row)
+                record = self._table.record(row)
+                self._run_callback(self.CALL_SELECTION, record)
 
     # Helper methods
 
@@ -680,18 +680,18 @@ class ListForm(RecordForm, Refreshable):
         return g.GetGridCursorRow(), g.GetGridCursorCol()
 
     def _current_key(self):
-        the_row = self.current_row()
-        if the_row is None:
+        record = self.current_row()
+        if record is None:
             return None
         else:
-            return the_row.row().columns([c.id() for c in self._data.key()])
+            return record.row().columns([c.id() for c in self._data.key()])
 
     def current_row(self):
         result = None
         row = self._current_cell()[0]
         if row >= 0 and row < self._table.number_of_rows(min_value=(row + 1)):
             try:
-                result = self._table.row(row)
+                result = self._table.record(row)
             except Exception:
                 # It sometimes happens, under unknown circumstances, that the
                 # data select gets changed without updating GridTable selection
@@ -702,11 +702,40 @@ class ListForm(RecordForm, Refreshable):
                 pass
         return result
 
-    def selected_rows(self, fallback_to_current_row=False):
-        row_numbers = self._grid.GetSelectedRows()
-        if len(row_numbers) == 0 and fallback_to_current_row:
-            row_numbers = (self._table.current_row(),)
-        return TableRowIterator(self._table, row_numbers)
+    def selected_rows(self, fallback_to_current_row=False, raise_on_error=True):
+        # Freeze the selection first to ensure consistent results.
+        if hasattr(self._grid, 'GetSelectedRowBlocks'):
+            # This should work with wxPython 4.2, but maybe also with some wxPython 4.1.x...
+            ranges = [(b.GetTopRow(), b.GetBottomRow()) for b in self._grid.GetSelectedRowBlocks()]
+            # Avoid materializing row numbers before checking max length.
+            row_numbers = None
+            length = sum(bottom - top + 1 for top, bottom in ranges)
+        else:
+            # Legacy solution for wxPython 4.1.0 and older.  It can be slow
+            # (memory demanding) for the big  grids as indicated in the wx
+            # documentation, but no other option seems to work.
+            row_numbers = self._grid.GetSelectedRows()
+            length = len(row_numbers)
+        if length > self.Selection.MAX_ROWS:
+            error = self.SelectionLimitExceeded(
+                _("The limit for operation on selection is {limit} rows, "
+                  "but the current selection contains {length} rows."
+                  ).format(limit=self.Selection.MAX_ROWS, length=length))
+            if raise_on_error:
+                raise error
+            # Don't raise the error now, but create the iterator that
+            # displays the error message on the attempt to get the first
+            # item and stops.  The user (typically the form.selection
+            # API caller) can detect the problem in advance by checking
+            # "len(selection) > selection.MAX_ROWS" if they need to, but
+            # if they do not, the default behavior should be OK in most
+            # cases.
+            return self.Selection(None, None, self._row, error=error, length=length)
+        if length == 0 and fallback_to_current_row:
+            row_numbers = [self._table.current_row()]
+        elif row_numbers is None:
+            row_numbers = [n for top, bottom in ranges for n in range(top, bottom + 1)]
+        return self.Selection(row_numbers, self._table.data_row, self._row)
 
     def unselect_selected_rows(self):
         self._grid.ClearSelection()
@@ -873,7 +902,7 @@ class ListForm(RecordForm, Refreshable):
             # checks are probably insufficient or there is a race condition.  The question
             # is whether it is not enough to handle the exception here and remove the
             # checks altogether.
-            record = self._table.row(row)
+            record = self._table.record(row)
         except pytis.data.NotWithinSelect:
             return True
         if record:
@@ -892,12 +921,12 @@ class ListForm(RecordForm, Refreshable):
             return None
 
     def _run_selection_callback(self, row):
-        the_row = self._table.row(row)
-        if the_row is not None:
-            self._run_callback(self.CALL_SELECTION, the_row)
-            self._post_selection_hook(the_row)
+        record = self._table.record(row)
+        if record is not None:
+            self._run_callback(self.CALL_SELECTION, record)
+            self._post_selection_hook(record)
 
-    def _post_selection_hook(self, the_row):
+    def _post_selection_hook(self, record):
         if Form.focused_form() is self:
             # TODO: See the note in _select_cell.
             self._update_list_position()
@@ -905,7 +934,7 @@ class ListForm(RecordForm, Refreshable):
             # but tooltips are not useful when using keyboard only).
             row, col = self._current_cell()
             if row >= 0 and col >= 0:
-                app.echo(self._table.row(row).display(self._columns[col].id()))
+                app.echo(self._table.record(row).display(self._columns[col].id()))
 
     def _on_select_cell(self, event):
         if not self._in_select_cell and self._grid.GetBatchCount() == 0:
@@ -1732,7 +1761,7 @@ class ListForm(RecordForm, Refreshable):
     def filter_by_cell(self):
         row, col = self._current_cell()
         id = self._columns[col].id()
-        value = self._table.row(row)[id]
+        value = self._table.record(row)[id]
         self.filter_by_value(column_id=id, value=value)
 
     def _can_filter_by_cell(self):
@@ -1869,10 +1898,10 @@ class ListForm(RecordForm, Refreshable):
     @Command.define
     def copy_cell(self):
         row, col = self._current_cell()
-        presented_row = self._table.row(row)
-        if presented_row:
+        record = self._table.record(row)
+        if record:
             cid = self._columns[col].id()
-            copy_to_clipboard(presented_row.format(cid, secure=True))
+            copy_to_clipboard(record.format(cid, secure=True))
 
     @Command.define
     def copy_aggregation_result(self, operation, cid):
@@ -1992,9 +2021,9 @@ class ListForm(RecordForm, Refreshable):
                 break
             if only_selected and not self._grid.IsInSelection(r, 0):
                 continue
-            presented_row = self._table.row(r)
+            record = self._table.record(r)
             result += '\t'.join(
-                ';'.join(presented_row.format(cid, secure=True, **kwargs).splitlines())
+                ';'.join(record.format(cid, secure=True, **kwargs).splitlines())
                 for cid, kwargs in columns
             ) + '\n'
         try:
@@ -2077,11 +2106,11 @@ class ListForm(RecordForm, Refreshable):
                 break
             if only_selected and not self._grid.IsInSelection(r, 0):
                 continue
-            presented_row = self._table.row(r)
+            record = self._table.record(r)
             for position, cid, write in columns:
-                value = presented_row.get(cid, secure=True)
+                value = record.get(cid, secure=True)
                 if value and value.value() is not None:
-                    write(output_row_number, position, presented_row, value.value())
+                    write(output_row_number, position, record, value.value())
             output_row_number += 1
         writer.close()
         return output.getvalue()
@@ -2471,7 +2500,7 @@ class FoldableForm(ListForm):
             column = self._columns[col]
             if isinstance(self._row.type(column.id()), PrettyFoldable):
                 row = event.GetRow()
-                value = self._table.row(row).format(column.id(), pretty=True, form=self)
+                value = self._table.record(row).format(column.id(), pretty=True, form=self)
                 pos = value.find(PrettyFoldable.FOLDED_MARK)
                 if pos == -1:
                     pos = value.find(PrettyFoldable.UNFOLDED_MARK)
@@ -2490,7 +2519,7 @@ class FoldableForm(ListForm):
         super(FoldableForm, self)._on_left_click(event)
 
     def _expand_or_collapse(self, row, level=None):
-        node = self._table.row(row)[self._folding_column_id].value()
+        node = self._table.record(row)[self._folding_column_id].value()
         if self._folding.expand_or_collapse(node, level=level):
             self._refresh_folding()
 
@@ -2680,7 +2709,6 @@ class CodebookForm(PopupForm, FoldableForm, KeyHandler):
         """Set the return value and close the modal dialog."""
         self._result = self.current_row()
         self.Parent.EndModal(1)
-        return True
 
     def _on_dclick(self, event):
         return self.activate()
@@ -2690,9 +2718,14 @@ class SelectRowsForm(CodebookForm):
     """Row popup form returning a tuple of all selected rows."""
 
     def _on_activation(self, alternate=False):
-        self._result = tuple(self.selected_rows(fallback_to_current_row=True))
-        self.Parent.EndModal(1)
-        return True
+        try:
+            selection = self.selected_rows(fallback_to_current_row=True)
+        except self.SelectionLimitExceeded as e:
+            app.warning(unistr(e))
+        else:
+            # TODO: Avoid tuple conversion here (but check the apps before).
+            self._result = tuple(selection)
+            self.Parent.EndModal(1)
 
 
 class BrowseForm(FoldableForm):
@@ -2995,12 +3028,16 @@ class BrowseForm(FoldableForm):
             spec = prints[0]
         if spec.handler():
             handler = spec.handler()
-            args = self._context_action_args(Action('x', '-', context=spec.context()))
+            try:
+                args = self._context_action_args(spec.context())
+            except self.SelectionLimitExceeded as e:
+                app.warning(unistr(e))
+                return
             return handler(*args)
         else:
             app.printout(self._name, spec.name(),
                          parameters=self._formatter_parameters(),
-                         row=copy.copy(self._table.row(self._current_cell()[0])),
+                         row=copy.copy(self._table.record(self._current_cell()[0])),
                          form=self,
                          language=spec.language())
 

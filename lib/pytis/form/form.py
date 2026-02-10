@@ -1809,6 +1809,118 @@ class RecordForm(LookupForm):
             # This instance will also have the select initialized in LookupForm.
             return self._form.data(init_select=init_select)
 
+
+    class Selection(object):
+        """Iterator yielding `PresentedRow` instances for the current form selection.
+
+        May represent an error-only selection if the selection size exceeds
+        `MAX_ROWS`.  The first attempt to fetch a row from the iterator
+        displays an error message and stops iteration in this case.
+
+        """
+
+        MAX_ROWS = 10000
+        """Maximum number of rows in the selection.
+
+        If the form selection exceeds this limit, it will not be possible to
+        invoke actions on such selection.  Operations working on larger data
+        sets should be implemented using a different mechanism (not requiring a
+        selection).
+
+        """
+
+        def __init__(self, row_numbers, get_row_by_number, record, error=None, length=None):
+            """Arguments:
+
+              row_numbers -- sequence of row numbers as integer indices of rows
+                selected within the form.  None if `error` is given.
+
+              get_row_by_number -- callable returning the data row for a given
+                row number.  None if `error` is given.
+
+              record -- `PresentedRow` instance to be used to produce the
+                instances returned by the iterator.
+
+              error -- `RecordForm.SelectionLimitExceeded` instance if the
+                selection length exceeds `MAX_ROWS`.  `row_numbers` should be
+                None in this case and `length` should indicate the actual
+                selection length.
+
+              length -- number of selected rows in case `row_numbers` is None
+                and `error` is given.
+
+            """
+            if error:
+                assert row_numbers is None
+                assert get_row_by_number is None
+                assert length is not None
+                self._error = error
+                self._length = length
+            else:
+                assert length is None
+                self._error = None
+                # Store keys as space efficient unique identifiers of rows present
+                # in the selection.
+                data = record.data()
+                key_columns = data.key()
+                if len(key_columns) == 1:
+                    # Eliminate single item tuples for this most common case.
+                    key_column_id = key_columns[0].id()
+                    key_column_type = key_columns[0].type()
+                    def get_key_value(row):
+                        return row[key_column_id].value()
+                    def get_row(key_value):
+                        return data.row(pytis.data.Value(key_column_type, key_value))
+                else:
+                    # Multi-column keys are deprecated, but we probably still need to support them.
+                    key_column_ids = [c.id() for c in key_columns]
+                    key_column_types = [c.type() for c in key_columns]
+                    def get_key_value(row):
+                        return tuple(row[k].value() for k in key_column_ids)
+                    def get_row(key_value):
+                        key = [pytis.data.Value(t, v) for t, v in zip(key_column_types, key_value)]
+                        return data.row(key)
+                self._keys = [get_key_value(get_row_by_number(n)) for n in row_numbers]
+                self._length = len(self._keys)
+                self._get_row = get_row
+                self._pointer = -1
+            self._record = copy.copy(record)
+
+        def __iter__(self):
+            return self
+
+        def __len__(self):
+            return self._length
+
+        def __next__(self):
+            if self._error:
+                app.error(unistr(self._error) + "\n" + _("Operation canceled."))
+                raise StopIteration
+            self._pointer += 1
+            if self._pointer >= self._length:
+                raise StopIteration
+            row = self._get_row(self._keys[self._pointer])
+            self._record.set_row(row)
+            return copy.copy(self._record)
+
+        next = __next__  # for Python 2
+
+        @property
+        def form(self):
+            """Return the `pytis.api.Form` representation of the originating form.
+
+            This allows action handlers to access the form API when this iterator is
+            passed as an argument (e.g. for ActionContext.SELECTION).
+
+            """
+            return self._record.form
+
+
+    class SelectionLimitExceeded(Exception):
+        """Exception raised by 'form.selected_rows()' when the selection is too big."""
+        pass
+
+
     def _init_attributes(self, prefill=None, select_row=None, _new=False, **kwargs):
         """Process constructor keyword arguments and initialize the attributes.
 
@@ -2083,25 +2195,25 @@ class RecordForm(LookupForm):
         else:
             return None
 
-    def _context_action_args(self, action):
-        context = action.context()
+    def _context_action_args(self, context, secondary_context=None, raise_on_error=True):
         if context == ActionContext.RECORD:
             args = (self.current_row(),)
         elif context == ActionContext.SELECTION:
-            args = (self.selected_rows(fallback_to_current_row=True),)
+            args = (self.selected_rows(fallback_to_current_row=True,
+                                       raise_on_error=raise_on_error),)
         else:
             raise ProgramError("Unsupported action context:", context)
-        scontext = action.secondary_context()
-        if scontext is not None:
+        if secondary_context is not None:
             form = self._secondary_context_form()
             if form is None:
                 args += (None,)
-            elif scontext == ActionContext.RECORD:
+            elif secondary_context == ActionContext.RECORD:
                 args += (form.current_row(),)
-            elif scontext == ActionContext.SELECTION:
-                args += (selection(form),)
+            elif secondary_context == ActionContext.SELECTION:
+                args += (form.selected_rows(fallback_to_current_row=True,
+                                            raise_on_error=raise_on_error),)
             else:
-                raise ProgramError("Unsupported action secondary_context:", scontext)
+                raise ProgramError("Unsupported action secondary context:", secondary_context)
         return args
 
     def _cleanup(self):
@@ -2204,7 +2316,11 @@ class RecordForm(LookupForm):
     @Command.define
     def context_action(self, action):
         """Invoke a context menu action on the current form record."""
-        args = self._context_action_args(action)
+        try:
+            args = self._context_action_args(action.context(), action.secondary_context())
+        except self.SelectionLimitExceeded as e:
+            app.error(unistr(e) + "\n" + _("Operation canceled."))
+            return True
         kwargs = action.kwargs()
         log(EVENT, 'Calling context action handler:', (args, kwargs))
         action.handler()(*args, **kwargs)
@@ -2243,7 +2359,8 @@ class RecordForm(LookupForm):
             return False
         enabled = action.enabled()
         if callable(enabled):
-            args = self._context_action_args(action)
+            args = self._context_action_args(action.context(), action.secondary_context(),
+                                             raise_on_error=False)
             kwargs = action.kwargs()
             return enabled(*args, **kwargs)
         else:
@@ -2549,18 +2666,26 @@ class RecordForm(LookupForm):
         """
         return self._row
 
-    def selected_rows(self, fallback_to_current_row=False):
+    def selected_rows(self, fallback_to_current_row=False, raise_on_error=True):
         """Return an iterator over all currently selected rows.
 
         Arguments:
-          fallback_to_current_row -- if True and if there is no selection,
+
+          fallback_to_current_row -- if True and there is no selection,
             return an iterator over the current row.
 
+          raise_on_error -- if True and the selection size exceeds
+            `RecordForm.Selection.MAX_ROWS`, raise
+            `RecordForm.SelectionLimitExceeded`.  If False, return
+            `RecordForm.Selection` instance, which indicates the selection
+            length, but does not yield any rows.  Instead it displays an error
+            message on attempt to fetch the first row.
+
         The iterator returns all rows present in the current selection as
-        'PresentedRow' instances in the order of their appearance in the form.
+        `PresentedRow` instances in the order of their appearance in the form.
 
         """
-        return iter([])
+        return self.Selection([], lambda x: None, self._row)
 
     def unselect_selected_rows(self):
         """Completely clear the current selection of rows in the form."""
@@ -2596,9 +2721,9 @@ class RecordForm(LookupForm):
             def __next__(self):
                 if self._row_number >= self._table.GetNumberRows():
                     raise StopIteration
-                row = self._table.row(self._row_number)
+                record = self._table.record(self._row_number)
                 self._row_number += 1
-                return row
+                return record
 
             next = __next__  # for Python 2
 
@@ -2612,7 +2737,7 @@ class RecordForm(LookupForm):
 
     @property
     def api_selection(self):
-        return self.selected_rows()
+        return self.selected_rows(raise_on_error=False)
 
     def api_clear_selection(self):
         self.unselect_selected_rows()
