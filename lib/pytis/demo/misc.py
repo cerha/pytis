@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2025 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2026 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2007-2017 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -431,8 +431,8 @@ class Products(Specification):
     def actions(self):
         return (
             Action('toggle', _("Mark/unmark"), self._mark, hotkey='m'),
-            Action('mark_all', _("Mark all"), self._mark, hotkey='Ctrl-a', mark_all=True),
-            Action('unmark_all', _("Unmark all"), self._mark, hotkey='Ctrl-u', mark_all=True,
+            Action('mark_all', _("Mark all"), self._mark, hotkey='a', mark_all=True),
+            Action('unmark_all', _("Unmark all"), self._mark, hotkey='u', mark_all=True,
                    mark=False),
             Action('mark_selected', _("Mark selected"), self._mark_selected,
                    context=pp.ActionContext.SELECTION),
