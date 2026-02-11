@@ -1817,6 +1817,9 @@ class RecordForm(LookupForm):
         `MAX_ROWS`.  The first attempt to fetch a row from the iterator
         displays an error message and stops iteration in this case.
 
+        Iteration may yield None values if the corresponding data rows are
+        deleted from the data object during iteration.
+
         """
 
         MAX_ROWS = 10000
@@ -1900,6 +1903,8 @@ class RecordForm(LookupForm):
             if self._pointer >= self._length:
                 raise StopIteration
             row = self._get_row(self._keys[self._pointer])
+            if not row:
+                return None
             self._record.set_row(row)
             return copy.copy(self._record)
 
