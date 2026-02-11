@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2025 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2026 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2002-2016 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -93,6 +93,8 @@ DEFAULT_KEYMAP = (
     ('Alt-Enter', Command(ListForm.context_menu)),
     ('F11', Command(ListForm.toggle_row_labels)),
     ('Ctrl-=', Command(ListForm.filter_by_cell)),
+    ('Ctrl-a', Command(ListForm.select_all)),
+    ('Ctrl-Shift-a', Command(ListForm.clear_selection)),
     ('+', Command(FoldableForm.expand_or_collapse)),
     ('Ctrl-+', Command(FoldableForm.expand_or_collapse_subtree)),
     ('Shift-+', Command(FoldableForm.expand_all)),
