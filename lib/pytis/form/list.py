@@ -556,6 +556,24 @@ class ListForm(RecordForm, Refreshable):
         """
         return ()
 
+    def _selection_context_menu(self):
+        return (
+            MenuItem(_("Cancel selection"),
+                     command=Command(ListForm.clear_selection),
+                     icon='selection-cancel',
+                     help=_("Cancel the selection of rows for bulk operations.")),
+            MenuItem(_("Add row to selection"),
+                     command=Command(ListForm.add_row_to_selection),
+                     icon='selection-add',
+                     help=_("Add this row to the current selection of rows for "
+                            "bulk operations.")),
+            MenuItem(_("Remove row from selection"),
+                     icon='selection-remove',
+                     command=Command(ListForm.remove_row_from_selection),
+                     help=_("Remove this row from the current selection of rows "
+                            "for bulk operations.")),
+        )
+
     def _lf_sfs_columns(self):
         def labelfunc(c):
             label = c.column_label()
@@ -2727,6 +2745,12 @@ class SelectRowsForm(CodebookForm):
             self._result = tuple(selection)
             self.Parent.EndModal(1)
 
+    def _context_menu(self):
+        return self._selection_context_menu() + (
+            MenuSeparator(),
+            MenuItem(_("Confirm selection"), command=Command(ListForm.activate)),
+        )
+
 
 class BrowseForm(FoldableForm):
     """Form for browsing data in a tabular view."""
@@ -2949,22 +2973,7 @@ class BrowseForm(FoldableForm):
 
     def _context_menu(self):
         if self._grid.IsSelection():
-            menu = (
-                MenuItem(_("Cancel selection"),
-                         command=Command(ListForm.clear_selection),
-                         icon='selection-cancel',
-                         help=_("Cancel the selection of rows for bulk operations.")),
-                MenuItem(_("Add row to selection"),
-                         command=Command(ListForm.add_row_to_selection),
-                         icon='selection-add',
-                         help=_("Add this row to the current selection of rows for "
-                                "bulk operations.")),
-                MenuItem(_("Remove row from selection"),
-                         icon='selection-remove',
-                         command=Command(ListForm.remove_row_from_selection),
-                         help=_("Remove this row from the current selection of rows "
-                                "for bulk operations.")),
-            )
+            menu = self._selection_context_menu()
             actions = self._action_mitems(self._view.actions(), context=ActionContext.SELECTION)
             if actions:
                 menu += (MenuSeparator(),) + tuple(actions)
