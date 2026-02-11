@@ -755,9 +755,6 @@ class ListForm(RecordForm, Refreshable):
             row_numbers = [n for top, bottom in ranges for n in range(top, bottom + 1)]
         return self.Selection(row_numbers, self._table.data_row, self._row)
 
-    def unselect_selected_rows(self):
-        self._grid.ClearSelection()
-
     def _select_cell(self, row=None, col=None, invoke_callback=True):
         # Returns True if the event can be performed (see _on_select_cell).
         if self._in_select_cell:
@@ -2135,7 +2132,8 @@ class ListForm(RecordForm, Refreshable):
 
     @Command.define
     def clear_selection(self):
-        self.unselect_selected_rows()
+        """Clear the current selection to contain no rows."""
+        self._grid.ClearSelection()
 
     def _can_clear_selection(self):
         return self._grid.IsSelection()

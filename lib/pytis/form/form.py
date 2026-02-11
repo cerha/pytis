@@ -2335,7 +2335,7 @@ class RecordForm(LookupForm):
             # they no longer match the current filter. In that case the grid behaves
             # inconsistently: the selection sometimes moves to other rows and
             # sometimes it contains invalid row numbers.
-            self.unselect_selected_rows()
+            self.clear_selection()
         dual = self._dualform()
         if dual:
             # If we are part of a dual form, refresh the whole form (a bit hacky).
@@ -2692,7 +2692,7 @@ class RecordForm(LookupForm):
         """
         return self.Selection([], lambda x: None, self._row)
 
-    def unselect_selected_rows(self):
+    def clear_selection(self):
         """Completely clear the current selection of rows in the form."""
         pass
 
@@ -2745,7 +2745,7 @@ class RecordForm(LookupForm):
         return self.selected_rows(raise_on_error=False)
 
     def api_clear_selection(self):
-        self.unselect_selected_rows()
+        self.clear_selection()
 
     def api_select_row(self, position):
         self.select_row(position)
