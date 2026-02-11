@@ -2131,6 +2131,11 @@ class ListForm(RecordForm, Refreshable):
         return output.getvalue()
 
     @Command.define
+    def select_all(self):
+        """Extend the current selection to contain all rows."""
+        self._grid.SelectAll()
+
+    @Command.define
     def clear_selection(self):
         """Clear the current selection to contain no rows."""
         self._grid.ClearSelection()
