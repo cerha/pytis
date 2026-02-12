@@ -2001,6 +2001,15 @@ class mupdfProcessor(wx.lib.pdfviewer.viewer.mupdfProcessor):
         self.page_rect = page.bound()
         self.zoom_error = False     # set if memory errors during render
 
+    def GetPageSize(self, pageNum):
+        """ Return width, height for the page """
+        try:
+            page = self.pdfdoc.load_page(pageNum)
+        except AttributeError: # old PyMuPDF version
+            page = self.pdfdoc.loadPage(pageNum)
+        bound = page.bound()
+        return bound.width, bound.height
+
     def RenderPage(self, gc, pageno, scale=1.0):
         # The change in PyMuPDF=1.14.17 ("Changed methods Page.getPixmap,
         # Document.getPagePixmap to now use alpha=False as default"),
@@ -2133,6 +2142,7 @@ class FileViewer(wx.lib.pdfviewer.viewer.pdfViewer):
         self.numpages = self.pdfdoc.numpages
         self.pagewidth = self.pdfdoc.pagewidth
         self.pageheight = self.pdfdoc.pageheight
+        self.pagesizes = [self.pdfdoc.GetPageSize(i) for i in range(self.numpages)]
         self.page_buffer_valid = False
         self.Scroll(0, 0)               # in case this is a re-LoadFile
         self.CalculateDimensions()      # to get initial visible page range
