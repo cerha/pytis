@@ -606,6 +606,17 @@ class LongTable(Specification):
         fields.modify('id', fixed=True, editable=Editable.NEVER,
                       default=nextval('longtable_id_seq'))
 
+    def actions(self):
+        return (
+            Action('process', _("Process selection"), self._process,
+                   context=pp.ActionContext.SELECTION),
+        )
+
+    def _process(self, rows):
+        def process(update, row, n):
+            update(message=_("Processing row {}: {}").format(n, row['value'].value()))
+        app.run(process, over=rows, show_time=True, can_abort=True)
+
 
 class SlowLongTable(LongTable):
     """Read-only long table with slow default sorting.
