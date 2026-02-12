@@ -36,7 +36,11 @@ import io
 import threading
 import time
 import mimetypes
-import fitz
+
+try:
+    import pymupdf
+except ImportError:
+    import fitz as pymupdf
 
 import wx
 import wx.html2
@@ -1956,7 +1960,7 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler, KeyHandler):
 
 
 class mupdfProcessor(wx.lib.pdfviewer.viewer.mupdfProcessor):
-    """Overriden to allow passing fitz.Document instances directly."""
+    """Overriden to allow passing pymupdf.Document instances directly."""
 
     def __init__(self, parent, pdf_file):
         self.parent = parent
@@ -1967,27 +1971,27 @@ class mupdfProcessor(wx.lib.pdfviewer.viewer.mupdfProcessor):
         # we have to make some adjustments here.
         # These adjustments can be removed as soon as
         # we completely switch to Python3
-        if hasattr(fitz.Document, "is_pdf"):
-            self.fitz_obsolete = False
+        if hasattr(pymupdf.Document, "is_pdf"):
+            self.pymupdf_obsolete = False
         else:
-            self.fitz_obsolete = True
+            self.pymupdf_obsolete = True
         if isinstance(pdf_file, basestring):
-            # a filename/path string, pass the name to fitz.open
+            # a filename/path string, pass the name to pymupdf.open
             pathname = pdf_file
-            self.pdfdoc = fitz.open(pathname)
-        if isinstance(pdf_file, fitz.Document):
+            self.pdfdoc = pymupdf.open(pathname)
+        if isinstance(pdf_file, pymupdf.Document):
             pathname = 'fileobject.pdf'
             self.pdfdoc = pdf_file
         else:
-            # assume it is a file-like object, pass the stream content to fitz.open
+            # assume it is a file-like object, pass the stream content to pymupdf.open
             # and a '.pdf' extension in pathname to identify the stream type
             pathname = 'fileobject.pdf'
             if pdf_file.tell() > 0:     # not positioned at start
                 pdf_file.seek(0)
             stream = bytearray(pdf_file.read())
-            self.pdfdoc = fitz.open(pathname, stream)
+            self.pdfdoc = pymupdf.open(pathname, stream)
 
-        if self.fitz_obsolete:
+        if self.pymupdf_obsolete:
             self.pdfdoc.page_count = self.pdfdoc.pageCount
             self.pdfdoc.load_page = self.pdfdoc.loadPage
         self.numpages = self.pdfdoc.page_count
@@ -2009,12 +2013,12 @@ class mupdfProcessor(wx.lib.pdfviewer.viewer.mupdfProcessor):
         # (see https://github.com/wxWidgets/Phoenix/issues/1350)
         """Render the set of pagedrawings into gc for specified page """
         page = self.pdfdoc.load_page(pageno)
-        if self.fitz_obsolete:
+        if self.pymupdf_obsolete:
             page.get_pixmap = page.getPixmap
-        matrix = fitz.Matrix(scale, scale)
+        matrix = pymupdf.Matrix(scale, scale)
         try:
             pix = page.get_pixmap(matrix=matrix)   # MUST be keyword arg(s)
-            if [int(v) for v in fitz.version[1].split('.')] >= [1,15,0]:
+            if [int(v) for v in pymupdf.version[1].split('.')] >= [1,15,0]:
                 # See https://github.com/wxWidgets/Phoenix/issues/1350
                 bmp = wx.Bitmap.FromBuffer(pix.width, pix.height, pix.samples)
             else:
@@ -2141,7 +2145,7 @@ class FileViewer(wx.lib.pdfviewer.viewer.pdfViewer):
     def load_file(self, data):
         """Display preview of given document in the viewer.
 
-        'data' is either a file-like object or a 'fitz.Document' instance.
+        'data' is either a file-like object or a 'pymupdf.Document' instance.
 
         If 'data' is None, empty, or of unsupported format, display an empty
         (gray) area.
@@ -2159,7 +2163,7 @@ class FileViewer(wx.lib.pdfviewer.viewer.pdfViewer):
                     mime_type = magic.from_buffer(data.read(1024), mime=True)
                 data.seek(0)
             else:
-                assert isinstance(data, fitz.Document), data
+                assert isinstance(data, pymupdf.Document), data
                 mime_type = 'application/pdf'
             try:
                 if mime_type != 'application/pdf':
