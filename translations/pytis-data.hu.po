@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 0.1\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-01-16 11:19+0100\n"
+"POT-Creation-Date: 2026-02-13 16:22+0100\n"
 "PO-Revision-Date: 2011-12-29 14:56+0100\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Hungarian <wiking@lists.freebsoft.org>\n"
@@ -16,258 +16,258 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
-#: ../lib/pytis/data/access.py:420
+#: ../pytis/data/access.py:420
 msgid "Access denied"
 msgstr ""
 
-#: ../lib/pytis/data/dbapi.py:91
+#: ../pytis/data/dbapi.py:91
 msgid "Waiting for server recovery"
 msgstr ""
 
-#: ../lib/pytis/data/dbapi.py:103
+#: ../pytis/data/dbapi.py:103
 msgid "Can't connect to database"
 msgstr ""
 
-#: ../lib/pytis/data/dbapi.py:233
+#: ../pytis/data/dbapi.py:233
 msgid "Database interface error"
 msgstr ""
 
-#: ../lib/pytis/data/dbapi.py:252
+#: ../pytis/data/dbapi.py:252
 msgid "Database connection timeout"
 msgstr ""
 
-#: ../lib/pytis/data/dbapi.py:254 ../lib/pytis/data/dbapi.py:389
+#: ../pytis/data/dbapi.py:254 ../pytis/data/dbapi.py:389
 msgid "Database connection error"
 msgstr ""
 
-#: ../lib/pytis/data/dbapi.py:268
+#: ../pytis/data/dbapi.py:268
 msgid "Database operational error"
 msgstr ""
 
-#: ../lib/pytis/data/dbapi.py:276
+#: ../pytis/data/dbapi.py:276
 msgid "Database internal error"
 msgstr ""
 
-#: ../lib/pytis/data/dbapi.py:280
+#: ../pytis/data/dbapi.py:280
 msgid "Database integrity violation"
 msgstr ""
 
-#: ../lib/pytis/data/dbdata.py:294
+#: ../pytis/data/dbdata.py:294
 msgid "Too many database connections"
 msgstr ""
 
-#: ../lib/pytis/data/dbdata.py:723
+#: ../pytis/data/dbdata.py:723
 msgid "Database error"
 msgstr ""
 
-#: ../lib/pytis/data/dbdata.py:791
+#: ../pytis/data/dbdata.py:791
 msgid "Invalid user name or password"
 msgstr ""
 
-#: ../lib/pytis/data/postgresql.py:443 ../lib/pytis/data/postgresql.py:553
-#: ../lib/pytis/data/postgresql.py:565
+#: ../pytis/data/postgresql.py:443 ../pytis/data/postgresql.py:553
+#: ../pytis/data/postgresql.py:565
 msgid "Method not implemented"
 msgstr ""
 
-#: ../lib/pytis/data/postgresql.py:3583
+#: ../pytis/data/postgresql.py:3583
 msgid "Invalid database counter value"
 msgstr ""
 
-#: ../lib/pytis/data/types_.py:374
+#: ../pytis/data/types_.py:374
 #, python-format
 msgid "Wildcard matching not supported for values of type '%s'."
 msgstr ""
 
 #. User input validation error message.
-#: ../lib/pytis/data/types_.py:381
+#: ../pytis/data/types_.py:381
 msgid "Empty value"
 msgstr ""
 
 #. User input validation error message.
-#: ../lib/pytis/data/types_.py:397
+#: ../pytis/data/types_.py:397
 msgid "Invalid value"
 msgstr ""
 
 #. User input validation error message.
-#: ../lib/pytis/data/types_.py:545
+#: ../pytis/data/types_.py:545
 #, python-format
 msgid "Minimal value is %(minimum)s"
 msgstr ""
 
 #. User input validation error message.
-#: ../lib/pytis/data/types_.py:548
+#: ../pytis/data/types_.py:548
 #, python-format
 msgid "Maximal value is %(maximum)s"
 msgstr ""
 
 #. User input validation error message.
-#: ../lib/pytis/data/types_.py:588
+#: ../pytis/data/types_.py:588
 #, python-format
 msgid "Minimal size %(minlen)s not satisfied"
 msgstr ""
 
 #. User input validation error message.
-#: ../lib/pytis/data/types_.py:590
+#: ../pytis/data/types_.py:590
 #, python-format
 msgid "Maximal size %(maxlen)s exceeded"
 msgstr ""
 
-#: ../lib/pytis/data/types_.py:741
+#: ../pytis/data/types_.py:741
 msgid "Lower range bound higher than the upper one"
 msgstr ""
 
 #. User input validation error message.
-#: ../lib/pytis/data/types_.py:834
+#: ../pytis/data/types_.py:834
 msgid "Not an integer"
 msgstr ""
 
-#: ../lib/pytis/data/types_.py:1009
+#: ../pytis/data/types_.py:1009
 msgid "Invalid number"
 msgstr ""
 
 #. User input validation error message.
-#: ../lib/pytis/data/types_.py:1145
+#: ../pytis/data/types_.py:1145
 #, python-format
 msgid "Minimal length %(minlen)s characters not satisfied"
 msgstr ""
 
 #. User input validation error message.
-#: ../lib/pytis/data/types_.py:1147
+#: ../pytis/data/types_.py:1147
 #, python-format
 msgid "Maximal length %(maxlen)s characters exceeded"
 msgstr ""
 
 #. User input validation error message.
-#: ../lib/pytis/data/types_.py:1288
+#: ../pytis/data/types_.py:1288
 msgid "Please use mix of letters and non-letters in your password"
 msgstr ""
 
 #. User input validation error message.
-#: ../lib/pytis/data/types_.py:1294
+#: ../pytis/data/types_.py:1294
 msgid "Enter the password twice to eliminate typos"
 msgstr ""
 
 #. User input validation error message.
-#: ../lib/pytis/data/types_.py:1297
+#: ../pytis/data/types_.py:1297
 msgid "Passwords don't match"
 msgstr ""
 
 #. User input validation error message.
-#: ../lib/pytis/data/types_.py:1320
+#: ../pytis/data/types_.py:1320
 msgid "Invalid MD5 hash"
 msgstr ""
 
 #. User input validation error message.
-#: ../lib/pytis/data/types_.py:1327 ../lib/pytis/data/types_.py:1365
-#: ../lib/pytis/data/types_.py:1395 ../lib/pytis/data/types_.py:1415
-#: ../lib/pytis/data/types_.py:2145
+#: ../pytis/data/types_.py:1327 ../pytis/data/types_.py:1365
+#: ../pytis/data/types_.py:1395 ../pytis/data/types_.py:1415
+#: ../pytis/data/types_.py:2145
 msgid "Invalid format"
 msgstr ""
 
 #. User input validation error message.
-#: ../lib/pytis/data/types_.py:1350
+#: ../pytis/data/types_.py:1350
 msgid "Invalid color format ('#RGB' or '#RRGGBB')"
 msgstr ""
 
 #. User input validation error message.
-#: ../lib/pytis/data/types_.py:1370
+#: ../pytis/data/types_.py:1370
 #, python-format
 msgid "Invalid inet address mask: %(mask)s"
 msgstr ""
 
 #. User input validation error message.
-#: ../lib/pytis/data/types_.py:1377
+#: ../pytis/data/types_.py:1377
 #, python-format
 msgid "Invalid inet address value %(addr)s"
 msgstr ""
 
-#: ../lib/pytis/data/types_.py:1544
+#: ../pytis/data/types_.py:1544
 msgid "Invalid date or time format"
 msgstr ""
 
-#: ../lib/pytis/data/types_.py:1757
+#: ../pytis/data/types_.py:1757
 msgid "Date outside the allowed range"
 msgstr ""
 
-#: ../lib/pytis/data/types_.py:2161
+#: ../pytis/data/types_.py:2161
 #, python-format
 msgid "%d min"
 msgid_plural "%d min"
 msgstr[0] ""
 
-#: ../lib/pytis/data/types_.py:2163
+#: ../pytis/data/types_.py:2163
 #, python-format
 msgid "%d h"
 msgid_plural "%d h"
 msgstr[0] ""
 
-#: ../lib/pytis/data/types_.py:2165
+#: ../pytis/data/types_.py:2165
 #, python-format
 msgid "%d day"
 msgid_plural "%d days"
 msgstr[0] ""
 
-#: ../lib/pytis/data/types_.py:2167
+#: ../pytis/data/types_.py:2167
 msgid "less than 1 min"
 msgstr ""
 
-#: ../lib/pytis/data/types_.py:2278
+#: ../pytis/data/types_.py:2278
 msgid "Invalid boolean type input value"
 msgstr ""
 
-#: ../lib/pytis/data/types_.py:2505
+#: ../pytis/data/types_.py:2505
 msgid "Invalid graphics format"
 msgstr ""
 
-#: ../lib/pytis/data/types_.py:2563
+#: ../pytis/data/types_.py:2563
 #, python-format
 msgid "Minimal pixel size %(minsize)s exceeded"
 msgstr ""
 
-#: ../lib/pytis/data/types_.py:2566
+#: ../pytis/data/types_.py:2566
 #, python-format
 msgid "Maximal pixel size %(maxsize)s exceeded"
 msgstr ""
 
-#: ../lib/pytis/data/types_.py:2570
+#: ../pytis/data/types_.py:2570
 #, python-format
 msgid "Unsupported format %(format)s; valid formats: %(formats)s"
 msgstr ""
 
-#: ../lib/pytis/data/types_.py:2617
+#: ../pytis/data/types_.py:2617
 msgid "Invalid hierarchical value format"
 msgstr ""
 
-#: ../lib/pytis/data/types_.py:2619
+#: ../pytis/data/types_.py:2619
 msgid "One of hierarchical value items is too long"
 msgstr ""
 
-#: ../lib/pytis/data/types_.py:2621
+#: ../pytis/data/types_.py:2621
 msgid "One of hierarchical value items contains invalid characters"
 msgstr ""
 
 #. User input validation error message.
-#: ../lib/pytis/data/types_.py:2802
+#: ../pytis/data/types_.py:2802
 msgid "Not a JSON string"
 msgstr ""
 
-#: ../lib/pytis/data/types_.py:2806
+#: ../pytis/data/types_.py:2806
 msgid "Unsupported JSON value"
 msgstr ""
 
-#: ../lib/pytis/data/types_.py:2812
+#: ../pytis/data/types_.py:2812
 msgid "JSON value doesn't match schema definition"
 msgstr ""
 
-#: ../lib/pytis/presentation/field.py:484
+#: ../pytis/presentation/field.py:484
 msgid "Such value already exists."
 msgstr ""
 
-#: ../lib/pytis/presentation/field.py:759
+#: ../pytis/presentation/field.py:759
 msgid "unlimited"
 msgstr ""
 
-#: ../lib/pytis/presentation/spec.py:5742
+#: ../pytis/presentation/spec.py:5742
 #, python-format
 msgid ""
 "You don't have priviledges to invoke the action '%s'.\n"
