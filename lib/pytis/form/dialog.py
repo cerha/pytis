@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2019-2025 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2019-2026 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2018 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -45,7 +45,7 @@ from pytis.util import ProgramError, send_mail, public_attr_values
 
 from .command import CommandHandler
 from .event import wx_callback
-from .screen import KeyHandler, wx_focused_window, wx_text_ctrl, wx_text_view, wx_button
+from .screen import KeyHandler, wx_focused_window, wx_text_ctrl, wx_text_view, wx_button, get_icon
 
 # Needed for subprocess.getstatusoutput (commands.getstatusoutput in Python 2).
 standard_library.install_aliases()
@@ -270,10 +270,10 @@ class GenericDialog(Dialog):
         """
         pass
 
-    def _create_icon(self, artid):
-        bitmap = wx.ArtProvider.GetBitmap(artid, wx.ART_MESSAGE_BOX, (48, 48))
-        if bitmap.IsOk():
-            return wx.StaticBitmap(self._dialog, -1, bitmap)
+    def _create_icon(self, icon_id):
+        icon = get_icon(icon_id, type=wx.ART_MESSAGE_BOX, size=(48, 48))
+        if icon:
+            return wx.StaticBitmap(self._dialog, -1, icon)
         else:
             return None
 
@@ -382,20 +382,18 @@ class Message(GenericDialog):
     tlačítkem).
 
     """
-    ICON_INFO = wx.ART_INFORMATION
-    "Ikona pro informativní zprávy (žárovka)"
-    ICON_QUESTION = wx.ART_QUESTION
-    "Ikona s otazníkem."
-    ICON_WARNING = wx.ART_WARNING
-    "Ikona s vykřičníkem."
-    ICON_ERROR = wx.ART_ERROR
-    "Ikona pro chybové zprávy."
-    ICON_TIP = wx.ART_TIP
-    "Ikona pro tipy, rady apod."
-    ICON_QUIT = wx.ART_QUIT
-    "Ikona opuštění aplikace."
-    ICON_RUN = wx.ART_EXECUTABLE_FILE
-    "Ikona opuštění aplikace."
+    ICON_INFO = 'information'
+    "Icon for informational messages (light bulb)."
+    ICON_QUESTION = 'question'
+    "Icon with a question mark."
+    ICON_WARNING = 'warning'
+    "Icon with an exclamation mark."
+    ICON_ERROR = 'error'
+    "Icon for error messages."
+    ICON_QUIT = 'quit'
+    "Icon for exiting the application."
+    ICON_RUN = 'execute'
+    "Icon for running an application."
 
     _BUTTONS = (GenericDialog.BUTTON_OK,)
     _DEFAULT_BUTTON = GenericDialog.BUTTON_OK

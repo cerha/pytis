@@ -2406,9 +2406,11 @@ def get_icon(icon_id, type=wx.ART_MENU, size=(16, 16)):
     Returns None if an icon for given identifier is not found.
 
     """
-    def find_file(icon_id):
+    def find_file(icon_id, size):
         for directory in pytis.config.icon_path:
             for ext in ('.png', '.svg'):
+                if ext == '.png' and size == (48, 48):
+                    directory = os.path.join(directory, '48x48')
                 filename = os.path.join(directory, icon_id) + ext
                 if os.path.exists(filename):
                     return filename
@@ -2420,10 +2422,10 @@ def get_icon(icon_id, type=wx.ART_MENU, size=(16, 16)):
           sys.version_info[0] > 2 and isinstance(icon_id, bytes)):
         bitmap = wx.ArtProvider.GetBitmap(icon_id, type, size)
     else:
-        filename = find_file(icon_id)
+        filename = find_file(icon_id, size)
         if not filename:
-            log(OPERATIONAL, "Could not find icon file {}.(svg|png):".format(icon_id),
-                pytis.config.icon_path)
+            log(OPERATIONAL, "Could not find icon file {}.(svg|png) {}x{}:".format(
+                icon_id, size[0], size[1]), pytis.config.icon_path)
             return None
         if filename.endswith('.png'):
             img = wx.Image(filename, type=wx.BITMAP_TYPE_PNG)
