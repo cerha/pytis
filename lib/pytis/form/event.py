@@ -16,25 +16,25 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Zpracování událostí.
+"""Event handling.
 
-Hlavním cílem tohoto modulu je umožnit vyřízení wx události během zpracování
-jiné wx události.  Události ve wxWidgets jsou blokující, během zpracování
-události musí další události čekat na její dokončení.  To má některé nepříjemné
-důsledky, jako například nemožnost průběžné aktualizace obsahu oken nebo
-možnost přerušení dlouhotrvajícího zpracování události uživatelem.  Modul se
-snaží tyto potíže obejít.
+The main goal of this module is to allow processing a wx event while another
+wx event is being processed. wxWidgets events are blocking: while an event is
+being handled, other events must wait until it finishes. This has some
+unpleasant consequences, such as the inability to update window contents
+incrementally, or the inability for the user to interrupt long-running event
+processing. This module tries to work around these issues.
 
-Aby modul plnil svůj účel, je nutno zajistit následující:
+To make the module fulfill its purpose, you must ensure the following:
 
-- Všechna přiřazení callbacků ('EVT_*' funkce) musí být prováděna
-  prostřednictvím funkce 'wx_callback()'.
+- All callback bindings (the 'EVT_*' functions) must be performed via
+  'wx_callback()'.
 
-- Na nějakém místě, nejlépe v top-level kódu uživatelského rozhraní, je nutno
-  spustit hlídací vlákno zavoláním funkce 'interrupt_watcher()'.
+- Somewhere, ideally in the top-level UI code, start the watcher thread by
+  calling 'interrupt_watcher()'.
 
-- Je nutno zajistit periodické volání funkce 'yield_()'.  Mnohdy je možno
-  výhodně využít háček ve funkci 'pytis.util.log()'.
+- Ensure periodic calls to 'yield_()'. Often it is convenient to use a hook in
+  'pytis.util.log()'.
 
 """
 
@@ -55,10 +55,10 @@ _ = translations('pytis-wx')
 
 
 class UserBreakException(Exception):
-    """Výjimka vyvolávaná při přerušení zpracování události.
+    """Exception raised when the user interrupts event processing.
 
-    Tato výjimka je používána jednoúčelově pro signalizaci přerušení zpracování
-    události uživatelem.
+    This exception is used solely as a signal that event processing was
+    interrupted by the user.
 
     """
     def __init__(self, *args):
@@ -77,7 +77,7 @@ _in_top_level_exception = False
 
 
 def top_level_exception(einfo=None):
-    """Zpracuj aktuálně vyvolanou výjimku aplikace."""
+    """Handle the currently raised application exception."""
     global _in_top_level_exception
     if not _in_top_level_exception:
         _in_top_level_exception = True
@@ -107,9 +107,9 @@ _last_user_event = None
 
 
 def last_user_event():
-    """Vrať poslední přijatou uživatelskou událost jako instanci 'wx.Event'.
+    """Return the last received user event as a 'wx.Event' instance.
 
-    Před prvním voláním uživatelské události vrať 'None'.
+    Return None before the first user event is received.
 
     """
     return _last_user_event
@@ -131,13 +131,13 @@ def last_event_age():
 
 
 def _is_user_event(event):
-    # Sem nelze přidat jen tak jakoukoliv událost, protože některé uživatelské
-    # události nastávají vesměs během jiných uživatelských událostí, a pak by
-    # mohlo dojít k různým nepříjemným efektům.
+    # You cannot just add any event type here, because some user events tend to
+    # occur mostly during other user events, which could lead to unpleasant
+    # effects.
     if isinstance(event, (wx.KeyEvent, wx.MenuEvent, wx.MouseEvent)):
         return True
-    # Instance wxCommandEvent považujeme za user_event, kromě událostí gridu
-    # a výběru z menu (např. výběr z popup menu)
+    # Treat wx.CommandEvent instances as user events, except for grid events
+    # and menu selection events (e.g. selection from a popup menu).
     if isinstance(event, wx.CommandEvent) and \
        not isinstance(event, (wx.grid.GridEvent, wx.UpdateUIEvent)) and \
        event.GetEventType() != wx.wxEVT_COMMAND_MENU_SELECTED:
@@ -167,9 +167,9 @@ def wx_callback(event_kind, handler, callback, **kwargs):
 
     def process_event(event, callback=callback):
         def system_callback():
-            # Při zamykání atd. se využívá toho, že v existují jen dvě vlákna
-            # zpracovávající události a že v rámci jednoho vlákna dochází pouze
-            # k sekvenčnímu nebo cibulovitému řazení událostí.
+            # The locking relies on the fact that there are only two threads
+            # processing events, and that within a single thread events are
+            # nested/stacked in a purely sequential (onion-like) way.
             STATE_CURRENT = 'STATE_CURRENT'
             STATE_FREE = 'STATE_FREE'
             STATE_BLOCKED = 'STATE_BLOCKED'
@@ -178,54 +178,54 @@ def wx_callback(event_kind, handler, callback, **kwargs):
             try:
                 ident = _thread.get_ident()
                 if _system_callback_thread_ident == ident:
-                    # Jsme uvnitř vlastní slupky, jsme v pohodě
+                    # We are inside our own "onion layer", we're fine.
                     state = STATE_CURRENT
                 elif (_system_callback_thread_ident is None and
                       _system_callback_lock is None):
-                    # Nikdo jiný nemá zájem, uzmeme to
+                    # Nobody else is interested, take it.
                     _system_callback_thread_ident = ident
                     state = STATE_FREE
                 else:
-                    # Máme konkurenci -- vytvoříme si synchronizační zámek pro
-                    # oznámení uvolnění cesty
+                    # We have competition: create a synchronization lock used to
+                    # signal that the path has been released.
                     _system_callback_lock = lock = _thread.allocate_lock()
                     _system_callback_lock.acquire()
                     state = STATE_BLOCKED
             finally:
                 _system_callback_access_lock.release()
             if state == STATE_BLOCKED:
-                # Čekáme na uvolnění cesty
+                # Wait until the path is released.
                 lock.acquire()
                 lock.release()
                 _system_callback_access_lock.acquire()
                 try:
-                    # Ještě stále je to náš synchronizační zámek?  Uvolni jej!
+                    # Is this still our synchronization lock? Release it.
                     if _system_callback_lock is lock:
                         _system_callback_lock = None
-                    # Teď jsme na koni my
+                    # Now it's our turn.
                     _system_callback_thread_ident = ident
                     state = STATE_FREE
                 finally:
                     _system_callback_access_lock.release()
             try:
-                # To hlavní...
+                # The main work...
                 result = callback(event)
             finally:
                 _system_callback_access_lock.acquire()
                 try:
-                    # Jako první usurpátoři musíme uvolnit informace o své
-                    # cibuli ...
+                    # As the first usurper, we must clear the information about
+                    # our "onion layer"...
                     if state == STATE_FREE:
                         _system_callback_thread_ident = None
                         if _system_callback_lock is not None:
                             while True:
                                 try:
-                                    # ... a poslat signál případnému čekateli
+                                    # ... and send a signal to a potential waiter.
                                     _system_callback_lock.release()
                                     break
                                 except _thread.error:
-                                    # To je případ, kdy čekatel ještě nestačil
-                                    # na svůj zámek zavolat acquire
+                                    # This happens when the waiter has not yet
+                                    # managed to call acquire() on its lock.
                                     pass
                 finally:
                     _system_callback_access_lock.release()
@@ -241,8 +241,8 @@ def wx_callback(event_kind, handler, callback, **kwargs):
                 log(DEBUG, 'Processing event:', (event, event.__class__))
         try:
             if _thread.get_ident() == _watcher_thread_ident or _current_event:
-                # Událost během události
-                if _wx_key and _wx_key.is_event_of_key(event, 'Ctrl-g'):  # TODO: ne natvr.
+                # Event during event.
+                if _wx_key and _wx_key.is_event_of_key(event, 'Ctrl-g'):  # TODO: avoid hardcoding.
                     _interrupted = True
                     result = True
                 elif is_user:
@@ -250,20 +250,20 @@ def wx_callback(event_kind, handler, callback, **kwargs):
                 else:
                     result = system_callback()
             elif is_user and pytis.form.app and pytis.form.modal(pytis.form.app.top_window()):
-                # Událost vyvolaná uživatelským příkazem v modálním okně
+                # Event triggered by a user command in a modal window.
                 result = callback(event)
             elif is_user:
-                # Událost vyvolaná uživatelským příkazem
+                # Event triggered by a user command.
                 _interrupted = False
                 _current_event = event
                 try:
                     result = callback(event)
                 finally:
-                    _interrupted = False  # událost končí -> nebude co přerušit
+                    _interrupted = False  # event ends -> nothing to interrupt anymore
                     _current_event = None
                     _last_user_event = event
             else:
-                # Standardní "systémová" událost
+                # Standard "system" event.
                 result = system_callback()
         except SystemExit:
             raise
@@ -278,7 +278,7 @@ def wx_callback(event_kind, handler, callback, **kwargs):
 
 
 def unlock_callbacks():
-    """Uvolni uzamčení uživatelských událostí callbackem."""
+    """Release the user event lock held by the callback wrapper."""
     global _current_event
     _current_event = None
 
@@ -380,7 +380,7 @@ def standard_stop_check_function():
 
 
 def interrupt_watcher():
-    """Spusť vlákno sledující wx události během zpracování jiné wx události."""
+    """Start a thread which watches wx events during processing of another wx event."""
     lock = _thread.allocate_lock()
     lock.acquire()
 
@@ -396,14 +396,14 @@ def interrupt_watcher():
             else:
                 last_event = _current_event
     _thread.start_new_thread(watcher, ())
-    # Čekání na dokončení inicializace watcheru
+    # Wait for watcher initialization to finish.
     lock.acquire()
     lock.release()
 
 
 def interrupt_init(_main_thread_ident_=_thread.get_ident(),
                    _watcher_thread_ident_=None):
-    """Inicializuj zpracování přerušení události pro aktuální thread."""
+    """Initialize event interruption handling for the current thread."""
     global _wx_key, _main_thread_ident, _watcher_thread_ident
     _wx_key = pytis.form.WxKey()
     _main_thread_ident = _main_thread_ident_

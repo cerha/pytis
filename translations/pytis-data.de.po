@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pytis 0.1\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2025-06-10 21:37+0200\n"
+"POT-Creation-Date: 2026-01-16 11:19+0100\n"
 "PO-Revision-Date: 2025-01-17 20:05+0100\n"
 "Last-Translator: Pavel Vohnout <vohnout@officehouse.cz>\n"
 "Language-Team: German <wiking@lists.freebsoft.org>\n"
@@ -16,7 +16,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: ../lib/pytis/data/access.py:433
+#: ../lib/pytis/data/access.py:420
 msgid "Access denied"
 msgstr ""
 
@@ -278,7 +278,7 @@ msgstr ""
 msgid "unlimited"
 msgstr ""
 
-#: ../lib/pytis/presentation/spec.py:5802
+#: ../lib/pytis/presentation/spec.py:5742
 #, python-format
 msgid ""
 "You don't have priviledges to invoke the action '%s'.\n"

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2025 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2026 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2017 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -485,7 +485,7 @@ class InputField(KeyHandler, CommandHandler):
         self._needs_check = True
 
     def _on_change(self, event=None):
-        # Called on user interaction (editation, selection).  The actual processing of the event
+        # Called on user interaction (edit, selection).  The actual processing of the event
         # is postponed to the idle thread to avoid user interface hangs on time-consuming
         # operations (such as complicated field recomputations).
         if not self._readonly:
@@ -499,7 +499,7 @@ class InputField(KeyHandler, CommandHandler):
             set_editable(ctrl, editable)
             if editable:
                 # ctrl.Disconnect(-1, -1, wx.wxEVT_NAVIGATION_KEY)
-                # The disconnect above doeasn't work, so here is a nasty workaround.
+                # The disconnect above doesn't work, so here is a nasty workaround.
                 if ctrl in self._skipped_controls:
                     del self._skipped_controls[ctrl]
             else:
@@ -714,10 +714,10 @@ class InputField(KeyHandler, CommandHandler):
 
 
 class Unlabeled(object):
-    """Mix-in třída pro políčka .
+    """Mix-in class for unlabeled fields.
 
-    Některé prvky mají label spojen přímo s controlem, takže label zobrazený
-    v gridu musí být prázdný.
+    Some controls have their label integrated directly into the control, so
+    the label shown in the grid must be empty.
 
     """
     def _create_label(self, parent):
@@ -725,7 +725,7 @@ class Unlabeled(object):
 
 
 class TextField(InputField):
-    """Textové vstupní políčko."""
+    """Text input field."""
 
     class TextValidator(wx.Validator):
 
@@ -793,7 +793,7 @@ class TextField(InputField):
         return style
 
     def _maxlen(self):
-        """Vrať maximální délku zadaného textu."""
+        """Return the maximum allowed length of the entered text."""
         return None
 
     def _on_enter_key(self, event):
@@ -819,10 +819,10 @@ class TextField(InputField):
         super(TextField, self)._on_change(event=event)
 
     def _post_process_func(self):
-        """Vrať funkci odpovídající specifikaci postprocessingu políčka.
+        """Return the function corresponding to the field post-processing specification.
 
-        Vrací: Funkci jednoho argumentu (původní text), která vrací
-        řetězec (změněný text).
+        Returns: A single-argument function (original text) returning a
+        string (modified text).
 
         """
         try:
@@ -842,13 +842,12 @@ class TextField(InputField):
             return self._stored_post_process_func
 
     def _filter(self):
-        """Vrať filtrační funkci odpovídající specifikaci políčka.
+        """Return the filter function corresponding to the field specification.
 
-        Vrací: Funkci jednoho argumentu, která vrací pravdu, pokud znak
-        odpovídá specifikaci filtru pro dané políčko, nepravdu v opačném
-        případě.
+        Returns: A single-argument function that returns true if the character
+        matches the filter specification for this field, and false otherwise.
 
-        Pokud políčko nemá nastavenu filtraci, vrací None.
+        If the field has no filtering configured, returns None.
 
         """
         filter_spec = self.spec().filter()
@@ -945,7 +944,7 @@ class TextField(InputField):
 
 
 class StringField(TextField):
-    """Textové vstupní políčko pro data typu 'pytis.data.String'."""
+    """Text input field for values of type 'pytis.data.String'."""
 
     def _maxlen(self):
         return self._type.maxlen()
@@ -1054,7 +1053,7 @@ class SpinnableField(InputField):
 
 
 class NumericField(TextField, SpinnableField):
-    """Textové vstupní políčko pro data typu 'pytis.data.Number'."""
+    """Text input field for values of type 'pytis.data.Number'."""
     _SPIN_STEP = 1
 
     def _text_ctrl_style(self):
@@ -1103,7 +1102,7 @@ class CheckBoxField(Unlabeled, InputField):
             return CheckBoxField.ReadOnlyValidator()
 
     def _create_ctrl(self, parent):
-        """Vrať instanci 'wx.CheckBox'."""
+        """Return a 'wx.CheckBox' instance."""
         control = wx.CheckBox(parent, -1, self.spec().label())
         wx_callback(wx.EVT_CHECKBOX, control, self._on_change)
         return control
@@ -1133,7 +1132,7 @@ class GenericEnumerationField(InputField):
                                     self._on_enumeration_change)
 
     def _on_enumeration_change(self):
-        # Callback může být volán i když už je list mrtev.
+        # The callback may be invoked even when the UI list is already dead.
         if not self._readonly:
             self._needs_validation = True
             self._enumeration_changed = True
@@ -1451,7 +1450,7 @@ class TimeField(TextField, SpinnableField):
 
 
 class ColorSelectionField(Invocable, TextField):
-    """Vstupní pole pro výběr barvy."""
+    """Input field for selecting a color."""
 
     _DEFAULT_WIDTH = 9  # Value is max. 7 chars, but may include wide letters, such as D.
     _INVOKE_TITLE = _("Select Color")
@@ -1471,7 +1470,7 @@ class ColorSelectionField(Invocable, TextField):
 
 
 class GenericCodebookField(GenericEnumerationField):
-    """Společná nadtřída číselníkových políček."""
+    """Common base class for codebook-backed fields."""
 
     def _init_attributes(self):
         cb_name = self._row.codebook(self._id)
@@ -1498,7 +1497,7 @@ class GenericCodebookField(GenericEnumerationField):
         return self._row.runtime_arguments(self.id())
 
     def _run_codebook_form(self, begin_search=None):
-        """Zobraz číselník a po jeho skončení nastav hodnotu políčka."""
+        """Show the codebook and set the field value after the form is closed."""
         enumerator = self._type.enumerator()
         validity_condition = enumerator.validity_condition()
         runtime_filter_condition = self._row.runtime_filter(self.id())
@@ -1536,20 +1535,20 @@ class GenericCodebookField(GenericEnumerationField):
 
 
 class CodebookField(Invocable, GenericCodebookField, TextField):
-    """Vstupní pole pro data navázaná na číselník.
+    """Input field for values backed by a codebook.
 
-    Bude použito v případě, že datový typ definuje enumerátor typu
-    'pytis.data.DataEnumerator' a prezentační specifikace políčka definuje
-    navázaný číselník (viz. argument 'codebook' konstruktoru 'Field').
+    Used when the data type defines an enumerator of type
+    'pytis.data.DataEnumerator' and the presentation specification defines the
+    linked codebook (see the 'codebook' argument of the 'Field' constructor).
 
-    Jako akci pro vyvolání výběru definuje zobrazení formuláře
-    'pytis.form.CodebookForm'.  Název specifikace číselníku je dán výše
-    zmíněným specifikátorem 'codebook'.  Další vlastnosti číselníkového
-    formuláře jsou dány jednak specifikací 'cb_spec' v odkazované specifikaci a
-    jednak přímo specifikací 'view_spec' tamtéž.
+    For selection invocation, this field shows the 'pytis.form.CodebookForm'
+    form.  The codebook specification name is given by the above-mentioned
+    'codebook' specifier.  Additional codebook-form properties are defined by
+    the 'cb_spec' specification in the referenced spec and also directly by the
+    'view_spec' specification there.
 
-    K políčku může být volitelně přidružen displej, který slouží k zobrazení
-    popisu vybrané (aktuální) hodnoty číselníku.
+    Optionally, the field may include a display control used to show the
+    description of the selected (current) codebook value.
 
     """
     _INVOKE_TITLE = _("Select from Codebook")
@@ -1560,7 +1559,7 @@ class CodebookField(Invocable, GenericCodebookField, TextField):
         super(CodebookField, self)._init_attributes()
 
     def _create_widget(self, parent, ctrl):
-        """Zavolej '_create_widget()' třídy Invocable a přidej displej."""
+        """Call Invocable._create_widget() and add the optional display control."""
         widget = super(CodebookField, self)._create_widget(parent, ctrl)
         spec = self.spec()
         cb_spec = self._cb_spec
@@ -1632,10 +1631,10 @@ class CodebookField(Invocable, GenericCodebookField, TextField):
 
 
 class ListField(GenericCodebookField, CallbackHandler):
-    """Číselníkové políčko zobrazující data číselníku jako součást formuláře.
+    """Codebook field displaying codebook data as part of the form.
 
-    Pokud je 'selection_type' číselníkového políčka ve specifikaci určen jako 'LIST', bude ve
-    formuláři použit tento typ vstupního pole.
+    If the codebook field's 'selection_type' is set to 'LIST' in the field
+    specification, this input field type will be used in the form.
 
     """
     _DEFAULT_WIDTH = 30
@@ -2130,7 +2129,7 @@ class StructuredTextField(TextField):
                                              SMALL_THUMBNAIL_SIZE)),
                        ('large-thumbnail', _("Larger preview (%d px), click to enlarge" %
                                              LARGE_THUMBNAIL_SIZE)),
-                       # ('custom-thumbnail', _("Vlastní velikost náhledu")),
+                       # ('custom-thumbnail', _("Custom preview size")),
                        ('full-size', _("Full size (appropriate for screenshot etc.)")))
         default = 'full-size'
 
@@ -2249,11 +2248,11 @@ class StructuredTextField(TextField):
     def _toolbar_commands(self):
         commands = (
             # (UICommand(Command(self.undo),
-            #            _(u"Zpět"),
-            #            _(u"Vrátit zpět poslední akci.")),
+            #            _(u"Undo"),
+            #            _(u"Undo the last action.")),
             #  UICommand(Command(self.redo),
-            #            _(u"Znovu"),
-            #            _(u"Provést znovu poslední akci vzatou zpět.")),
+            #            _(u"Redo"),
+            #            _(u"Redo the last undone action.")),
             # ),
 
             (UICommand(Command(self.cut),
@@ -2267,11 +2266,11 @@ class StructuredTextField(TextField):
                        _("Paste text from clipboard.")),
              ),
             # (UICommand(Command(self.search),
-            #            _(u"Hledat"),
-            #            _(u"Vyhledat řetězec v textu políčka.")),
+            #            _(u"Find"),
+            #            _(u"Find a string in the field text.")),
             #  UICommand(Command(self.search_and_replace),
-            #            _(u"Hledat a nahradit"),
-            #            _(u"Vyhledat na nahradit řetězec v textu políčka.")),
+            #            _(u"Find and replace"),
+            #            _(u"Find and replace a string in the field text.")),
             # ),
             (UICommand(Command(self.heading),
                        _("Heading level"),
@@ -2358,7 +2357,7 @@ class StructuredTextField(TextField):
                 return self.CanCut()
         # TODO: We currently use a standard wx.TextCtrl instead of
         # wx.stc.StyledTextCtrl as it has some strange bugs in caret
-        # positioning etc.  Once this is resolved, we can re-enable usiong the
+        # positioning etc.  Once this is resolved, we can re-enable using the
         # derived TextCtrl class defined above.
         # ctrl = TextCtrl(parent, -1, style=self._text_ctrl_style())
         # wx_callback(wx.stc.EVT_STC_MODIFIED, ctrl, self._on_change)
@@ -2623,10 +2622,10 @@ class StructuredTextField(TextField):
                   computer=computer(self._resize_computer)),
             Field('align', _("Alignment"), not_null=True,
                   enumerator=self.ImageAlignments),
-            # Field('title', _(u"Název"), width=50,
-            #       descr=_(u"Zadejte název zobrazený v textu dokumentu.  Ponechte\n"
-            #               u"prázdné, pokud chcete zobrazit přímo URL zadané v \n"
-            #               u"předchozím políčku.")),
+            # Field('title', _(u"Title"), width=50,
+            #       descr=_(u"Enter the title displayed in the document text.  Leave\n"
+            #               u"blank if you want to display the URL entered in the\n"
+            #               u"previous field directly.")),
             Field('tooltip', _("Tooltip"), width=50,
                   descr=_("Enter the text displayed above the image when the mouse moves over.")),
         )

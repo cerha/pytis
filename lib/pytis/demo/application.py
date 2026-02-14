@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2025 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2026 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2007-2018 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -41,6 +41,9 @@ class Application(pytis.presentation.Application):
     def init(self):
         basedir = os.path.dirname(os.path.dirname(__file__))
         sys.path.append(os.path.join(basedir, 'www'))
+
+    def post_init(self):
+        pass
 
     def menu(self):
         return (

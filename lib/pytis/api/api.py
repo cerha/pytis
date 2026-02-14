@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2025 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2026 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2017 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -196,7 +196,7 @@ class Form(API):
     """Current filtering condition as a 'pytis.data.Operator' instance or None."""
 
     arguments = property()
-    """Current arguemnts as a dictionary of 'pytis.data.Value' instances or None."""
+    """Current arguments as a dictionary of 'pytis.data.Value' instances or None."""
 
     sorting = property()
     """Current sorting as in 'pytis.data.Data.select()' or None."""
@@ -797,7 +797,8 @@ class Application(API):
         pass
 
     def run_form(self, specification, select_row=None, multi=True, preview=False, sorting=None,
-                 filter=None, condition=None, profile=None, binding=None, transaction=None):
+                 filter=None, condition=None, arguments=None, profile=None, binding=None,
+                 transaction=None):
         """Display given form in the main application frame.
 
         Arguments:
@@ -828,6 +829,11 @@ class Application(API):
           condition -- 'pytis.data.Operator' instance filtering the rows of the
             underlying data object.  This condition is not indicated to the user
             and it is not possible to turn it of from the UI.
+          arguments -- dictionary of table function call arguments, with
+            function argument identifiers as keys and 'pytis.data.Value'
+            instances as values.  Useful only when the underlying database
+            table is actually a row returning database function, otherwise
+            ignored.
           profile -- id of the initial profile to be loaded.  If not None, it
             must be one of the available system profiles (defined in
             specification) and the arguments 'filter' and 'sorting' must be
