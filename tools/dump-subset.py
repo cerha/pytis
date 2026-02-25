@@ -284,32 +284,63 @@ def get_constraint_defs(connection, constraint_oids):
 
 
 def get_owned_sequences_for_tables(connection, tables):
-    """Return list of dicts for sequences owned by columns of given tables.
+    """Return list of dicts for sequences tied to columns of given tables.
+
+    This includes sequences owned by columns (SERIAL/IDENTITY) and sequences
+    referenced from column defaults (nextval(...)).
 
     Each dict has the following keys: 'schema', 'name', 'value'.
 
-    Only sequences that have a non-null value (have ever been called) are returned.
+    If a sequence has never been called, its start value is returned.
 
     """
     sql = """
+        WITH target_tables AS (
+            SELECT c.oid, n.nspname, c.relname
+            FROM pg_class c
+            JOIN pg_namespace n ON n.oid = c.relnamespace
+            WHERE (n.nspname || '.' || c.relname) = ANY(%s)
+        ),
+        owned_seqs AS (
+            -- Sequences owned by table columns (SERIAL/IDENTITY).
+            SELECT s.oid AS seq_oid
+            FROM pg_class s
+            JOIN pg_depend d ON d.objid = s.oid
+            JOIN target_tables tt ON d.refobjid = tt.oid
+            WHERE s.relkind = 'S'
+              AND d.classid = 'pg_class'::regclass
+              AND d.refclassid = 'pg_class'::regclass
+              AND d.refobjsubid <> 0
+              AND d.deptype IN ('a', 'i')
+        ),
+        default_seqs AS (
+            -- Sequences referenced from column defaults (nextval()).
+            SELECT s.oid AS seq_oid
+            FROM pg_class s
+            JOIN pg_depend d ON d.refobjid = s.oid
+            JOIN pg_attrdef ad ON ad.oid = d.objid
+            JOIN target_tables tt ON ad.adrelid = tt.oid
+            WHERE s.relkind = 'S'
+              AND d.classid = 'pg_attrdef'::regclass
+              AND d.refclassid = 'pg_class'::regclass
+              AND d.deptype IN ('n', 'a', 'i')
+        ),
+        seqs AS (
+            SELECT seq_oid FROM owned_seqs
+            UNION
+            SELECT seq_oid FROM default_seqs
+        )
         SELECT
             ps.schemaname AS schema,
             ps.sequencename AS name,
-            ps.last_value AS value
-        FROM pg_class s
-             JOIN pg_namespace sn ON sn.oid = s.relnamespace
-             JOIN pg_depend d ON d.objid = s.oid
-             JOIN pg_class c ON c.oid = d.refobjid
-             JOIN pg_namespace n ON n.oid = c.relnamespace
-             JOIN pg_sequences ps ON ps.schemaname = sn.nspname AND ps.sequencename = s.relname
-        WHERE
-            s.relkind = 'S'
-            AND d.classid = 'pg_class'::regclass
-            AND d.refclassid = 'pg_class'::regclass
-            AND d.deptype in ('a', 'i')
-            AND (n.nspname || '.' || c.relname) = ANY(%s)
-            AND ps.last_value IS NOT NULL
-        ORDER BY n.nspname, c.relname, ps.schemaname, ps.sequencename;
+            COALESCE(ps.last_value, ps.start_value) AS value
+        FROM seqs
+        JOIN pg_class s ON s.oid = seqs.seq_oid
+        JOIN pg_namespace sn ON sn.oid = s.relnamespace
+        JOIN pg_sequences ps
+          ON ps.schemaname = sn.nspname
+         AND ps.sequencename = s.relname
+        ORDER BY schema, name;
     """
     with connection.cursor(cursor_factory=psycopg2.extras.DictCursor) as cur:
         cur.execute(sql, (tables,))
