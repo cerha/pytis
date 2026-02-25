@@ -48,6 +48,7 @@ wx = [
     # wxPython version to the one available in given source, such as:
     # pip install -f https://extras.wxpython.org/wxPython4/extras/linux/gtk3/debian-10/ wxPython==4.2.1
     "wxpython",
+    "standard-cgitb; python_version >= '3.13'",
 ]
 
 [tool.flit.module]
