@@ -275,7 +275,7 @@ msgstr "ID sezení X2Go"
 
 #: ../pytis/form/application.py:1419
 msgid "X2Go version"
-msgstr "ID sezení X2Go"
+msgstr "Verze X2Go"
 
 #: ../pytis/form/application.py:1420
 msgid "Local Python version"

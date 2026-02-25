@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pytis 0.1\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-02-13 16:22+0100\n"
+"POT-Creation-Date: 2026-02-25 19:15+0100\n"
 "PO-Revision-Date: 2026-02-13 16:23+0100\n"
 "Last-Translator: Tomáš Cerha <t.cerha@gmail.com>\n"
 "Language-Team: Czech <cs@li.org>\n"
@@ -525,19 +525,19 @@ msgstr "Iterace nad tabulkou"
 msgid "Continent name"
 msgstr "Název kontinentu"
 
-#: ../pytis/demo/cb.py:122
+#: ../pytis/demo/cb.py:123
 msgid "Continent details"
 msgstr "Podrobnosti o kontinentu"
 
-#: ../pytis/demo/cb.py:124
+#: ../pytis/demo/cb.py:125
 msgid "Shows the details of the currently selected main table record."
 msgstr "Zobrazuje detaily aktuálně vybraného řádku hlavního formuláře."
 
-#: ../pytis/demo/cb.py:125
+#: ../pytis/demo/cb.py:126
 msgid "Other countries of the same continent"
 msgstr "Ostatní země stejného kontinentu"
 
-#: ../pytis/demo/cb.py:128
+#: ../pytis/demo/cb.py:129
 msgid ""
 "Displays a table of all countries from the same continent as the currently "
 "selected main form country."
@@ -546,35 +546,35 @@ msgstr ""
 "v\n"
 "hlavním formuláři."
 
-#: ../pytis/demo/cb.py:130
+#: ../pytis/demo/cb.py:131
 msgid "Wikipedia"
 msgstr "Wikipedie"
 
-#: ../pytis/demo/cb.py:131
+#: ../pytis/demo/cb.py:132
 msgid "Shows Wikipedia information about the currently selected country."
 msgstr "Zobrazuje informace o aktuálně vybrané zemi z Wikipedie."
 
-#: ../pytis/demo/cb.py:169
+#: ../pytis/demo/cb.py:170
 msgid "Function Table"
 msgstr "Tabulka nad DB funkcí"
 
-#: ../pytis/demo/cb.py:184
+#: ../pytis/demo/cb.py:185
 msgid "Fees"
 msgstr "Poplatky"
 
-#: ../pytis/demo/cb.py:195
+#: ../pytis/demo/cb.py:196
 msgid "Really print?"
 msgstr "Opravdu tisknout?"
 
-#: ../pytis/demo/cb.py:197
+#: ../pytis/demo/cb.py:198
 msgid "Document title"
 msgstr "Název dokumentu"
 
-#: ../pytis/demo/cb.py:198
+#: ../pytis/demo/cb.py:199
 msgid "Title"
 msgstr "Název"
 
-#: ../pytis/demo/cb.py:208 ../pytis/demo/cb.py:292
+#: ../pytis/demo/cb.py:209 ../pytis/demo/cb.py:293
 msgid "Printed!"
 msgstr "Vytištěno!"
 
