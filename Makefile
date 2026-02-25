@@ -1,6 +1,8 @@
 .PHONY: doc test translations resources assets
 
-all: doc compile translations resources assets
+all: doc compile update
+
+update: translations resources assets
 
 doc:
 	python -m lcg.make doc/tutorials/Fields.txt doc/html
