@@ -448,7 +448,8 @@ def build_selection_sets(connection, reachable_tables, start_table, seed_where,
 
 
 def dump_subset(connection, table, seed_where, binary=False, debug=False, debug_sql=False,
-                on_conflict_do_nothing=False, disable_triggers=False, force_defer=False):
+                on_conflict_do_nothing=False, disable_triggers=False, force_defer=False,
+                adjust_sequences=True):
     foreign_keys = get_foreign_keys(connection)
     parents, deps = build_parent_graph(foreign_keys)
     reachable_tables = ancestors_only(table, parents)  # table ∪ transitive parents
@@ -614,8 +615,9 @@ def dump_subset(connection, table, seed_where, binary=False, debug=False, debug_
                 cdef=constraint_defs[oid],
             ))
     # Adjust sequences for affected tables so that future inserts do not collide.
-    for seq in get_owned_sequences_for_tables(connection, list(ordered_tables)):
-        print("SELECT pg_catalog.setval('{schema}.{name}', {value}, true);".format(**seq))
+    if adjust_sequences:
+        for seq in get_owned_sequences_for_tables(connection, list(ordered_tables)):
+            print("SELECT pg_catalog.setval('{schema}.{name}', {value}, true);".format(**seq))
 
     print('COMMIT;')
 
@@ -664,6 +666,11 @@ def main():
                               "constraints around the import and recreate them afterwards. "
                               "Data integrity is still validated when the constraints are "
                               "added back."))
+    parser.add_argument("--no-adjust-sequences", action='store_true',
+                        help=("Skip emitting setval() calls for sequences owned by the "
+                              "exported tables. Useful when merging into an existing "
+                              "database where you want to preserve the current sequence "
+                              "values."))
 
     args = parser.parse_args()
     table = args.table if "." in args.table else f"public.{args.table}"
@@ -685,7 +692,8 @@ def main():
                             debug=args.debug, debug_sql=args.debug_sql,
                             on_conflict_do_nothing=args.on_conflict_do_nothing,
                             disable_triggers=args.disable_triggers,
-                            force_defer=args.force_defer)
+                            force_defer=args.force_defer,
+                            adjust_sequences=not args.no_adjust_sequences)
             break
         except psycopg2.OperationalError as e:
             msg = str(e).lower()
