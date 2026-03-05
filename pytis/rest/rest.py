@@ -274,19 +274,33 @@ def annotate(fn: typing.Callable[..., typing.Any], **params: typing.Any) -> None
     ])
 
 
-def add_api_routes(router: fastapi.APIRouter, db: Database, spec: ResourceSpec) -> None:
+_VALID_OPERATIONS = frozenset({'get', 'list', 'create', 'update', 'delete'})
+
+# Type for a single operation's authorisation spec:
+#   True               — enabled, no auth required
+#   False              — explicitly disabled (same effect as omitting the key)
+#   callable           — enabled; callable auto-wrapped in fastapi.Depends
+#   list of callables  — enabled; each callable auto-wrapped in fastapi.Depends
+OperationAuth = bool | typing.Callable | list[typing.Callable]
+
+
+def add_api_routes(router: fastapi.APIRouter, db: Database, spec: ResourceSpec,
+                   operations: dict[str, OperationAuth]) -> None:
     """Register CRUD-ish REST endpoints for a ResourceSpec.
 
-    Responsibilities:
-      - Define FastAPI routes and endpoint callables.
-      - Attach dynamic annotations (pk type, request body model) before
-        registration.
+    Args:
+        router: FastAPI router to register routes on.
+        spec: Resource specification.
+        db: Database instance.
+        operations: Mapping of operation name to authorisation spec.  A missing
+            key or ``False`` disables that operation.  ``True`` enables it
+            without restrictions.  A callable is auto-wrapped in
+            ``fastapi.Depends`` and run as an authorisation check before the
+            handler.  A list of callables runs all checks.
+            Valid keys: 'get', 'list', 'create', 'update', 'delete'.
 
-    Design notes:
-      - Endpoints are closures so we can dynamically set path/body annotations
-        (e.g., primary key type varies across tables).
-      - This router instance is intended to be reused: call add_api_routes()
-        multiple times to register multiple resources.
+    Raises:
+        ValueError: If ``operations`` contains unknown keys.
 
     Route closures and **kwargs
     ---------------------------
@@ -304,100 +318,124 @@ def add_api_routes(router: fastapi.APIRouter, db: Database, spec: ResourceSpec) 
     argument at runtime without knowing its name at definition time.
 
     """
+    unknown = set(operations) - _VALID_OPERATIONS
+    if unknown:
+        raise ValueError(
+            f"Unknown operation(s) for resource {spec.name!r}: {sorted(unknown)}. "
+            f"Valid keys: {sorted(_VALID_OPERATIONS)}."
+        )
+
+    def _deps(operation: str) -> list | None:
+        """Return a Depends list for operation, or None if the operation is disabled."""
+        auth = operations.get(operation, False)
+        if auth is False:
+            return None
+        elif auth is True:
+            return []
+        elif callable(auth):
+            return [fastapi.Depends(auth)]
+        else:
+            return [fastapi.Depends(f) for f in auth]
+
     handler = TopLevelResourceHandler(spec, db)
     prefix = '/' + spec.name
     tags = [getattr(spec, 'tag', None) or spec.name]
     out_model = handler.model('out')
     key = handler.key
 
-    # GET one  (**kwargs receives the dynamic path key; see docstring above)
-    def get_one(**kwargs):
-        return handler.get_one(kwargs[key.name])
+    # GET one
+    if (d := _deps('get')) is not None:
+        def get_one(**kwargs):  # **kwargs receives the dynamic path key; see docstring above.
+            return handler.get_one(kwargs[key.name])
 
-    annotate(get_one, **{key.name: key.type})
-    router.add_api_route(
-        prefix + '/{' + key.name + '}',
-        get_one,
-        methods=['GET'],
-        response_model=out_model,
-        tags=tags,
-        summary='Get one',
-        description='Returns a single record identified by its key.',
-    )
+        annotate(get_one, **{key.name: key.type})
+        router.add_api_route(
+            prefix + '/{' + key.name + '}',
+            get_one,
+            methods=['GET'],
+            response_model=out_model,
+            tags=tags,
+            summary='Get one',
+            description='Returns a single record identified by its key.',
+            dependencies=d,
+        )
 
     # GET list
-    def list_many(
-        limit: int = fastapi.Query(
-            100,
-            ge=1,
-            le=1000,
-            description='Maximum number of records to return.',
-        ),
-        offset: int = fastapi.Query(
-            0,
-            ge=0,
-            description='Number of records to skip before returning results.',
-        ),
-    ):
-        return handler.list_many(limit=limit, offset=offset)
+    if (d := _deps('list')) is not None:
+        def list_many(
+            limit: int = fastapi.Query(
+                100, ge=1, le=1000, description='Maximum number of records to return.',
+            ),
+            offset: int = fastapi.Query(
+                0, ge=0, description='Number of records to skip before returning results.',
+            ),
+        ):
+            return handler.list_many(limit=limit, offset=offset)
 
-    router.add_api_route(
-        prefix,
-        list_many,
-        methods=['GET'],
-        response_model=list[out_model],
-        tags=tags,
-        summary='List',
-        description='Returns records ordered by the key with limit/offset pagination.',
-    )
+        router.add_api_route(
+            prefix,
+            list_many,
+            methods=['GET'],
+            response_model=list[out_model],
+            tags=tags,
+            summary='List',
+            description='Returns records ordered by the key with limit/offset pagination.',
+            dependencies=d,
+        )
 
     # POST
-    def create_one(payload):
-        return handler.create_one(payload.model_dump())
+    if (d := _deps('create')) is not None:
+        def create_one(payload):
+            return handler.create_one(payload.model_dump())
 
-    annotate(create_one, payload=handler.model('create'))
-    router.add_api_route(
-        prefix,
-        create_one,
-        methods=['POST'],
-        status_code=201,
-        response_model=out_model,
-        tags=tags,
-        summary='Create',
-        description='Inserts a new record.',
-    )
+        annotate(create_one, payload=handler.model('create'))
+        router.add_api_route(
+            prefix,
+            create_one,
+            methods=['POST'],
+            status_code=201,
+            response_model=out_model,
+            tags=tags,
+            summary='Create',
+            description='Inserts a new record.',
+            dependencies=d,
+        )
 
     # PATCH
-    def update_one(payload, **kwargs):  # **kwargs = dynamic path key; see docstring.
-        return handler.update_one(kwargs[key.name], payload.model_dump(exclude_unset=True))
+    if (d := _deps('update')) is not None:
+        def update_one(payload, **kwargs):  # **kwargs = dynamic path key; see docstring.
+            return handler.update_one(kwargs[key.name], payload.model_dump(exclude_unset=True))
 
-    annotate(update_one, **{key.name: key.type, 'payload': handler.model('patch')})
-    router.add_api_route(
-        prefix + '/{' + key.name + '}',
-        update_one,
-        methods=['PATCH'],
-        response_model=out_model,
-        tags=tags,
-        summary='Patch',
-        description='Partially updates a record. Only provided fields are updated.',
-    )
+        annotate(update_one, **{key.name: key.type, 'payload': handler.model('patch')})
+        router.add_api_route(
+            prefix + '/{' + key.name + '}',
+            update_one,
+            methods=['PATCH'],
+            response_model=out_model,
+            tags=tags,
+            summary='Patch',
+            description='Partially updates a record. Only provided fields are updated.',
+            dependencies=d,
+        )
 
-    # DELETE  (**kwargs = dynamic path key; see docstring)
-    def delete_one(**kwargs):
-        handler.delete_one(kwargs[key.name])
-        return fastapi.Response(status_code=204)
+    # DELETE
+    if (d := _deps('delete')) is not None:
+        def delete_one(**kwargs):  # **kwargs = dynamic path key; see docstring.
+            handler.delete_one(kwargs[key.name])
+            return fastapi.Response(status_code=204)
 
-    annotate(delete_one, **{key.name: key.type})
-    router.add_api_route(
-        prefix + '/{' + key.name + '}',
-        delete_one,
-        methods=['DELETE'],
-        status_code=204,
-        response_class=fastapi.Response,
-        tags=tags,
-        summary='Delete',
-        description='Deletes a record by its key.',
-    )
+        annotate(delete_one, **{key.name: key.type})
+        router.add_api_route(
+            prefix + '/{' + key.name + '}',
+            delete_one,
+            methods=['DELETE'],
+            status_code=204,
+            response_class=fastapi.Response,
+            tags=tags,
+            summary='Delete',
+            description='Deletes a record by its key.',
+            dependencies=d,
+        )
 
 
 class ResourceHandler:
