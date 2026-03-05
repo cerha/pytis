@@ -124,7 +124,7 @@ class BindingTable:
                 - the API user does not interact with the join table directly
     """
 
-    table: type[SQLTabular] = datafield(doc='Binding table definition.')
+    table: SQLTabular = datafield(doc='Binding table definition.')
     parent_fk: str = datafield(doc='FK on binding table to parent.')
     target_fk: str = datafield(doc='FK on binding table to target.')
     extra: tuple[str, ...] | None = datafield(
@@ -220,7 +220,7 @@ class ResourceSpec:
 
     """
     name: str = datafield(doc='Public API name of the resource.')
-    table: type[SQLTabular] = datafield(doc='Underlying SQLTable/SQLView class.')
+    table: SQLTabular = datafield(doc='Underlying SQLTable/SQLView class.')
 
     key: tuple[str, ...] | None = datafield(
         default=None,
