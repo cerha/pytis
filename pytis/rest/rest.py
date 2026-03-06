@@ -25,7 +25,8 @@ import typing
 
 from .db import (
     NonUniqueKeyError, PayloadError, ConstraintViolationError, DataConsistencyError,
-    Operator, AND, EQ, IN, ASCENDENT, Database, PytisAccessor, SQLTable, SQLTabular,
+    Operator, AND, EQ, IN, ASCENDENT, DESCENDANT, Sorting, Database, PytisAccessor,
+    SQLTable, SQLTabular,
 )
 
 
@@ -133,7 +134,7 @@ class BindingTable:
     )
     expose: bool = datafield(
         default=False,
-        doc='If True, binding table itself is exposed in API.',
+        doc='If True, binding table itself is exposed in API. Not yet implemented.',
     )
 
 
@@ -150,7 +151,10 @@ class ResourceSpec:
         - the API-visible unique key (``key``),
         - optional nested resources (``relations``),
         - how a nested resource is linked to its parent (``via``),
-        - and high-level write policy (``upsert``).
+        - high-level write policy (``upsert``),
+        - a base filter condition (``condition``),
+        - a default sort order (``sorting``),
+        - and columns to hide from the API (``exclude``).
 
     Top-level vs nested resources
     -----------------------------
@@ -241,9 +245,25 @@ class ResourceSpec:
         doc='Whether nested entities are upserted by key.',
     )
 
+    condition: Operator | None = datafield(
+        default=None,
+        doc='Base filter condition applied to all get and list operations.',
+    )
+
+    sorting: Sorting | None = datafield(
+        default=None,
+        doc='Default sort order for list operations. Each entry is (column, ASCENDENT|DESCENDANT). '
+            'Defaults to ascending by key if not set.',
+    )
+
     exclude: tuple[str, ...] = datafield(
         default=(),
         doc='Column names to exclude from the API.',
+    )
+
+    tag: str | None = datafield(
+        default=None,
+        doc='Swagger/OpenAPI tag for grouping endpoints. Defaults to the resource name.',
     )
 
 
@@ -1139,7 +1159,10 @@ class TopLevelResourceHandler(ResourceHandler):
         """Return one record identified by its key (404 if not found)."""
         try:
             with self._db.session() as session:
-                row = self._accessor.row(session, EQ(self._key.name, item_id))
+                condition = EQ(self._key.name, item_id)
+                if self._spec.condition is not None:
+                    condition = AND(self._spec.condition, condition)
+                row = self._accessor.row(session, condition)
                 if row is None:
                     raise fastapi.HTTPException(status_code=404, detail="Not found")
                 return self._materialize(session, row)
@@ -1154,7 +1177,8 @@ class TopLevelResourceHandler(ResourceHandler):
             with self._db.session() as session:
                 rows = self._accessor.rows(
                     session,
-                    sorting=((self._key.name, ASCENDENT),),
+                    condition=self._spec.condition,
+                    sorting=self._spec.sorting or ((self._key.name, ASCENDENT),),
                     limit=limit,
                     offset=offset,
                 )
