@@ -493,6 +493,18 @@ class ResourceHandler:
                 raise ValueError(f"Unknown relation via: {rel.via!r}")
         self._relations = relations
         self._relations_by_name = {rel.name: rel for rel in self._relations}
+        # FK columns that are "owned" by a ForeignRelationHandler are hidden
+        # from all models.  Clients interact with the nested object instead of
+        # the raw FK value; the handler resolves and assigns the FK internally.
+        # This set is computed here (after _relations is final) and consulted
+        # by _model() so the exclusion is consistent across all model kinds.
+        # Note: ForeignRelationHandler is defined later in this module, but the
+        # isinstance() call is a runtime check so the forward reference is fine.
+        self._fk_col_names: frozenset[str] = frozenset(
+            rel._fk_column.name
+            for rel in self._relations
+            if isinstance(rel, ForeignRelationHandler)
+        )
 
     def _column_type(self, col: sa.Column) -> type | None:
         """Return a best-effort Python type for a SQLAlchemy Column."""
@@ -611,8 +623,19 @@ class ResourceHandler:
         return fields
 
     def _model(self, kind: str) -> type[pydantic.BaseModel]:
+        if kind not in ('out', 'create', 'patch', 'nested'):
+            raise ValueError(f'Unknown model kind: {kind!r}')
         accessor = self._accessor
         pk = accessor.primary_key
+        # The DB primary key is excluded whenever it is not part of the API
+        # key (surrogate/internal identifier).  When it IS the API key it is
+        # still excluded from 'create' if the DB generates it automatically.
+        pk_internal = pk.name not in self._key_cols
+        pk_db_generated = (
+            getattr(pk, 'identity', None) is not None
+            or pk.autoincrement is True
+            or pk.server_default is not None
+        )
 
         def field(col: sa.Column) -> tuple[typing.Any, typing.Any]:
             t = self._column_type(col) or typing.Any
@@ -625,36 +648,26 @@ class ResourceHandler:
                 # Required if NOT NULL and no default (server-side or client-side).
                 has_default = (col.server_default is not None) or (col.default is not None)
                 required = (not col.nullable) and (not has_default)
-            elif kind in ('patch', 'nested'):
+            else:  # kind in ('patch', 'nested'):
                 # All fields optional on update (only provided fields are applied).
                 required = False
-            else:
-                raise ValueError(f'Unknown model kind: {kind!r}')
             return (t, ... if required else None)
 
-        if kind == 'out':
-            exclude = set()
-            config = pydantic.ConfigDict(from_attributes=True)
-        elif kind == 'create':
-            if ((getattr(pk, 'identity', None) is not None
-                 or pk.autoincrement is True
-                 or pk.server_default is not None)):
-                # Heuristic: detect DB-generated PKs (SERIAL/IDENTITY/default/autoinc).
-                exclude = {pk.name}
-            else:
-                exclude = set()
-            config = pydantic.ConfigDict(extra='forbid')
-        elif kind == 'patch':
-            exclude = {pk.name}
-            config = pydantic.ConfigDict(extra='forbid')
-        elif kind == 'nested':
-            if pk.name not in self._key_cols:
-                exclude = {pk.name}
-            else:
-                exclude = set()
-            config = pydantic.ConfigDict(extra='forbid')
-        else:
-            raise ValueError(f'Unknown model kind: {kind!r}')
+        # The DB primary key is excluded whenever it is not part of the API key.
+        # In that case it is a surrogate/internal identifier that clients should
+        # never see or supply.  When the PK *is* the API key (key= omitted or
+        # explicitly set to the PK column), it is kept — but only in models
+        # where the client is expected to know it (out, create when not
+        # DB-generated).
+        # FK columns subsumed by nested relation objects are always excluded.
+        exclude = set(self._fk_col_names)
+        # Exclude PK when internal (not the API key), always on 'patch' (the
+        # key is immutable), or on 'create' when the DB generates it.
+        if pk_internal or kind == 'patch' or (kind == 'create' and pk_db_generated):
+            exclude.add(pk.name)
+
+        config = (pydantic.ConfigDict(from_attributes=True) if kind == 'out'
+                  else pydantic.ConfigDict(extra='forbid'))
 
         fields = {c.name: field(c) for c in accessor.columns if c.name not in exclude}
         fields.update(self._relation_fields(kind))
