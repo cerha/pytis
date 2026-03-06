@@ -148,7 +148,6 @@ class ResourceSpec:
 
         - the underlying database structure (``table``),
         - the API-visible unique key (``key``),
-        - whether the internal primary key is exposed (``expose_pk``),
         - optional nested resources (``relations``),
         - how a nested resource is linked to its parent (``via``),
         - and high-level write policy (``upsert``).
@@ -225,11 +224,6 @@ class ResourceSpec:
     key: tuple[str, ...] | None = datafield(
         default=None,
         doc='API-visible unique key columns.',
-    )
-
-    expose_pk: bool | None = datafield(
-        default=None,
-        doc='Whether DB primary key columns are exposed.',
     )
 
     relations: tuple['ResourceSpec', ...] = datafield(
