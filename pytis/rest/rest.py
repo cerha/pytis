@@ -688,7 +688,7 @@ class ResourceHandler:
             else:  # kind in ('patch', 'nested'):
                 # All fields optional on update (only provided fields are applied).
                 required = False
-            return (t, ... if required else None)
+            return (t, pydantic.Field(... if required else None, description=col.doc))
 
         # The DB primary key is excluded whenever it is not part of the API key.
         # In that case it is a surrogate/internal identifier that clients should
