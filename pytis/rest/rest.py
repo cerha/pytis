@@ -113,7 +113,7 @@ class BindingTable:
 
     Modes:
 
-        expose = True
+        expose = True (not implemented yet)
             The binding table is exposed as a first-class API resource.
             Its primary key and all columns are visible and handled explicitly.
 
@@ -358,7 +358,7 @@ def add_api_routes(router: fastapi.APIRouter, db: Database, spec: ResourceSpec,
 
     handler = TopLevelResourceHandler(spec, db)
     prefix = '/' + spec.name
-    tags = [getattr(spec, 'tag', None) or spec.name]
+    tags = [spec.tag or spec.name]
     out_model = handler.model('out')
     key = handler.key
 
