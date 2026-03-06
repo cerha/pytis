@@ -25,7 +25,7 @@ import typing
 
 from .db import (
     NonUniqueKeyError, PayloadError, ConstraintViolationError, DataConsistencyError,
-    Operator, AND, EQ, IN, ASCENDENT, Database, PytisAccessor, SQLTabular,
+    Operator, AND, EQ, IN, ASCENDENT, Database, PytisAccessor, SQLTable, SQLTabular,
 )
 
 
@@ -245,6 +245,11 @@ class ResourceSpec:
     upsert: bool = datafield(
         default=True,
         doc='Whether nested entities are upserted by key.',
+    )
+
+    exclude: tuple[str, ...] = datafield(
+        default=(),
+        doc='Column names to exclude from the API.',
     )
 
 
@@ -493,18 +498,43 @@ class ResourceHandler:
                 raise ValueError(f"Unknown relation via: {rel.via!r}")
         self._relations = relations
         self._relations_by_name = {rel.name: rel for rel in self._relations}
-        # FK columns that are "owned" by a ForeignRelationHandler are hidden
-        # from all models.  Clients interact with the nested object instead of
-        # the raw FK value; the handler resolves and assigns the FK internally.
-        # This set is computed here (after _relations is final) and consulted
-        # by _model() so the exclusion is consistent across all model kinds.
+        # Columns excluded from all generated Pydantic models:
+        #   - FK columns owned by a ForeignRelationHandler (clients use the
+        #     nested object; the handler resolves and assigns the FK internally)
+        #   - columns listed explicitly in spec.exclude
+        # Computed here (after _relations is final) and consulted by _model().
         # Note: ForeignRelationHandler is defined later in this module, but the
         # isinstance() call is a runtime check so the forward reference is fine.
-        self._fk_col_names: frozenset[str] = frozenset(
+        self._exclude: frozenset[str] = frozenset(
+            rel._fk_column.name
+            for rel in self._relations
+            if isinstance(rel, ForeignRelationHandler)
+        ) | frozenset(spec.exclude)
+        col_names = {c.name for c in self._accessor.columns}
+        for name in spec.exclude:
+            if name not in col_names:
+                raise ValueError(f"Unknown column in ResourceSpec.exclude: {name!r}")
+
+    def _check_exclude_for_inserts(self) -> None:
+        """Raise ValueError if any explicitly excluded column would prevent INSERT."""
+        # FK columns handled by a ForeignRelationHandler and the primary key are
+        # exempt — the handler fills in FK values automatically, and the PK is
+        # managed separately.
+        fk_col_names = frozenset(
             rel._fk_column.name
             for rel in self._relations
             if isinstance(rel, ForeignRelationHandler)
         )
+        pk_name = self._accessor.primary_key.name
+        for name in self._spec.exclude:
+            if name in fk_col_names or name == pk_name:
+                continue
+            col = self._accessor.table.c[name]
+            if not col.nullable and col.server_default is None and col.default is None:
+                raise ValueError(
+                    f"Column {name!r} in ResourceSpec.exclude is NOT NULL with no "
+                    f"default; INSERT operations will fail."
+                )
 
     def _column_type(self, col: sa.Column) -> type | None:
         """Return a best-effort Python type for a SQLAlchemy Column."""
@@ -625,6 +655,13 @@ class ResourceHandler:
     def _model(self, kind: str) -> type[pydantic.BaseModel]:
         if kind not in ('out', 'create', 'patch', 'nested'):
             raise ValueError(f'Unknown model kind: {kind!r}')
+        # For model kinds that correspond to INSERT operations, verify that no
+        # explicitly excluded column would silently break INSERT.  'create' is
+        # used for top-level POST; 'nested' is used for nested write payloads
+        # where upsert=True means the target may be inserted.
+        if ((self._spec.exclude and issubclass(self._spec.table, SQLTable)
+             and (kind == 'create' or (kind == 'nested' and self._spec.upsert)))):
+            self._check_exclude_for_inserts()
         accessor = self._accessor
         pk = accessor.primary_key
         # The DB primary key is excluded whenever it is not part of the API
@@ -659,8 +696,9 @@ class ResourceHandler:
         # explicitly set to the PK column), it is kept — but only in models
         # where the client is expected to know it (out, create when not
         # DB-generated).
-        # FK columns subsumed by nested relation objects are always excluded.
-        exclude = set(self._fk_col_names)
+        # Columns pre-excluded by __init__: FK columns owned by nested
+        # relation handlers and any columns listed in spec.exclude.
+        exclude = set(self._exclude)
         # Exclude PK when internal (not the API key), always on 'patch' (the
         # key is immutable), or on 'create' when the DB generates it.
         if pk_internal or kind == 'patch' or (kind == 'create' and pk_db_generated):

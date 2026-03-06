@@ -26,7 +26,8 @@ import pytis
 import typing
 from sqlalchemy.sql.elements import ColumnElement
 
-SQLTabular = type[pytis.data.gensqlalchemy.SQLTable] | type[pytis.data.gensqlalchemy.SQLView]
+SQLTable = pytis.data.gensqlalchemy.SQLTable
+SQLTabular = type[SQLTable] | type[pytis.data.gensqlalchemy.SQLView]
 
 
 class Database:
