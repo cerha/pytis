@@ -622,48 +622,15 @@ class ResourceHandler:
             )
         return relation
 
-    def _binding_item_model(self, relation: 'BindingRelationHandler', *,
-                            kind: str) -> type[pydantic.BaseModel]:
-        if kind == 'out':
-            base = relation.model('out')
-        else:
-            base = relation.model('nested')
-        binding_required = (kind == 'out')
-        binding_fields: dict[str, tuple[typing.Any, typing.Any]] = {}
-        if relation._extra_names:
-            binding_table = relation._binding_accessor.table
-            for name in relation._extra_names:
-                col = binding_table.c[name]
-                t = self._column_type(col) or typing.Any
-                if col.nullable:
-                    t = t | None
-                binding_fields[name] = (t, ... if binding_required else None)
-        if not binding_fields:
-            return base
-        return pydantic.create_model(
-            f'{base.__name__}{relation.name.capitalize()}{kind.capitalize()}Binding',
-            __base__=base,
-            **binding_fields,
-        )
-
     def _relation_fields(self, kind: str) -> dict[str, tuple[typing.Any, typing.Any]]:
         fields: dict[str, tuple[typing.Any, typing.Any]] = {}
         for rel in self._relations:
+            t = rel.model(kind)
+            default = ... if kind == 'out' else None
             if isinstance(rel, ForeignRelationHandler):
-                if kind == 'out':
-                    nested_model = rel.model('out')
-                else:
-                    nested_model = rel.model('nested')
-                t = nested_model | None
-                default = ... if kind == 'out' else None
-                fields[rel.name] = (t, default)
+                fields[rel.name] = (t | None, default)
             else:
-                item_model = self._binding_item_model(rel, kind=kind)
-                t = list[item_model]
-                if kind == 'out':
-                    fields[rel.name] = (t, ...)
-                else:
-                    fields[rel.name] = (t | None, None)
+                fields[rel.name] = (list[t] if kind == 'out' else list[t] | None, default)
         return fields
 
     def _model(self, kind: str) -> type[pydantic.BaseModel]:
@@ -928,6 +895,16 @@ class ForeignRelationHandler(NestedResourceHandler):
         self._fk_column = fk_column
         self._ref_column = ref_column
 
+    def model(self, kind: str) -> type[pydantic.BaseModel]:
+        """Return the Pydantic model for a FK-relation item.
+
+        FK-relation items have only two distinct shapes: 'out' for read
+        responses and 'nested' for all write payloads.  Parent model kinds
+        'create' and 'patch' are normalised to 'nested'.
+
+        """
+        return super().model('out' if kind == 'out' else 'nested')
+
     def materialize(self, session: orm.Session, parent_row: typing.Any):
         """Return nested object (or None) for a ForeignKey relation."""
         fk_value = getattr(parent_row, self._fk_column.name)
@@ -980,6 +957,39 @@ class BindingRelationHandler(NestedResourceHandler):
         self._target_fk_column = target_fk_column
         self._target_ref_column = target_ref_column
         self._extra_names = extra_names
+
+    def model(self, kind: str) -> type[pydantic.BaseModel]:
+        """Return the Pydantic model for a binding-relation item.
+
+        Binding items have only two distinct shapes: 'out' for read responses
+        and 'nested' for all write payloads.  The parent model kinds 'create'
+        and 'patch' are both normalised to 'nested' so the write model is
+        shared and built only once.
+
+        """
+        return super().model('out' if kind == 'out' else 'nested')
+
+    def _model(self, kind: str) -> type[pydantic.BaseModel]:
+        """Build target-resource model, extended with extra binding-table columns."""
+        base = super()._model(kind)
+        if not self._extra_names:
+            return base
+        binding_required = (kind == 'out')
+        binding_table = self._binding_accessor.table
+        binding_fields: dict[str, tuple[typing.Any, typing.Any]] = {}
+        for name in self._extra_names:
+            col = binding_table.c[name]
+            t = self._column_type(col) or typing.Any
+            if col.nullable:
+                t = t | None
+            binding_fields[name] = (
+                t, pydantic.Field(... if binding_required else None, description=col.doc),
+            )
+        return pydantic.create_model(
+            f'{base.__name__}{self.name.capitalize()}{kind.capitalize()}Binding',
+            __base__=base,
+            **binding_fields,
+        )
 
     def materialize(self, session: orm.Session, parent_row: typing.Any):
         """Return list of nested objects for a BindingTable relation."""
