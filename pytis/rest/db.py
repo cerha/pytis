@@ -53,6 +53,20 @@ class Database:
         Returns:
             A ready-to-use Database instance.
 
+        Note on sync vs async
+        ---------------------
+
+        This implementation uses a synchronous psycopg2 driver and
+        SQLAlchemy 1.4 (with future=True for 2.0-style API).  FastAPI
+        dispatches synchronous route handlers in a thread pool, so there
+        is no event-loop blocking even without async I/O.
+
+        Once pytis applications are migrated to SQLAlchemy 2.0, this class
+        should be rewritten to use create_async_engine + async_sessionmaker
+        with the asyncpg driver, and all handler methods converted to
+        async def.  The 2.0-style session API (future=True) used throughout
+        this module is intentional to make that migration straightforward.
+
         """
         pytis.config.add_command_line_options(('pytis', '--config', config_path))
         engine = sa.create_engine(
