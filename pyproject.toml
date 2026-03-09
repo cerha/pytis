@@ -28,6 +28,13 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+rest = [
+    # Dependencies for the pytis REST API framework (pytis.rest).
+    # Install with: pip install pytis[rest]
+    # Also install the ASGI server separately (not here as it is a deployment option).
+    "fastapi",
+    "pydantic>=2",
+]
 wx = [
     # Dependencies for Pytis wxPython desktop applications.
     "file-magic; python_version >= '3.0'",
