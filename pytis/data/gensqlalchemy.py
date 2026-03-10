@@ -4578,8 +4578,7 @@ def clear():
     global _metadata
     _metadata = sqlalchemy.MetaData()
     global _engine
-    _engine = sqlalchemy.create_engine('postgresql://', strategy='mock',
-                                       executor=_dump_sql_command)
+    _engine = sqlalchemy.create_mock_engine('postgresql://', _dump_sql_command)
 
 
 def specifications():
