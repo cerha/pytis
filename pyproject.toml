@@ -66,5 +66,6 @@ include = [
     "COPYING",
     "pytis/translations/**/**.mo",
     "pytis/resources/**",
+    "pytis/assets/**",
     "pytis/**/test.py",  # Excluded in .flitignore, so override for sdist.
 ]
