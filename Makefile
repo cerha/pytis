@@ -26,7 +26,7 @@ assets:
 test:
 	python -m pytest doc pytis -v
 
-build: translations resources assets
+build: update
 	flit build
 
 install:
