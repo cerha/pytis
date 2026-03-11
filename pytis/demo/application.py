@@ -129,17 +129,17 @@ class Application(pytis.presentation.Application):
                 MenuItem(_("Inexistent specification"),
                          Command(app.run_form, 'cb.Something')),
             )),
-            Menu(_("&CMS"), (
-                MenuItem(_("Menu"), Command(app.run_form, 'cms.Menu')),
-                MenuItem(_("Languages"), Command(app.run_form, 'cms.Languages')),
-                MenuItem(_("Modules"), Command(app.run_form, 'cms.Modules')),
-                MenuItem(_("Generic actions"), Command(app.run_form, 'cms.GenericActions')),
-                MenuItem(_("Users"), Command(app.run_form, 'cms.Users')),
-                MenuItem(_("User Roles"), Command(app.run_form, 'cms.Roles')),
-                MenuItem(_("Session Log"), Command(app.run_form, 'cms.SessionLog')),
-                MenuItem(_("Access Log"), Command(app.run_form, 'cms.AccessLog')),
-                MenuItem(_("Color themes"), Command(app.run_form, 'cms.Themes')),
-            )),
+            #Menu(_("&CMS"), (
+            #    MenuItem(_("Menu"), Command(app.run_form, 'cms.Menu')),
+            #    MenuItem(_("Languages"), Command(app.run_form, 'cms.Languages')),
+            #    MenuItem(_("Modules"), Command(app.run_form, 'cms.Modules')),
+            #    MenuItem(_("Generic actions"), Command(app.run_form, 'cms.GenericActions')),
+            #    MenuItem(_("Users"), Command(app.run_form, 'cms.Users')),
+            #    MenuItem(_("User Roles"), Command(app.run_form, 'cms.Roles')),
+            #    MenuItem(_("Session Log"), Command(app.run_form, 'cms.SessionLog')),
+            #    MenuItem(_("Access Log"), Command(app.run_form, 'cms.AccessLog')),
+            #    MenuItem(_("Color themes"), Command(app.run_form, 'cms.Themes')),
+            #)),
         )
 
     def _refresh_counter(self):
