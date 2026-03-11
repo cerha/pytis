@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2025 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2026 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2012-2016 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -706,7 +706,7 @@ def visit_create_table(element, compiler, **kwargs):
     result = compiler.visit_create_table(element, **kwargs)
     if table.inherits:
         inherited = [table._table_name(t) for t in table.inherits]
-        result = '%s\nINHERITS (%s)\n\n' % (result.rstrip(), ', '.join(inherited),)
+        result = '%s\nINHERITS (%s)' % (result.rstrip(), ', '.join(inherited),)
     # Replace double percent sign produced from the compiler
     # when using %s e.g. in sql "format"" function in check constraints
     return result.replace('%%', '%')
