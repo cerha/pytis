@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (c) 2018-2024 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (c) 2018-2026 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (c) 2001-2013 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -18,7 +18,7 @@
 
 from __future__ import print_function
 
-__version__ = "1.2.1"
+__version__ = "1.3.0.dev1"
 
 from . import util  # noqa: F401
 from . import data  # noqa: F401
