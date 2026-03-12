@@ -95,8 +95,7 @@ class Database:
     def check_connection(self) -> bool:
         """Verify database connectivity by executing a trivial query."""
         with self._engine.connect() as conn:
-            with conn.execute(sa.text('SELECT 1')) as result:
-                return result.scalar() == 1
+            return conn.execute(sa.text('SELECT 1')).scalar() == 1
 
     @contextlib.asynccontextmanager
     async def lifespan(self, app: typing.Any):
