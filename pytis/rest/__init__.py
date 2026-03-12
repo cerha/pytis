@@ -15,5 +15,5 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from .rest import add_api_routes, ResourceSpec, ForeignKey, BindingTable
+from .rest import add_api_routes, api_key_dependency, ResourceSpec, ForeignKey, BindingTable
 from .db import Database
