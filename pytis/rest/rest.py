@@ -17,7 +17,9 @@
 
 import dataclasses
 import fastapi
+import fastapi.security
 import inspect
+import os
 import pydantic
 import sqlalchemy as sa
 import sqlalchemy.orm as orm
@@ -28,6 +30,43 @@ from .db import (
     Operator, AND, EQ, IN, ASCENDENT, DESCENDANT, Sorting, Database, PytisAccessor,
     SQLTable, SQLTabular,
 )
+
+_api_key_header = fastapi.security.APIKeyHeader(name='X-API-Key', auto_error=True)
+
+
+def api_key_dependency(env_var: str = 'API_KEY') -> fastapi.params.Depends:
+    """Return a FastAPI dependency that validates the X-API-Key request header.
+
+    The expected key is read from the environment variable named by *env_var*
+    at request time (not at startup), so the value can be injected after the
+    process starts (e.g. via a secrets manager or systemd ``EnvironmentFile``).
+
+    Usage::
+
+        router = fastapi.APIRouter(
+            dependencies=[api_key_dependency('SPVC_API_KEY')],
+        )
+
+    Args:
+        env_var: Name of the environment variable holding the expected API key.
+
+    Returns:
+        A ``fastapi.Depends`` instance ready for use in ``dependencies=``.
+
+    """
+    def verify(api_key: str = fastapi.Security(_api_key_header)) -> None:
+        expected = os.environ.get(env_var)
+        if not expected:
+            raise fastapi.HTTPException(
+                status_code=fastapi.status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail='API key not configured on server.',
+            )
+        if api_key != expected:
+            raise fastapi.HTTPException(
+                status_code=fastapi.status.HTTP_403_FORBIDDEN,
+                detail='Invalid API key.',
+            )
+    return fastapi.Depends(verify)
 
 
 def datafield(*, default=dataclasses.MISSING, doc: str | None = None):
