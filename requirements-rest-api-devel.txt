@@ -2,3 +2,4 @@ uvicorn[standard]
 gunicorn
 pytest
 httpx
+watchdog
