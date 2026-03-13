@@ -254,8 +254,9 @@ class ResourceSpec:
         - It may correspond to a unique constraint rather than the DB PK.
         - It allows avoiding exposure of internal surrogate identifiers.
 
-    Current limitation: top-level resources are assumed to use a
-    single-column key for path parameters.
+    For composite keys the values are encoded into a single URL path segment
+    using ``key_separator`` (default ``"-"``), e.g. ``/accounts/1234567890-0100``
+    for ``key=('account_id', 'bank_code')``.
 
     """
     name: str = datafield(doc='Public API name of the resource.')
@@ -302,6 +303,15 @@ class ResourceSpec:
         doc='Swagger/OpenAPI tag for grouping endpoints. Defaults to the resource name.',
     )
 
+    key_separator: str = datafield(
+        default='-',
+        doc=(
+            'Separator used to encode composite key values in URL path segments. '
+            'For a composite key (account_id, bank_code) with separator "-" the '
+            'path segment looks like "1234567890-0100". '
+            'Ignored for single-column keys.'
+        ),
+    )
 
 
 def annotate(fn: typing.Callable[..., typing.Any], **params: typing.Any) -> None:
@@ -1169,8 +1179,12 @@ class TopLevelResourceHandler(ResourceHandler):
     Key handling
     ------------
 
-        - Only single-column keys are currently supported.
-        - Path parameter name matches the key column name.
+        - Single-column keys: path parameter name matches the column name,
+          type matches the column's Python type.
+        - Composite keys: all column values are joined by ``key_separator``
+          (default ``"-"``) into a single path segment of type ``str``.
+          The path parameter name is the column names joined by ``"__"``,
+          e.g. ``account_id__bank_code`` for key ``(account_id, bank_code)``.
         - Internal database primary keys may differ from API-level keys.
 
     """
@@ -1179,33 +1193,71 @@ class TopLevelResourceHandler(ResourceHandler):
     class ResourceKey:
         """API-level identifier of a resource.
 
-        Encapsulates the path parameter name and its Python type.  Derived from
-        database metadata but independent of SQLAlchemy internals.
+        Encapsulates the URL path parameter name, its Python type, the
+        underlying key column names, and (for composite keys) the separator
+        used to encode multiple values into a single path segment.
+
+        For a single-column key the path parameter carries the column value
+        directly with its natural Python type.  For a composite key the path
+        parameter is always ``str`` and encodes all column values joined by
+        *separator*, e.g. ``"1234567890-0100"`` for
+        ``(account_id, bank_code)`` with separator ``"-"``.
 
         """
         name: str
         type: type
+        columns: tuple[str, ...]
+        separator: str
+
+        def condition(self, raw_value: typing.Any) -> Operator:
+            """Build a filter condition from a URL path segment value.
+
+            For a single-column key returns ``EQ(col, raw_value)``.
+            For a composite key splits *raw_value* on the separator and
+            returns ``AND(EQ(col1, part1), EQ(col2, part2), ...)``.
+
+            Raises:
+                ValueError: If the composite key value does not contain the
+                    expected number of parts.
+
+            """
+            if len(self.columns) == 1:
+                return EQ(self.columns[0], raw_value)
+            parts = str(raw_value).split(self.separator, len(self.columns) - 1)
+            if len(parts) != len(self.columns):
+                raise ValueError(
+                    f"Expected {len(self.columns)} parts separated by "
+                    f"{self.separator!r}, got {str(raw_value)!r}"
+                )
+            return AND(*(EQ(col, part) for col, part in zip(self.columns, parts)))
 
     def __init__(self, spec: ResourceSpec, db: Database):
         super().__init__(spec)
         self._db = db
-        if len(self._key_cols) != 1:
-            raise ValueError('Top-level resources must use a single-column key for now.')
+        if len(self._key_cols) == 1:
+            t = self._column_type(self._accessor.table.c[self._key_cols[0]]) or str
+        else:
+            t = str
         self._key = self.ResourceKey(
-            name=self._key_cols[0],
-            type=self._column_type(self._accessor.table.c[self._key_cols[0]]) or str,
+            name='__'.join(self._key_cols),
+            type=t,
+            columns=self._key_cols,
+            separator=spec.key_separator,
         )
 
     @property
     def key(self) -> ResourceKey:
-        """API-level resource identifier (single-column key)."""
+        """API-level resource identifier."""
         return self._key
 
     def get_one(self, item_id: typing.Any):
         """Return one record identified by its key (404 if not found)."""
         try:
             with self._db.session() as session:
-                condition = EQ(self._key.name, item_id)
+                try:
+                    condition = self._key.condition(item_id)
+                except ValueError as e:
+                    raise fastapi.HTTPException(status_code=422, detail=str(e))
                 if self._spec.condition is not None:
                     condition = AND(self._spec.condition, condition)
                 row = self._accessor.row(session, condition)
@@ -1224,7 +1276,9 @@ class TopLevelResourceHandler(ResourceHandler):
                 rows = self._accessor.rows(
                     session,
                     condition=self._spec.condition,
-                    sorting=self._spec.sorting or ((self._key.name, ASCENDENT),),
+                    sorting=self._spec.sorting or tuple(
+                        (col, ASCENDENT) for col in self._key.columns
+                    ),
                     limit=limit,
                     offset=offset,
                 )
@@ -1249,7 +1303,11 @@ class TopLevelResourceHandler(ResourceHandler):
         """Partially update a record and return it (or None if not found)."""
         try:
             with self._db.session.begin() as session:
-                row = self._update(session, EQ(self._key.name, item_id), payload)
+                try:
+                    condition = self._key.condition(item_id)
+                except ValueError as e:
+                    raise fastapi.HTTPException(status_code=422, detail=str(e))
+                row = self._update(session, condition, payload)
                 if row is None:
                     raise fastapi.HTTPException(status_code=404, detail='Not found')
                 return self._materialize(session, row)
@@ -1264,7 +1322,11 @@ class TopLevelResourceHandler(ResourceHandler):
         """Delete a record by key (404 if not found)."""
         try:
             with self._db.session.begin() as session:
-                ok = self._accessor.delete(session, EQ(self._key.name, item_id))
+                try:
+                    condition = self._key.condition(item_id)
+                except ValueError as e:
+                    raise fastapi.HTTPException(status_code=422, detail=str(e))
+                ok = self._accessor.delete(session, condition)
                 if not ok:
                     raise fastapi.HTTPException(status_code=404, detail='Not found')
         except ConstraintViolationError as e:
