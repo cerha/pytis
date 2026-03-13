@@ -62,8 +62,7 @@ jobs:
           grep -v '^flit' requirements-devel.txt | pip install -r /dev/stdin
           python3 -m pip install flit
           # Beware: 'make build' duplication here, but we need python3 to run flit.
-          make translations
-          make resources
+          make update
           python3 -m flit build
           # This is mainly to install the dependencies.  The code will run form
           # the current directory anyway.
