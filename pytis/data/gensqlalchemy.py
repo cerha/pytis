@@ -1217,7 +1217,11 @@ class _PytisBaseMetaclass(sqlalchemy.sql.visitors.VisitableType):
     _new_specification_callback = None
 
     def __init__(cls, clsname, bases, clsdict):
-        if cls._is_specification(clsname):
+        # Skip SA-internal annotation classes (e.g. AnnotatedFoo created by
+        # sqlalchemy.sql.annotation when annotating table/column objects for
+        # query building).  These are dynamically-generated subclasses that
+        # inherit our metaclass but must not be registered as specifications.
+        if cls.__module__ != 'sqlalchemy.sql.annotation' and cls._is_specification(clsname):
             name = cls.pytis_name()
             name_specs = _PytisBaseMetaclass._name_mapping.get(name)
             if name_specs is None:
@@ -1276,7 +1280,8 @@ class _PytisSchematicMetaclass(_PytisBaseMetaclass):
 
     def __init__(cls, clsname, bases, clsdict):
         _PytisBaseMetaclass.__init__(cls, clsname, bases, clsdict)
-        if cls._is_specification(clsname):
+        # See comment in _PytisBaseMetaclass.__init__() for explanation.
+        if cls.__module__ != 'sqlalchemy.sql.annotation' and cls._is_specification(clsname):
             schemas = _expand_schemas(cls)
 
             def init_function(cls=cls, may_alter_schema=False, schemas=schemas):
