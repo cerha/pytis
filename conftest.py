@@ -5,4 +5,4 @@ import sys
 # Exclude it from collection entirely when running under Python 2 so that
 # pytest does not choke on syntax errors before any test starts.
 if sys.version_info[0] < 3:
-    collect_ignore_glob = ['pytis/rest/*']
+    collect_ignore_glob = ['pytis/rest/*', 'pytis/extensions/dump.py']
