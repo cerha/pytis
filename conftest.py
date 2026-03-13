@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import sys
 
 # pytis.rest requires Python 3 (type-union syntax, dataclasses with slots, …).
