@@ -19,7 +19,6 @@ import dataclasses
 import fastapi
 import fastapi.security
 import inspect
-import os
 import pydantic
 import sqlalchemy as sa
 import sqlalchemy.orm as orm
@@ -34,28 +33,26 @@ from .db import (
 _api_key_header = fastapi.security.APIKeyHeader(name='X-API-Key', auto_error=True)
 
 
-def api_key_dependency(env_var: str = 'API_KEY') -> fastapi.params.Depends:
+def api_key_dependency(get_key: typing.Callable[[], str | None]) -> fastapi.params.Depends:
     """Return a FastAPI dependency that validates the X-API-Key request header.
 
-    The expected key is read from the environment variable named by *env_var*
-    at request time (not at startup), so the value can be injected after the
-    process starts (e.g. via a secrets manager or systemd ``EnvironmentFile``).
-
-    Usage::
+    *get_key* is called on every request to retrieve the expected key, so the
+    value can change without restarting the process::
 
         router = fastapi.APIRouter(
-            dependencies=[api_key_dependency('SPVC_API_KEY')],
+            dependencies=[api_key_dependency(lambda: pytis.config.api_key)],
         )
 
     Args:
-        env_var: Name of the environment variable holding the expected API key.
+        get_key: Zero-argument callable returning the expected API key string,
+            or ``None`` / empty string when not configured.
 
     Returns:
         A ``fastapi.Depends`` instance ready for use in ``dependencies=``.
 
     """
     def verify(api_key: str = fastapi.Security(_api_key_header)) -> None:
-        expected = os.environ.get(env_var)
+        expected = get_key()
         if not expected:
             raise fastapi.HTTPException(
                 status_code=fastapi.status.HTTP_500_INTERNAL_SERVER_ERROR,
