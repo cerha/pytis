@@ -59,7 +59,11 @@ jobs:
           pip install wxpython --only-binary=:all: --verbose \
               -f https://extras.wxpython.org/wxPython4/extras/linux/gtk3/debian-10/
           # There's no flit in Pyton 2.7 so we install and use flit from Python 3.
-          grep -v '^flit' requirements-devel.txt | pip install -r /dev/stdin
+          # Also filter out '-r' include directives as pip resolves relative paths
+          # against the "directory" of stdin (/dev/) when reading from
+          # /dev/stdin and we don't need the included requirements for Python 2
+          # tests (-r requirements-rest-api-devel.txt).
+          grep -v '^flit\|^-r ' requirements-devel.txt | pip install -r /dev/stdin
           python3 -m pip install flit
           # Beware: 'make build' duplication here, but we need python3 to run flit.
           make update

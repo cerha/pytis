@@ -1,3 +1,5 @@
+fastapi
+pydantic>=2
 uvicorn[standard]
 gunicorn
 pytest

@@ -12,3 +12,4 @@ pep8
 pyflakes
 pytest
 pytest-benchmark
+-r requirements-rest-api-devel.txt
