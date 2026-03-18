@@ -23,7 +23,7 @@ ifeq ($(MAKECMDGOALS),extract)
 pytis-data.pot: $(foreach dir, data presentation, $(shell find ../pytis/$(dir) -name "*.py"))
 pytis-defs.pot: $(foreach dir, defs cms, $(shell find ../pytis/$(dir) -name "*.py"))
 pytis-web.pot:  $(shell find ../pytis/web -name "*.py") \
-		$(shell find ../resources/scripts -name "*.js")
+		$(shell find ../javascript -name "*.js")
 pytis-wx.pot:   $(foreach dir, form util extensions output help remote, \
 	   	  $(shell find ../pytis/$(dir) -name "*.py"))
 pytis-demo.pot: $(shell find ../pytis/demo -name "*.py")
