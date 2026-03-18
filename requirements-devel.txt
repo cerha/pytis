@@ -12,4 +12,5 @@ pep8
 pyflakes
 pytest
 pytest-benchmark
+rjsmin
 -r requirements-rest-api-devel.txt

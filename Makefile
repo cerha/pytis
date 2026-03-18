@@ -1,8 +1,11 @@
-.PHONY: doc test translations resources assets
+.PHONY: doc test translations resources assets javascript
+
+js_src := $(wildcard javascript/*.js)
+js_out := $(js_src:javascript/%.js=pytis/resources/scripts/%.js)
 
 all: doc compile update
 
-update: translations resources assets
+update: translations resources assets javascript
 
 doc:
 	python -m lcg.make doc/tutorials/Fields.txt doc/html
@@ -16,6 +19,12 @@ translations:
 
 extract:
 	make -C translations extract
+
+javascript: $(js_out)
+
+pytis/resources/scripts/%.js: javascript/%.js
+	mkdir -p $(@D)
+	python3 -m rjsmin < $< > $@
 
 resources:
 	git ls-files resources | rsync -av --delete --files-from=- ./ pytis/
