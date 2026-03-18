@@ -4,14 +4,19 @@
 # dependencies directly in the Makefile using find.
 
 domains := pytis-data pytis-defs pytis-web pytis-wx pytis-demo
+web_domains := pytis-data pytis-web
 mo_dir := ../pytis/translations
+json_dir := ../pytis/resources/translations
 mo_files := $(foreach d, $(domains), $(patsubst $(d).%.po,\
                                       $(mo_dir)/%/LC_MESSAGES/$(d).mo,\
                                       $(wildcard $(d).*.po)))
 pot_files := $(patsubst %,%.pot,$(domains))
+json_files := $(foreach d, $(web_domains), $(patsubst $(d).%.po,\
+                                           $(json_dir)/$(d).%.po.json,\
+                                           $(wildcard $(d).*.po)))
 
-all: $(mo_files)
-extract: $(wildcard *.po) $(pot_files) $(mo_files)
+all: $(mo_files) $(json_files)
+extract: $(wildcard *.po) $(pot_files) $(mo_files) $(json_files)
 
 ifeq ($(MAKECMDGOALS),extract)
 
@@ -50,6 +55,10 @@ $(mo_dir)/%/LC_MESSAGES/pytis-wx.mo: pytis-wx.%.po
 $(mo_dir)/%/LC_MESSAGES/pytis-demo.mo: pytis-demo.%.po
 	@mkdir -p $(dir $@)
 	msgfmt -v $< -o $@
+
+$(json_dir)/%.po.json: %.po
+	@mkdir -p $(dir $@)
+	pojson $< > $@
 
 clean:
 	rm -rf *.pot $(mo_dir)

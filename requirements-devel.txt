@@ -9,6 +9,7 @@ gnureadline
 jsonschema
 mock
 pep8
+pojson
 pyflakes
 pytest
 pytest-benchmark
