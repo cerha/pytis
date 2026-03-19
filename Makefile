@@ -1,24 +1,16 @@
-.PHONY: doc test translations resources assets javascript
+.PHONY: all update resources sync-resources javascript assets translations extract doc test build install clean coverage
 
 js_src := $(wildcard javascript/*.js)
 js_out := $(js_src:javascript/%.js=pytis/resources/scripts/%.js)
 
-all: doc compile update
+all: doc update
 
-update: translations resources assets javascript
+update: translations resources assets
 
-doc:
-	python -m lcg.make doc/tutorials/Fields.txt doc/html
+resources: sync-resources javascript
 
-compile:
-	python -m compileall -d . pytis
-	python -O -m compileall -d . pytis
-
-translations:
-	make -C translations
-
-extract:
-	make -C translations extract
+sync-resources:
+	git ls-files resources | rsync -av --delete --files-from=- ./ pytis/
 
 javascript: $(js_out)
 
@@ -26,11 +18,17 @@ pytis/resources/scripts/%.js: javascript/%.js
 	mkdir -p $(@D)
 	python3 -m rjsmin < $< > $@
 
-resources:
-	git ls-files resources | rsync -av --delete --files-from=- ./ pytis/
-
 assets:
 	git ls-files icons help | rsync -av --delete --files-from=- ./ pytis/assets/
+
+translations:
+	make -C translations
+
+extract:
+	make -C translations extract
+
+doc:
+	python -m lcg.make doc/tutorials/Fields.txt doc/html
 
 test:
 	python -m pytest doc pytis -v
@@ -39,7 +37,7 @@ build: update
 	flit build
 
 install:
-        # Only for development installs.  Use pip for production/user installs.
+	# Only for development installs.  Use pip for production/user installs.
 	flit install --symlink
 
 clean:
