@@ -1,0 +1,21 @@
+#!/bin/bash
+# Pre-commit hook: verify Python syntax on all staged .py files
+
+files=$(git diff --cached --name-only --diff-filter=ACM | grep '\.py$')
+
+if [ -z "$files" ]; then
+    exit 0
+fi
+
+errors=0
+while IFS= read -r file; do
+    if ! python3 -c "import ast; ast.parse(open('$file').read())" 2>/dev/null; then
+        echo "  Syntax error: $file"
+        errors=$((errors + 1))
+    fi
+done <<< "$files"
+
+if [ $errors -gt 0 ]; then
+    echo "Commit aborted: $errors file(s) with syntax errors."
+    exit 1
+fi
