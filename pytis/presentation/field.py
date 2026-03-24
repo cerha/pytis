@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2025 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2026 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2002-2017 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -738,6 +738,8 @@ class PresentedRow(object):
                 else:
                     if export is not None:
                         svalue = export(value, **kwargs)
+                    elif isinstance(value_type, pytis.data.Array):
+                        svalue = ', '.join(value.export(**kwargs))
                     else:
                         svalue = value.export(**kwargs)
         else:
