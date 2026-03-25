@@ -2969,23 +2969,31 @@ class _SQLQuery(SQLObject):
     def _pytis_add_dynamic_dependencies(self):
         objects = self._pytis_query_objects()
         seen = []
-        # We may add some objects multiple times here but that doesn't matter.
-        # Trying to prune the list in trivial ways makes gsql many times slower
-        # because there may be many comparisons here.
+        seen_ids = set()
+        # In SQLAlchemy 1.4+, get_children() returns shared sub-expressions
+        # that appear in multiple places in the expression tree (DAG structure).
+        # Without deduplication, re-queuing shared nodes causes exponential
+        # traversal growth and an effectively infinite loop for complex queries.
+        # Using id()-based deduplication is O(1) and safe since all objects
+        # remain referenced (alive) throughout the traversal.
         while objects:
             o = objects.pop()
+            oid = id(o)
+            if oid in seen_ids:
+                continue
+            seen_ids.add(oid)
             if isinstance(o, sqlalchemy.sql.Alias):
                 # Some aliases, e.g. sqlalchemy.alias with sqlalchemy.literal inside,
                 # can't get children, so prevent crashing on that.
                 try:
-                    objects += o.get_children()
+                    objects += list(o.get_children())
                 except Exception:
                     pass
             elif isinstance(o, sqlalchemy.Table):
                 self.add_is_dependent_on(o)
                 seen.append(o)
             elif isinstance(o, sqlalchemy.sql.ClauseElement):
-                objects += o.get_children()
+                objects += list(o.get_children())
                 seen.append(o)
             elif isinstance(o, (tuple, list)):
                 objects += list(o)
