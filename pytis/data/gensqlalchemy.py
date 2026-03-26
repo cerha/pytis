@@ -175,7 +175,7 @@ class _PytisSchemaGenerator(sqlalchemy.engine.ddl.SchemaGenerator, _PytisSchemaH
             view.dispatch.after_create(view, self.connection, checkfirst=self.checkfirst,
                                        _ddl_runner=self)
             if hasattr(view, 'indexes'):
-                for index in view.indexes:
+                for index in sorted(view.indexes, key=lambda i: i.name):
                     self.traverse_single(index)
 
     def visit_materialized_view(self, view, create_ok=False):
@@ -2751,8 +2751,8 @@ class SQLTable(_SQLIndexable, _SQLTabular):
 
     def _register_access_rights(self):
         super(SQLTable, self)._register_access_rights()
-        groups = set([group for right, group in self.access_rights
-                      if right.lower() in ('insert', 'all')])
+        groups = sorted(set([group for right, group in self.access_rights
+                             if right.lower() in ('insert', 'all')]))
         for c in self.c:
             if isinstance(c.type, (SERIAL, BIGSERIAL)) and not c.info.get('inherited'):
                 for g in groups:
@@ -2763,11 +2763,14 @@ class SQLTable(_SQLIndexable, _SQLTabular):
 
     def create(self, bind=None, checkfirst=False):
         self._pytis_create_p = True
+        orig_indexes = self.indexes
+        self.indexes = sorted(orig_indexes, key=lambda i: i.name)
         with local_search_path(self._set_search_path(bind)):
             try:
                 super(SQLTable, self).create(bind=bind, checkfirst=checkfirst)
             finally:
                 self._pytis_create_p = False
+                self.indexes = orig_indexes
             self._insert_values(bind)
 
     def _set_search_path(self, bind):
