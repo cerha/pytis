@@ -195,7 +195,7 @@ class CmsMenu(sql.SQLView, CmsExtensible):
         lang = sql.t.CmsLanguages.alias('l')
         texts = sql.t.CmsMenuTexts.alias('t')
         mod = sql.t.CmsModules.alias('m')
-        return sqlalchemy.select(
+        return sqlalchemy.select(*(
             [(stype(structure.c.menu_item_id) + sval('.') + texts.c.lang).label('menu_id')] +
             cls._exclude(structure) +
             cls._exclude(lang, 'lang_id') +
@@ -204,8 +204,7 @@ class CmsMenu(sql.SQLView, CmsExtensible):
             [func.coalesce(texts.c.published, bval(False)).label('published'),
              func.coalesce(texts.c.title, structure.c.identifier).label('title_or_identifier'),
              itype(sql.gL("(select count(*)-1 from cms_menu_structure "
-                          "where tree_order <@ s.tree_order)")).label('tree_order_nsub')]
-        ).select_from(
+                          "where tree_order <@ s.tree_order)")).label('tree_order_nsub')])).select_from(
             structure
             .join(lang, sqlalchemy.sql.true())
             .outerjoin(texts, and_(
@@ -338,15 +337,14 @@ class CmsRights(sql.SQLView, CmsExtensible):
         s = sql.t.CmsMenuStructure.alias('s')
         r = sql.t.CmsRoles.alias('r')
         a = sql.t.CmsActions.alias('a')
-        return sqlalchemy.select(
+        return sqlalchemy.select(*(
             cls._exclude(x) +
             [r.c.name.label('role_name'),
              s.c.mod_id.label('mod_id'),
              r.c.description.label('role_description'),
              r.c.system_role.label('system_role'),
              a.c.name.label('action_name'),
-             a.c.description.label('action_description')],
-        ).select_from(
+             a.c.description.label('action_description')])).select_from(
             x
             .join(s, s.c.menu_item_id == x.c.menu_item_id)
             .join(r, r.c.role_id == x.c.role_id)
@@ -519,12 +517,11 @@ class CmsUserRoles(sql.SQLView, CmsExtensible):
         a = sql.t.CmsUserRoleAssignment.alias('a')
         u = sql.t.CmsUsers.alias('u')
         r = sql.t.CmsRoles.alias('r')
-        return sqlalchemy.select(
+        return sqlalchemy.select(*(
             cls._exclude(a) +
             cls._exclude(r, 'role_id') +
             [u.c.login.label('login'),
-             u.c.fullname.label('fullname')],
-        ).select_from(
+             u.c.fullname.label('fullname')])).select_from(
             a
             .join(u, a.c.uid == u.c.uid)
             .join(r, a.c.role_id == r.c.role_id)
@@ -557,15 +554,14 @@ class CmsSessionLog(sql.SQLView, CmsExtensible):
         log = sql.t.CmsSessionLogData.alias('l')
         session = sql.t.CmsSession.alias('s')
         users = sql.t.CmsUsers.alias('u')
-        return sqlalchemy.select(
+        return sqlalchemy.select(*(
             cls._exclude(log, 'end_time') +
             [users.c.fullname.label('fullname'),
              (func.coalesce(log.c.end_time,
                             session.c.last_access) - log.c.start_time).label('duration'),
              and_(session.c.session_id != null,
                   func.age(session.c.last_access) < dtval('1 hour')).label('active')
-             ],
-        ).select_from(
+             ])).select_from(
             log
             .outerjoin(session, log.c.session_id == session.c.session_id)
             .join(users, log.c.uid == users.c.uid)

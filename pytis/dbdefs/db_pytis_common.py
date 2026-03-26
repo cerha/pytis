@@ -252,14 +252,16 @@ class VInserts(sql.SQLView):
     def query(cls):
         _inserts = sql.t.XInserts
         return sqlalchemy.select(
-            [sql.gL("vytvoreno::date").label('datum'),
+            sql.gL("vytvoreno::date").label('datum'),
              sql.gL("vytvoreno::time").label('cas'),
              _inserts.c.id.label('id'),
              _inserts.c.vytvoril.label('vytvoril'),
              _inserts.c.vytvoreno.label('vytvoreno'),
              _inserts.c.tabulka.label('tabulka'),
-             _inserts.c.klic.label('klic')],
-            from_obj=[_inserts])
+             _inserts.c.klic.label('klic')
+        ).select_from(
+            _inserts
+        )
     depends_on = (XInserts,)
     access_rights = default_access_rights.value(globals())
 
@@ -273,15 +275,17 @@ class VInsertsUser(sql.SQLView):
     def query(cls):
         _inserts = sql.t.XInserts
         return sqlalchemy.select(
-            [sql.gL("vytvoreno::date").label('datum'),
+            sql.gL("vytvoreno::date").label('datum'),
              sql.gL("vytvoreno::time").label('cas'),
              _inserts.c.id.label('id'),
              _inserts.c.vytvoril.label('vytvoril'),
              _inserts.c.vytvoreno.label('vytvoreno'),
              _inserts.c.tabulka.label('tabulka'),
-             _inserts.c.klic.label('klic')],
-            from_obj=[_inserts],
-            whereclause=_inserts.c.vytvoril == sqlalchemy.text('current_user'),
+             _inserts.c.klic.label('klic')
+        ).select_from(
+            _inserts
+        ).where(
+            _inserts.c.vytvoril == sqlalchemy.text('current_user')
         )
     depends_on = (XInserts,)
     access_rights = default_access_rights.value(globals())
@@ -296,15 +300,16 @@ class VUpdates(sql.SQLView):
     def query(cls):
         _updates = sql.t.XUpdates
         return sqlalchemy.select(
-            [sql.gL("zmeneno::date").label('datum'),
+            sql.gL("zmeneno::date").label('datum'),
              sql.gL("zmeneno::time").label('cas'),
              _updates.c.id.label('id'),
              _updates.c.zmenil.label('zmenil'),
              _updates.c.zmeneno.label('zmeneno'),
              _updates.c.tabulka.label('tabulka'),
              _updates.c.klic.label('klic'),
-             _updates.c.zmeny.label('zmeny')],
-            from_obj=[_updates],
+             _updates.c.zmeny.label('zmeny')
+        ).select_from(
+            _updates
         )
     depends_on = (XUpdates,)
     access_rights = default_access_rights.value(globals())
@@ -319,16 +324,18 @@ class VUpdatesUser(sql.SQLView):
     def query(cls):
         _updates = sql.t.XUpdates
         return sqlalchemy.select(
-            [sql.gL("zmeneno::date").label('datum'),
+            sql.gL("zmeneno::date").label('datum'),
              sql.gL("zmeneno::time").label('cas'),
              _updates.c.id.label('id'),
              _updates.c.zmenil.label('zmenil'),
              _updates.c.zmeneno.label('zmeneno'),
              _updates.c.tabulka.label('tabulka'),
              _updates.c.klic.label('klic'),
-             _updates.c.zmeny.label('zmeny')],
-            from_obj=[_updates],
-            whereclause=_updates.c.zmenil == sqlalchemy.text('current_user'),
+             _updates.c.zmeny.label('zmeny')
+        ).select_from(
+            _updates
+        ).where(
+            _updates.c.zmenil == sqlalchemy.text('current_user')
         )
     depends_on = (XUpdates,)
     access_rights = default_access_rights.value(globals())
@@ -343,14 +350,15 @@ class VDeletes(sql.SQLView):
     def query(cls):
         _deletes = sql.t.XDeletes
         return sqlalchemy.select(
-            [sql.gL("smazano::date").label('datum'),
+            sql.gL("smazano::date").label('datum'),
              sql.gL("smazano::time").label('cas'),
              _deletes.c.id.label('id'),
              _deletes.c.smazal.label('smazal'),
              _deletes.c.smazano.label('smazano'),
              _deletes.c.tabulka.label('tabulka'),
-             _deletes.c.klic.label('klic')],
-            from_obj=[_deletes],
+             _deletes.c.klic.label('klic')
+        ).select_from(
+            _deletes
         )
     depends_on = (XDeletes,)
     access_rights = default_access_rights.value(globals())
@@ -365,15 +373,17 @@ class VDeletesUser(sql.SQLView):
     def query(cls):
         _deletes = sql.t.XDeletes
         return sqlalchemy.select(
-            [sql.gL("smazano::date").label('datum'),
+            sql.gL("smazano::date").label('datum'),
              sql.gL("smazano::time").label('cas'),
              _deletes.c.id.label('id'),
              _deletes.c.smazal.label('smazal'),
              _deletes.c.smazano.label('smazano'),
              _deletes.c.tabulka.label('tabulka'),
-             _deletes.c.klic.label('klic')],
-            from_obj=[_deletes],
-            whereclause=_deletes.c.smazal == sqlalchemy.text('current_user'),
+             _deletes.c.klic.label('klic')
+        ).select_from(
+            _deletes
+        ).where(
+            _deletes.c.smazal == sqlalchemy.text('current_user')
         )
     depends_on = (XDeletes,)
     access_rights = default_access_rights.value(globals())
@@ -418,10 +428,11 @@ class VChanges(sql.SQLView):
     def query(cls):
         changes = sql.t.TChanges.alias('changes')
         detail = sql.t.TChangesDetail.alias('detail')
-        return sqlalchemy.select(
+        return sqlalchemy.select(*(
             cls._exclude(changes) +
-            cls._exclude(detail, 'id'),
-            from_obj=[changes.outerjoin(detail, changes.c.id == detail.c.id)]
+            cls._exclude(detail, 'id'))).select_from(
+            changes
+            .outerjoin(detail, changes.c.id == detail.c.id)
         )
 
     insert_order = ()

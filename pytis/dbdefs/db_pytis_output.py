@@ -39,10 +39,11 @@ class EvPytisGlobalOutputTemplates(sql.SQLView):
     @classmethod
     def query(cls):
         templates = sql.t.EPytisOutputTemplates.alias('templates')
-        return sqlalchemy.select(
-            cls._exclude(templates),
-            from_obj=[templates],
-            whereclause=templates.c.username.is_(None),
+        return sqlalchemy.select(*(
+            cls._exclude(templates))).select_from(
+            templates
+        ).where(
+            templates.c.username.is_(None)
         )
 
     insert_order = (EPytisOutputTemplates,)
@@ -60,26 +61,29 @@ class EvPytisUserOutputTemplates(sql.SQLView):
     def query(cls):
         templates = sql.t.EPytisOutputTemplates.alias('templates')
         templates2 = sql.t.EPytisOutputTemplates.alias('templates2')
-        return sqlalchemy.select(
-            cls._exclude(templates),
-            from_obj=[templates],
-            whereclause=or_(
+        return sqlalchemy.select(*(
+            cls._exclude(templates))).select_from(
+            templates
+        ).where(
+            or_(
                 templates.c.username == sqlalchemy.text('current_user'),
                 and_(
                     templates.c.username.is_(None),
                     not_(sqlalchemy.tuple_(templates.c.module, templates.c.specification).in_(
                         sqlalchemy.select(
-                            [templates2.c.module, templates2.c.specification],
-                            from_obj=[templates2],
-                            whereclause=and_(
+                            templates2.c.module, templates2.c.specification
+                        ).select_from(
+                            templates2
+                        ).where(
+                            and_(
                                 templates2.c.module == templates.c.module,
                                 templates2.c.specification == templates.c.specification,
                                 templates2.c.username == sqlalchemy.text('current_user'),
-                            ),
+                            )
                         ),
                     )),
                 ),
-            ),
+            )
         )
 
     def on_insert(self):

@@ -98,13 +98,13 @@ class EvPytisFormSummary(sql.SQLView):
     @classmethod
     def query(cls):
         log = sql.t.EPytisFormLog.alias('log')
-        return sqlalchemy.select(
+        return sqlalchemy.select(*(
             cls._exclude(log, 'id', 'login', 't_start', 't_show') +
             [sql.gL("count(distinct login)").label('n_users'),
              sql.gL("count(t_start)").label('n_open'),
              sql.gL("extract('epoch' from avg(t_show-t_start))").label('avg_start'),
-             sql.gL("max(t_start)").label('last_used')],
-            from_obj=[log]
+             sql.gL("max(t_start)").label('last_used')])).select_from(
+            log
         ).group_by('form', 'class', 'info')
 
     depends_on = (EPytisFormLog,)
@@ -118,13 +118,13 @@ class EvPytisFormShortSummary(sql.SQLView):
     @classmethod
     def query(cls):
         log = sql.t.EPytisFormLog.alias('log')
-        return sqlalchemy.select(
+        return sqlalchemy.select(*(
             cls._exclude(log, 'id', 'login', 't_start', 't_show', 'info') +
             [sql.gL("count(distinct login)").label('n_users'),
              sql.gL("count(t_start)").label('n_open'),
              sql.gL("extract('epoch' from avg(t_show-t_start))").label('avg_start'),
-             sql.gL("max(t_start)").label('last_used')],
-            from_obj=[log]
+             sql.gL("max(t_start)").label('last_used')])).select_from(
+            log
         ).group_by('form', 'class')
 
     depends_on = (EPytisFormLog,)
@@ -138,11 +138,11 @@ class EvPytisFormUsers(sql.SQLView):
     @classmethod
     def query(cls):
         log = sql.t.EPytisFormLog.alias('log')
-        return sqlalchemy.select(
+        return sqlalchemy.select(*(
             cls._exclude(log, 'id', 't_start', 't_show') +
             [sql.gL("count(t_start)").label('n_open'),
-             sql.gL("max(t_start)").label('last_used')],
-            from_obj=[log]
+             sql.gL("max(t_start)").label('last_used')])).select_from(
+            log
         ).group_by('form', 'class', 'info', 'login')
 
     depends_on = (EPytisFormLog,)
@@ -156,13 +156,14 @@ class EvPytisFormUsersNoinfo(sql.SQLView):
     @classmethod
     def query(cls):
         log = sql.t.EPytisFormLog.alias('log')
-        return sqlalchemy.select(
+        return sqlalchemy.select(*(
             cls._exclude(log, 'id', 'info', 't_start', 't_show') +
             [sql.gL("count(t_start)").label('n_open'),
              sql.gL("max(t_start)").label('last_used'),
-             sql.gL("'form/'||form").label('shortname')],
-            from_obj=[log],
-            whereclause=between(log.c.t_start,
+             sql.gL("'form/'||form").label('shortname')])).select_from(
+            log
+        ).where(
+            between(log.c.t_start,
                                 func.f_user_cfg_datum_od(),
                                 func.f_user_cfg_datum_do())
         ).group_by('form', 'class', 'login')
@@ -178,9 +179,9 @@ class EvPytisFormUserList(sql.SQLView):
     @classmethod
     def query(cls):
         log = sql.t.EPytisFormLog.alias('log')
-        return sqlalchemy.select(
-            cls._exclude(log, 'id', 'form', 'class', 'info', 't_start', 't_show'),
-            from_obj=[log]
+        return sqlalchemy.select(*(
+            cls._exclude(log, 'id', 'form', 'class', 'info', 't_start', 't_show'))).select_from(
+            log
         ).group_by('login')
 
     depends_on = (EPytisFormLog,)

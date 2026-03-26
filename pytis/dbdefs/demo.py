@@ -395,10 +395,13 @@ class Slowlongtable(sql.SQLView):
     @classmethod
     def query(cls):
         longtable = sql.t.Longtable.alias('long')
-        return sqlalchemy.select(list(longtable.c) +
-                                 [(sval('x') + longtable.c.value).label('xvalue'),
-                                  (ival(64) * longtable.c.id).label('id64')],
-                                 from_obj=[longtable])
+        return sqlalchemy.select(
+            *longtable.c,
+            (sval('x') + longtable.c.value).label('xvalue'),
+            (ival(64) * longtable.c.id).label('id64'),
+        ).select_from(
+            longtable
+        )
 
     depends_on = (Longtable,)
     access_rights = (('all', 'pytis-demo'), ('select', 'www-data'))
@@ -581,11 +584,11 @@ class Tree(sql.SQLView):
     @classmethod
     def query(cls):
         main = sql.t.XTree.alias('main')
-        return sqlalchemy.select(
+        return sqlalchemy.select(*(
             cls._exclude(main) +
             [main.c.id.label('tid'),
-             ival("(select count(*)-1 from _tree where id <@ main.id)").label('id_nsub')],
-            from_obj=[main]
+             ival("(select count(*)-1 from _tree where id <@ main.id)").label('id_nsub')])).select_from(
+            main
         )
 
     insert_order = (XTree,)

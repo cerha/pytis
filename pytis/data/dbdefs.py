@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2024 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2024, 2026 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2013-2015 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -23,6 +23,8 @@ from __future__ import print_function
 from past.builtins import basestring
 
 import sqlalchemy
+
+_SA_VERSION = int(sqlalchemy.__version__.split('.')[0])
 
 # Simple shorthands
 
@@ -242,7 +244,7 @@ def if_(condition, then_, else_):
       else_ -- else part, 'sqlalchemy.sql.expression.ClauseElement' instance
 
     """
-    return case([(condition, then_)], else_=else_)
+    return case((condition, then_), else_=else_)
 
 
 def _rule_assignments(values):
@@ -316,8 +318,14 @@ def rule_insert(table, values, inline=False):
             or a basestring to be wrapped by 'sqlalchemy.literal_column'
 
     """
-    insert = table.insert(inline=inline)
-    return insert.values(**_rule_assignments(values))
+    if _SA_VERSION >= 2:
+        insert = table.insert()
+    else:
+        insert = table.insert(inline=inline)
+    result = insert.values(**_rule_assignments(values))
+    if _SA_VERSION >= 2:
+        result = result.return_defaults(False)
+    return result
 
 
 def rule_update(table, conditions, values):

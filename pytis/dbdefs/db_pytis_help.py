@@ -116,7 +116,7 @@ class EvPytisHelp(sql.SQLView):
             a_ = sql.t.CPytisMenuActions.alias('a')
             mh = sql.t.EPytisHelpMenu.alias('mh')
             sh = sql.t.EPytisHelpSpec.alias('sh')
-            return sqlalchemy.select(
+            return sqlalchemy.select(*(
                 sql.reorder_columns(
                     [sql.gL("'menu/'||m.menuid").label('help_id'),
                      m.c.menuid.label('menuid'),
@@ -140,18 +140,20 @@ class EvPytisHelp(sql.SQLView):
                      .label('removed')],
                     ['help_id', 'menuid', 'fullname', 'title', 'description', 'menu_help',
                      'spec_name', 'spec_description', 'spec_help', 'page_id', 'parent', 'ord',
-                     'content', 'position', 'position_nsub', 'changed', 'removed']),
-                from_obj=[m.join(a_, a_.c.fullname == m.c.fullname).
-                          outerjoin(mh, mh.c.fullname == a_.c.fullname).
-                          outerjoin(sh, sh.c.spec_name == a_.c.spec_name)],
-                whereclause=func.nlevel(m.c.position) >= ival(2),
+                     'content', 'position', 'position_nsub', 'changed', 'removed']))).select_from(
+                m
+                .join(a_, a_.c.fullname == m.c.fullname)
+                .outerjoin(mh, mh.c.fullname == a_.c.fullname)
+                .outerjoin(sh, sh.c.spec_name == a_.c.spec_name)
+            ).where(
+                func.nlevel(m.c.position) >= ival(2)
             )
 
         def select_2():
-            series = sqlalchemy.select(["*"], from_obj=[
+            series = sqlalchemy.select("*").select_from(
                 sqlalchemy.text("generate_series(0, 0)")
-            ]).alias('series')
-            return sqlalchemy.select(
+            ).alias('series')
+            return sqlalchemy.select(*(
                 sql.reorder_columns(
                     [sql.gL("'menu/'").label('help_id'),
                      sql.gL("null").label('menuid'),
@@ -172,14 +174,14 @@ class EvPytisHelp(sql.SQLView):
                      sql.gL("false").label('removed')],
                     ['help_id', 'menuid', 'fullname', 'title', 'description', 'menu_help',
                      'spec_name', 'spec_description', 'spec_help', 'page_id', 'parent', 'ord',
-                     'content', 'position', 'position_nsub', 'changed', 'removed']),
-                from_obj=[series]
+                     'content', 'position', 'position_nsub', 'changed', 'removed']))).select_from(
+                series
             )
         set_1 = sqlalchemy.union(select_1(), select_2())
 
         def select_3():
             p = sql.t.EPytisHelpPages.alias('p')
-            return sqlalchemy.select(
+            return sqlalchemy.select(*(
                 sql.reorder_columns(
                     cls._exclude(p) +
                     [sql.gL("'page/'||page_id").label('help_id'),
@@ -195,8 +197,8 @@ class EvPytisHelp(sql.SQLView):
                      sql.gL("false").label('removed')],
                     ['help_id', 'menuid', 'fullname', 'title', 'description', 'menu_help',
                      'spec_name', 'spec_description', 'spec_help', 'page_id', 'parent', 'ord',
-                     'content', 'position', 'position_nsub', 'changed', 'removed']),
-                from_obj=[p]
+                     'content', 'position', 'position_nsub', 'changed', 'removed']))).select_from(
+                p
             )
         return sqlalchemy.union(set_1, select_3())
 
@@ -259,31 +261,31 @@ class EvPytisUserHelp(sql.SQLView):
                 sqlalchemy.Column('menuid', sqlalchemy.Integer()),
             ).alias('u')
             h = sql.t.EvPytisHelp.alias('h')
-            return sqlalchemy.select(
+            return sqlalchemy.select(*(
                 sql.reorder_columns(
                     cls._exclude(h),
                     ['help_id', 'menuid', 'fullname', 'title', 'description',
                      'menu_help', 'spec_name', 'spec_description', 'spec_help',
                      'page_id', 'parent', 'ord', 'content', 'position',
                      'position_nsub', 'changed', 'removed']
-                ),
-                from_obj=[
-                    h.join(
+                ))).select_from(
+                h
+                .join(
                         u, h.c.menuid == u.c.menuid
                     )
-                ]
             )
 
         def select_2():
             h = sql.t.EvPytisHelp.alias('h')
-            return sqlalchemy.select(
+            return sqlalchemy.select(*(
                 sql.reorder_columns(cls._exclude(h),
                                     ['help_id', 'menuid', 'fullname', 'title', 'description',
                                      'menu_help', 'spec_name', 'spec_description', 'spec_help',
                                      'page_id', 'parent', 'ord', 'content', 'position',
-                                     'position_nsub', 'changed', 'removed']),
-                from_obj=[h],
-                whereclause=h.c.menuid.is_(None),
+                                     'position_nsub', 'changed', 'removed']))).select_from(
+                h
+            ).where(
+                h.c.menuid.is_(None)
             )
         return sqlalchemy.union(select_1(), select_2())
     depends_on = (EvPytisHelp, PytisViewUserMenu,)
