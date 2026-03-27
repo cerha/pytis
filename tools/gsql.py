@@ -57,6 +57,8 @@ def parse_options():
                       help="pytis configuration file for database access (on upgrade)")
     parser.add_option("--debug", action="store_true", dest="debug",
                       help="print some debugging information to stderr")
+    parser.add_option("--compat", action="store_true", dest="compat", default=False,
+                      help="normalize SA-version-dependent output for SA 1.x vs SA 2.x comparison")
     parser.add_option("--host", default=None, action="store", dest="host")
     parser.add_option("--port", default=None, type="int", action="store", dest="port")
     parser.add_option("--database", default=None, action="store", dest="database")
@@ -111,7 +113,7 @@ def run():
                                          schema=options.schema, source=options.source,
                                          upgrade=options.upgrade, plpython3=options.plpython3,
                                          debug=options.debug, limit_module=options.limit_module,
-                                         limit_class=limit_class)
+                                         limit_class=limit_class, compat=options.compat)
 
 
 if __name__ == '__main__':

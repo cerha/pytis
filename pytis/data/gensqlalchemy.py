@@ -92,6 +92,7 @@ import pytis.data
 import pytis.util
 
 unistr = type(u'')  # Python 2/3 transition hack.
+_SA_VERSION = int(sqlalchemy.__version__.split('.')[0])
 
 # SQLAlchemy extensions
 
@@ -141,7 +142,7 @@ def _rename_replaced_function(generator, function, create):
                        (schema, old_underscore, underscores, replaced_name,
                         _function_arguments(function),
                         new_underscore, underscores, replaced_name,))
-            generator.connection.execute(command)
+            generator.connection.execute(sqlalchemy.text(command))
 
 
 def _role_string(role):
@@ -158,7 +159,7 @@ class _PytisSchemaHandler(object):
         path_list = [_sql_id_escape(s) for s in search_path]
         path = ','.join(path_list)
         command = 'SET SEARCH_PATH TO %s' % (path,)
-        self.connection.execute(command)
+        self.connection.execute(sqlalchemy.text(command))
         return search_path
 
 
@@ -194,7 +195,7 @@ class _PytisSchemaGenerator(sqlalchemy.engine.ddl.SchemaGenerator, _PytisSchemaH
             server = table.server.pytis_name(real=True)
             command = ('CREATE %s "%s"."%s" (\n%s\n) SERVER %s\n' %
                        (table._DB_OBJECT, table.schema, table.name, column_string, server,))
-            self.connection.execute(command)
+            self.connection.execute(sqlalchemy.text(command))
 
     def visit_type(self, type_, create_ok=False):
         with local_search_path(self._set_search_path(type_.search_path())):
@@ -210,7 +211,7 @@ class _PytisSchemaGenerator(sqlalchemy.engine.ddl.SchemaGenerator, _PytisSchemaH
         column_string = ', '.join(['%s %s' % (self.preparer.format_column(c), ctype(c))
                                    for c in sqlalchemy_columns])
         command = 'CREATE TYPE %s AS\n(%s)' % (type_name, column_string,)
-        self.connection.execute(command)
+        self.connection.execute(sqlalchemy.text(command))
 
     def visit_function(self, function, create_ok=False, result_type=None, suffix=''):
         search_path = function.search_path()
@@ -244,7 +245,7 @@ class _PytisSchemaGenerator(sqlalchemy.engine.ddl.SchemaGenerator, _PytisSchemaH
             if isinstance(body, basestring):
                 body = body.strip()
                 command = query_prefix + body + query_suffix
-                self.connection.execute(command)
+                self.connection.execute(sqlalchemy.text(command))
             elif isinstance(body, (tuple, list)):
                 n = len(body)
                 for i in range(n):
@@ -280,7 +281,7 @@ class _PytisSchemaGenerator(sqlalchemy.engine.ddl.SchemaGenerator, _PytisSchemaH
             command = (('CREATE AGGREGATE "%s"."%s" (%s) (\n'
                         '%s\n)') %
                        (aggregate.schema, name, ', '.join(arguments[1:]), ', '.join(settings),))
-            self.connection.execute(command)
+            self.connection.execute(sqlalchemy.text(command))
             aggregate.dispatch.after_create(aggregate, self.connection, checkfirst=self.checkfirst,
                                             _ddl_runner=self)
 
@@ -346,7 +347,7 @@ class _PytisSchemaGenerator(sqlalchemy.engine.ddl.SchemaGenerator, _PytisSchemaH
                                (trigger.pytis_name(real=True), trigger.position, events,
                                 table.pytis_name(real=True), referencing,
                                 row_or_statement, when_clause, trigger_call,))
-                    self.connection.execute(command)
+                    self.connection.execute(sqlalchemy.text(command))
                 trigger.dispatch.after_create(trigger, self.connection, checkfirst=self.checkfirst,
                                               _ddl_runner=self)
 
@@ -368,52 +369,52 @@ class _PytisSchemaGenerator(sqlalchemy.engine.ddl.SchemaGenerator, _PytisSchemaH
             sql += raw.sql()
             if raw.error_level > 0:
                 sql += "\n-- I repeat:\n--\n" + message
-        self.connection.execute(sql)
+        self.connection.execute(sqlalchemy.text(sql))
 
 
 class _PytisSchemaDropper(sqlalchemy.engine.ddl.SchemaGenerator, _PytisSchemaHandler):
 
     def visit_view(self, view, create_ok=False):
         command = 'DROP %s "%s"."%s"' % (view._DB_OBJECT, view.schema, view.name,)
-        self.connection.execute(command)
+        self.connection.execute(sqlalchemy.text(command))
 
     def visit_materialized_view(self, view, create_ok=False):
         self.visit_view(view, create_ok=create_ok)
 
     def visit_foreign_table(self, table, create_ok=False):
         command = 'DROP FOREIGN TABLE "%s"."%s"' % (table.schema, table.name,)
-        self.connection.execute(command)
+        self.connection.execute(sqlalchemy.text(command))
 
     def visit_type(self, type_, create_ok=False):
         command = 'DROP TYPE "%s"."%s"' % (type_.schema, type_.name,)
-        self.connection.execute(command)
+        self.connection.execute(sqlalchemy.text(command))
 
     def visit_function(self, function, create_ok=False, result_type=None):
         name = function.pytis_name(real=True)
         arguments = _function_arguments(function)
         command = 'DROP FUNCTION "%s"."%s" (%s)' % (function.schema, name, arguments,)
-        self.connection.execute(command)
+        self.connection.execute(sqlalchemy.text(command))
         _rename_replaced_function(self, function, False)
 
     def visit_aggregate(self, aggregate, checkfirst=False):
         name = aggregate.pytis_name(real=True)
         arguments = _function_arguments(aggregate, types_only=True)[1:]
         command = 'DROP AGGREGATE "%s"."%s" (%s)' % (aggregate.schema, name, arguments,)
-        self.connection.execute(command)
+        self.connection.execute(sqlalchemy.text(command))
 
     def visit_trigger(self, trigger, checkfirst=False):
         for search_path in _expand_schemas(trigger):
             with local_search_path(self._set_search_path(search_path)):
                 table = trigger.table
                 if table is not None:
-                    self.connection.execute('DROP TRIGGER "%s" ON "%s"' %
-                                            (trigger.pytis_name(real=True),
-                                             table.pytis_name(real=True),))
+                    self.connection.execute(sqlalchemy.text(
+                        'DROP TRIGGER "%s" ON "%s"' %
+                        (trigger.pytis_name(real=True), table.pytis_name(real=True),)))
 
     def visit_table_index(self, index, checkfirst=False):
         command = ('ALTER %s "%s"."%s" DROP CONSTRAINT "%s"' %
                    (index.db_object, index.object_schema, index.object_name, index.name,))
-        self.connection.execute(command)
+        self.connection.execute(sqlalchemy.text(command))
 
 
 class _ObjectComment(sqlalchemy.schema.DDLElement):
@@ -498,7 +499,7 @@ def visit_rule(element, compiler, **kw):
     instead_commands = element.instead_commands()
     also_commands = element.also_commands()
     if instead_commands is None and not also_commands:
-        return
+        return ''
     # We have to attach also_commands to instead_commands because
     # also_commands may contain references to NEW and OLD which are not
     # available in ALSO rules.
@@ -506,6 +507,10 @@ def visit_rule(element, compiler, **kw):
     commands = tuple(instead_commands or ()) + tuple(also_commands or ())
     if commands:
         sql_commands = [_make_sql_command(c) for c in commands]
+        if element.action.lower() == 'insert':
+            # Strip RETURNING clause — not valid in rule bodies and unnecessary for SQL output
+            # (SA 1.4 uses inline=True on rule inserts; SA 2.0 adds RETURNING by default)
+            sql_commands = [re.sub(r'\s+RETURNING\s+.*$', '', c) for c in sql_commands]
         if len(sql_commands) == 1:
             sql = sql_commands[0]
         else:
@@ -1210,7 +1215,13 @@ class SQLNameException(SQLException):
         super(SQLNameException, self).__init__("Object not found", *args)
 
 
-class _PytisBaseMetaclass(sqlalchemy.sql.visitors.VisitableType):
+if _SA_VERSION >= 2:
+    _PytisVisitableBase = type
+else:
+    _PytisVisitableBase = sqlalchemy.sql.visitors.VisitableType
+
+
+class _PytisBaseMetaclass(_PytisVisitableBase):
 
     _name_mapping = {}
     _class_mapping = {}
@@ -1232,7 +1243,7 @@ class _PytisBaseMetaclass(sqlalchemy.sql.visitors.VisitableType):
             cls.name = name
             if _PytisBaseMetaclass._new_specification_callback:
                 _PytisBaseMetaclass._new_specification_callback(cls)
-        sqlalchemy.sql.visitors.VisitableType.__init__(cls, clsname, bases, clsdict)
+        _PytisVisitableBase.__init__(cls, clsname, bases, clsdict)
 
     def _is_specification(cls, clsname):
         return _is_specification_name(clsname)
@@ -1298,7 +1309,8 @@ class _PytisSchematicMetaclass(_PytisBaseMetaclass):
                         if issubclass(cls, SQLSequence):
                             # hack
                             o = cls(cls.pytis_name(), metadata=_metadata, schema=search_path[0],
-                                    start=cls.start, increment=cls.increment)
+                                    start=cls.start or (1 if _compat else None),
+                                    increment=cls.increment)
                         else:
                             o = cls(_metadata, search_path)
                     _PytisSchematicMetaclass.objects.append(o)
@@ -1846,7 +1858,7 @@ class SQLSchema(with_metaclass(_PytisSimpleMetaclass, sqlalchemy.schema.DDLEleme
         if self.owner:
             command = ('ALTER SCHEMA "%s" OWNER TO "%s"' %
                        (self.name, self.owner,))
-            bind.execute(command)
+            bind.execute(sqlalchemy.text(command))
 
 
 @compiles(SQLSchema)
@@ -1944,14 +1956,32 @@ class _SQLTabular(with_metaclass(_PytisSchematicMetaclass, sqlalchemy.Table, SQL
     special_insert_columns = ()
     special_update_columns = ()
 
-    def _init(self, *args, **kwargs):
-        super(_SQLTabular, self)._init(*args, **kwargs)
+    def _pytis_init(self):
+        """Pytis-specific post-SA-init setup, called cooperatively via super() through the MRO.
+
+        In SA 1.4, called from _init() after SA's own table setup completes.
+        In SA 2.0, called from __init__() when _no_init=False signals the real init call.
+        Subclasses override this (calling super()._pytis_init() first) to add their own work.
+
+        """
         self._search_path = _current_search_path
         self._add_dependencies()
         self._create_comments()
         self._create_access_rights()
         self._register_access_rights()
         self._create_rules()
+
+    def _init(self, *args, **kwargs):
+        super(_SQLTabular, self)._init(*args, **kwargs)
+        self._pytis_init()
+
+    def __init__(self, *args, **kwargs):
+        # SA 2.0: Table._new() explicitly calls __init__ with _no_init=False to signal real init.
+        # In SA 1.4, _init() is used instead (called from Table.__new__); __init__ is a no-op there.
+        # The _no_init guard ensures _pytis_init() runs exactly once, on the real init call only.
+        super(_SQLTabular, self).__init__(*args, **kwargs)
+        if not kwargs.get('_no_init', True):
+            self._pytis_init()
 
     def pytis_exists(self, metadata):
         name = self.pytis_name(real=True)
@@ -2094,7 +2124,7 @@ class _SQLTabular(with_metaclass(_PytisSchematicMetaclass, sqlalchemy.Table, SQL
         for c in all_columns:
             if c.name in excluded:
                 continue
-            table_c = c.element if isinstance(c, sqlalchemy.sql.expression._Label) else c
+            table_c = c.element if isinstance(c, sqlalchemy.sql.expression.Label) else c
             if not isinstance(table_c, sqlalchemy.sql.expression.ColumnClause):
                 # Probably literal column, we can't handle it.
                 continue
@@ -2128,7 +2158,7 @@ class _SQLTabular(with_metaclass(_PytisSchematicMetaclass, sqlalchemy.Table, SQL
                 equivalent_columns = [(c.table, c.name, c.primary_key,)
                                       for c in equivalent_column_instances]
                 for c in self._original_columns():
-                    tc = c.element if isinstance(c, sqlalchemy.sql.expression._Label) else c
+                    tc = c.element if isinstance(c, sqlalchemy.sql.expression.Label) else c
                     if not isinstance(tc, sqlalchemy.Column):
                         continue
                     table, name = tc.table, tc.name
@@ -2177,7 +2207,7 @@ class _SQLTabular(with_metaclass(_PytisSchematicMetaclass, sqlalchemy.Table, SQL
         for tabular in self._rule_tables(self.insert_order):
             assignments = self._rule_assignments(tabular, self.no_insert_columns,
                                                  self.special_insert_columns)
-            c = tabular.insert(inline=True).values(**assignments)
+            c = tabular.insert().values(**assignments)
             commands.append(c)
         return commands
 
@@ -2260,8 +2290,8 @@ class _SQLIndexable(SQLObject):
 
     index_columns = ()
 
-    def _init(self, *args, **kwargs):
-        super(_SQLIndexable, self)._init(*args, **kwargs)
+    def _pytis_init(self):
+        super(_SQLIndexable, self)._pytis_init()
         if self._is_true_specification():
             self._create_special_indexes()
 
@@ -2534,21 +2564,26 @@ class SQLTable(_SQLIndexable, _SQLTabular):
             args += (sqlalchemy.ForeignKeyConstraint(columns, refcolumns, **kwargs),)
         obj = sqlalchemy.Table.__new__(cls, *args, schema=search_path[0])
         obj.pytis_key = key
+        obj._search_path = search_path  # SA 2.0: _init() is not called
+        obj._pytis_create_p = False     # SA 2.0: _init() is not called
         for f in foreign_constraints:
             _forward_foreign_keys.append(_ForwardForeignKey(*(f[:5] + (obj,))))
         return obj
 
-    def _init(self, *args, **kwargs):
-        self._pytis_create_p = False
-        super(SQLTable, self)._init(*args, **kwargs)
+    def _pytis_init(self):
+        super(SQLTable, self)._pytis_init()
         self._create_parameters()
         if self._is_true_specification():
             self._create_triggers()
 
+    def _init(self, *args, **kwargs):
+        self._pytis_create_p = False  # must be set before super()._init() accesses columns
+        super(SQLTable, self)._init(*args, **kwargs)
+
     @property
     def columns(self):
         columns = super(SQLTable, self).columns
-        if self._pytis_create_p:
+        if getattr(self, '_pytis_create_p', False):
             all_columns = columns
             columns = sqlalchemy.sql.ColumnCollection()
             for c in all_columns:
@@ -2767,7 +2802,7 @@ class SQLTable(_SQLIndexable, _SQLTabular):
         self.indexes = sorted(orig_indexes, key=lambda i: i.name)
         with local_search_path(self._set_search_path(bind)):
             try:
-                super(SQLTable, self).create(bind=bind, checkfirst=checkfirst)
+                super(SQLTable, self).create(bind, checkfirst=checkfirst)
             finally:
                 self._pytis_create_p = False
                 self.indexes = orig_indexes
@@ -2778,7 +2813,7 @@ class SQLTable(_SQLIndexable, _SQLTabular):
         path_list = [_sql_id_escape(s) for s in search_path]
         path = ','.join(path_list)
         command = 'SET SEARCH_PATH TO %s' % (path,)
-        bind.execute(command)
+        bind.execute(sqlalchemy.text(command))
         return search_path
 
     def _insert_values(self, bind):
@@ -2866,7 +2901,9 @@ class SQLForeignTable(_SQLTabular):
         columns = tuple([c.sqlalchemy_column(search_path, None, None, None)
                          for c in cls.fields])
         args = (cls.name, metadata,) + columns
-        return sqlalchemy.Table.__new__(cls, *args, schema=search_path[0])
+        obj = sqlalchemy.Table.__new__(cls, *args, schema=search_path[0])
+        obj._search_path = search_path  # SA 2.0: _init() is not called
+        return obj
 
     def _add_dependencies(self):
         super(SQLForeignTable, self)._add_dependencies()
@@ -3079,7 +3116,9 @@ class _SQLBaseView(_SQLReplaceable, _SQLQuery, _SQLTabular):
                         c.primary_key = True
                         break
             args = (cls.name, metadata,) + columns
-            return sqlalchemy.Table.__new__(cls, *args, schema=search_path[0])
+            obj = sqlalchemy.Table.__new__(cls, *args, schema=search_path[0], implicit_returning=False)
+            obj._search_path = search_path  # SA 2.0: _init() is not called
+            return obj
 
     def _pytis_definition(self, connection):
         self._pytis_set_definition_schema(connection)
@@ -3090,11 +3129,9 @@ class _SQLBaseView(_SQLReplaceable, _SQLQuery, _SQLTabular):
                  "pg_namespace on relnamespace = pg_namespace.oid "
                  "where rulename = '_RETURN' and relname = :name and nspname = :schema")
         result = connection.execute(
-            sqlalchemy.text(query,
-                            bindparams=[sqlalchemy.bindparam('schema', schema,
-                                                             type_=sqlalchemy.String),
-                                        sqlalchemy.bindparam('name', name,
-                                                             type_=sqlalchemy.String)]))
+            sqlalchemy.text(query).bindparams(
+                sqlalchemy.bindparam('schema', schema, type_=sqlalchemy.String),
+                sqlalchemy.bindparam('name', name, type_=sqlalchemy.String)))
         row = result.fetchone()
         result.close()
         if row is None:
@@ -3325,7 +3362,9 @@ class SQLType(_SQLTabular):
         columns = tuple([c.sqlalchemy_column(search_path, None, None, None)
                          for c in cls.fields])
         args = (cls.name, metadata,) + columns
-        return sqlalchemy.Table.__new__(cls, *args, schema=search_path[0])
+        obj = sqlalchemy.Table.__new__(cls, *args, schema=search_path[0])
+        obj._search_path = search_path  # SA 2.0: _init() is not called
+        return obj
 
     @classmethod
     def specification_fields(class_):
@@ -3333,6 +3372,8 @@ class SQLType(_SQLTabular):
 
     def pytis_exists(self, metadata):
         name = self.pytis_name(real=True)
+        if _SA_VERSION >= 2:
+            return metadata.pytis_engine.dialect.has_type(name, schema=self.schema)
         with _metadata_connection(metadata) as connection:
             return metadata.pytis_engine.dialect.has_type(connection, name, schema=self.schema)
 
@@ -3448,7 +3489,9 @@ class SQLFunctional(_SQLReplaceable, _SQLTabular):
             else:
                 raise SQLException("Invalid result type", result_type)
             args = (cls.name, metadata,) + columns
-            return sqlalchemy.Table.__new__(cls, *args, schema=search_path[0])
+            obj = sqlalchemy.Table.__new__(cls, *args, schema=search_path[0], implicit_returning=False)
+            obj._search_path = search_path  # SA 2.0: _init() is not called
+            return obj
 
     @classmethod
     def specification_fields(class_):
@@ -3524,13 +3567,10 @@ class SQLFunctional(_SQLReplaceable, _SQLTabular):
                  "from pg_proc join pg_namespace n on pronamespace = n.oid "
                  "where nspname = :schema and proname = :name and pronargs = :nargs")
         result = connection.execute(
-            sqlalchemy.text(query,
-                            bindparams=[sqlalchemy.bindparam('schema', schema,
-                                                             type_=sqlalchemy.String),
-                                        sqlalchemy.bindparam('name', name,
-                                                             type_=sqlalchemy.String),
-                                        sqlalchemy.bindparam('nargs', nargs,
-                                                             type_=sqlalchemy.Integer)]))
+            sqlalchemy.text(query).bindparams(
+                sqlalchemy.bindparam('schema', schema, type_=sqlalchemy.String),
+                sqlalchemy.bindparam('name', name, type_=sqlalchemy.String),
+                sqlalchemy.bindparam('nargs', nargs, type_=sqlalchemy.Integer)))
         definition = ''
         for row in result:
             definition += row[0]
@@ -3952,12 +3992,11 @@ class SQLTrigger(with_metaclass(_PytisTriggerMetaclass, SQLEventHandler)):
                      "where tgname = :tgname and relname = :name")
             with _metadata_connection(metadata) as connection:
                 result = connection.execute(
-                    sqlalchemy.text(
-                        query,
-                        bindparams=[sqlalchemy.bindparam('tgname', self.pytis_name(real=True),
-                                                         type_=sqlalchemy.String),
-                                    sqlalchemy.bindparam('name', self.table.pytis_name(real=True),
-                                                         type_=sqlalchemy.String)]))
+                    sqlalchemy.text(query).bindparams(
+                        sqlalchemy.bindparam('tgname', self.pytis_name(real=True),
+                                             type_=sqlalchemy.String),
+                        sqlalchemy.bindparam('name', self.table.pytis_name(real=True),
+                                             type_=sqlalchemy.String)))
                 n = result.fetchone()[0]
                 result.close()
             return n > 0
@@ -3972,12 +4011,11 @@ class SQLTrigger(with_metaclass(_PytisTriggerMetaclass, SQLEventHandler)):
                      "where tgname = :tgname and relname = :name")
             with _metadata_connection(metadata) as connection:
                 result = connection.execute(
-                    sqlalchemy.text(
-                        query,
-                        bindparams=[sqlalchemy.bindparam('tgname', self.pytis_name(real=True),
-                                                         type_=sqlalchemy.String),
-                                    sqlalchemy.bindparam('name', self.table.pytis_name(real=True),
-                                                         type_=sqlalchemy.String)]))
+                    sqlalchemy.text(query).bindparams(
+                        sqlalchemy.bindparam('tgname', self.pytis_name(real=True),
+                                             type_=sqlalchemy.String),
+                        sqlalchemy.bindparam('name', self.table.pytis_name(real=True),
+                                             type_=sqlalchemy.String)))
                 definition = result.fetchone()[0]
                 if result.fetchone() is not None:
                     _warn("Multiple definitions of trigger `%s'" % (self.name,))
@@ -4134,6 +4172,7 @@ def _db_dependencies(metadata):
 
 
 _engine = None
+_SA_TextClause = type(sqlalchemy.text(''))
 
 
 def _make_sql_command(sql, *multiparams, **params):
@@ -4141,13 +4180,21 @@ def _make_sql_command(sql, *multiparams, **params):
         output = unistr(sql)
     elif isinstance(sql, unistr):
         output = sql
+    elif isinstance(sql, _SA_TextClause):
+        # Use the raw text directly — dialect compilation escapes '%' to '%%'.
+        output = sql.text
     else:
         compiled = sql.compile(dialect=_engine.dialect)
         if isinstance(sql, sqlalchemy.sql.expression.Insert):
             parameters = {}
             for k, v in compiled.params.items():
                 parameters[k] = _sql_value_escape(v)
-            output = unistr(compiled) % parameters
+            compiled_str = unistr(compiled)
+            if _compat and _SA_VERSION >= 2:
+                # SA 2.0 appends type casts to parameter placeholders, e.g. %(col)s::DATERANGE.
+                # Strip them — PostgreSQL coerces the values implicitly, matching SA 1.4 output.
+                compiled_str = re.sub(r'(%\([\w]+\)s)::[A-Za-z0-9_]+', r'\1', compiled_str)
+            output = compiled_str % parameters
         elif isinstance(sql, sqlalchemy.sql.expression.Select):
             output = unistr(compiled) % compiled.params
         else:
@@ -4185,6 +4232,7 @@ def _gsql_output(output):
 _debug = False
 _pretty = 0
 _plpython3 = False
+_compat = False
 
 def _encoded_output(output):
     if not hasattr(output, 'encoding') or output.encoding is None:
@@ -4193,7 +4241,7 @@ def _encoded_output(output):
 
 
 def _gsql_process(loader, regexp, no_deps, views, functions, names_only, pretty, schema, source,
-                  config_file, upgrade, plpython3, debug, module_name, limit_class):
+                  config_file, upgrade, plpython3, debug, module_name, limit_class, compat=False):
     global _output
     if upgrade:
         if alembic is None:
@@ -4208,6 +4256,8 @@ def _gsql_process(loader, regexp, no_deps, views, functions, names_only, pretty,
     _pretty = pretty
     global _plpython3
     _plpython3 = plpython3
+    global _compat
+    _compat = compat
     global _enforced_schema, _enforced_schema_objects
     _enforced_schema = schema
     _enforced_schema_objects = set()
@@ -4486,7 +4536,7 @@ def _gsql_process_1(loader, regexp, no_deps, views, functions, names_only, sourc
 
 def gsql_file(file_name, regexp=None, no_deps=False, views=False, functions=False,
               names_only=False, pretty=0, schema=None, source=False, config_file=None,
-              upgrade=False, plpython3=False, debug=False, limit_class=None):
+              upgrade=False, plpython3=False, debug=False, limit_class=None, compat=False):
     """Generate SQL code from given specification file.
 
     Arguments:
@@ -4511,6 +4561,8 @@ def gsql_file(file_name, regexp=None, no_deps=False, views=False, functions=Fals
       debug -- iff true, print some debugging information to standard error output
       limit_class -- if not None, limit output to specifications derived from given
         Python class
+      compat -- iff true, normalize SA-version-dependent output differences for
+        easier comparison between SA 1.x and SA 2.x generated SQL
 
     If both 'views' and 'functions' are specified, output both views and
     functions.
@@ -4522,13 +4574,13 @@ def gsql_file(file_name, regexp=None, no_deps=False, views=False, functions=Fals
         with open(file_name, 'rb') as f:
             exec(compile(f.read(), file_name, 'exec'), copy.copy(globals()))
     _gsql_process(loader, regexp, no_deps, views, functions, names_only, pretty, schema, source,
-                  config_file, upgrade, plpython3, debug, None, limit_class)
+                  config_file, upgrade, plpython3, debug, None, limit_class, compat=compat)
 
 
 def gsql_module(module_name, regexp=None, no_deps=False, views=False, functions=False,
                 names_only=False, pretty=0, schema=None, source=False,
                 config_file=None, upgrade=False, plpython3=False, debug=False,
-                limit_module=False, limit_class=None):
+                limit_module=False, limit_class=None, compat=False):
     """Generate SQL code from given specification module.
 
     Arguments:
@@ -4555,6 +4607,8 @@ def gsql_module(module_name, regexp=None, no_deps=False, views=False, functions=
         in the given module
       limit_class -- if not None, limit output to specifications derived from given
         Python class
+      compat -- iff true, normalize SA-version-dependent output differences for
+        easier comparison between SA 1.x and SA 2.x generated SQL
 
     If both 'views' and 'functions' are specified, output both views and
     functions.
@@ -4574,7 +4628,7 @@ def gsql_module(module_name, regexp=None, no_deps=False, views=False, functions=
                     pytis.util.load_module(module_name + '.' + filename[:-3])
     _gsql_process(loader, regexp, no_deps, views, functions, names_only, pretty, schema, source,
                   config_file, upgrade, plpython3, debug, (module_name if limit_module else None),
-                  limit_class)
+                  limit_class, compat=compat)
 
 
 def capture(function, *args, **kwargs):
