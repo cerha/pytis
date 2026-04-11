@@ -377,6 +377,62 @@ def _connect():
     return connection
 
 
+def _connect_json(password, port):
+    import importlib.util
+    client_py = os.path.join(os.path.dirname(__file__), 'client.py')
+    log(OPERATIONAL, "JSON: connecting to localhost:{} via {}".format(port, client_py))
+    _spec = importlib.util.spec_from_file_location(
+        'pytis_remote_client',
+        client_py,
+    )
+    if _spec is None:
+        raise ImportError("client.py not found at: {}".format(client_py))
+    _mod = importlib.util.module_from_spec(_spec)
+    _spec.loader.exec_module(_mod)
+    ServiceClient = _mod.ServiceClient
+    RPCInfo.file_proxy_class = _mod.FileProxy
+
+    client = ServiceClient(password)
+    client.connect('localhost', port)
+    RPCInfo.connection = client
+    RPCInfo.connection_order += 1
+    RPCInfo.client_api_pushed = False
+    log(OPERATIONAL, "JSON client connection {} ({}) established.".format(
+        RPCInfo.connection_order, RPCInfo.access_data_version))
+    # Push server-side handlers (session_password, GPG wrappers, etc.)
+    if 'session_password' not in client.request('extensions'):
+        with open(os.path.join(os.path.dirname(__file__), 'client_handlers.py')) as f:
+            handlers_code = f.read()
+        result = client.request('push_code', code=handlers_code)
+        if isinstance(result, str) and result.startswith('error:'):
+            log(OPERATIONAL, "Client handlers push failed:", result)
+        else:
+            log(OPERATIONAL, "Client handlers pushed successfully.")
+            RPCInfo.client_api_pushed = True
+    # Push clientapi.py to replace the Stub UI backend with a real wx/zenity backend.
+    # clientapi.py is on the server; it is designed to run on the client (pytis2go)
+    # which has the GUI libraries available — same mechanism as RPyC's exposed_extend().
+    clientapi_path = os.path.join(os.path.dirname(__file__), 'clientapi.py')
+    if os.path.exists(clientapi_path):
+        with open(clientapi_path) as f:
+            clientapi_code = f.read()
+        result = client.request('setup_ui_backend', code=clientapi_code)
+        if isinstance(result, str) and result.startswith('error:'):
+            log(OPERATIONAL, "UI backend setup failed: %s" % result)
+        else:
+            log(OPERATIONAL, "UI backend set to: %s" % result)
+    try:
+        client_info = json.loads(client.request('client_info'))
+    except Exception as e:
+        log(OPERATIONAL, "Failed reading client info:", e)
+        client_info = {}
+    extra = {k: v for k, v in client_info.items() if k != 'pytis2go_version'}
+    extra['client_version'] = client_info.get('pytis2go_version', '')
+    extra['display'] = x2go_display()
+    RPCInfo.client_info = ClientInfo(**extra)
+    return client
+
+
 def _request(request, *args, **kwargs):
     def retype(arg):
         # Convert lcg.TranslatableText instances to unicode before passing
