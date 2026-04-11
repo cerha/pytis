@@ -1069,6 +1069,9 @@ class PytisClientAPIService(rpyc.Service):
             x2go_version=os.getenv('X2GO_VERSION'),
         ))
 
+    def exposed_session_password(self):
+        return getattr(self._client, '_session_password', None)
+
     def exposed_get_clipboard_text(self):
         """Return current clipboard text, as unicode.
 
@@ -1218,6 +1221,15 @@ class PytisClientAPIService(rpyc.Service):
         handle, filename = tempfile.mkstemp(prefix='pytistmp', suffix=suffix)
         return ExposedFileWrapper(filename, handle=handle, encoding=encoding, mode=mode,
                                   decrypt=self._decrypt(decrypt))
+
+    def exposed_enter_text(self, title=u"Zadejte text", label=None, password=False):
+        return self._client.enter_text(title=title, label=label, password=password)
+
+    def exposed_select_option(self, title=u"Výběr položky",
+                              label=u"Zvolte jednu z níže uvedených položek:",
+                              columns=(), data=(), return_column=1):
+        return self._client.select_option(title=title, label=label, columns=columns,
+                                          data=data, return_column=return_column)
 
     def exposed_select_directory(self, directory=None, title=u"Výběr adresáře"):
         return self._client.select_directory(directory=directory, title=title)
