@@ -210,7 +210,7 @@ def client_connection_ok():
     if not client_available():
         return False
     try:
-        return _request('echo', 'hello') == 'hello'
+        return _request('echo', text='hello') == 'hello'
     except Exception as e:
         log(OPERATIONAL, "RPC exception:", e)
         return False
@@ -449,6 +449,16 @@ def _connect_json(password, port):
     return client
 
 
+def _make_file_proxy(result, mode):
+    """Wrap a JSON file-handle dict in a FileProxy for the JSON protocol."""
+    if result is None:
+        return None
+    cls = RPCInfo.file_proxy_class
+    if cls is not None and isinstance(result, dict) and 'handle' in result:
+        return cls(RPCInfo.connection, result['handle'], result['path'], mode)
+    return result
+
+
 def _request(request, *args, **kwargs):
     def retype(arg):
         # Convert lcg.TranslatableText instances to unicode before passing
@@ -497,7 +507,7 @@ def set_clipboard_text(text):
     assert isinstance(text, unistr), text
     text = text.replace('\n', '\r\n')
     try:
-        _request('set_clipboard_text', text)
+        _request('set_clipboard_text', text=text)
     except Exception:
         pass
 
@@ -505,7 +515,7 @@ def set_clipboard_text(text):
 def launch_file(path):
     assert isinstance(path, basestring), path
     try:
-        return _request('launch_file', path)
+        return _request('launch_file', path=path)
     except Exception as e:
         app.error(_("Unable to open file %(filename)s: %(error)s", filename=path, error=e))
 
@@ -513,7 +523,7 @@ def launch_file(path):
 def launch_url(url):
     assert isinstance(url, basestring), url
     try:
-        return _request('launch_file', url)
+        return _request('launch_file', path=url)
     except Exception:
         app.error(_("Unable to open URL %s", url))
 
@@ -525,7 +535,9 @@ def open_file(filename, mode, encoding=None, encrypt=None, decrypt=False):
     assert encrypt is None or isinstance(encrypt, list), encrypt
     assert isinstance(decrypt, bool), decrypt
     try:
-        return _request('open_file', filename, mode, encoding=encoding, encrypt=encrypt)
+        result = _request('open_file', filename=filename, mode=mode,
+                          encoding=encoding, encrypt=encrypt)
+        return _make_file_proxy(result, mode)
     except Exception as e:
         app.error(_("Unable to open file %(filename)s: %(error)s", filename=filename, error=e))
 
@@ -544,8 +556,9 @@ def open_selected_file(directory=None, patterns=(), pattern=None, filetypes=None
         assert not patterns and not pattern, (filetypes, patterns, pattern)
         patterns = ((_("Files of the required type"), ['*.' + ext for ext in filetypes]),)
     try:
-        return _request('open_selected_file', directory=directory,
-                        patterns=patterns, pattern=pattern, encrypt=encrypt)
+        result = _request('open_selected_file', directory=directory,
+                          patterns=patterns, pattern=pattern, encrypt=encrypt)
+        return _make_file_proxy(result, 'rb')
     except Exception as e:
         app.error(_("Unable to select a file for download: %s", e))
 
@@ -567,9 +580,10 @@ def make_selected_file(directory=None, filename=None, patterns=(), pattern=None,
         assert not patterns and not pattern, (filetypes, patterns, pattern)
         patterns = ((_("Files of the required type"), ['*.' + ext for ext in filetypes]),)
     try:
-        return _request('make_selected_file', directory=directory, filename=filename,
-                        patterns=patterns, pattern=pattern, encoding=encoding,
-                        mode=mode, decrypt=decrypt)
+        result = _request('make_selected_file', directory=directory, filename=filename,
+                          patterns=patterns, pattern=pattern, encoding=encoding,
+                          mode=mode, decrypt=decrypt)
+        return _make_file_proxy(result, mode)
     except Exception as e:
         app.error(_("Unable to select a file to save: %s", e))
 
@@ -579,8 +593,9 @@ def make_temporary_file(suffix='', encoding=None, mode='wb', decrypt=False):
     assert encoding is None or isinstance(encoding, basestring), encoding
     assert mode is None or isinstance(mode, basestring), mode
     assert isinstance(decrypt, bool), decrypt
-    return _request('make_temporary_file', suffix=suffix, encoding=encoding, mode=mode,
-                    decrypt=decrypt)
+    result = _request('make_temporary_file', suffix=suffix, encoding=encoding, mode=mode,
+                      decrypt=decrypt)
+    return _make_file_proxy(result, mode)
 
 
 def select_directory(directory=None, title=_("Directory selection")):
@@ -629,6 +644,6 @@ def select_file(filename=None, directory=None, title=None,
 
 def run_python(script):
     try:
-        return _request('run_python', script)
+        return _request('run_python', script=script)
     except Exception:
         return None
