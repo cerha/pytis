@@ -328,12 +328,28 @@ def _rpc_access_data():
 
 def _connect():
     access_data = _rpc_access_data()
-    connector = Connector(access_data.get('password'))
-    RPCInfo.connection = connection = connector.connect('localhost', access_data.get('port'))
+    protocol = access_data.get('protocol', 'rpyc')
+    password = access_data.get('password')
+    port = access_data.get('port')
+
+    try:
+        if protocol == 'json':
+            return _connect_json(password, port)
+        else:
+            return _connect_rpyc(password, port)
+    except Exception as e:
+        log(OPERATIONAL, "Connection failed (protocol={}): {}: {}".format(
+            protocol, type(e).__name__, e))
+        raise
+
+
+def _connect_rpyc(password, port):
+    connector = Connector(password)
+    RPCInfo.connection = connection = connector.connect('localhost', port)
     RPCInfo.connection_order += 1
     RPCInfo.client_api_pushed = False
     client_version = connection.root.x2goclient_version()
-    log(OPERATIONAL, "Client connection {} ({}) established with version: {}".format(
+    log(OPERATIONAL, "RPyC client connection {} ({}) established with version: {}".format(
         RPCInfo.connection_order,
         RPCInfo.access_data_version,
         client_version,
@@ -341,7 +357,7 @@ def _connect():
     try:
         connection.root.extend
     except AttributeError:
-        # This is an older client versinon, which doesn't support API push, but
+        # This is an older client version, which doesn't support API push, but
         # contains a fixed API.  Pushing is not necessary in this case as long
         # as we do not rely on newer API features.  Once we get rid of all
         # "fixed API" clients, we can start relying on all API features.
