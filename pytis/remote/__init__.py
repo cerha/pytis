@@ -30,7 +30,7 @@ from .remote import (  # noqa!
     launch_file, launch_url,
     make_selected_file, make_temporary_file,
     open_file, open_selected_file, select_directory, select_file,
-    run_python, x2go_session_id, client_info,
+    run_python, x2go_session_id, client_info, connection_protocol,
     pytis_x2go_info_file, keep_x2go_info_file, parse_x2go_info_file,
     X2GoInfoException, X2GoInfoSoftException, X2GoInfoHardException,
     RPCInfo, Connector

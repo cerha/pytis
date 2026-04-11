@@ -1410,6 +1410,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         if client_info is None:
             return ()
         fields = (
+            (_("Protocol"), pytis.remote.connection_protocol()),
             (_("Client version"), client_info.client_version),
             (_("Client OS"), '{} {}'.format(client_info.os_name, client_info.os_version)
              if client_info.os_name else None),
@@ -1437,7 +1438,8 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
             icon = 'status-offline'
             tooltip = _("Running locally.")
         elif pytis.remote.client_connection_ok():
-            status = _("Ok")
+            protocol = pytis.remote.connection_protocol()
+            status = _("Ok") + (' ({})'.format(protocol) if protocol else '')
             icon = 'status-online'
             tooltip = _("Connected.")
             self._remote_connection_last_available = time.localtime()

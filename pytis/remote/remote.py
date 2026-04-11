@@ -59,6 +59,7 @@ class RPCInfo(object):
     access_data_version = 0
     client_api_pushed = False
     client_info = None
+    file_proxy_class = None
 
 class ClientInfo(object):
     """Container for information about the remote client."""
@@ -192,6 +193,14 @@ def client_info():
     return RPCInfo.client_info
 
 
+def connection_protocol():
+    """Return the active RPC protocol as 'rpyc', 'json', or None if not connected."""
+    access_data = RPCInfo.access_data or _read_x2go_info_file()
+    if access_data:
+        return access_data.get('protocol', 'rpyc')
+    return None
+
+
 def client_connection_ok():
     """Return True, iff remote client connection is active.
 
@@ -259,13 +268,17 @@ def parse_x2go_info_file(filename):
     items = data.split(':')
     if len(items) != 4:
         raise X2GoInfoSoftException("Incomplete or invalid X2Go file")
-    if items[0] != '0':
-        raise X2GoInfoHardException("Unknown pytis X2Go format")
+    if items[0] == '0':
+        protocol = 'rpyc'
+    elif items[0] == '1':
+        protocol = 'json'
+    else:
+        raise X2GoInfoHardException("Unknown pytis X2Go format", items[0])
     try:
         port = int(items[1])
     except ValueError:
         raise X2GoInfoHardException("Invalid port number in X2Go file", items[1])
-    return dict(port=port, password=items[2])
+    return dict(port=port, password=items[2], protocol=protocol)
 
 
 def keep_x2go_info_file():
