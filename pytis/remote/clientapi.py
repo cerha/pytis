@@ -1078,7 +1078,7 @@ class PytisClientAPIService(rpyc.Service):
           text (str): Text to store into the clipboard.
 
         """
-        assert isinstance(text, str), text
+        assert isinstance(text, str if sys.version_info[0] >= 3 else basestring), text
         return self._client.set_clipboard_text(text)
 
     def exposed_launch_file(self, path):
