@@ -478,12 +478,24 @@ def _request(request, *args, **kwargs):
             return arg
     if RPCInfo.connection is None:
         _connect()
-    try:
-        RPCInfo.connection.root.echo
-    except Exception:
-        _connect()
-    method = getattr(RPCInfo.connection.root, request)
-    return method(*retype(args), **retype(kwargs))
+    access_data = _rpc_access_data()
+    if access_data and access_data.get('protocol') == 'json':
+        # JSON protocol: connection is a ServiceClient
+        conn = RPCInfo.connection
+        if not conn.is_connected():
+            _connect()
+            conn = RPCInfo.connection
+        # Positional args are not supported in JSON protocol; callers must use kwargs
+        assert not args, "Positional args not supported in JSON protocol"
+        return conn.request(request, **retype(kwargs))
+    else:
+        # RPyC protocol: connection has a .root proxy
+        try:
+            RPCInfo.connection.root.echo
+        except Exception:
+            _connect()
+        method = getattr(RPCInfo.connection.root, request)
+        return method(*retype(args), **retype(kwargs))
 
 
 def session_password():
