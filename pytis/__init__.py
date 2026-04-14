@@ -18,7 +18,7 @@
 
 from __future__ import print_function
 
-__version__ = "1.3.0.dev1"
+__version__ = "1.3.0.dev2"
 
 from . import util  # noqa: F401
 from . import data  # noqa: F401
