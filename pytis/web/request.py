@@ -25,8 +25,8 @@ from pytis.util import ProgramError
 class FileUpload:
     """Abstract definition of file upload API.
 
-    Instances of 'FileUpload' class should be used to represent file uploads within the request
-    parameters.
+    Instances of `FileUpload` class should be used to represent file uploads
+    within the request parameters.
 
     """
 
@@ -39,16 +39,17 @@ class FileUpload:
         raise ProgramError("Pytis FileUpload interface not implemented by derived class!")
 
     def mime_type(self):
-        """Return the mime type provided byt he UA as a string"""
+        """Return the mime type provided by the UA as a string."""
         raise ProgramError("Pytis FileUpload interface not implemented by derived class!")
 
 
 class Request:
     """Abstract definition of an HTTP request API.
 
-    Pytis web components may need to access some information from the HTTP request.  This class
-    defines the expected abstract interface.  When a request object is passed to pytis components,
-    it must implement this interface.
+    Pytis web components may need to access some information from the HTTP
+    request.  This class defines the expected abstract interface.  When a
+    request object is passed to pytis components, it must implement this
+    interface.
 
     """
 
@@ -63,15 +64,16 @@ class Request:
         raise ProgramError("Pytis Request interface not implemented by derived class!")
 
     def has_param(self, name):
-        """Return true if the parameter 'name' was sent with the request."""
+        """Return true if the parameter name was sent with the request."""
         raise ProgramError("Pytis Request interface not implemented by derived class!")
 
     def param(self, name, default=None):
-        """Return the value of request parameter 'name'.
+        """Return the value of request parameter name.
 
-        The returned value is a unicode string (with HTTP escapes decoded) for ordinary parameters,
-        a 'FileUpload' instance for uploaded multipart data or a sequence of such values when
-        multiple values of the parameter were sent with the request.
+        The returned value is a unicode string (with HTTP escapes decoded) for
+        ordinary parameters, a `FileUpload` instance for uploaded multipart data
+        or a sequence of such values when multiple values of the parameter were
+        sent with the request.
 
         """
         raise ProgramError("Pytis Request interface not implemented by derived class!")
@@ -79,7 +81,8 @@ class Request:
     def cookie(self, name, default=None):
         """Return the value of given cookie as a unicode string.
 
-        The 'default' value is returned if given cookie was not present in the HTTP request.
+        The default value is returned if given cookie was not present in the
+        HTTP request.
 
         """
         raise ProgramError("Pytis Request interface not implemented by derived class!")
@@ -87,13 +90,13 @@ class Request:
     def set_cookie(self, name, value, expires=None):
         """Set the value of given cookie.
 
-        The value of cookie 'name' will be set to a string 'value', with optional expiration time
-        set to 'expires' seconds.  This cookie will be sent with the HTTP response for the current
-        request.
+        The value of cookie name will be set to a string value, with optional
+        expiration time set to expires seconds.  This cookie will be sent with
+        the HTTP response for the current request.
 
         """
         raise ProgramError("Pytis Request interface not implemented by derived class!")
 
     def localizer(self):
-        """Return an 'lcg.Localizer()' instance for the current request locales."""
+        """Return an `lcg.Localizer` instance for the current request locales."""
         raise ProgramError("Pytis Request interface not implemented by derived class!")

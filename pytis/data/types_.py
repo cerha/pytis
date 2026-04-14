@@ -19,19 +19,19 @@
 """Data types, their values and internal/external representation.
 
 Základní ideou modulu je, že uvnitř programu vždy pracujeme s hodnotami
-určitého, námi definovaného, typu.  Z důvodu datové abstrakce při práci s daty
-nepoužíváme přímo standardní typy Pythonu a jeho knihoven, nýbrž naše vlastní
-obálky okolo nich, které nám zajistí nezávislost vůči konkrétní reprezentaci
-hodnot daného typu v různých částech programu (PostgreSQL, wxWidgets, ...).
-Kromě toho nám tyto typové obálky mohou také poskytovat některé doplňující
-funkce související s typy dat, jako je například validace vstupní hodnoty
-daného typu reprezentované stringem a její převod na interní reprezentaci, se
-kterou dále v programu pracujeme.
+určitého, námi definovaného, typu.  Z důvodu datové abstrakce při práci
+s daty nepoužíváme přímo standardní typy Pythonu a jeho knihoven, nýbrž naše
+vlastní obálky okolo nich, které nám zajistí nezávislost vůči konkrétní
+reprezentaci hodnot daného typu v různých částech programu (PostgreSQL,
+wxWidgets, ...). Kromě toho nám tyto typové obálky mohou také poskytovat
+některé doplňující funkce související s typy dat, jako je například validace
+vstupní hodnoty daného typu reprezentované stringem a její převod na interní
+reprezentaci, se kterou dále v programu pracujeme.
 
-Základem modulu je abstraktní třída 'Type', která je společným základem všech
-typových tříd.  Jejím poděděním vznikají konkrétní typy nebo jejich společné
-specializovanější základy.  Hodnoty daných typů jsou pak reprezentovány
-instancemi samostatné třídy 'Value'.
+Základem modulu je abstraktní třída `Type`, která je společným základem
+všech typových tříd.  Jejím poděděním vznikají konkrétní typy nebo jejich
+společné specializovanější základy.  Hodnoty daných typů jsou pak
+reprezentovány instancemi samostatné třídy `Value`.
 
 """
 from __future__ import print_function
@@ -90,21 +90,19 @@ class Type(with_metaclass(_MType, object)):
     Instances of this class are considered to be immutable.  They can not be
     modified during their life time and may be shared without a limitation.
 
-    Constructor arguments:
-
-      not_null -- flag saying the value must not be empty.  Empty value is
-        None or any other value mapped to None in '_SPECIAL_VALUES'.
-      enumerator -- enumerator specification as 'Enumerator' instance or
-        None.  Enumerators are used to implement referential integrity or
-        static enumeration checking.  See 'Enumerator' class documentation
-        for more information.
-      constraints -- sekvence validačních funkcí sloužících k realizaci
-        libovolných integritních omezení.  Každá z těchto funkcí je funkcí
+    Arguments:
+      not_null (bool): Flag saying the value must not be empty.  Empty value is
+        None or any other value mapped to None in `_SPECIAL_VALUES`.
+      enumerator (`Enumerator`): Enumerator specification or None. Enumerators
+        are used to implement referential integrity or static enumeration
+        checking.  See `Enumerator` class documentation for more information.
+      constraints: Sekvence validačních funkcí sloužících k realizaci
+        libovolných integritních omezení.  Každá z těchto funkcí je funkcí
         jednoho argumentu, kterým je vnitřní hodnota typu.  Funkce pro tuto
-        hodnotu musí vrátit buď 'None', je-li hodnota správná, nebo chybovou
-        hlášku jako string v opačném případě.
-      unique -- flag saying the value must be unique within its column in a
-        table
+        hodnotu musí vrátit buď None, je-li hodnota správná, nebo chybovou
+        hlášku jako string v opačném případě.
+      unique (bool): Flag saying the value must be unique within its column in a
+        table.
 
     """
     class _TypeTable(object):
@@ -164,14 +162,14 @@ class Type(with_metaclass(_MType, object)):
     def make(class_, *args, **kwargs):
         """Pouze pro účely zpětné kompatibility a pro metatřídu.
 
-        V novém kódu nepoužívat.
+        V novém kódu nepoužívat.
 
         """
         return class_._make(class_, *args, **kwargs)
 
     @classmethod
     def type_table(class_):
-        """Vrať tabulku typů jako instanci '_TypeTable'.
+        """Vrať tabulku typů jako instanci `_TypeTable`.
 
         Jediný účel této metody je zpřístupnit tabulku typů pro vzdálené
         předávání typů ze serveru na klienta.  Pro jiné účely by tabulka typů
@@ -184,14 +182,14 @@ class Type(with_metaclass(_MType, object)):
         """Initialize the instance.
 
         See the class docstring for description of available arguments.  Don't
-        override the constructor in derived classes, unless you really know
-        what you are doing.  Normally you want to override the '_init()' method
-        in derived classes to define specific type constructor arguments or
-        default values of inherited arguments.
+        override the constructor in derived classes, unless you really know what
+        you are doing.  Normally you want to override the `_init` method in
+        derived classes to define specific type constructor arguments or default
+        values of inherited arguments.
 
-        The purpose of overriding '_init()' instead of '__init__()' is to be
-        able to save the dictionary of explicitly passed constructor arguments
-        here.  This allows type cloning (see 'clone()').
+        The purpose of overriding `_init` instead of `__init__` is to be able to
+        save the dictionary of explicitly passed constructor arguments here.
+        This allows type cloning (see `clone`).
 
         """
         self._constructor_kwargs = kwargs
@@ -204,8 +202,8 @@ class Type(with_metaclass(_MType, object)):
         Defines constructor arguments and their default values.  You typically
         want to override this method in derived classes to define type specific
         constructor arguments or default values of inherited arguments as you
-        would normally do by overriding '__init__()', which has a special
-        purpose in this class.
+        would normally do by overriding `__init__`, which has a special purpose
+        in this class.
 
         """
         assert isinstance(not_null, bool), not_null
@@ -217,7 +215,7 @@ class Type(with_metaclass(_MType, object)):
         self._enumerator = enumerator
         self._constraints = xtuple(constraints)
         # Cachujeme na úrovni instancí, protože ty jsou stejně sdílené, viz
-        # `__new__'.
+        # `__new__`.
         self._validation_cache = LimitedCache(self._validating_provider,
                                               limit=self._VALIDATION_CACHE_LIMIT)
         if isinstance(enumerator, DataEnumerator):
@@ -267,10 +265,9 @@ class Type(with_metaclass(_MType, object)):
 
         The returned instance will inherit all attributes of the cloned type
         instance as well as the cloning instance (the one passed as the
-        argument), where the attributes of the cloning instance take
-        precedence.  The cloning instance must be the same class or a subclass
-        of the cloned instance.  The returned instance is of the cloning
-        instance's class.
+        argument), where the attributes of the cloning instance take precedence.
+        The cloning instance must be the same class or a subclass of the cloned
+        instance.  The returned instance is of the cloning instance's class.
 
         """
         assert isinstance(other, self.__class__), '%s, %s' % (self.__class__, other)
@@ -279,49 +276,50 @@ class Type(with_metaclass(_MType, object)):
 
     def validate(self, obj, strict=True, transaction=None, condition=None, arguments=None,
                  **kwargs):
-        """Validate the 'obj' and return a 'Value' instance and an error.
+        """Validate obj and return a `Value` instance and an error.
 
-        Arguments:
-
-          obj -- an object to be converted to a value.  This is typically a
-            string representation of the value from user input.  See below for
-            more details.
-          strict -- when True (by default), the input object is first converted
-            to a Value instance (containing a proper internal Python
-            representation of the value) and then this value is checkend
-            against all constraints defined by the type instance.  Passing
-            False disables constraints checking so it reduces validation just
-            to conversion.  Note, that constraints may be checked individually
-            later using 'check_constraints()'.
-          transaction, condition, arguments -- used for constraints checking
-            (only when 'strict' is False) with the same meaning as defined by
-            'check_constraints()'.
-          kwargs -- type specific keyword arguments
-
-        Returns: a pair (VALUE, ERROR).  VALUE is a 'Value' instance (for a
-        valid 'obj') or 'None' (for an invalid 'obj').  ERROR is 'None'
-        for a valid 'obj' and a 'ValidationError' instance for an invalid
-        'obj'.
-
-        Most types require the 'obj' to be a string, most often representing
-        user input or a value loaded from a file or process.  Certain more
-        sophisticated types, however, may accept or require an 'obj' of a
+        Most types require obj to be a string, most often representing user
+        input or a value loaded from a file or process.  Certain more
+        sophisticated types, however, may accept or require an obj of a
         different type.  All types should, if possible, accept a string and if
         not (eg. for excessive complications), they should accept an object,
         which may be simply constructed from data picked up from the user
-        interface.  If the 'obj' is not a string or another type explicitely
-        allowed in the documentation of the corresponding type class, the
-        behavior of this method is undefined.
+        interface.  If obj is not a string or another type explicitly allowed in
+        the documentation of the corresponding type class, the behavior of this
+        method is undefined.
 
-        The 'kwargs' argument allows parametrized validation for particular
-        types.  Each type may specify its set of options, which control the way
-        how the user input is treated.
+        The kwargs argument allows parametrized validation for particular types.
+        Each type may specify its set of options, which control the way how the
+        user input is treated.
 
-        Most types should validate an empty string to a 'Value' instance, which
-        has 'None' as its value.
+        Most types should validate an empty string to a `Value` instance which
+        has None as its value.
 
         Derived classes should not override this method.  They should override
-        '_validate()' instead.
+        `_validate` instead.
+
+        Arguments:
+          obj: An object to be converted to a value.  This is typically a string
+            representation of the value from user input.
+          strict (bool): When True (by default), the input object is first
+            converted to a `Value` instance (containing a proper internal Python
+            representation of the value) and then this value is checked against
+            all constraints defined by the type instance. Passing False disables
+            constraints checking so it reduces validation just to conversion.
+            Note, that constraints may be checked individually later using
+            `check_constraints`.
+          transaction: Used for constraints checking (only when strict is False)
+            with the same meaning as defined by `check_constraints`.
+          condition: Used for constraints checking (only when strict is False)
+            with the same meaning as defined by `check_constraints`.
+          arguments: Used for constraints checking (only when strict is False)
+            with the same meaning as defined by `check_constraints`.
+          **kwargs: Type specific keyword arguments.
+
+        Returns:
+          A pair (VALUE, ERROR).  VALUE is a `Value` instance (for a valid obj)
+          or None (for an invalid obj).  ERROR is None for a valid obj and a
+          `ValidationError` instance for an invalid obj.
 
         """
         # Tato metoda je zároveň používána i pro převod hodnot získaných
@@ -362,13 +360,13 @@ class Type(with_metaclass(_MType, object)):
         """Validate input object for wildcard matching.
 
         Arguments:
+          obj (str): Validated object.
 
-          obj -- validated object, string
-
-        Returns: pair (VALUE, ERROR).  When given 'obj' is valid and can be
-        used for wildcard matching, VALUE is a 'WMValue' instance () and ERROR
-        is 'None'.  In the other case VALUE is None and ERROR is a
-        'ValidationError' instance containing error description.
+        Returns:
+          A pair (VALUE, ERROR).  When given obj is valid and can be used for
+          wildcard matching, VALUE is a `WMValue` instance and ERROR is None.
+          Otherwise VALUE is None and ERROR is a `ValidationError` instance
+          containing an error description.
 
         """
         msg = _(u"Wildcard matching not supported for values of type '%s'.")
@@ -397,20 +395,18 @@ class Type(with_metaclass(_MType, object)):
                 raise ValidationError(_(u"Invalid value"))
 
     def check_constraints(self, value, transaction=None, condition=None, arguments=None):
-        """Check if 'value' matches all constraints defined by this type instance.
+        """Check if value matches all constraints defined by this type instance.
 
         Arguments:
-
-          value -- internal Python representation of a value of given type as
-            returned by 'Value.value()'.
-          transaction -- transaction for data operations.  Only needed if the
-            type defines an enumerator, which is a 'TransactionalEnumerator'
-            instance.
-          condition -- runtime filter condition for enumerator validation.
-            Only needed if the type defines an enumerator.
-          arguments -- runtime table function arguments for enumerator
-            validation.  Only needed if the type defines an enumerator which
-            operates on a table function.
+          value: Internal Python representation of a value of given type as
+            returned by `Value.value`.
+          transaction: Transaction for data operations.  Only needed if the type
+            defines an enumerator which is a `TransactionalEnumerator` instance.
+          condition: Runtime filter condition for enumerator validation. Only
+            needed if the type defines an enumerator.
+          arguments: Runtime table function arguments for enumerator validation.
+            Only needed if the type defines an enumerator which operates on a
+            table function.
 
         """
         try:
@@ -430,7 +426,7 @@ class Type(with_metaclass(_MType, object)):
         return not not self._unique
 
     def enumerator(self):
-        """Return the 'Enumerator' instance bound to this type or None."""
+        """Return the `Enumerator` instance bound to this type or None."""
         return self._enumerator
 
     def init_args(self):
@@ -442,20 +438,22 @@ class Type(with_metaclass(_MType, object)):
         return self._init_args
 
     def export(self, value, *args, **kwargs):
-        """Return a valid string reprezentation of 'value'.
+        """Return a valid string representation of value.
 
-        'value' is the internal Python representation of a value of given
-        type as returned by 'Value.value()'.
+        Arguments:
+          value: The internal Python representation of a value of given type as
+            returned by `Value.value`.
 
-        When 'value' is None, most types (whose documentation doesnt't say
-        otherwise) return an empty string.
+        Returns:
+          A string representation of value.  When value is None, most types
+          (whose documentation doesn't say otherwise) return an empty string.
+          The returned value should always be a valid representation which can
+          be converted back to an internal Python representation of the value
+          using : meth:`validate`.
 
-        In any case, the returned value should always be a valid representation
-        which can be converted back to an internal Python representation of the
-        value using 'validate()'
-
-        Derived classes should not override this method.  They should override
-        '_export()' instead.
+        Note:
+          Derived classes should not override this method.  They should
+          override : meth:`_export` instead.
 
         """
         special = assoc(value, self._SPECIAL_VALUES)
@@ -468,11 +466,10 @@ class Type(with_metaclass(_MType, object)):
         return repr(value)
 
     def default_value(self):
-        """Return the default value as a 'Value' instance.
+        """Return the default value as a `Value` instance.
 
-        If no such value exists or doesn't make sense, return 'None'.
-
-        The returned value may be used for example for initialization of a new
+        If no such value exists or doesn't make sense, return None.  The
+        returned value may be used for example for initialization of a new
         record.
 
         """
@@ -483,30 +480,29 @@ class Type(with_metaclass(_MType, object)):
         return '***'
 
     def adjust_value(self, value):
-        """Return 'value' in the form to be used as type internal value.
+        """Return value in the form to be used as type internal value.
 
-        Typically, the return value is just 'value'.  But if the value is not
-        of the proper internal value type it may be converted to it if
-        possible.  If it is not possible then 'TypeError' is raised.
+        Typically, the return value is just value.  But if the value is not of
+        the proper internal value type it may be converted to it if possible. If
+        it is not possible then `TypeError` is raised.
 
         """
         return value
 
     def sqlalchemy_type(self):
-        """Return corresponding SQLAlchemy type, sqlalchemy.types.TypeEngine instance."""
+        """Return corresponding SQLAlchemy type, `sqlalchemy.types.TypeEngine` instance."""
         raise Exception("Not implemented", self)
 
 
 class Number(Type):
     """Abstraktní typová třída, která je základem všech numerických typů.
 
-    Třída víceméně nic nového nedefinuje, je určena pouze k podědění všemi
+    Třída víceméně nic nového nedefinuje, je určena pouze k podědění všemi
     numerickými typy, aby tyto byly jakožto číselné snadno rozpoznatelné.
 
-    Constructor arguments:
-
-      minimum -- minimal value; 'None' denotes no limit.
-      maximum -- maximal value; 'None' denotes no limit.
+    Arguments:
+      minimum: Minimal value; `None` denotes no limit.
+      maximum: Maximal value; `None` denotes no limit.
 
     Other arguments are passed to the parent constructor.
 
@@ -524,7 +520,7 @@ class Number(Type):
     def minimum(self):
         """Return the minimal value.
 
-        'None' denotes no limit.
+        `None` denotes no limit.
 
         """
         return self._minimum
@@ -532,7 +528,7 @@ class Number(Type):
     def maximum(self):
         """Return the maximal value.
 
-        'None' denotes no limit.
+        `None` denotes no limit.
 
         """
         return self._maximum
@@ -551,8 +547,8 @@ class Number(Type):
 class Big(Type):
     """Mixin class denoting types with big values.
 
-    Instances of this type are sometimes handled in Pytis in a special way,
-    e.g. they are not printed to the terminal log.
+    Instances of this type are sometimes handled in Pytis in a special way, e.g.
+    they are not printed to the terminal log.
 
     """
 
@@ -569,16 +565,14 @@ class Large(Big):
 class Limited(Type):
     """Mixin class for types with possibly limited maximal and/or minimal length.
 
-    Minimal and maximal length of a value of this type can be limited by passing the
-    `minlen' and `maxlen' constructor arguments.
+    Minimal and maximal length of a value of this type can be limited by passing
+    the `minlen` and `maxlen` constructor arguments.
 
-    Constructor arguments:
-
-      minlen -- minimal length of a value of this type as integer or
-        'None'; 'None' denotes unlimited minimal length.
-
-      maxlen -- maximal length of a value of this type as integer or
-        'None'; 'None' denotes unlimited maximal length.
+    Arguments:
+      minlen (int): Minimal length of a value of this type as integer or `None`;
+        `None` denotes unlimited minimal length.
+      maxlen (int): Maximal length of a value of this type as integer or `None`;
+        `None` denotes unlimited maximal length.
 
     Other arguments are passed to the parent constructor.
 
@@ -598,17 +592,17 @@ class Limited(Type):
         return super(Limited, self)._comparison_key() + (self._minlen, self._maxlen)
 
     def minlen(self):
-        """Return the minimal length of the value as an integer or 'None'.
+        """Return the minimal length of the value as an integer or `None`.
 
-        'None' denotes unlimited minimal length.
+        `None` denotes unlimited minimal length.
 
         """
         return self._minlen
 
     def maxlen(self):
-        """Return the maximal length of the value as an integer or 'None'.
+        """Return the maximal length of the value as an integer or `None`.
 
-        'None' denotes unlimited length.
+        `None` denotes unlimited length.
 
         """
         return self._maxlen
@@ -637,11 +631,11 @@ class Range(Type):
 
     Those types are available in PostgreSQL >= 9.2.
 
-    This class should be inherited to corresponding base types to make new
-    range types.  Validation accepts pairs of strings which are validated by
-    calling the superclass.  Export returns 'Range.Range' instance.  NULL
-    values are represented by single 'None' values in export and by a
-    'Range.Range' instance of empty strings on validation.
+    This class should be inherited to corresponding base types to make new range
+    types.  Validation accepts pairs of strings which are validated by calling
+    the superclass.  Export returns 'Range.Range' instance.  NULL values are
+    represented by single 'None' values in export and by a 'Range.Range'
+    instance of empty strings on validation.
 
     """
     class Range(object):
@@ -701,11 +695,11 @@ class Range(Type):
     _NULL_RANGE_VALUE = ('', '')
 
     def _init(self, lower_inc=True, upper_inc=False, **kwargs):
-        """
-        Arguments:
+        """Initialize the instance.
 
-          lower_inc -- indicates whether the lower bound is inclusive; boolean
-          upper_inc -- indicates whether the upper bound is inclusive; boolean
+        Arguments:
+          lower_inc (bool): Indicates whether the lower bound is inclusive.
+          upper_inc (bool): Indicates whether the upper bound is inclusive.
 
         """
         self._lower_inc = lower_inc
@@ -798,7 +792,7 @@ class Range(Type):
         return result
 
     def base_type(self):
-        """Return instance of the underlying types of the range type.
+        """Return instance of the underlying type of the range type.
 
         This is the type of the two values of the range pair.
 
@@ -810,15 +804,14 @@ class Integer(Number):
     """Libovolný integer."""
 
     def _validate(self, obj):
-        """Attempt to convert given 'obj' integer.
+        """Attempt to convert given obj to integer.
 
-        Pokud je 'obj' možno převést integer, je správný a vrácená instance
-        třídy 'Value' obsahuje odpovídající hodnotu jako integer.  Pokud
-        'obj' není možno převést na integer, 'obj' není správný a je
-        vrácena chyba.
+        Pokud je obj možno převést na integer, je správný a vrácená instance
+        třídy `Value` obsahuje odpovídající hodnotu jako integer. Pokud obj není
+        možno převést na integer, obj není správný a je vrácena chyba.
 
         Metoda validuje všechny zápisy integers akceptované Pythonem, zejména
-        tedy i long integers ve tvaru '1L'.
+        tedy i long integers ve tvaru '1L'.
 
         """
         assert isinstance(obj, basestring), obj
@@ -905,12 +898,12 @@ class LargeIntegerRange(Range, Integer):
 
 
 class Serial(Integer):
-    """Integer s automaticky generovanými hodnotami.
+    """Integer s automaticky generovanými hodnotami.
 
-    Typ oproti 'Integer' nezavádí žádné nové rysy, jeho význam je čistě
-    specifikační.  Například uživatelské rozhraní tak získává informaci, že
-    není třeba ani žádoucí explicitně nastavovat hodnoty sloupců tohoto typu
-    v řádku při vkládání nového záznamu.
+    Typ oproti `Integer` nezavádí žádné nové rysy, jeho význam je čistě
+    specifikační.  Například uživatelské rozhraní tak získává informaci, že není
+    třeba ani žádoucí explicitně nastavovat hodnoty sloupců tohoto typu v řádku
+    při vkládání nového záznamu.
 
     """
 
@@ -932,23 +925,22 @@ class LargeSerial(Integer):
 class Float(Number):
     """Floating point number.
 
-    Constructor arguments:
-
-      precision -- non-negative integer determining the number of digits after
-        decimal point in the exported value, or 'None' (no explicit limit on
-        the precision)
-      digits -- maximum number of digits, integer, or 'True' (the number is
+    Arguments:
+      precision (int): Non-negative integer determining the number of digits
+        after the decimal point in the exported value, or None (no explicit
+        limit on the precision).
+      digits (int): Maximum number of digits, integer, or True (the number is
         precise, with arbitrary number of digits after decimal point; this is
-        useful for database definitions of unqualified NUMERIC types), or
-        'None' (unspecified value)
+        useful for database definitions of unqualified NUMERIC types), or None
+        (unspecified value).
 
-    Other keyword arguments are the same is in the superclass.
+    Other keyword arguments are the same as in the superclass.
 
     """
     CEILING = decimal.ROUND_CEILING
-    """Konstanta pro typ zaokrouhlení ve 'validate'."""
+    """Rounding constant for use in `validate`."""
     FLOOR = decimal.ROUND_FLOOR
-    """Konstanta pro typ zaokrouhlení ve 'validate'."""
+    """Rounding constant for use in `validate`."""
 
     def _init(self, precision=None, digits=None, **kwargs):
         super(Float, self)._init(**kwargs)
@@ -966,7 +958,7 @@ class Float(Number):
         return super(Float, self)._comparison_key() + (self._precision, self._digits)
 
     def precision(self):
-        """Vrať přesnost čísla zadanou v konstruktoru jako integer."""
+        """Return the precision given in the constructor as an integer."""
         return self._precision
 
     def digits(self):
@@ -974,23 +966,22 @@ class Float(Number):
         return self._digits
 
     def _validate(self, obj, precision=None, rounding=None, locale_format=True):
-        """Pokus se převést 'obj' na float.
+        """Pokus se převést obj na float.
 
-        Pokud je 'obj' možno převést na float, je správný a vrácená instance
-        třídy 'Value' obsahuje odpovídající hodnotu jako plain integer.  Pokud
-        'obj' převést možno není, 'obj' není správný a je vrácena chyba.
+        Pokud je obj možno převést na float, je správný a vrácená instance třídy
+        `Value` obsahuje odpovídající hodnotu jako decimal. Pokud obj převést
+        možno není, obj není správný a je vrácena chyba.
 
         Metoda validuje všechny zápisy floats akceptované Pythonem.
 
-        Argumenty:
-
-          precision -- nezáporný integer udávající počet čísel za desetinnou
-            čárkou, na která má být zvalidované číslo zaokrouhleno, nebo 'None'
-            (pak není přesnost uměle omezena)
-          rounding -- specifikace zaokrouhlení při požadavku na omezenou
-            přesnost; 'None' značí standardní zaokrouhlení, konstanta 'CEILING'
-            zaokrouhlení směrem nahoru, konstanta 'FLOOR' zaokrouhlení směrem
-            dolů (pozor na záporná čísla, platí to pro ně také přesně takto!)
+        Arguments:
+          precision (int): Nezáporný integer udávající počet čísel za desetinnou
+            čárkou, na která má být zvalidované číslo zaokrouhleno, nebo None
+            (pak není přesnost uměle omezena).
+          rounding: Specifikace zaokrouhlení při požadavku na omezenou přesnost;
+            None značí standardní zaokrouhlení, konstanta `CEILING` zaokrouhlení
+            směrem nahoru, konstanta `FLOOR` zaokrouhlení směrem dolů (pozor na
+            záporná čísla, platí to pro ně také přesně takto!).
 
         """
         assert isinstance(obj, basestring), ('Not a string', obj)
@@ -1137,7 +1128,7 @@ class String(Limited):
     """Libovolný string.
 
     Lze také specifikovat, že řetězec může mít pouze omezenou délku, blíže viz
-    metody '_init' a 'maxlen'.
+    metody `_init` a `maxlen`.
 
     """
     _SPECIAL_VALUES = Type._SPECIAL_VALUES + ((None, ''),)
@@ -1147,10 +1138,10 @@ class String(Limited):
     _MSG_MAXLEN = _(u"Maximal length %(maxlen)s characters exceeded")
 
     def _validate(self, obj):
-        """Vrať instanci třídy 'Value' s hodnotou 'obj'.
+        """Vrať instanci třídy `Value` s hodnotou obj.
 
-        Pokud byla v konstruktoru specifikována maximální délka, 'obj' je
-        správný právě tehdy, není-li delší než tato délka.
+        Pokud byla v konstruktoru specifikována maximální délka, obj je správný
+        právě tehdy, není-li delší než tato délka.
 
         """
         assert isinstance(obj, basestring), ('Not a string', obj)
@@ -1192,12 +1183,12 @@ class Name(String):
 class PgName(Name):
     """String type to be identified as PostgreSQL type 'NAME' in the database.
 
-    The type 'NAME' is limited to PostgreSQL and it is actually mentioned as
-    its internal type, so it should be probably avoided except for situations
-    where we interface with PostgreSQL internals, such as the catalog.
-    Everywhere else using VARCHAR(64) (produced by 'Name') should be preferred.
+    The type 'NAME' is limited to PostgreSQL and it is actually mentioned as its
+    internal type, so it should be probably avoided except for situations where
+    we interface with PostgreSQL internals, such as the catalog. Everywhere else
+    using VARCHAR(64) (produced by `Name`) should be preferred.
 
-    PgName is also useful for legacy projects, where the Postgresql NAME type
+    `PgName` is also useful for legacy projects, where the PostgreSQL NAME type
     was for some reason used before DB specifications were converted to
     gensqlalchemy and we need to make the specifications compatible with the
     previously existing DB objects.
@@ -1215,47 +1206,45 @@ class Password(String):
     strings.
 
     1. The values must be treated as sensitive information which should never
-       appear on the screen as well as in logs etc.
+      appear on the screen as well as in logs etc.
 
-    2. Also, if the constructor argument 'verify' is true (it is by default),
-       the user should be required to type the new value twice to prevent typos
-       (since there is no visual feedback).  Thus the user interface should
-       create two input fields in this case.  The value of the second field
-       must be passed as the 'verify' argument to the 'validate()' method.
+    2. Also, if the constructor argument `verify` is true (it is by
+      default), the user should be required to type the new value twice to
+      prevent typos (since there is no visual feedback).  Thus the user
+      interface should create two input fields in this case.  The value of the
+      second field must be passed as the `verify` argument to the
+      `validate` method.
 
-    Constructor arguments:
-
-      verify -- boolean flag indicating, that user input should be verified by
-        the user interface by presenting two controls for entering the
-        password.  Both inputs must match to pass validation.
-
-      strength -- specification of password strength checking.  If 'None', no
-        special checks are performed.  If 'True', default checking implemented
-        in the '_check_strength' method is performed.  If anything else, it
-        must be a function of a single argument, the password string, that
-        returns either 'None' when the password is strong enough or an error
-        message if the password is weak.
-
-      md5 -- DEPRECATED; Use a virtual field for password entry and a computer
-        function to create a hash; The built-in md5 hashing doesn't use salt so
-        can not be considered secure; Original docstring: boolean flag
-        indicating, that the password is stored as a hexadeximal md5 hash.
-        This will lead to automatic conversion of user input to its md5 hash,
-        so the original password is no more visible anywhere after successful
-        validation.  The conversion is only done when the 'verify' argument is
-        passed to the 'validate()' method.  When 'verify' is not used, the
-        input string is not considered to be user input, but an already hashed
-        value (eg. read from data source).
-
-    Other arguments are passed to the parent constructor.
-
-    The validation argument 'verify' should be always passed when validating
+    The validation argument `verify` should always be passed when validating
     user input.  It may be omitted if validation is used just to convert an
-    already validated string value (e.g. read from database) to a 'Value'
+    already validated string value (e.g. read from database) to a `Value`
     instance.  When user input is validated, but the type doesn't require
     verification (the user enters the password just once), it is thus necessary
-    to pass the same value twice (as the validated value and as the 'verify'
+    to pass the same value twice (as the validated value and as the `verify`
     argument).
+
+    Arguments:
+      verify (bool): Flag indicating that user input should be verified by the
+        user interface by presenting two controls for entering the password.
+        Both inputs must match to pass validation.
+      strength: Specification of password strength checking.  If None, no
+        special checks are performed.  If True, default checking implemented in
+        the `_check_strength` method is performed.  If anything else, it must be
+        a function of a single argument, the password string, that returns
+        either None when the password is strong enough or an error message if
+        the password is weak.
+      md5 (bool): DEPRECATED; Use a virtual field for password entry and a
+        computer function to create a hash.  The built-in md5 hashing doesn't
+        use salt so cannot be considered secure.  Original meaning: boolean flag
+        indicating that the password is stored as a hexadecimal md5 hash. This
+        will lead to automatic conversion of user input to its md5 hash, so the
+        original password is no longer visible anywhere after successful
+        validation.  The conversion is only done when the `verify` argument is
+        passed to `validate`.  When `verify` is not used, the input string is
+        not considered to be user input, but an already hashed value (e.g. read
+        from data source).
+
+    Other arguments are passed to the parent constructor.
 
     """
     def _init(self, md5=False, verify=True, strength=None, **kwargs):
@@ -1419,9 +1408,10 @@ class Email(String):
 class TreeOrderBase(Type):
     """Literal numeric value denoting the level of the item within the tree structure.
 
-    The type itself does not implement any specific features.  It has strictly specificational
-    meaning.  If such a column is detected within a list, the user interface may try to render the
-    tree structure of the items according to the tree level value.
+    The type itself does not implement any specific features.  It has strictly
+    specificational meaning.  If such a column is detected within a list, the
+    user interface may try to render the tree structure of the items according
+    to the tree level value.
 
     """
     pass
@@ -1437,15 +1427,14 @@ class FullTextIndex(String):
 
     This is a special type with limited use and promiscuous values.  Values of
     this type can't be directly read from the database and they can't be
-    inserted at all into it.  All this type is able to do is to enable access
-    to 'pytis.data.FT' operator and to enable access to full text search result
+    inserted at all into it.  All this type is able to do is to enable access to
+    the `pytis.data.FT` operator and to enable access to full text search result
     headlines.
 
-    Constructor arguments:
-
-      columns -- tuple of column ids (strings), these columns will be included
-        for the purpose of generating full text search headlines when a column
-        of this type is included in the full text search
+    Arguments:
+      columns (tuple): Tuple of column ids (strings); these columns will be
+        included for the purpose of generating full text search headlines when a
+        column of this type is included in the full text search.
 
     """
 
@@ -1524,20 +1513,20 @@ class _UTCTimezone(datetime.tzinfo):
 class _CommonDateTime(Type):
     """Common base class of all date and time types.
 
-    All the derived classes use classes from Python 'datetime' module to
+    All the derived classes use classes from Python `datetime` module to
     represent the date and/or time values.
 
-    Constructor arguments:
-
-      format -- specification of both input and output format of date
-        and/or time in the form accepted by `time.strftime()'.
-      mindate, maxdate -- limits of acceptable date/time
-      utc -- specifies whether timestamp in the database is in UTC
-      without_timezone -- iff true then use WITHOUT TIMEZONE when declaring the
-        type in the database.  This is only to support legacy tables, all new
-        database objects should be created WITH TIMEZONE.
-      precision -- optional precision value p which specifies the number
-        of fractional digits retained in the seconds field, default 0
+    Arguments:
+      format (str): Specification of both input and output format of date and/or
+        time in the form accepted by `time.strftime`.
+      mindate: Limit of acceptable date/time (lower bound).
+      maxdate: Limit of acceptable date/time (upper bound).
+      utc (bool): Specifies whether timestamp in the database is in UTC.
+      without_timezone (bool): If true then use WITHOUT TIMEZONE when declaring
+        the type in the database.  This is only to support legacy tables; all
+        new database objects should be created WITH TIMEZONE.
+      precision (int): Optional precision value p which specifies the number of
+        fractional digits retained in the seconds field, default 0.
 
     """
     _SPECIAL_VALUES = Type._SPECIAL_VALUES + ((None, ''),)
@@ -1581,35 +1570,34 @@ class _CommonDateTime(Type):
         return matcher.match(obj)
 
     def format(self):
-        """Return format given in the constructor, basestring."""
+        """Return format given in the constructor as a string."""
         return self._format
 
     def utc(self):
-        """Return 'utc' flag value given in the constructor, boolean."""
+        """Return utc flag value given in the constructor as a boolean."""
         return self._utc
 
     def timezone(self):
-        """Return 'datetime.tzinfo' object corresponding to the time zone."""
+        """Return `datetime.tzinfo` object corresponding to the time zone."""
         return self._timezone
 
     def precision(self):
         return self._precision
 
     def is_utc(self):
-        """Deprecated.  Use 'utc' instead."""
+        """Deprecated.  Use `utc` instead."""
         return self.utc()
 
     def _validate(self, obj, format=None, local=None):
-        """Stejné jako v předkovi až na klíčované argumenty.
+        """Stejné jako v předkovi až na klíčované argumenty.
 
-        Argumenty:
-
-          obj -- stejné jako v předkovi
-          format -- požadovaný formát hodnoty 'obj', ve tvaru požadovaném
-            metodou '_init()'
-          local -- if true, handle the given value as a local time value; if
-            false, handle it as a UTC value; if 'None' handle it according to
-            utc flag of the type
+        Arguments:
+          obj: Stejné jako v předkovi.
+          format: Požadovaný formát hodnoty obj, ve tvaru požadovaném metodou
+            `_init`.
+          local: If true, handle the given value as a local time value; if
+            false, handle it as a UTC value; if None handle it according to the
+            utc flag of the type.
 
         """
         assert isinstance(obj, basestring), obj
@@ -1617,10 +1605,10 @@ class _CommonDateTime(Type):
             format = self._format
         if local is None:
             local = (not self._utc)
-        # Využití `strptime' je nejjednodušší řešení.  GNU `strptime' je
+        # Využití `strptime` je nejjednodušší řešení.  GNU `strptime` je
         # dostatečně tolerantní vůči nadbytečným mezerám atd., takže by jeho
         # použitím neměl vzniknout problém, pokud nehodláme software provozovat
-        # na ne-GNU systémech, které `strptime' řádně nepodporují.
+        # na ne-GNU systémech, které `strptime` řádně nepodporují.
         obj = obj.strip()
         dt = None
         if not self._check_format(format, obj):
@@ -1645,11 +1633,10 @@ class _CommonDateTime(Type):
 
     @classmethod
     def now(class_, **kwargs):
-        """Return 'Value' instance of this type of the current moment.
+        """Return `Value` instance of this type of the current moment.
 
         Arguments:
-
-          kwargs -- arguments passed to the class constructor
+          **kwargs: Arguments passed to the class constructor.
 
         """
         type_ = class_(**kwargs)
@@ -1663,14 +1650,13 @@ class _CommonDateTime(Type):
     def datetime(class_, tz=None):
         """Return value corresponding to the current moment.
 
-        The returned value is instance of a 'datetime' module class which is
+        The returned value is an instance of a `datetime` module class which is
         used to represent internal values of the given pytis type.
 
         Arguments:
-
-          tz -- determines time zone of the value; if 'None', UTC is used, if
-            'True', local time zone is used, if 'False', don't use any time
-            zone; otherwise it must be a 'datetime.tzinfo' instance to use
+          tz: Determines time zone of the value; if `None`, UTC is used; if
+            True, local time zone is used; if False, don't use any time zone;
+            otherwise it must be a `datetime.tzinfo` instance to use.
 
         """
         if tz is None:
@@ -1690,34 +1676,34 @@ class _CommonDateTime(Type):
 
 
 class DateTime(_CommonDateTime):
-    """Time stamp represented by a 'datetime.datetime' instance.
+    """Time stamp represented by a `datetime.datetime` instance.
 
     The class can work only with absolute times.  The time can be local or UTC,
-    depending on the constructor parameter; each time value must contain time
+    depending on the constructor parameter; each time value must contain a time
     zone.
 
     The date and time format is the same for both import and export and is
     determined by constructor arguments.
 
-    Constructor arguments:
-
-      format -- specification of both input and output format of date
-        and/or time in the form accepted by `time.strftime()'.
-        May be also None in which case the configuration option
-        'config.date_time_format' is used.  The class defines '*_FORMAT'
-        constants which may be used as a value of this argument.
-      mindate, maxdate -- limits of acceptable date/time
-      precision -- optional precision value p which specifies the number
-        of fractional digits retained in the seconds field, default 0
-      utc -- specifies, if timestamp in database is in UTC
+    Arguments:
+      format (str): Specification of both input and output format of date and/or
+        time in the form accepted by `time.strftime`.  May be also None in which
+        case the configuration option `config.date_time_format` is used.  The
+        class defines `*_FORMAT` constants which may be used as a value of this
+        argument.
+      mindate (str): Lower limit of acceptable date/time.
+      maxdate (str): Upper limit of acceptable date/time.
+      precision (int): Optional precision value p which specifies the number of
+        fractional digits retained in the seconds field, default 0.
+      utc (bool): Specifies whether timestamp in database is in UTC.
 
     """
     DEFAULT_FORMAT = '%Y-%m-%d %H:%M:%S'
-    """Implicitní formát data a času."""
+    """Default date and time format."""
     SQL_FORMAT = DEFAULT_FORMAT
-    """Formát data a času používaný standardně SQL stroji."""
+    """Date and time format used by SQL engines."""
     CZECH_FORMAT = '%d.%m.%Y %H:%M:%S'
-    """Český \"účetnický\" formát data a času."""
+    """Czech accounting date and time format."""
 
     _ISO_TZ_MATCHER = re.compile('(?P<sign>[-+])(?P<hours>[0-9]+):(?P<minutes>[0-9]+)')
 
@@ -1787,13 +1773,13 @@ class DateTime(_CommonDateTime):
         return Value(self, value)
 
     def _export(self, value, local=None, format=None):
-        """Stejné jako v předkovi až na klíčované argumenty.
+        """Stejné jako v předkovi až na klíčované argumenty.
 
         Arguments:
-
-          local -- if true then the value is exported in local time, otherwise
-            it is exported in UTC; if 'None' handle it according to utc flag of
-            the type
+          local: If true then the value is exported in local time, otherwise it
+            is exported in UTC; if None handle it according to the utc flag of
+            the type.
+          format: Output format string or None to use the instance format.
 
         """
         assert isinstance(value, datetime.datetime), value
@@ -1865,12 +1851,11 @@ class DateTime(_CommonDateTime):
 
     @staticmethod
     def diff_seconds(dt1, dt2):
-        """Return difference between d1 and d2 in seconds.
+        """Return difference between dt1 and dt2 in seconds.
 
         Arguments:
-
-          dt1 -- start datetime; 'Value' instance of 'DateTime' type
-          dt2 -- end datetime; 'Value' instance of 'DateTime' type
+          dt1 (`Value`): Start datetime; `Value` instance of `DateTime` type.
+          dt2 (`Value`): End datetime; `Value` instance of `DateTime` type.
 
         """
         diff = dt2.value() - dt1.value()
@@ -1878,8 +1863,7 @@ class DateTime(_CommonDateTime):
 
     @classmethod
     def current_gmtime(class_):
-        """Deprecated.  Use 'datetime' method instead.
-        """
+        """Deprecated.  Use `datetime` instead."""
         return class_.datetime()
 
     def adjust_value(self, value):
@@ -1906,7 +1890,7 @@ class DateTime(_CommonDateTime):
 
 
 class LocalDateTime(DateTime):
-    "Datetime stored as UTC in database but presented as local time by default."
+    """Datetime stored as UTC in database but presented as local time by default."""
 
     def _export(self, value, local=None, format=None):
         if local is None:
@@ -1935,6 +1919,7 @@ class DateTimeRange(Range, DateTime):
 
 class ISODateTime(DateTime):
     """Datetime represented by the ISO datetime format in the database.
+
     """
     SQL_FORMAT = True
 
@@ -1942,22 +1927,21 @@ class ISODateTime(DateTime):
 class Date(DateTime):
     """Date without a time.
 
-    Constructor arguments:
-
-      format -- specification of both input and output format of date
-        and/or time in the form accepted by `time.strftime()'.
-         May be also None in which case the configuration option
-        'pytis.config.date_time_format' is used.  The class defines '*_FORMAT'
-         constants which may be used as a value of this argument.
+    Arguments:
+      format (str): Specification of both input and output format of date in the
+        form accepted by `time.strftime`.  May be also None in which case the
+        configuration option `pytis.config.date_format` is used.  The class
+        defines `*_FORMAT` constants which may be used as a value of this
+        argument.
 
     """
 
     DEFAULT_FORMAT = '%Y-%m-%d'
-    """Implicitní formát data."""
+    """Default date format."""
     SQL_FORMAT = DEFAULT_FORMAT
-    """Formát data používaný standardně SQL stroji."""
+    """Date format used by SQL engines."""
     CZECH_FORMAT = '%d.%m.%Y'
-    """Český \"účetnický\" formát data."""
+    """Czech accounting date format."""
 
     def _init(self, format=None, **kwargs):
         if format is None:
@@ -2011,27 +1995,26 @@ class Time(_CommonDateTime):
 
     It is strongly recommended to always use UTC as the only Time timezone to
     prevent problems with daylight saving time conversions.  If you need to use
-    time with local timezones, either use 'DateTime' or don't mix timezones in
+    time with local timezones, either use `DateTime` or don't mix timezones in
     constructor, validation and exports.
 
-    Constructor arguments:
-
-      format -- specification of both input and output format of date
-        and/or time in the form accepted by `time.strftime()'.
-        May be also None in which case the configuration option
-        'pytis.config.date_time_format' is used.  The class defines '*_FORMAT'
-        constants which may be used as a value of this argument.
-      precision -- optional precision value p which specifies the number
-        of fractional digits retained in the seconds field, default 0
+    Arguments:
+      format (str): Specification of both input and output format of time in the
+        form accepted by `time.strftime`.  May be also None in which case the
+        configuration option `pytis.config.time_format` is used.  The class
+        defines `*_FORMAT` constants which may be used as a value of this
+        argument.
+      precision (int): Optional precision value p which specifies the number of
+        fractional digits retained in the seconds field, default 0.
 
     """
 
     DEFAULT_FORMAT = '%H:%M:%S'
-    """Implicitní formát času."""
+    """Default time format."""
     SQL_FORMAT = DEFAULT_FORMAT
-    """Formát času používaný standardně SQL stroji."""
+    """Time format used by SQL engines."""
     SHORT_FORMAT = '%H:%M'
-    """Formát času bez zobrazení sekund."""
+    """Time format without seconds."""
 
     def _init(self, format=None, precision=0, **kwargs):
         if format is None:
@@ -2079,7 +2062,7 @@ class Time(_CommonDateTime):
                                                    precision=self._precision)
 
 class LocalTime(Time):
-    "Time stored as UTC in database but presented as local time by default."
+    """Time stored as UTC in database but presented as local time by default."""
 
     def _export(self, value, local=None, format=None):
         if local is None:
@@ -2095,11 +2078,9 @@ class LocalTime(Time):
 class TimeInterval(Type):
     """Amount of time between two moments.
 
-    Constructor arguments:
-
-      format -- specification of both input and output format of the time
-        interval; only a limited set of specification constructs is
-        supported
+    Arguments:
+      format (str): Specification of both input and output format of the time
+        interval; only a limited set of specification constructs is supported.
 
     """
 
@@ -2200,13 +2181,15 @@ class TimeInterval(Type):
 
 
 def date_and_time(date, time):
-    """Combine given 'date' and 'time' 'Value's into a 'datetime.datetime' return value.
+    """Combine given date and time `Value` instances into a datetime.
 
     Arguments:
+      date (`Value`): `Value` instance of type `Date` containing the date value.
+      time (`Value`): `Value` instance of type `Time` containing the time value
+        to add to the date value.
 
-      date -- 'Value' instance of type 'Date' containing the date value
-      time -- 'Value' instance of type 'Time' containing the time value to
-        add to the date value
+    Returns:
+      datetime.datetime: Combined datetime value.
 
     """
     assert isinstance(date, Value) and isinstance(date.type(), Date), date
@@ -2220,20 +2203,21 @@ def date_and_time(date, time):
 
 
 def add_timedelta(value, timedelta):
-    """Return information about 'DateTime' 'value' with 'timedelta' added.
+    """Return information about `DateTime` value with timedelta added.
+
+    This utility function takes value, adds timedelta to its Python value and
+    returns the tuple (VALUE, DATETIME, DIFF_DATES) where VALUE is a new `Value`
+    instance created from the resulting datetime, DATETIME is the corresponding
+    Python value, and DIFF_DATES is the difference in days between the original
+    and new dates (without considering times); it is positive iff the new date
+    is higher than the old date.
 
     Arguments:
+      value (`Value`): `Value` instance of type `DateTime`.
+      timedelta (datetime.timedelta): Timedelta to add.
 
-      value -- 'Value' instance of type 'DateTime'
-      timedelta -- 'datetime.timedelta' instance
-
-    This utility function takes the 'value', adds 'timedelta' to its Python
-    value and returns the sequence (VALUE, DATETIME, DIFF_DATES) where:
-    - VALUE is a new 'Value' instance created from the resulting datetime
-    - DATETIME is the corresponding Python value
-    - DIFF_DATES is the difference in days between the original and new
-      dates (without considering times); it is positive iff the new date is
-      higher than the old date
+    Returns:
+      tuple: A tuple (VALUE, DATETIME, DIFF_DATES).
 
     """
     assert isinstance(value, Value) and isinstance(value.type(), DateTime), value
@@ -2246,19 +2230,18 @@ def add_timedelta(value, timedelta):
 
 
 class Boolean(Type):
-    """Jednoduchý výčtový typ implementující hodnoty \"pravda\" a \"nepravda\".
+    """Jednoduchý výčtový typ implementující hodnoty "pravda" a "nepravda".
 
-    Za pravdu je považován string 'T', za nepravdu string 'F'; tyto stringy
-    jsou uživatelskými hodnotami výčtu.  Odpovídající vnitřní hodnoty jsou
-    blíže nespecifikované pythonové objekty s pythonovu sémantikou pravdy a
-    nepravdy.
+    Za pravdu je považován string 'T', za nepravdu string 'F'; tyto stringy jsou
+    uživatelskými hodnotami výčtu.  Odpovídající vnitřní hodnoty jsou blíže
+    nespecifikované pythonové objekty s pythonovu sémantikou pravdy a nepravdy.
 
-    Validační argument 'extended' umožňuje liberálnější kontrolu vstupu.  Je-li pravdivý, jsou
-    kromě \"oficiálních\" hodnot 'obj' zvalidovány i následující stringové hodnoty:
+    Validační argument `extended` umožňuje liberálnější kontrolu vstupu. Je-li
+    pravdivý, jsou kromě "oficiálních" hodnot obj zvalidovány i následující
+    stringové hodnoty:
 
-    \'t\', \'1\' -- jako reprezentace pravdivé hodnoty
-    \'f\', \'0\' -- jako reprezentace nepravdivé hodnoty
-
+    - 't', '1' -- jako reprezentace pravdivé hodnoty - 'f', '0' -- jako
+    reprezentace nepravdivé hodnoty
 
     """
 
@@ -2295,13 +2278,12 @@ class Boolean(Type):
 class Uuid(Type):
     """Uuid type.
 
-    Uuid type is represented by python's immutable UUID object (UUID class).
+    Uuid type is represented by Python's immutable UUID object (UUID class).
 
-    Constructor arguments:
-
-      version -- optional argument; if given, the resulting UUID will have
-        its variant and version number set according to RFC 4122, overriding bits
-        in the given hex, bytes, bytes_le, fields, or int.
+    Arguments:
+      version (int): Optional argument; if given, the resulting UUID will have
+        its variant and version number set according to RFC 4122, overriding
+        bits in the given hex, bytes, bytes_le, fields, or int.
 
     """
 
@@ -2331,9 +2313,9 @@ class Uuid(Type):
 class Binary(Limited):
     """Binary data.
 
-    Binary values are represented by instances of Python 'bytes' type or 'None'
+    Binary values are represented by instances of Python `bytes` type or `None`
     (representing a null value).  Internal representation is an instance of the
-    'Binary.Data' class (or <derived-class>.Data for derived classes).  This
+    `Binary.Data` class (or `<derived-class>.Data` for derived classes).  This
     class adds optional possibility to keep file name and MIME type information
     together with the value instance.  Derived classes may extend the internal
     value representation to add more specific features, such as obtaining image
@@ -2345,8 +2327,8 @@ class Binary(Limited):
     NULL value) and they can be used as non-key values in insertions and
     updates.
 
-    Values of this type are not cached as they may be large and their
-    validation is trivial.
+    Values of this type are not cached as they may be large and their validation
+    is trivial.
 
     """
 
@@ -2355,9 +2337,9 @@ class Binary(Limited):
     class Data(bytes):
         """Internal representation of binary values.
 
-        The primary purpose of this class is to provide verification od binary
+        The primary purpose of this class is to provide verification of binary
         data depending on their content.  This class accepts any data, but
-        subclasses may exist, which only accept certain binary formats, such as
+        subclasses may exist which only accept certain binary formats, such as
         images, documents, audio files etc.
 
         """
@@ -2377,27 +2359,24 @@ class Binary(Limited):
             """Initialize a new value instance.
 
             Arguments:
-
-              data -- The binary data.  It can be a Python 'bytes', 'str' or
-                 'buffer' object or an open stream (a file-like object).  A
-                 'bytes' object is used directly, file-like object is read (the
-                 caller is responsible for closing it) and the other types are
-                 converted to 'bytes'.
-              filename -- Filename as a string or None.  This name does not
+              data: The binary data.  It can be a Python `bytes`, `str` or
+                `buffer` object or an open stream (a file-like object). A
+                `bytes` object is used directly, file-like object is read (the
+                caller is responsible for closing it) and the other types are
+                converted to `bytes`.
+              filename (str): Filename as a string or None.  This name does not
                 include directory and does not refer to any actual file (has
-                nothing to do with the input file for reading the data).  It
-                may be used to suggest what the content of the data is.  It is
+                nothing to do with the input file for reading the data). It may
+                be used to suggest what the content of the data is. It is
                 optional and its usage may be application specific.
-              mime_type -- Data MIME type as a string or None.  It is optional
-                and its usage may be application specific.
+              mime_type (str): Data MIME type as a string or None.  It is
+                optional and its usage may be application specific.
 
-            Raises 'TypeError' if 'data' is a value of unsupported type.
-
-            Raises 'IOError' if 'data' is an open stream which can not be read.
-
-            Raises 'ValueError' if the data content does not conform to the
-            expected binary format (depending on the actual 'Binary.Data'
-            subclass).
+            Raises:
+              `TypeError`: If data is a value of unsupported type.
+              `IOError`: If data is an open stream which cannot be read.
+              `ValueError`: If the data content does not conform to the expected
+                binary format (depending on the actual `Binary.Data` subclass).
 
             """
             assert filename is None or isinstance(filename, basestring), filename
@@ -2456,12 +2435,12 @@ class Binary(Limited):
 class Image(Binary, Big):
     """Binary type for generic bitmap images.
 
-    The binary data of this type are represented by an 'Image.Data' instance.
+    The binary data of this type are represented by an `Image.Data` instance.
 
-    'Image.Data' makes sure that the binary data represent an image in one of
-    the input formats supported by the Python Imaging Library.  It also
-    provides the `image()' method, which returns the 'PIL.Image' instance
-    corresponding to the image contained within the data.
+    `Image.Data` makes sure that the binary data represent an image in one of
+    the input formats supported by the Python Imaging Library.  It also provides
+    the `image` method, which returns the `PIL.Image` instance corresponding to
+    the image contained within the data.
 
     Image type can be further restricted to a list of allowed formats.  You may
     also restrict minimal/maximal pixel size of the image.
@@ -2472,25 +2451,24 @@ class Image(Binary, Big):
 
     The Python Imaging Library (PIL) must be installed when using this type.
 
-    Constructor arguments:
-
-      minsize -- maximal image size in pixels as a sequence of two integers
-        (WIDTH, HEIGHT).  'None' in either value indicates an unlimited
-        size in the corresponding direction...
-      maxsize -- maximal image size in pixels; same rules as for 'minsize'
-      formats -- list of allowed input formats as a sequence of strings,
+    Arguments:
+      minsize (tuple): Minimal image size in pixels as a sequence of two
+        integers (WIDTH, HEIGHT).  None in either value indicates an unlimited
+        size in the corresponding direction.
+      maxsize (tuple): Maximal image size in pixels; same rules as for minsize.
+      formats (list): List of allowed input formats as a sequence of strings,
         each string being one of PIL supported file formats, such as 'PNG',
-        'JPEG', 'TIFF', 'GIF', 'BMP', 'PCX' etc.  Full list of the
-        supported formats depends upon your PIL version.  If None, all
-        formats supported by the Python Imaging Library are allowed.
+        'JPEG', 'TIFF', 'GIF', 'BMP', 'PCX' etc.  Full list of supported formats
+        depends upon your PIL version.  If None, all formats supported by the
+        Python Imaging Library are allowed.
 
     Other arguments are passed to the parent constructor.
 
     """
     class Data(Binary.Data):
-        """A bufer for internal representation of bitmap image data.
+        """A buffer for internal representation of bitmap image data.
 
-        See the documentation of the 'Image' type for more information.
+        See the documentation of the `Image` type for more information.
 
         """
 
@@ -2506,7 +2484,7 @@ class Image(Binary, Big):
             self._image = image
 
         def image(self):
-            """Return the image as a 'PIL.Image' instance."""
+            """Return the image as a `PIL.Image` instance."""
             return self._image
 
     Buffer = Data
@@ -2536,7 +2514,7 @@ class Image(Binary, Big):
     def minsize(self):
         """Return the minimal image size in pixels as a pair (WIDTH, HEIGHT).
 
-        WIDTH and HEIGHT are integers or 'None' (denoting no limit).
+        WIDTH and HEIGHT are integers or `None` (denoting no limit).
 
         """
         return self._minsize
@@ -2544,13 +2522,13 @@ class Image(Binary, Big):
     def maxsize(self):
         """Return the maximal image size in pixels as a pair (WIDTH, HEIGHT).
 
-        WIDTH and HEIGHT are integers or 'None' (denoting no limit).
+        WIDTH and HEIGHT are integers or `None` (denoting no limit).
 
         """
         return self._maxsize
 
     def formats(self):
-        """Return the tuple of allowed input formats or None."""
+        """Return the tuple of allowed input formats or `None`."""
         return self._formats
 
     def _check_constraints(self, value, **kwargs):
@@ -2573,7 +2551,7 @@ class Image(Binary, Big):
 class LTree(Type):
     """Type representing a hierarchical (tree) structure.
 
-    It is similar to 'String', but there are some differences:
+    It is similar to `String`, but there are some differences:
 
     - No length limits can be set in LTree.
 
@@ -2583,16 +2561,15 @@ class LTree(Type):
     - The items between dots may not be empty, may contain only alphanumeric
       characters and may be at most 255 characters long (each of them).
 
-    Constructor arguments:
-
-      text -- if true, handle the type values as text values, otherwise handle
-        them as true ltree values.  This makes difference in sorting -- when
-        true, sort textually, when false, sort as ltree.  This may be
-        particularly useful when ltree values contain national characters,
-        which are not sorted correctly by PostgreSQL ltree sorting.  Anyway,
-        when true, the values must be padded to a fixed width of individual
-        ltree components (such as '00010.00008.00124' instead of '10.8.124') in
-        order to get the expected results with textual sorting.
+    Arguments:
+      text (bool): If true, handle the type values as text values, otherwise
+        handle them as true ltree values.  This makes a difference in sorting --
+        when true, sort textually, when false, sort as ltree.  This may be
+        particularly useful when ltree values contain national characters, which
+        are not sorted correctly by PostgreSQL ltree sorting.  When true, the
+        values must be padded to a fixed width of individual ltree components
+        (such as '00010.00008.00124' instead of '10.8.124') in order to get the
+        expected results with textual sorting.
 
     """
     _REGEX = re.compile(r'^\w+$', re.UNICODE)
@@ -2606,7 +2583,7 @@ class LTree(Type):
         return super(LTree, self)._comparison_key() + (self._text,)
 
     def text(self):
-        """Return value of 'text' constructor argument."""
+        """Return value of text constructor argument."""
         return self._text
 
     def _validate(self, obj):
@@ -2643,12 +2620,12 @@ class LTree(Type):
 class Array(Limited):
     """Sequence of values of some other type.
 
-    The 'inner_type' constructor argument (mandatory) determines the pytis type
-    of array items.  Validation expects a sequence of strings (python tuple,
-    array or any iterable object containing strings) for validation.  These
-    strings are validated against the inner type.  The internal value is a
-    tuple of 'Value' instances of the inner type.  Export returns a tuple of
-    strings corresponding to the exported array items.
+    The `inner_type` constructor argument (mandatory) determines the pytis type
+    of array items.  Validation expects a sequence of strings (Python tuple,
+    array or any iterable object containing strings).  These strings are
+    validated against the inner type.  The internal value is a tuple of `Value`
+    instances of the inner type.  Export returns a tuple of strings
+    corresponding to the exported array items.
 
     """
     _SPECIAL_VALUES = Limited._SPECIAL_VALUES + ((None, ''),)
@@ -2665,7 +2642,7 @@ class Array(Limited):
                  **kwargs):
         # We override `validate()' instead of `_validate()' here, which is
         # discouraged in `validate()' method docstring.  The reason is that we
-        # need to pass arguments `transaction', `condition' and `arguments' to
+        # need to pass arguments `transaction`, `condition` and `arguments` to
         # the validation of inner values.  We also don't want to cache
         # validation results as it should be enough to cache the inner values.
         values = []
@@ -2829,38 +2806,36 @@ class JSONB(JSON):
 class Enumerator(object):
     """Generic interface for enumerations of data type values for integrity constraints.
 
-    The enumerator provides an interface for validation if a given value
-    belongs to the set of valid values (the 'check()' method) and also a means
-    to retrieve all valid enumeration values (the 'values()' method).  The
-    means of retrieving the values and performing the check is the subject of
-    implementation of particular derived classes.
+    The enumerator provides an interface for validation if a given value belongs
+    to the set of valid values (the `check` method) and also a means to retrieve
+    all valid enumeration values (the `values` method). The means of retrieving
+    the values and performing the check is the subject of implementation of
+    particular derived classes.
 
     This class defines the mandatory enumerator API.  Derived classes may also
     offer extended interface for specific services.  An instance of an
     enumerator class (a derived class implementing the mandatory API) may be
-    used as the 'enumerator' argument of a data 'Type' constructor.
+    used as the `enumerator` argument of a data `Type` constructor.
 
-    Generally, enumerators must be thread-safe as thy can be used in shared
-    'Type' instances.  Any enumerator method which is not thread-safe must be
-    clearly marked as such and it may not be used with enumerator instances
-    used in types.
+    Generally, enumerators must be thread-safe as they can be used in shared
+    `Type` instances.  Any enumerator method which is not thread-safe must be
+    clearly marked as such and it may not be used with enumerator instances used
+    in types.
 
     """
 
     def check(self, value, **kwargs):
-        """Return true, iff 'value' belongs to the enumeration.
-
-        Arguments:
-
-          value -- internal Python value of the corresponding data type, for
-            which the enumerator is used.
-
-          **kwargs -- keyword arguments as accepted by 'values()'.
+        """Return true iff value belongs to the enumeration.
 
         The default implementation simply retrieves all values and checks the
-        presence of 'value' in the returned sequence.  This may be suboptimal
-        for potentionaly large sets so it may be overriden in derived classes
-        using a more sophisticated method.
+        presence of value in the returned sequence.  This may be suboptimal for
+        potentially large sets so it may be overridden in derived classes using
+        a more sophisticated method.
+
+        Arguments:
+          value: Internal Python value of the corresponding data type for which
+            the enumerator is used.
+          **kwargs: Keyword arguments as accepted by `values`.
 
         """
         return value in self.values(**kwargs)
@@ -2879,8 +2854,8 @@ class Enumerator(object):
 class TransactionalEnumerator(object):
     """Mix-in class for enumerators which need a database transaction.
 
-    The methods 'values()' and 'check()' of such enumerators accept one
-    mandatory keyword argument 'transaction' representing the current database
+    The methods `values` and `check` of such enumerators accept one mandatory
+    keyword argument `transaction` representing the current database
     transaction.
 
     """
@@ -2890,8 +2865,7 @@ class TransactionalEnumerator(object):
 class FixedEnumerator(Enumerator):
     """Enumerator with a fixed enumeration passed to the constructor.
 
-    The method 'values()' (and thus 'check()' as well) accepts no keyword
-    arguments.
+    The method `values` (and thus `check` as well) accepts no keyword arguments.
 
     """
 
@@ -2899,9 +2873,8 @@ class FixedEnumerator(Enumerator):
         """Initialize the instance.
 
         Arguments:
-
-          enumeration -- a sequence of values compatible with internal (Python)
-            values of the type, for which the enumerator is used.
+          enumeration: A sequence of values compatible with internal (Python)
+            values of the type for which the enumerator is used.
 
         """
         super(FixedEnumerator, self).__init__()
@@ -2924,10 +2897,9 @@ class DataEnumerator(Enumerator, TransactionalEnumerator):
     arguments.
 
     One special thing about this enumerator is that it is internally handled
-    specifically throughout Pytis.  It's instances are created automatically
-    when a specification name is passed to a 'codebook' or 'enumerator'
-    attribute of 'Field' constructor and its extended API is also used where
-    appropriate.
+    specifically throughout Pytis.  Its instances are created automatically when
+    a specification name is passed to a `codebook` or `enumerator` attribute of
+    `Field` constructor and its extended API is also used where appropriate.
 
     """
 
@@ -2936,23 +2908,24 @@ class DataEnumerator(Enumerator, TransactionalEnumerator):
         """Initialize the instance.
 
         Arguments:
-
-          data_factory -- a 'DataFactory' instance for data object creation, or
-            a string naming the specification of the data factory
-          value_column -- identifier of the column which provides the enumeration values.  If
-            None, the key column is used.
-          validity_column -- identifier of the column which determines valid rows (or None).  If
-            defined, only rows with a true value in this column will be used for the enumeration
-            (it must be a boolean column).  It is not possible to combine this argument with the
-            'validity_condition' argument below.
-          validity_condition -- a condition determining validity of data rows as a
-            'pytis.data.Operator' instance (or None).  Only rows complying to this condition will
-            be used for the enumeration.  This is a more general option than the 'validity_column'
-            argument above.  It is not possible to combine these two arguments, but it is always
-            possible to implement 'validity_column' within 'validity_condition'.
-          connection_data -- 'DBConnection' instance providing the database
-            connection parameters; if 'None' then connection parameters are
-            retrieved from the configuration
+          data_factory: A `DataFactory` instance for data object creation, or a
+            string naming the specification of the data factory.
+          value_column (str): Identifier of the column which provides the
+            enumeration values.  If None, the key column is used.
+          validity_column (str): Identifier of the column which determines valid
+            rows (or None).  If defined, only rows with a true value in this
+            column will be used for the enumeration (it must be a boolean
+            column).  It is not possible to combine this argument with the
+            validity_condition argument below.
+          validity_condition: A condition determining validity of data rows as a
+            `pytis.data.Operator` instance (or None).  Only rows complying with
+            this condition will be used for the enumeration.  This is a more
+            general option than the validity_column argument above.  It is not
+            possible to combine these two arguments, but it is always possible
+            to implement validity_column within validity_condition.
+          connection_data: `DBConnection` instance providing the database
+            connection parameters; if None then connection parameters are
+            retrieved from the configuration.
 
         """
         super(DataEnumerator, self).__init__()
@@ -3083,7 +3056,7 @@ class DataEnumerator(Enumerator, TransactionalEnumerator):
             self._change_callbacks.append(callback)
 
     def data_factory(self):
-        """Vrať specifikaci datového objektu enumerátoru jako instanci 'pytis.data.DataFactory'."""
+        """Vrať specifikaci datového objektu enumerátoru jako instanci `pytis.data.DataFactory`."""
         return self._data_factory
 
     def value_column(self):
@@ -3095,20 +3068,20 @@ class DataEnumerator(Enumerator, TransactionalEnumerator):
         return self._validity_condition
 
     def row(self, value, transaction=None, condition=None, arguments=None):
-        """Return a *data* row corresponding to given codebook value.
+        """Return a data row corresponding to given codebook value.
 
         Arguments:
-
-          value -- internal (Python) value of the enumerator's 'value_column'.  The row
-            corresponding to this value is returned.
-          transaction -- transaction for data operations.
-          condition -- runtime filter condition for enumerator validation.
-          arguments -- dictionary of table function call arguments, with
-            function argument identifiers as keys and 'pytis.data.Value'
+          value: Internal (Python) value of the enumerator's value_column. The
+            row corresponding to this value is returned.
+          transaction: Transaction for data operations.
+          condition: Runtime filter condition for enumerator validation.
+          arguments (dict): Dictionary of table function call arguments, with
+            function argument identifiers as keys and `pytis.data.Value`
             instances as values.  Useful only when the table is actually a row
             returning database function, otherwise ignored.
 
-        Returns a 'pytis.data.Row' instance from the underlying data object.
+        Returns:
+          A `pytis.data.Row` instance from the underlying data object.
 
         """
         return self._retrieve(value, transaction=transaction, condition=condition,
@@ -3118,12 +3091,11 @@ class DataEnumerator(Enumerator, TransactionalEnumerator):
         """Return sequence of rows of the underlying data object.
 
         Arguments:
-
-          transaction -- transaction for data operations.
-          condition -- runtime filter condition as an 'Operator' instance or None.
-          sort -- sorting specification as accepted by 'pytis.data.Data.select()'.
-          arguments -- dictionary of table function call arguments, with
-            function argument identifiers as keys and 'pytis.data.Value'
+          transaction: Transaction for data operations.
+          condition: Runtime filter condition as an `Operator` instance or None.
+          sort: Sorting specification as accepted by `pytis.data.Data.select`.
+          arguments (dict): Dictionary of table function call arguments, with
+            function argument identifiers as keys and `pytis.data.Value`
             instances as values.  Useful only when the table is actually a row
             returning database function, otherwise ignored.
 
@@ -3160,10 +3132,10 @@ class DataEnumerator(Enumerator, TransactionalEnumerator):
 
 @python_2_unicode_compatible
 class ValidationError(Exception):
-    """Validation error message on 'Type.validate()' failure.
+    """Validation error message on `Type.validate` failure.
 
     The human readable error message can be retrieved using the public method
-    'message()'.
+    `message`.
 
     """
 
@@ -3171,8 +3143,7 @@ class ValidationError(Exception):
         """Initialize the instance.
 
         Arguments:
-
-          message -- human readable error message as a string
+          message (str): Human readable error message.
 
         """
         super(ValidationError, self).__init__(message)
@@ -3190,7 +3161,7 @@ class ValidationError(Exception):
 class _Value(object):
     """Obecná reprezentace hodnoty daného typu.
 
-    Každá hodnota se skládá z typu (instance třídy 'Type') a hodnoty samotné.
+    Každá hodnota se skládá z typu (instance třídy `Type`) a hodnoty samotné.
     Hodnota samotná může být cokoliv, bez ohledu na uvedený typ.
 
     """
@@ -3198,10 +3169,9 @@ class _Value(object):
     def __init__(self, type, value):
         """Inicializuj instanci.
 
-        Argumenty:
-
-          type -- instance třídy 'Type'
-          value -- hodnota samotná, libovolný objekt
+        Arguments:
+          type (`Type`): Instance třídy `Type`.
+          value: Hodnota samotná, libovolný objekt.
 
         """
         self._type = type
@@ -3246,16 +3216,15 @@ class _Value(object):
         return hash(self._type) ^ hash(self._value)
 
     def type(self):
-        """Vrať typ hodnoty jako instanci třídy 'Type' zadanou v '__init__()'.
-        """
+        """Vrať typ hodnoty jako instanci třídy `Type` zadanou v konstruktoru."""
         return self._type
 
     def value(self):
-        """Return value given in '__init__()'.
+        """Return value given in the constructor.
 
-        In some derived classes the returned value may be modified, e.g. when
-        it is necessary to hide the value.  If you need the unchanged value
-        (and you are sure this is really what you want), use 'true_value()'.
+        In some derived classes the returned value may be modified, e.g. when it
+        is necessary to hide the value.  If you need the unchanged value (and
+        you are sure this is really what you want), use `true_value`.
 
         """
         return self._value
@@ -3263,7 +3232,7 @@ class _Value(object):
     def true_value(self):
         """Return true value of the instance.
 
-        In some derived classes, the value returned by 'value()' may be
+        In some derived classes, the value returned by `value` may be
         transformed, e.g. when the true value should be hidden.  This method
         always returns the actual unchanged value.
 
@@ -3274,11 +3243,11 @@ class _Value(object):
 class Value(_Value):
     """Reprezentace hodnoty daného typu.
 
-    Každá hodnota se skládá z typu (instance třídy 'Type') a hodnoty samotné.
+    Každá hodnota se skládá z typu (instance třídy `Type`) a hodnoty samotné.
     Hodnota samotná může být cokoliv, bez ohledu na uvedený typ.
 
     Pro zápis hodnoty do uživatelského rozhraní nebo databáze lze využít metodu
-    'export()'.
+    `export`.
 
     """
     _VOID = object()
@@ -3286,10 +3255,9 @@ class Value(_Value):
     def __init__(self, type_, value):
         """Inicializuj hodnotu daného typu.
 
-        Argumenty:
-
-          type_ -- instance třídy 'Type'
-          value -- hodnota samotná, libovolný objekt
+        Arguments:
+          type_ (`Type`): Instance třídy `Type`.
+          value: Hodnota samotná, libovolný objekt.
 
         """
         # print '---', type_, type(value), repr(value)
@@ -3316,8 +3284,8 @@ class Value(_Value):
         """Vrať stringovou reprezentaci hodnoty schopnou validace.
 
         Tato metoda je pouze zkratkou pro volání
-        'self.type().export(self.value())'.  Pokud jsou metodě předány
-        argumenty, je metoda `Type.export()' volána i s těmito argumenty.
+        `self.type().export(self.value())`.  Pokud jsou metodě předány
+        argumenty, je metoda `Type.export` volána i s těmito argumenty.
 
         """
         # Abychom to zbytečně nekomplikovali, tak cachujeme pouze exporty bez
@@ -3332,14 +3300,14 @@ class Value(_Value):
         return exported
 
     def retype(self, type):
-        """Return instance of the same class and value, but of diferent type.
-
-        Arguments:
-
-          type -- 'Type' instance to be used as the new value instance type
+        """Return instance of the same class and value, but of different type.
 
         It is responsibility of the caller to ensure that the new type is
         compatible with the type of the value.
+
+        Arguments:
+          type (`Type`): `Type` instance to be used as the new value instance
+            type.
 
         """
         assert isinstance(type, Type)
@@ -3347,12 +3315,11 @@ class Value(_Value):
 
     @classmethod
     def reconceal(class_, value):
-        """Return 'class_' instance corresponding to 'value'.
+        """Return `class_` instance corresponding to value.
 
         Arguments:
-
-          value -- 'Value' instance to use as the base of the 'class_'
-            instance
+          value (`Value`): `Value` instance to use as the base of the `class_`
+            instance.
 
         """
         assert isinstance(value, Value)
@@ -3371,11 +3338,11 @@ class WMValue(_Value):
 
 
 def sval(value, maxlen=None):
-    """Return 'Value' instance of type 'String' with given value.
+    """Return `Value` instance of type `String` with given value.
 
     Arguments:
-
-      value -- internal value of the 'Value' instance, basestring
+      value (str): Internal value of the `Value` instance.
+      maxlen (int): Optional maximum length passed to `String`.
 
     """
     assert value is None or isinstance(value, basestring), value
@@ -3383,11 +3350,10 @@ def sval(value, maxlen=None):
 
 
 def ival(value):
-    """Return 'Value' instance of type 'Value' with given value.
+    """Return `Value` instance of type `Integer` with given value.
 
     Arguments:
-
-      value -- internal value of the 'Value' instance, integer
+      value (int): Internal value of the `Value` instance.
 
     """
     assert value is None or isinstance(value, int), value
@@ -3395,14 +3361,13 @@ def ival(value):
 
 
 def fval(value, digits=None, precision=None):
-    """Return 'Value' instance of type 'Float' with given value.
+    """Return `Value` instance of type `Float` with given value.
 
     Arguments:
-
-      value -- internal value of the 'Value' instance, float
-      digits -- maximum number of digits to pass to 'Float' constructor
-      precision -- number of digits after decimal point to pass to 'Float'
-        constructor
+      value (float): Internal value of the `Value` instance.
+      digits (int): Maximum number of digits to pass to `Float` constructor.
+      precision (int): Number of digits after decimal point to pass to `Float`
+        constructor.
 
     """
     assert value is None or isinstance(value, (float, decimal.Decimal)), value
@@ -3412,11 +3377,10 @@ def fval(value, digits=None, precision=None):
 
 
 def bval(value):
-    """Return 'Value' instance of type 'Boolean' with given value.
+    """Return `Value` instance of type `Boolean` with given value.
 
     Arguments:
-
-      value -- internal value of the 'Value' instance, basestring
+      value (bool): Internal value of the `Value` instance.
 
     """
     assert value is None or isinstance(value, bool), value
@@ -3424,11 +3388,10 @@ def bval(value):
 
 
 def dval(value):
-    """Return 'Value' instance of type 'Date' with given value.
+    """Return `Value` instance of type `Date` with given value.
 
     Arguments:
-
-      value -- internal value of the 'Value' instance, datetime.date
+      value (datetime.date): Internal value of the `Value` instance.
 
     """
     assert value is None or isinstance(value, datetime.date), value
@@ -3436,12 +3399,11 @@ def dval(value):
 
 
 def dtval(value, without_timezone=False):
-    """Return 'Value' instance of type 'DateTime' with given value.
+    """Return `Value` instance of type `DateTime` with given value.
 
     Arguments:
-
-      value -- internal value of the 'Value' instance, datetime.datetime
-      without_timezone -- corresponding constructor argument of 'DateTime'
+      value (datetime.datetime): Internal value of the `Value` instance.
+      without_timezone (bool): Corresponding constructor argument of `DateTime`.
 
     """
     assert value is None or isinstance(value, datetime.datetime), value
@@ -3449,12 +3411,11 @@ def dtval(value, without_timezone=False):
 
 
 def tval(value, without_timezone=False):
-    """Return 'Value' instance of type 'Time' with given value.
+    """Return `Value` instance of type `Time` with given value.
 
     Arguments:
-
-      value -- internal value of the 'Value' instance, datetime.time
-      without_timezone -- corresponding constructor argument of 'Time'
+      value (datetime.time): Internal value of the `Value` instance.
+      without_timezone (bool): Corresponding constructor argument of `Time`.
 
     """
     assert value is None or isinstance(value, datetime.time), value
@@ -3462,23 +3423,21 @@ def tval(value, without_timezone=False):
 
 
 def binval(value):
-    """Return 'Value' instance of type 'Binary' with given value.
+    """Return `Value` instance of type `Binary` with given value.
 
     Arguments:
-
-      value -- internal value of the 'Value' instance as 'bytes' or an open
-        stream (a file-like object).
+      value: Internal value of the `Value` instance as `bytes` or an open stream
+        (a file-like object).
 
     """
     return Value(Binary(), value)
 
 
 def wmval(value):
-    """Return 'VMValue' instance of type 'String' with given value.
+    """Return `WMValue` instance of type `String` with given value.
 
     Arguments:
-
-      value -- internal value of the 'WMValue' instance, basestring
+      value (str): Internal value of the `WMValue` instance.
 
     """
     assert value is None or isinstance(value, basestring), value

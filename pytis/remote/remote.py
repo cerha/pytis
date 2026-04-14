@@ -80,14 +80,13 @@ class ClientInfo(object):
 
 
 class Connector(object):
-    """Pytis RPyC service connector
+    """Pytis RPyC service connector.
 
     This is the client part of the authentication protocol implemented by
-    'p2go.PasswordAuthenticator'.  This class is actually a partial duplication
-    of 'p2go.PasswordAuthenticator' because the server side also implements the
-    method 'connect()' for P2Go's internal purposes.  The duplication is
-    necessary in order to avoid Pytis runtime to have dependencies on P2go and
-    vice versa.
+    `p2go.PasswordAuthenticator`.  This class is actually a partial duplication
+    of p2go.PasswordAuthenticator because the server side also implements the
+    method connect() for P2Go's internal purposes.  The duplication is necessary
+    in order to avoid Pytis runtime to have dependencies on P2go and vice versa.
 
     """
     def __init__(self, password):
@@ -126,8 +125,8 @@ def write_python_version():
     """If inside X2Go session, write running Python version to the file for Pytis2Go.
 
     Pytis2Go needs to know the Python version of the running application in
-    order to start the RPyC service with the same Python version (otherwise
-    RPyC communication will not work).  We write the version number to a known
+    order to start the RPyC service with the same Python version (otherwise RPyC
+    communication will not work).  We write the version number to a known
     location and Pytis2go will wait until it finds the file, read the
     information and start the RPyC service with that version.
 
@@ -147,7 +146,7 @@ def write_python_version():
 def client_ip():
     """Return IP address of the x2go client as a string.
 
-    If pytis is not run from an x2go client, return 'None'.
+    If pytis is not run from an x2go client, return `None`.
 
     """
     if pytis.config.session_id:
@@ -175,13 +174,13 @@ def client_ip():
 def client_available():
     """Return True iff running a remote Pytis client session (Pytis2Go).
 
-    The result of client_ip() returns an IP address for any X2Go session, even
+    The result of `client_ip` returns an IP address for any X2Go session, even
     if a remote RPyC connection was not initialized.
 
-    This function returns True if we are inside an X2Go session ('client_ip()'
+    This function returns True if we are inside an X2Go session (`client_ip`
     returns an IP address) and the remote Pytis RPyC connection is available.
 
-    Use 'client_connection_ok()' to further check if the client connection
+    Use `client_connection_ok` to further check if the client connection
     actually works.
 
     """
@@ -274,11 +273,11 @@ def keep_x2go_info_file():
 
     The info file (containing the connection port and password) is normally
     removed after it is read succesfully because it contains sensitive data and
-    is normally not neeeded any more.  This, however, makes it impossible to
-    run pytis twice within one pytis2go session.  This may be a problem in
-    tests, which we want to be able to run multiple times within one session.
-    Call this function before any other method in this module in order to
-    prevent info file removal.
+    is normally not neeeded any more.  This, however, makes it impossible to run
+    pytis twice within one pytis2go session.  This may be a problem in tests,
+    which we want to be able to run multiple times within one session. Call this
+    function before any other method in this module in order to prevent info
+    file removal.
 
     """
     global _remove_x2go_info_file

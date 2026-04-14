@@ -27,12 +27,12 @@ _ = pytis.util.translations('pytis-web')
 
 
 class UriType:
-    """URI type for 'uri_provider' 'kind' argument.
+    """URI type for `uri_provider` `kind` argument.
 
-    URI provider is a function passed to the form constructor (and from there
-    to the field constructors) that returns different kinds of URIs.  The
-    constants defined by this class define the different kinds of links which
-    may be queried.
+    URI provider is a function passed to the form constructor (and from there to
+    the field constructors) that returns different kinds of URIs.  The constants
+    defined by this class define the different kinds of links which may be
+    queried.
 
     """
     LINK = 'LINK'
@@ -41,7 +41,7 @@ class UriType:
     If an URI is returned by URI provider for this URI kind and given field, the
     field value is rendered as a link pointing to given URI.  If None is
     returned, the field value is not rendered as a link.  The returned URI may
-    be either a string or unicode or a 'Link' instance.
+    be either a string or unicode or a `Link` instance.
 
     """
     ACTION = 'ACTION'
@@ -49,7 +49,7 @@ class UriType:
 
     Allows querying URIs for pytis actions.  The target of the URI provider
     request (the last argument of the provider call) is the
-    'pytis.presentation.Action' instance.
+    `pytis.presentation.Action` instance.
 
     """
     IMAGE = 'IMAGE'
@@ -65,10 +65,10 @@ class UriType:
     TOOLTIP = 'TOOLTIP'
     """URI for loading an asynchronous tooltip content for given field.
 
-    If an URI is returned by URI provider for this URI kind and given field,
-    the field will display the content loaded from this uri as a tooltip when
-    the mouse hovers over the field value.  Any errors loading the URI are
-    silently ignored and the tooltip is just not dispayed in this case.
+    If an URI is returned by URI provider for this URI kind and given field, the
+    field will display the content loaded from this uri as a tooltip when the
+    mouse hovers over the field value.  Any errors loading the URI are silently
+    ignored and the tooltip is just not dispayed in this case.
 
     """
     PRINT = 'PRINT'
@@ -86,13 +86,13 @@ class UriType:
 
 
 class Link:
-    """Link representation for 'uri_provider' returned value.
+    """Link representation for `uri_provider` returned value.
 
     The value returned by URI provider (function passed to the form constructor)
     is normally a string or unicode containing the URI.  If the URI provider
     wants to also specify the title or target of the link (as defined by the
-    corresponding HTML A tag attributtes) it may return an instance of this
-    class instead of a string.
+    corresponding HTML A tag attributes) it may return an instance of this class
+    instead of a string.
 
     """
 
@@ -112,22 +112,22 @@ class Link:
 
 
 def localizable_export(value, **kwargs):
-    """Try to convert a pytis value into a corresponding 'lcg.Localizable'.
+    """Try to convert a pytis value into a corresponding `lcg.Localizable`.
 
-    Arguemnts:
-      value -- 'pytis.data.Value' instance to be converted.
-
-    'lcg.LocalizableDateTime' instances may be included in LCG element's export
+    `lcg.LocalizableDateTime` instances may be included in LCG element's export
     result and will be automatically formatted according to the target locale
     during LCG export.  The function returns a string if the conversion is not
     possible (see below) or necessary (for null values).
 
     The conversion is applied only to base pytis.data.Date type and not to its
     descendants.  The derived classes may customize the export and since we are
-    replacing the type's export here, the customized export would be igored.
+    replacing the type's export here, the customized export would be ignored.
     Thus it is safer to limit special handling to direct pytis.data.Date
-    instances here, althought it is unpleasant, that derived types are not
+    instances here, although it is unpleasant that derived types are not
     localized automatically.
+
+    Arguments:
+      value: `pytis.data.Value` instance to be converted.
 
     """
     if value.value() is not None:
@@ -156,9 +156,9 @@ def localizable_export(value, **kwargs):
 class Content(pd.Type):
     """Data type for representation of lcg.Content within pytis fields.
 
-    The type currently doesn't support DB serialization/deserialization and
-    thus is only suitable for ineditable virtual fields.  It just allows to
-    display arbitrary content in web forms.
+    The type currently doesn't support DB serialization/deserialization and thus
+    is only suitable for ineditable virtual fields.  It just allows to display
+    arbitrary content in web forms.
 
     """
     pass
@@ -169,15 +169,15 @@ class Field:
 
     An instance of this class represents a pytis form field an all kinds of
     pytis web forms.  It defines public methods and attributes to query field
-    properties and methods 'format()' and 'editor()' which render the final
-    HTML representation of the field ('format()' renders the read-only
-    representation and 'editor()' the editable field).  All public attributes
-    must be treated as read-only!
+    properties and methods `format` and `editor` which render the final HTML
+    representation of the field (`format` renders the read-only representation
+    and `editor` the editable field).  All public attributes must be treated as
+    read-only!
 
-    Subclasses of this class define specific kinds of fields with different
-    user interface and behavior.  A new instance is created by the static
-    method 'create()', which automatically decides which particular subclass
-    must be used for given field according to specification.
+    Subclasses of this class define specific kinds of fields with different user
+    interface and behavior.  A new instance is created by the static method
+    `create`, which automatically decides which particular subclass must be used
+    for given field according to specification.
 
     """
     _JS_CLASS = 'pytis.Field'
@@ -187,16 +187,16 @@ class Field:
         """Create a new instance of the corresponding Field subclass.
 
         Arguments:
-
-          row -- 'pytis.presentation.PresentedRow' instance
-          spec -- 'pytis.presentation.Field' specification instance of the field to create
-          form -- 'pytis.web.Form' instance of the field's parent form
-          uri_provider -- URI provider function as described in 'UriType' class
-          multirow -- boolean flag; True if the field appears in a multiline
-            edit form, where the HTML field name and identifier must contain
-            the row identification (will be suffixed by the exported row key
-            value separated by a dash from the name and id of the field
-            itself).  If False, no suffix is used.
+          row: `pytis.presentation.PresentedRow` instance
+          spec: `pytis.presentation.Field` specification instance of the field
+            to create
+          form: `pytis.web.Form` instance of the field's parent form
+          uri_provider: URI provider function as described in `UriType` class
+          multirow: boolean flag; True if the field appears in a multiline edit
+            form, where the HTML field name and identifier must contain the row
+            identification (will be suffixed by the exported row key value
+            separated by a dash from the name and id of the field itself).  If
+            False, no suffix is used.
 
         """
         data_type = row.type(spec.id())
@@ -273,12 +273,12 @@ class Field:
     def _format(self, context):
         """Return the formatted field value as a (localizable) string.
 
-        This method is called as part of the public method 'format()' to
-        provide the field's exported value.  The final result returned by
-        'format()' will also include the additional information returned by the
-        method '_display()' (if not None).  For fields represented by links,
-        value returned by '_format() will be used as the link label and the
-        '_display()' result will be added outside the link.
+        This method is called as part of the public method `format` to provide
+        the field's exported value.  The final result returned by `format` will
+        also include the additional information returned by the method
+        `_display` (if not None).  For fields represented by links, value
+        returned by `_format` will be used as the link label and the `_display`
+        result will be added outside the link.
 
         """
         value = self._row.format(self.id, export=localizable_export)
@@ -304,7 +304,7 @@ class Field:
             return localizable_export(self._value())
 
     def _display(self, context):
-        """Additional information about the field value (see '_format()' for more info)."""
+        """Additional information about the field value (see `_format` for more info)."""
         return None
 
     def _value(self):
@@ -329,8 +329,8 @@ class Field:
         """Return the field editor control as HTML string.
 
         The keyword arguments passed to this method are the values returned by
-        '_editor_kwargs()'.  This allows easier customization of the final
-        result by independent overriding of either of the two methods.
+        `_editor_kwargs`.  This allows easier customization of the final result
+        by independent overriding of either of the two methods.
 
         """
         return None
@@ -363,14 +363,15 @@ class Field:
         return True
 
     def validate(self, req, locale_data):
-        """Validate the submitted field value and return ValidationError or None.
+        """Validate the submitted field value and return `pytis.data.ValidationError` or None.
 
         Returns None if the field value in given request is valid.  Returns
-        ValidationError if validation fails.
+        `pytis.data.ValidationError` if validation fails.
 
-        The valid field value is propagated to the underlying PresentedRow
-        instance as a side effect.  If the submitted value is invalid, it is
-        also available later through 'PresentedRow.invalid_string()'.
+        The valid field value is propagated to the underlying
+        `pytis.presentation.PresentedRow` instance as a side effect.  If the
+        submitted value is invalid, it is also available later through
+        `pytis.presentation.PresentedRow.invalid_string`.
 
         """
         value = req.param(self.name())

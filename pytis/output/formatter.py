@@ -19,24 +19,22 @@
 """Formátování výstupu.
 
 Modul má na starost formátování textu a dat pro výstup dle zadaných šablon.
-Zpracovává specifikace v podobě značek definovaných v modulu 'markup'.  Šablony
-mají podobu pythonových souborů, obsahujících následující funkce vracející
-odpovídající specifikace:
+Zpracovává specifikace v podobě značek definovaných v modulu `markup`.
+Šablony mají podobu pythonových souborů, obsahujících následující funkce
+vracející odpovídající specifikace:
 
-  doc_header -- hlavička dokumentu; implicitně prázdná
-  doc_footer -- zakončení dokumentu; implicitně prázdné
-  page_header -- hlavička stránky; implicitně prázdná
-  page_footer -- patička stránky; implicitně číslo stránky
-  first_page_header -- hlavička první stránky; implicitně shodná
-    s 'page_header'
-  page_layout -- dictionary parametrů určujících velikosti stránky a jejích
-    okrajů; klíči jsou 'PAGE_*' konstanty modulu, hodnoty jsou popsány
-    v dokumentaci těchto konstant
-  background -- pozadí stránky; implicitně prázdné bílé
-  body -- obsah dokumentu samotného; tato funkce musí být povinně přítomna
+doc_header: hlavička dokumentu; implicitně prázdná doc_footer: zakončení
+dokumentu; implicitně prázdné page_header: hlavička stránky; implicitně
+prázdná page_footer: patička stránky; implicitně číslo stránky
+first_page_header: hlavička první stránky; implicitně shodná s page_header
+page_layout: dictionary parametrů určujících velikosti stránky a jejích
+  okrajů; klíči jsou PAGE_* konstanty modulu, hodnoty jsou popsány v
+  dokumentaci těchto konstant
+background: pozadí stránky; implicitně prázdné bílé body: obsah dokumentu
+samotného; tato funkce musí být povinně přítomna
 
-Hlavní třídou modulu je třída 'Formatter'.  Ta zajišťuje načtení a zpracování
-šablon a doručení zformátovaných dat.
+Hlavní třídou modulu je třída `Formatter`.  Ta zajišťuje načtení a
+zpracování šablon a doručení zformátovaných dat.
 
 """
 from __future__ import unicode_literals
@@ -64,19 +62,19 @@ _ = pytis.util.translations('pytis-wx')
 unistr = type(u'')  # Python 2/3 transition hack.
 
 PAGE_WIDTH = 'pwidth'
-"""Šířka stránky, instance třídy 'Unit'."""
+"""Šířka stránky, instance třídy `Unit`."""
 PAGE_HEIGHT = 'pheight'
-"""Výška stránky, instance třídy 'Unit'."""
+"""Výška stránky, instance třídy `Unit`."""
 # Pokud nejsou uvedeny rozměry PAGE_WIDTH a PAGE_HEIGHT,
 # použijí se v pdf exporteru lcg standardní rozměry stránky A4.
 PAGE_TOP_MARGIN = 'top_margin'
-"""Velikost horního okraje stránky, instance třídy 'Unit'."""
+"""Velikost horního okraje stránky, instance třídy `Unit`."""
 PAGE_BOTTOM_MARGIN = 'bottom_margin'
-"""Velikost dolního okraje stránky, instance třídy 'Unit'."""
+"""Velikost dolního okraje stránky, instance třídy `Unit`."""
 PAGE_LEFT_MARGIN = 'left_margin'
-"""Velikot levého okraje stránky, instance třídy 'Unit'."""
+"""Velikot levého okraje stránky, instance třídy `Unit`."""
 PAGE_RIGHT_MARGIN = 'right_margin'
-"""Velikost pravého okraje stránky, instance třídy 'Unit'."""
+"""Velikost pravého okraje stránky, instance třídy `Unit`."""
 PAGE_LANDSCAPE_MODE = 'landscape_mode'
 """Právě když je pravdivé, bude zaměněna výška a šířka stránky."""
 # Nastavení landscape módu se uplatní jen v případě, že nejsou
@@ -247,13 +245,13 @@ class Formatter(object):
         def _initial_dictionary(self, form, form_bindings, codebooks, current_row, parameters):
             dictionary = _ProxyDict()
             if form is not None:
-                import pytis.form  # must be placed before first `pytis' use here
+                import pytis.form  # must be placed before first `pytis` use here
                 if current_row is None:
                     dictionary['data'] = _FormDataIterator(self._resolver, form,
                                                            transaction=self._transaction,
                                                            parameters=parameters)
                 else:
-                    # Using `data' iteration in row templates is most likely an error.
+                    # Using `data` iteration in row templates is most likely an error.
                     # And since it may cause various performance or system problems we forbid it.
                     dictionary['data'] = _FakeDataIterator()
                 if current_row is None:
@@ -378,21 +376,22 @@ class Formatter(object):
 
     def __init__(self, resolver, output_resolvers, template_id, form=None, form_bindings=None,
                  parameters={}, language=None, translations=(), spec_kwargs=None):
-        """Arguments:
+        """Initialize the formatter.
 
-          resolver -- form specification resolver
-          output_resolvers -- resolver of template names and data objects; may
+        Arguments:
+          resolver: form specification resolver
+          output_resolvers: resolver of template names and data objects; may
             also be a non-empty sequence of resolvers, in such a case the first
-            resolver not throwing 'ResolverError' when accessing the template
+            resolver not throwing `ResolverError` when accessing the template
             will be used
-          template_id -- id of the output template, string
-          form -- current form; 'Form' instance or 'None'
-          form_bindings -- bindings of the current form (if it is the main form
-            of a dual form) as a sequence of 'Binding' instances; or 'None'
-          parameters -- dictionary of form parameters
-          language -- language code to pass to the exporter context
-          translations -- translations to pass to PDFExporter
-          spec_kwargs -- dictionary of keyword arguments to pass to the print
+          template_id: id of the output template, string
+          form: current form; Form instance or None
+          form_bindings: bindings of the current form (if it is the main form of
+            a dual form) as a sequence of Binding instances; or None
+          parameters: dictionary of form parameters
+          language: language code to pass to the exporter context
+          translations: translations to pass to PDFExporter
+          spec_kwargs: dictionary of keyword arguments to pass to the print
             specification constructor
 
         """
@@ -581,17 +580,16 @@ class Formatter(object):
         return pdf
 
     def pdf(self):
-        "Return the formatted document as PDF data (basestring)."
+        """Return the formatted document as PDF data (basestring)."""
         return self._pdf()
 
     def printout(self, stream):
-        """Send the document as PDF to 'stream'.
+        """Send the document as PDF to stream.
+
+        Closing the stream is left up to the caller.
 
         Arguments:
-
-          stream -- stream open for writing, providing 'write' method.
-
-        Closing the 'stream' is left up to the caller.
+          stream: stream open for writing, providing write method.
 
         """
         stream.write(self._pdf())
@@ -599,8 +597,8 @@ class Formatter(object):
     def cleanup(self):
         """Call the cleanup method from the print specification.
 
-        This method should be called after displaying the result of
-        'printout()' to the user.
+        This method should be called after displaying the result of `printout`
+        to the user.
 
         """
         self._resolve(self._template_id, 'cleanup')
@@ -614,8 +612,8 @@ class Formatter(object):
         """Return help text to put into a template editing form.
 
         Arguments:
-
-          module -- name of the specification to generate the help for, string
+          row: unused; present for compatibility with the computer callback API
+          module: name of the specification to generate the help for, string
 
         """
         cid = _("COLUMN_IDENTIFIER")
@@ -677,20 +675,20 @@ class PrintSpecification(object):
     """Specification of printed output.
 
     Every method provides specification of the corresponding printed output
-    element.  Every printed specification should define 'body' content, the
+    element.  Every printed specification should define `body` content, the
     other specifications are optional.
 
-    Additionally, it's possible to define initial actions to be performed
-    before printing, typically asking user for dynamic parameters of the
-    output.  You can use 'init()' method for that purpose.
+    Additionally, it's possible to define initial actions to be performed before
+    printing, typically asking user for dynamic parameters of the output.  You
+    can use `init` method for that purpose.
 
     """
 
     def __init__(self, parameters):
-        """
-        Arguments:
+        """Initialize the print specification.
 
-          parameters -- dictionary of print parameters
+        Arguments:
+          parameters: dictionary of print parameters
 
         """
         self._parameters = dict(parameters)
@@ -706,8 +704,8 @@ class PrintSpecification(object):
     def init(self):
         """Run actions to be performed before the printing starts.
 
-        Return true if printing can continue.  If the user interaction
-        indicates that printing should be aborted, return false.
+        Return true if printing can continue.  If the user interaction indicates
+        that printing should be aborted, return false.
 
         """
         return True
@@ -719,8 +717,9 @@ class PrintSpecification(object):
     def body(self):
         """Return body of the document.
 
-        Returns pytis 'Document' instance or a sequence of 'Document' instances
-        or any pytis markup content acceptable by 'Document' constructor.
+        Returns:
+          `Document` instance or a sequence of `Document` instances or any pytis
+          markup content acceptable by the `Document` constructor.
 
         """
         return None
@@ -728,7 +727,8 @@ class PrintSpecification(object):
     def page_header(self):
         """Return header of a page.
 
-        Returns '_Mark' instance.
+        Returns:
+          pytis markup content instance.
 
         """
         return None
@@ -736,10 +736,11 @@ class PrintSpecification(object):
     def first_page_header(self):
         """Return header of the first page.
 
-        It is necessary to define this only when the first page header should
-        be different from the header returned from 'page_header'.
+        It is necessary to define this only when the first page header should be
+        different from the header returned from `page_header`.
 
-        Returns '_Mark' instance.
+        Returns:
+          pytis markup content instance.
 
         """
         return self.page_header()
@@ -747,7 +748,8 @@ class PrintSpecification(object):
     def page_footer(self):
         """Return footer of a page.
 
-        Returns '_Mark' instance.
+        Returns:
+          pytis markup content instance.
 
         """
         return pytis.output.Center('Strana ', pytis.output.PageNumber())
@@ -755,7 +757,8 @@ class PrintSpecification(object):
     def doc_header(self):
         """Return initial part of the whole document.
 
-        Returns '_Mark' instance.
+        Returns:
+          pytis markup content instance.
 
         """
         return None
@@ -763,7 +766,8 @@ class PrintSpecification(object):
     def doc_footer(self):
         """Return closing part of the document.
 
-        Returns '_Mark' instance.
+        Returns:
+          pytis markup content instance.
 
         """
         return None
@@ -771,7 +775,8 @@ class PrintSpecification(object):
     def page_layout(self):
         """Return dictionary of page parameters.
 
-        Returns dictionary of supported page parameters.
+        Returns:
+          dictionary of supported page parameters.
 
         """
         return {}
@@ -779,7 +784,8 @@ class PrintSpecification(object):
     def background(self):
         """Return background image to be put on each page.
 
-        Returns '_Mark' instance.
+        Returns:
+          pytis markup content instance.
 
         """
         return None
@@ -787,7 +793,8 @@ class PrintSpecification(object):
     def style(self):
         """Return style specification of the document.
 
-        Returns textual style specification as basestring.
+        Returns:
+          textual style specification as basestring.
 
         """
         return None

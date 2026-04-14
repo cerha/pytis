@@ -18,7 +18,7 @@
 
 """Working with forms that display data in a list view.
 
-This module interprets the form specification (see the 'spec' module) for
+This module interprets the form specification (see the `spec` module) for
 list views and provides access to it through wxWidgets objects.
 
 """
@@ -87,11 +87,11 @@ unistr = type(u'')  # Python 2/3 transition hack.
 class ListForm(RecordForm, Refreshable):
     """Common base class for forms with a list view.
 
-    These forms display a list of rows split into several columns, i.e. a
-    table. The class defines common features such as navigation, searching,
-    sorting, etc.
+    These forms display a list of rows split into several columns, i.e. a table.
+    The class defines common features such as navigation, searching, sorting,
+    etc.
 
-    The class is a 'CallbackHandler' and passes a dictionary to the callback
+    The class is a `CallbackHandler` and passes a dictionary to the callback
     function, where keys are column ids (strings) and values are the values of
     those columns (also strings) for the row the callback concerns.
 
@@ -234,7 +234,7 @@ class ListForm(RecordForm, Refreshable):
         """Return the ideal column width.
 
         If the user previously explicitly resized the column, the resized width
-        is returned.  Otherwise the ideal width is determined by the
+        is returned. Otherwise the ideal width is determined by the
         specification.
 
         """
@@ -548,10 +548,11 @@ class ListForm(RecordForm, Refreshable):
     def _context_menu(self):
         """Return the specification of the context popup menu for the selected cell.
 
-        Returns: A sequence of 'MenuItem' instances.
-
         Derived classes should override this method if they want to display a
         context menu.
+
+        Returns:
+          A sequence of `MenuItem` instances.
 
         """
         return ()
@@ -713,7 +714,7 @@ class ListForm(RecordForm, Refreshable):
             except Exception:
                 # It sometimes happens, under unknown circumstances, that the
                 # data select gets changed without updating GridTable selection
-                # data.  Then `row' may actually be outside the reported number
+                # data.  Then `row` may actually be outside the reported number
                 # of rows limit and the table row call above may crash.  In
                 # such a case, it's probably better to return an unknown row
                 # instead of raising an error.
@@ -830,11 +831,11 @@ class ListForm(RecordForm, Refreshable):
         """Callback that can be called when data in the data source changes.
 
         This method is intended to be registered via
-        'pytis.data.Data.add_callback_on_change'.
+        `pytis.data.Data.add_callback_on_change`.
 
         The method is not meant for requesting an immediate update; it only
         schedules an update request that is processed at an unspecified later
-        time. For direct updates use 'reset()' and 'refresh()'.
+        time. For direct updates use `reset` and `refresh`.
 
         """
         log(EVENT, 'List data change notification')
@@ -2053,17 +2054,21 @@ class ListForm(RecordForm, Refreshable):
 
     def _export_xlsx(self, update, only_selected=False):
         def writefunc(cid, ctype, vfunc=pytis.util.identity):
-            """Return a closure writing the formatted value of a given column to the spreadsheet.
+            """Return a closure writing the formatted value of a given column.
 
-            Returns a function of arguments (x, y, r, v), where:
-              x -- worksheet column number
-              y -- worksheet row number
-              r -- PresentedRow instance representing the current row
-              v -- internal Python value of the worksheet cell
+            The returned function accepts arguments (x, y, r, v) and writes the
+            formatted cell value to the spreadsheet, where:
 
-            This function allows to perform all decision making once and reuse the created
-            closure repeatedly during export for all rows.  One closure is created for each
-            spreadsheet column according to its data type.
+            Arguments:
+              x (int): worksheet column number
+              y (int): worksheet row number
+              r (`PresentedRow`): instance representing the current row
+              v: internal Python value of the worksheet cell
+
+            This function allows performing all decision making once and reusing
+            the created closure repeatedly during export for all rows. One
+            closure is created for each spreadsheet column according to its data
+            type.
 
             """
             if isinstance(ctype, (pytis.data.Float, pytis.data.Integer)):
@@ -2187,8 +2192,8 @@ class FoldableForm(ListForm):
     objects.
 
     The folding facilities are automatically enabled when a column of type
-    'PrettyFoldable' is present.  At most one such column may be present.  The
-    tree order column referred by the PrettyFoldable column must have unique
+    `PrettyFoldable` is present. At most one such column may be present. The
+    tree order column referred by the `PrettyFoldable` column must have unique
     not-NULL values (typically it is the primary key in the corresponding
     database table).
 
@@ -2202,16 +2207,16 @@ class FoldableForm(ListForm):
     class Folding(object):
         """Representation of current folding state.
 
-        Initial folding level can be specified in the constructor.  Then
-        folding can be changed using 'expand()' method.
+        Initial folding level can be specified in the constructor. Then folding
+        can be changed using `expand` method.
 
         """
         def __init__(self, level=1):
-            """
-            Arguments:
+            """Initialize the folding state.
 
-              level -- initial folding level, integer (0=everything folded,
-                1=single level unfolded, etc.) or 'None' (everything unfolded)
+            Arguments:
+              level (int): initial folding level (0=everything folded, 1=single
+                level unfolded, etc.) or None (everything unfolded).
 
             """
             self._folding = FoldableForm._FoldingState(level=level, subnodes={})
@@ -2295,13 +2300,12 @@ class FoldableForm(ListForm):
             return state is not new_state
 
         def expand(self, node, level=None):
-            """Set folding level of 'node' to 'level'.
+            """Set folding level of `node` to `level`.
 
             Arguments:
-
-              node -- tree column value of the node
-              level -- new folding level of the node, integer or 'None', see
-                '__init__()' for more details
+              node: tree column value of the node
+              level (int): new folding level of the node, integer or None; see
+                `__init__` for more details.
 
             """
             # level==None => expand whole subtree
@@ -2588,16 +2592,15 @@ class FoldableForm(ListForm):
                 self._refresh_folding()
 
     def folding_level(self, row):
-        """Return the current folding level of 'row'.
+        """Return the current folding level of `row`.
 
-        If 'None' is returned, the node is completely expanded.  If 0 is
-        returned then the node is completely folded.  If N, N > 0, is returned
-        then the node is expanded up to level N.  If an empty string is
-        returned, folding is not enabled.
+        If `None` is returned, the node is completely expanded. If 0 is returned
+        then the node is completely folded. If N, N > 0, is returned then the
+        node is expanded up to level N. If an empty string is returned, folding
+        is not enabled.
 
         Arguments:
-
-          row -- 'Row' or 'PresentedRow' instance
+          row (`PresentedRow`): current row instance.
 
         """
         if row is not None and self._folding_enabled():
@@ -2612,13 +2615,13 @@ class CodebookForm(PopupForm, FoldableForm, KeyHandler):
     """Form for displaying a selection list (codebook).
 
     The selection list shows data rows from which the user selects one row.
-    Apart from selecting and browsing, the user cannot otherwise manipulate
-    the rows.
+    Apart from selecting and browsing, the user cannot otherwise manipulate the
+    rows.
 
-    The form is displayed as a modal window using the 'run()' method. It
-    finishes after an item is selected and returns a PresentedRow instance for
+    The form is displayed as a modal window using the `run` method. It
+    finishes after an item is selected and returns a `PresentedRow` instance for
     the selected row. If the form was closed in any other way than selecting a
-    record, 'None' is returned.
+    record, `None` is returned.
 
     """
     DESCR = _("codebook")
@@ -2636,11 +2639,12 @@ class CodebookForm(PopupForm, FoldableForm, KeyHandler):
         wx_callback(wx.grid.EVT_GRID_CELL_LEFT_DCLICK, self._grid, self._on_dclick)
 
     def _init_attributes(self, begin_search=None, **kwargs):
-        """Arguments:
+        """Process constructor arguments and initialize attributes.
 
-          begin_search -- If not None, the form will automatically start
+        Arguments:
+          begin_search: If not None, the form will automatically start
             incremental search on startup. If the value is a string, it is the
-            column identifier in which to search.  Otherwise the search is
+            column identifier in which to search. Otherwise the search is
             performed on the column with primary sorting.
 
         """
@@ -3063,8 +3067,7 @@ class SideBrowseForm(BrowseForm):
         """Process constructor arguments and initialize attributes.
 
         Arguments:
-
-          main_form -- the main form instance.
+          main_form (`Form`): the main form instance.
 
         """
         assert isinstance(main_form, Form), main_form
@@ -3118,8 +3121,7 @@ class SideBrowseForm(BrowseForm):
         """Update form after main form selection.
 
         Arguments:
-
-          row -- main form selected row as a PresentedRow instance.
+          row (`PresentedRow`): main form selected row.
 
         """
         # log(EVENT, 'Filtering form contents:', (self._name, row))
@@ -3167,7 +3169,7 @@ class SideBrowseForm(BrowseForm):
                 self._search(search, pytis.data.FORWARD, row_number=0, report_failure=False)
 
     def side_form_in_condition(self):
-        """Return pytis.form.IN condition for filtering mainform records by this sideform.
+        """Return IN condition for filtering main form records by this side form.
 
         The main form will be filtered to contain only rows which have non-zero
         side form rows with the current binding condition for the current side

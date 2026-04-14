@@ -18,21 +18,22 @@
 
 """Sample web application based on Pytis CMS.
 
-Pytis CMS is a fat client CMS form Pytis Extensions.  See 'defs/cms.py' for more information.
+Pytis CMS is a fat client CMS form Pytis Extensions.  See `defs/cms.py` for
+more information.
 
 This is a sample Web application using Wiking and managed through Pytis CMS.
 
-The Wiking modules based on Pytis CMS are defined in 'pytis.cms.web'.  They are imported
-here so may be further customized here.  They also depend of a few Wiking modules, so these modules
-are also imported here from Wiking.
+The Wiking modules based on Pytis CMS are defined in `pytis.cms.web`. They
+are imported here so may be further customized here.  They also depend on a
+few Wiking modules, so these modules are also imported here from Wiking.
 
-To use this application, simply configure a Wiking site to search this module for available Wiking
-Modules.  For example put this line into the site's configuration file:
+To use this application, simply configure a Wiking site to search this
+module for available Wiking Modules.  For example put this line into the
+site's configuration file: `modules = ('demo',)`.
 
-modules = ('demo',)
-
-Of course, you need to have the path to this module in the Python path of your web server and the
-web server must be configured to run Wiking (see Wiking documentation for more information).
+Of course, you need to have the path to this module in the Python path of
+your web server and the web server must be configured to run Wiking (see
+Wiking documentation for more information).
 
 """
 from __future__ import unicode_literals
@@ -60,9 +61,9 @@ class Application(pytis.cms.web.Application):
 class Products(pytis.cms.web.EmbeddablePytisModule):
     """Sample Wiking module based on misc.Products from Pytis Demo.
 
-    This module is derived from 'EmbeddablePytisModule' and thus may be embedded into page content
-    from Pytis CMS.  The module name must be first added to the codebook of available CMS modules
-    manually.
+    This module is derived from `pytis.cms.web.EmbeddablePytisModule` and thus
+    may be embedded into page content from Pytis CMS.  The module name must be
+    first added to the codebook of available CMS modules manually.
 
     """
     class Spec(wiking.Specification, pytis.demo.misc.Products):
@@ -85,13 +86,13 @@ class Continents(pytis.cms.web.EmbeddablePytisModule):
 class RuntimeFilterDemo(pytis.cms.web.EmbeddablePytisModule):
     """Demonstration of runtime filters and few other AJAX form features.
 
-    This module serves as an example of dynamic form features on the web (through AJAX).  The
-    specification of computers, editability and runtime filters is just the same as in the fat
-    client application.  This way the web forms gain nearly all the comfort we have in the fat
-    client.
+    This module serves as an example of dynamic form features on the web
+    (through AJAX).  The specification of computers, editability and runtime
+    filters is just the same as in the fat client application.  This way the web
+    forms gain nearly all the comfort we have in the fat client.
 
-    This module doesn't exist in the fat client application, so its specification is defined
-    directly here just for the web.
+    This module doesn't exist in the fat client application, so its
+    specification is defined directly here just for the web.
 
     """
     class Spec(wiking.Specification):

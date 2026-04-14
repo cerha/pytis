@@ -36,9 +36,14 @@ from pytis.presentation import Specification
 def implements(api_class, incomplete=False):
     """Decorator for marking a class which implements a particular API.
 
-    The argument is the API definition class.  Particular API definition
-    classes are defined below.  The implementing class then must define all
-    public methods and properties defined by the definition class.
+    The argument is the API definition class.  Particular API definition classes
+    are defined below.  The implementing class then must define all public
+    methods and properties defined by the definition class.
+
+    Arguments:
+      api_class: The API definition class.
+      incomplete (bool): If True, incomplete implementations are allowed (not
+        all API members need to be implemented).
 
     """
     def provider(self):
@@ -80,13 +85,13 @@ def implements(api_class, incomplete=False):
 class APIProvider(object):
     """Public API provider proxying access to the public API of the wrapped instance.
 
-    This class checks for correct API implementation of the wrapped instance
-    and restricts access to its attributes to only those which belong to the
-    public API.
+    This class checks for correct API implementation of the wrapped instance and
+    restricts access to its attributes to only those which belong to the public
+    API.
 
-    Marking a class by the 'pytis.api.implements()' decorator adds a new public
-    method 'provider()' which returnes a (cached) 'APIProvider' instance for
-    the implementation class instance on which it is called.
+    Marking a class by the `implements` decorator adds a new public method
+    `provider` which returns a (cached) `APIProvider` instance for the
+    implementation class instance on which it is called.
 
     """
     def __init__(self, instance=None):
@@ -118,16 +123,16 @@ class APIProvider(object):
 
 
 class ApplicationAPIProvider(APIProvider):
-    """Special case of API provider for the top level 'pytis.api.app' instance.
+    """Special case of API provider for the top level `pytis.api.app` instance.
 
-    We need an initially uninitialized instance in 'pytis.api.app' to allow
-    'from pytis.api import app' in the top level of application modules.  This
+    We need an initially uninitialized instance in `pytis.api.app` to allow
+    `from pytis.api import app` in the top level of application modules. This
     instance will be initialized as soon as the real Application API
     implementing instance is ready.
 
-    Morover we want initialize a limited application in scripts where a real
-    application does not actually run.  When 'app.param' is accessed when
-    'init()' has not been called (yet), 'BaseApplication' instance is created
+    Moreover we want to initialize a limited application in scripts where a real
+    application does not actually run.  When app.param is accessed when `init`
+    has not been called (yet), a `BaseApplication` instance is created
     automatically.
 
     """
@@ -139,7 +144,7 @@ class ApplicationAPIProvider(APIProvider):
             # Automatically handle application initialization for scripts:
             # Application attributes may be accessed here when no actual
             # application is running.  Initializing BaseApplication will
-            # make the basic set of app methods (such as app.param,
+            # make the basic set of app methods (such as `app.param`,
             # app.has_access, ...) available on the 'app' object.
             # '__' prefixed attributes are ignored here because these
             # may be examined during introspection, such as on pytest
@@ -152,7 +157,9 @@ class ApplicationAPIProvider(APIProvider):
         self._init(instance)
 
     def release(self):
-        """Stop providing the API implemented by the current application instance."""
+        """Stop providing the API implemented by the current application instance.
+
+        """
         self._instance = None
 
 
@@ -160,7 +167,7 @@ class API:
     """Common base class for definition of public API methods and attributes.
 
     API definition classes are derived from this base class.  Classes
-    implementing a particular API are decorated using 'implements()'.
+    implementing a particular API are decorated using `implements`.
 
     """
     pass
@@ -182,36 +189,40 @@ class Form(API):
     field = property()
     """Access to input fields through the attributes of this object.
 
-    Has one attribute named by field id for each field present in the form.
-    Each field attribute represents a 'pytis.api.Field' API.  Is None in forms
-    which have no input fields (such as browse forms).
+    Has one attribute named by field id for each field present in the form. Each
+    field attribute represents a `pytis.api.Field` API.  Is None in forms which
+    have no input fields (such as browse forms).
 
     May also be called passing the field id as a string.  Thus
-    'form.field.field_id' or 'form.field("field_id")' should both
-    give the same result.
+    `form.field.field_id` or `form.field("field_id")` should both give the same
+    result.
 
     """
 
     condition = property()
-    """Current filtering condition as a 'pytis.data.Operator' instance or None."""
+    """Current filtering condition as a `pytis.data.Operator` instance or None."""
 
     arguments = property()
-    """Current arguments as a dictionary of 'pytis.data.Value' instances or None."""
+    """Current arguments as a dictionary of `pytis.data.Value` instances or None.
+
+    """
 
     sorting = property()
-    """Current sorting as in 'pytis.data.Data.select()' or None."""
+    """Current sorting as in `pytis.data.Data.select` or None."""
 
     profile = property()
-    """Current form profile as 'pytis.presentation.Profile' instance or None."""
+    """Current form profile as `pytis.presentation.Profile` instance or None.
+
+    """
 
     query_fields = property()
-    """The form's query fields panel API as 'pytis.api.QueryFields' instance.
+    """The form's query fields panel API as `pytis.api.QueryFields` instance.
 
     Returns None if the form has no query fields panel.
 
     """
     row = property()
-    """The current form row as 'pytis.presentation.PresentedRow' instance.
+    """The current form row as `pytis.presentation.PresentedRow` instance.
 
     The current row is the currently active (focused) row of the form.  It
     represents the currently displayed record or the focused row in a multirow
@@ -222,7 +233,8 @@ class Form(API):
     """Iterator over all currently selected rows.
 
     The iterator returns all rows present in the current selection as
-    'pytis.presentation.PresentedRow' instances in the order of their presence in the form.
+    `pytis.presentation.PresentedRow` instances in the order of their presence
+    in the form.
 
     """
     main_form = property()
@@ -250,14 +262,13 @@ class Form(API):
         """Make given row the currently selected row of the form.
 
         Arguments:
-
-          position -- It may be a 'pytis.data.Value' instance representing the
-            value of the key column, a tuple of Value instances representing a
-            multi-column key, a non-negative integer representing the ordinal
-            position of the row to be selected starting from zero, a dictionary
-            of 'pytis.data.Value' instances keyed by column ids to select the
-            first row with matching values or a 'pytis.data.Row' instance to
-            select the row matching the value of the key columns(s).
+          position: May be a `pytis.data.Value` instance representing the value
+            of the key column, a tuple of Value instances representing a multi-
+            column key, a non-negative integer representing the ordinal position
+            of the row to be selected starting from zero, a dictionary of
+            `pytis.data.Value` instances keyed by column ids to select the first
+            row with matching values or a `pytis.data.Row` instance to select
+            the row matching the value of the key columns(s).
 
         """
 
@@ -270,14 +281,13 @@ class Form(API):
         The other forms are hidden and inactive.
 
         Modal forms can not be activated this way.  The top most modal form is
-        always active and blocks activation of any other form (modal or
-        non-modal).
+        always active and blocks activation of any other form (modal or non-
+        modal).
 
         Returns:
-
           True if the form was successfully activated or False otherwise (such
-          as when the form already is active, if there is a modal form or
-          dialog blocking its activation or if the form actually is modal).
+          as when the form already is active, if there is a modal form or dialog
+          blocking its activation or if the form actually is modal).
 
         """
         pass
@@ -285,9 +295,12 @@ class Form(API):
     def close(self, force=False):
         """Close the form and destroy all its UI elements.
 
-        If 'force' is False, the user may be asked to confirm closing if there
-        is some "work in progress" (whatever that means for given form type).
-        If 'force' is True, the form is closed unconditionally.
+        If force is False, the user may be asked to confirm closing if there is
+        some "work in progress" (whatever that means for given form type). If
+        force is True, the form is closed unconditionally.
+
+        Arguments:
+          force (bool): If True, close unconditionally without asking.
 
         """
 
@@ -296,15 +309,20 @@ class Form(API):
 class StatusField(API):
     """Public API representation of a status bar field.
 
-    Status bar fields are defined by 'pytis.presentation.StatusField' instances
-    returned by 'pytis.presentation.Application.status_fields()'.
+    Status bar fields are defined by `pytis.presentation.StatusField` instances
+    returned by `pytis.presentation.Application.status_fields`.
 
     """
 
     def update(self, text=None, icon=None, tooltip=None):
         """Update the text and/or icon displayed in the field.
 
-        Same as setting the corresponding field propertiess separately.
+        Same as setting the corresponding field properties separately.
+
+        Arguments:
+          text (str): New text to display or None to leave unchanged.
+          icon (str): New icon identifier or None to leave unchanged.
+          tooltip (str): New tooltip text or None to leave unchanged.
 
         """
         pass
@@ -326,8 +344,9 @@ class StatusField(API):
     """Get/set the current status field icon as a string or None.
 
     The icon is determined by a string identifier accepted by
-    'pytis.form.get_icon()'.  The position of the icon is determined by the
-    field specification ('icon_position' passed to 'StatusField' constructor).
+    `pytis.form.get_icon`.  The position of the icon is determined by the field
+    specification (icon_position passed to `pytis.presentation.StatusField`
+    constructor).
 
     """
 
@@ -336,10 +355,10 @@ class StatusField(API):
 
     May also be a function with no arguments returning a string.  In this case
     the function is called when the tooltip is really needed at the moment when
-    the user hovers above the field.  Note that the function is called only
-    once and its result is cached until the tooltip is set next time.  Note
-    that field label (defined by field specification) is displeyed in the
-    tooltip by default as a heading above the actual tooltip content.
+    the user hovers above the field.  Note that the function is called only once
+    and its result is cached until the tooltip is set next time.  Note that
+    field label (defined by field specification) is displayed in the tooltip by
+    default as a heading above the actual tooltip content.
 
     """
 
@@ -358,8 +377,11 @@ class Field(API):
     def on_list_change(self, callback):
         """Add callback on change of the list of available values in a LIST field.
 
-        Raises Exception when called on a field which is not
-        selection_type=LIST.
+        Arguments:
+          callback (callable): Function to be called on list change.
+
+        Raises:
+          `Exception`: When called on a field which is not selection_type=LIST.
 
         """
         pass
@@ -369,13 +391,13 @@ class QueryFields(API):
     """Public API representation of the form's query fields panel."""
 
     row = property()
-    """The query field values as 'pytis.presentation.PresentedRow' instance."""
+    """The query field values as `pytis.presentation.PresentedRow` instance."""
 
 
 class Application(API):
     """Public API representation of the currently running application.
 
-    Accessed through 'pytis.api.app'.
+    Accessed through `pytis.api.app`.
 
     """
     title = property()
@@ -385,44 +407,44 @@ class Application(API):
     """Access to shared parameters.
 
     Shared parameters provide a simple way to share values between the database
-    and the application code.  Each 'pytis.presentation.SharedParams' instance
-    defined in 'Application.params()' leads to creation of one attribute
-    'app.param.<name>', where <name> corresponds to the name defined by the
-    'SharedParams' instance.  Shared parameter values can be accessed as
-    'app.param.<name>.<param>', where <param> corresponds to the name of the
-    column present in the data object defined by the SharedParams instance.
-    When read, the attributes return the internal Python value of the column.
-    When assigned, they update the value in the database.
+    and the application code.  Each `pytis.presentation.SharedParams` instance
+    defined in `Application.params` leads to creation of one attribute
+    `app.param.<name>`, where `<name>` corresponds to the name defined by the
+    `pytis.presentation.SharedParams` instance.  Shared parameter values can be
+    accessed as `app.param.<name>.<param>`, where `<param>` corresponds to the
+    name of the column present in the data object defined by the SharedParams
+    instance.  When read, the attributes return the internal Python value of the
+    column.  When assigned, they update the value in the database.
 
     """
 
     form = property()
-    """The current form as 'pytis.api.Form' instance or None.
+    """The current form as `pytis.api.Form` instance or None.
 
     Returns None if there is no open form in the application.  If the current
-    form is a dual form, returns its current subform.  If there is a modal
-    form (such as a popup edit form), returns the modal form.
+    form is a dual form, returns its current subform.  If there is a modal form
+    (such as a popup edit form), returns the modal form.
 
     """
 
     forms = property()
-    """List of all currently opened forms as 'pytis.api.Form' instances.
+    """List of all currently opened forms as `pytis.api.Form` instances.
 
-    Returns the top level forms, so if there is a dual form, it is returned,
-    not its current subform (as in 'form').  The most recently used forms are
-    ordered first.  If there are any modal forms, they are returned at the
-    beginning of the list.
+    Returns the top level forms, so if there is a dual form, it is returned, not
+    its current subform (as in form).  The most recently used forms are ordered
+    first.  If there are any modal forms, they are returned at the beginning of
+    the list.
 
     """
 
     main_form = property()
-    """The main form of the current dual form as 'pytis.api.Form' instance or None.
+    """The main form of the current dual form as `pytis.api.Form` instance or None.
 
     Returns None if the current form is not dual form.
 
     """
     side_form = property()
-    """The side form of the current dual form as 'pytis.api.Form' instance or None.
+    """The side form of the current dual form as `pytis.api.Form` instance or None.
 
     Returns None if the current form is not dual form.
 
@@ -434,10 +456,10 @@ class Application(API):
     The returned object has one attribute named by field id for each field
     present in the status bar.  If the field id contains a hyphen, it is
     replaced by an underscore in the attribute name.  Each field implements the
-    'pytis.api.StatusField' API.
+    `pytis.api.StatusField` API.
 
     May also be called passing the field id as a string.  Thus
-    'app.status.field_id' or 'app.status("field_id")' should both give the same
+    `app.status.field_id` or `app.status("field_id")` should both give the same
     result.
 
     """
@@ -446,10 +468,9 @@ class Application(API):
         """Display a non-interactive message to the user.
 
         Arguments:
-
-          message -- the text to be displayed.
-          kind -- message kind as a string.  One of 'info', 'warning', 'error'.
-            The message kind may be indicated in the UI using colors, icons or
+          message (str): The text to be displayed.
+          kind (str): Message kind.  One of 'info', 'warning', 'error'. The
+            message kind may be indicated in the UI using colors, icons or
             sounds (beeping for 'warning' and 'error' etc.).
 
         """
@@ -461,11 +482,10 @@ class Application(API):
         The user needs to confirm the dialog before continuing.
 
         Arguments:
-
-          message -- the text to be displayed.
-          title -- dialog window title as a string.
-          content -- additional content to be displayed under the message in a
-            possibly scrollable view.  May be passed as 'lcg.Content' instance
+          message (str): The text to be displayed.
+          title (str): Dialog window title.
+          content: Additional content to be displayed under the message in a
+            possibly scrollable view.  May be passed as `lcg.Content` instance
             which is exported and displayed in an HTML component or a string
             which is displayed as plain text.
 
@@ -478,11 +498,10 @@ class Application(API):
         The user needs to confirm the dialog before continuing.
 
         Arguments:
-
-          message -- the warning text to be displayed.
-          title -- dialog window title as a string.
-          content -- additional content to be displayed under the message in a
-            possibly scrollable view.  May be passed as 'lcg.Content' instance
+          message (str): The warning text to be displayed.
+          title (str): Dialog window title.
+          content: Additional content to be displayed under the message in a
+            possibly scrollable view.  May be passed as `lcg.Content` instance
             which is exported and displayed in an HTML component or a string
             which is displayed as plain text.
 
@@ -495,11 +514,10 @@ class Application(API):
         The user needs to confirm the dialog before continuing.
 
         Arguments:
-
-          message -- the error text to be displayed.
-          title -- dialog window title as a string.
-          content -- additional content to be displayed under the message in a
-            possibly scrollable view.  May be passed as 'lcg.Content' instance
+          message (str): The error text to be displayed.
+          title (str): Dialog window title.
+          content: Additional content to be displayed under the message in a
+            possibly scrollable view.  May be passed as `lcg.Content` instance
             which is exported and displayed in an HTML component or a string
             which is displayed as plain text.
 
@@ -513,28 +531,26 @@ class Application(API):
         The user needs to answer by pressing one of the available buttons.
         Default buttons are 'Yes' and 'No' and the method returns True when
         'Yes' was selected, False when 'No' was pressed and None when canceled.
-        Custom answers can be passed using the 'answers' argument.
+        Custom answers can be passed using the answers argument.
 
         Arguments:
-
-          message -- the question to be displayed.
-          answers -- available answers.  When None, the default answers are
-            'Yes' and 'No' and True/False is returned on pressing Yes/No.
-            Custom answers may be specified as a sequence of button label
-            strings.  Pressing one of the buttons results in returning given
-            label.
-          default -- the default selected answer (pressing Enter submits it).
-            If no answers are given (the answers are Yes/No), the value is a
+          message (str): The question to be displayed.
+          answers: Available answers.  When None, the default answers are 'Yes'
+            and 'No' and True/False is returned on pressing Yes/No. Custom
+            answers may be specified as a sequence of button label strings.
+            Pressing one of the buttons results in returning given label.
+          default: The default selected answer (pressing Enter submits it). If
+            no answers are given (the answers are Yes/No), the value is a
             boolean - True for 'Yes', False for 'No'.  Otherwise the value must
             be a string matching one of the given answers.
-          title -- dialog window title as a string.
-          content -- additional content to be displayed under the message in a
-            possibly scrollable view.  May be passed as 'lcg.Content' instance
+          title (str): Dialog window title.
+          content: Additional content to be displayed under the message in a
+            possibly scrollable view.  May be passed as an lcg.Content instance
             which is exported and displayed in an HTML component or a string
             which is displayed as plain text.
-          timeout -- dialog timeout in seconds; integer.  If not None, the
-            dialog is automatically closed after given timeout returning 'None'
-            as the answer.
+          timeout (int): Dialog timeout in seconds.  If not None, the dialog is
+            automatically closed after given timeout returning None as the
+            answer.
 
         """
         pass
@@ -550,31 +566,29 @@ class Application(API):
     def input_text(self, title, label, default=None, not_null=False, width=20, height=1,
                    descr=None, noselect=False, compact=False,
                    text_format=pytis.presentation.TextFormat.PLAIN, attachment_storage=None):
-        """Display a form for entering a single textual value and return this value.
+        """Display a form for entering a single textual value and return it.
 
         Arguments:
+          title (str): Input form main title.
+          label (str): Field label or None for an unlabeled field.
+          default (str): Initial field value.
+          not_null (bool): If True, it will not be possible to submit the form
+            without entering a value.
+          width (int): Input field width (number of characters).
+          height (int): Input field height (number of characters).
+          descr (str): Field description displayed in a tooltip of a blue icon
+            right from the field.
+          noselect (bool): The initial input field value is by default initially
+            selected, which results in overwriting the whole value when the user
+            starts typing.  Passing True here avoids this initial selection.
+          compact (bool): If true, show field label above the field instead of
+            on the left (as in pytis.presentation.Field).
+          text_format: As in pytis.presentation.Field.
+          attachment_storage: As in pytis.presentation.Field.
 
-          title -- input form main title as a string.
-          label -- field label as a string or None for an unlabeled field.
-          default -- initial field value as a string.
-          not_null -- iff True, it will not be possible to submit the form without
-            entering a value.
-          width -- input field width (number of characters).
-          height -- input field height (number of characters).
-          descr -- field description displayed in a tooltip of a blue icon right
-            from the field.
-          noselect -- the initial input field value is by default initially
-            selected, which results in overwriting the whole value when the
-            user starts typing.  Passing True here avoids this initial
-            selection.
-          compact -- if true, show field label above the field instead of on
-            the left (as in 'pytis.presentation.Field').
-          text_format -- as in 'pytis.presentation.Field'.
-          attachment_storage -- as in 'pytis.presentation.Field'.
-
-        Returns the value entered into the field as a string or None if the
-        form was escaped or the value was empty (only possible when not_null is
-        False).
+        Returns:
+          The value entered into the field as a string or None if the form was
+          escaped or the value was empty (only possible when not_null is False).
 
         """
         pass
@@ -583,52 +597,51 @@ class Application(API):
         """Display a form for entering a date and return this value.
 
         Arguments:
+          title (str): Input form main title.
+          label (str): Field label.  If None, "Date" is used as the default.
+          default (datetime.date): Initial field value or None.
+          not_null (bool): If True, it will not be possible to submit the form
+            without entering a value.
+          descr (str): Field description displayed in a tooltip of a blue icon
+            right from the field.
+          noselect (bool): The initial input field value is by default initially
+            selected, which results in overwriting the whole value when the user
+            starts typing.  Passing True here avoids this initial selection.
 
-          title -- input form main title as a string.
-          label -- field label as a string.  If None, "Date" is used as the default.
-          default -- initial field value as 'datetime.date' or None.
-          not_null -- iff True, it will not be possible to submit the form without
-            entering a value.
-          descr -- field description displayed in a tooltip of a blue icon right
-            from the field.
-          noselect -- the initial input field value is by default initially
-            selected, which results in overwriting the whole value when the
-            user starts typing.  Passing True here avoids this initial
-            selection.
-
-        Returns the value entered into the field as a 'datetime.date' instance or
-        None if the form was escaped or the value was empty (only possible when
-        not_null is False).
+        Returns:
+          The value entered into the field as a datetime.date instance or None
+          if the form was escaped or the value was empty (only possible when
+          not_null is False).
 
         """
         pass
 
     def input_number(self, title, label, default=None, not_null=True, width=14, precision=None,
                      minimum=None, maximum=None, descr=None, noselect=False):
-        """Display a form for entering a single numeric value and return this value.
+        """Display a form for entering a single numeric value and return it.
 
         Arguments:
+          title (str): Input form main title.
+          label (str): Field label or None for an unlabeled field.
+          default: Initial field value as int or float (float when precision is
+            given).
+          not_null (bool): If True, it will not be possible to submit the form
+            without entering a value.
+          width (int): Total input field width (number of characters).
+          precision (int): Number of digits after decimal point or None for an
+            integer field.
+          minimum: Minimal value; None denotes no limit.
+          maximum: Maximal value; None denotes no limit.
+          descr (str): Field description displayed in a tooltip of a blue icon
+            right from the field.
+          noselect (bool): The initial input field value is by default initially
+            selected, which results in overwriting the whole value when the user
+            starts typing.  Passing True here avoids this initial selection.
 
-          title -- input form main title as a string.
-          label -- field label as a string or None for an unlabeled field.
-          default -- initial field value as int or float (float when
-            precision is given).
-          not_null -- iff True, it will not be possible to submit the form without
-            entering a value.
-          width -- total input field width (number of characters).
-          precision -- number of digits after decimal point or None for an integer field.
-          minimum -- minimal value; 'None' denotes no limit.
-          maximum -- maximal value; 'None' denotes no limit.
-          descr -- field description displayed in a tooltip of a blue icon right
-            from the field.
-          noselect -- the initial input field value is by default initially
-            selected, which results in overwriting the whole value when the
-            user starts typing.  Passing True here avoids this initial
-            selection.
-
-        Returns the value entered into the field as int or float (float when
-        precision was given) or None if the form was escaped or the value was empty
-        (only possible when not_null is False).
+        Returns:
+          The value entered into the field as int or float (float when precision
+          was given) or None if the form was escaped or the value was empty
+          (only possible when not_null is False).
 
         """
         pass
@@ -638,42 +651,41 @@ class Application(API):
         """Display modal form to collect user input from user defined fields.
 
         Arguments:
-
-          title -- window title as a string.
-          fields -- sequence of form field specifications as
-            'pytis.presentation.Field' instances.
-          prefill -- initial field values as a dictionary or None.  The
-            dictionary keys are field identifiers and values are either the
-            corresponding internal Python values valid for the fields's data
-            type or 'pytis.data.Value' instances directly.
-          layout -- form layout as in 'pytis.presentation.ViewSpec'
+          title (str): Window title.
+          fields: Sequence of form field specifications as
+            `pytis.presentation.Field` instances.
+          prefill (dict): Initial field values or None.  The dictionary keys are
+            field identifiers and values are either the corresponding internal
+            Python values valid for the field's data type or `pytis.data.Value`
+            instances directly.
+          layout: Form layout as in `pytis.presentation.ViewSpec` constructor.
+          check: Form check function as in `pytis.presentation.ViewSpec`
             constructor.
-          check -- form check function as in 'pytis.presentation.ViewSpec'
-            constructor.
-          noselect -- the initial input field values are by default initially
-            selected when the field is entered, which results in overwriting
-            the whole value when the user starts typing.  Passing True here
-            avoids this initial selection.
-          inserted_data -- iterable providing items for batch insertion.  Each
-            item may be a 'pytis.data.Row' instance or a dictionary as in
-            'prefill'.  If not null, the form is gradually prefilled by
-            given data and the user can individually accept or skip each row.
-            Use 'on_commit_record' to handle the user accepted records
-            (multiple records can not be passed through the return value).
-          focus_field -- identifier of the field to be activated for user input
-            on form startup.  If None, the first field is the default.  It is
-            also possible to pass a function of one argument -- the
-            PresentedRow instance representing the current record.  This
-            function must return a field identifier or None.
-          on_commit_record -- callback to be called when the record is
-            succesfully saved after the submit button is pressed.  Similar to
-            'cleanup' in form specification and called just after cleanup when
-            both defined.  A 'pytis.presentation.PresentedRow' instance is
+          noselect (bool): The initial input field values are by default
+            initially selected when the field is entered, which results in
+            overwriting the whole value when the user starts typing. Passing
+            True here avoids this initial selection.
+          inserted_data: Iterable providing items for batch insertion.  Each
+            item may be a `pytis.data.Row` instance or a dictionary as in
+            prefill.  If not null, the form is gradually prefilled by given data
+            and the user can individually accept or skip each row. Use
+            on_commit_record to handle the user accepted records (multiple
+            records can not be passed through the return value).
+          focus_field: Identifier of the field to be activated for user input on
+            form startup.  If None, the first field is the default.  It is also
+            possible to pass a function of one argument (the
+            `pytis.presentation.PresentedRow` instance representing the current
+            record).  This function must return a field identifier or None.
+          on_commit_record (callable): Callback to be called when the record is
+            successfully saved after the submit button is pressed. Similar to
+            cleanup in form specification and called just after cleanup when
+            both defined.  A `pytis.presentation.PresentedRow` instance is
             passed as argument.
-          transaction -- transaction for DB operations.
+          transaction: Transaction for DB operations.
 
-        Returns a 'pytis.presentation.PresentedRow' instance containing field
-        values or None if the user cancels the form.
+        Returns:
+          A `pytis.presentation.PresentedRow` instance containing field values
+          or None if the user cancels the form.
 
         """
         pass
@@ -682,40 +694,38 @@ class Application(API):
                    copied_row=None, set_values=None, block_on_new_record=False, transaction=None):
         """Insert a new record using a modal form.
 
-        Arguments:
+        Runs `on_new_record` instead of the default insertion form if the
+        specification defines it.
 
-          specification -- 'pytis.presentation.Specification' subclass,
-            instance or its name for resolver as a string.
-          prefill -- a dictionary of initial field values.  Keys are field
-            identifiers and values are either 'pytis.data.Value' instances or
+        Arguments:
+          specification: `pytis.presentation.Specification` subclass, instance
+            or its name for resolver as a string.
+          prefill (dict): A dictionary of initial field values.  Keys are field
+            identifiers and values are either `pytis.data.Value` instances or
             the corresponding Python internal values directly.  These values
             will override the default (or computed) values defined in field
             specifications.
-          inserted_data -- allows to pass a sequence of 'pytis.data.Row'
-            instances to be inserted.  The form is then gradually prefilled by
-            values of these rows and the user can individually accept or skip
-            each row.
-          multi_insert -- boolean flag indicating whether inserting multiple
-            values is permitted.  False value will disable this feature and the
-            `Next' button will not be present on the form.
-          copied_row -- row to copy as a 'pytis.data.Row' instance.  If not
-            None, the new row will be a copy of given row.  Field values are
-            copied except for fields with 'nocopy' set to True.  Also
-            'on_copy_record' is used insted of 'on_new_record' if defined.
-          set_values -- dictionary of row values to change in the openened form
-            (or None).  The dictionary keys are field identifiers and values
-            are either the corresponding internal Python values valid for the
-            fields's data type or 'pytis.data.Value' instances directly.  These
-            values will not affect the initial row state and thus will appear
-            as changed to the user (as opposed to 'prefill').
-          block_on_new_record -- if true, the 'on_new_record' procedure from
-            specification  will be blocked.  This makes it possible to call
-            'new_record' from within the 'on_new_record' procedure without
-            recursion..
-          transaction -- transaction for DB operations.
-
-        Runs 'on_new_record' instead of the default insertion form if the
-        specification defines it.
+          inserted_data: Allows to pass a sequence of `pytis.data.Row` instances
+            to be inserted.  The form is then gradually prefilled by values of
+            these rows and the user can individually accept or skip each row.
+          multi_insert (bool): Flag indicating whether inserting multiple values
+            is permitted.  False value will disable this feature and the 'Next'
+            button will not be present on the form.
+          copied_row: Row to copy as a `pytis.data.Row` instance. If not None,
+            the new row will be a copy of given row.  Field values are copied
+            except for fields with `nocopy` set to True. Also `on_copy_record`
+            is used instead of `on_new_record` if defined.
+          set_values (dict): Dictionary of row values to change in the opened
+            form (or None).  The dictionary keys are field identifiers and
+            values are either the corresponding internal Python values valid for
+            the field's data type or `pytis.data.Value` instances directly.
+            These values will not affect the initial row state and thus will
+            appear as changed to the user (as opposed to `prefill`).
+          block_on_new_record (bool): If true, the `on_new_record` procedure
+            from specification will be blocked.  This makes it possible to call
+            `new_record` from within the `on_new_record` procedure without
+            recursion.
+          transaction: Transaction for DB operations.
 
         """
         pass
@@ -723,16 +733,15 @@ class Application(API):
     def show_record(self, specification, row):
         """Show existing record details in a separate form.
 
-        Arguments:
-
-          specification -- 'pytis.presentation.Specification' subclass,
-            instance or its name for resolver as a string.
-          row -- edited record as a 'pytis.data.Row' or
-            'pytis.presentation.PresentedRow' instance or record key as a
-            'pytis.data.Value' instance.
-
         Opens the new form on the "stack" (inside the main application frame).
         The form contains fields in edit form layout, but they are read only.
+
+        Arguments:
+          specification: `pytis.presentation.Specification` subclass, instance
+            or its name for resolver as a string.
+          row: Edited record as a `pytis.data.Row` or
+            `pytis.presentation.PresentedRow` instance or record key as a
+            `pytis.data.Value` instance.
 
         """
         pass
@@ -741,34 +750,35 @@ class Application(API):
                     block_on_edit_record=False, transaction=None):
         """Edit an existing record in a modal form.
 
-        Arguments:
-
-          specification -- 'pytis.presentation.Specification' subclass,
-            instance or its name for resolver as a string.
-          row -- edited record as a 'pytis.data.Row' or
-            'pytis.presentation.PresentedRow' instance or record key as a
-            'pytis.data.Value' instance.
-          set_values -- dictionary of row values to change in the openened form
-            (or None).  The dictionary keys are field identifiers and values
-            are either the corresponding internal Python values valid for the
-            fields's data type or 'pytis.data.Value' instances directly.  These
-            values will not affect the initial row state and thus will appear
-            as changed to the user.
-          layout -- custom layout of the edit form overriding the specification
-            defined layout.  Instance of 'GroupSpec' or a sequence of items
-            to be passed to a vertical 'GroupSpec'.
-          block_on_edit_record -- if true, the 'on_edit_record' procedure from
-            specification  will be blocked.  This makes it possible to call
-            'edit_record' from within the 'on_new_record' procedure without
-            recursion..
-          transaction -- transaction for DB operations.
-
-        Runs 'on_edit_record' instead of the default edit form if the
+        Runs `on_edit_record` instead of the default edit form if the
         specification defines it.
 
-        Returns a 'pytis.presentation.PresentedRow' instance of the updated
-        record or None if the user cancels the form.  If 'on_edit_record' is
-        defined, returns whatever 'on_edit_record()' returned.
+        Arguments:
+          specification: `pytis.presentation.Specification` subclass, instance
+            or its name for resolver as a string.
+          row: Edited record as a `pytis.data.Row` or
+            `pytis.presentation.PresentedRow` instance or record key as a
+            `pytis.data.Value` instance.
+          set_values (dict): Dictionary of row values to change in the opened
+            form (or None).  The dictionary keys are field identifiers and
+            values are either the corresponding internal Python values valid for
+            the field's data type or `pytis.data.Value` instances directly.
+            These values will not affect the initial row state and thus will
+            appear as changed to the user.
+          layout: Custom layout of the edit form overriding the specification
+            defined layout.  Instance of `pytis.presentation.GroupSpec` or a
+            sequence of items to be passed to a vertical
+            `pytis.presentation.GroupSpec`.
+          block_on_edit_record (bool): If true, the `on_edit_record` procedure
+            from specification will be blocked.  This makes it possible to call
+            `edit_record` from within the `on_new_record` procedure without
+            recursion.
+          transaction: Transaction for DB operations.
+
+        Returns:
+          A `pytis.presentation.PresentedRow` instance of the updated record or
+          None if the user cancels the form.  If `on_edit_record` is
+          defined, returns whatever `on_edit_record` returned.
 
         """
         pass
@@ -776,22 +786,23 @@ class Application(API):
     def delete_record(self, specification, row, question=None, transaction=None):
         """Delete an existing record after user's confirmation.
 
-        Arguments:
-          specification -- 'pytis.presentation.Specification' subclass,
-            instance or its name for resolver as a string.
-          row -- deleted record as a 'pytis.data.Row' or
-            'pytis.presentation.PresentedRow' instance or record key as a
-            'pytis.data.Value' instance.
-          question -- user defined deletion confirmation question or None to
-            used the default (generic) question "Are you sure to delete the
-            record permanently?".
-          transaction -- transaction for DB operations.
-
-        Runs 'on_delete_record' instead of the default deletion if the
+        Runs `on_delete_record` instead of the default deletion if the
         specification defines it.
 
-        Returns True if the record was actually deleted and False if not
-        (the user didn't confirm deletion).
+        Arguments:
+          specification: `pytis.presentation.Specification` subclass, instance
+            or its name for resolver as a string.
+          row: Deleted record as a `pytis.data.Row` or
+            `pytis.presentation.PresentedRow` instance or record key as a
+            `pytis.data.Value` instance.
+          question (str): User defined deletion confirmation question or None to
+            use the default (generic) question "Are you sure to delete the
+            record permanently?".
+          transaction: Transaction for DB operations.
+
+        Returns:
+          True if the record was actually deleted and False if not (the user
+          didn't confirm deletion).
 
         """
         pass
@@ -801,50 +812,47 @@ class Application(API):
                  transaction=None):
         """Display given form in the main application frame.
 
-        Arguments:
-
-          specification -- 'pytis.presentation.Specification' subclass,
-            instance or its name for resolver as a string.
-          select_row -- the row to be intially selected within the opened form
-            or None to perform no initial row selection.  If not None, has the
-            same meaning as the 'position' argument of
-            'pytis.api.Form.select_row()'
-          multi -- iff True, prefer multiform over plain browse form.  This
-            means that a multiform (incuding side forms) will be used when the
-            specification defines 'bindings'.  If there are no bindings or
-            'multi' is set to False, just a simple form without side forms will
-            be opened.
-          preview -- display a preview of the current record in a side form.
-            The preview is a read-only form with the same layout as edit form
-            and refreshes as the user moves the current record within the main
-            form (table).  Currently implies multi=False, but this may change
-            in future.
-          sorting -- specification of initial form sorting in the same format
-            as the argument 'sorting' of the 'Profile' constructor.  If not
-            None, overrides the sorting of the default form profile.
-          filter -- initial filter condition as a 'pytis.data.Operator'
-            instance.  This filter is indicated to the user and can be modified
-            as any other user-defined filter (as opposed to 'condition').  If
-            not None, overrides the filter of the default form profile.
-          condition -- 'pytis.data.Operator' instance filtering the rows of the
-            underlying data object.  This condition is not indicated to the user
-            and it is not possible to turn it of from the UI.
-          arguments -- dictionary of table function call arguments, with
-            function argument identifiers as keys and 'pytis.data.Value'
-            instances as values.  Useful only when the underlying database
-            table is actually a row returning database function, otherwise
-            ignored.
-          profile -- id of the initial profile to be loaded.  If not None, it
-            must be one of the available system profiles (defined in
-            specification) and the arguments 'filter' and 'sorting' must be
-            None (they are determined by the profile).
-          binding -- id of the side form binding to be initially selected.
-          transaction -- transaction for DB operations.
-
         The form type is selected automatically.  If name contains '::' (the
         legacy dual form separator), the form is a dual form.  If the form
-        specification defines 'bindings', the form is a multiform with side
-        form tabs.  Otherwise the form is a plain browse form (simple table).
+        specification defines bindings, the form is a multiform with side form
+        tabs.  Otherwise the form is a plain browse form (simple table).
+
+        Arguments:
+          specification: `pytis.presentation.Specification` subclass, instance
+            or its name for resolver as a string.
+          select_row: The row to be initially selected within the opened form or
+            None to perform no initial row selection.  If not None, has the same
+            meaning as the position argument of `pytis.api.Form.select_row`.
+          multi (bool): If True, prefer multiform over plain browse form. This
+            means that a multiform (including side forms) will be used when the
+            specification defines bindings.  If there are no bindings or multi
+            is set to False, just a simple form without side forms will be
+            opened.
+          preview (bool): Display a preview of the current record in a side
+            form.  The preview is a read-only form with the same layout as edit
+            form and refreshes as the user moves the current record within the
+            main form (table).  Currently implies multi=False, but this may
+            change in future.
+          sorting: Specification of initial form sorting in the same format as
+            the argument sorting of the Profile constructor.  If not None,
+            overrides the sorting of the default form profile.
+          filter: Initial filter condition as a `pytis.data.Operator` instance.
+            This filter is indicated to the user and can be modified as any
+            other user-defined filter (as opposed to condition).  If not None,
+            overrides the filter of the default form profile.
+          condition: `pytis.data.Operator` instance filtering the rows of the
+            underlying data object.  This condition is not indicated to the user
+            and it is not possible to turn it off from the UI.
+          arguments (dict): Dictionary of table function call arguments, with
+            function argument identifiers as keys and `pytis.data.Value`
+            instances as values.  Useful only when the underlying database table
+            is actually a row returning database function, otherwise ignored.
+          profile (str): Id of the initial profile to be loaded.  If not None,
+            it must be one of the available system profiles (defined in
+            specification) and the arguments filter and sorting must be None
+            (they are determined by the profile).
+          binding (str): Id of the side form binding to be initially selected.
+          transaction: Transaction for DB operations.
 
         """
         pass
@@ -854,50 +862,47 @@ class Application(API):
         """Display a modal codebook selection form and return the selected row.
 
         Arguments:
-
-          specification -- 'pytis.presentation.Specification' subclass,
-            instance or its name for resolver as a string.
-          select_row -- the row to be intially selected within the opened form
-            or None to perform no initial row selection.  If not None, has the
-            same meaning as the 'position' argument of
-            'pytis.api.Form.select_row()'
-          columns -- sequence of column identifiels to override the 'columns'
+          specification: `pytis.presentation.Specification` subclass, instance
+            or its name for resolver as a string.
+          select_row: The row to be initially selected within the opened form or
+            None to perform no initial row selection.  If not None, has the same
+            meaning as the position argument of `pytis.api.Form.select_row`.
+          columns: Sequence of column identifiers to override the columns
             defined by specification.
-          sorting -- specification of initial form sorting in the same format
-            as the argument 'sorting' of the 'Profile' constructor.  If not
-            None, overrides the sorting of the default form profile.
-          filter -- initial filter condition as a 'pytis.data.Operator'
-            instance.  This filter is indicated to the user and can be modified
-            as any other user-defined filter (as opposed to 'condition').  If
-            not None, overrides the filter of the default form profile.
-          condition -- 'pytis.data.Operator' instance filtering the rows of the
+          sorting: Specification of initial form sorting in the same format as
+            the argument sorting of the Profile constructor.  If not None,
+            overrides the sorting of the default form profile.
+          filter: Initial filter condition as a `pytis.data.Operator` instance.
+            This filter is indicated to the user and can be modified as any
+            other user-defined filter (as opposed to condition).  If not None,
+            overrides the filter of the default form profile.
+          condition: `pytis.data.Operator` instance filtering the rows of the
             underlying data object.  This condition is not indicated to the user
-            and it is not possible to turn it of from the UI.
-          multirow -- allow selection of multiple rows.
-          begin_search -- id of the column on which to start incremental seach.
-          transaction -- transaction for DB operations.
+            and it is not possible to turn it off from the UI.
+          multirow (bool): Allow selection of multiple rows.
+          begin_search (str): Id of the column on which to start incremental
+            search.
+          transaction: Transaction for DB operations.
 
-        Returns the selected row as 'pytis.data.Row' instance or a tuple of
-        such rows when 'multirow' is True.  Returns None when the user cancels
-        the form.
+        Returns:
+          The selected row as `pytis.data.Row` instance or a tuple of such rows
+          when multirow is True.  Returns None when the user cancels the form.
 
         """
 
     def web_view(self, title, content, name=None):
         """Show given content in a web browser inside the main application frame.
 
-        The browser window behaves as any other form displayed using
-        'run_form()'.
+        The browser window behaves as any other form displayed using `run_form`.
 
         Arguments:
-
-          title - form title used to identify the window within the application
-            (e.g. when switching windows).
-          content -- the content to be displayed.  May be passed as
-            'lcg.Content' instance or an HTML string.  If callable, it will be
-            called without arguments and the returned value is used instead.
-          name -- optional string name identifying the web browser form within
-            'app.forms'.
+          title (str): Form title used to identify the window within the
+            application (e.g. when switching windows).
+          content: The content to be displayed.  May be passed as an lcg.Content
+            instance or an HTML string.  If callable, it will be called without
+            arguments and the returned value is used instead.
+          name (str): Optional string name identifying the web browser form
+            within app.forms.
 
         """
         pass
@@ -911,93 +916,83 @@ class Application(API):
         the user about the progress of the operation visually (by a progress
         bar) and textually (by a progress message).
 
-        Blocks until the operation is finished and returns the value returned
-        by 'function'.
-
-        Arguments:
-
-          function -- the Python function to be executed.
-          args -- tuple of arguments to be passed to 'function'.
-          kwargs -- dictionary of keyword arguments to be passed to 'function'.
-          over -- sequence of arguments to call 'function' repeatedly with each
-            of them.  If not None, the function will be called with each item
-            as an argument preceeding 'args'.  Additionally, if 'function'
-            accepts an argument named 'n', the ordinal number of the item
-            within the sequence (starting from zero) will be passed as
-            additional keyword argument 'n'.  The progress will be updated
-            automatically to reflect the curent position within the sequence.
-            You can still call 'update' to update the progress message, but you
-            should avoid passing it 'progress'.  When passing an iterable
-            object with unknown lenght (such as a generator), you need to pass
-            its expected length as the 'maximum' arument.
-          title -- dialog window title as a string.
-          message -- the initial progress message to be displayed within the
-            dialog.  The message can be further updated to indicate the
-            operation progress (see "Progress updates" below).
-          progress -- if false, progress updates are not supported.  All
-            remaining arguments are ignored, the dialog just statically
-            displays the 'message' and waits until the operation is finished.
-          maximum -- value determining the range in which the progress is
-            updated (see Progress updates below).  The default value is 100 if
-            'over' is None.
-          elapsed_time -- if true, the dialog will display the time elapsed
-            from the start.
-          estimated_time -- if true, the dialog will display the estimated
-            total execution time.
-          remaining_time -- if true, the dialog will display the estimated
-            remaining time to the end.
-          time_precision -- elapsed/total/remaining time is by default
-            displayed with precision to seconds unless it has non-zero hours,
-            in which case it only displays hours and minutes.  Setting this
-            option to 'minutes' (a string literal) will suppress displaying
-            seconds in any case.
-          can_abort -- if true, the executed function may be aborted if it is
-            written properly (see Progress updates below).
-
-        Progress updates:
+        Blocks until the operation is finished and returns the value returned by
+        function.
 
         Progress updates must be directly supported by the function performing
         the operation.  If the function doesn't support progress updates, pass
-        false to 'show_progress' and the remaining rules will not apply.
+        false to progress and the remaining rules will not apply.
 
-        To support progress updates, the function must (in addition to its
-        other arguments passed through 'args' and 'kwargs') accept the first
-        positional argument named 'update' and call it periodically to update
-        the progress.  The 'update' callback accepts two keyword arguments
-        (both optional) 'progress' and 'message' ('progress' can also be passed
-        as the first positional argument).  If 'progress' is passed (is not
-        None), it is an integer between 0 and the 'maximum' passed to the
-        dialog constructor.  It will move the visual progress indicator
-        proportionally to given position between zero and the maximum.  The
-        argument 'message' (if not None) updates the progress message displayed
-        above the progress bar.  If 'can_abort' was true, the caller should
-        also check the return value of the 'update' callback and abort the
-        operation if the return value is false.
+        To support progress updates, the function must (in addition to its other
+        arguments passed through args and kwargs) accept the first positional
+        argument named 'update' and call it periodically to update the progress.
+        The update callback accepts two keyword arguments (both optional)
+        'progress' and 'message' (progress can also be passed as the first
+        positional argument).  If progress is passed (is not None), it is an
+        integer between 0 and the maximum passed to the dialog constructor.  It
+        will move the visual progress indicator proportionally to given position
+        between zero and the maximum.  The argument message (if not None)
+        updates the progress message displayed above the progress bar.  If
+        can_abort was true, the caller should also check the return value of the
+        update callback and abort the operation if the return value is false.
 
-        Indeterminate mode:
-
-        When the value of 'progress' passed to the 'update' callback is -1, the
-        progress bar will switch to indeterminate mode, where it doesn't show
-        an exact percentage, but bounces between the left and right edge of the
-        gauge.  To keep bouncing, the 'update' callback needs to be called
+        When the value of progress passed to the update callback is -1, the
+        progress bar will switch to indeterminate mode, where it doesn't show an
+        exact percentage, but bounces between the left and right edge of the
+        gauge.  To keep bouncing, the update callback needs to be called
         repeatedly (with progress=-1).  To make an impression of pulsing
         smoothly, it is good to call the callback a few times a second.  Thus
-        this mode is good for operations which are able to call the callback
-        but where the final point of the operation can not be measured.
+        this mode is good for operations which are able to call the callback but
+        where the final point of the operation can not be measured.
 
-        Time measures:
+        Time measures can display current elapsed time, estimated total and
+        estimated remaining time of the whole operation and can be turned on by
+        the elapsed_time, estimated_time and remaining_time arguments. But
+        remember that they are only updated when the update callback is called.
+        The times are by default displayed with precision to seconds.  This will
+        work nicely if it is possible to call the update callback at least a few
+        times a second.  If not, it may be a good idea to set time_precision to
+        'minutes'.  Also note, that the estimated times will only be accurate if
+        the progress grows more or less consistently.  So only use the measures
+        when these conditions can be met, otherwise they may give confusing
+        results.
 
-        Time can display current elapsed time, estimated total and estimated
-        remainng time of the whole operation and can be turned on by
-        constructor arguments 'elapsed_time', 'estimated_time' and
-        'remaining_time'.  But remember that they are only updated when the
-        'update' callback is called.  The times are by default displayed with
-        precision to seconds.  This will work nicely if it is possible to call
-        the update callback at least a few times a second.  If not, it may be a
-        good idea to set 'time_precision' to 'minutes'.  Also note, that the
-        estimated times will only be accurate if the progress grows more or
-        less consistently.  So only use the measures when these conditions can
-        be met, otherwise they may give confusing results.
+        Arguments:
+          function (callable): The Python function to be executed.
+          args (tuple): Arguments to be passed to function.
+          kwargs (dict): Keyword arguments to be passed to function.
+          over: Sequence of arguments to call function repeatedly with each of
+            them.  If not None, the function will be called with each item as an
+            argument preceding args.  Additionally, if function accepts an
+            argument named 'n', the ordinal number of the item within the
+            sequence (starting from zero) will be passed as additional keyword
+            argument 'n'.  The progress will be updated automatically to reflect
+            the current position within the sequence.  You can still call update
+            to update the progress message, but you should avoid passing it
+            progress.  When passing an iterable object with unknown length (such
+            as a generator), you need to pass its expected length as the maximum
+            argument.
+          title (str): Dialog window title.
+          message (str): The initial progress message to be displayed within the
+            dialog.  The message can be further updated to indicate the
+            operation progress.
+          progress (bool): If false, progress updates are not supported. All
+            remaining arguments are ignored, the dialog just statically displays
+            the message and waits until the operation is finished.
+          maximum (int): Value determining the range in which the progress is
+            updated.  The default value is 100 if over is None.
+          elapsed_time (bool): If true, the dialog will display the time elapsed
+            from the start.
+          estimated_time (bool): If true, the dialog will display the estimated
+            total execution time.
+          remaining_time (bool): If true, the dialog will display the estimated
+            remaining time to the end.
+          time_precision (str): Elapsed/total/remaining time is by default
+            displayed with precision to seconds unless it has non-zero hours, in
+            which case it only displays hours and minutes. Setting this option
+            to 'minutes' will suppress displaying seconds in any case.
+          can_abort (bool): If true, the executed function may be aborted if it
+            is written properly.
 
         """
         pass
@@ -1005,18 +1000,18 @@ class Application(API):
     def call(self, function, *args, **kwargs):
         """Call given function with given arguments.
 
+        This method is useful to create a `pytis.presentation.Command` instance
+        for given function (which is not possible directly).  Otherwise calling
+        function directly is preferred.
+
         Arguments:
+          function (callable): Callable to be called.
+          *args: Arguments to be passed to the function. **kwargs: Keyword
+          arguments to be passed to the function except for the keyword argument
+            'enabled'.
 
-          function -- callable to be called
-
-          *args, **kwargs -- arguments to be passed to the function except for
-            the keyword argument 'enabled',
-
-        This method is useful to create a 'pytis.presentation.Command' instance
-        for given 'function' (which is not possible directly).  Otherwise
-        calling function directly is preferred.
-
-        Returns the value returned by the function.
+        Returns:
+          The value returned by the function.
 
         """
         pass
@@ -1024,25 +1019,26 @@ class Application(API):
     def run_procedure(self, spec_name, proc_name, *args, **kwargs):
         """Run application defined procedure by name.
 
-        Arguments:
-
-          spec_name -- specification name as a string.
-          proc_name -- name of the procedure within the specification.
-
         All other arguments, including keyword arguments, are passed on to the
-        invoked procedure, except for the keyword argument 'block_refresh'.
-        When 'block_refresh' is passed and is True, automatic refreshing of all
+        invoked procedure, except for the keyword argument `block_refresh`.
+        When block_refresh is passed and is True, automatic refreshing of all
         currently open forms will be blocked until the procedure returns.
 
-        Returns the value returned by the procedure.
-
         TODO: This method may be deprecated in future because it seems
-        redundant.  It is advised to avoid running code through
-        'app.run_procedure()' as it seems much more straightforward to just
-        import that code and call it directly (or through 'app.call()' in
-        situations where a 'Command' is needed).  'app.run_procedure()' remains
-        mainly just for backwards compatibility.  The arguemnt 'block_refresh'
-        can be implemented for 'call()' too.
+        redundant.  It is advised to avoid running code through `run_procedure`
+        as it seems much more straightforward to just import that code and call
+        it directly (or through `call` in situations where a Command is needed).
+        `run_procedure` remains mainly just for backwards compatibility.  The
+        argument block_refresh can be implemented for `call` too.
+
+        Arguments:
+          spec_name (str): Specification name.
+          proc_name (str): Name of the procedure within the specification.
+          *args: Additional positional arguments passed to the procedure.
+          **kwargs: Additional keyword arguments passed to the procedure.
+
+        Returns:
+          The value returned by the procedure.
 
         """
         pass
@@ -1050,30 +1046,28 @@ class Application(API):
     def launch_file(self, path=None, data=None, suffix=None, decrypt=False):
         """Launch a viewer for given local file or data.
 
-        Arguments:
-
-          path -- full path to the file in the local (server side) file system.
-             If not None, 'data' and 'suffix' must be None.
-          data -- the file data as 'bytes' or a file like object.  This is the
-            contents of the file to be viewed.  If not None, 'path' must be
-            None.
-          suffix -- the filename suffix including the leading dot.  Only
-            relevant if 'data' is not None.
-          decrypt -- if True then decrypt 'data' before saving on remote
-            client's machine.
-
         The viewer will be launched on the client machine (remotely) if remote
         client connection exists.  The file will be temporarily copied to the
         client machine in this case and cleaned up automatically afterwards.
 
         The client's side file associations will take effect in case of remote
         invocation.  If the viewer is run locally (on the application server),
-        the viewer is determined through Mailcap.  For PDF files, the viewer
-        set through the configuration option 'postscript_viewer' (if set) takes
+        the viewer is determined through Mailcap. For PDF files, the viewer set
+        through the configuration option postscript_viewer (if set) takes
         precedence.
 
         This method is non-blocking.  It returns immediately and the viewer is
         run in the background in all cases.
+
+        Arguments:
+          path (str): Full path to the file in the local (server side) file
+            system.  If not None, data and suffix must be None.
+          data: The file data as bytes or a file like object.  This is the
+            contents of the file to be viewed.  If not None, path must be None.
+          suffix (str): The filename suffix including the leading dot. Only
+            relevant if data is not None.
+          decrypt (bool): If True then decrypt data before saving on remote
+            client's machine.
 
         """
         pass
@@ -1084,28 +1078,27 @@ class Application(API):
         The browser will be launched on the client machine (remotely) if remote
         client connection exists.
 
-        This function is non-blocking.  It returns immediately and the browser is
-        run in the background in all cases.
+        This function is non-blocking.  It returns immediately and the browser
+        is run in the background in all cases.
 
         """
         pass
 
     def splitpath(self, path):
-        """Split the path obtained from 'Application.select_file()' and similar methods.
+        """Split the path obtained from `select_file` and similar methods.
 
-        'Application.select_file()' returns a path name, but the caller doesn't
-        know whether it comes from a local file system or a remote (client)
-        machine.  The same applies for 'f.name' of a file object returned by
-        'Application.open_selected_file()'.  It is not clear which path
-        separator applies for such paths.  This method should be used to split
-        such paths correctly.
-
-        Returns a pair of strings (dirname, filename).
+        `select_file` returns a path name, but the caller doesn't know whether
+        it comes from a local file system or a remote (client) machine. The same
+        applies for f.name of a file object returned by `open_selected_file`.
+        It is not clear which path separator applies for such paths.  This
+        method should be used to split such paths correctly.
 
         Arguments:
+          path (str): Path to a local or remote file returned by `select_file`
+            or similar method.
 
-          path -- path to a local or remote file returned by 'select_file()' or
-            similar method.
+        Returns:
+          A pair of strings (dirname, filename).
 
         """
         pass
@@ -1113,24 +1106,24 @@ class Application(API):
     def select_file(self, filename=None, filetypes=None, directory=None, context='default'):
         """Return a filename selected by the user in a GUI dialog.
 
-        Returns None if the user cancels the dialog.  If remote client connection
-        exists, the returned filename belongs to the client's file system.
+        Returns None if the user cancels the dialog.  If remote client
+        connection exists, the returned filename belongs to the client's file
+        system.
 
         Arguments:
-
-          filename -- initial (default) filename or None
-          filetypes -- sequence of allowed filename extensions as case insensitive
+          filename (str): Initial (default) filename or None.
+          filetypes: Sequence of allowed filename extensions as case insensitive
             strings.  If present (not None), only files of given types will be
-            available for selection.  The exact behavior depends on the Client OS.
-            Non-matching files are grayed out on Mac OS and completely hidden on
-            Linux and Windows.
-          directory -- the initial directory or None
-          context -- selector of the memory for keeping track of the most recently
-            used directory.  If not None, the initial dialog directory will be
-            loaded from given memory and the memory will be updated by the path of
-            the selected file when the dialog is closed.  The selector is an
-            arbitrary string - for each unique string the most recently used
-            directory is stored separately.
+            available for selection.  The exact behavior depends on the Client
+            OS.  Non-matching files are grayed out on Mac OS and completely
+            hidden on Linux and Windows.
+          directory (str): The initial directory or None.
+          context (str): Selector of the memory for keeping track of the most
+            recently used directory.  If not None, the initial dialog directory
+            will be loaded from given memory and the memory will be updated by
+            the path of the selected file when the dialog is closed.  The
+            selector is an arbitrary string - for each unique string the most
+            recently used directory is stored separately.
 
         """
         pass
@@ -1139,14 +1132,13 @@ class Application(API):
         """Return a tuple of filenames selected by the user in a GUI dialog.
 
         Returns empty tuple if the user cancels the dialog.  If remote client
-        connection exists, the returned filenames belong to the client's
-        file system.
+        connection exists, the returned filenames belong to the client's file
+        system.
 
         Arguments:
-
-          directory -- the initial directory or None
-          filetypes -- see 'Application.select_file()'
-          context -- see 'Application.select_file()' - unused if 'directory' not None.
+          directory (str): The initial directory or None.
+          filetypes: See `select_file`.
+          context (str): See `select_file` - unused if directory is not None.
 
         """
         pass
@@ -1154,140 +1146,134 @@ class Application(API):
     def select_directory(self, directory=None, context='default'):
         """Return a directory selected by the user in a GUI dialog.
 
+        Returns None if the user cancels the dialog.  If remote client
+        connection exists, the returned directory belongs to the client's file
+        system.
+
         Arguments:
-
-          directory -- the initial directory or None
-          context -- see 'Application.select_file()'
-
-        Returns None if the user cancels the dialog.  If remote client connection
-        exists, the returned directory belongs to the client's file system.
+          directory (str): The initial directory or None.
+          context (str): See `select_file`.
 
         """
         pass
 
     def make_selected_file(self, filename, mode='w', encoding=None, filetypes=None,
                            directory=None, context='default'):
-        """Return a write-only 'file' like object of a user selected file.
+        """Return a write-only file like object of a user selected file.
 
         The file is selected by the user using a GUI dialog.  Returns None if
         the user cancels the dialog.  If remote client connection exists, the
         returned file is created in the client's file system (the returned
-        object is an 'ExposedFileWrapper' instance).
+        object is a `pytis.remote.ExposedFileWrapper` instance).
 
         Arguments:
-
-          filename -- default filename or None
-          mode -- default mode for opening the file
-          encoding -- output encoding, string or None
-          filetypes -- see 'Application.select_file()'
-          directory -- the initial directory or None
-          context -- see 'Application.select_file()'
+          filename (str): Default filename or None.
+          mode (str): Default mode for opening the file.
+          encoding (str): Output encoding or None.
+          filetypes: See `select_file`.
+          directory (str): The initial directory or None.
+          context (str): See `select_file`.
 
         """
         pass
 
     def write_selected_file(self, data, filename, mode='w', encoding=None, filetypes=None,
                             context='default'):
-        """Write 'data' to a file selected by the user using a GUI dialog.
+        """Write data to a file selected by the user using a GUI dialog.
 
-        Returns the file path if the file was created and written succesfully
-        or 'None' if the user cancels the dialog.  If remote client connection
+        Returns the file path if the file was created and written successfully
+        or None if the user cancels the dialog.  If remote client connection
         exists, the file is created in the client's file system (the returned
         path refers to the remote file system).
 
         Arguments:
-
-          data -- the file data as a string or bytes
-          filename -- default filename or None
-          mode -- default mode for opening the file
-          encoding -- output encoding, string or None
-          filetypes -- see 'Application.select_file()'
-          context -- see 'Application.select_file()'
+          data: The file data as a string or bytes.
+          filename (str): Default filename or None.
+          mode (str): Default mode for opening the file.
+          encoding (str): Output encoding or None.
+          filetypes: See `select_file`.
+          context (str): See `select_file`.
 
         """
         pass
 
     def open_selected_file(self, directory=None, mode='rb', encoding=None, encrypt=None,
                            filetypes=None, context='default'):
-        """Return a read-only 'file' like object of a user selected file.
+        """Return a read-only file like object of a user selected file.
 
         The file is selected by the user using a GUI dialog.  Returns None if
         the user cancels the dialog.  If remote client connection exists, the
-        returned file is opened in the client's file system (the returned
-        object is an 'ExposedFileWrapper' instance).
+        returned file is opened in the client's file system (the returned object
+        is a `pytis.remote.ExposedFileWrapper` instance).
+
+        Beware: The default mode is historically 'rb'.  It will change to 'r' in
+        the future to correspond with the expected default mode of Python built-
+        in function open().  Please always pass the mode explicitly, to avoid
+        future regression.
 
         Arguments:
-
-          directory -- the initial directory or None
-          mode -- mode for opening the file
-          encoding -- the name of the encoding used to decode or encode the
-            file. This should only be used in text mode. The default encoding
-            is 'utf-8'.  Any text encoding supported by Python can be used.
-          filetypes -- see 'Application.select_file()'
-          encrypt -- list of encryption keys to use to encrypt the file; if the
-            list is empty then let the user select the keys; if 'None' then
-            don't encrypt the file
-          context -- see 'Application.select_file()'
-
-        Beware: The default mode is historically 'rb'.  It will change to 'r'
-        in the future to correspond with the expected default mode of Python
-        built-in function 'open()'.  Please always pass the mode explicitly, to
-        avoid future regression.
+          directory (str): The initial directory or None.
+          mode (str): Mode for opening the file.
+          encoding (str): The name of the encoding used to decode or encode the
+            file. This should only be used in text mode. The default encoding is
+            'utf-8'.  Any text encoding supported by Python can be used.
+          filetypes: See `select_file`.
+          encrypt: List of encryption keys to use to encrypt the file; if the
+            list is empty then let the user select the keys; if None then don't
+            encrypt the file.
+          context (str): See `select_file`.
 
         """
         pass
 
     def open_file(self, filename, mode='r', encoding=None):
-        """Return a 'file' like object for given file.
+        """Return a file like object for given file.
 
         If remote client connection exists, the returned file is opened in the
-        client's file system (the returned object is an 'ExposedFileWrapper'
-        instance).
-
-        Arguments:
-
-          filename -- name of the file to open, basestring
-          mode -- mode for opening the file
-          encoding -- the name of the encoding used to decode or encode the
-            file. This should only be used in text mode. The default encoding
-            is 'utf-8'.  Any text encoding supported by Python can be used.
+        client's file system (the returned object is a
+        `pytis.remote.ExposedFileWrapper` instance).
 
         May return None in case that a previously active remote connection was
         lost and the user decides to abort the operation (refuses to fall back
         to local/server-side file).
 
+        Arguments:
+          filename (str): Name of the file to open.
+          mode (str): Mode for opening the file.
+          encoding (str): The name of the encoding used to decode or encode the
+            file. This should only be used in text mode. The default encoding is
+            'utf-8'.  Any text encoding supported by Python can be used.
+
         """
         pass
 
     def write_file(self, data, filename, mode='w'):
-        """Write given 'data' to given file.
+        """Write given data to given file.
 
-        If remote client connection exists, the file is created in the
-        client's file system.
+        If remote client connection exists, the file is created in the client's
+        file system.
 
         Arguments:
-
-          data -- the (possibly binary) data as a basestring
-          filename -- name of the file to write to, basestring
-          mode -- mode for opening the file
+          data (str): The (possibly binary) data.
+          filename (str): Name of the file to write to.
+          mode (str): Mode for opening the file.
 
         """
         pass
 
     def has_access(self, name, perm=pd.Permission.VIEW, column=None):
-        """Return true if the current user has given permission for given form specification.
+        """Return true if the current user has given permission.
 
         Arguments:
+          name (str): Specification name.  May also be a dual name (containing
+            '::').  In such a case, the permission is checked for both names and
+            column=None is assumed regardless of the actual column value.
+          perm: Access permission as one of `pytis.data.Permission` constants.
+          column (str): Identifier of the column to check or None (no specific
+            column checked).
 
-          name -- specification name as a string.  May also be a dual name
-            (containing '::').  In such a case, the permission is checked for both
-            names and 'column=None' is assumed regardless of the actual 'column'
-            value.
-          perm -- access permission as one of 'pytis.data.Permission' constants.
-          column -- string identifier of the column to check or 'None' (no specific
-            column checked)
-
-        Raises 'pytis.util.ResolverError' if given specification name cannot be found.
+        Raises:
+          `pytis.util.ResolverError`: If given specification name cannot be found.
 
         """
         pass
@@ -1301,17 +1287,17 @@ class Application(API):
         """Print given template to PDF and display the result in a viewer.
 
         Arguments:
-          spec_name -- name of the specification for print resolver
-          template_id -- id of the output template, string
-          row -- current row data for print resolver as 'pytis.data.Row' instance or None
-          parameters -- dictionary of extra user-defined parameters passed
+          spec_name (str): Name of the specification for print resolver.
+          template_id (str): Id of the output template.
+          row: Current row data for print resolver as `pytis.data.Row` instance
+            or None.
+          parameters (dict): Dictionary of extra user-defined parameters passed
             to the print specification (available in the print specification
-            through self._parameter(key))
-          output_file -- file to write output PDF data to, open file-like object; if
-            'None' then show the output in an external PDF viewer
-          language -- language code to pass to the exporter context
-
-          form -- current form; 'Form' instance or None
+            through self._parameter(key)).
+          output_file: File to write output PDF data to, open file-like object;
+            if None then show the output in an external PDF viewer.
+          language (str): Language code to pass to the exporter context.
+          form: Current form as a `pytis.api.Form` instance or None.
 
         """
         pass
@@ -1324,9 +1310,8 @@ class Application(API):
         """Exit the application.
 
         Arguments:
-
-          force -- If True, exit unconditionally without asking about closing
-            open forms even if they contain unsaved changes or otherwise
+          force (bool): If True, exit unconditionally without asking about
+            closing open forms even if they contain unsaved changes or otherwise
             require user's attention.
 
         """
@@ -1335,16 +1320,16 @@ class Application(API):
 
 @implements(Application, incomplete=True)
 class BaseApplication(object):
-    """Base class for classes implementing the 'Application' API.
+    """Base class for classes implementing the `Application` API.
 
-    This class only implements a few basic API points, such as 'app.param',
-    'app.has_access()' and 'app.printout()'.  It may be used as a base class for
-    other classes implementing the full 'Application' API and its instance is
-    available as a fallback 'app' instance in scripts.
+    This class only implements a few basic API points, such as `app.param`,
+    `has_access` and `printout`.  It may be used as a base class for other
+    classes implementing the full `Application` API and its instance is
+    available as a fallback app instance in scripts.
 
     Without the fallback instance, it would simply not be possible to even load
     specifications through the resolver in scripts (when the wx app is not
-    running) because 'app.param' and 'app.has_access()' are often used in
+    running) because `app.param` and `app.has_access` are often used in
     specification construction methods.
 
     """
@@ -1524,14 +1509,13 @@ class BaseApplication(object):
         return self.action_has_access('form/' + name, perm=perm, column=column)
 
     def action_has_access(self, action, perm=pd.Permission.CALL, column=None):
-        """Return true iff 'action' has 'perm' permission.
+        """Return true iff action has perm permission.
 
         Arguments:
-
-          action -- action identifier, string
-          perm -- access permission as one of 'pytis.data.Permission' constants
-          column -- string identifier of the column to check or 'None' (no specific
-            column checked)
+          action (str): Action identifier.
+          perm: Access permission as one of `pytis.data.Permission` constants.
+          column (str): Identifier of the column to check or None (no specific
+            column checked).
 
         """
         if self._access_rights == 'nonuser':

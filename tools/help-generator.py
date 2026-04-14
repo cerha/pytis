@@ -31,9 +31,7 @@ class HelpExporter(pytis.help.HelpExporter):
 
 
 def main(spec_name):
-    """Generate HTML help page for given specification.
-
-    """
+    """Generate HTML help page for given specification."""
     node = pytis.help.help_page('help:spec/' + spec_name)
 
     exporter = HelpExporter(get_resource_uri=lambda r, absolute=True: r.uri() or r.filename(),

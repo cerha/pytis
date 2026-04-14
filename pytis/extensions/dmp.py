@@ -25,8 +25,8 @@ Basic requirements on their functionality are:
 - Reading data from database DMP tables.
 
 - Comparing data retrieved from different sources, including some sort of
-  non-trivial comparison such as detecting identical menu items at different
-  places within the menu.  Strictness of the comparison is adjustable.
+non-trivial comparison such as detecting identical menu items at different
+places within the menu.  Strictness of the comparison is adjustable.
 
 - Writing updated data to database DMP tables.
 
@@ -41,39 +41,40 @@ Overall intended usages are:
 - Importing DMP database tables from application specifications.
 
 - Updating certain application specifications (such as application menu
-  specification) from DMP tables.
+specification) from DMP tables.
 
-- Detecting differences between application specifications and DMP tables and
-  suggesting updates to DMP tables.  Especially updating DMP tables after
-  adding new menu items, specifications, subform bindings, form actions, etc.
-  This process may be performed globally or only on selected specifications.
+- Detecting differences between application specifications and DMP tables
+and suggesting updates to DMP tables.  Especially updating DMP tables after
+adding new menu items, specifications, subform bindings, form actions, etc.
+This process may be performed globally or only on selected specifications.
 
 - Using utility functions such as manipulation with DMP fullnames and
-  shortnames or common command line processing for scripts using this library.
+shortnames or common command line processing for scripts using this library.
 
 We are interested in the following kinds of data:
 
 - Application menu.
 
-- Forms (either present in the application menu or not) and their bindings and
-  actions.
+- Forms (either present in the application menu or not) and their bindings
+and actions.
 
 - User roles and role membership.
 
 - Access rights.
 
-We use proprietary classes for storing, examining and manipulating given kinds
-of data instead of using standard available pytis classes.  The reason is that
-for first there are attributes not present in the standard pytis classes such
-as database rows numeric identifiers and for second we need simple and
-intelligible data structures and operations just serving the purpose of
-implementing and maintaining the required functionality easily.  But if pytis
-classes provide useful functionality for DMP we use the functionality.
+We use proprietary classes for storing, examining and manipulating given
+kinds of data instead of using standard available pytis classes.  The reason
+is that for first there are attributes not present in the standard pytis
+classes such as database rows numeric identifiers and for second we need
+simple and intelligible data structures and operations just serving the
+purpose of implementing and maintaining the required functionality easily.
+But if pytis classes provide useful functionality for DMP we use the
+functionality.
 
 This file defines several classes for the tasks defined above: 'DMPActions',
-'DMPRoles', 'DMPMenu', 'DMPRights', 'DMPImport'.  There are also some utility
-functions defined and exported here, serving mostly as an interface for 'dmp'
-script.
+'DMPRoles', 'DMPMenu', 'DMPRights', 'DMPImport'.  There are also some
+utility functions defined and exported here, serving mostly as an interface
+for 'dmp' script.
 
 """
 from __future__ import print_function
@@ -102,9 +103,9 @@ def dmp_menu():
     """Return DMP menu as a LIST of pytis.presentation.Menu instances.
 
     The menu is definition is loaded from the database, namely from the table
-    'pytis_view_user_menu', and turned into a list of
-    'pytis.presentation.Menu', 'pytis.presentation.MenuItem' and
-    'pytis.presentation.MenuSeparator' instances.
+    'pytis_view_user_menu', and turned into a list of `pytis.presentation.Menu`,
+    `pytis.presentation.MenuItem` and `pytis.presentation.MenuSeparator`
+    instances.
 
     """
     # TODO: These translations can be removed here as soon as fullnames
@@ -115,8 +116,7 @@ def dmp_menu():
     }
 
     def parse_action(action):
-        """Return pair COMMAND, ARGUMENTS corresponding to the given action id.
-        If the action id is invalid, behavior of this method is undefined.
+        """Return pair COMMAND, ARGUMENTS corresponding to the given action id. If the action id is invalid, behavior of this method is undefined.
 
         """
         def find_symbol(symbol):
@@ -270,17 +270,16 @@ class DMPMessage(Structure):
 
 
 def add_message(messages, kind, message, arguments=()):
-    """Add new message to 'messages'.
-
-    Arguments:
-
-      messages -- list of 'DMPMessage' instances
-      kind -- kind of the message, one of 'DMPMessage' constants
-      message -- the message itself, basestring
-      arguments -- tuple of message arguments
+    """Add new message to messages.
 
     This function and related facilities should be merged with other
     reporting/logging mechanisms in pytis.
+
+    Arguments:
+      messages: list of `DMPMessage` instances
+      kind: kind of the message, one of `DMPMessage` constants
+      message: the message itself, basestring
+      arguments: tuple of message arguments
 
     """
     if messages is None:
@@ -297,14 +296,17 @@ class DMPConfiguration(object):
 
     def __init__(self, configuration_file=None, schemas=None,
                  database=None, host=None, port=None, user=None, password=None, sslmode=None):
-        """
-        Arguments:
+        """Initialize the DMP configuration.
 
-          def_directory -- directory containing application specifications,
-            string or 'None'
-          schemas -- schemas string (schema names separated by commas) or 'None'
-          database, host, port, user, password, sslmode -- common database
-            connection parameters
+        Arguments:
+          configuration_file: path to application configuration file or None
+          schemas: schemas string (schema names separated by commas) or None
+          database: database name
+          host: database host
+          port: database port
+          user: database user
+          password: database password
+          sslmode: database SSL mode
 
         """
         set_configuration_file(configuration_file)
@@ -348,17 +350,16 @@ class DMPItem(Structure):
         return getattr(self, self._attributes[0].name())
 
     def equal(self, other):
-        """Return whether 'self' is equal with 'other'.
+        """Return whether self is equal with other.
 
-        If the two items are completely semanticaly equal, return 'True'.  If
-        they belong to the same item but they are not completely semanticaly
-        equal (they are \"semi-equal\", e.g. two corresponding menu items with
-        different title), return 'None'.  If they are non-equal (i.e. they are
-        two basically unrelated items), return 'False'.
+        If the two items are completely semantically equal, return `True`. If
+        they belong to the same item but they are not completely semantically
+        equal (they are "semi-equal", e.g. two corresponding menu items with
+        different title), return `None`.  If they are non-equal (i.e. they are
+        two basically unrelated items), return `False`.
 
         Arguments:
-
-          other -- instance of the same class as 'self'
+          other: instance of the same class as self
 
         """
         for attribute in self._attributes:
@@ -414,10 +415,10 @@ class DMPObject(object):
             return copy.copy(self._messages)
 
     def __init__(self, configuration):
-        """
-        Arguments:
+        """Initialize the DMP object.
 
-          configuration -- 'DMPConfiguration' instance
+        Arguments:
+          configuration: `DMPConfiguration` instance
 
         """
         self._configuration = configuration
@@ -490,11 +491,11 @@ class DMPObject(object):
     def load_specifications(self, **kwargs):
         """Load DMP data from specifications.
 
-        Return sequence of 'DMPMessage' instances.
-
         Arguments:
+          **kwargs: DMP object specific arguments
 
-          kwargs -- DMP object specific arguments
+        Returns:
+          Sequence of `DMPMessage` instances.
 
         """
         self._reset()
@@ -516,13 +517,12 @@ class DMPObject(object):
         """Store DMP data into the database.
 
         Arguments:
-
-          fake -- iff True, don't actually store the data but return sequence
-            of SQL commands (basestrings) that would do so
-          transaction -- transaction object to use or 'None'; if not 'None' no
-            commit nor rollback is performed in this method regardless 'fake'
+          fake: iff True, don't actually store the data but return sequence of
+            SQL commands (basestrings) that would do so
+          transaction: transaction object to use or `None`; if not `None` no
+            commit nor rollback is performed in this method regardless fake
             argument value
-          specifications -- if not 'None' then it is a sequence of specification
+          specifications: if not `None` then it is a sequence of specification
             names to restrict the operation to
 
         """
@@ -548,13 +548,12 @@ class DMPObject(object):
         """Delete DMP data from the database.
 
         Arguments:
-
-          fake -- iff True, don't actually delete the data but return sequence
-            of SQL commands (basestrings) that would do so
-          transaction -- transaction object to use or 'None'; if not 'None' no
-            commit nor rollback is performed in this method regardless 'fake'
+          fake: iff True, don't actually delete the data but return sequence of
+            SQL commands (basestrings) that would do so
+          transaction: transaction object to use or `None`; if not `None` no
+            commit nor rollback is performed in this method regardless fake
             argument value
-          specifications -- if not 'None' then it is a sequence of specification
+          specifications: if not `None` then it is a sequence of specification
             names to restrict the operation to
 
         """
@@ -585,8 +584,7 @@ class DMPObject(object):
         """Print object data.
 
         Arguments:
-
-          specifications -- if not 'None' then it is a sequence of specification
+          specifications: if not `None` then it is a sequence of specification
             names to restrict the operation to
 
         """
@@ -612,17 +610,16 @@ class DMPObject(object):
         raise Exception('Not implemented')
 
     def compare(self, other):
-        """Compare DMP data in 'self' and 'other'.
+        """Compare DMP data in self and other.
 
         Return sequence of pairs (SELF_ITEM, OTHER_ITEM) where SELF_ITEM is
-        'None' in case OTHER_ITEM is not present in 'self' at all, OTHER_ITEM
-        is 'None' in case SELF_ITEM is not present in 'other' at all.  If both
-        SELF_ITEM and OTHER_ITEM are not 'None', they represent a pair of
-        semi-equal items in 'self' and 'other'.
+        `None` in case OTHER_ITEM is not present in self at all, OTHER_ITEM is
+        None in case SELF_ITEM is not present in other at all.  If both
+        SELF_ITEM and OTHER_ITEM are not None, they represent a pair of semi-
+        equal items in self and other.
 
         Arguments:
-
-          other -- another instance of the same class
+          other: another instance of the same class
 
         """
         other_dictionary = {}
@@ -664,7 +661,7 @@ class DMPMenu(DMPObject):
     - Action (applies only to action items).
 
     This class represents the whole menu, single menu items are represented by
-    'MenuItem' instances.
+    `MenuItem` instances.
 
     Note that this class stores not only actual menu items, but also additional
     actions available in the application (in a menu like structure) in the form
@@ -676,9 +673,8 @@ class DMPMenu(DMPObject):
 
         There are several kinds of menu items:
 
-          action item -- it invokes an action
-          menu item -- it invokes a nested menu
-          separator item -- visual separator in a menu
+          action item -- it invokes an action menu item -- it invokes a nested
+          menu separator item -- visual separator in a menu
 
         """
         ACTION_ITEM = 'ACTION_ITEM'
@@ -785,7 +781,7 @@ class DMPMenu(DMPObject):
             def modulify(obj, name):
                 module_name = unistr(obj.__module__)
                 if module_name == 'pytis.form.list':
-                    # Well, not a very good idea to name a Python file `list'
+                    # Well, not a very good idea to name a Python file `list`
                     module_name = 'pytis.form'
                 name = '%s.%s' % (module_name, name,)
                 return name
@@ -1188,12 +1184,9 @@ class DMPRights(DMPObject):
         initialized again from application specifications.
 
         Arguments:
-
-          fake -- iff True, don't actually change the data but return sequence
-            of SQL commands (basestrings) that would do so
-          def_directory -- directory containing application specifications,
-            string or 'None'
-          specifications -- sequence of specification names to restrict the
+          fake: iff True, don't actually change the data but return sequence of
+            SQL commands (basestrings) that would do so
+          specifications: sequence of specification names to restrict the
             operation to
 
         """
@@ -1438,11 +1431,10 @@ class DMPRoles(DMPObject):
         """Add new member to role.
 
         Arguments:
-
-          fake -- iff True, don't actually change the data but return sequence
-            of SQL commands (basestrings) that would do so
-          member -- name of the member to be added, string
-          role -- name of the target role, string
+          fake: iff True, don't actually change the data but return sequence of
+            SQL commands (basestrings) that would do so
+          member: name of the member to be added, string
+          role: name of the target role, string
 
         """
         messages = []
@@ -1793,21 +1785,20 @@ class DMPActions(DMPObject):
                      keep_old=False):
         """Check given form specifications and update the database.
 
-        For given form specification name, load the specification and check
-        its bindings and actions.  Delete old bindings and actions from the
-        database and insert the new ones.
+        For given form specification name, load the specification and check its
+        bindings and actions.  Delete old bindings and actions from the database
+        and insert the new ones.
 
         Arguments:
-
-          fake -- iff True, don't actually change the data but return sequence
-            of SQL commands (basestrings) that would do so
-          specification -- specification name, string
-          new_fullname -- if not 'None', it defines new fullname of the
+          fake: iff True, don't actually change the data but return sequence of
+            SQL commands (basestrings) that would do so
+          specification: specification name, string
+          new_fullname: if not `None`, it defines new fullname of the
             specification, string
-          transaction -- transaction object to use or 'None'; if not 'None' no
-            commit nor rollback is performed in this method regardless 'fake'
+          transaction: transaction object to use or `None`; if not `None` no
+            commit nor rollback is performed in this method regardless fake
             argument value
-          keep_old -- iff true, don't delete old bindings and actions
+          keep_old: iff true, don't delete old bindings and actions
 
         """
         messages = []
@@ -2117,9 +2108,8 @@ class DMPImport(DMPObject):
         Original database data are deleted.
 
         Arguments:
-
-          fake -- iff True, don't actually change the data but return sequence
-            of SQL commands (basestrings) that would do so
+          fake: iff True, don't actually change the data but return sequence of
+            SQL commands (basestrings) that would do so
 
         """
         transaction = pd.transaction()
@@ -2139,14 +2129,13 @@ class DMPImport(DMPObject):
         """Add new action to the menu.
 
         Arguments:
-
-          fake -- iff True, don't actually change the data but return sequence
-            of SQL commands (basestrings) that would do so
-          fullname -- fullname of the action, string
-          position -- menu position of the action or preceding item title,
+          fake: iff True, don't actually change the data but return sequence of
+            SQL commands (basestrings) that would do so
+          fullname: fullname of the action, string
+          position: menu position of the action or preceding item title,
             basestring, or True (in such a case the action is added to actions
             but no menu item is created)
-          title -- title of the menu item; unicode or 'None'
+          title: title of the menu item; unicode or None
 
         """
         resolver = self._resolver()

@@ -7,7 +7,7 @@ This script can be invoked from a command-line (or a cron job or whatever).
 You can call any non-interactive application defined function this way.
 
 The path to pytis configuration file must be set in environment variable
-'PYTISCONFIG'.
+`PYTISCONFIG`.
 
 """
 from __future__ import print_function

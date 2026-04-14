@@ -23,7 +23,7 @@ class PartitioningTrigger(Base_PyTriggerFunction):
 
     @staticmethod
     def partitioning_trigger():
-        """Updatuje datum a místo odeslání"""
+        """Updatuje datum a místo odeslání."""
         class Part(Base_PyTriggerFunction.Util.BaseTriggerObject):
 
             def _get_table_name(self):
@@ -71,7 +71,7 @@ class PartitioningTrigger(Base_PyTriggerFunction):
 
 
 class GenMirrorSpec(Base_PyFunction):
-    """Vygeneruje základní specifikace pro seznam tabulek"""
+    """Vygeneruje základní specifikace pro seznam tabulek."""
     name = 'gen_mirror_spec'
     arguments = (sql.Column('', pytis.data.String()),)
     result_type = pytis.data.String()
@@ -82,7 +82,7 @@ class GenMirrorSpec(Base_PyFunction):
 
     @staticmethod
     def gen_mirror_spec(tables):
-        """Vygeneruje základní specifikace pro seznam tabulek"""
+        """Vygeneruje základní specifikace pro seznam tabulek."""
         tables = [t.strip() for t in args[0].split(',')]
         specs = []
         for table in tables:
@@ -208,7 +208,10 @@ class FDateMonth(sql.SQLFunction):
 
 class XChanges(sql.SQLTable):
     """Sloupečky zaznamenávající uživatele a časy vytvoření a změn údajů.
-    Je určena k tomu, aby ji dědily všechny ostatní tabulky."""
+
+    Je určena k tomu, aby ji dědily všechny ostatní tabulky.
+
+    """
     name = '_changes'
     fields = (sql.Column('vytvoril', pytis.data.Name(not_null=True),
                          default=sqlalchemy.text('user')),
@@ -244,8 +247,7 @@ class NewTempname(sql.SQLFunction):
 
 
 class VInserts(sql.SQLView):
-    """Tabulka zaznamenávající přidávání záznamů standardních
-    tabulek."""
+    """Tabulka zaznamenávající přidávání záznamů standardních tabulek."""
     name = 'v_inserts'
 
     @classmethod
@@ -267,8 +269,7 @@ class VInserts(sql.SQLView):
 
 
 class VInsertsUser(sql.SQLView):
-    """Tabulka zaznamenávající přidávání záznamů standardních
-    tabulek."""
+    """Tabulka zaznamenávající přidávání záznamů standardních tabulek."""
     name = 'v_inserts_user'
 
     @classmethod
@@ -292,8 +293,7 @@ class VInsertsUser(sql.SQLView):
 
 
 class VUpdates(sql.SQLView):
-    """Tabulka zaznamenávající změny v záznamech standardních
-    tabulek."""
+    """Tabulka zaznamenávající změny v záznamech standardních tabulek."""
     name = 'v_updates'
 
     @classmethod
@@ -316,8 +316,7 @@ class VUpdates(sql.SQLView):
 
 
 class VUpdatesUser(sql.SQLView):
-    """Tabulka zaznamenávající změny v záznamech standardních
-    tabulek."""
+    """Tabulka zaznamenávající změny v záznamech standardních tabulek."""
     name = 'v_updates_user'
 
     @classmethod
@@ -342,8 +341,7 @@ class VUpdatesUser(sql.SQLView):
 
 
 class VDeletes(sql.SQLView):
-    """Tabulka zaznamenávající vymazávání záznamů ve standardních
-    tabulkách."""
+    """Tabulka zaznamenávající vymazávání záznamů ve standardních tabulkách."""
     name = 'v_deletes'
 
     @classmethod
@@ -365,8 +363,7 @@ class VDeletes(sql.SQLView):
 
 
 class VDeletesUser(sql.SQLView):
-    """Tabulka zaznamenávající vymazávání záznamů ve standardních
-    tabulkách."""
+    """Tabulka zaznamenávající vymazávání záznamů ve standardních tabulkách."""
     name = 'v_deletes_user'
 
     @classmethod
@@ -543,7 +540,10 @@ END;
 
 class DropTemptables(Base_PyFunction):
     """Slouží k zrušení dočasných temporery tabulek.
-    Funkce otestuje, zda tabulky uvedené v seznamu existují a případně je dropne.
+
+    Funkce otestuje, zda tabulky uvedené v seznamu existují a případně je
+    dropne.
+
     """
     name = 'drop_temptables'
     arguments = (sql.Column('', pytis.data.String()),)
@@ -555,8 +555,12 @@ class DropTemptables(Base_PyFunction):
 
     @staticmethod
     def drop_temptables(tables):
-        """Slouží k zrušení dočasných temporery tabulek. Funkce otestuje, zda tabulky uvedené
-        v seznamu existují a případně je dropne."""
+        """Slouží k zrušení dočasných temporery tabulek.
+
+        Funkce otestuje, zda tabulky uvedené v seznamu existují a případně je
+        dropne.
+
+        """
         str_tables = args[0]
         if str_tables is None:
             return 0
@@ -579,7 +583,7 @@ class DropTemptables(Base_PyFunction):
 
 
 class CTypFormular(Base_LogSQLTable):
-    """Slouží jako číselník typů formulářů"""
+    """Slouží jako číselník typů formulářů."""
     name = 'c_typ_formular'
     fields = (sql.PrimaryColumn('id', pytis.data.String(maxlen=2, not_null=False)),
               sql.Column('popis', pytis.data.String(not_null=False)),
@@ -594,8 +598,7 @@ class CTypFormular(Base_LogSQLTable):
 
 
 class EasterDate(Base_PyFunction):
-    """Pro udaný rok (parametr) vrátí datum velikonoční
-    neděle."""
+    """Pro udaný rok (parametr) vrátí datum velikonoční neděle."""
     name = 'easter_date'
     arguments = (sql.Column('', pytis.data.Integer()),)
     result_type = pytis.data.Date()

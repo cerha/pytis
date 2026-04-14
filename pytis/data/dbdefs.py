@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"Miscellaneous utilities for gensqlalchemy specifications."
+"""Miscellaneous utilities for gensqlalchemy specifications."""
 
 from __future__ import print_function
 
@@ -47,8 +47,7 @@ def dval(date):
     """Return literal date value.
 
     Arguments:
-
-      date -- ISO date string, e.g. "2012-12-31"
+      date: ISO date string, e.g. "2012-12-31".
 
     """
     return sqlalchemy.literal_column("'%s'" % (date,), type_=sqlalchemy.Date())
@@ -58,8 +57,7 @@ def dtval(date):
     """Return literal date value.
 
     Arguments:
-
-      date -- ISO date string, e.g. "2012-12-31"
+      date: ISO date string, e.g. "2012-12-31".
 
     """
     return sqlalchemy.literal_column("'%s'" % (date,), type_=sqlalchemy.DateTime())
@@ -69,8 +67,7 @@ def ival(number):
     """Return literal integer value.
 
     Arguments:
-
-      number -- integer value
+      number: Integer value.
 
     """
     return sqlalchemy.literal_column(str(number), type_=sqlalchemy.Integer())
@@ -80,8 +77,7 @@ def fval(number):
     """Return literal float value.
 
     Arguments:
-
-      number -- float value
+      number: Float value.
 
     """
     return sqlalchemy.literal_column(str(number), type_=sqlalchemy.Float())
@@ -91,8 +87,7 @@ def itval(interval):
     """Return literal interval value.
 
     Arguments:
-
-      interval -- PostgreSQL interval string, e.g. "11:59:00" or "1 day"
+      interval: PostgreSQL interval string, e.g. "11:59:00" or "1 day".
 
     """
     return sqlalchemy.literal_column("'%s'" % (interval,), type_=sqlalchemy.Interval())
@@ -102,8 +97,7 @@ def sval(text, length=None):
     """Return literal string value.
 
     Arguments:
-
-      text -- unicode value
+      text: Unicode value.
 
     """
     return sqlalchemy.literal_column(
@@ -115,8 +109,7 @@ def bval(expression):
     """Return literal boolean value.
 
     Arguments:
-
-      expression --  value
+      expression: Boolean value.
 
     """
     return sqlalchemy.literal_column(str(expression), type_=sqlalchemy.Boolean())
@@ -126,8 +119,7 @@ def dtype(expr):
     """Return SQLAlchemy expression casted to date.
 
     Arguments:
-
-      expr -- 'sqlalchemy.sql.expression.ClauseElement' instance
+      expr: `sqlalchemy.sql.expression.ClauseElement` instance.
 
     """
     return sqlalchemy.cast(expr, sqlalchemy.Date())
@@ -137,8 +129,7 @@ def ttype(expr, timezone=False):
     """Return SQLAlchemy expression casted to time.
 
     Arguments:
-
-      expr -- 'sqlalchemy.sql.expression.ClauseElement' instance
+      expr: `sqlalchemy.sql.expression.ClauseElement` instance.
 
     """
     return sqlalchemy.cast(expr, sqlalchemy.Time(timezone=False))
@@ -148,8 +139,7 @@ def dttype(expr, timezone=False):
     """Return SQLAlchemy expression casted to datetime.
 
     Arguments:
-
-      expr -- 'sqlalchemy.sql.expression.ClauseElement' instance
+      expr: `sqlalchemy.sql.expression.ClauseElement` instance.
 
     """
     return sqlalchemy.cast(expr, sqlalchemy.DateTime(timezone=False))
@@ -159,8 +149,7 @@ def itype(expr):
     """Return SQLAlchemy expression casted to integer.
 
     Arguments:
-
-      expr -- 'sqlalchemy.sql.expression.ClauseElement' instance
+      expr: `sqlalchemy.sql.expression.ClauseElement` instance.
 
     """
     return sqlalchemy.cast(expr, sqlalchemy.Integer())
@@ -170,8 +159,7 @@ def ftype(expr, precision, scale, asdecimal=False):
     """Return SQLAlchemy expression casted to numeric.
 
     Arguments:
-
-      expr -- 'sqlalchemy.sql.expression.ClauseElement' instance
+      expr: `sqlalchemy.sql.expression.ClauseElement` instance.
 
     """
     return sqlalchemy.cast(expr, sqlalchemy.Numeric(precision=precision, scale=scale,
@@ -182,8 +170,7 @@ def rtype(expr):
     """Return SQLAlchemy expression casted to float.
 
     Arguments:
-
-      expr -- 'sqlalchemy.sql.expression.ClauseElement' instance
+      expr: `sqlalchemy.sql.expression.ClauseElement` instance.
 
     """
     return sqlalchemy.cast(expr, sqlalchemy.Float())
@@ -193,8 +180,7 @@ def ittype(expr):
     """Return SQLAlchemy expression casted to interval.
 
     Arguments:
-
-      expr -- 'sqlalchemy.sql.expression.ClauseElement' instance
+      expr: `sqlalchemy.sql.expression.ClauseElement` instance.
 
     """
     return sqlalchemy.cast(expr, sqlalchemy.Interval())
@@ -204,8 +190,7 @@ def stype(expr, **kwargs):
     """Return SQLAlchemy expression casted to string.
 
     Arguments:
-
-      expr -- 'sqlalchemy.sql.expression.ClauseElement' instance
+      expr: `sqlalchemy.sql.expression.ClauseElement` instance.
 
     """
     return sqlalchemy.cast(expr, sqlalchemy.String(**kwargs))
@@ -215,20 +200,18 @@ def btype(expr, **kwargs):
     """Return SQLAlchemy expression casted to boolean.
 
     Arguments:
-
-      expr -- 'sqlalchemy.sql.expression.ClauseElement' instance
+      expr: `sqlalchemy.sql.expression.ClauseElement` instance.
 
     """
     return sqlalchemy.cast(expr, sqlalchemy.Boolean(**kwargs))
 
 
 def is_(column, other):
-    """Like SQLAlchemy 'is_()' method, but casted to boolean.
+    """Like SQLAlchemy `is_` method, but casted to boolean.
 
     Arguments:
-
-      column -- SQLAlchemy column instance to compare
-      other -- object to compare the column to
+      column: SQLAlchemy column instance to compare.
+      other: Object to compare the column to.
 
     """
     return sqlalchemy.cast(column.is_(other), sqlalchemy.Boolean())
@@ -238,10 +221,9 @@ def if_(condition, then_, else_):
     """Return simple conditional expression.
 
     Arguments:
-
-      condition -- condition, 'sqlalchemy.sql.expression.ClauseElement' instance
-      then_ -- then part, 'sqlalchemy.sql.expression.ClauseElement' instance
-      else_ -- else part, 'sqlalchemy.sql.expression.ClauseElement' instance
+      condition: Condition, `sqlalchemy.sql.expression.ClauseElement` instance.
+      then_: Then part, `sqlalchemy.sql.expression.ClauseElement` instance.
+      else_: Else part, `sqlalchemy.sql.expression.ClauseElement` instance.
 
     """
     return case((condition, then_), else_=else_)
@@ -264,24 +246,21 @@ def _rule_assignments(values):
 
 
 def rule_condition(*specifiers):
-    """Return condition expression based on 'specifiers'.
-
-    Arguments:
-
-      specifiers -- sequence of condition specifiers.  Each of the specifiers
-        can be on of the following:
-
-          basestring -- it names the column to assign and the same column name
-            is used from OLD to get the value
-          tuple of two elements -- the first element (basestring) names the
-            column to assign, the second element defines the value; the value
-            may be either a 'sqlalchemy.sql.expression.ClauseElement' instance
-            or a basestring to be wrapped by 'sqlalchemy.literal_column'
-          'sqlalchemy.sql.expression.ClauseElement' instance -- it is used as
-            it is
+    """Return condition expression based on `specifiers`.
 
     The resulting condition is a conjunction of the conditions generated from
     the specifiers.
+
+    Arguments:
+      specifiers: Sequence of condition specifiers.  Each specifier can be one
+        of the following:
+
+    - basestring: names the column to assign and the same column name is used
+    from OLD to get the value. - tuple of two elements: the first element
+    (basestring) names the column to assign, the second element defines the
+    value; the value may be either a `sqlalchemy.sql.expression.ClauseElement`
+    instance or a basestring to be wrapped by `sqlalchemy.literal_column`. -
+    `sqlalchemy.sql.expression.ClauseElement` instance: used as it is.
 
     """
     conditions = []
@@ -305,17 +284,15 @@ def rule_insert(table, values, inline=False):
     """Return typical insert rule statement.
 
     Arguments:
+      table: `sqlalchemy.schema.Table` instance to apply the insert action on.
+      values: Sequence of column assignment specifications; each element is one
+        of the following forms:
 
-      table -- 'sqlalchemy.schema.Table' instance to apply the insert action on
-      values -- sequence of column assignment specifications; each of the
-        element is one of the following forms:
-
-          basestring -- it names the column to assign and the same column name
-            is used from NEW to get the value
-          tuple of two elements -- the first element (basestring) names the
-            column to assign, the second element defines the value; the value
-            may be either a 'sqlalchemy.sql.expression.ClauseElement' instance
-            or a basestring to be wrapped by 'sqlalchemy.literal_column'
+    - basestring: names the column to assign and the same column name is used
+    from NEW to get the value. - tuple of two elements: the first element
+    (basestring) names the column to assign, the second element defines the
+    value; the value may be either a `sqlalchemy.sql.expression.ClauseElement`
+    instance or a basestring to be wrapped by `sqlalchemy.literal_column`.
 
     """
     if _SA_VERSION >= 2:
@@ -332,19 +309,17 @@ def rule_update(table, conditions, values):
     """Return typical update rule statement.
 
     Arguments:
+      table: `sqlalchemy.schema.Table` instance to apply the update action on.
+      conditions: Sequence of specifiers to pass to `rule_condition` in order to
+        create WHERE clause for the update statement.
+      values: Sequence of column assignment specifications; each element is one
+        of the following forms:
 
-      table -- 'sqlalchemy.schema.Table' instance to apply the update action on
-      conditions -- sequence of specifiers to pass to 'rule_condition()' in
-        order to create WHERE clause for the update statement
-      values -- sequence of column assignment specifications; each of the
-        element is one of the following forms:
-
-          basestring -- it names the column to assign and the same column name
-            is used from NEW to get the value
-          tuple of two elements -- the first element (basestring) names the
-            column to assign, the second element defines the value; the value
-            may be either a 'sqlalchemy.sql.expression.ClauseElement' instance
-            or a basestring to be wrapped by 'sqlalchemy.literal_column'
+    - basestring: names the column to assign and the same column name is used
+    from NEW to get the value. - tuple of two elements: the first element
+    (basestring) names the column to assign, the second element defines the
+    value; the value may be either a `sqlalchemy.sql.expression.ClauseElement`
+    instance or a basestring to be wrapped by `sqlalchemy.literal_column`.
 
     """
     update = table.update()

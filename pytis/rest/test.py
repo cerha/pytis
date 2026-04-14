@@ -20,35 +20,31 @@
 Async-migration readiness
 --------------------------
 
-Tests are organised in three layers to minimise the number of changes
-needed when the framework switches from sync (psycopg2/SQLAlchemy 1.4)
-to async (asyncpg/SQLAlchemy 2.0)::
+Tests are organised in three layers to minimise the number of changes needed
+when the framework switches from sync (psycopg2/SQLAlchemy 1.4) to async
+(asyncpg/SQLAlchemy 2.0):
 
-    Layer 1 — pure Python (zero changes ever):
-        TestOperators, TestResourceHandlerModel
-        No sessions, no database.  These test operator expression
-        generation and Pydantic model derivation from SA column metadata.
+Layer 1 — pure Python (zero changes ever): TestOperators,
+TestResourceHandlerModel No sessions, no database.  These test operator
+expression generation and Pydantic model derivation from SA column metadata.
 
-    Layer 2 — session fixture (ONE fixture change per file):
-        TestPytisAccessor
-        Test bodies call accessor methods (row, rows, insert, update,
-        delete) through the ``session`` fixture.  On async migration only
-        the ``session`` fixture body changes; all test bodies stay
-        identical.  The async form is documented in the fixture docstring.
+Layer 2 — session fixture (ONE fixture change per file): TestPytisAccessor
+Test bodies call accessor methods (row, rows, insert, update, delete)
+through the `session` fixture.  On async migration only the `session`
+fixture body changes; all test bodies stay identical.  The async form is
+documented in the fixture docstring.
 
-    Layer 3 — HTTP client (zero changes ever):
-        TestHttpRoutes
-        FastAPI's TestClient handles both sync and async route handlers
-        transparently, so no test code changes are needed when route
-        closures become ``async def``.
+Layer 3 — HTTP client (zero changes ever): TestHttpRoutes FastAPI's
+TestClient handles both sync and async route handlers transparently, so no
+test code changes are needed when route closures become `async def`.
 
 Running integration tests
 --------------------------
 
-``TestPytisAccessor`` and ``TestHttpRoutes`` require a PostgreSQL database.
-Set ``PYTIS_REST_TEST_DB`` to a connection URL (default:
-``postgresql://localhost/test``).  Tests are automatically skipped when
-the database is unreachable.
+`TestPytisAccessor` and `TestHttpRoutes` require a PostgreSQL database. Set
+`PYTIS_REST_TEST_DB` to a connection URL (default:
+`postgresql://localhost/test`).  Tests are automatically skipped when the
+database is unreachable.
 
 """
 
@@ -147,8 +143,8 @@ _TEST_DSN = os.environ.get('PYTIS_REST_TEST_DB', 'postgresql://localhost/test')
 
 @pytest.fixture(scope='session')
 def engine():
-    """Session-scoped engine.  Tests that depend on it are skipped when the
-    database is unreachable.  Also creates/drops the test tables.
+    """Session-scoped engine.  Tests that depend on it are skipped when the database is unreachable.  Also creates/drops the test tables.
+
     """
     try:
         eng = sa.create_engine(_TEST_DSN, future=True, pool_pre_ping=True)
@@ -186,20 +182,10 @@ def engine():
 def session(engine):
     """Transactional session that rolls back all changes after each test.
 
-    This is the **only fixture that needs to change** when migrating to
-    async.  All test bodies that use this fixture remain unchanged.
+    This is the **only fixture that needs to change** when migrating to async.
+    All test bodies that use this fixture remain unchanged.
 
-    Async form (SQLAlchemy 2.0 + asyncpg)::
-
-        @pytest.fixture
-        async def session(async_engine):
-            async with async_engine.connect() as conn:
-                async with conn.begin():
-                    async with AsyncSession(
-                        conn, autoflush=False, expire_on_commit=False,
-                    ) as sess:
-                        yield sess
-                    await conn.rollback()
+    Async form (SQLAlchemy 2.0 + asyncpg): `@pytest.fixture async def session(async_engine):`.
 
     """
     conn = engine.connect()
@@ -230,8 +216,9 @@ def db(engine):
 def client(db):
     """FastAPI TestClient with item + category routes.
 
-    TestClient works identically for both sync and async route handlers,
-    so nothing here changes on the async migration.
+    TestClient works identically for both sync and async route handlers, so
+    nothing here changes on the async migration.
+
     """
     app = fastapi.FastAPI()
     router = fastapi.APIRouter()
@@ -335,8 +322,9 @@ class TestOperators:
 class TestResourceHandlerModel:
     """Test Pydantic model generation from SA column metadata.
 
-    Model generation is purely computational (no I/O), so these tests
-    never change on the async migration.
+    Model generation is purely computational (no I/O), so these tests never
+    change on the async migration.
+
     """
 
     @pytest.fixture(scope='class')
@@ -395,9 +383,10 @@ class TestResourceHandlerModel:
 class TestPytisAccessor:
     """Test PytisAccessor CRUD via a real PostgreSQL session.
 
-    Each test receives a ``session`` that rolls back on teardown.
-    When migrating to async, **only the ``session`` fixture changes**;
-    every test body stays identical.
+    Each test receives a `session` that rolls back on teardown. When migrating
+    to async, **only the `session` fixture changes**; every test body stays
+    identical.
+
     """
 
     @pytest.fixture(scope='class')
@@ -519,8 +508,9 @@ class TestPytisAccessor:
 class TestHttpRoutes:
     """End-to-end HTTP tests via FastAPI's TestClient.
 
-    TestClient works identically for sync and async route handlers, so
-    **no test code changes are needed** when routes become ``async def``.
+    TestClient works identically for sync and async route handlers, so **no test
+    code changes are needed** when routes become `async def`.
+
     """
 
     @pytest.fixture(autouse=True)

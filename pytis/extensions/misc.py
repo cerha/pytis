@@ -19,7 +19,7 @@
 """Drobné doplňkové funkce.
 
 Do tohoto modulu patří funkce, které nemají s Pytisem jako takovým nic
-společného.  Nepracují přímo s jeho API, jen se zkrátka v defsech mohou nějak
+společného. Nepracují přímo s jeho API, jen se zkrátka v defsech mohou nějak
 hodit.
 
 """
@@ -178,8 +178,8 @@ def set_default_printer():
 def constraints_email(email):
     """Ověř platnost zápisu e-mailové adresy.
 
-    Pokud má adresa platný tvar, nebo je None vrací None.  Jinak vrací řetězec
-    s chybovou hláškou
+    Pokud má adresa platný tvar, nebo je None vrací None.  Jinak vrací řetězec s
+    chybovou hláškou
 
     """
     if email is None:
@@ -217,8 +217,7 @@ def crypto_key_table(connection_data):
     """Return data object corresponding to the table of crypto keys.
 
     Arguments:
-
-      connection_data -- database connection data; 'pytis.data.DBConnection'
+      connection_data: database connection data; `pytis.data.DBConnection`
         instance
 
     """
@@ -230,14 +229,13 @@ def crypto_key_table(connection_data):
 def crypto_admin_key(area, admin_user, connection_data):
     """Return crypto admin key for the given user and area.
 
-    The return value is a pair (KEY_ID, KEY) where KEY_ID is the database
-    record key and KEY is the actual key.
+    The return value is a pair (KEY_ID, KEY) where KEY_ID is the database record
+    key and KEY is the actual key.
 
     Arguments:
-
-      area -- name of the crypto area; basestring
-      admin_user -- login name of the crypto area administrator; basestring
-      connection_data -- database connection data; 'pytis.data.DBConnection'
+      area: name of the crypto area; basestring
+      admin_user: login name of the crypto area administrator; basestring
+      connection_data: database connection data; `pytis.data.DBConnection`
         instance
 
     """
@@ -254,10 +252,9 @@ def check_crypto_password(key, password, connection_data):
     """Return true iff the given key and password match.
 
     Arguments:
-
-      key -- encrypted key; basestring
-      password -- password to the key; basestring
-      connection_data -- database connection data; 'pytis.data.DBConnection'
+      key: encrypted key; basestring
+      password: password to the key; basestring
+      connection_data: database connection data; `pytis.data.DBConnection`
         instance
 
     """
@@ -270,22 +267,21 @@ def add_crypto_user(area, user, admin_user, admin_password, admin_address, conne
                     transaction=None, user_password=None):
     """Add new crypto user for the given area.
 
-    If the action succeeds, return 'None'.  Otherwise return an error
+    If the action succeeds, return `None`.  Otherwise return an error
     description (basestring).
 
     Arguments:
-
-      area -- name of the crypto area; basestring
-      user -- login name of the user to get the access to the area; basestring
-      admin_user -- login name of the crypto area administrator; basestring
-      admin_password -- password to the admin key; basestring
-      admin_address -- e-mail address of the admin user, to be used as the
-        sender of the notification e-mail; basestring
-      connection_data -- database connection data; 'pytis.data.DBConnection'
+      area: name of the crypto area; basestring
+      user: login name of the user to get the access to the area; basestring
+      admin_user: login name of the crypto area administrator; basestring
+      admin_password: password to the admin key; basestring
+      admin_address: e-mail address of the admin user, to be used as the sender
+        of the notification e-mail; basestring
+      connection_data: database connection data; `pytis.data.DBConnection`
         instance
-      transaction -- transaction to use
-      user_password -- string to use as the password for given login name; in such a case
-        password will not be sent by email.
+      transaction: transaction to use
+      user_password: string to use as the password for given login name; in such
+        a case password will not be sent by email.
 
     """
     key_id, key = crypto_admin_key(area, admin_user, connection_data)

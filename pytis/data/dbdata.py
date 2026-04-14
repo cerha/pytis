@@ -19,11 +19,11 @@
 
 """Implementace tabulkových dat pro relační databázové stroje.
 
-Základem modulu je abstraktní třída 'DBData'.  Ta je potomkem třídy
-'data.Data' a obohacuje ji o specifikaci napojení tabulkových dat do relační
-databáze a rozšiřuje některé ji metody.
+Základem modulu je abstraktní třída `DBData`.  Ta je potomkem třídy
+`~pytis.data.Data` a obohacuje ji o specifikaci napojení tabulkových dat do
+relační databáze a rozšiřuje některé ji metody.
 
-Jednotliví potomci třídy 'DBData' implementují databázový přístup pro
+Jednotliví potomci třídy `DBData` implementují databázový přístup pro
 jednotlivé databázové stroje (na úrovni SQL) a jejich potomci pak pro
 konkrétní pythonová rozhraní k těmto strojům.
 
@@ -37,12 +37,12 @@ Různé databázové třídy plní následující role:
 
 Každá z těchto rolí je realizována samostatnou třídou.
 
-Kromě toho modul obsahuje pomocnou třídu 'DBConnection' pro specifikaci
-databázového spojení, pomocné třídy založené na 'DBBinding' pro specifikaci
-napojení uvnitř 'DBData' a databázové výjimky odvozené ze třídy
-'DBException'.  Třídě 'DBBinding' a jejím potomkům je třeba věnovat
-obzvláštní pozornost, pomocí nich se definují nejdůležitější věci týkající se
-tabulky.
+Kromě toho modul obsahuje pomocnou třídu `DBConnection` pro specifikaci
+databázového spojení, pomocné třídy založené na `DBBinding` pro specifikaci
+napojení uvnitř `DBData` a databázové výjimky odvozené ze třídy
+`DBException`. Třídě `DBBinding` a jejím potomkům je třeba věnovat
+obzvláštní pozornost, pomocí nich se definují nejdůležitější věci týkající
+se tabulky.
 
 """
 from __future__ import print_function
@@ -78,19 +78,18 @@ class DBData(Data):
     """Tabulková data mapovaná do relační databáze.
 
     Třída rozšiřuje svého předka o specifikaci napojení sloupců tabulkových dat
-    do relační databáze (blíže viz metoda '__init__') a o některé argumenty
-    jeho veřejných metod.  Zavádí také veřejnou metodu 'sleep'.
+    do relační databáze (blíže viz metoda `__init__`) a o některé argumenty jeho
+    veřejných metod.  Zavádí také veřejnou metodu `sleep`.
 
     Tato třída je nezávislá na konkrétním použitém databázovém stroji a
-    pythonovém modulu.  Závislé věci jsou implementovány v potomcích této
-    třídy, přičemž se doporučuje v nejbližší podtřídě napsat potomky pro
-    jednotlivé databázové stroje (tj. realizovat metody na úrovni SQL a jiných
-    vlastností daného databázového stroje) a teprve nad nimi definovat třídy
-    odpovídajícím jednotlivým pythonovým modulům.  Je též možné využít
-    vícenásobné dědičnosti a definovat například \"odbočující\" třídu pro
-    DB-SIG API.
+    pythonovém modulu.  Závislé věci jsou implementovány v potomcích této třídy,
+    přičemž se doporučuje v nejbližší podtřídě napsat potomky pro jednotlivé
+    databázové stroje (tj. realizovat metody na úrovni SQL a jiných vlastností
+    daného databázového stroje) a teprve nad nimi definovat třídy odpovídajícím
+    jednotlivým pythonovým modulům.  Je též možné využít vícenásobné dědičnosti
+    a definovat například \"odbočující\" třídu pro DB-SIG API.
 
-    Všechny metody této třídy přístupující k datům mohou metat 'DBException'.
+    Všechny metody této třídy přistupující k datům mohou metat `DBException`.
 
     """
 
@@ -98,26 +97,25 @@ class DBData(Data):
                  crypto_names=(), **kwargs):
         """Inicializuj tabulku s napojením do databáze.
 
-        Argumenty:
+        Arguments:
+          bindings: Sekvence instancí třídy `DBBinding`.
+          ordering: Stejné jako v předkovi.
+          distinct_on: Sequence of column names to add as a DISTINCT ON part to
+            SELECT commands.
+          arguments: Sequence of `DBBinding` instances defining table arguments,
+            when the table is actually a row returning function. Otherwise it
+            must be None.
+          crypto_names: Sequence of additional crypto names (strings) required
+            by the object but not defined in bindings.
+          kwargs: K předání předkovi.
 
-          bindings -- sekvence instancí třídy 'DBBinding'
-          ordering -- stejné jako v předkovi
-          distinct_on -- sequence of column names to add as a DISTINCT TO part
-            to SELECT commands
-          arguments -- sequence of 'DBBinding' instances defining table
-            arguments, when the table is actually a row returning function.
-            Otherwise it must be 'None'.
-          crypto_names -- sequence of additional crypto names (strings)
-            required by the object but not defined in bindings
-          kwargs -- k předání předkovi
+        Sloupce datové tabulky se určí automaticky na základě `bindings`. Jejich
+        typy jsou určeny typy odpovídajících dat v databázi (přesné mapování
+        závisí na potomcích třídy a není zde specifikováno).  Klíčovým sloupcem
+        tabulky je první sloupec z `bindings`, který je klíčovým sloupcem
+        v databázi.
 
-        Sloupce datové tabulky se určí automaticky na základě 'bindings'.
-        Jejich typy jsou určeny typy odpovídajících dat v databázi(přesné
-        mapování závisí na potomcích třídy a není zde specifikováno).  Klíčovým
-        sloupcem tabulky je první sloupec z 'bindings', který je klíčovým
-        sloupcem v databázi.
-
-        Žádné dva prvky 'bindings' by neměly mít shodné id, s výjimkou skrytých
+        Žádné dva prvky `bindings` by neměly mít shodné id, s výjimkou skrytých
         bindings, která mají jako id prázdný řetězec.
 
         """
@@ -148,13 +146,14 @@ class DBData(Data):
         super(DBData, self).__init__(columns=columns, key=key, ordering=ordering, **kwargs)
 
     def _db_bindings_to_column_spec(self, bindings):
-        """Vrať dvojici (COLUMNS, KEY) odpovídající argumentům 'Data.__init__'.
+        """Vrať dvojici (COLUMNS, KEY) odpovídající argumentům `~pytis.data.Data.__init__`.
 
         V této třídě metoda vrátí jednoduše seznam sloupců v podobě instancí
-        'ColumnSpec' s názvy odpovídajícími identifikátorům 'bindings' (i co
-        se týče jejich pořadí), přičemž typ všech sloupců je nastaven na
-        nejobecnější typ 'types_.Type'.  Jako KEY je vrácen první sloupec
-        uvedený v 'bindings'; pokud jsou 'bindings' prázdné, je vráceno 'None'.
+        `~pytis.data.ColumnSpec` s názvy odpovídajícími identifikátorům
+        `bindings` (i co se týče jejich pořadí), přičemž typ všech sloupců je
+        nastaven na nejobecnější typ `~pytis.data.types_.Type`.  Jako KEY je
+        vrácen první sloupec uvedený v `bindings`; pokud jsou `bindings`
+        prázdné, je vráceno `None`.
 
         Tato implementace metody je velmi hrubá a metoda je určena
         k předefinování v potomcích třídy.
@@ -168,13 +167,12 @@ class DBData(Data):
         return columns, key
 
     def _db_column_binding(self, col_id):
-        """Vrať binding sloupce 'col_id'.
+        """Vrať binding sloupce `col_id`.
 
-        Pokud pro 'col_id' není žádné binding definováno, vrať 'None'.
+        Pokud pro `col_id` není žádné binding definováno, vrať `None`.
 
-        Argumenty:
-
-          col_id -- identifikace tabulkového sloupce jako string
+        Arguments:
+          col_id: Identifikace tabulkového sloupce jako string.
 
         """
         for b in self._bindings:
@@ -183,11 +181,11 @@ class DBData(Data):
         return None
 
     def table(self, col_id):
-        """Vrať tabulku sloupce 'col_id'.
+        """Vrať tabulku sloupce `col_id`.
 
-        Argumenty:
+        Arguments:
+          col_id: Viz metodu `_db_column_binding`.
 
-           viz metoda '_db_column_binding'.
         """
         b = self._db_column_binding(col_id)
         if b:
@@ -205,9 +203,9 @@ class DBData(Data):
         Tato metoda by měla být volána vždy, když je trvale nebo na delší dobu
         ukončeno používání instance.
 
-        Zavoláním této metody se neznemožňuje další použití instance, lze
-        nadále využívat všechny její veřejné metody.  Je-li pak ovšem třeba
-        opět uvolnit zdroje, je nutno tuto metodu zavolat znovu.
+        Zavoláním této metody se neznemožňuje další použití instance, lze nadále
+        využívat všechny její veřejné metody.  Je-li pak ovšem třeba opět
+        uvolnit zdroje, je nutno tuto metodu zavolat znovu.
 
         """
         if __debug__:
@@ -215,11 +213,11 @@ class DBData(Data):
         self.close()
 
     def arguments(self):
-        """Return the value of argument 'arguments' passed to the constructor."""
+        """Return the value of argument arguments passed to the constructor."""
         return self._arguments
 
     def crypto_names(self):
-        """Return sequence of all crypto names (strings) required by the data object.
+        """Return sequence of all crypto names (strings) required by the object.
 
         It includes crypto names given in the constructor and crypto names
         defined in bindings.
@@ -354,9 +352,9 @@ class DBConnection(object):
 
     The instance of this class just holds information about database connection
     parameters.  It doesn't perform any operations related to database
-    connections and doesn't even hold any acual connection objects.
+    connections and doesn't even hold any actual connection objects.
 
-    The parameters are described in the '__init__' docstring.
+    The parameters are described in the `__init__` docstring.
 
     This connection parameters are mostly immutable, except for login
     credentials (username, password and encryption passwords), which may be
@@ -372,28 +370,26 @@ class DBConnection(object):
         """Initialize connection specification instance.
 
         Arguments:
-
-          user -- database user as a string or 'None'
-          password -- database password as a string or 'None'
-          host -- database server name as a string or 'None'
-          port -- database server port number as an int or 'None'
-          database -- database name as a string or 'None'
-          sslmode -- one of string constants accepted by PostgreSQL
-          schemas -- non-empty sequence of schema identifiers (strings) to use
-            in the database in the order of preference or 'None' (use default
-            schemas)
-          crypto_password -- rsa encrypted password for database encrypted
-            areas
-          alternatives -- dictionary of alternative connection parameters.
+          user: Database user as a string or `None`.
+          password: Database password as a string or `None`.
+          host: Database server name as a string or `None`.
+          port: Database server port number as an int or `None`.
+          database: Database name as a string or `None`.
+          sslmode: One of string constants accepted by PostgreSQL.
+          schemas: Non-empty sequence of schema identifiers (strings) to use in
+            the database in the order of preference or `None` (use default
+            schemas).
+          crypto_password: RSA encrypted password for database encrypted areas.
+          alternatives: Dictionary of alternative connection parameters.
             Alternative database connections are identified by name and data
-            object specifications may refer to these names to use connect to
+            object specifications may refer to these names to connect to
             alternative data sources (thus the number and names of alternative
             connections is application specific).  The dictionary keys are
             connection names and the values are dictionaries of connection
-            options ('user', 'password', 'host', 'database', ...) with the same
-            meaning as the corresponding arguments.
+            options (user, password, host, database, ...) with the same meaning
+            as the corresponding arguments.
 
-        Arguments with the value 'None' will be ignored when connecting to the
+        Arguments with the value `None` will be ignored when connecting to the
         database.
 
         """
@@ -425,23 +421,23 @@ class DBConnection(object):
                      if option not in exclude and self.__dict__['_' + option] is not None])
 
     def user(self):
-        """Vrať databázového uživatele jako string nebo 'None'."""
+        """Vrať databázového uživatele jako string nebo `None`."""
         return self._user
 
     def password(self):
-        """Vrať heslo databázového uživatele jako string nebo 'None'."""
+        """Vrať heslo databázového uživatele jako string nebo `None`."""
         return self._password
 
     def host(self):
-        """Vrať jméno databázového serveru jako string nebo 'None'."""
+        """Vrať jméno databázového serveru jako string nebo `None`."""
         return self._host
 
     def port(self):
-        """Vrať jméno portu na serveru jako integer nebo 'None'."""
+        """Vrať jméno portu na serveru jako integer nebo `None`."""
         return self._port
 
     def database(self):
-        """Vrať jméno databáze jako string nebo 'None'."""
+        """Vrať jméno databáze jako string nebo `None`."""
         return self._database
 
     def sslmode(self):
@@ -467,10 +463,13 @@ class DBConnection(object):
     def select(self, name):
         """Return the specification instance activated for given connection name.
 
-        Available connection names are defined by the 'alternatives'
-        constructor argument.  'None' is reserved for the default connection.
-        The list of alternative connections is kept, so it is possible to
-        switch back to a previous connection using 'select()' again.
+        Available connection names are defined by the alternatives constructor
+        argument.  None is reserved for the default connection. The list of
+        alternative connections is kept, so it is possible to switch back to a
+        previous connection using `select` again.
+
+        Arguments:
+          name: Connection name string or None for the default connection.
 
         """
         if name == self._name:
@@ -487,14 +486,13 @@ class DBConnection(object):
         """Set given login parameters in the instance.
 
         Arguments:
-
-          user -- database user as a string or 'None'
-          password -- database password as a string or 'None'
+          user: Database user as a string or `None`.
+          password: Database password as a string or `None`.
 
         """
         self._user = user
         self._password = password
-        # If `password' is wrong then the following dbfunction call will
+        # If `password` is wrong then the following dbfunction call will
         # initiate new password dialog and will invoke this method recursively.
         # In such a case we must not set the wrong password here.
         self._crypto_password = None
@@ -514,11 +512,10 @@ class DBConnection(object):
         return self._crypto_password
 
     def set_crypto_password(self, password):
-        """Set instance crypto password to 'password'.
+        """Set instance crypto password to password.
 
         Arguments:
-
-          password -- the password, string
+          password: The password, string.
 
         """
         self._crypto_password = password
@@ -531,8 +528,7 @@ class DBConnection(object):
         """Set instance db key.
 
         Arguments:
-
-          db_key -- the database communication key
+          db_key: The database communication key.
 
         """
         self._db_key = db_key
@@ -541,7 +537,7 @@ class DBConnection(object):
 class DBBinding(object):
     """Definice napojení dat do databáze.
 
-    Tato definice je využívána třídou 'DBData' a jejími potomky.
+    Tato definice je využívána třídou `DBData` a jejími potomky.
 
     Tato třída je pouze abstraktním základem, který definuje pouze stringový
     identifikátor instance napojení.  Mechanismy pro skutečné definice
@@ -555,9 +551,8 @@ class DBBinding(object):
     def __init__(self, id):
         """Definuj napojení.
 
-        Argumenty:
-
-          id -- identifikátor napojení, libovolný string
+        Arguments:
+          id: Identifikátor napojení, libovolný string.
 
         """
         assert isinstance(id, basestring)
@@ -572,8 +567,8 @@ class DBBinding(object):
 class DBColumnBinding(DBBinding):
     """Vazba 1-1 tabulkového sloupce na databázový sloupec.
 
-    Tato vazba je dána jménem databázové tabulky a jejího sloupce, na který
-    se tabulkový sloupec mapuje.
+    Tato vazba je dána jménem databázové tabulky a jejího sloupce, na který se
+    tabulkový sloupec mapuje.
 
     Třída je specifikována jako immutable a jako taková může být libovolně
     sdílena.
@@ -584,44 +579,50 @@ class DBColumnBinding(DBBinding):
                  encrypt_empty=True, **kwargs):
         """Define a column binding.
 
-        Argumenty:
-
-          id -- id sloupce
-          table -- jméno databázové tabulky, do které má být tabulkový sloupec napojen, jako string
-          column -- jméno sloupce databázové tabulky, na který má být tabulkový sloupec napojen,
-            jako string nebo sekvence (viz níže)
-          related_to -- instance 'DBColumnBinding' specifikující, se kterým sloupcem jiné
-            databázové tabulky je tento sloupec v relaci; pokud s žádným, je hodnotou 'None'
-          type_ -- explicitně specifikovaný typ sloupce jako instance třídy 'Type' nebo 'None'.
-            Je-li 'None', bude typ sloupce určen automaticky dle informací získaných přímo
-            z databáze.  V opačném případě bude typem hodnota tohoto argumentu, která musí
+        Arguments:
+          id: Id sloupce.
+          table: Jméno databázové tabulky, do které má být tabulkový sloupec
+            napojen, jako string.
+          column: Jméno sloupce databázové tabulky, na který má být tabulkový
+            sloupec napojen, jako string nebo sekvence (viz níže).
+          related_to: Instance `DBColumnBinding` specifikující, se kterým
+            sloupcem jiné databázové tabulky je tento sloupec v relaci; pokud
+            s žádným, je hodnotou `None`.
+          type_: Explicitně specifikovaný typ sloupce jako instance třídy
+            `~pytis.data.types_.Type` nebo None.  Je-li None, bude typ sloupce
+            určen automaticky dle informací získaných přímo z databáze.
+            V opačném případě bude typem hodnota tohoto argumentu, která musí
             odpovídat typu sloupce v databázi (být jeho specializací).
-          crypto_name -- if not 'None' then the column is stored encrypted in
-            the database and the argument value is a string identifier of the
+          crypto_name: If not None then the column is stored encrypted in the
+            database and the argument value is a string identifier of the
             protection area.  There can be defined several different protection
             areas identified by corresponding crypto names in the application,
-            protected by different passwords.  Not all types support
-            encryption, it is an error to set encryption here for column types
-            which don't support it.
-          encrypt_empty -- if True (default) then encrypt also None values (and
+            protected by different passwords.  Not all types support encryption,
+            it is an error to set encryption here for column types which don't
+            support it.
+          encrypt_empty: If True (default) then encrypt also None values (and
             empty values when they are represented by None values).  Otherwise
-            store empty values as NULLs in the database.  Empty values should
-            be commonly encrypted in the databases so that there is no
-            information about secret data.  But when you want to allow
-            unauthorized users to work with encrypted data in a limited way,
-            e.g. to insert new records with empty secret values, then setting
-            this argument to False is useful.
-          **kwargs -- explicitně definované klíčové argumenty typu.  Pokud jsou definovány
-            libovolné klíčové argumenty, budou tyto předány konstruktoru implicitního datového
-            typu.  Typ v takovém případě nesmí být explicitně určen argumentem 'type_'.
+            store empty values as NULLs in the database.  Empty values should be
+            commonly encrypted in the databases so that there is no information
+            about secret data.  But when you want to allow unauthorized users to
+            work with encrypted data in a limited way, e.g. to insert new
+            records with empty secret values, then setting this argument to
+            False is useful.
+          **kwargs: Explicitně definované klíčové argumenty typu.  Pokud jsou
+            definovány libovolné klíčové argumenty, budou tyto předány
+            konstruktoru implicitního datového typu.  Typ v takovém případě
+            nesmí být explicitně určen argumentem `type_`.
 
-        Napojení může být *skryté*, což znamená, že přímo neodpovídá žádnému sloupci datové
-        tabulky.  To se může stát například v případě, že binding je definováno *pouze* kvůli
-        specifikaci relace mezi tabulkami (prostřednictvím argumentu 'related_to').  U skrytého
-        napojení nezáleží na hodnotě příslušného sloupce a tudíž k těmto hodnotám ani nelze
-        přistupovat.  Napojení je považováno za skryté, právě když řetězec 'id' je prázdný.
+        Napojení může být *skryté*, což znamená, že přímo neodpovídá žádnému
+        sloupci datové tabulky.  To se může stát například v případě, že binding
+        je definováno *pouze* kvůli specifikaci relace mezi tabulkami
+        (prostřednictvím argumentu `related_to`).  U skrytého napojení nezáleží
+        na hodnotě příslušného sloupce a tudíž k těmto hodnotám ani nelze
+        přistupovat.  Napojení je považováno za skryté, právě když řetězec `id`
+        je prázdný.
 
-        'related_to' je obecně nesymetrická relace přibližně odpovídající specifikátoru REFERENCES.
+        `related_to` je obecně nesymetrická relace přibližně odpovídající
+        specifikátoru REFERENCES.
 
         """
         DBBinding.__init__(self, id)
@@ -666,23 +667,23 @@ class DBColumnBinding(DBBinding):
         return self._column
 
     def related_to(self):
-        """Vrať instanci DBColumnBinding napojeného sloupce nebo 'None'."""
+        """Vrať instanci `DBColumnBinding` napojeného sloupce nebo `None`."""
         return self._related_to
 
     def type(self):
-        """Vrať instanci typu sloupce z konstruktoru nebo 'None'."""
+        """Vrať instanci typu sloupce z konstruktoru nebo `None`."""
         return self._type
 
     def crypto_name(self):
-        """Return 'crypto_name' value given in the constructor, 'None' or string."""
+        """Return `crypto_name` value given in the constructor, `None` or string."""
         return self._crypto_name
 
     def encrypt_empty(self):
-        """Return 'encrypt_empty' value given in the constructor, boolean."""
+        """Return `encrypt_empty` value given in the constructor, boolean."""
         return self._encrypt_empty
 
     def kwargs(self):
-        """Vrať slovník klíčových argumentů konstruktoru dat. typu sloupce."""
+        """Vrať slovník klíčových argumentů konstruktoru datového typu sloupce."""
         return self._kwargs
 
     def is_hidden(self):
@@ -696,7 +697,7 @@ class DBColumnBinding(DBBinding):
 class DBException(Exception):
     """Výjimka nahazovaná v případě vzniku databázové chyby.
 
-    Všechny databázové výjimky metané ven ze třídy 'DBData' jsou tohoto typu.
+    Všechny databázové výjimky metané ven ze třídy `DBData` jsou tohoto typu.
 
     Třída ve svém konstruktoru automaticky zaloguje základní informace
     o výjimce.
@@ -706,17 +707,16 @@ class DBException(Exception):
     def __init__(self, message, exception=None, *args):
         """Inicializuj výjimku a zaloguj informace o ní.
 
-        Argumenty:
-
-          message -- lidsky čitelné oznámení o chybě, string; může být též
-            'None', v kterémžto případě se doplní standardní zpráva
-            o databázové chybě, to je však vhodné používat pouze v případě, kdy
-            nemá smysl uživateli sdělovat bližší popis chyby
-          exception -- výjimka, která tuto výjimku způsobila, instance třídy
-            'Exception'; nebo 'None' (neznamená nutně, že chyba nebyla
-            způsobena výjimkou, tato výjimka pouze nemusí být podstatná)
-          args -- libovolné další argumenty, které mají být spolu s 'message' a
-            'exception' předány konstruktoru nadtřídy
+        Arguments:
+          message: Lidsky čitelné oznámení o chybě, string; může být též None,
+            v kterémžto případě se doplní standardní zpráva o databázové chybě,
+            to je však vhodné používat pouze v případě, kdy nemá smysl uživateli
+            sdělovat bližší popis chyby.
+          exception: Výjimka, která tuto výjimku způsobila, instance třídy
+            `Exception`; nebo `None` (neznamená nutně, že chyba nebyla způsobena
+            výjimkou, tato výjimka pouze nemusí být podstatná).
+          *args: Libovolné další argumenty, které mají být spolu s `message` a
+            `exception` předány konstruktoru nadtřídy.
 
         """
         if message is None:
@@ -733,7 +733,7 @@ class DBException(Exception):
         return self._message
 
     def exception(self):
-        """Vrať databázovou výjimku zadanou v konstruktoru nebo 'None'."""
+        """Vrať databázovou výjimku zadanou v konstruktoru nebo `None`."""
         return self._exception
 
 
@@ -741,12 +741,12 @@ class DBSystemException(DBException):
     """Výjimka nahazovaná v případě vzniku systémové databázové chyby.
 
     Systémová chyba je chyba související se systémovými prostředky, například
-    chyba spojení do databáze.  Viz též 'DBUserException'.
+    chyba spojení do databáze.  Viz též `DBUserException`.
 
-    Databázové rozhraní generuje v případě databázových chyb
-    'DBSystemException' pouze tehdy, je-li schopno rozpoznat, že se jedná
-    o systémovou chybu.  To znamená, že systémová chyba může být signalizována
-    i jako prostá 'DBException'.
+    Databázové rozhraní generuje v případě databázových chyb `DBSystemException`
+    pouze tehdy, je-li schopno rozpoznat, že se jedná o systémovou chybu.  To
+    znamená, že systémová chyba může být signalizována i jako prostá
+    `DBException`.
 
     """
 
@@ -769,12 +769,12 @@ class DBUserException(DBException):
 
     Uživatelská chyba je chyba způsobená syntakticky nebo sémanticky chybnou
     databázovou operací, například chybným použitím SQL příkazu nebo pokusem
-    o porušení referenční integrity.  Viz též 'DBSystemException'.
+    o porušení referenční integrity.  Viz též `DBSystemException`.
 
-    Databázové rozhraní generuje v případě databázových chyb
-    'DBUserException' pouze tehdy, je-li schopno rozpoznat, že se jedná
-    o uživatelskou chybu.  To znamená, že uživatelská chyba může být
-    signalizována i jako prostá 'DBException'.
+    Databázové rozhraní generuje v případě databázových chyb `DBUserException`
+    pouze tehdy, je-li schopno rozpoznat, že se jedná o uživatelskou chybu.  To
+    znamená, že uživatelská chyba může být signalizována i jako prostá
+    `DBException`.
 
     """
 
@@ -814,20 +814,21 @@ class NotWithinSelect(ProgramError):
 
 def dbtable(table, columns, connection_data=None, arguments=None, connection_name=None,
             sql_logger=None):
-    """Return 'DBDataDefault' instance corresponding to a 'table' with 'columns'.
+    """Return `DBDataDefault` instance for a table with given columns.
 
     Arguments:
-
-      table -- table name, string
-      columns -- sequence of column ids (strings); instead of column ids pairs
-        of the form (ID, TYPE,) may be used where ID is the column id and TYPE
-        is 'Type' instance corresponding to the type of the column,
-        specifying types is necessary in case of table functions
-      arguments -- optional sequence of table function arguments in case the
-        table is actually a database function returning rows; sequence items
-        must be 'DBBinding' instances
-      sql_logger -- if not 'None' all SQL commands are written to this object
-        using its 'write' method (which the object must provide)
+      table: Table name, string.
+      columns: Sequence of column ids (strings); instead of column ids pairs of
+        the form (ID, TYPE) may be used where ID is the column id and TYPE is a
+        `Type` instance corresponding to the type of the column; specifying
+        types is necessary in case of table functions.
+      connection_data: Connection parameters or None.
+      arguments: Optional sequence of table function arguments in case the table
+        is actually a database function returning rows; sequence items must be
+        `DBBinding` instances.
+      connection_name: Optional connection name string or None.
+      sql_logger: If not None, all SQL commands are written to this object using
+        its write method (which the object must provide).
 
     """
     def binding(spec):
@@ -850,40 +851,35 @@ def dbfunction(fspec, *args, **kwargs):
     If the database call fails, return None.
 
     Arguments:
-
-      function -- name of the function (string) or database specification
-        ('pytis.data.gensqlalchemy.SQLFunctional' subclass) corresponding to
+      fspec: Name of the function (string) or database specification
+        (`~pytis.data.gensqlalchemy.SQLFunctional` subclass) corresponding to
         the function.  Passing string name allows calling any DB function
         directly without specification, but lacks argument and result type
-        safety so it should only be used for legacy purposes.  Passing function
+        safety so it should only be used for legacy purposes. Passing function
         by specification should be preferred where possible.
-
-      args, kwargs -- function call arguments.  Positional arguments are passed
-        in given order.  Keyword arguments must match the argument names
+      *args: Function call positional arguments passed in given order. Argument
+        values are Python "internal" values corresponding to the argument's
+        Pytis data type given by specification (TypeError is raised if not).
+        The rules are somewhat different when the function is passed by name and
+        the specification is not available - see below.
+      **kwargs: Function call keyword arguments; must match the argument names
         defined in function specification.  Note, that arguments are not
         optional.  You must always pass all arguments defined by function
-        specification.  You may only choose to pass them as positional or as
-        keywords.  Argument values are Python "internal" values corresponding
-        to the argument's Pytis data type given by specification (TypeError is
-        raised if not).  The rules are somewhat different when the function is
-        passed by name and the specification is not available - see below.
+        specification.  Special keyword argument `transaction` is a database
+        transaction as a `DBTransactionDefault` instance.
 
-      transaction -- database transaction as a 'DBTransactionDefault' instance.
-        Transaction is popped out of kwargs, so this makes it impossible to pass
-        the argument of the same name as a keyword argument (pass as positional if
-        needed).
-
-    Returns the Python value of the function call result or a sequence of
-    'pytis.data.Row' instances for functions with multirow = True in
-    specification (calling multirow functions by name is not supported).
+    Returns:
+      The Python value of the function call result or a sequence of
+      `~pytis.data.Row` instances for functions with multirow=True in
+      specification (calling multirow functions by name is not supported).
 
     If the function is passed by name, the specification is not available.
     Argument types are thus not checked, but inferred from values.  The types
     str, int, float, bool, datetime.date, datetime.datetime simply map to the
     corresponding Pytis data types.  Value instances can also be used directly
-    to define the argument type explicitly.  Keyword arguments are not
-    supported in this case.  You may get database errors if you pass arguments
-    incorrectly (but extra arguments are ignored silently!).
+    to define the argument type explicitly.  Keyword arguments are not supported
+    in this case.  You may get database errors if you pass arguments incorrectly
+    (but extra arguments are ignored silently!).
 
     """
     def argument(value):
@@ -944,9 +940,11 @@ def transaction(**kwargs):
     """Return a new database transaction bound to the configured DB connection.
 
     Arguments:
-        **kwargs: Additional transaction options forwarded to DBTransactionDefault.
+      **kwargs: Additional transaction options forwarded to
+        `DBTransactionDefault`.
 
     Returns:
-        DBTransactionDefault instance.
+      `DBTransactionDefault` instance.
+
     """
     return pytis.data.DBTransactionDefault(pytis.config.dbconnection, **kwargs)

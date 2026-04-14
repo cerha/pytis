@@ -18,14 +18,14 @@
 
 """Access rights handling.
 
-Everything what is needed to define and handle access permissions to the data
-objects is put here.  The set of allowed access rights is defined in the
-'Permission' class.  The access rights checking mechanism is implemented in the
-class 'AcessRights'.  Access to data objects is regulated in the
-'RestrictedData' class.
+Everything what is needed to define and handle access permissions to the
+data objects is put here.  The set of allowed access rights is defined in
+the `Permission` class.  The access rights checking mechanism is implemented
+in the class `AccessRights`.  Access to data objects is regulated in the
+`RestrictedData` class.
 
 Access rights violation is signalized exclusively using the
-'DataAccessException' class.
+`DataAccessException` class.
 
 """
 from __future__ import print_function
@@ -44,8 +44,8 @@ class Permission(object):
     """Enumerator of permission constants.
 
     Not all the constants here make sense for all data objects.  For instance,
-    it makes no sense to specify 'DELETE' permission for a table column, or the
-    user commands will mostly use 'CALL' permission.
+    it makes no sense to specify `DELETE` permission for a table column, or the
+    user commands will mostly use `CALL` permission.
 
     """
 
@@ -90,23 +90,23 @@ class AccessRights(object):
     """Access rights specification."""
 
     def __init__(self, *access_rights):
-        """
-        Arguments:
+        """Initialize with given access rights.
 
-          access_rights -- each of the arguments is a tuple of tuples of the
-            form (COLUMNS, (GROUPS, PERMISSIONS, ...), ...), where COLUMNS is
-            a column name or a sequence of column names (as strings) or 'None',
-            GROUPS is a group name or a sequence of group names or 'None' and
-            PERMISSIONS is a sequence of 'Permission' class constants
+        Arguments:
+          access_rights: Each argument is a tuple of tuples of the form
+            (COLUMNS, (GROUPS, PERMISSIONS, ...), ...), where COLUMNS is a
+            column name or a sequence of column names (as strings) or None,
+            GROUPS is a group name or a sequence of group names or None and
+            PERMISSIONS is a sequence of `Permission` class constants.
 
         PERMISSIONS makes corresponding actions allowed, anything what is not
-        allowed is forbidden.  When COLUMN or GROUP is 'None', it's an implicit
-        value that applies to the given column or group respectively, if no
-        more specific permission is defined for it.  Implicit permissions are
-        added to the explicit permissions given to a column or group, so they
-        can be extended but not limited.  If a column name is 'False', it
-        applies only to those columns which don't have any own rights defined
-        for the given permission.
+        allowed is forbidden.  When COLUMN or GROUP is None, it's an implicit
+        value that applies to the given column or group respectively, if no more
+        specific permission is defined for it.  Implicit permissions are added
+        to the explicit permissions given to a column or group, so they can be
+        extended but not limited.  If a column name is False, it applies only to
+        those columns which don't have any own rights defined for the given
+        permission.
 
         If a column or a group within a column is given multiple times, the
         corresponding permissions are added together.
@@ -156,17 +156,16 @@ class AccessRights(object):
         return (None in ok_groups) or any(g in ok_groups for g in groups)
 
     def permitted(self, permission, groups, column=None):
-        """Return true iff any of 'groups' has got 'permission'.
+        """Return true iff any of `groups` has got `permission`.
 
         Arguments:
-
-          permission -- required permission, one of the 'Permission' class
-            constants except of 'Permission.ALL'
-          groups -- sequence of group names (as strings); permission is valid
-            if at least one of the listed groups has got the permission
-          column -- name of the column (as a string) to test the permission
-            against, or 'None' in which case implicit rights are tested, or
-            'True' to check that any of the columns has the permission
+          permission: Required permission, one of the `Permission` class
+            constants except of `Permission.ALL`.
+          groups: Sequence of group names (as strings); permission is valid if
+            at least one of the listed groups has got the permission.
+          column: Name of the column (as a string) to test the permission
+            against, or None in which case implicit rights are tested, or True
+            to check that any of the columns has the permission.
 
         """
         assert isinstance(column, basestring) or column in (None, True, False,), column
@@ -189,14 +188,13 @@ class AccessRights(object):
         return groups
 
     def permitted_groups(self, permission, column):
-        """Return list of groups with 'permission' to 'column'.
+        """Return list of groups with `permission` to `column`.
 
         Arguments:
-
-          permission -- asked permission, one of the 'Permission' class
-            constants except of 'Permission.ALL'
-          column -- name of the column (as a string) to test the permission
-            against, or 'None' in which case implicit rights are tested
+          permission: Asked permission, one of the `Permission` class constants
+            except of `Permission.ALL`.
+          column: Name of the column (as a string) to test the permission
+            against, or None in which case implicit rights are tested.
 
         """
         groups = self._permitted_groups(permission, column)
@@ -214,19 +212,18 @@ class AccessRights(object):
 class DBAccessRights(AccessRights):
     """Access rights retrieved from a database.
 
-
     The access rights are read from the database only when initializing the
     instance, they are not checked for later updates.
 
     """
 
     def __init__(self, object_name, connection_data=None):
-        """
-        Arguments:
+        """Initialize with access rights loaded from the database.
 
-          object-name -- symbolic identifier (as a string) of the access rights
-            in the database
-          connection_data -- connection parameters specification
+        Arguments:
+          object_name: Symbolic identifier (as a string) of the access rights in
+            the database.
+          connection_data: Connection parameters specification.
 
         """
         access_rights = self._build_access_rights(object_name, connection_data)
@@ -248,11 +245,11 @@ class RestrictedData(Data):
     """Data object with restricted access to its operations."""
 
     def __init__(self, access_rights=AccessRights((None, (None, Permission.ALL))), **kwargs):
-        """
-        Arguments:
+        """Initialize with given access rights.
 
-          access_rights -- 'AccessRights' instance defining access rights to
-            the object
+        Arguments:
+          access_rights: `AccessRights` instance defining access rights to the
+            object.
 
         """
         self._access_rights = access_rights
@@ -276,7 +273,7 @@ class RestrictedData(Data):
                 raise DataAccessException(permission, table=table, column=c)
 
     def _check_access_condition_columns(self, condition):
-        # Toto původně byla lokální funkce v `_check_access_condition'.
+        # Toto původně byla lokální funkce v `_check_access_condition`.
         # Jenomže je rekurzivní, což vede k tomu, že nemůže být uvolněna (sice
         # nechápu, proč ji neuvolní garbage collector, když hlásí, že nejsou
         # žádné neuvolnitelné objekty, ale prostě je to tak) a dochází
@@ -325,11 +322,10 @@ class RestrictedData(Data):
         """Return true iff the user may access the given column.
 
         Arguments:
-
-          column_id -- id (as a string) of the column checked for access; it
-            may be also 'None' meaning global column access right is checked
-          permission -- the permission to be checked, one of the 'Permission'
-            class constants
+          column_id: Id (as a string) of the column checked for access; it may
+            be also None meaning global column access right is checked.
+          permission: The permission to be checked, one of the `Permission`
+            class constants.
 
         """
         return self._access_rights.permitted(permission, self.access_groups(),
@@ -404,15 +400,13 @@ class DataAccessException(Exception):
     """Exception raised on access rights violation."""
 
     def __init__(self, permission, table=None, column=None):
-        """
-        Arguments:
+        """Initialize with information about the access violation.
 
-          permission -- the missing permission, one of the 'Permission' class
-            constants
-          table -- name of the table which couldn't be accessed, string or
-            'None'
-          column -- name of the column which couldn't be accessed, string or
-            'None'
+        Arguments:
+          permission: The missing permission, one of the `Permission` class
+            constants.
+          table: Name of the table which couldn't be accessed, string or None.
+          column: Name of the column which couldn't be accessed, string or None.
 
         """
         log(EVENT, 'Access violation attempt:',
@@ -424,10 +418,8 @@ def is_in_groups(access_groups):
     """Return true iff the current user is a member of any of the groups.
 
     Arguments:
-
-      'access_groups' -- sequence of group names (as strings) to test the user
-        against, or 'None'; if it is 'None' then true is returned
-        unconditionally.
+      access_groups: Sequence of group names (as strings) to test the user
+        against, or None; if it is None then true is returned unconditionally.
 
     """
     from pytis.data import default_access_groups

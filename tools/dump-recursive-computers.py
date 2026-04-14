@@ -19,9 +19,9 @@
 
 """Dump fields with recursive runtime_filter or runtime_arguments.
 
-All specifications are walked through and fields which define a runtime_filter
-or runtime_arguments computer which depend on the field itself are reported to
-STDOUT.
+All specifications are walked through and fields which define a
+runtime_filter or runtime_arguments computer which depend on the field
+itself are reported to STDOUT.
 
 """
 from __future__ import print_function

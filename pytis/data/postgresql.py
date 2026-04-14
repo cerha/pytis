@@ -20,9 +20,10 @@
 
 """Obecná implementace databázového rozhraní pro PostgreSQL.
 
-Tato část je nezávislá na konkrétní použité knihovně pro přístup k PostgreSQL,
-tvoří jen obecné rozhraní skládající například SQL příkazy.  Fyzický přístup
-k databázi zajišťují rozhraní dále implementovaná v jiných zdrojových souborech.
+Tato část je nezávislá na konkrétní použité knihovně pro přístup
+k PostgreSQL, tvoří jen obecné rozhraní skládající například SQL příkazy.
+Fyzický přístup k databázi zajišťují rozhraní dále implementovaná v jiných
+zdrojových souborech.
 
 """
 from __future__ import print_function
@@ -61,7 +62,7 @@ from pytis.util import (
 _ = pytis.util.translations('pytis-data')
 
 
-# Modifikace tabulek se oznamuje zasláním notifikace `__modif_table', kde `table'
+# Modifikace tabulek se oznamuje zasláním notifikace `__modif_table`, kde `table`
 # je jméno modifikované tabulky.
 
 
@@ -274,25 +275,20 @@ class _QInsert(_Query):
 class PostgreSQLResult(object):
     """Na použitém backendu nezávislá reprezentace výsledku SQL příkazu.
 
-    Předpokládá se předefinování této třídy v potomcích PostgreSQLAccessor dle
+    Předpokládá se předefinování této třídy v potomcích `PostgreSQLAccessor` dle
     potřeb konkrétního použitého backendu.
 
     """
 
     def __init__(self, data):
-        """
+        """Inicializuje výsledek SQL příkazu.
 
-        Argumenty:
-
-          data -- datový objekt odpovídající výsledku; jedná-li se o sekvenci
+        Arguments:
+          data: Datový objekt odpovídající výsledku; jedná-li se o sekvenci
             sekvencí stringů, fungují standardní metody v této třídě, v opačném
-            případě je nutno tyto metody předefinovat
+            případě je nutno tyto metody předefinovat.
 
-        Příklady standardních hodnot 'data':
-
-          (('1', 'prvni'), ('2', 'druhy'), ('3', 'treti'))
-          ()
-          [['42']]
+        Příklady standardních hodnot `data`: `(('1', 'prvni'), ('2', 'druhy'), ('3', 'treti')) () [['42']]`.
 
         """
         # Poznámka ke specifikaci: Reprezentace dat řetězci se může zdát
@@ -304,10 +300,12 @@ class PostgreSQLResult(object):
         self._data = data
 
     def __getitem__(self, row):
-        """Vrať hodnotu výsledku z řádku 'row'.
+        """Vrať hodnotu výsledku z řádku `row`.
 
-        Návratovou hodnotou je reprezentace dat řádku jako indexovatelný objekt
-        s hodnotami typu string odpovídajícími jednotlivým sloupcům výsledku.
+        Returns:
+          Reprezentace dat řádku jako indexovatelný objekt s hodnotami typu
+          string odpovídajícími jednotlivým sloupcům výsledku.
+
         """
         return self._data[row]
 
@@ -319,8 +317,7 @@ class PostgreSQLResult(object):
     __nonzero__ = __bool__
 
     def __len__(self):
-        """Vrať počet řádků dat.
-        """
+        """Vrať počet řádků dat."""
         return len(self._data)
 
     def __str__(self):
@@ -345,17 +342,15 @@ class PostgreSQLAccessor(object_2_5):
     """
 
     class _postgresql_Connection(object):
-        """Spojení do databáze.
-        """
+        """Spojení do databáze."""
         _connection_set = weakref.WeakSet()
 
         def __init__(self, connection, connection_data):
-            """
+            """Inicializuje spojení do databáze.
 
-            Argumenty:
-
-              connection -- spojení do databázového stroje
-              connection_data -- specifikace parametrů spojení
+            Arguments:
+              connection: Spojení do databázového stroje.
+              connection_data: Specifikace parametrů spojení.
 
             """
             self._connection_set.add(self)
@@ -394,16 +389,14 @@ class PostgreSQLAccessor(object_2_5):
                     PostgreSQLAccessor._postgresql_close_connection(c)
 
     class _postgresql_Result(object):
-        """Výsledek SQL příkazu.
-        """
+        """Výsledek SQL příkazu."""
 
         def __init__(self, result):
-            """
+            """Inicializuje výsledek SQL příkazu.
 
-            Argumenty:
-
-              result -- výsledek SQL příkazu v podobě závislé na použitém
-               backendu
+            Arguments:
+              result: Výsledek SQL příkazu v podobě závislé na použitém
+                backendu.
 
             """
             self._result = result
@@ -414,12 +407,12 @@ class PostgreSQLAccessor(object_2_5):
     def _postgresql_new_connection(self, connection_data):
         """Vytvoř, inicializuj a vrať nové spojení do databáze.
 
-        Návratovou hodnotou je instance '_postgresql_Connection'.
+        Arguments:
+          connection_data: Dictionary obsahující přihlašovací údaje jako stroj,
+            port, uživatel, heslo, atd.
 
-        Argumenty:
-
-          connection_data -- dictionary obsahující přihlašovací údaje jako
-            stroj, port, uživatel, heslo, atd.
+        Returns:
+          Instance `_postgresql_Connection`.
 
         """
         connection = self._postgresql_open_connection(connection_data)
@@ -430,14 +423,14 @@ class PostgreSQLAccessor(object_2_5):
     def _postgresql_open_connection(class_, connection_data):
         """Vytvoř a vrať nové spojení do databáze.
 
-        Návratovou hodnotou je instance '_postgresql_Connection'.
-
-        Argumenty:
-
-          connection_data -- dictionary obsahující přihlašovací údaje jako
-            stroj, port, uživatel, heslo, atd.
-
         Tato metoda musí být předefinována v podtřídě.
+
+        Arguments:
+          connection_data: Dictionary obsahující přihlašovací údaje jako stroj,
+            port, uživatel, heslo, atd.
+
+        Returns:
+          Instance `_postgresql_Connection`.
 
         """
         raise ProgramError(_(u"Method not implemented"))
@@ -446,18 +439,17 @@ class PostgreSQLAccessor(object_2_5):
     def _postgresql_close_connection(class_, connection):
         """Uzavři spojení do databáze.
 
-        Argumenty:
-
-          connection -- spojení, které má být uzavřeno, instance
-            '_postgresql_Connection'
-
         V této třídě metoda nedělá nic.
+
+        Arguments:
+          connection: Spojení, které má být uzavřeno, instance
+            `_postgresql_Connection`.
 
         """
         pass
 
     def _postgresql_initialize_connection(self, connection):
-        """Proveď potřebné inicializace nového spojení 'connection'.
+        """Proveď potřebné inicializace nového spojení `connection`.
 
         Pozor, tato metoda může být volána z jakékoliv instance třídy, nesmí
         tedy zde být nic specifického pro konkrétní instanci.
@@ -534,32 +526,31 @@ class PostgreSQLAccessor(object_2_5):
                     self._postgresql_query(connection, query, False)
 
     def _postgresql_query(self, connection, query, restartable):
-        """Perform SQL 'query' and return the result.
-
-        Arguments:
-
-          connection -- '_postgresql_Connection' instance
-          query -- '_Query' instance of the SQL command to be performed
-          restartable -- iff this is true, the method may try to restart the
-            database connection in case of error
-
-        The return value is a pair ('result', 'connection'), where 'result' is
-        a '_postgresql_Result' result and 'connection' a
-        '_postgresql_Connection' of the connection that returned the result.
+        """Perform SQL `query` and return the result.
 
         This method is required to be redefined in a subclass.
+
+        Arguments:
+          connection: `_postgresql_Connection` instance.
+          query: `_Query` instance of the SQL command to be performed.
+          restartable: If true, the method may try to restart the database
+            connection in case of error.
+
+        Returns:
+          A pair (`result`, `connection`), where `result` is a
+          `_postgresql_Result` result and `connection` a
+          `_postgresql_Connection` of the connection that returned the result.
 
         """
         raise ProgramError(_(u"Method not implemented"))
 
     def _postgresql_transform_query_result(self, result):
-        """Vrať instanci 'PostgreSQLResult' odpovídající výsledku 'result'.
-
-        Argumenty:
-
-          result -- instance '_postgresql_Result'
+        """Vrať instanci `PostgreSQLResult` odpovídající výsledku `result`.
 
         Tato metoda musí být předefinována v podtřídě.
+
+        Arguments:
+          result: Instance `_postgresql_Result`.
 
         """
         raise ProgramError(_(u"Method not implemented"))
@@ -578,10 +569,9 @@ class PostgreSQLAccessor(object_2_5):
         """Rollback all database connections.
 
         Arguments:
-
-          callback -- function of a single argument to be called for each of
-            the rollbacked connections with the connection instance as its
-            single argument; it's currently useful only for debugging
+          callback: Function of a single argument to be called for each of the
+            rollbacked connections with the connection instance as its single
+            argument; it's currently useful only for debugging.
 
         """
         class_._postgresql_Connection.rollback_connections(callback)
@@ -591,9 +581,8 @@ class PostgreSQLAccessor(object_2_5):
         """Close all inactive database connections.
 
         Arguments:
-
-          timeout -- number of seconds defining the interval of connection
-            inactivity to consider the connection inactive
+          timeout: Number of seconds defining the interval of connection
+            inactivity to consider the connection inactive.
 
         """
         class_._postgresql_Connection.close_idle_connections(timeout)
@@ -603,19 +592,19 @@ class PostgreSQLConnector(PostgreSQLAccessor):
     """Třída pro přístup k PostgreSQL na vyšší úrovni.
 
     Třída rozšiřuje funkce nadtřídy o funkce vyšší úrovně jako jsou správa
-    spojení, SQL inicializace při otevírání spojení nebo zpracování výsledků
-    SQL příkazů.
+    spojení, SQL inicializace při otevírání spojení nebo zpracování výsledků SQL
+    příkazů.
 
     """
 
     _pg_connection_pool_ = None
 
     def __init__(self, connection_data, connection_name=None, **kwargs):
-        """
-        Arguments:
+        """Inicializuje konektor.
 
-          connection_data -- 'DBConnection' instance
-          kwargs -- propagated to superclass constructors
+        Arguments:
+          connection_data: `DBConnection` instance.
+          kwargs: Propagated to superclass constructors.
 
         """
         # Logování
@@ -666,23 +655,23 @@ class PostgreSQLConnector(PostgreSQLAccessor):
         pool.put_back(connection.connection_data(), connection)
 
     def _pg_query(self, query, outside_transaction=False, backup=False, transaction=None):
-        """Call the SQL 'query' and return the result.
+        """Call the SQL `query` and return the result.
+
+        The method must properly handle database exceptions and in case any is
+        caught the corresponding `DBException` must be raised.
 
         Arguments:
+          query: `_Query` instance.
+          outside_transaction: If true, the query is performed outside the
+            current transaction (if there is any).
+          backup: If true, write the completed SQL command into log.
+          transaction: Transaction object containing the connection to be used
+            for performing the query or None (in which case the connection is
+            selected automatically); this argument may not be used when
+            `outside_transaction` is true.
 
-          query -- '_Query' instance
-          outside_transaction -- iff it is true, the query is performed outside
-            the current transaction (if there is any)
-          backup -- iff it is true, write the completed SQL command into log
-          transaction -- transaction object containing the connection to be
-            used for performing the query or 'None' (in which case the
-            connection is selected automatically); this argument may not be
-            used when 'outside_transaction' is true
-
-        The return value is a 'PostgreSQLResult' instance.
-
-        The method must properly handle database exception and in case any is
-        caught the corresponding 'DBException' must be raised.
+        Returns:
+          `PostgreSQLResult` instance.
 
         """
         assert isinstance(query, _Query), query
@@ -745,14 +734,13 @@ class PostgreSQLConnector(PostgreSQLAccessor):
         self._pg_connection_pool().flush(self._postgresql_close_connection)
 
     def reset_crypto_password(self, password):
-        """Set crypto password to 'password' in all database connections.
+        """Set crypto password to `password` in all database connections.
 
-        This method closes all connections as a side effect so use it
-        with caution.
+        This method closes all connections as a side effect so use it with
+        caution.
 
         Arguments:
-
-          password -- new crypto password; basestring
+          password: New crypto password; basestring.
 
         """
         pytis.config.dbconnection.set_crypto_password(password)
@@ -802,15 +790,11 @@ class PostgreSQLUserGroups(PostgreSQLConnector):
     def access_groups(self):
         """Vrať sekvenci jmen skupin, do kterých patří přihlášený uživatel.
 
-        Nejsou-li skupiny uživatele známy, vrať 'None'.
+        Sekvence jmen skupin je updatována při každém vytvoření nového spojení.
+        Jména skupin jsou strings.
 
-        Argumenty:
-
-          connection_data -- specifikace spojení, jehož skupiny mají být
-            vráceny
-
-        Sekvence jmen skupin je updatována při každém vytvoření nového
-        spojení.  Jména skupin jsou strings.
+        Returns:
+          Sekvence jmen skupin nebo None, nejsou-li skupiny uživatele známy.
 
         """
         connection_data = self._pg_connection_data()
@@ -877,7 +861,7 @@ class PostgreSQLNotifier(PostgreSQLConnector):
     """Class with notification about table contents changes.
 
     The class runs a thread watching for notification defined in the
-    `_pg_notifications' attribute and sets the `_pg_changed' attribute to True
+    `_pg_notifications` attribute and sets the `_pg_changed` attribute to True
     whenever any of the given object gets changed and calls registered
     callbacks.
 
@@ -904,7 +888,7 @@ class PostgreSQLNotifier(PostgreSQLConnector):
 
         def _notif_register(self, notification):
             # Zamykáme zde kvůli možnosti současného vyvolání této metody
-            # z `register' i naslouchacího threadu.
+            # z `register` i naslouchacího threadu.
             if __debug__:
                 log(DEBUG, 'Registering notification:', notification)
             with Locked(self._notif_connection_lock):
@@ -970,11 +954,12 @@ class PostgreSQLNotifier(PostgreSQLConnector):
                 log(DEBUG, 'Notification registered')
 
     def __init__(self, connection_data, **kwargs):
-        """
-        Argumenty:
+        """Inicializuje notifikátor.
 
-          connection_data -- údaje o spojení, stejné jako ve třídě 'PostgreSQLConnector'
-          kwargs -- k předání předkovi
+        Arguments:
+          connection_data: Údaje o spojení, stejné jako ve třídě
+            `PostgreSQLConnector`.
+          kwargs: K předání předkovi.
 
         """
         self._pg_notifications = []
@@ -1015,12 +1000,12 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
     """Interpretace sémantiky specifikace napojení do databáze.
 
     Tato třída řeší problematiku naplnění významu specifikace napojení sloupců
-    datové tabulky na data v databázi PostgreSQL.  Nedědí žádnou datovou
-    třídu, pouze implementuje metody týkající se interpretace specifikace
-    sloupců, je tudíž vhodná k podědění v některém z potomků 'data.DBData'.
+    datové tabulky na data v databázi PostgreSQL.  Nedědí žádnou datovou třídu,
+    pouze implementuje metody týkající se interpretace specifikace sloupců, je
+    tudíž vhodná k podědění v některém z potomků `DBData`.
 
     Současná implementace této třídy podporuje sloupcovou specifikační třídu
-    'DBColumnBinding' a jen tuto třídu.  Pro bindings navíc platí následující
+    `DBColumnBinding` a jen tuto třídu.  Pro bindings navíc platí následující
     pravidla:
 
     - Musí být specifikováno alespoň jedno binding.
@@ -1039,7 +1024,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
     integrity dat, tj. ohlídání vlastností klíčů nebo referenční integrity je
     ponecháno na databázovém stroji.  Předpokládá se, že v případě porušení
     pravidel definovaných v databázovém stroji je příslušná transakce
-    stornována.  Stejně tak metoda 'delete' pracuje na tom principu, že vymaže
+    stornována.  Stejně tak metoda `delete` pracuje na tom principu, že vymaže
     řádek *pouze z tabulky primárního klíče* napojení; předpokládá se, že data
     v ostatních tabulkách budou smazána automaticky databázovým strojem v rámci
     pravidel zachování referenční integrity.
@@ -1075,44 +1060,45 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
 
     def __init__(self, bindings=None, ordering=None, operations=None, column_groups=None,
                  db_spec=None, **kwargs):
-        """
-        Arguments:
+        """Inicializuje handler napojení na databázi.
 
-          bindings, ordering, kwargs -- passed to superclass
-          operations -- sequence of pairs (OPERATION, COLUMN, NAME), where
-            OPERATION is one of 'AGG_*' constants of the class, COLUMN is id of
+        Arguments:
+          bindings: Předává se předkovi.
+          ordering: Předává se předkovi.
+          kwargs: Předává se předkovi.
+          operations: Sequence of pairs (OPERATION, COLUMN, NAME), where
+            OPERATION is one of `AGG_*` constants of the class, COLUMN is id of
             the column binding corresponding to the column to be aggregated and
             NAME is the result column name (string) that can be used to refer to
-            the aggregate column
-          column_groups -- sequence of columns for the GROUP BY clause.  Each
-            item is either a string identifier of an existing column or a tuple
+            the aggregate column.
+          column_groups: Sequence of columns for the GROUP BY clause.  Each item
+            is either a string identifier of an existing column or a tuple
             (NAME, TYPE, FUNCTION_NAME, *FUNCTION_ARGS), where NAME is the
-            string identifier of the column, TYPE is a 'pytis.data.Type'
-            instance of the resulting column type, FUNCTION_NAME is a string
-            containing the name of the database function returning the value
-            used for grouping, and FUNCTION_ARGS are arguments of the function.
-            Each of FUNCTION_ARGS can be either a string denoting another table
-            column name or a 'Value' instance denoting particular value of the
-            argument.
-          db_spec -- corresponding database specification as '_SQLTabular'
-            instance or 'None'; if not 'None' then database introspection can
-            be omitted for this object
+            string identifier of the column, TYPE is a `Type` instance of the
+            resulting column type, FUNCTION_NAME is a string containing the name
+            of the database function returning the value used for grouping, and
+            FUNCTION_ARGS are arguments of the function.  Each of FUNCTION_ARGS
+            can be either a string denoting another table column name or a
+            `Value` instance denoting particular value of the argument.
+          db_spec: Corresponding database specification as `_SQLTabular`
+            instance or None; if not None then database introspection can be
+            omitted for this object.
 
-        If 'column_groups' is not 'None' it defines the set of grouped columns
-        as in the GROUP BY part of an SQL select statement.  If 'operations' is
-        not 'None', it defines a set of columns to be used as given aggregates
-        in SQL select statements.
+        If `column_groups` is not None it defines the set of grouped columns as
+        in the GROUP BY part of an SQL select statement.  If `operations` is not
+        None, it defines a set of columns to be used as given aggregates in SQL
+        select statements.
 
-        If any of 'operations' and 'column_groups' is not 'None', all columns
-        not specified in 'operations' nor 'column_groups' are excluded from all
-        select operations.  This especially concerns the key column(which is
+        If any of `operations` and `column_groups` is not None, all columns not
+        specified in `operations` nor `column_groups` are excluded from all
+        select operations.  This especially concerns the key column (which is
         typically not present when using groupings), without its presence it's
-        impossible to perform data manipulation and other operations(in some
-        cases you can use the virtual column named '_number' containing the
-        current row number).  Additionally note that 'condition' constructor
-        argument, unlike 'condition' argument in 'select' calls, applies to the
-        base non-aggregated columns of the table thus allowing you to filter
-        the underlying data rows before aggregations get applied.
+        impossible to perform data manipulation and other operations (in some
+        cases you can use the virtual column named `_number` containing the
+        current row number).  Additionally note that `condition` constructor
+        argument, unlike `condition` argument in `select` calls, applies to the
+        base non-aggregated columns of the table thus allowing you to filter the
+        underlying data rows before aggregations get applied.
 
         """
         self._pdbb_db_spec = db_spec
@@ -2369,28 +2355,29 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
 
     def _pg_select(self, condition, sort, columns, arguments={}, transaction=None,
                    async_count=False, stop_check=None, limit=None):
-        """Initiate select and return the number of its lines or 'None'.
+        """Initiate select and return the number of its lines or `None`.
 
         Arguments:
-
-          condition -- unprocessed conditional expression or 'None'
-          sort -- unprocessed sorting specification or 'None'
-          operation -- unprocessed specification of an aggregation function
-          columns -- sequence of IDs of columns to select
-          arguments -- dictionary of function call arguments
-          transaction -- transaction object
-          async_count -- if true, count result lines asynchronously and return
-            a '_PgRowCounting' instance instead of the number of lines;
-            this is useful on large tables where row counting may take
-            significant amount of time
-          stop_check -- if not 'None' then it is a function to be called
+          condition: Unprocessed conditional expression or None.
+          sort: Unprocessed sorting specification or None.
+          columns: Sequence of IDs of columns to select.
+          arguments: Dictionary of function call arguments.
+          transaction: Transaction object.
+          async_count: If true, count result lines asynchronously and return a
+            `_PgRowCounting` instance instead of the number of lines; this is
+            useful on large tables where row counting may take significant
+            amount of time.
+          stop_check: If not None then it is a function to be called
             periodically, during some long taking operations, with the single
             argument passing start time of the long operation as returned by
-            'time.time()'.  It is not guaranteed that this function gets
+            `time.time`.  It is not guaranteed that this function gets
             actually called during any long taking operation.  If it gets, it's
             up to the function what to do, it can e.g. raise some exception to
             stop the operation.
-          limit -- maximum number of rows
+          limit: Maximum number of rows.
+
+        Returns:
+          Number of rows or a `_PgRowCounting` instance.
 
         """
         cond_string = self._pdbb_condition2sql(condition)
@@ -2673,9 +2660,15 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         return self._key_rows(keys, transaction=transaction)
 
     def _pg_update(self, condition, row, transaction=None):
-        """Updatuj řádky identifikované 'condition'.
+        """Updatuj řádky identifikované `condition`.
 
-        Vrací: Počet updatovaných řádků.
+        Arguments:
+          condition: Podmínka identifikující řádky k updatu.
+          row: Nová data.
+          transaction: Transakce nebo None.
+
+        Returns:
+          Počet updatovaných řádků.
 
         """
         # TODO: Při použití RULEs v PostgreSQL UPDATE vrací vždy 0.  Toto
@@ -2716,9 +2709,14 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             raise DBSystemException('Unexpected UPDATE value', None, result)
 
     def _pg_delete(self, condition, transaction=None):
-        """Smaž řádek identifikovaný podmínkou 'condition'.
+        """Smaž řádky identifikované podmínkou `condition`.
 
-        Vrací: Počet smazaných řádků.
+        Arguments:
+          condition: Podmínka identifikující řádky ke smazání.
+          transaction: Transakce nebo None.
+
+        Returns:
+          Počet smazaných řádků.
 
         """
         sql_condition = self._pdbb_condition2sql(condition)
@@ -2754,17 +2752,15 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
     def __init__(self, bindings, key, connection_data, ro_select=True, **kwargs):
         """Inicializuj databázovou tabulku dle uvedených specifikací.
 
-        Argumenty:
-
-          bindings -- stejné jako v předkovi
-          key -- binding klíčového sloupce datové tabulky, musí být jeden
-            z prvků 'bindings' nebo sekvence prvků z 'bindings'
-          connection_data -- instance třídy 'DBConnection' definující
-            parametry připojení, nebo funkce bez argumentů vracející takovou
-            instanci 'DBConnection'
-          ro_select -- iff true, make select transactions read-only when
-            possible
-          kwargs -- předá se předkovi
+        Arguments:
+          bindings: Stejné jako v předkovi.
+          key: Binding klíčového sloupce datové tabulky, musí být jeden z prvků
+            `bindings` nebo sekvence prvků z `bindings`.
+          connection_data: Instance třídy `DBConnection` definující parametry
+            připojení, nebo funkce bez argumentů vracející takovou instanci
+            `DBConnection`.
+          ro_select: If true, make select transactions read-only when possible.
+          kwargs: Předá se předkovi.
 
         """
         if __debug__:
@@ -3105,17 +3101,16 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
                  arguments={}):
         """Vrať sekvenci všech nestejných hodnot daného sloupce.
 
-        Argumenty:
-
-          column -- column identifier
-          prefix -- length of a string prefix to work on (integer).  If not 'None', only given
-            initial substring of column's value is considered by the query.  Only applicable for
-            columns of string types.
-          condition -- conditional expression as an Operator instance or 'None'
-          sort -- one of 'ASCENDENT', 'DESCENDANT' constants or None
-          transaction -- transaction object to be used when running the SQL
-            commands
-          arguments -- dictionary of function call arguments
+        Arguments:
+          column: Column identifier.
+          prefix: Length of a string prefix to work on (integer).  If not None,
+            only given initial substring of column's value is considered by the
+            query.  Only applicable for columns of string types.
+          condition: Conditional expression as an `Operator` instance or None.
+          sort: One of `ASCENDENT`, `DESCENDANT` constants or None.
+          transaction: Transaction object to be used when running the SQL
+            commands.
+          arguments: Dictionary of function call arguments.
 
         """
         if __debug__:
@@ -3132,8 +3127,8 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         tables and continues delivering old data until the transaction is
         interrupted.
 
-        Reaction to notifications is left up to the application using the
-        method 'add_callback_on_change()'.
+        Reaction to notifications is left up to the application using the method
+        'add_callback_on_change()'.
 
         """
         if __debug__:
@@ -3221,10 +3216,11 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         self._pg_buffer.rewind()
 
     def search(self, condition, direction=FORWARD, transaction=None, arguments={}):
-        """Vyhledej ve směru 'direction' první řádek od 'row' dle 'condition'.
+        """Vyhledej ve směru `direction` první řádek od `row` dle `condition`.
 
-        Vrací: Vzdálenost od řádku 'row' jako kladný integer nebo 0, pokud
-        takový řádek neexistuje.
+        Returns:
+          Vzdálenost od řádku `row` jako kladný integer nebo 0, pokud takový
+          řádek neexistuje.
 
         """
         if __debug__:
@@ -3506,11 +3502,10 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
     def refresh(self, concurrently=True):
         """Refresh materialized view.
 
-        Arguments:
-
-          concurrently -- True if refresh should be done concurrently
-
         This method may be invoked only on materialized views.
+
+        Arguments:
+          concurrently: True if refresh should be done concurrently.
 
         """
         self.close()
@@ -3523,14 +3518,13 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
     def lock_row(self, key, transaction=None):
         """Lock row with the given key.
 
-        Arguments:
-
-          key -- key of the row to lock
-          transaction -- transaction object representing the transaction in
-            which the row is locked
-
         The lock is automatically released when the transaction is closed
         (whether by commit or rollback).
+
+        Arguments:
+          key: Key of the row to lock.
+          transaction: Transaction object representing the transaction in which
+            the row is locked.
 
         """
         if is_sequence(key):
@@ -3563,11 +3557,11 @@ class DBPostgreSQLCounter(PostgreSQLConnector, Counter):
         """Initialize the instance.
 
         Arguments:
-          name -- identifier of the counter in the database as a string
-          connection_data -- instance třídy 'DBConnection' definující
-            parametry připojení, nebo funkce bez argumentů vracející takovou
-            instanci 'DBConnection'
-          kwargs -- passed to 'PostgreSQLConnector' constructor.
+          name: Identifier of the counter in the database as a string.
+          connection_data: Instance třídy `DBConnection` definující parametry
+            připojení, nebo funkce bez argumentů vracející takovou instanci
+            `DBConnection`.
+          kwargs: Passed to `PostgreSQLConnector` constructor.
 
         """
         assert isinstance(name, basestring)
@@ -3586,21 +3580,21 @@ class DBPostgreSQLCounter(PostgreSQLConnector, Counter):
 
 class DBPostgreSQLFunction(Function, DBDataPostgreSQL,
                            PostgreSQLStandardBindingHandler):
-    """PostgreSQL implementation of the 'Function' class."""
+    """PostgreSQL implementation of the `Function` class."""
 
     def __init__(self, name, connection_data, result_columns=None, **kwargs):
-        """
-        Arguments:
+        """Inicializuje přístup k funkci PostgreSQL.
 
-          name -- name of the function (string) or database specification class
-            corresponding to the function
-          connection_data -- instance třídy 'DBConnection' definující
-            parametry připojení, nebo funkce bez argumentů vracející takovou
-            instanci 'DBConnection'
-          result_columns -- sequence of 'ColumnSpec' instances describing the result
-            rows; if 'None', columns and their types are determined
-            automatically but only if it is possible and supported
-          kwargs -- forwarded to successors
+        Arguments:
+          name: Name of the function (string) or database specification class
+            corresponding to the function.
+          connection_data: Instance třídy `DBConnection` definující parametry
+            připojení, nebo funkce bez argumentů vracející takovou instanci
+            `DBConnection`.
+          result_columns: Sequence of `ColumnSpec` instances describing the
+            result rows; if None, columns and their types are determined
+            automatically but only if it is possible and supported.
+          kwargs: Forwarded to successors.
 
         """
         from pytis.data.gensqlalchemy import SQLFunctional
@@ -3721,25 +3715,24 @@ class DBPostgreSQLTransaction(DBDataPostgreSQL):
     """User transaction.
 
     By creating an instance of this class new transaction is started.  You can
-    tell 'DBDataPostgreSQL' methods to be invoked inside the transaction by
-    giving the instance as their 'transaction' argument.
+    tell `DBDataPostgreSQL` methods to be invoked inside the transaction by
+    giving the instance as their `transaction` argument.
 
-    The transaction is finished by calling one of its 'commit' or 'rollback'
+    The transaction is finished by calling one of its `commit` or `rollback`
     methods.  After that the transaction may not be used any longer.
 
     You can also use partial rollbacks by setting transaction points with the
-    'set_point' method and calling the 'cut' method to rollback to a previously
+    `set_point` method and calling the `cut` method to rollback to a previously
     set transaction point.
 
     The transaction can also be used as a context manager:
 
-        with DBPostgreSQLTransaction(...) as transaction:
-            ...
-            # Explicit transaction.commit() or transaction.rollback() is optional.
+    with DBPostgreSQLTransaction(...) as transaction: ... # Explicit
+    transaction.commit() or transaction.rollback() is optional.
 
     If neither 'commit()' nor 'rollback()' is called explicitly inside the
-    context, the transaction is committed on normal exit from the 'with'
-    block and rolled back if an exception is raised.
+    context, the transaction is committed on normal exit from the `with` block
+    and rolled back if an exception is raised.
 
     """
     REPEATABLE_READ = REPEATABLE_READ  # Deprecated: left for backwards compatibility.
@@ -3750,20 +3743,20 @@ class DBPostgreSQLTransaction(DBDataPostgreSQL):
 
     def __init__(self, connection_data, isolation=None, read_only=False, timeout_callback=None,
                  ok_rollback_closed=False, **kwargs):
-        """
-        Arguments:
+        """Inicializuje transakci.
 
-          connection_data -- instance třídy 'DBConnection' definující
-            parametry připojení, nebo funkce bez argumentů vracející takovou
-            instanci 'DBConnection'
-          isolation -- transaction isolation level, either 'None' (default
-            isolation level, i.e. read commited) or constant 'pytis.data.REPEATABLE_READ'
-            (repeatable read isolation level)
-          read_only -- whether the transaction is read-only; boolean
-          timeout_callback -- function to be called on transaction timeout or 'None';
-            the function is called with no arguments
-          ok_rollback_closed -- iff true, don't complain about rollbacking
-            closed transactions
+        Arguments:
+          connection_data: Instance třídy `DBConnection` definující parametry
+            připojení, nebo funkce bez argumentů vracející takovou instanci
+            `DBConnection`.
+          isolation: Transaction isolation level, either None (default isolation
+            level, i.e. read committed) or constant `pytis.data.REPEATABLE_READ`
+            (repeatable read isolation level).
+          read_only: Whether the transaction is read-only; boolean.
+          timeout_callback: Function to be called on transaction timeout or
+            None; the function is called with no arguments.
+          ok_rollback_closed: If true, do not complain about rolling back closed
+            transactions.
 
         """
         super(DBPostgreSQLTransaction, self).__init__(
@@ -3844,9 +3837,8 @@ class DBPostgreSQLTransaction(DBDataPostgreSQL):
         """Set transaction point for possible future partial rollback.
 
         Arguments:
-
-          point -- string containing only lowercase English letters defining
-            the transaction point
+          point: String containing only lowercase English letters defining the
+            transaction point.
 
         """
         assert re.match('^[a-z]+$', point)
@@ -3856,9 +3848,8 @@ class DBPostgreSQLTransaction(DBDataPostgreSQL):
         """Rollback the transaction to the given point.
 
         Arguments:
-
-          point -- string containing only lowercase English letters defining
-            the transaction point to which the rollback should be performed
+          point: String containing only lowercase English letters defining the
+            transaction point to which the rollback should be performed.
 
         """
         assert re.match('^[a-z]+$', point)
@@ -3868,11 +3859,11 @@ class DBPostgreSQLTransaction(DBDataPostgreSQL):
     def set_read_only(self):
         """Make the transaction read-only.
 
-        Usually, the transaction should be marked as read-only using
-        'read_only' constructor argument.  But in some situations, such as with
-        cursors calling functions utilizing temporary tables, this is not
-        possible and the transaction can be set as read-only only after the
-        database modifying operation, using this method.
+        Usually, the transaction should be marked as read-only using `read_only`
+        constructor argument.  But in some situations, such as with cursors
+        calling functions utilizing temporary tables, this is not possible and
+        the transaction can be set as read-only only after the database
+        modifying operation, using this method.
 
         """
         self._pg_query(_Query('set transaction read only'), transaction=self)
@@ -3885,12 +3876,10 @@ class DBPostgreSQLTransaction(DBDataPostgreSQL):
         """Set maximum transaction age.
 
         Calling the method has the same effect on transaction age as if an SQL
-        command was called at 'moment'.
+        command was called at `moment`.
 
         Arguments:
-
-          moment -- minimum time to set in the same form as 'time.time()'
-            result
+          moment: Minimum time to set in the same form as `time.time` result.
 
         """
         c = self._trans_connection()

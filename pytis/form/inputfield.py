@@ -18,11 +18,14 @@
 
 """Input field abstraction.
 
-The input field is basically the user interface control (widget or a set of widgets) which is
-directly bound to the PresentedRow instance representing the edited record.  The changes are
-automatically propagated between the PresentedRow instance and the user interface.
+The input field is basically the user interface control (widget or a set of
+widgets) which is directly bound to the `pytis.presentation.PresentedRow`
+instance representing the edited record.  The changes are automatically
+propagated between the `pytis.presentation.PresentedRow` instance and the
+user interface.
 
-The actual class representing each field is determined by its specification and data type.
+The actual class representing each field is determined by its specification
+and data type.
 
 """
 from __future__ import print_function
@@ -72,7 +75,7 @@ _ = pytis.util.translations('pytis-wx')
 
 
 class _Completer(wx.TextCompleterSimple):
-    """wx autocompletion API implementation on top of 'PresentedRow.completions()'."""
+    """wx autocompletion API implementation on top of `pytis.presentation.PresentedRow.completions`."""
 
     def __init__(self, row, field_id):
         super(_Completer, self).__init__()
@@ -89,9 +92,9 @@ class InputField(KeyHandler, CommandHandler):
     """Abstract base class for input fields.
 
     Subclasses of this class implement input fields for particular field types
-    according to their specification.  Instances of InputField subclasses are
+    according to their specification.  Instances of `InputField` subclasses are
     not themselves wx widgets, but they create widgets and return them through
-    the methods 'label()' and 'widget()'.
+    the methods `label` and `widget`.
 
     """
     _DEFAULT_WIDTH = 13
@@ -122,7 +125,7 @@ class InputField(KeyHandler, CommandHandler):
     def create(cls, parent, row, id, **kwargs):
         """Create an instance of the class corresponding to the field specification.
 
-        The arguments are the same as for the 'InputField' constructor.
+        The arguments are the same as for the `InputField` constructor.
 
         """
         # assert isinstance(parent, wx.Window)
@@ -207,16 +210,15 @@ class InputField(KeyHandler, CommandHandler):
         """Initialize the input field according to its specification.
 
         Arguments:
+          parent: wx parent for the created widgets.
+          row: `PresentedRow` instance.
+          id (str): Field identifier (also used to look up the field spec).
+          guardian: Parent `KeyHandler` instance.
+          readonly (bool): If true, the field is read-only.
 
-          parent -- wx parent for the created widgets.
-          row -- 'PresentedRow' instance.
-          id -- field specification as a 'Field' instance.
-          guardian -- parent 'KeyHandler'.
-          readonly --
-
-        This method should not be overriden by derived classes.  All field
-        specific initialization should be done in the methods
-        '_create_widget()' and '_create_label'.
+        This method should not be overridden by derived classes.  All field
+        specific initialization should be done in `_create_widget` and
+        `_create_label`.
 
         """
         assert isinstance(row, PresentedRow)
@@ -452,15 +454,17 @@ class InputField(KeyHandler, CommandHandler):
     def _on_change_hook(self):
         """Handle field value changes.
 
-        Overriding this method allows any additional actions after each change of the field value.
+        Overriding this method allows any additional actions after each change
+        of the field value.
 
         """
         pass
 
     def _current_ctrl(self):
-        """
+        """Return the currently active control.
 
-        Note, there may be several active controls, for example in range fields...
+        Note, there may be several active controls, for example in range
+        fields...
 
         """
         return self._last_focused_ctrl or self._controls[0][0]
@@ -607,11 +611,11 @@ class InputField(KeyHandler, CommandHandler):
         return self._guardian
 
     def spec(self):
-        """Return field specification as a 'Field' instance."""
+        """Return field specification as a `Field` instance."""
         return self._spec
 
     def type(self):
-        """Return the data type as a 'pytis.data.Type' instance."""
+        """Return the data type as a `pytis.data.Type` instance."""
         return self._type
 
     def widget(self):
@@ -619,23 +623,25 @@ class InputField(KeyHandler, CommandHandler):
         return self._widget
 
     def label(self):
-        """Return the field label as a 'wx.StaticText' instance."""
+        """Return the field label as a `wx.StaticText` instance."""
         return self._label
 
     def validate(self, interactive=True):
-        """Invoke field validation and propagate current user input to the underlying PresentedRow.
+        """Validate and propagate current user input to the underlying `pytis.presentation.PresentedRow`.
+
+        As a side effect, the current user input is propagated to the underlying
+        `PresentedRow` instance.  If the value is valid, it will be stored in
+        the row.  If not, the row will recognize its state as changed but
+        invalid.
 
         Arguments:
+          interactive (bool): Controls how the validation error is announced if
+            the current field value is not valid.  If true, the error is
+            announced by a popup dialog.  If false the error message will appear
+            in the status line.
 
-          interactive -- controls how the validation error is announced if the current field value
-            is not valid.  If true, the error is announced by a popup dialog.  If false the error
-            message will appear in the status line.
-
-        The side effect of calling this method is propagation of the current user input to the
-        underlying PresentedRow instance.  If the value is valid, it will be stored in the row.  If
-        not, the row will recognize its state as changed but invalid.
-
-        Returns: True if the field value is valid and False otherwise.
+        Returns:
+          True if the field value is valid and False otherwise.
 
         """
         error = self._validate()
@@ -675,8 +681,9 @@ class InputField(KeyHandler, CommandHandler):
         The field may be disabled for several reasons:
           * the field was created as read-only,
           * the user doesn't have sufficient permissions,
-          * the field is not editable from definition (permanently or because of an editability
-            condition, typically dependence on values of some other fields in the form).
+          * the field is not editable from definition (permanently or because of
+            an editability condition, typically dependence on values of some
+            other fields in the form).
 
         """
         return self._enabled
@@ -688,16 +695,16 @@ class InputField(KeyHandler, CommandHandler):
     def connection_closed(self):
         """Return True if closed transaction was detected in background threads.
 
-        True is returned if a background database operation, such as
-        validation, caught 'pytis.data.DBRetryException' or
-        'pytis.data.DBSystemException'.  The parent form should watch for this
-        situation and react properly if necessary.
+        True is returned if a background database operation, such as validation,
+        caught `pytis.data.DBRetryException` or `pytis.data.DBSystemException`.
+        The parent form should watch for this situation and react properly if
+        necessary.
 
         """
         return self._connection_closed
 
     def tab_navigated_widgets(self):
-        """Return a tuple of 'wx.Window' subclasses present in form tab navigation."""
+        """Return a tuple of `wx.Window` subclasses present in form tab navigation."""
         return (self._controls[0][0],)
 
     # Implementation of Public API 'pytis.api.Field'.
@@ -716,8 +723,8 @@ class InputField(KeyHandler, CommandHandler):
 class Unlabeled(object):
     """Mix-in class for unlabeled fields.
 
-    Some controls have their label integrated directly into the control, so
-    the label shown in the grid must be empty.
+    Some controls have their label integrated directly into the control, so the
+    label shown in the grid must be empty.
 
     """
     def _create_label(self, parent):
@@ -821,8 +828,8 @@ class TextField(InputField):
     def _post_process_func(self):
         """Return the function corresponding to the field post-processing specification.
 
-        Returns: A single-argument function (original text) returning a
-        string (modified text).
+        Returns: A single-argument function (original text) returning a string
+        (modified text).
 
         """
         try:
@@ -944,7 +951,7 @@ class TextField(InputField):
 
 
 class StringField(TextField):
-    """Text input field for values of type 'pytis.data.String'."""
+    """Text input field for values of type `pytis.data.String`."""
 
     def _maxlen(self):
         return self._type.maxlen()
@@ -1015,16 +1022,18 @@ class SpinnableField(InputField):
     _SPIN_STEP = None
     """Value incremented/decremented on each spin step.
 
-    This constant must be set by derived classes to the value which is incremented/decremented
-    to/from the current field value on each spin command.  Thus the value must be compatible for
-    addition/subtraction with the internal value of the field's type.
+    This constant must be set by derived classes to the value which is
+    incremented/decremented to/from the current field value on each spin
+    command.  Thus the value must be compatible for addition/subtraction with
+    the internal value of the field's type.
 
     """
     def _spin(self, value, up=True):
         """Return the incremented (if 'up' is true) or decremented (if 'up' is false) 'value'.
 
-        The derived classes will usually just define '_SPIN_STEP' value, but for more complicated
-        spinning logic, it is possible to override this method as well.
+        The derived classes will usually just define '_SPIN_STEP' value, but for
+        more complicated spinning logic, it is possible to override this method
+        as well.
 
         """
         if value is None:
@@ -1053,7 +1062,7 @@ class SpinnableField(InputField):
 
 
 class NumericField(TextField, SpinnableField):
-    """Text input field for values of type 'pytis.data.Number'."""
+    """Text input field for values of type `pytis.data.Number`."""
     _SPIN_STEP = 1
 
     def _text_ctrl_style(self):
@@ -1086,7 +1095,7 @@ class NumericField(TextField, SpinnableField):
 
 
 class CheckBoxField(Unlabeled, InputField):
-    """Boolean control implemented using 'wx.CheckBox'."""
+    """Boolean control implemented using `wx.CheckBox`."""
 
     class ReadOnlyValidator(wx.Validator):
 
@@ -1102,7 +1111,7 @@ class CheckBoxField(Unlabeled, InputField):
             return CheckBoxField.ReadOnlyValidator()
 
     def _create_ctrl(self, parent):
-        """Return a 'wx.CheckBox' instance."""
+        """Return a `wx.CheckBox` instance."""
         control = wx.CheckBox(parent, -1, self.spec().label())
         wx_callback(wx.EVT_CHECKBOX, control, self._on_change)
         return control
@@ -1152,7 +1161,8 @@ class GenericEnumerationField(InputField):
 
         Public method to be used by application code in specific cases,
         typically when the enumeration depends on some external condition which
-        is not detected by the PresentedRow row automatic callbacks.
+        is not detected by the `pytis.presentation.PresentedRow` row automatic
+        callbacks.
 
         """
         self._reload_enumeration()
@@ -1167,13 +1177,13 @@ class GenericEnumerationField(InputField):
 
 
 class RadioBoxField(Unlabeled, GenericEnumerationField):
-    """Field with a fixed enumeration represented by 'wx.RadioBox'.
+    """Field with a fixed enumeration represented by `wx.RadioBox`.
 
-    Field specification interpretation details:
-
-      orientation -- the individual radio buttons will be aligned horizontaly or vertically.
-      width -- max number of columns (if the orientation is horizontal)
-      height -- max number of rows (if the orientation is vertical)
+    Attributes:
+      orientation: The individual radio buttons will be aligned horizontally or
+        vertically.
+      width (int): Max number of columns (if the orientation is horizontal).
+      height (int): Max number of rows (if the orientation is vertical).
 
     """
     _DEFAULT_WIDTH = 0
@@ -1226,10 +1236,10 @@ class RadioBoxField(Unlabeled, GenericEnumerationField):
 
 
 class EnumerationField(GenericEnumerationField):
-    """Common base class for fields based on 'wx.ControlWithItems'.
+    """Common base class for fields based on `wx.ControlWithItems`.
 
-    'wx.ControlWithItems' allows the items to be updated dynamically (as
-    opposed to static enumeration controls, such as 'wx.RadioBox').
+    `wx.ControlWithItems` allows the items to be updated dynamically (as opposed
+    to static enumeration controls, such as `wx.RadioBox`).
 
     """
     _INVALID_SELECTION = wx.NOT_FOUND
@@ -1297,7 +1307,7 @@ class ChoiceField(EnumerationField):
 
 
 class ListBoxField(EnumerationField):
-    """Field with a fixed enumeration represented by 'wx.ListBox'."""
+    """Field with a fixed enumeration represented by `wx.ListBox`."""
     _DEFAULT_HEIGHT = None
 
     def _create_ctrl(self, parent):
@@ -1330,12 +1340,12 @@ class ListBoxField(EnumerationField):
 class Invocable(CommandHandler):
     """Mix-in class for fields capable to invoke a selection.
 
-    The selection can be an enumeration (such as codebook selection) or just a dialog with some
-    specific representation of the selected value (such as color selection or date selection).  The
-    selection dialog is usually modal.
+    The selection can be an enumeration (such as codebook selection) or just a
+    dialog with some specific representation of the selected value (such as
+    color selection or date selection).  The selection dialog is usually modal.
 
-    The input control will be accompanied with an invocation button and will also handle the
-    INVOKE_SELECTION command.
+    The input control will be accompanied with an invocation button and will
+    also handle the INVOKE_SELECTION command.
 
     """
     _INVOKE_TITLE = _("Select")
@@ -1382,11 +1392,12 @@ class Invocable(CommandHandler):
 
 
 class DateField(Invocable, TextField, SpinnableField):
-    """Input field for values of type 'pytis.data.Date'.
+    """Input field for values of type `pytis.data.Date`.
 
     The field implements selection invocation using a calendar widget.
 
-    The field also supports spinning (see 'SpinnableField') by one day per one step.
+    The field also supports spinning (see `SpinnableField`) by one day per one
+    step.
 
     """
 
@@ -1407,7 +1418,7 @@ class DateField(Invocable, TextField, SpinnableField):
 
 
 class DateTimeField(DateField):
-    """Input field for values of type 'pytis.data.DateTime'.
+    """Input field for values of type `pytis.data.DateTime`.
 
     The date part can be changed using the calendar widget.
 
@@ -1432,9 +1443,10 @@ class DateTimeField(DateField):
 
 
 class TimeField(TextField, SpinnableField):
-    """Input field for values of type 'pytis.data.Time'.
+    """Input field for values of type `pytis.data.Time`.
 
-    The field also supports spinning (see 'SpinnableField') by one hour per one step.
+    The field also supports spinning (see `SpinnableField`) by one hour per one
+    step.
 
     """
     _SPIN_STEP = datetime.timedelta(hours=1)
@@ -1538,14 +1550,14 @@ class CodebookField(Invocable, GenericCodebookField, TextField):
     """Input field for values backed by a codebook.
 
     Used when the data type defines an enumerator of type
-    'pytis.data.DataEnumerator' and the presentation specification defines the
-    linked codebook (see the 'codebook' argument of the 'Field' constructor).
+    `pytis.data.DataEnumerator` and the presentation specification defines the
+    linked codebook (see the `codebook` argument of the `Field` constructor).
 
-    For selection invocation, this field shows the 'pytis.form.CodebookForm'
+    For selection invocation, this field shows the `pytis.form.CodebookForm`
     form.  The codebook specification name is given by the above-mentioned
-    'codebook' specifier.  Additional codebook-form properties are defined by
-    the 'cb_spec' specification in the referenced spec and also directly by the
-    'view_spec' specification there.
+    `codebook` specifier.  Additional codebook-form properties are defined by
+    the `cb_spec` specification in the referenced spec and also directly by the
+    `view_spec` specification there.
 
     Optionally, the field may include a display control used to show the
     description of the selected (current) codebook value.
@@ -1559,7 +1571,7 @@ class CodebookField(Invocable, GenericCodebookField, TextField):
         super(CodebookField, self)._init_attributes()
 
     def _create_widget(self, parent, ctrl):
-        """Call Invocable._create_widget() and add the optional display control."""
+        """Call Invocable._create_widget and add the optional display control."""
         widget = super(CodebookField, self)._create_widget(parent, ctrl)
         spec = self.spec()
         cb_spec = self._cb_spec
@@ -1633,7 +1645,7 @@ class CodebookField(Invocable, GenericCodebookField, TextField):
 class ListField(GenericCodebookField, CallbackHandler):
     """Codebook field displaying codebook data as part of the form.
 
-    If the codebook field's 'selection_type' is set to 'LIST' in the field
+    If the codebook field's `selection_type` is set to `LIST` in the field
     specification, this input field type will be used in the form.
 
     """
@@ -2334,11 +2346,11 @@ class StructuredTextField(TextField):
         import wx.stc
 
         class TextCtrl(wx.stc.StyledTextCtrl):
-            """StyledTextCtrl implementing the TextCtrl API used by parent classes.
+            """`wx.stc.StyledTextCtrl` implementing the `wx.TextCtrl` API used by parent classes.
 
-            This allows us to use StyledTextCtrl (which is normally not API
-            compatible with TextCtrl) as a drop-in replacement for the TextCtrl
-            widget and keep the parent classes happy.
+            This allows us to use `wx.stc.StyledTextCtrl` (which is normally not
+            API compatible with `wx.TextCtrl`) as a drop-in replacement for the
+            `wx.TextCtrl` widget and keep the parent classes happy.
 
             """
             def SetValue(self, text):

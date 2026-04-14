@@ -27,15 +27,15 @@ Example application using these Wiking modules can be found in pytis-demo.
 
 The applications built on top of Pytis CMS may be extended by so called
 embedded modules -- dynamic content embeddable into CMS pages.  Embedded
-modules are Wiking modules derived from `EmbeddablePytisModule' (for modules
-bound to pytis data object) or `EmbeddableModule' (for non database modules).
-See the documentation of these classes for more information.
+modules are Wiking modules derived from `EmbeddablePytisModule` (for modules
+bound to pytis data object) or `EmbeddableModule` (for non database
+modules).  See the documentation of these classes for more information.
 
-The class 'Application' implements the necessary methods defined by
-`wiking.Application' API (constructing the application menu out of the database
-defined menu structure, authentication, access rights checking etc.  However
-this class may be further customized for a particular application.  Full API
-defined and documented by `wiking.Application' may be used.
+The class `Application` implements the necessary methods defined by
+`wiking.Application` API (constructing the application menu out of the
+database defined menu structure, authentication, access rights checking etc.
+However this class may be further customized for a particular application.
+Full API defined and documented by `wiking.Application` may be used.
 
 """
 
@@ -96,8 +96,8 @@ class Menu(RestrictedPytisModule):
     """Sequence of names of modules providing substitution variables.
 
     Each string in the sequence must be a name of a module derived from
-    'SubstitutionProvider' (see its documentation for information about
-    variable substitution).
+    `SubstitutionProvider` (see its documentation for information about variable
+    substitution).
 
     """
     EMBED_BINDING_ID = 'data'
@@ -120,8 +120,9 @@ class Menu(RestrictedPytisModule):
     def _resolve_menu_args(self, req):
         """Return arguments identifying the current menu item rows.
 
-        Returns arguments for self._data.get_rows() which limit returned rows to match the current
-        menu item (multiple rows only represent language variants of the item).
+        Returns arguments for self._data.get_rows() which limit returned rows to
+        match the current menu item (multiple rows only represent language
+        variants of the item).
 
         """
         return dict(identifier=req.unresolved_path[0])
@@ -140,7 +141,7 @@ class Menu(RestrictedPytisModule):
         return bindings
 
     def _action(self, req, record=None):
-        # The only supported action of this module is `view' and the `action' argument is ignored
+        # The only supported action of this module is `view` and the `action` argument is ignored
         # here (left for the embedded module action resolution).
         return 'view'
 
@@ -153,7 +154,8 @@ class Menu(RestrictedPytisModule):
     def _pytis_redirect_origin(self, req):
         """Find the original module if the request was forwarded due to pytis redirection.
 
-        Returns module instance of the original request handler (before pytis redirection) or None
+        Returns module instance of the original request handler (before pytis
+        redirection) or None
 
         """
         module = None
@@ -336,7 +338,7 @@ class UserRoles(RestrictedPytisModule):
         return wiking.Role(role_id, name)
 
     def roles(self, uid):
-        """Return list of user's roles as 'wiking.Role' instances."""
+        """Return list of user's roles as `wiking.Role` instances."""
         return [self.role(row['role_id'].value(), row['system_role'].value(),
                           row['name'].value())
                 for row in self._data.get_rows(uid=uid)]
@@ -364,7 +366,7 @@ class Users(RestrictedPytisModule):
         return self._data.get_row(**kwargs)
 
     def _user_args(self, req, row):
-        """Override this method to customize the 'User' instance constructor arguments."""
+        """Override this method to customize the `User` instance constructor arguments."""
         uid = row['uid'].value()
         return dict(uid=uid,
                     login=row['login'].value(),
@@ -562,19 +564,20 @@ class Application(wiking.Application):
 class EmbeddableModule(wiking.Module, wiking.ActionHandler):
     """Base class for modules which may be embedded into page content.
 
-    Most CMS modules will be derived from 'EmbeddablePytisModule', but this module allows creation
-    of modules not bound to database.  As this module is derived from 'wiking.ActionHandler' with
-    action 'view' as the default action, so you usually just define the method 'action_view()' to
-    display the content.
+    Most CMS modules will be derived from `EmbeddablePytisModule`, but this
+    module allows creation of modules not bound to database.  As this module is
+    derived from `wiking.ActionHandler` with action `view` as the default
+    action, so you usually just define the method `action_view` to display the
+    content.
 
     """
 
     def submenu(self, req, menu_item_id):
-        """Return a list of 'MenuItem' instances to insert into the main menu.
+        """Return a list of `MenuItem` instances to insert into the main menu.
 
-        The submenu will appear in the main menu under the item of a page which embeds the module.
-        The items returned by this method will always be placed above any items defined by the menu
-        structure.
+        The submenu will appear in the main menu under the item of a page which
+        embeds the module. The items returned by this method will always be
+        placed above any items defined by the menu structure.
 
         """
         return []
@@ -597,19 +600,23 @@ class EmbeddableModule(wiking.Module, wiking.ActionHandler):
 class EmbeddablePytisModule(RestrictedPytisModule, wiking.PytisRssModule, EmbeddableModule):
     """Base class for pytis modules which may be embedded into page content.
 
-    This class only modifies the generic class `RestrictedPytisModule' to be usable within Pytis CMS
-    pages.  Documentation of the parent class should be used for Pytis CMS module development.  It
-    applies completely except for the following specific customizations:
+    This class only modifies the generic class `RestrictedPytisModule` to be
+    usable within Pytis CMS pages.  Documentation of the parent class should be
+    used for Pytis CMS module development.  It applies completely except for the
+    following specific customizations:
 
-      * The method `_document()' automatically adds global variables defined through
-        `Menu._SUBSTITUTION_PROVIDERS'.  The variables may be used within all content.
+      * The method `_document` automatically adds global variables defined
+        through `Menu._SUBSTITUTION_PROVIDERS`.  The variables may be used
+        within all content.
 
-      * The methods `_current_base_uri()' and `_binding_parent_uri()' are modified to respect the
-        specific way of embedding modules into CMS pages.
+      * The methods `_current_base_uri` and `_binding_parent_uri` are
+        modified to respect the specific way of embedding modules into CMS
+        pages.
 
-      * The constant `_USE_BINDING_PARENT_TITLE' is set to False by default.
+      * The constant `_USE_BINDING_PARENT_TITLE` is set to False by default.
 
-      * The constant `_BROWSE_FORM_LIMITS' is set to (50, 100, 200, 300, 500) by default.
+      * The constant `_BROWSE_FORM_LIMITS` is set to (50, 100, 200, 300, 500) by
+        default.
 
     """
     _USE_BINDING_PARENT_TITLE = False
@@ -645,20 +652,20 @@ class SubstitutionProvider(wiking.Module):
 
     Variables provided by modules derived from this class may be used for
     variable substitution in CMS texts.  The constant
-    `Menu._SUBSTITUTION_PROVIDERS' must be used to define which concrete
+    `Menu._SUBSTITUTION_PROVIDERS` must be used to define which concrete
     substitution modules (derived from this class) are available.
 
-    Derived modules need to implement the method 'variables()' returning the
+    Derived modules need to implement the method `variables` returning the
     dictionary of substitution values defined by the module.
 
     Example:
 
-    If the method 'variables()' returns the dictionary:
-       {'foo': 'bar', 'count': 5, 'cfg': {'min': 3, 'max': 8}}
-    the CMS page text:
-       The $foo has $count items ranging from $cfg.min to $cfg.max.
-    will be substituted by:
-       The bar has 5 items ranging from 3 to 8.
+      If the method `variables` returns the dictionary:
+        {'foo': 'bar', 'count': 5, 'cfg': {'min': 3, 'max': 8}}
+      the CMS page text:
+        The $foo has $count items ranging from $cfg.min to $cfg.max.
+      will be substituted by:
+        The bar has 5 items ranging from 3 to 8.
 
     """
 
@@ -673,9 +680,9 @@ class DataSubstitutionProvider(RestrictedPytisModule, SubstitutionProvider):
     This class makes it possible to simply define substitution variables
     obtaining their substitution values from a pytis data object.
 
-    Derived modules need to define a pytis specification (class 'Spec') and the
-    method 'variables()' which defines concrete variable names and values.  The
-    values may use the predefined helper classes, such as 'SingleRowDict' (see
+    Derived modules need to define a pytis specification (class `Spec`) and the
+    method `variables` which defines concrete variable names and values.  The
+    values may use the predefined helper classes, such as `SingleRowDict` (see
     its documentation for more information).
 
     """
@@ -684,12 +691,12 @@ class DataSubstitutionProvider(RestrictedPytisModule, SubstitutionProvider):
 
         The dictionary keys are field identifiers and their substitution values
         are the exported field values.  The concrete data row used for
-        substitution may be specified by constructor arguments (see below).
-        The database lookup is only performed when needed.
+        substitution may be specified by constructor arguments (see below). The
+        database lookup is only performed when needed.
 
         If you want to select the row based on some specific condition, you may
-        pass selection arguments to 'SingleRowDict' constructor.  These
-        arguments are actually passed to 'self._data.get_rows()' when the first
+        pass selection arguments to `SingleRowDict` constructor.  These
+        arguments are actually passed to `self._data.get_rows` when the first
         dictionary value is needed and the returned row is stored for further
         substitutions.  If more rows are returned, the first one is used in any
         case.  Here are a few examples:
@@ -760,17 +767,17 @@ class Themes(RestrictedPytisModule):
 
 
 class HttpAttachmentStorageBackend(wiking.Module, wiking.RequestHandler):
-    """Implements the server side of 'pp.HttpAttachmentStorage'.
+    """Implements the server side of `pp.HttpAttachmentStorage`.
 
-    The environment variable 'PYTIS_CMS_ATTACHMENTS_STORAGE' must be set to a
+    The environment variable `PYTIS_CMS_ATTACHMENTS_STORAGE` must be set to a
     filesystem path where attachments are stored on the server side.  The
-    'pytis.presentation.FileAttachmentStorage' backend is actually used by the
+    `pytis.presentation.FileAttachmentStorage` backend is actually used by the
     server side to store attachments.  The HTTP storage works as a HTTP proxy
     between the application and the server side file storage backend.  The http
     address of the server side storage must be set in the environment variable
-    'PYTIS_CMS_ATTACHMENTS_STORAGE' on the client side.
+    `PYTIS_CMS_ATTACHMENTS_STORAGE` on the client side.
 
-    Override the method '_authorize()' to control authorization per directory.
+    Override the method `_authorize` to control authorization per directory.
 
     """
 

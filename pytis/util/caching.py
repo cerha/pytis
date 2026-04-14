@@ -38,11 +38,11 @@ class _Cache(dict):
         """Initialize the instance.
 
         Arguments:
-          provider -- function of one argument (the cache key) returning the
-            value corresponding to given key.
-          validator -- function of one argument (the cache key) returning true
-            if the value corresponding to given key is valid.  If None, all
-            values are considered valid.
+          provider: Function of one argument (the cache key) returning the value
+            corresponding to given key.
+          validator: Function of one argument (the cache key) returning true if
+            the value corresponding to given key is valid.  If None, all values
+            are considered valid.
 
         """
         super(_Cache, self).__init__()
@@ -53,9 +53,9 @@ class _Cache(dict):
     def __getitem__(self, key):
         """Return the value corresponding to 'key'.
 
-        If the value is not present in the cache, use the 'provider' function
-        to retrieve it and save it to the cache.  The method itself doesn't
-        raise any exception.
+        If the value is not present in the cache, use the 'provider' function to
+        retrieve it and save it to the cache.  The method itself doesn't raise
+        any exception.
 
         """
         try:
@@ -86,9 +86,8 @@ class LimitedCache(_Cache):
         """Initialize the instance.
 
         Arguments:
-
-          provider -- same as in parent class
-          limit -- maximal number of cached items as a non-negative integer.
+          provider: Same as in parent class.
+          limit (int): Maximal number of cached items as a non-negative integer.
 
         """
         super(LimitedCache, self).__init__(provider)
@@ -118,9 +117,9 @@ class LimitedCache(_Cache):
 class RangeCache(_Cache):
     """Cache with integer keys saving continuous ranges of data.
 
-    The ranges are given by continuous intervals of key values and their size
-    is given.  The result is actually an array of cached values, but values
-    outside the given range are discarded.
+    The ranges are given by continuous intervals of key values and their size is
+    given.  The result is actually an array of cached values, but values outside
+    the given range are discarded.
 
     """
 
@@ -128,9 +127,8 @@ class RangeCache(_Cache):
         """Initialize the instance.
 
         Arguments:
-
-          provider -- same as in parent class.
-          size -- maximal cached range size as a non-negative integer.
+          provider: Same as in parent class.
+          size (int): Maximal cached range size as a non-negative integer.
 
         """
         super(RangeCache, self).__init__(provider)

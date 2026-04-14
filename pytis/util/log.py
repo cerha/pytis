@@ -18,7 +18,7 @@
 
 """Logování.
 
-Logování slouží k zaznamenávání následujících informací:
+Logování slouží k zaznamenávání následujících informací:
 
 - Informace pro administrátora o stavu systému.
 
@@ -27,17 +27,17 @@ Logování slouží k zaznamenávání následujících informací:
 - Změny všech dat.
 
 - Ladící informace potřebné pouze během vývoje programu, které se nikdy
-  nelogují za ostrého běhu aplikace.
+nelogují za ostrého běhu aplikace.
 
-Modul umožňuje zaznamenávání těchto informací prostřednictvím funkce 'log'.
-Každé volání této funkce je definováno svým typem, slovním popisem události a
-nepovinně libovolným datovým objektem, který obsahuje data vztahující se k dané
-informaci.
+Modul umožňuje zaznamenávání těchto informací prostřednictvím funkce `log`.
+Každé volání této funkce je definováno svým typem, slovním popisem události
+a nepovinně libovolným datovým objektem, který obsahuje data vztahující se k
+dané informaci.
 
 Co se druhů informací týče, modul definuje konstantu pro každý typ informace
-z výše uvedeného seznamu.
+z výše uvedeného seznamu.
 
-Konfigurace modulu je dána proměnnou 'config'.
+Konfigurace modulu je dána proměnnou config.
 
 """
 from __future__ import print_function
@@ -70,15 +70,15 @@ DEBUG = 'DBG'
 class Logger(object):
     """Abstraktní třída pro logování.
 
-    Třída obsahuje jedinou veřejnou metodu 'log()', prostřednictvím které je
-    možno logování kompletně obsloužit.
+    Třída obsahuje jedinou veřejnou metodu `log`, prostřednictvím které je možno
+    logování kompletně obsloužit.
 
-    Tato třída zajišťuje potřebnou logovací infrastrukturu, neposílá však
-    hlášky na žádný výstup.  Zasílání hlášek do konkrétních cílů je záležitostí
-    potomků třídy.
+    Tato třída zajišťuje potřebnou logovací infrastrukturu, neposílá však hlášky
+    na žádný výstup.  Zasílání hlášek do konkrétních cílů je záležitostí potomků
+    třídy.
 
     Pro obecné logování je lépe nevyužívat tuto třídu nebo její potomky přímo,
-    nýbrž použít funkci 'log.log()'.
+    nýbrž použít funkci `log`.
 
     """
 
@@ -110,9 +110,9 @@ class Logger(object):
         if frame:
             if __debug__ and False:
                 # TODO/Python: Zjišťování jména modulu je velmi pomalé (chyba
-                # modulu `inspect').
+                # modulu `inspect`).
                 try:
-                    # TODO: Z neznámého důvodu od jisté doby nefunguje zjištění
+                    # TODO: Z neznámého důvodu od jisté doby nefunguje zjištění
                     # modulu pro pytis.form.
                     module = inspect.getmodule(frame).__name__
                 except Exception:
@@ -201,16 +201,15 @@ class Logger(object):
         pass
 
     def log(self, kind, message, data=None):
-        """Zaloguj 'message'.
+        """Zaloguj message.
 
-        Argumenty:
-
-          kind -- druh hlášky, jedna z konstant modulu 'log'
-          message -- slovní hláška, string; jestliže tento string končí
-            dvojtečkou, 'data' mají jednořádkovou reprezentaci a konfigurační
-            volba 'one_line_preferred' je pravda, jsou data do logu zapsána na
-            stejný řádek jako 'message'
-          data -- libovolná data; tento argument není nutno klíčovat
+        Arguments:
+          kind: Druh hlášky, jedna z konstant modulu `pytis.util.log`.
+          message (str): Slovní hláška; jestliže tento string končí dvojtečkou,
+            data mají jednořádkovou reprezentaci a konfigurační volba
+            log_one_line_preferred je pravda, jsou data do logu zapsána na
+            stejný řádek jako message.
+          data: Libovolná data; tento argument není nutno klíčovat.
 
         """
         assert kind in (OPERATIONAL, ACTION, EVENT, DEBUG), \
@@ -226,8 +225,8 @@ class Logger(object):
 class StreamLogger(Logger):
     """Logger posílající hlášení do streamu.
 
-    Cílový stream je třídě předán v konstruktoru.  Třída není zodpovědná za
-    hlídání chyb streamu ani neprovádí žádné akce v případě, že stream je vně
+    Cílový stream je třídě předán v konstruktoru.  Třída není zodpovědná za
+    hlídání chyb streamu ani neprovádí žádné akce v případě, že stream je vně
     třídy uzavřen.
 
     """
@@ -235,9 +234,8 @@ class StreamLogger(Logger):
     def __init__(self, stream):
         """Inicializuj logování.
 
-        Argumenty:
-
-          stream -- otevřený file object, do kterého lze logovat
+        Arguments:
+          stream: Otevřený file object, do kterého lze logovat.
 
         """
         super(StreamLogger, self).__init__()
@@ -250,7 +248,6 @@ class StreamLogger(Logger):
 
 
 class SyslogLogger(Logger):
-
     """Logger posílající hlášení syslogu."""
 
     _MAX_MESSAGE_LENGTH = 1020
@@ -301,7 +298,7 @@ class NullLogger(Logger):
 class LoggingInterface(object):
     """Rozhraní ke standardnímu logovacímu objektu.
 
-    Tato třída není určena k instanciaci mimo modul 'pytis.util.log'.
+    Tato třída není určena k instanciaci mimo modul `pytis.util.log`.
 
     """
 
@@ -310,16 +307,14 @@ class LoggingInterface(object):
         self._hooks = []
 
     def __call__(self, kind, message, data=None):
-        """Zaloguj 'message'.
+        """Zaloguj message.
 
-        Argumenty:
+        Pokud je __debug__ nepravda a kind je DEBUG, message není zalogováno.
 
-          kind -- druh hlášky, jedna z konstant modulu
-          message -- slovní hláška, string
-          data -- libovolná data, tento argument není nutno klíčovat
-
-        Pokud je '__debug__' nepravda a 'kind' je 'DEBUG', 'message' není
-        zalogováno.
+        Arguments:
+          kind: Druh hlášky, jedna z konstant modulu `pytis.util.log`.
+          message (str): Slovní hláška.
+          data: Libovolná data, tento argument není nutno klíčovat.
 
         """
         if __debug__ or kind is not DEBUG:  # optimalizační záležitost
@@ -335,20 +330,19 @@ class LoggingInterface(object):
             hook()
 
     def add_hook(self, hook):
-        """Přidej 'hook' ke každému logování.
+        """Přidej hook ke každému logování.
 
-        Argumenty:
+        Logovací hooky lze využít k opakovanému vykonání nějaké činnosti v
+        kterékoliv části kódu.  Myšlenka vychází z toho, že veškerý kód by měl
+        na všech důležitých místech, a také dostatečně často časově, logovat.
+        Navěšení volání něčeho na logování je pak nenásilnou metodou, jak
+        zajistit opakované volání nějakého kódu i v případě, kdy je z
+        jakéhokoliv důvodu nevhodné tak činit ve vedlejším threadu.
 
-          hook -- funkce bez argumentů, která je zavolána při každém volání
-            metody '__call__()', bez ohledu na to, zda nějaká zpráva byla
-            skutečně zalogována
-
-        Logovací hooky lze využít k opakovanému vykonání nějaké činnosti
-        v kterékoliv části kódu.  Myšlenka vychází z toho, že veškerý kód by
-        měl na všech důležitých místech, a také dostatečně často časově,
-        logovat.  Navěšení volání něčeho na logování je pak nenásilnou metodou,
-        jak zajistit opakované volání nějakého kódu i v případě, kdy je
-        z jakéhokoliv důvodu nevhodné tak činit ve vedlejším threadu.
+        Arguments:
+          hook: Funkce bez argumentů, která je zavolána při každém volání metody
+            `__call__`, bez ohledu na to, zda nějaká zpráva byla skutečně
+            zalogována.
 
         """
         self._hooks.append(hook)

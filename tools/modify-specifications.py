@@ -19,35 +19,32 @@
 
 """Programatical batch modification of Pytis specifications.
 
-This script can be run on a single file, multiple files or recursively on whole
-directories.  Python Abstract Syntax Tree parser is used to walk through the
-source file AST tree and get information about positions of particular Python
-constructs in the source file, allowing syntax aware modifications of the
-source code.
+This script can be run on a single file, multiple files or recursively on
+whole directories.  Python Abstract Syntax Tree parser is used to walk
+through the source file AST tree and get information about positions of
+particular Python constructs in the source file, allowing syntax aware
+modifications of the source code.
 
-These modifications are often needed when the API of Pytis specifications needs
-to be changed.
+These modifications are often needed when the API of Pytis specifications
+needs to be changed.
 
 The script consists of a generic infrastructure for running various
-modifications and then of particullar commands implementing some modifications
-which were already needed.  These commands are defined as functions with name
-prefixed by 'cmd_'.  Several modifications can be run in one invocation of the
-script.  Some commands may not modify the source code, they just print warnings
-and let the user perform modifications manually.  The printed output is
-formatted to allow easy access to the source code points in Emacs compilation
-mode.
+modifications and then of particular commands implementing some
+modifications which were already needed.  These commands are defined as
+functions with name prefixed by `cmd_`.  Several modifications can be run in
+one invocation of the script.  Some commands may not modify the source code,
+they just print warnings and let the user perform modifications manually.
+The printed output is formatted to allow easy access to the source code
+points in Emacs compilation mode.
 
-For example:
-
-  modify-specifications.py --type-kwargs --check-codebooks-not-null directory
-
-Will run the functions 'cmd_type_kwargs()' and 'cmd_check_codebooks_not_null()'
-on all *.py files in given directory.
+For example, `modify-specifications.py --type-kwargs --check-codebooks-not-null directory`
+will run the functions `cmd_type_kwargs` and `cmd_check_codebooks_not_null`
+on all `*.py` files in given directory.
 
 Most commands are single purpose -- they are not going to be needed in the
 future once they are applied on all applications.  They may remain here for
-future reference and examples or they may be removed sometimes in the future as
-new commands are added.
+future reference and examples or they may be removed sometimes in the future
+as new commands are added.
 
 """
 from __future__ import print_function
@@ -317,11 +314,12 @@ def cmd_set_explicit_ineditable(filename, lines):
 def cmd_type_kwargs(filename, lines, type_map=None):
     """Convert type kwargs in field specifications to type instance arguments.
 
-    The optional argument 'type_map' may be used to supply type classes to fields
-    where the type can not be determined from the field specification itself.
+    The optional argument `type_map` may be used to supply type classes to
+    fields where the type can not be determined from the field specification
+    itself.
 
     The value of the argument is a file name as a string.  The current type map
-    file format follows the format of pytis/tools/dump-specifications.py
+    file format follows the format of `pytis/tools/dump-specifications.py`
     output.
 
     """

@@ -91,7 +91,7 @@ class Bar(sql.SQLTable):
     access_rights = (('ALL', True,),)
 
 class BarTrigger(sql.SQLPlFunction, sql.SQLTrigger):
-    "Trigger directly defining its function."
+    """Trigger directly defining its function."""
     name = 'bar_trigger'
     schemas = ((Private, 'public',),)
     table = Bar
@@ -178,7 +178,7 @@ class LogFunction(sql.SQLPyFunction, sql.SQLTrigger):
                      (TD['args'][0], TD['event'],))
 
 class DemoLogTrigger(sql.SQLTrigger):
-    "Tables with this trigger automatically log changes."
+    """Tables with this trigger automatically log changes."""
     name = 'demo_log_trigger'
     events = ('insert', 'update', 'delete',)
     body = LogFunction
@@ -186,9 +186,9 @@ class DemoLogTrigger(sql.SQLTrigger):
 class _LoggingTable(sql.SQLTable):
     """Demonstration of trigger attachment inheritance.
 
-    'DemoLogTrigger' is attached to all subclass specifications.  Note the
-    trick with turning 'trigger' attribute into property.  This works for
-    triggers but may not work for other specification properties.
+    `DemoLogTrigger` is attached to all subclass specifications.  Note the trick
+    with turning `trigger` attribute into a property.  This works for triggers
+    but may not work for other specification properties.
 
     """
     @property
@@ -235,7 +235,7 @@ class Circular2(sql.SQLTable):
               )
 
 class TableWithLongNames(sql.SQLTable):
-    "Just a test of name length limits."
+    """Just a test of name length limits."""
     name = 'table_with_long_name_names'
     fields = (sql.Column('column_with_a_long_name', pytis.data.String()),
               sql.Column('another_column_with_a_long_name', pytis.data.String()),
@@ -324,7 +324,7 @@ class SimplifiedEditableView(sql.SQLView):
     column into the view multiple times for each of the view relations.  The
     column can be present in the query only once and this is all needed for
     read-only views.  But for views with modification rules it is necessary to
-    tell gensqlalchemy about equivalent join columns using 'join_columns'
+    tell gensqlalchemy about equivalent join columns using the `join_columns`
     specification property.
 
     """
@@ -359,7 +359,7 @@ class ViewOverView(sql.SQLView):
         return sqlalchemy.select([sql.t.SimplifiedEditableView])
 
 class BogusView(sql.SQLView):
-    "One should avoid using full outer joins when possible."
+    """One should avoid using full outer joins when possible."""
     name = 'bogus_view'
     schemas = ((Private, 'public',),)
     @classmethod
@@ -445,7 +445,7 @@ class RowSelectFunc(sql.SQLFunction):
     depends_on = (Foo,)
 
 class PrivateDateTable(sql.SQLFunction):
-    "Demonstration of 'set_parameters' attribute."
+    """Demonstration of the `set_parameters` attribute."""
     name = 'private_date_table'
     arguments = ()
     result_type = DateTable

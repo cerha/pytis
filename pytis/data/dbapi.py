@@ -19,12 +19,12 @@
 
 """PostgreSQL database interface using Python Database API.
 
-The particular Database API implementation is selected using the 'dbapi' import
-line.
+The particular Database API implementation is selected using the `dbapi`
+import line.
 
 As Python Database API doesn't define notification interface, it is
-implementation specific and has to be implemented separately for each supported
-Database API implementation.
+implementation specific and has to be implemented separately for each
+supported Database API implementation.
 
 """
 from __future__ import print_function
@@ -186,7 +186,7 @@ class _DBAPIAccessor(PostgreSQLAccessor):
             if callback is not None:
                 start_time = time.time()
             # query_args shouldn't be used when empty to prevent mistaken
-            # '%' processing in `query'
+            # '%' processing in `query`
             try:
                 if query_args:
                     cursor.execute(query, query_args)
@@ -318,7 +318,7 @@ class _DBAPIAccessor(PostgreSQLAccessor):
         return PostgreSQLResult(data)
 
     def _postgresql_begin_transaction(self):
-        # In psycopg2 `begin' is called automatically.
+        # In psycopg2 `begin` is called automatically.
         # By disabling its explicit call we avoid PostgreSQL warnings about
         # transactions in progress.
         # Not only that, we even close previous transaction here.  This so that
@@ -514,13 +514,13 @@ class DBDataDefaultClass(PostgreSQLUserGroups, RestrictedData, DBAPIData):
 
 
 DBDataDefault = DBDataDefaultClass
-"""Podtřída 'DBData', kterou používáme pro přístup k databázi."""
+"""Podtřída `DBData`, kterou používáme pro přístup k databázi."""
 
 DBCounterDefault = DBAPICounter
-"""Podtřída třídy 'Counter', která je standardně používána."""
+"""Podtřída třídy `~pytis.data.postgresql.DBPostgreSQLCounter`, která je standardně používána."""
 
 DBFunctionDefault = DBAPIFunction
-"""Podtřída třídy 'Function', která je standardně používána."""
+"""Podtřída třídy `~pytis.data.postgresql.DBPostgreSQLFunction`, která je standardně používána."""
 
 DBTransactionDefault = DBAPITransaction
 """Standard transaction class."""
@@ -545,20 +545,19 @@ def _reload_session_variables(connection_data):
 reload_session_variables = _reload_session_variables
 """Reload all session variables
 
-This can be done only by closing all existing connections
-in the connection pool. So use with caution.
+    This can be done only by closing all existing connections in the connection
+    pool. So use with caution.
+
 """
 
 
 def reset_crypto_password(connection_data, password):
     """Set crypto password to 'password' in all database connections.
 
-    This method closes all connections as a side effect so use it
-    with caution.
+    This method closes all connections as a side effect so use it with caution.
 
     Arguments:
-
-      password -- new crypto password; basestring
+      password: New crypto password; basestring.
 
     """
     PostgreSQLConnector(connection_data).reset_crypto_password(password)

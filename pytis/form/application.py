@@ -18,10 +18,10 @@
 
 """Implementation of the wx.Widgets application.
 
-The class 'Application' handles creation of the main application window and
+The class `Application` handles creation of the main application window and
 manages it during its lifetime.  It also implements the public API of
-'pytis.api.Application' and other public methods used internally throughout
-'pytis.form'.
+`pytis.api.Application` and other public methods used internally throughout
+`pytis.form`.
 
 """
 
@@ -86,16 +86,16 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
 
     Each Pytis application has exactly one main application window for the
     entire lifetime of the process. It consists of static UI elements and a
-    replaceable inner part (the actual forms). The static elements are the
-    pull-down menu and the status bar.
+    replaceable inner part (the actual forms). The static elements are the pull-
+    down menu and the status bar.
 
-    The application may be customized by defining a class named 'Application'
+    The application may be customized by defining a class named `Application`
     within application's resolver modules. This class must be derived from
-    'pytis.presentation.Application' and customizations may be done by
+    `pytis.presentation.Application` and customizations may be done by
     overriding its methods and attributes (see the base class docstring).
 
     Starting the user interface consists of creating an instance of this class
-    and calling its 'run()' method.
+    and calling its `run` method.
 
     """
     _STATE_RECENT_FORMS = 'recent_forms'
@@ -126,11 +126,13 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         return pytis.form.app
 
     def __init__(self, headless=False):
-        """Arguments:
+        """Initialize the application.
 
-          headless -- Run the application without showing any windows/frames.
-            Experimental mode for running tests which require the application
-            environment, but no user interaction.  Sample tests in Pytis Demo.
+        Arguments:
+          headless (bool): Run the application without showing any
+            windows/frames.  Experimental mode for running tests which require
+            the application environment, but no user interaction.  Sample tests
+            in Pytis Demo.
 
         """
         self._headless = headless
@@ -1195,28 +1197,27 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
 
     @property
     def menu(self):
-        """Return the application menu as a sequence of 'pytis.presentation.Menu' instances."""
+        """Return the application menu as a sequence of `pytis.presentation.Menu` instances."""
         return self._menu
 
     def run_dialog(self, dialog_or_class_, *args, **kwargs):
         """Display a given dialog above the application's main frame.
 
-        Arguments:
-
-          dialog_or_class_ -- a dialog class (derived from 'Dialog'), or a
-            dialog instance directly. If a class is provided, a new instance
-            will be created and then executed.
-
         The current (top-level) application frame will be supplied as the first
-        constructor argument ('parent'). Other arguments are passed through
+        constructor argument (`parent`). Other arguments are passed through
         unchanged. For more information about dialog classes and their
-        constructor arguments, see the 'pytis.form.dialog' module.
+        constructor arguments, see the `pytis.form.dialog` module.
 
-        If an instance is provided, the arguments are passed to its 'run()'
+        If an instance is provided, the arguments are passed to its `run`
         method.
 
-        The dialog is executed (via the 'run()' method) and its return value is
+        The dialog is executed (via the `run` method) and its return value is
         also the return value of this method.
+
+        Arguments:
+          dialog_or_class_: A dialog class (derived from `Dialog`), or a dialog
+            instance directly. If a class is provided, a new instance will be
+            created and then executed.
 
         """
         if not isinstance(dialog_or_class_, pytis.form.Dialog):
@@ -1247,7 +1248,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
     def run(self):
         """Start the user interface loop.
 
-        Do not return until the user interface has been fully terminated.
+        Does not return until the user interface has been fully terminated.
 
         """
         if not self._headless:
@@ -1281,9 +1282,9 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
     def current_form(self, inner=True, allow_modal=True):
         """Return the currently active application form, if one exists.
 
-        If no form is open, or the active window is not a form, returns None.
-        If the active form is a dual form, its active subform will be returned,
-        but only if the 'inner' argument is True.
+        If no form is open, or the active window is not a form, returns None. If
+        the active form is a dual form, its active subform will be returned, but
+        only if the `inner` argument is True.
 
         """
         form = self.top_window(allow_modal=allow_modal)
@@ -1298,8 +1299,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         """Process wx events in the queue.
 
         Arguments:
-
-          full -- if true, process also user events.
+          full (bool): If true, process also user events.
 
         """
         if self._yield_blocked:
@@ -1320,8 +1320,8 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         """Block or unblock processing of application events.
 
         Arguments:
-
-          block -- if true, block processing of application events, otherwise unblock it
+          block (bool): If true, block processing of application events,
+            otherwise unblock it.
 
         """
         self._yield_blocked = block
@@ -1348,7 +1348,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         """Log user action to the database.
 
         To activate database logging of user actions, include the table
-        'pytis.dbdefs.db_pytis_logging.EPytisActionLog' in the database schema.
+        `pytis.dbdefs.db_pytis_logging.EPytisActionLog` in the database schema.
 
         If the logging table does not exist, the information will only be
         written to server log.
@@ -1372,10 +1372,10 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
     def client_mode(self):
         """Return the client operation mode as one of 'remote', 'local' or None.
 
-        If the remote connection exists, 'remote' is returned.  If not and the
-        configuration option 'allow_local_file_dialogs' is set to true, 'local'
-        is returned.  If it is False, None is returned (the operation should be
-        aborted).
+        If the remote connection exists, `'remote'` is returned.  If not and the
+        configuration option `allow_local_file_dialogs` is set to true,
+        `'local'` is returned.  If it is False, None is returned (the operation
+        should be aborted).
 
         """
         if pytis.remote.client_connection_ok():
@@ -1460,12 +1460,11 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         return (pytis.config.dbuser, 'user-icon', tooltip)
 
     def status_fields(self):
-        """Return default status bar fields as a list of 'StatusField' instances.
+        """Return default status bar fields as a list of `StatusField` instances.
 
         The result is returned by the default implementation of
-        'pytis.presentation.Application.status_fields()'.  The derived
-        application may, however, extend, reorder or redefine the fields as
-        needed.
+        `pytis.presentation.Application.status_fields`.  The derived application
+        may, however, extend, reorder or redefine the fields as needed.
 
         """
         return [
@@ -1482,12 +1481,14 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         """Pop-up a wx context menu.
 
         Arguments:
-           parent -- wx parent window of the menu
-           items -- sequence of MenuItem, MenuSeparator or Menu instances
-           keymap -- keymap to use for determination of menu command keyboard shortcuts
-           position -- optional position of the menu as a tuple (x, y).  The menu is normally
-             positioned automatically under the pointer so position may be needed when displaying menu
-             in response to a keyboard command.
+          parent: wx parent window of the menu.
+          items: Sequence of `MenuItem`, `MenuSeparator` or `Menu` instances.
+          keymap: Keymap to use for determination of menu command keyboard
+            shortcuts.
+          position (tuple): Optional position of the menu as a tuple (x, y). The
+            menu is normally positioned automatically under the pointer so
+            position may be needed when displaying menu in response to a
+            keyboard command.
 
         """
         menu = self._create_menu(parent, Menu('', items), keymap)
@@ -1533,37 +1534,37 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         self._recent_directories[':'.join((cmode, context))] = directory
 
     class _ExposedFileWrapper(object):
-        """Wrapper over wrapper to hide deficiencies of legacy ExposedFileWrapper.
+        """Wrapper over wrapper to hide deficiencies of legacy `pytis.remote.ExposedFileWrapper`.
 
-        ExposedFileWrapper implementations from older Pytis2Go versions (which
-        don't load remote clientapi.py) don't support some features we want in
-        Pytis API (context manager protocol, iterator protocol, text mode
-        encoding), so this wrapper implements them on top of the
-        ExposedFileWrapper instance.
+        `pytis.remote.ExposedFileWrapper` implementations from older Pytis2Go
+        versions (which don't load remote clientapi.py) don't support some
+        features we want in Pytis API (context manager protocol, iterator
+        protocol, text mode encoding), so this wrapper implements them on top of
+        the `pytis.remote.ExposedFileWrapper` instance.
 
         Older Pytis2Go clients always open the file in binary mode with
-        'open_file()' and 'open_selected_file()'.  Encoding cannot be passed
-        to those methods so we perform encoding in this class and pass bytes
-        data to the underlying class.  For these, we always open remote files in
+        `open_file` and `open_selected_file`.  Encoding cannot be passed to
+        those methods so we perform encoding in this class and pass bytes data
+        to the underlying class.  For these, we always open remote files in
         binary mode and encode/decode the data in this class.
-        'make_selected_file()' on the other hand does support text mode encoding
-        so we pass the data without encoding in this case ('encoding' passed to
+        `make_selected_file` on the other hand does support text mode encoding
+        so we pass the data without encoding in this case (`encoding` passed to
         our constructor is None).
 
-        # Temporarily disabled: Also, because reading and writing data in small
-        # chunks (such as using readline()) over a remote connection is really
-        slow, we implement buffering through
-        'io.BufferedReader'/'io.BufferedWriter' which significantly improves
+        # Temporarily disabled: Also, because reading and writing data in #
+        small chunks (such as using `readline`) over a remote connection is #
+        really slow, we implement buffering through #
+        `io.BufferedReader`/`io.BufferedWriter` which significantly improves #
         performance.
 
         """
         _BUFFER_SIZE = 512 * 1024
 
         class BufferingWrapper(object):
-            """Wrap ExposedFileWrapper instance to serve buffered data.
+            """Wrap `pytis.remote.ExposedFileWrapper` instance to serve buffered data.
 
-            Implements the API expected by 'io.BufferedReader' and
-            'io.BufferedWriter'.
+            Implements the API expected by `io.BufferedReader` and
+            `io.BufferedWriter`.
 
             """
             def __init__(self, instance):
@@ -2372,7 +2373,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
         return self._decrypted_areas
 
     class _OutputResolver(pytis.output.OutputResolver):
-        """Default print resolver used by 'app.printout()'."""
+        """Default print resolver used by `app.printout`."""
 
         class _Spec(object):
             # This class has to emulate a specification module as well as a
@@ -2460,24 +2461,22 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
 def run_form(form_class, name=None, **kwargs):
     """Create a form and run it in the application.
 
-    Arguments:
-
-      form_class -- class of the created form (derived from 'Form').
-
-      name -- specification name for the resolver as a string.
-
-      kwargs -- keyword arguments to be passed to the form constructor.
-        The 'parent' and 'resolver' arguments will be supplied automatically.
-
     The created form will be displayed in the application window, or in a new
-    modal window (if it is a modal form derived from 'PopupForm').  The window
+    modal window (if it is a modal form derived from `PopupForm`).  The window
     of a non-modal form remains open in the application after this function
-    returns (it can be removed with the 'Form.leave_form' command).  For a
-    modal form, the function returns only after the form is closed.
+    returns (it can be removed with the `Form.leave_form` command). For a modal
+    form, the function returns only after the form is closed.
 
-    Returns: The return value of the 'run()' method in case of a modal form,
-    or None in case of a non-modal form.  If the form cannot be run
-    (e.g. insufficient access rights), returns False.
+    Arguments:
+      form_class: Class of the created form (derived from `Form`).
+      name (str): Specification name for the resolver.
+      **kwargs: Keyword arguments to be passed to the form constructor. The
+        `parent` and `resolver` arguments will be supplied automatically.
+
+    Returns:
+      The return value of the : meth:`run` method in case of a modal form, or
+      None in case of a non-modal form.  If the form cannot be run (e.g.
+      insufficient access rights), returns False.
 
     """
     command = Command(Application.run_form, form_class=form_class, name=name, **kwargs)
@@ -2489,33 +2488,35 @@ def run_form(form_class, name=None, **kwargs):
 def db_operation(operation, *args, **kwargs):
     """Invoke a database operation with handling of possible DB errors.
 
-    'operation' is called with the given arguments.  If 'pd.dbdata.DBException' is
+    `operation` is called with the given arguments.  If `pd.DBException` is
     raised during the operation, an error dialog is displayed with the exception
     description and a question asking whether the user wishes to re-invoke the
     operation.  The operation is repeated as long as the user answers the
     question positively.
 
-    Exceptions of type 'DBLoginException' result in displaying a login
-    dialog and the supplied username and password is set before repeating the
+    Exceptions of type `DBLoginException` result in displaying a login dialog
+    and the supplied username and password is set before repeating the
     operation.
 
     When the operation is performed successfully (regardless of whether on the
     first try or later), its result is returned.
 
     Arguments:
-      operation -- function (callable object) performing a database operation
-        and returning its result.
-      args, kwargs -- arguments and keyword arguments passed to the function,
-        excluding the keyword arguments named below.
-      allow_retry -- if true, offer the user a chance to retry the
-        operation.  It is on by default when 'kwargs' contain a 'translation'.
+      operation: Function (callable object) performing a database operation and
+        returning its result.
+      *args: Positional arguments passed to `operation`. **kwargs: Keyword
+      arguments passed to `operation`, excluding the keyword arguments named
+        below.
+      allow_retry (bool): If true, offer the user a chance to retry the
+        operation.  It is on by default when `kwargs` contain a `transaction`.
         Off otherwise.
-      quiet -- if true, don't report errors to the user at all (regardless
-        of 'allow_retry').
+      quiet (bool): If true, don't report errors to the user at all (regardless
+        of `allow_retry`).
 
-    Returns: Pair (SUCCESS, RESULT), where SUCCESS is a boolean flag indicating
-    success (true) or failure (false) and RESULT is the value returned by
-    'operation' (if SUCCESS is false, RESULT is not defined).
+    Returns:
+      Pair (SUCCESS, RESULT), where SUCCESS is a boolean flag indicating success
+      (true) or failure (false) and RESULT is the value returned by `operation`
+      (if SUCCESS is false, RESULT is not defined).
 
     """
     # Don't offer the user a chance to retry the operation when inside a transaction.

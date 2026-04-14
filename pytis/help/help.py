@@ -22,16 +22,16 @@ Help texts are stored in the database and edited by help administrator.
 
 This module includes the following classes:
 
-  'HelpUpdater' -- Create/update initial help texts in the database according
-    to specifications.
+`HelpUpdater` -- Create/update initial help texts in the database according
+to specifications.
 
-  'HelpGenerator' -- Generate a final help page contents according to the texts
-    defined in the database.
+`HelpGenerator` -- Generate a final help page contents according to the
+texts defined in the database.
 
 The last important part of the pytis help system is the user interface for
-managment of the help texts in the database by help administrators.  This is
-defined in 'pytis.defs.help.Help' (and can be used as 'help.Help' when
-'pytis.defs' is in resolver search path).
+management of the help texts in the database by help administrators.  This
+is defined in `pytis.defs.help.Help` (and can be used as `help.Help` when
+`pytis.defs` is in resolver search path).
 
 """
 from __future__ import print_function
@@ -62,8 +62,8 @@ class HelpUpdater(object):
     maintained by help administrator.  The contents of the database must be
     regularly synchronized with the specifications after changes in the
     application, so that new objects (views, fields, profiles etc.) get visible
-    in the help database, old objects are removed and changed or renamed
-    objects are updated.
+    in the help database, old objects are removed and changed or renamed objects
+    are updated.
 
     """
 
@@ -272,7 +272,7 @@ generator = None
 
 
 def help_page(uri):
-    """Return a help page for given URI as a 'lcg.ContentNode' instance."""
+    """Return a help page for given URI as an `lcg.ContentNode` instance."""
     global generator
     if not generator:
         # TODO: decide which one to use without trying...
@@ -290,7 +290,7 @@ def help_page(uri):
 class HelpGenerator(object):
     """Generate help page content and menu structure for the help browser.
 
-    Generate the help as lcg.ContentNode structure for the current application
+    Generate the help as `lcg.ContentNode` structure for the current application
     from the available source of help texts.
 
     This base class defines the common parts but is abstract regarding the
@@ -452,8 +452,8 @@ class HelpGenerator(object):
     def help_page(self, uri):
         """Return the complete help structure of LCG nodes with content for given uri.
 
-        The returned value is an 'lcg.ContentNode' instance, which is a part of
-        the complete menu structure (it refers to other 'lcg.ContentNode'
+        The returned value is an `lcg.ContentNode` instance, which is a part of
+        the complete menu structure (it refers to other `lcg.ContentNode`
         instances through the parent/child relationships).  Only the returned
         node, however, actually has content (page to be displayed in the help
         browser).  Other nodes have empty content as they are only important as

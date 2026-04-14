@@ -19,8 +19,8 @@
 
 """Dump Pytis application specifications to STDOUT.
 
-Specifications, their fields and properties are dumped to standard output in a
-way, that allows comparing these outputs to detect changes caused by
+Specifications, their fields and properties are dumped to standard output in
+a way, that allows comparing these outputs to detect changes caused by
 modifications of specification files or Pytis API changes (or both).
 
 """

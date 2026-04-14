@@ -35,11 +35,11 @@ P_KEY = 'P_KEY'
 P_ROW = 'P_ROW'
 """Output parameter storing the data row."""
 P_CONDITION = 'P_CONDITION'
-"""Output parameter storing the condition for 'pytis.data.Data.select()' call."""
+"""Output parameter storing the condition for `pytis.data.Data.select` call."""
 P_ARGUMENTS = 'P_ARGUMENTS'
 """Output parameter storing the arguments of the data object function."""
 P_SORTING = 'P_SORTING'
-"""Output parameter storing the sorting for 'pytis.data.Data.select()' call."""
+"""Output parameter storing the sorting for `pytis.data.Data.select` call."""
 P_DATA = 'P_DATA'
 """Output parameter storing the data object."""
 P_LANGUAGE = 'P_LANGUAGE'
@@ -50,23 +50,21 @@ def data_table(view, data, condition=None, sorting=None, transaction=None, **lon
     """Jednoduchý tisk tabulky dat.
 
     Zadaná tabulka bude jednoduchým způsobem zformátována na výstup.  Výběr dat
-    je specifikován argumenty předanými konstruktoru použitého formátovače.
-    Pro prezentační podobu tabulky jsou přiměřeně použity specifikace v jejím
-    view.
+    je specifikován argumenty předanými konstruktoru použitého formátovače. Pro
+    prezentační podobu tabulky jsou přiměřeně použity specifikace v jejím view.
 
-    Argumenty:
-
-      view -- presentation specification of the table;
-        'pytis.presentation.Specification' instance
-      data -- data object to use for querying the database; 'pytis.data.Data'
+    Arguments:
+      view: presentation specification of the table;
+        `pytis.presentation.Specification` instance
+      data: data object to use for querying the database; `pytis.data.Data`
         instance
-      condition -- podmínka výběru řádků tabulky ve formátu argumentu
-        'condition' metody 'pytis.util.Data.select()'
-      sorting -- specifikace třídění řádků tabulky ve formátu argumentu 'sort'
-        metody 'pytis.util.Data.select()'
-      transaction -- transaction object to use for database operations
-      long_table_args -- dodatečné argumenty předané konstruktoru třídy
-        'LongTable'
+      condition: podmínka výběru řádků tabulky ve formátu argumentu `condition`
+        metody `pytis.util.Data.select`
+      sorting: specifikace třídění řádků tabulky ve formátu argumentu `sort`
+        metody `pytis.util.Data.select`
+      transaction: transaction object to use for database operations
+      **long_table_args: dodatečné argumenty předané konstruktoru třídy
+        `LongTable`
 
     """
     import pytis.data
@@ -88,7 +86,7 @@ def data_table(view, data, condition=None, sorting=None, transaction=None, **lon
         else:
             alignment = pytis.output.LongTable.Column.ALIGN_LEFT
         tc = pytis.output.LongTable.Column(label, width, alignment=alignment)
-        tc.id = cid  # fuj, viz `table_row' níže
+        tc.id = cid  # fuj, viz `table_row` níže
         columns.append(tc)
     # Data
     data.select(condition=condition, sort=sorting, transaction=transaction)
@@ -108,21 +106,19 @@ def data_table(view, data, condition=None, sorting=None, transaction=None, **lon
 def data_item(view, data, column, key=None, row=None):
     """Exportovaná hodnota položky záznamu datového objektu.
 
-    Jinak řečeno, tato funkce způsobí vložení příslušné \"buňky\" dat na
-    výstup.  Aby toto bylo možno udělat, musí být známa příslušná datová buňka.
-    Ta je identifikována přímo záznamem nebo jeho klíčem a identifikátorem
-    sloupce.
+    Jinak řečeno, tato funkce způsobí vložení příslušné \"buňky\" dat na výstup.
+    Aby toto bylo možno udělat, musí být známa příslušná datová buňka. Ta je
+    identifikována přímo záznamem nebo jeho klíčem a identifikátorem sloupce.
 
-    Argumenty:
-
-      view -- presentation specification of the table;
-        'pytis.presentation.Specification' instance
-      data -- data object to use for querying the database; 'pytis.data.Data'
+    Arguments:
+      view: presentation specification of the table;
+        `pytis.presentation.Specification` instance
+      data: data object to use for querying the database; `pytis.data.Data`
         instance
-      column -- stringový identifikátor sloupce datového objektu, jehož
-        hodnota bude vložena na výstup
-      key -- klíč řádku (ve formě parametru pro 'pytis.data.Data.row()')
-      row -- the row containing the required value; 'pytis.data.Row' instance
+      column: stringový identifikátor sloupce datového objektu, jehož hodnota
+        bude vložena na výstup
+      key: klíč řádku (ve formě parametru pro `pytis.data.Data.row`)
+      row: the row containing the required value; `pytis.data.Row` instance
 
     """
     assert isinstance(view, pytis.presentation.Specification), view

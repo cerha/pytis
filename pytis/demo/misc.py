@@ -50,50 +50,50 @@ class InputFields(Specification):
     This example shows:
 
     1. "Basic fields", such as textual, numeric or date entries where the value
-       is only limited by the field data type,
+      is only limited by the field data type,
 
     2. "Range fields", where you enter the lower and the upper bounds of a
-       range into two basic fields,
+      range into two basic fields,
 
     3. "Enumeration fields", where the value is additionally limited to a
-       certain set of available values from which the user selects (typically
-       used to represent 1:N database relations).
+      certain set of available values from which the user selects (typically
+      used to represent 1: N database relations).
 
-    By `enumeration' we understand the set of valid values for a particular
-    field.  This set of values is provided by an `enumerator' bound to the
+    By "enumeration" we understand the set of valid values for a particular
+    field.  This set of values is provided by an "enumerator" bound to the
     field's data type.  A simple enumerator may provide a fixed set of values
     defined in the specification, but the most typical usage is an enumerator
     bound to a data object.  This makes the enumeration user editable as any
     other data view of a Pytis application.  This type of enumeration is called
-    a 'Codebook'.  Any Pytis specification may be used as a codebook.  This
+    a "Codebook".  Any Pytis specification may be used as a codebook.  This
     demo, for example, defines the codebooks of countries and continents.  See
-    their specifications in the file `cb.py' for more details.
+    their specifications in the file `cb.py` for more details.
 
-    There several kinds of enumeration fields.  The kind used for a particular
-    field is determined by 'selection_type' in field specification.  The
-    default is the `Codebook' field.  Other representations may use radio
+    There are several kinds of enumeration fields.  The kind used for a
+    particular field is determined by `selection_type` in field specification.
+    The default is the "Codebook" field.  Other representations may use radio
     boxes, choices or other kinds of selections.  This demo shows how different
     selection types behave.
 
-    Using `pd.RestrictedMemData' as the data object class (specified by the
-    attrattribute 'data_cls') makes it possible to create a specification,
-    which is not bound to any database table.  The data object doesn't hold any
-    data, but otherwise it acts as any other data object.  This can be useful
-    for example when you want to get some more complicated user input.  A form
-    on top of a virtual specification can be used as a dialog, but allows the
-    full power of pytis forms.  Form values can be retrieved as its return
-    value.
+    Using `pytis.data.RestrictedMemData` as the data object class (specified by
+    the attribute `data_cls`) makes it possible to create a specification, which
+    is not bound to any database table.  The data object doesn't hold any data,
+    but otherwise it acts as any other data object. This can be useful for
+    example when you want to get some more complicated user input.  A form on
+    top of a virtual specification can be used as a dialog, but allows the full
+    power of pytis forms.  Form values can be retrieved as its return value.
 
     The following differences apply:
 
-      * Since it is not possible to determine field data types automatically
-        from the data specification (or database introspection), the default
-        type is always `pd.String'
+    * Since it is not possible to determine field data types automatically
+      from the data specification (or database introspection), the default type
+      is always `pytis.data.String`.
 
-      * If you need to pass a codebook type (it is different not `pd.String'),
-        you will also need to pass all its constructor arguments, including
-        `enumerator'.  This makes it quite difficult, since you can't rely on
-        automatic enumerator construction based on the `codebook' argument.
+    * If you need to pass a codebook type (it is different from
+      `pytis.data.String`), you will also need to pass all its constructor
+      arguments, including `enumerator`.  This makes it quite difficult, since
+      you can't rely on automatic enumerator construction based on the
+      `codebook` argument.
 
     Except for the restrictions mentioned above, everything else works just the
     same, so all the features used in this specification can be used generally
@@ -248,13 +248,13 @@ class RuntimeFilter(Specification):
     Runtime filter is a condition determining valid codebook items (available
     for selection).  This condition is recomputed in runtime similarly as the
     values of computed fields.  It can also depend on values of other fields in
-    the current row.  The filter determines the items available for selection
-    in the user interface controls as well as the validation process.
+    the current row.  The filter determines the items available for selection in
+    the user interface controls as well as the validation process.
 
-    Filters fan be applied as conditions for database selects
-    ('runtime_filter') or as arguments to database or non-database functions
-    ('runtime_arguments').  This specification shows database select condition
-    and non-database function arguments.
+    Filters can be applied as conditions for database selects (`runtime_filter`)
+    or as arguments to database or non-database functions (`runtime_arguments`).
+    This specification shows database select condition and non-database function
+    arguments.
 
     """
     public = True
@@ -321,9 +321,9 @@ class Passwords(Specification):
     control shows eight positions, regardless how long the actual password is,
     just as an indication that the value is not empty.
 
-    In practice, passwords will not be stored directly within the database.
-    They will be typically protected by hashing.  This may be done by creating
-    a virtual password field for the user interaction and a computed database
+    In practice, passwords will not be stored directly within the database. They
+    will be typically protected by hashing.  This may be done by creating a
+    virtual password field for the user interaction and a computed database
     fields which generates the hashed value based on the UI field's plain text
     value.  This demo shpould be extended to give an example.
 
@@ -522,11 +522,11 @@ def mark_products(product_id=None, mark=True):
 
     Demonstrates a function working with application data which can be called
     from within application code (above) or from a standalone script (see
-    demo/script.py).
+    `demo/script.py`).
 
     As demonstrated below, a limited set of Pytis API can also be used in such
-    functions.  More exactly these are the API methods and properties defined
-    by 'pytis.api.BaseApplication'.
+    functions.  More exactly these are the API methods and properties defined by
+    `pytis.api.BaseApplication`.
 
     """
     assert isinstance(mark, bool)

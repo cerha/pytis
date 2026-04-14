@@ -408,7 +408,7 @@ class PostponedSelectionDualForm(ImmediateSelectionDualForm):
 
 
 class SideBrowseDualForm(PostponedSelectionDualForm):
-    """Dual form with a 'SideBrowseForm' as the side form."""
+    """Dual form with a `SideBrowseForm` as the side form."""
 
     def _create_side_form(self, parent):
         return SideBrowseForm(parent, self._resolver, self._side_name, guardian=self,
@@ -445,11 +445,11 @@ class SideBrowseDualForm(PostponedSelectionDualForm):
 
 
 class BrowseDualForm(SideBrowseDualForm):
-    """Dual form with a 'BrowseForm' as the main form.
+    """Dual form with a `BrowseForm` as the main form.
 
-    The main form is an instance of 'BrowseForm' and the side form is an
-    instance of 'SideBrowseForm'.  The forms are linked via binding columns
-    given by the `BindingSpec' specification.
+    The main form is an instance of `BrowseForm` and the side form is an
+    instance of `SideBrowseForm`.  The forms are linked via binding columns
+    given by the `pytis.presentation.BindingSpec` specification.
 
     """
 
@@ -471,7 +471,7 @@ class BrowseDualForm(SideBrowseDualForm):
 
 
 class AggregationDualForm(PostponedSelectionDualForm):
-    """Dual form with 'AggregationForm' main form and 'BrowseForm' sideform.
+    """Dual form with `AggregationForm` main form and `BrowseForm` sideform.
 
     The side form shows all records corresponding to the currently selected
     aggregation form row.  This means records having the values of all "group
@@ -542,9 +542,7 @@ class AggregationDualForm(PostponedSelectionDualForm):
 
 
 class ShowDualForm(SideBrowseDualForm):
-    """Dual form with a 'BrowsableShowForm' as the main form.
-
-    """
+    """Dual form with a `BrowsableShowForm` as the main form."""
     def _full_init(self, *args, **kwargs):
         super(ShowDualForm, self)._full_init(*args, **kwargs)
         self._initialization_done = False
@@ -566,8 +564,8 @@ class BrowseShowDualForm(ImmediateSelectionDualForm):
     """Dual form with a row list on top and a preview below.
 
     This form is used to show an overview of items together with a form
-    providing additional information. Depending on the binding specification
-    and the lower form, this can be either details of the current record or
+    providing additional information. Depending on the binding specification and
+    the lower form, this can be either details of the current record or
     aggregate information (e.g. results of aggregations over the upper form
     data, etc.).
 
@@ -599,10 +597,10 @@ class BrowseShowDualForm(ImmediateSelectionDualForm):
 class DescriptiveDualForm(BrowseShowDualForm):
     """Dual form with a row list on top and a preview below.
 
-    This form is used to show an overview of items together with a detailed
-    view of the current item. The preview is not meant for editing the item.
-    This is effectively a special case of the parent class where the preview
-    in the lower form uses the same specification as the upper form.
+    This form is used to show an overview of items together with a detailed view
+    of the current item. The preview is not meant for editing the item. This is
+    effectively a special case of the parent class where the preview in the
+    lower form uses the same specification as the upper form.
 
     """
     class _SideForm(ShowForm):
@@ -664,7 +662,8 @@ class DescriptiveDualForm(BrowseShowDualForm):
 class MultiForm(Form, Refreshable):
     """Form container showing multiple inner forms in separate notebook tabs.
 
-    The form has no data itself -- it just acts as a proxy to the currently visible inner form.
+    The form has no data itself -- it just acts as a proxy to the currently
+    visible inner form.
 
     """
     @classmethod
@@ -1231,11 +1230,16 @@ class MultiSideForm(MultiForm):
     def select_binding(self, id):
         """Raise the side form tab corresponding to the binding with given identifier.
 
-        The argument 'id' is a string identifier of a 'Binding' instance which must appear in the
-        main form 'bindings' specification. If there is no binding with the given id, an
-        'AssertError' is raised. If the corresponding form is not active (e.g. the user has no
-        access rights for the form), False is returned and an error message is displayed.
-        Otherwise the form is raised and True is returned.
+        Arguments:
+          id (str): Identifier of a Binding instance which must appear in the
+            main form `bindings` specification.
+
+        Returns:
+          True if the form was raised successfully, False if the corresponding
+          form is not active (e.g. the user has no access rights).
+
+        Raises:
+          `AssertionError`: If there is no binding with the given id.
 
         """
         for i, form in enumerate(self._subforms()):
@@ -1248,12 +1252,11 @@ class MultiSideForm(MultiForm):
 
 
 class MultiBrowseDualForm(BrowseDualForm):
-    """Dual form with a 'BrowseForm' up and multiple side forms.
+    """Dual form with a `BrowseForm` up and multiple side forms.
 
-    Specific constructor arguments:
-
-      binding -- has the same effect as calling the method 'select_binding' with
-        given argument after the form is created.
+    Arguments:
+      binding: Has the same effect as calling `select_binding` with this
+        argument after the form is created.
 
     """
     DESCR = _("tabbed dual form")

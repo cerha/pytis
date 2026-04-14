@@ -43,10 +43,9 @@ class ResolverModuleError(pytis.util.ResolverError):
     def __init__(self, module_name, *args):
         """Inicializuj výjimku.
 
-        Argumenty:
-
-          module_name -- jméno nenalezeného specifikačního modulu, string
-          args -- další argumenty předané konstruktoru předka
+        Arguments:
+          module_name: jméno nenalezeného specifikačního modulu, string
+          *args: další argumenty předané konstruktoru předka
 
         """
         msg = 'Specification module not found: %s, %s' % (module_name, args)
@@ -59,12 +58,11 @@ class ResolverFileError(pytis.util.ResolverError):
     def __init__(self, file_name, path, exception):
         """Inicializuj výjimku.
 
-        Argumenty:
-
-          file_name -- jméno nenalezeného specifikačního souboru, string
-          path -- cesta ke specifikačním souborům, string
-          exception -- výjimka, která problém signalizovala, instance třídy
-            'Exception' nebo 'None'
+        Arguments:
+          file_name: jméno nenalezeného specifikačního souboru, string
+          path: cesta ke specifikačním souborům, string
+          exception: výjimka, která problém signalizovala, instance třídy
+            `Exception` nebo None
 
         """
         msg = 'Error importing specification file %s: %s %s' % (file_name, exception, path)
@@ -77,10 +75,9 @@ class ResolverSpecError(pytis.util.ResolverError):
     def __init__(self, module_name, spec_name):
         """Inicializuj výjimku.
 
-        Argumenty:
-
-          module_name -- jméno specifikačního modulu, string
-          spec_name -- jméno specfikační funkce, string
+        Arguments:
+          module_name: jméno specifikačního modulu, string
+          spec_name: jméno specfikační funkce, string
 
         """
         msg = 'Specification not found: %s, %s' % (module_name, spec_name)
@@ -90,11 +87,11 @@ class ResolverSpecError(pytis.util.ResolverError):
 class Resolver(object):
     """Resolver umožňuje získat specifikační objekt na základě modulu a jména.
 
-    Modulem se rozumí objekt, může a nemusí jím být pythonový modul,
-    poskytující specifikace prostřednictvím funkcí vracejících instance
-    specifikačních objektů.  Specifikační jména odpovídají jménům callable
-    objektů modulu, resolver je schopen vracet přímo tyto objekty (metoda
-    'get_object()') nebo jimi vytvořené instance (metoda 'get()').
+    Modulem se rozumí objekt, může a nemusí jím být pythonový modul, poskytující
+    specifikace prostřednictvím funkcí vracejících instance specifikačních
+    objektů.  Specifikační jména odpovídají jménům callable objektů modulu,
+    resolver je schopen vracet přímo tyto objekty (metoda `get_object`) nebo
+    jimi vytvořené instance (metoda `get`).
 
     """
 
@@ -142,16 +139,14 @@ class Resolver(object):
     def get_object(self, module_name, spec_name):
         """Vrať požadovaný objekt z daného specifikačního modulu.
 
-        Argumenty:
+        Není-li modul module_name nalezen, je vyvolána výjimka
+        `ResolverModuleError`.  Je-li modul nalezen, avšak není v něm nalezena
+        třída daná spec_name nebo pokud spec_name začíná podtržítkem, je
+        vyvolána výjimka `ResolverSpecError`.
 
-          module_name -- jméno specifikačního modulu
-          spec_name -- jméno objektu ze specifikačního modulu, neprázdný
-            string
-
-        Není-li modul 'module_name' nalezen, je vyvolána výjimka
-        'ResolverModuleError'.  Je-li modul nalezen, avšak není v něm
-        nalezena třída daná 'spec_name' nebo pokud 'spec_name' začíná
-        podtržítkem, je vyvolána výjimka 'ResolverSpecError'.
+        Arguments:
+          module_name: jméno specifikačního modulu
+          spec_name: jméno objektu ze specifikačního modulu, neprázdný string
 
         """
         if not spec_name or spec_name[0] == '_':
@@ -162,12 +157,11 @@ class Resolver(object):
     def get_module(self, module_name):
         """Vrať požadovaný modul.
 
-        Argumenty:
+        Není-li modul module_name nalezen, je vyvolána výjimka
+        `ResolverModuleError`.
 
-          module_name -- jméno specifikačního modulu
-
-        Není-li modul 'module_name' nalezen, je vyvolána výjimka
-        'ResolverModuleError'.
+        Arguments:
+          module_name: jméno specifikačního modulu
 
         """
         return self._get_module(module_name)
@@ -177,52 +171,49 @@ class Resolver(object):
         # svůj modul, což může činit potíže při vzdáleném přístupu přes Pyro.
         """Vrať instanci požadované třídy z daného specifikačního modulu.
 
-        Argumenty:
+        Instance třídy je vytvořena voláním jejího konstruktoru s argumenty args
+        a kwargs.
 
-          module_name -- jméno specifikačního modulu
-          spec_name -- jméno veřejné třídy ze specifikačního modulu, neprázdný
+        Není-li modul module_name nalezen, je vyvolána výjimka
+        `ResolverModuleError`.  Je-li modul nalezen, avšak není v něm nalezena
+        třída daná spec_name nebo pokud spec_name začíná podtržítkem, je
+        vyvolána výjimka `ResolverSpecError`.
+
+        Arguments:
+          module_name: jméno specifikačního modulu
+          spec_name: jméno veřejné třídy ze specifikačního modulu, neprázdný
             string
-
-        Instance třídy je vytvořena voláním jejího konstruktoru s argumenty
-        'args' a 'kwargs'.
-
-        Není-li modul 'module_name' nalezen, je vyvolána výjimka
-        'ResolverModuleError'.  Je-li modul nalezen, avšak není v něm
-        nalezena třída daná 'spec_name' nebo pokud 'spec_name' začíná
-        podtržítkem, je vyvolána výjimka 'ResolverSpecError'.
 
         """
         key = (module_name, spec_name, tuple(args), tuple(kwargs.items()))
         return self._instance_cache[key]
 
     def get(self, module_name, spec_name, **kwargs):
-        """Vrať specifikaci 'spec_name' ze specifikačního modulu 'module_name'.
+        """Vrať specifikaci `spec_name` ze specifikačního modulu `module_name`.
 
-        Argumenty:
+        Pokud module_name neobsahuje tečky, jde přímo o jméno modulu.  V tomto
+        modulu je vyhledána funkce spec_name, ta je spuštěna s instancí
+        resolveru jako prvním pozičním argumentem a danými klíčovými argumenty a
+        výsledek je vrácen.
 
-          module_name -- jméno specifikačního modulu.
-          spec_name -- jméno specifikační funkce/metoda.
-          kwargs -- klíčové argumenty specifikační funkce/metody.
-
-        Pokud 'module_name' neobsahuje tečky, jde přímo o jméno modulu.  V
-        tomto modulu je vyhledána funkce 'spec_name', ta je spuštěna s instancí
-        resolveru jako prvním pozičním argumentem a danými klíčovými argumenty
-        a výsledek je vrácen.
-
-        Pokud 'module_name' obsahuje tečky, jde o název modulu a třídy v něm
+        Pokud `module_name` obsahuje tečky, jde o název modulu a třídy v něm
         obsažené.  Název modulu může v tomto případě také obsahovat názvy
         adresářů (oddělené rovněž tečkami).  Například název
         'ucetnictvi.denik.UcetniDenik' znamená, že v adresáři 'ucetnictvi' bude
         hledán soubor 'denik.py' a v něm třída 'UcetniDenik'.  Pokud je třída
         nalezena, je vytvořena její instance (konstruktoru je předána instance
         resolveru jako první poziční argument) a nad ní zavolána metoda
-        'spec_name', té jsou předány dané klíčové argumenty a výsledek je
+        `spec_name`, té jsou předány dané klíčové argumenty a výsledek je
         vrácen.
 
-        Není-li modul 'module_name' nalezen, je vyvolána výjimka
-        'ResolverModuleError'.  Je-li modul nalezen, avšak není v něm
-        nalezena specifikace 'spec_name', je vyvolána výjimka
-        'ResolverSpecError'.
+        Není-li modul module_name nalezen, je vyvolána výjimka
+        `ResolverModuleError`.  Je-li modul nalezen, avšak není v něm nalezena
+        specifikace spec_name, je vyvolána výjimka `ResolverSpecError`.
+
+        Arguments:
+          module_name: jméno specifikačního modulu.
+          spec_name: jméno specifikační funkce/metody.
+          **kwargs: klíčové argumenty specifikační funkce/metody.
 
         """
         key = (module_name, spec_name, tuple(kwargs.items()))
@@ -240,10 +231,8 @@ class FileResolver(Resolver):
     def __init__(self, path):
         """Inicializuj resolver.
 
-        Argumenty:
-
-          path -- cesta ke specifikačním souborům; string, nebo sekvence
-            stringů
+        Arguments:
+          path: cesta ke specifikačním souborům; string, nebo sekvence stringů
 
         """
         super(FileResolver, self).__init__()
@@ -282,19 +271,19 @@ class FileResolver(Resolver):
 class DatabaseResolver(Resolver):
     """Resolver taking its objects from a database.
 
-    It looks up objects in the database table specified in the constructor.
-    This table is expected to contain (at least) the following columns:
+    It looks up objects in the database table specified in the constructor. This
+    table is expected to contain (at least) the following columns:
 
-      module -- text column containing module names
-      specification -- text column containing specification names
-      data -- column of any type containing the object data; alternatively other
+      module: text column containing module names
+      specification: text column containing specification names
+      data: column of any type containing the object data; alternatively other
         column names can be used as specified in the constructor
 
     Each (module, specification) value should be unique within the table.
 
     For given module and specification the resolver returns data Python value
     from the corresponding row.  If there is no corresponding row,
-    ResolverError is raised.
+    `pytis.util.ResolverError` is raised.
 
     This resolver can handle only complete module + specification requests, it
     doesn't return anything reasonable for module only requests.
@@ -302,16 +291,14 @@ class DatabaseResolver(Resolver):
     """
 
     def __init__(self, table, columns=('data',), specs=('body',)):
-        """
+        """Initialize the resolver.
+
         Arguments:
-
-          table -- name of the database table storing the resolved data
-          columns -- sequence of column names to include in the result
-          specs -- sequence of specification names in the order matching
-            the order of 'columns'.  Possible specification names are
-            'body', 'row', 'page_header', 'first_page_header', 'page_footer'
-            and 'style'.
-
+          table: name of the database table storing the resolved data
+          columns: sequence of column names to include in the result
+          specs: sequence of specification names in the order matching the order
+            of columns.  Possible specification names are 'body', 'row',
+            'page_header', 'first_page_header', 'page_footer' and 'style'.
 
         """
         super(DatabaseResolver, self).__init__()
@@ -367,12 +354,14 @@ class OutputResolver(Resolver):
     Resolves both standard specifications and print specifications.
 
     """
-    def __init__(self, print_spec_dir, specification_resolver):
-        """
-        Arguments:
 
-          print_spec_dir -- print specification directory for 'pytis.output.FileResolver'.
-          specification_resolver -- instance 'pytis.util.Resolver'.
+    def __init__(self, print_spec_dir, specification_resolver):
+        """Initialize the resolver.
+
+        Arguments:
+          print_spec_dir: print specification directory for
+            `pytis.output.FileResolver`.
+          specification_resolver: instance of `pytis.util.Resolver`.
 
         """
         super(OutputResolver, self).__init__()

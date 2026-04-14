@@ -45,35 +45,35 @@ class Resolver(object):
 
     The resolver is responsible for resolution of specification names.  It
     automatically creates specification instances from classes defined by
-    specification modules.  It then calls methods on those instances and
-    returns their results.  The specification instances as well as the results
-    of their method calls are cached transparently.  The only public method is
-    'get()' which returns the result of calling a given method on given
-    specification (both given by name).
+    specification modules.  It then calls methods on those instances and returns
+    their results.  The specification instances as well as the results of their
+    method calls are cached transparently.  The only public method is `get`
+    which returns the result of calling a given method on given specification
+    (both given by name).
 
     The specifications are located by their name in python modules available in
     the current python path.  The resolver can be configured in two modes using
-    the constructor argument `search'.  The names are either fully qualified
-    names including the top level module name or relative to modules named in
-    the search list (see the constructor documentation for more details).
+    the constructor argument search.  The names are either fully qualified names
+    including the top level module name or relative to modules named in the
+    search list (see the constructor documentation for more details).
 
-    The configuration option `search_modules' is normally passed as the
-    `search' constructor argument by pytis to the resolver instances which it
-    creates.
+    The configuration option search_modules is normally passed as the search
+    constructor argument by pytis to the resolver instances which it creates.
 
     """
 
     def __init__(self, search=()):
-        """Arguments:
+        """Initialize the resolver.
 
-          search -- if not used, the names are fully qualified names of python
-           classes located in python modules available in the current python
-           path.  Thus a name `myapp.people.Users' will refer to a class
-           `Users' in python module `myapp' and its submodule `people'.  If
-           `search' is used, it must be a sequence of strings.  These strings
-           are used as prefixes to specification names passed to 'get()'.  Thus
-           a name `people.Users' will be searched in pyhon modules `myapp' and
-           `myextensions' when search is set to ('myapp', 'myextensions').
+        Arguments:
+          search (tuple): If not used, the names are fully qualified names of
+            python classes located in python modules available in the current
+            python path.  Thus a name myapp.people.Users will refer to a class
+            Users in python module myapp and its submodule people.  If search is
+            used, it must be a sequence of strings.  These strings are used as
+            prefixes to specification names passed to `get`.  Thus a name
+            people.Users will be searched in python modules myapp and
+            myextensions when search is set to ('myapp', 'myextensions').
 
         """
         self._search = search
@@ -191,12 +191,12 @@ class Resolver(object):
         return method()
 
     def specification(self, name, **kwargs):
-        """Return the specification instance of given 'name'.
+        """Return the specification instance of given name.
 
         Arguments:
-          name -- string name of the specification
-          kwargs -- optional keyword arguments to be passed to the
-            specification instance constructor
+          name (str): Name of the specification.
+          kwargs: Optional keyword arguments to be passed to the specification
+            instance constructor.
 
         """
         specification = self._specification_cache[(name, tuple(kwargs.items()))]
@@ -210,14 +210,13 @@ class Resolver(object):
         return specification
 
     def get(self, name, method_name, **kwargs):
-        """Return the result of calling 'method_name' on specification instance 'name'.
+        """Return the result of calling `method_name` on specification `name`.
 
         Arguments:
-
-          name -- string name of the specification
-          method_name -- string name of the method to call
-          kwargs -- optional keyword arguments to be passed to the
-            specification instance constructor
+          name (str): Name of the specification.
+          method_name (str): Name of the method to call.
+          kwargs: Optional keyword arguments to be passed to the specification
+            instance constructor.
 
         """
         return self._method_result_cache[(name, tuple(kwargs.items()), method_name)]
@@ -226,9 +225,8 @@ class Resolver(object):
         """Return given object from specification.
 
         Arguments:
-
-          spec_name -- name of the specification; string
-          object_name -- name of the object in the specification; string
+          spec_name (str): Name of the specification.
+          object_name (str): Name of the object in the specification.
 
         """
         specification = self._get_specification((spec_name, (),))
@@ -239,14 +237,13 @@ class Resolver(object):
         return object
 
     def walk(self, cls=None):
-        """Return all 'cls' subclasses defined in current search path.
+        """Return all cls subclasses defined in current search path.
 
         Returns a list of pairs (name, class), where name is the string name of
-        the class and class is a subclass of 'cls'.  Each class is returned
-        only once and the name is always the shortest name of given class when
-        it is first found within the search path (the same class may be
-        imported into several modules, so it may be available under several
-        different names).
+        the class and class is a subclass of cls.  Each class is returned only
+        once and the name is always the shortest name of given class when it is
+        first found within the search path (the same class may be imported into
+        several modules, so it may be available under several different names).
 
         This method only works when the search path is non-empty.
 

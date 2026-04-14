@@ -19,12 +19,17 @@ from pytis.dbdefs.db_pytis_common import XChanges
 
 class EPytisDisabledDmpTriggers(sql.SQLTable):
     """This table allows disabling some trigger calls.
+
     Supported values (flags) are:
-    genmenu -- initial insertion and deletion on certain tables
-    positions -- set during trigger update of menu positions to prevent recursive trigger calls;
-    note this way of doing it is not safe in case of parallel table updates
-    redundancy -- set during rights redundancy update to prevent recursive trigger calls;
-    note this way of doing it is not safe in case of parallel table updates
+
+    - `genmenu` -- initial insertion and deletion on certain tables -
+    `positions` -- set during trigger update of menu positions to prevent
+      recursive trigger calls; note this way of doing it is not safe in case of
+      parallel table updates
+    - `redundancy` -- set during rights redundancy update to prevent
+      recursive trigger calls; note this way of doing it is not safe in case of
+      parallel table updates
+
     """
     name = 'e_pytis_disabled_dmp_triggers'
     schemas = dmp_schemas.value(globals())
@@ -36,10 +41,12 @@ class EPytisDisabledDmpTriggers(sql.SQLTable):
 
 class CPytisRolePurposes(sql.SQLTable):
     """There are three kinds of roles:
-    1. Menu and access administrator roles.  Definitions of these roles may be changed
-    only by the database administrators.
+
+    1. Menu and access administrator roles.  Definitions of these roles may be
+       changed only by the database administrators.
     2. Roles corresponding to system accounts (login roles).
     3. Pure application roles.
+
     """
     name = 'c_pytis_role_purposes'
     schemas = dmp_schemas.value(globals())
@@ -126,7 +133,9 @@ class EvPytisRoles(sql.SQLView):
 
 class EPytisRoleMembers(Base_LogSQLTable):
     """Mutual memberships of roles.
+
     Entries in this table define members of each roleid.
+
     """
     name = 'e_pytis_role_members'
     schemas = dmp_schemas.value(globals())
@@ -174,7 +183,9 @@ class EvPytisValidRoleMembers(sql.SQLView):
 
 class APytisValidRoleMembers(sql.SQLTable):
     """Complete membership of roles, including transitive relations.
+
     This table is modified only by triggers.
+
     """
     name = 'a_pytis_valid_role_members'
     schemas = dmp_schemas.value(globals())
@@ -299,7 +310,11 @@ class PytisCopyRole(sql.SQLFunction):
 
 class PytisUser(sql.SQLFunction):
     """Return current pytis user.
-    By redefining this function, debugging of user behavior or sulogin may be possible."""
+
+    By redefining this function, debugging of user behavior or sulogin may be
+    possible.
+
+    """
     name = 'pytis_user'
     schemas = dmp_schemas.value(globals())
     arguments = ()
@@ -891,13 +906,13 @@ class EPytisActionRights(Base_LogSQLTable):
     """Assignments of access rights to actions.
 
     Extent of each action right is strictly limited by its granted system
-    permissions.  Non-system rights can only further limit the system rights.  If
-    there is no system permission for a given action, the action is forbidden.  The
-    resulting right is not broader than the intersection of all the related
+    permissions.  Non-system rights can only further limit the system rights. If
+    there is no system permission for a given action, the action is forbidden.
+    The resulting right is not broader than the intersection of all the related
     permissions.
 
-    Some actions, e.g. dual form actions, form its access rights set by inclusion
-    of other action rights.
+    Some actions, e.g. dual form actions, form its access rights set by
+    inclusion of other action rights.
 
     Access rights of non-terminal menu items, identified by action name
     'menu/MENUID' define default rights, used when no non-system access right
@@ -907,6 +922,7 @@ class EPytisActionRights(Base_LogSQLTable):
     Action rights are supported and used in the application, but they are not
     exposed in the current user interface directly.  In future they may also
     support extended rights assignment, e.g. in context menus etc.
+
     """
     name = 'e_pytis_action_rights'
     fields = (sql.PrimaryColumn('id', pytis.data.Serial(), doc="Just to make logging happy"),
@@ -1218,6 +1234,7 @@ class EPytisRoleMembersTriggers(sql.SQLRaw):
 
     @classmethod
     def sql(class_):
+
         return """
 create trigger e_pytis_role_members_all_after after insert or update or delete
         on e_pytis_role_members
@@ -1720,8 +1737,10 @@ class PytisUpdateSummaryRights(sql.SQLFunction):
 
 class APytisActionsStructure(sql.SQLTable):
     """Precomputed actions structure as presented to menu admin.
-    Item positions and indentations are determined by positions.
-    This table is modified only by triggers.
+
+    Item positions and indentations are determined by positions. This table is
+    modified only by triggers.
+
     """
     name = 'a_pytis_actions_structure'
     schemas = dmp_schemas.value(globals())

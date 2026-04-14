@@ -18,27 +18,28 @@
 
 """User settings managers.
 
-This module defines classes for accessing various user specific data, such as
-application configuration, form profiles and other settings.  The user's data
-are stored in database tables but pytis internally uses ``managers'' to access
-them.  All managers are similar, but each of them has a slightly different API.
+This module defines classes for accessing various user specific data, such
+as application configuration, form profiles and other settings.  The user's
+data are stored in database tables but pytis internally uses "managers" to
+access them.  All managers are similar, but each of them has a slightly
+different API.
 
 A pytis application instance automatically creates instances of all needed
 managers at startup and these managers are then accessible through its
-properties 'Application.form_profile_manager',
-'Application.form_settings_manager' and 'Application.aggregated_views_manager'.
+properties `Application.form_profile_manager`,
+`Application.form_settings_manager` and
+`Application.aggregated_views_manager`.
 
+Most of the settings are stored as JSON objects, but the API works with
+pytis classes, such as `pytis.presentation.Profile`.  Conversion to/from
+these classes is done internally by the manager.
 
-Most of the settings are stored as JSON objects, but the API works with pytis
-classes, such as 'pytis.presentation.Profile()'.  Conversion to/from these
-classes is done internally by the manager.
-
-Settings are always identified by the current user (the 'username' argument of
-the manager's constructor) and additionally by other selectors such as
-specification name ('spec_name') and/or form name ('form_name').  Where
-'spec_name' and 'form_name' is used, it should follow the conventions for the
-relevant parts of DMP fullnames, but the manager doesn't enforce that in any
-way.
+Settings are always identified by the current user (the `username` argument
+of the manager's constructor) and additionally by other selectors such as
+specification name (`spec_name`) and/or form name (`form_name`).  Where
+`spec_name` and `form_name` is used, it should follow the conventions for
+the relevant parts of DMP fullnames, but the manager doesn't enforce that in
+any way.
 
 """
 
@@ -117,8 +118,8 @@ class ApplicationConfigManager(UserSetttingsManager):
     """Application configuration storage manager.
 
     The options are saved in a simple database table as JSON objects, one per
-    user.  The methods 'load()' and 'save()' can be used to retrieve and store
-    the settings as Python dictionaries of options.
+    user.  The methods `load` and `save` can be used to retrieve and store the
+    settings as Python dictionaries of options.
 
     """
     _TABLE = 'e_pytis_config'
@@ -133,7 +134,13 @@ class ApplicationConfigManager(UserSetttingsManager):
             return {}
 
     def save(self, options, transaction=None):
-        """Store given configuration options (dict instance)."""
+        """Store given configuration options (dict instance).
+
+        Arguments:
+          options (dict): Configuration options to store.
+          transaction: Existing DB transaction or None.
+
+        """
         assert isinstance(options, dict)
         self._save(dict(options=options), transaction=transaction)
 
@@ -141,15 +148,15 @@ class ApplicationConfigManager(UserSetttingsManager):
 class FormSettingsManager(UserSetttingsManager):
     """Accessor of database storage of form settings other than profiles.
 
-    Form settings are those form properties, which don't depend on the current
+    Form settings are those form properties which don't depend on the current
     profile.  They don't change when a profile is changed (for example dualform
     sash position doesn't depend on the current profile).
 
-    Form settings are simple pairs of string 'option' and a value of some
-    primitive python data type, such as 'int', 'str' or 'bool'.  Different form
-    types may store different settings (with different names).  The maneger
-    internally keeps a dictionary of settings for each form and the methods
-    'get()' and 'set()' may be used to retrieve/write individual options.
+    Form settings are simple pairs of string option and a value of some
+    primitive Python data type, such as int, str or bool.  Different form types
+    may store different settings (with different names).  The manager internally
+    keeps a dictionary of settings for each form and the methods `get` and `set`
+    may be used to retrieve/write individual options.
 
     """
     _TABLE = 'e_pytis_form_settings'
@@ -166,10 +173,11 @@ class FormSettingsManager(UserSetttingsManager):
         """Save value of user specific form configuration option.
 
         Arguments:
-          spec_name -- specification name as a string.
-          form_name -- string uniquely identifying the form type.
-          option -- string option name.
-          value -- option value as an instance of any python primitive data type.
+          spec_name (str): Specification name.
+          form_name (str): String uniquely identifying the form type.
+          option (str): Option name.
+          value: Option value as an instance of any Python primitive data type.
+          transaction: Existing DB transaction or None.
 
         """
         settings = self._settings(spec_name, form_name, transaction=transaction)
@@ -181,10 +189,15 @@ class FormSettingsManager(UserSetttingsManager):
         """Return previously saved user specific form configuration option.
 
         Arguments:
-          spec_name -- specification name as a string.
-          form_name -- string uniquely identifying the form type.
-          option -- string option name.
-          default -- default valuee to be used if the option was not previously set for given form.
+          spec_name (str): Specification name.
+          form_name (str): String uniquely identifying the form type.
+          option (str): Option name.
+          default: Default value to use if the option was not previously set for
+            given form.
+          transaction: Existing DB transaction or None.
+
+        Returns:
+          The previously saved option value or `default`.
 
         """
         settings = self._settings(spec_name, form_name, transaction=transaction)
@@ -194,9 +207,9 @@ class FormSettingsManager(UserSetttingsManager):
 class FormProfileParamsManager(UserSetttingsManager):
     """Accessor of database storage of form profile parameters.
 
-    This manager is only used internally by FormProfileManager to retrieve form
-    specific profile parameters which are then combined with form independent
-    profile parameters (filter).
+    This manager is only used internally by `FormProfileManager` to retrieve
+    form specific profile parameters which are then combined with form
+    independent profile parameters (filter).
 
     """
     _TABLE = 'e_pytis_form_profile_params'
@@ -234,9 +247,10 @@ class FormProfileParamsManager(UserSetttingsManager):
         """Remove the previously saved form parameters.
 
         Arguments:
-          spec_name, form_name -- unique string identification of a form to which the
-            profile belongs (see 'FormProfileManager' class docuemntation).
-          profile_id -- string identifier of the profile to drop.
+          spec_name (str): Specification name identifying the form.
+          form_name (str): Form name identifying the form.
+          profile_id (str): Identifier of the profile to drop.
+          transaction: Existing DB transaction or None.
 
         """
         self._drop(spec_name=spec_name, form_name=form_name, profile_id=profile_id,
@@ -246,19 +260,18 @@ class FormProfileParamsManager(UserSetttingsManager):
 class FormProfileManager(UserSetttingsManager):
     """Accessor of database storage of form profiles.
 
-    This manager is a little more complicated then the others as it must
+    This manager is a little more complicated than the others as it must
     understand the logic of the data it is saving/restoring.  The
-    'load_profiles()' method must read profile data from two different sources,
-    validate them against the current specification combine them into resulting
-    'pytis.presentation.Profile' instances
+    `load_profiles` method must read profile data from two different sources,
+    validate them against the current specification and combine them into
+    resulting `pytis.presentation.Profile` instances.
 
     The key aspect of this class is serialization of pytis filters
-    ('pytis.data.Operator' instances).  The Operator instances ale converted
-    (packed/unpacked) to/from our own structure of basic Python/JSON data
-    types.
+    (`pytis.data.Operator` instances).  The Operator instances are converted
+    (packed/unpacked) to/from our own structure of basic Python/JSON data types.
 
-    Forms are referenced by unique string identifiers (see the 'spec_name' and
-    'form_name' arguements of the manager's methods).
+    Forms are referenced by unique string identifiers (see the `spec_name` and
+    `form_name` arguments of the manager's methods).
 
     """
     _TABLE = 'e_pytis_form_profile_base'
@@ -441,11 +454,10 @@ class FormProfileManager(UserSetttingsManager):
         """Save user specific configuration of a form.
 
         Arguments:
-
-          spec_name, form_name -- unique string identification of a form to which the
-            profile belongs (see 'FormProfileManager' class docuemntation).
-          profile -- form profile as a 'pytis.presentation.Profile' instance.
-          transaction -- Existing DB transaction if the operation should be
+          spec_name (str): Specification name identifying the form.
+          form_name (str): Form name identifying the form.
+          profile: Form profile as a `pytis.presentation.Profile` instance.
+          transaction: Existing DB transaction if the operation should be
             performed as a part of it.  If None, a local transaction will be
             created if necessary.
 
@@ -473,22 +485,25 @@ class FormProfileManager(UserSetttingsManager):
         """Return list of form profiles including previously saved user customizations.
 
         Arguments:
-          spec_name -- string specification name
-          form_name -- unique string form identification
-          view_spec -- ViewSpec instance of given specification to be used for
-            profile validation
-          data_object -- data object of given specification to be used for
-            profile validation
-          default_profile -- 'pytis.presentation.Profile' instance representing
-            form's default profile
-          rename_columns -- dictionary to use for renaming columns in all
+          spec_name (str): Specification name.
+          form_name (str): Unique string form identification.
+          view_spec: `pytis.presentation.ViewSpec` instance of given
+            specification to be used for profile validation.
+          data_object: Data object of given specification to be used for profile
+            validation.
+          default_profile: `pytis.presentation.Profile` instance representing
+            the form's default profile.
+          transaction: Existing DB transaction or None.
+          rename_columns (dict): Dictionary to use for renaming columns in all
             loaded profiles.  Keys are the column identifiers to rename and
             values are the new column identifiers.
-          delete_columns -- sequence of column ids to drop from all loaded profiles
+          delete_columns: Sequence of column ids to drop from all loaded
+            profiles.
 
-        Returns a list of 'pytis.presentation.Profile' instances including
-        predefined system profiles (possibly with their user customizations) as
-        well as user defined profiles.
+        Returns:
+          A list of `pytis.presentation.Profile` instances including predefined
+          system profiles (possibly with their user customizations) as well as
+          user defined profiles.
 
         """
         def load_params(profile_id):
@@ -528,16 +543,17 @@ class FormProfileManager(UserSetttingsManager):
         return profiles
 
     def export_profiles(self, spec_name, form_name, profiles):
-        """Return a serialized represention of given profiles as a JSON string.
+        """Return a serialized representation of given profiles as a JSON string.
 
         Arguments:
+          spec_name (str): Specification name identifying the form.
+          form_name (str): Form name identifying the form.
+          profiles: Sequence of form profiles as `pytis.presentation.Profile`
+            instances.
 
-          spec_name, form_name -- unique string identification of a form to which the
-            profile belongs (see 'FormProfileManager' class docuemntation).
-          profiles -- sequence of form profiles as 'pytis.presentation.Profile' instances.
-
-        The serialized represention can be deserialized using
-        'import_profiles'.
+        Returns:
+          A JSON string that can be deserialized using
+          `import_profiles`.
 
         """
         return json.dumps(dict(
@@ -552,22 +568,23 @@ class FormProfileManager(UserSetttingsManager):
         ))
 
     def import_profiles(self, spec_name, form_name, view_spec, data_object, json_string):
-        """Validate given JSON string and deserialize the contained profiles into Profile instances.
+        """Validate and deserialize profiles from a JSON string.
 
         Arguments:
+          spec_name (str): Specification name identifying the form.
+          form_name (str): Form name identifying the form.
+          view_spec: `pytis.presentation.ViewSpec` instance of given
+            specification to be used for profile validation.
+          data_object: Data object of given specification to be used for profile
+            validation.
+          json_string (str): Serialized profiles as returned by
+            `export_profiles`.
 
-          spec_name, form_name -- unique string identification of a form to which the
-            profile belongs (see 'FormProfileManager' class docuemntation).
-          view_spec -- ViewSpec instance of given specification to be used for
-            profile validation
-          data_object -- data object of given specification to be used for
-            profile validation
-          json string -- serialized profiles as returned by 'export_profiles'.
-
-        Returns a pair of (profiles, error), where 'error' is a string
-        describing the problem if 'json_string' can not be deserialized or None
-        if deserialization succeeds and 'profiles' is a sequence of
-        'pytis.presentation.Profile' instances if 'error' is None.
+        Returns:
+          A pair (error, profiles) where error is a string describing the
+          problem if `json_string` cannot be deserialized or None if
+          deserialization succeeds, and profiles is a sequence of
+          `pytis.presentation.Profile` instances when error is None.
 
         """
         try:
@@ -606,18 +623,21 @@ class FormProfileManager(UserSetttingsManager):
         """Return a previously saved user defined filter.
 
         Arguments:
-          spec_name -- string form specification name
-          data_object -- data object of given specification to be used for filter validation
-          profile_id -- string identifier of the profile
-          transaction -- Existing DB transaction if the operation should be
+          spec_name (str): Form specification name.
+          data_object: Data object of given specification to be used for filter
+            validation.
+          profile_id (str): Identifier of the profile.
+          transaction: Existing DB transaction if the operation should be
             performed as a part of it.  If None, a local transaction will be
             created if necessary.
 
-        Returns a tuple (filter, title), where filter is a
-        'pytis.data.Operator' instance or None when given profile exists, but
-        has no filter and title is the user defined title of the profile.
+        Returns:
+          A tuple (filter, title), where filter is a `pytis.data.Operator`
+          instance or None when the profile exists but has no filter, and title
+          is the user defined title of the profile.
 
-        Raises exception if no such profile is found or is invalid.
+        Raises:
+          `Exception`: If no such profile is found or it is invalid.
 
         """
         row = self._row(transaction=transaction, spec_name=spec_name, profile_id=profile_id)
@@ -633,9 +653,10 @@ class FormProfileManager(UserSetttingsManager):
         """Remove the previously saved form configuration.
 
         Arguments:
-          spec_name -- string specification name
-          form_name -- unique string form identification
-          profile_id -- string identifier of the profile to drop
+          spec_name (str): Specification name.
+          form_name (str): Unique string form identification.
+          profile_id (str): Identifier of the profile to drop.
+          transaction: Existing DB transaction or None.
 
         """
         if profile_id.startswith(self.USER_PROFILE_PREFIX):
@@ -677,11 +698,11 @@ class AggregatedViewsManager(UserSetttingsManager):
 
     Aggregation form setups are the properties defined by the user in the
     aggregation form setup dialog and represented by a
-    'pytis.presentation.AggregatedView' instance.  Users may create several
-    named setups for each specification and these setups will appear as
-    separate items in the aggregation menu in a form toolbar.  Aggregated views
-    are related to a specification, so all forms above given 'spec_name' share
-    the list of available aggregation setups.
+    `pytis.presentation.AggregatedView` instance.  Users may create several
+    named setups for each specification and these setups will appear as separate
+    items in the aggregation menu in a form toolbar.  Aggregated views are
+    related to a specification, so all forms above given `spec_name` share the
+    list of available aggregation setups.
 
     """
     _TABLE = 'e_pytis_aggregated_views'
@@ -691,9 +712,9 @@ class AggregatedViewsManager(UserSetttingsManager):
         """Save aggregation form setup.
 
         Arguments:
-
-          spec_name -- specification name as a string.
-          aggregated_view -- 'pytis.presentation.AggregatedView' instance.
+          spec_name (str): Specification name.
+          aggregated_view: `pytis.presentation.AggregatedView` instance.
+          transaction: Existing DB transaction or None.
 
         """
         assert isinstance(aggregated_view, pytis.presentation.AggregatedView)
@@ -707,11 +728,13 @@ class AggregatedViewsManager(UserSetttingsManager):
         """Return previously saved aggregated view setup.
 
         Arguments:
-          spec_name -- specification name as a string.
-          aggregated_view_id -- string identifier of the aggregated view to load.
+          spec_name (str): Specification name.
+          aggregated_view_id (str): Identifier of the aggregated view to load.
+          transaction: Existing DB transaction or None.
 
-        Returns a 'pytis.presentation.AggregatedView' instance.  If no such aggregated
-        view is found, None is returned.
+        Returns:
+          A `pytis.presentation.AggregatedView` instance, or None if no such
+          aggregated view is found.
 
         """
         row = self._row(spec_name=spec_name, aggregated_view_id=aggregated_view_id,
@@ -732,8 +755,9 @@ class AggregatedViewsManager(UserSetttingsManager):
         """Remove the previously saved aggregated view setup.
 
         Arguments:
-          spec_name -- specification name as a string.
-          profile_id -- string identifier of the profile to drop.
+          spec_name (str): Specification name.
+          aggregated_view_id (str): Identifier of the aggregated view to drop.
+          transaction: Existing DB transaction or None.
 
         """
         row = self._row(spec_name=spec_name, aggregated_view_id=aggregated_view_id)
@@ -744,10 +768,12 @@ class AggregatedViewsManager(UserSetttingsManager):
         """Return a sequence of all previously saved setups for given specification.
 
         Arguments:
-          spec_name -- specification name as a string.
+          spec_name (str): Specification name.
+          transaction: Existing DB transaction or None.
 
-        Returns a sequence of strings -- all distinct aggregated view
-        identifiers previously saved using 'save()' for given 'spec_name'.
+        Returns:
+          A sequence of strings -- all distinct aggregated view identifiers
+          previously saved using : meth:`save` for given `spec_name`.
 
         """
         return tuple(row['aggregated_view_id'].value()

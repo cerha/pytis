@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2024 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2026 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2009-2013 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -24,7 +24,7 @@ import pytis.data
 class PrettyType(pytis.data.Type):
     """Type providing pretty exports.
 
-    This is basically a standard type enhanced with 'pretty_export' method
+    This is basically a standard type enhanced with `pretty_export` method
     providing visually pleasant (whatever it means) formatted values.
 
     Pretty type classes are intended to be combined with data types by multiple
@@ -33,16 +33,15 @@ class PrettyType(pytis.data.Type):
     """
 
     def pretty_export(self, value, row, **kwargs):
-        """Return pretty 'value' as a string or unicode.
+        """Return pretty value as a string or unicode.
+
+        In this class the method is the same as `export`.
 
         Arguments:
-
-          value -- 'Value' instance to export
-          row -- 'PresentedRow' instance containing the whole row where the
-            value is present
-          kwargs -- arguments to be relayed to 'export' method
-
-        In this class the method is the same as 'export'.
+          value: Value instance to export.
+          row (`PresentedRow`): Instance containing the whole row where the
+            value is present.
+          **kwargs: Arguments to be relayed to `export`.
 
         """
         return self.export(self, value, **kwargs)
@@ -52,15 +51,15 @@ class PrettyTreeOrder(PrettyType):
     """Type providing indented pretty values based on a tree order column.
 
     The type inserts indentation in front of the values based on another column
-    of the 'TreeOrder' type providing indirect indentation information.  This
-    is useful for presenting hierarchical records such as menus.
+    of the `pytis.data.TreeOrder` type providing indirect indentation
+    information.  This is useful for presenting hierarchical records such as
+    menus.
 
-    The other column of 'TreeOrder' type must have unique non-NULL values
-    (typically it should be a primary key).
+    The other column of `pytis.data.TreeOrder` type must have unique non-NULL
+    values (typically it should be a primary key).
 
-    Extra constructor arguments:
-
-      tree_column_id -- id of the column defining tree ordering; string
+    Attributes:
+      tree_column_id (str): Id of the column defining tree ordering.
 
     """
 
@@ -91,23 +90,29 @@ class PrettyTreeOrder(PrettyType):
 
 
 class PrettyFoldable(PrettyTreeOrder):
-    """Similar as 'PrettyTreeOrder' but with an additional folding indicator.
+    """Similar to `PrettyTreeOrder` but with an additional folding indicator.
 
-    Extra constructor arguments:
+    Attributes:
+      FOLDED_MARK (str): Folding indicator for a foldable node in a folded
+        state.
+      UNFOLDED_MARK (str): Folding indicator for a foldable node in an unfolded
+        state.
+      NON_FOLDABLE_MARK (str): Folding indicator for an unfoldable node.
 
-      tree_column_id -- id of the column defining tree ordering; string
-      subcount_column_id -- id of the column providing number of subnodes
-        of the given tree ordering column; string.  This is used to display
-        proper folding indicators.  When 'None', no such column is used.
-      kwargs -- arguments to be forwarded to the superclass constructor
+    Arguments:
+      tree_column_id (str): Id of the column defining tree ordering.
+      subcount_column_id (str): Id of the column providing number of subnodes of
+        the given tree ordering column.  This is used to display proper folding
+        indicators.  When None, no such column is used.
+      **kwargs: Arguments to be forwarded to the superclass constructor.
 
     """
     FOLDED_MARK = u'⊞'
-    "Folding indicator for a foldable node in a folded state."
+    """Folding indicator for a foldable node in a folded state."""
     UNFOLDED_MARK = u'⊟'
-    "Folding indicator for a foldable node in a unfolded state."
+    """Folding indicator for a foldable node in a unfolded state."""
     NON_FOLDABLE_MARK = u'⊙'
-    "Folding indicator for an unfoldable node."
+    """Folding indicator for an unfoldable node."""
 
     def _init(self, tree_column_id, subcount_column_id=None, **kwargs):
         super(PrettyFoldable, self)._init(tree_column_id, **kwargs)

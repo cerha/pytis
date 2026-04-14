@@ -18,22 +18,22 @@
 
 """This module defines the Client RPyC service API.
 
-The service providing this API runs on the client which runs pytis application
-remotely through X2Go using the Pytis2Go client.  The service allows the Pytis
-application running on the server to perform certain tasks on the client
-machine, such as open local file through a GUI file dialog and pass that file
-to the server.  It simply attempts to transparently provide the functionality
-which is not directly available due to the fact that the application is running
-on a remote server.
+The service providing this API runs on the client which runs pytis
+application remotely through X2Go using the Pytis2Go client.  The service
+allows the Pytis application running on the server to perform certain tasks
+on the client machine, such as open local file through a GUI file dialog and
+pass that file to the server.  It simply attempts to transparently provide
+the functionality which is not directly available due to the fact that the
+application is running on a remote server.
 
 This module is actually not part of the Pytis Python module.  It is not
 imported (executed) by Pytis on the server.  It is only read as a file and
-pushed to the Pytis2Go client which executes this code.  It comes with Pytis,
-because it defines the functionality consumed by Pytis.  The remote functions
-defined in remote.py rely on the API defined here so it belongs here to keep
-the API in sync with the consumer expectations.  This also means that the
-dependencies of this module don't need to be installed on the application
-server, but on the client machine running Pytis2Go.
+pushed to the Pytis2Go client which executes this code.  It comes with
+Pytis, because it defines the functionality consumed by Pytis.  The remote
+functions defined in remote.py rely on the API defined here so it belongs
+here to keep the API in sync with the consumer expectations.  This also
+means that the dependencies of this module don't need to be installed on the
+application server, but on the client machine running Pytis2Go.
 
 """
 from __future__ import print_function
@@ -77,21 +77,20 @@ class ClientUIBackend(object):
     operations, such as running a file selection dialog with access to the
     client's file system.
 
-    Derived classes (the actual backends) implement the API for a particular
-    GUI toolkit/library.  Backends should always override the private
-    counterpart of given public API method (the same name, just beginning with
-    an underscore).
+    Derived classes (the actual backends) implement the API for a particular GUI
+    toolkit/library.  Backends should always override the private counterpart of
+    given public API method (the same name, just beginning with an underscore).
 
-    Instantiating 'ClientUIBackend' performs selection of available backends
-    and actually returns an instance of a particular backend (subclass), rather
-    than 'ClientUIBackend' itself.
+    Instantiating `ClientUIBackend` performs selection of available backends and
+    actually returns an instance of a particular backend (subclass), rather than
+    `ClientUIBackend` itself.
 
     """
 
     _DEPENDS = ()
     """Tuple of all python module names required by the backend.
 
-    Creation of module instance will fail with 'BackendNotAvailable' if one of
+    Creation of module instance will fail with `BackendNotAvailable` if one of
     the named modules is not available.
 
     """
@@ -158,13 +157,12 @@ class ClientUIBackend(object):
     def init(self):
         """Perform backend UI initializations if needed.
 
-        Some backends may need to initialize the UI, but this should not be
-        done in the constructor, so the right place for such initializations is
-        here.
+        Some backends may need to initialize the UI, but this should not be done
+        in the constructor, so the right place for such initializations is here.
 
         The real reason for having this in a separate method is the need to
         redirect UI actions into the main thread on Mac OS as described in
-        'ClientUIBackendWrapper' docstring in service.py of Pytis2Go.
+        `ClientUIBackendWrapper` docstring in service.py of Pytis2Go.
 
         """
         pass
@@ -177,10 +175,9 @@ class ClientUIBackend(object):
         """Prompt the user to enter text and return the text.
 
         Arguments:
-
-          title -- text entry dialog title
-          label -- text field label; If None, title is used
-          password -- if True, text entered should be hidden by stars
+          title (str): Text entry dialog title.
+          label (str): Text field label; If None, title is used.
+          password (bool): If True, text entered should be hidden by stars.
 
         """
         assert isinstance(title, basestring), title
@@ -199,19 +196,18 @@ class ClientUIBackend(object):
         """Prompt the user to select from a given list of options.
 
         Arguments:
-
-          title -- text entry dialog title
-          label -- selection field label
-          columns -- sequence of column labels
-          data -- sequence of tuples containing the values to be displayed in
-            the selection.  The items of each tuple are displayed as one table
-            row.  Thus the length of each tuple must match the number of
-            columns.
-          return_column -- number of column (beginning from one).  The value
+          title (str): Text entry dialog title.
+          label (str): Selection field label.
+          columns: Sequence of column labels.
+          data: Sequence of tuples containing the values to be displayed in the
+            selection.  The items of each tuple are displayed as one table row.
+            Thus the length of each tuple must match the number of columns.
+          return_column (int): Number of column (beginning from one). The value
             of this column in the selected row will be returned.
 
-        Returns the value of 'return_column' in the selected row or None if
-        nothing selected.
+        Returns:
+          The value of return_column in the selected row or None if nothing
+          selected.
 
         """
         assert isinstance(title, basestring), title
@@ -230,29 +226,28 @@ class ClientUIBackend(object):
         """Return the file name(s) of user selected file(s).
 
         The file is selected by the user using a GUI dialog.  If the user
-        cancels the dialog, 'None' is returned.
+        cancels the dialog, `None` is returned.
 
         Arguments:
-
-          title -- dialog title
-          directory -- initial directory for the dialog
-          filename -- default filename or None
-          patterns -- a sequence of pairs (LABEL, PATTERN) determining the
+          title (str): Dialog title.
+          directory (str): Initial directory for the dialog.
+          filename (str): Default filename or `None`.
+          patterns: A sequence of pairs (LABEL, PATTERN) determining the
             filename filters available within the dialog (for backends which
             support it).  Label is a user visible description of the filter,
-            such as "PDF document".  PATTERN is a filename pattern as a
-            basestring, such as '*.pdf', or a sequence of such patterns, such
-            as ('*.jpg', '*.jpeg', '*.png', '*.gif') if multiple file types are
-            to match a single filter.  An additional entry "All files" with
-            pattern '*' is always added automatically to the end.  The first
-            item is the initially selected filter in the dialog.
-          pattern -- the required file name pattern as a basestring, sequence
-            of basestrings or 'None'.  If 'patterns' don't already contain an
-            entry for given pattern(s), such item is added as the first (and
-            thus the initially selected) entry with label "Files of the
-            required type".
-          save -- True iff the file is to be open for writing
-          multi -- iff true, allow selecting multiple files (not possible when save is True)
+            such as "PDF document".  PATTERN is a filename pattern as a string,
+            such as '*.pdf', or a sequence of such patterns, such as ('*.jpg',
+            '*.jpeg', '*.png', '*.gif') if multiple file types are to match a
+            single filter.  An additional entry "All files" with pattern '*' is
+            always added automatically to the end.  The first item is the
+            initially selected filter in the dialog.
+          pattern: The required file name pattern as a string, sequence of
+            strings or None.  If patterns don't already contain an entry for
+            given pattern(s), such item is added as the first (and thus the
+            initially selected) entry with label "Files of the required type".
+          save (bool): True iff the file is to be open for writing.
+          multi (bool): If true, allow selecting multiple files (not possible
+            when save is True).
 
         """
         assert title is None or isinstance(title, basestring), title
@@ -294,11 +289,11 @@ class ClientUIBackend(object):
         """Return the name of user selected directory.
 
         The directory is selected by the user using a GUI dialog.  If the user
-        cancels the dialog, 'None' is returned.
+        cancels the dialog, `None` is returned.
 
         Arguments:
-
-          directory -- initial directory for the dialog
+          title (str): Dialog title.
+          directory (str): Initial directory for the dialog.
 
         """
         assert isinstance(title, basestring), title
@@ -319,8 +314,7 @@ class ClientUIBackend(object):
         """Store given text in system clipboard on user's machine.
 
         Arguments:
-
-          text -- the text to be stored in the clipboard.
+          text (str): The text to be stored in the clipboard.
 
         """
         assert text is None or isinstance(text, basestring), text
@@ -560,7 +554,7 @@ class Win32UIBackend(ClientUIBackend):
 
 
 class ClipboardUIBackend(ClientUIBackend):
-    """Implements clipboard operations using the Python module 'pyperclip'."""
+    """Implements clipboard operations using the Python module pyperclip."""
 
     _DEPENDS = ('pyperclip',)
 
@@ -858,30 +852,30 @@ class PyZenityUIBackend(ClipboardUIBackend):
 
 
 class ExposedFileWrapper(object):
-    """Exposed 'file' like object.
+    """Exposed file like object.
 
-    This class makes it possible to open files across the remote connection.
-
-    The file resides on the client machine, but the server may access it.
+    This class makes it possible to open files across the remote connection. The
+    file resides on the client machine, but the server may access it.
 
     """
     def __init__(self, filename, mode='r', handle=None, encoding=None,
                  encrypt=None, decrypt=False):
-        """Arguments:
+        """Initialize the instance.
 
-        filename -- name of the underlying file on client's filesystem.
-        handle -- file descriptor; If None, the file is opened by filename.
-        mode -- mode for opening the file.
-        encoding -- file content output encoding, string or None.  Not
-          applicable in binary modes.
-        encrypt -- function performing data encryption.  The function must
-          accept a file like object as argument and return its encrypted
-          contents as a string.  If 'None' then don't encrypt the file;
-          applicable only for input modes
-        decrypt -- function performing data decryption.  The function must
-          accept a string argument and return its decrypted content as a
-          string.  If 'None' then don't decrypt the file.  Applicable only for
-          output modes
+        Arguments:
+          filename (str): Name of the underlying file on client's filesystem.
+          mode (str): Mode for opening the file.
+          handle: File descriptor; If None, the file is opened by filename.
+          encoding (str): File content output encoding or None.  Not applicable
+            in binary modes.
+          encrypt (callable): Function performing data encryption.  The function
+            must accept a file like object as argument and return its encrypted
+            contents as a string.  If None then don't encrypt the file;
+            applicable only for input modes.
+          decrypt (callable): Function performing data decryption.  The function
+            must accept a string argument and return its decrypted content as a
+            string.  If None then don't decrypt the file.  Applicable only for
+            output modes.
 
         """
         self._filename = filename
@@ -1075,7 +1069,7 @@ class PytisClientAPIService(rpyc.Service):
     def exposed_get_clipboard_text(self):
         """Return current clipboard text, as unicode.
 
-        If the text can't be retrieved, return 'None'.
+        If the text can't be retrieved, return `None`.
 
         """
         return self._client.get_clipboard_text()
@@ -1084,8 +1078,7 @@ class PytisClientAPIService(rpyc.Service):
         """Set clipboard content to text.
 
         Arguments:
-
-          text -- text to store into the clipboard; unicode
+          text (str): Text to store into the clipboard.
 
         """
         assert isinstance(text, str), text
@@ -1095,9 +1088,8 @@ class PytisClientAPIService(rpyc.Service):
         """Start associated application on path.
 
         Arguments:
-
-          path -- path to the file to be started with its associated
-            application; basestring.
+          path (str): Path to the file to be started with its associated
+            application.
 
         """
         assert isinstance(path, basestring), path
@@ -1132,40 +1124,36 @@ class PytisClientAPIService(rpyc.Service):
             subprocess.Popen(['xdg-open', path])
 
     def exposed_open_file(self, filename, mode, encoding=None, encrypt=None, decrypt=False):
-        """Return a read-only 'file' like object of the given file.
+        """Return a read-only file like object of the given file.
 
         Arguments:
-
-          filename -- name of the file to open in the remote file system as a basestring
-          mode -- mode for opening the file
-          encoding -- file content output encoding, string or None
-          encrypt -- list of encryption keys to use to encrypt the file; if the
-            list is empty then let the user select the keys; if 'None' then
-            don't encrypt the file; applicable only for input modes ('r')
-          decrypt -- if true then decrypt the file contents; applicable only
-            for output modes ('w')
+          filename (str): Name of the file to open in the remote file system.
+          mode (str): Mode for opening the file.
+          encoding (str): File content output encoding or None.
+          encrypt: List of encryption keys to use to encrypt the file; if the
+            list is empty then let the user select the keys; if None then don't
+            encrypt the file; applicable only for input modes ('r').
+          decrypt (bool): If true then decrypt the file contents; applicable
+            only for output modes ('w').
 
         """
         return self._open_file(filename, mode, encoding, encrypt=encrypt, decrypt=decrypt)
 
     def exposed_open_selected_file(self, directory=None, patterns=(), pattern=None, encrypt=None):
-        """Return a read-only 'file' like object of a user selected file.
+        """Return a read-only file like object of a user selected file.
 
         The file is selected by the user using a GUI dialog.  If the user
-        cancels the dialog, 'None' is returned.
+        cancels the dialog, `None` is returned.
 
         Arguments:
-
-          directory -- initial directory of the GUI dialog
-          mode, encoding -- currently unsupported. Once we don't need to keep
-            compatibility with old Pytis2go clients, the arguments can be added
-            here.
-          patterns -- a sequence of pairs (label, pattern) for file filtering
-            as described in 'pytis.remote.ClientUIBackend.select_file()'.
-          pattern -- a string defining the required file name pattern, or 'None'
-          encrypt -- list of encryption keys to use to encrypt the file; if the
-            list is empty then let the user select the keys; if 'None' then
-            don't encrypt the file
+          directory (str): Initial directory of the GUI dialog.
+          patterns: A sequence of pairs (label, pattern) for file filtering as
+            described in `ClientUIBackend.select_file`.
+          pattern (str): A string defining the required file name pattern, or
+            None.
+          encrypt: List of encryption keys to use to encrypt the file; if the
+            list is empty then let the user select the keys; if None then don't
+            encrypt the file.
 
         """
         assert isinstance(patterns, (tuple, list)), patterns
@@ -1178,21 +1166,21 @@ class PytisClientAPIService(rpyc.Service):
 
     def exposed_make_selected_file(self, directory=None, filename=None, patterns=(), pattern=None,
                                    encoding=None, mode='wb', decrypt=False):
-        """Return a write-only 'file' like object of a user selected file.
+        """Return a write-only file like object of a user selected file.
 
         The file is selected by the user using a GUI dialog.  If the user
-        cancels the dialog, 'None' is returned.
+        cancels the dialog, `None` is returned.
 
         Arguments:
-
-          directory -- initial directory of the GUI dialog
-          filename -- default filename or None
-          patterns -- a sequence of pairs (label, pattern) for file filtering
-            as described in 'pytis.remote.ClientUIBackend.select_file()'.
-          pattern -- a string defining the required file name pattern, or 'None'
-          encoding -- output encoding, string or None
-          mode -- default mode for opening the file
-          decrypt -- if true then decrypt the file contents
+          directory (str): Initial directory of the GUI dialog.
+          filename (str): Default filename or `None`.
+          patterns: A sequence of pairs (label, pattern) for file filtering as
+            described in `ClientUIBackend.select_file`.
+          pattern (str): A string defining the required file name pattern, or
+            None.
+          encoding (str): Output encoding or None.
+          mode (str): Default mode for opening the file.
+          decrypt (bool): If true then decrypt the file contents.
 
         """
         assert isinstance(patterns, (tuple, list)), patterns
@@ -1207,15 +1195,15 @@ class PytisClientAPIService(rpyc.Service):
     def exposed_make_temporary_file(self, suffix='', encoding=None, mode='wb', decrypt=False):
         """Create a temporary file and return its instance.
 
-        The return value is a 'tempfile.NamedTemporaryFile' instance.
+        The return value is an `ExposedFileWrapper` instance.
 
         Arguments:
-
-          suffix -- suffix to use in the temporary file name; if a dot should
-            be part of the suffix then it must be explicitly included in it
-          encoding -- output encoding, string or None
-          mode -- default mode for opening the file
-          decrypt -- if true then decrypt the file contents
+          suffix (str): Suffix to use in the temporary file name; if a dot
+            should be part of the suffix then it must be explicitly included in
+            it.
+          encoding (str): Output encoding or None.
+          mode (str): Default mode for opening the file.
+          decrypt (bool): If true then decrypt the file contents.
 
         """
         handle, filename = tempfile.mkstemp(prefix='pytistmp', suffix=suffix)
@@ -1242,17 +1230,17 @@ class PytisClientAPIService(rpyc.Service):
         cancels the dialog, empty list is returned.
 
         Arguments:
-
-          filename -- default filename or None
-          directory -- initial directory of the GUI dialog
-          title -- dialog title.  The default is "Select file" or "Select files"
-            (if 'multi') or "Save file" if 'save' is True.
-          patterns -- a sequence of pairs (label, pattern) for file filtering
-            as described in 'pytis.remote.ClientUIBackend.select_file()'.
-          pattern -- a string defining the required file name pattern, or 'None'
-          save -- iff True, the file is to be open for saving (overwrite warning
-            is displayed when selecting an existing file).
-          multi -- iff true, allow selecting multiple files
+          filename (str): Default filename or `None`.
+          directory (str): Initial directory of the GUI dialog.
+          title (str): Dialog title.  The default is "Select file" or "Select
+            files" (if multi) or "Save file" if save is True.
+          patterns: A sequence of pairs (label, pattern) for file filtering as
+            described in `ClientUIBackend.select_file`.
+          pattern (str): A string defining the required file name pattern, or
+            None.
+          save (bool): If True, the file is to be open for saving (overwrite
+            warning is displayed when selecting an existing file).
+          multi (bool): If true, allow selecting multiple files.
 
         """
         assert filename is None or isinstance(filename, basestring), filename

@@ -19,46 +19,45 @@
 """Specifications of database objects.
 
 Database objects are specified as classes.  The classes inherit superclasses
-specific for particular kinds of database objects.  The classes define database
-objects by specifying their properties in class attributes or methods.  The
-following main specification classes are available: 'SQLSchema', 'SQLSequence',
-'SQLTable', 'SQLView', 'SQLType', 'SQLFunction', 'SQLPlFunction',
-'SQLPyFunction', 'SQLTrigger'.
+specific for particular kinds of database objects.  The classes define
+database objects by specifying their properties in class attributes or
+methods.  The following main specification classes are available:
+`SQLSchema`, `SQLSequence`, `SQLTable`, `SQLView`, `SQLType`, `SQLFunction`,
+`SQLPlFunction`, `SQLPyFunction`, `SQLTrigger`.
 
-Database specifications are based on SQLAlchemy Python library.  In many places
-you can (and should) use SQLAlchemy constructs.
+Database specifications are based on SQLAlchemy Python library.  In many
+places you can (and should) use SQLAlchemy constructs.
 
 It is important to distinguish between specification classes and their
 instances.  All database objects are specified as classes.  This makes
-specification inheritence easy.  Also a single specification class may define
-multiple database objects, typically a table specification may define the same
-table to be created in multiple schemas.  Particular database objects (e.g. a
-single table in a given schema) are represented by specification instances.
-Those instances are automatically created when a specification class is
-defined.
+specification inheritance easy.  Also a single specification class may
+define multiple database objects, typically a table specification may define
+the same table to be created in multiple schemas.  Particular database
+objects (e.g. a single table in a given schema) are represented by
+specification instances. Those instances are automatically created when a
+specification class is defined.
 
-When defining a specification you can refer to other specifications.  Usually
-you use specification classes in such places.  But sometimes it is necessary to
-use specification instances, in particular, SQLAlchemy can work only with
-specification instances.  You may not create specification instances directly.
-But they are available through instances of auxiliary classes 'TableLookup',
-'ColumnLookup' and 'ReferenceLookup' (available under short names 't', 'c' and
-'r').
+When defining a specification you can refer to other specifications.
+Usually you use specification classes in such places.  But sometimes it is
+necessary to use specification instances, in particular, SQLAlchemy can work
+only with specification instances.  You may not create specification
+instances directly. But they are available through instances of auxiliary
+classes `TableLookup`, `ColumnLookup` and `ReferenceLookup` (available under
+short names `t`, `c` and `r`).
 
 Specifications are defined in a Python source file.  Nothing else than
-specification classes and corresponding utilities should be put into the file.
-Names of specification classes may not start with 'SQL' and '_SQL' prefixes,
-those prefixes are reserved for base classes.  Specifications whose names start
-with underscore or 'Base_' prefix don't emit database objects, they are
-typically used as common base classes to be used by real specifications.  You
-can put specifications to several files in a Pytho module and then include them
-all in the corresponding '__init__.py' file.
+specification classes and corresponding utilities should be put into the
+file. Names of specification classes may not start with `SQL` and `_SQL`
+prefixes, those prefixes are reserved for base classes.  Specifications
+whose names start with underscore or `Base_` prefix don't emit database
+objects, they are typically used as common base classes to be used by real
+specifications.  You can put specifications to several files in a Python
+module and then include them all in the corresponding `__init__.py` file.
 
-SQL code can be generated from the specifications using 'gsql_module()'
-function.
+SQL code can be generated from the specifications using `gsql_module`.
 
-An example specification is available in 'pytis/doc/examples/dbdefs/', you can
-see all the most important constructs there.
+An example specification is available in `pytis/doc/examples/dbdefs/`, you
+can see all the most important constructs there.
 
 """
 
@@ -618,9 +617,9 @@ def compile_name(element, compiler, **kwargs):
 
 
 class PGNAME(sqlalchemy.String):
-    """Variant of NAME represented by PostgreSQL internal type 'NAME'.
+    """Variant of NAME represented by PostgreSQL internal type `NAME`.
 
-    See 'pytis.data.PgName' for explanation of NAME vs. PGNAME.
+    See `pytis.data.PgName` for explanation of NAME vs. PGNAME.
 
     """
     pass
@@ -756,81 +755,78 @@ class Column(pytis.data.ColumnSpec):
 
     It can be used anywhere new column specification is needed, typically in
     tables or function arguments.  In many other places, typically in views, it
-    is possible to use already defined columns and using already defined
-    columns is preferred.
+    is possible to use already defined columns and using already defined columns
+    is preferred.
 
-    Unlike standalone database objects such as tables, columns are not
-    specified by specification classes but by instances of 'Column' class.
-    Column specifications are also not derived from 'sqlalchemy.Column' class,
-    they are transformed to 'sqlalchemy.Column' instance inside gensqlalchemy.
-    When you later retrieve columns from other objects such as tables or views,
-    they are already presented as instances of 'sqlalchemy.Column'.
+    Unlike standalone database objects such as tables, columns are not specified
+    by specification classes but by instances of `Column`. Column specifications
+    are also not derived from `sqlalchemy.Column`, they are transformed to a
+    `sqlalchemy.Column` instance inside gensqlalchemy. When you later retrieve
+    columns from other objects such as tables or views, they are already
+    presented as instances of `sqlalchemy.Column`.
 
     Column properties are specified in the class constructor.  Class public
-    methods serve for internal purposes of gensqlalchemy and there are not
-    useful for specifications.  Instead you can inspect 'sqlalchemy.Column'
-    instances when needed in certain places using 'sqlalchemy.Column' public
-    methods.
+    methods serve for internal purposes of gensqlalchemy and are not useful for
+    specifications.  Instead you can inspect `sqlalchemy.Column` instances when
+    needed in certain places using `sqlalchemy.Column` public methods.
 
     """
 
     def __init__(self, name, type, label=None, doc=None, unique=None, check=None,
                  default=None, references=None, primary_key=False, index=False, out=False,
                  original_column=None, crypto_name=None):
-        """
-        Arguments:
+        """Initialize the column specification.
 
-          name -- name of the column; string containing only lower case English
+        Arguments:
+          name: Name of the column; string containing only lower case English
             letters and underscores.  Empty strings are permitted in special
             cases where the column name doesn't matter such as in SQL function
             arguments, however even in such cases it is recommended to use a
             proper column name as a form of documentation.
-          type -- column type; instance of 'pytis.data.Type' subclass
-          label -- default label to use in user interfaces; basestring or
-            'None'.  This is a presentation attribute and is ignored in
-            database schemas.
-          doc -- documentation of the column; basestring or 'None'
-          unique -- if true then the column is marked as unique (if it makes
-            sense at the given place), if 'None' then take the value from
-            column type; boolean
-          check -- if not 'None' then it defines SQL construct to use as a
-            check on the given column; basestring
-          default -- default column value; the value type must be compatible
-            with SQLAlchemy requirements for given column type.  When you want
-            to use a database function result as the default value, use
-            'sqlalchemy.text' construct.
-          references -- if not 'None' then it defines column that should be
-            referenced by this 'SQLTable' column.  The value may be the
+          type: Column type; instance of a `pytis.data.Type` subclass.
+          label: Default label to use in user interfaces; basestring or None.
+            This is a presentation attribute and is ignored in database schemas.
+          doc: Documentation of the column; basestring or None.
+          unique: If true then the column is marked as unique (if it makes sense
+            at the given place), if None then take the value from column type;
+            boolean.
+          check: If not None then it defines SQL construct to use as a check on
+            the given column; basestring.
+          default: Default column value; the value type must be compatible with
+            SQLAlchemy requirements for given column type.  When you want to use
+            a database function result as the default value, use
+            `sqlalchemy.text` construct.
+          references: If not None then it defines column that should be
+            referenced by this `SQLTable` column.  The value may be the
             referenced column, the referenced table (then its primary key is
-            used) or 'ReferenceLookup' instance.  Additional keyword arguments
-            from 'sqlalchemy.ForeignKey' constructor (e.g. 'onupdate') may be
-            used, in such a case wrap the target object by 'Arguments' class.
-          primary_key -- if true then the column is marked as part of the table
-            primary key; boolean.  It makes sense only in 'SQLTable'
-            definitions.  You can also use 'PrimaryColumn' class instead of
-            setting this argument, it is equivalent and you can use either the
-            argument or 'PrimaryColumn' class, but it is recommended to be
-            consistent within an application.
-          index -- if True then a default index should be created for this
-            'SQLTable' column; if a dictionary then it contains a single key
-            'method' whose value determines indexing method to be used for this
-            'SQLTable' column; if False then no index creation is requested by
+            used) or `ReferenceLookup` instance.  Additional keyword arguments
+            from `sqlalchemy.ForeignKey` constructor (e.g. `onupdate`) may be
+            used, in such a case wrap the target object by `Arguments`.
+          primary_key: If true then the column is marked as part of the table
+            primary key; boolean.  It makes sense only in `SQLTable`
+            definitions.  You can also use `PrimaryColumn` instead of setting
+            this argument, it is equivalent and you can use either the argument
+            or `PrimaryColumn`, but it is recommended to be consistent within an
+            application.
+          index: If True then a default index should be created for this
+            `SQLTable` column; if a dictionary then it contains a single key
+            `method` whose value determines indexing method to be used for this
+            `SQLTable` column; if False then no index creation is requested by
             the column specification (however the index may still be created
-            based on other information or specification)
-          out -- when the column is an 'SQLFunction' argument, the value
-            defines whether the given function argument is an output argument;
-            boolean
-          original_column -- original column of this column;
-            'sqlalchemy.Column' instance.  Useful in views where the column
-            origin must be known for some reason.
-          crypto_name -- if not 'None' then the field column values are stored
+            based on other information or specification).
+          out: When the column is a `SQLFunction` argument, the value defines
+            whether the given function argument is an output argument; boolean.
+          original_column: Original column of this column; `sqlalchemy.Column`
+            instance.  Useful in views where the column origin must be known for
+            some reason.
+          crypto_name: If not None then the field column values are stored
             encrypted in the database and the argument value is a string
             identifier of the protection area.  There can be defined several
             different protection areas identified by corresponding crypto names
             in the application, protected by different passwords.  Not all data
-            types support encryption, it is an error to set encryption for
-            field types which don't support it.  Encryption implies the
-            actual database column is of binary type.
+            types support encryption, it is an error to set encryption for field
+            types which don't support it.  Encryption implies the actual
+            database column is of binary type.
 
         """
         assert label is None or isinstance(label, basestring), label
@@ -955,7 +951,7 @@ class PrimaryColumn(Column):
     """Specification of a column that is part of the primary key.
 
     Instances of this class are automatically handled as primary keys or their
-    components.  Otherwise there is no difference to 'Column' class.
+    components.  Otherwise there is no difference to `Column`.
 
     """
 
@@ -1001,8 +997,8 @@ class _TabularType(pytis.data.Type):
 class Argument(Column):
     """Specification of a function argument.
 
-    This is basically the same as 'Column', but it additionaly allows
-    specifying '_SQLTabular' subclass as the argument type.
+    This is basically the same as `Column`, but it additionally allows
+    specifying `_SQLTabular` subclass as the argument type.
 
     """
 
@@ -1120,22 +1116,22 @@ class SQLFlexibleValue(object):
     is useful to use different values in different databases.
 
     The rules for retrieving the value are defined in constructor.  The current
-    value can be retrieved using 'value()' method.
+    value can be retrieved using `value`.
 
     """
     _values = {}
 
     def __init__(self, name, default=None, environment=None):
-        """
+        """Initialize the value placeholder.
+
         Arguments:
+          name: Name of the value; string.  It defines the default name of the
+            variable holding the value.
+          default: The default value.
+          environment: Name of the environment variable containing the name of
+            the variable holding the value; string or None.
 
-          name -- name of the value; string.  It defines the default name of
-            the variable holding the value.
-          default -- the default value
-          environment -- name of the environment variable containing the name
-            of the variable holding the value; string or 'None'
-
-        See also 'value()'.
+        See also `value`.
 
         """
         assert isinstance(name, basestring), name
@@ -1160,9 +1156,8 @@ class SQLFlexibleValue(object):
         - Otherwise the default value given in the constructor is returned.
 
         Arguments:
-
-          globals_ -- dictionary where to look the value for; if 'None' then
-            'globals()' is used
+          globals_: Dictionary where to look the value for; if `None` then
+            `globals` is used.
 
         """
         value = None
@@ -1186,14 +1181,13 @@ class SQLFlexibleValue(object):
 
     @classmethod
     def set_value(class_, name, value):
-        """Set flexible value 'name' to 'value'.
+        """Set flexible value `name` to `value`.
 
         The set value takes priority over other value sources.
 
         Arguments:
-
-          name -- name of the flexible value; string
-          value -- value bound to the name
+          name: Name of the flexible value; string.
+          value: Value bound to the name.
 
         """
         class_._values[name] = value
@@ -1262,12 +1256,12 @@ class _PytisBaseMetaclass(_PytisVisitableBase):
 
     @classmethod
     def specifications(cls):
-        "Return all registered specifications."
+        """Return all registered specifications."""
         return set.union(*_PytisBaseMetaclass._name_mapping.values())
 
     @classmethod
     def clear(cls):
-        "Clear all registered data."
+        """Clear all registered data."""
         _PytisBaseMetaclass._name_mapping = {}
         _PytisBaseMetaclass._class_mapping = {}
 
@@ -1473,11 +1467,11 @@ class TableLookup(object):
     """Accessor for table instances.
 
     You can use an instance of this class to access instances of table
-    specifications when needed.  The instance makes all defined tables
-    available as its attributes by their specification names.
+    specifications when needed.  The instance makes all defined tables available
+    as its attributes by their specification names.
 
-    An instance of this class is available under short name 't'.  So you can
-    refer to table instances by expressions such as 't.FooTable'.
+    An instance of this class is available under short name `t`.  So you can
+    refer to table instances by expressions such as `t.FooTable`.
 
     """
 
@@ -1495,10 +1489,10 @@ class ColumnLookup(object):
     table specifications when needed.  The instance makes SQLAlchemy column
     accessors available as its attributes named after all defined tables.
 
-    An instance of this class is available under short name 'c'.  So you can
-    refer to column instances by expressions such as 'c.FooTable.bar_column'.
-    'c.FooTable' returns the same object as regular SQLAlchemy table would
-    return with 'FooTable.c'.
+    An instance of this class is available under short name `c`.  So you can
+    refer to column instances by expressions such as `c.FooTable.bar_column`.
+    `c.FooTable` returns the same object as regular SQLAlchemy table would
+    return with `FooTable.c`.
 
     Note the lookup contains only table name and no schema name.  The schema is
     determined dynamically from the context where the column lookup is used
@@ -1516,20 +1510,20 @@ c = ColumnLookup()
 class ReferenceLookup(object):
     """Representation of specification columns.
 
-    'ReferenceLookup' works similar to 'ColumnLookup' but it returns a
-    reference to column instance instead of a direct column instance.  This is
-    useful when you want to refer to columns of specifications rather than to
-    columns of particular database objects.  Typical use is in foreign key
-    constraints where you define a table in multiple schemas by a single
-    specification.  If 'ColumnLookup' was used to define the referenced column
-    then all the tables would reference the same table in a single given
-    schema.  With 'ReferenceLookup' the referenced table is determined
-    separately for each of the schemas so the multiple tables can reference
-    their corresponding tables in different schemas.
+    `ReferenceLookup` works similar to `ColumnLookup` but it returns a reference
+    to column instance instead of a direct column instance. This is useful when
+    you want to refer to columns of specifications rather than to columns of
+    particular database objects.  Typical use is in foreign key constraints
+    where you define a table in multiple schemas by a single specification.  If
+    `ColumnLookup` was used to define the referenced column then all the tables
+    would reference the same table in a single given schema.  With
+    `ReferenceLookup` the referenced table is determined separately for each of
+    the schemas so the multiple tables can reference their corresponding tables
+    in different schemas.
 
-    An instance of this class is available under short name 'r'.  So you can
+    An instance of this class is available under short name `r`.  So you can
     refer to column specifications by expressions such as
-    'r.FooTable.bar_column'.
+    `r.FooTable.bar_column`.
 
     """
     class Reference(object):
@@ -1581,7 +1575,7 @@ class Arguments(object):
     By making an instance of this class you can add optional arguments to
     objects.  This is currently used only in foreign key constraints.
 
-    This class is also available by short name 'a'.
+    This class is also available by short name `a`.
 
     """
 
@@ -1600,16 +1594,15 @@ a = Arguments
 
 
 def reorder_columns(columns, column_ordering):
-    """Return 'columns' in 'column_ordering' order.
-
-    Arguments:
-
-      columns -- columns to reorder, sequence of 'sqlalchemy.Column' instances
-      column_ordering -- specification of column ordering; tuple of column
-        names (strings)
+    """Return `columns` in `column_ordering` order.
 
     This function is useful in union selects when you need to combine different
     tables with different column ordering.
+
+    Arguments:
+      columns: Columns to reorder, sequence of `sqlalchemy.Column` instances.
+      column_ordering: Specification of column ordering; tuple of column names
+        (strings).
 
     """
     assert len(columns) == len(column_ordering), (columns, column_ordering,)
@@ -1636,20 +1629,19 @@ class SQLObject(object):
     This class is not usable directly but it defines properties common to all
     specification classes.
 
-    Properties:
-
-      access_rights -- definition of access rights to the object; sequence of
-        pairs (RIGHT, ROLE); if ROLE is 'True' then the right is granted to
-        all users
-      owner -- database owner of the object; string
-      external -- iff true then do not create the object.  Used for definition
-         of "abstract" database objects which may be further modified and
-         included in a project by setting their 'external' attribute to False.
-      db_name -- actual name of the database object; string.  It is useful only
+    Attributes:
+      access_rights: Definition of access rights to the object; sequence of
+        pairs (RIGHT, ROLE); if ROLE is True then the right is granted to all
+        users.
+      owner: Database owner of the object; string.
+      external: Iff true then do not create the object.  Used for definition of
+        "abstract" database objects which may be further modified and included
+        in a project by setting their `external` attribute to False.
+      db_name: Actual name of the database object; string.  It is useful only
         with overloaded functions or *different* objects in different schemas
         when the Python object names must be different (as required by
-        SQLAlchemy) while the database object names should be the same.  If
-        'None' then it defaults to 'name'.
+        SQLAlchemy) while the database object names should be the same.  If None
+        then it defaults to `name`.
 
     """
     access_rights = ()
@@ -1748,17 +1740,16 @@ class SQLSchematicObject(SQLObject):
     corresponding property.  The class is not usable directly but is inherited
     by other specification classes.
 
-    Properties:
+    Attributes:
+      schemas: Sequence of search paths to use when creating the object. Each
+        search path is a sequence of schema names (strings).  For each of the
+        search paths an instance of the database object is created in the first
+        schema of the given search path.
 
-      schemas -- sequence of search paths to use when creating the object.
-        Each search path is a sequence of schema names (strings).  For each of
-        the search paths an instance of the database object is created in the
-        first schema of the given search path.
-
-    It is usually a good idea not to specify schemas directly, but to define
-    one or more schemas as 'SQLFlexibleValue' instances and using those
-    instances in 'schemas' property.  This way it is possible to override the
-    predefined schemas when generating SQL.
+    It is usually a good idea not to specify schemas directly, but to define one
+    or more schemas as `SQLFlexibleValue` instances and using those instances in
+    the `schemas` property.  This way it is possible to override the predefined
+    schemas when generating SQL.
 
     """
     schemas = _default_schemas
@@ -1829,9 +1820,8 @@ class SQLSchema(with_metaclass(_PytisSimpleMetaclass, sqlalchemy.schema.DDLEleme
                                sqlalchemy.schema.SchemaItem, SQLObject)):
     """Schema specification.
 
-    Properties:
-
-      name -- name of the schema; string
+    Attributes:
+      name: Name of the schema; string.
 
     """
     __visit_name__ = 'schema'
@@ -1871,14 +1861,13 @@ class SQLSequence(with_metaclass(_PytisSchematicMetaclass,
                                  sqlalchemy.Sequence, SQLSchematicObject)):
     """Sequence specification.
 
-    Properties:
+    Attributes:
+      name: Name of the sequence; string.
+      start: Initial value of the sequence; integer.
+      increment: Increment of the sequence; integer.
 
-      name -- name of the sequence; string
-      start -- initial value of the sequence; integer
-      increment -- increment of the sequence; integer
-
-    Note that some sequences are created automatically, e.g. for SERIAL
-    columns, you shouldn't define such sequences in specifications.
+    Note that some sequences are created automatically, e.g. for SERIAL columns,
+    you shouldn't define such sequences in specifications.
 
     """
     _DB_OBJECT = 'SEQUENCE'
@@ -1910,38 +1899,37 @@ class SQLSequence(with_metaclass(_PytisSchematicMetaclass,
 class _SQLTabular(with_metaclass(_PytisSchematicMetaclass, sqlalchemy.Table, SQLSchematicObject)):
     """Base class for all table-like specification objects.
 
-    It defines properties common to all specifications of objects which can
-    look like tables, i.e. real tables, views and functions.  It supports
-    especially creation of INSERT, UPDATE and DELETE rules.
+    It defines properties common to all specifications of objects which can look
+    like tables, i.e. real tables, views and functions.  It supports especially
+    creation of INSERT, UPDATE and DELETE rules.
 
-    Properties:
-
-      name -- name of the object; string
-      depends_on -- sequence of specification classes this class depends on.
+    Attributes:
+      name: Name of the object; string.
+      depends_on: Sequence of specification classes this class depends on.
         Dependencies are usually implicit (typically by refering to another
         specification class in the specification) and you have to define them
-        here only in case of doing something special (e.g. by using an
-        otherwise unreferenced object inside raw SQL code).
-      insert_order -- sequence of specification classes defining the table
-        object and order of insertion on them when INSERT command is performed
-        on the object.  If the value is 'None' then default insert action
-        (depending on particular tabular object kind) is performed.
-      update_order -- the same as 'insert_order' but it applies to updates
-      delete_order -- the same as 'insert_order' but it applies to deletes
-      no_insert_columns -- sequence of names of columns (strings) to ignore
-        when performing INSERT action on the object
-      no_update_columns -- the same as 'no_insert_columns' but it applies to
-        updates
-      special_insert_columns -- sequence of tripples (TABLE, COLUMN_NAME, VALUE);
-        each of the tripples defines assignment of special VALUE (SQL
-        expression as basestring) to COLUMN_NAME (basestring column name) of
-        TABLE (specification class or string table name)
-      special_update_columns -- the same as 'special_insert_columns' but it
-        applies to updates
+        here only in case of doing something special (e.g. by using an otherwise
+        unreferenced object inside raw SQL code).
+      insert_order: Sequence of specification classes defining the table object
+        and order of insertion on them when INSERT command is performed on the
+        object.  If the value is None then default insert action (depending on
+        particular tabular object kind) is performed.
+      update_order: The same as `insert_order` but it applies to updates.
+      delete_order: The same as `insert_order` but it applies to deletes.
+      no_insert_columns: Sequence of names of columns (strings) to ignore when
+        performing INSERT action on the object.
+      no_update_columns: The same as `no_insert_columns` but it applies to
+        updates.
+      special_insert_columns: Sequence of tripples (TABLE, COLUMN_NAME, VALUE);
+        each of the tripples defines assignment of special VALUE (SQL expression
+        as basestring) to COLUMN_NAME (basestring column name) of TABLE
+        (specification class or string table name).
+      special_update_columns: The same as `special_insert_columns` but it
+        applies to updates.
 
-    The class also defines default methods for rule handling, see
-    'on_insert()', 'on_update()', 'on_delete()', 'on_insert_also()',
-    'on_update_also()', 'on_delete_also()'.
+    The class also defines default methods for rule handling, see `on_insert`,
+    `on_update`, `on_delete`, `on_insert_also`, `on_update_also`,
+    `on_delete_also`.
 
     """
     _DB_OBJECT = None
@@ -1957,11 +1945,12 @@ class _SQLTabular(with_metaclass(_PytisSchematicMetaclass, sqlalchemy.Table, SQL
     special_update_columns = ()
 
     def _pytis_init(self):
-        """Pytis-specific post-SA-init setup, called cooperatively via super() through the MRO.
+        """Pytis-specific post-SA-init setup, called cooperatively via `super` through the MRO.
 
-        In SA 1.4, called from _init() after SA's own table setup completes.
-        In SA 2.0, called from __init__() when _no_init=False signals the real init call.
-        Subclasses override this (calling super()._pytis_init() first) to add their own work.
+        In SA 1.4, called from `_init` after SA's own table setup completes. In
+        SA 2.0, called from `__init__` when _no_init=False signals the real init
+        call. Subclasses override this (calling `super()._pytis_init` first)
+        to add their own work.
 
         """
         self._search_path = _current_search_path
@@ -2151,7 +2140,7 @@ class _SQLTabular(with_metaclass(_PytisSchematicMetaclass, sqlalchemy.Table, SQL
         conditions = []
         for table_c in [c for c in tabular.primary_key.columns] + [c for c in tabular.columns]:
             if table_c.primary_key or (table_c.unique and not table_c.nullable):
-                # Try to find `tabular' primary key or one of its equivalents in my
+                # Try to find `tabular` primary key or one of its equivalents in my
                 # columns, perhaps aliased.  If primary key is not found, look
                 # at primary like (i.e. UNIQUE NOT NULL) columns.
                 equivalent_column_instances = self._equivalent_rule_columns(table_c)
@@ -2197,8 +2186,8 @@ class _SQLTabular(with_metaclass(_PytisSchematicMetaclass, sqlalchemy.Table, SQL
 
         The method effectively defines an INSERT rule.  The commands are
         represented by SQLAlchemy insertion objects.  Default implementation
-        based on object properties is provided so it is usually not necessary
-        to redefine the method unless you want to do something special.
+        based on object properties is provided so it is usually not necessary to
+        redefine the method unless you want to do something special.
 
         """
         if self.insert_order is None:
@@ -2214,7 +2203,7 @@ class _SQLTabular(with_metaclass(_PytisSchematicMetaclass, sqlalchemy.Table, SQL
     def on_update(self):
         """Return sequence of SQL commands to be performed on UPDATE.
 
-        This is similar to 'on_insert()' except it handles UPDATE.
+        This is similar to `on_insert` except it handles UPDATE.
 
         """
         if self.update_order is None:
@@ -2233,7 +2222,7 @@ class _SQLTabular(with_metaclass(_PytisSchematicMetaclass, sqlalchemy.Table, SQL
     def on_delete(self):
         """Return sequence of SQL commands to be performed on DELETE.
 
-        This is similar to 'on_insert()' except it handles DELETE.
+        This is similar to `on_insert` except it handles DELETE.
 
         """
         if self.delete_order is None:
@@ -2257,7 +2246,7 @@ class _SQLTabular(with_metaclass(_PytisSchematicMetaclass, sqlalchemy.Table, SQL
     def on_update_also(self):
         """Return sequence of additional SQL commands to perfom on UPDATE.
 
-        This is similar to 'on_insert_also()' except it handles UPDATE.
+        This is similar to `on_insert_also` except it handles UPDATE.
 
         """
         return ()
@@ -2265,7 +2254,7 @@ class _SQLTabular(with_metaclass(_PytisSchematicMetaclass, sqlalchemy.Table, SQL
     def on_delete_also(self):
         """Return sequence of additional SQL commands to perfom on DELETE.
 
-        This is similar to 'on_insert_also()' except it handles DELETE.
+        This is similar to `on_insert_also` except it handles DELETE.
 
         """
         return ()
@@ -2446,59 +2435,57 @@ class _SQLIndexable(SQLObject):
 class SQLTable(_SQLIndexable, _SQLTabular):
     """Regular table specification.
 
-    Properties:
-
-      fields -- tuple of 'Column' instances defining table columns in their
-        order, excluding inherited columns
-      inherits -- tuple of inherited tables, specification classes
-      tablespace -- 'None' or string defining tablespace of the table
-      unlogged -- iff True then UNLOGGED prefix will be used
-      check -- tuple of SQL expressions (basestrings) defining check
-        constraints on the table
-      unique -- tuple of tuples defining unique constraints; each of the tuples
+    Attributes:
+      fields: Tuple of `Column` instances defining table columns in their order,
+        excluding inherited columns.
+      inherits: Tuple of inherited tables, specification classes.
+      tablespace: None or string defining tablespace of the table.
+      unlogged: Iff True then UNLOGGED prefix will be used.
+      check: Tuple of SQL expressions (basestrings) defining check constraints
+        on the table.
+      unique: Tuple of tuples defining unique constraints; each of the tuples
         contains names of the table columns (strings) creating a unique
-        constraint
-      exclude_constraints -- tuple of table exclude constraint definitions;
-        each of the constraint definitions is a tuple of pairs
-        (COLUMN, OPERATOR), the pairs being optionally followed by a keyword
-        argument dictionary to pass to SQLAlchemy 'ExcludeConstraints'
-        constructor
-      foreign_keys -- tuple of multicolumn foreign key constraints.  Each of
-        the constraints is 'Arguments' instance with the first argument being a
+        constraint.
+      exclude_constraints: Tuple of table exclude constraint definitions; each
+        of the constraint definitions is a tuple of pairs (COLUMN, OPERATOR),
+        the pairs being optionally followed by a keyword argument dictionary to
+        pass to SQLAlchemy `~sqlalchemy.schema.ExcludeConstraint` constructor.
+      foreign_keys: Tuple of multicolumn foreign key constraints.  Each of the
+        constraints is `Arguments` instance with the first argument being a
         tuple of table column names and the second argument a tuple of the same
         length containing corresponding foreign table columns or
-        'ReferenceLookup' instances.  Additional keyword arguments from
-        'sqlalchemy.ForeignKey' constructor (e.g. 'onupdate') may be given.
-        For single column foreign key constraints it is preferable to use
-        'references' argument in 'Column' definitions.
-      index_columns -- tuple of tuples or 'Arguments' instances.  Each of the
-        tuples or 'Arguments' instances contains names of columns or SQLAlchemy
+        `ReferenceLookup` instances.  Additional keyword arguments from
+        `~sqlalchemy.schema.ForeignKey` constructor (e.g. `onupdate`) may be
+        given. For single column foreign key constraints it is preferable to use
+        `references` argument in `Column` definitions.
+      index_columns: Tuple of tuples or `Arguments` instances.  Each of the
+        tuples or `Arguments` instances contains names of columns or SQLAlchemy
         expressions to include within a single index.  An additional keyword
-        argument 'method' may be provided in an 'Arguments' whose value
+        argument `method` may be provided in an `Arguments` whose value
         determines indexing method to be used for this index.  The optional
-        argument 'unique' in 'Arguments' marks the index as unique if the
-        argument value is true.  Use 'index_columns' only for multicolumn indexes
-        and functional indexes, plain single column indexes should be specified
-        directly in the corresponding 'Column' specifications.
-      triggers -- tuple of trigger specifications to assign to this table.  You
-        can assign a trigger to a table directly in 'SQLTrigger' specification.
+        argument `unique` in `Arguments` marks the index as unique if the
+        argument value is true.  Use `index_columns` only for multicolumn
+        indexes and functional indexes, plain single column indexes should be
+        specified directly in the corresponding `Column` specifications.
+      triggers: Tuple of trigger specifications to assign to this table.  You
+        can assign a trigger to a table directly in `SQLTrigger` specification.
         But if the same trigger function is to be used in more than one table
-        then you should define a trigger not bound to a particular table
-        (i.e. with undefined 'table' property) and assign the trigger to
-        corresponding tables in 'triggers'.  Each of 'trigger' elements is
-        either a specification class or a tuple of a specification class and
-        trigger function arguments.
+        then you should define a trigger not bound to a particular table (i.e.
+        with undefined `table` property) and assign the trigger to corresponding
+        tables in `triggers`.  Each of `trigger` elements is either a
+        specification class or a tuple of a specification class and trigger
+        function arguments.
 
     It is possible to insert predefined rows into the newly created table.  In
     such a case set the following properties:
 
-      init_columns -- tuple of column names (strings) of 'init_values'
-      init_values -- tuple of tuples; each of the tuples represents a row of
+      init_columns: Tuple of column names (strings) of `init_values`.
+      init_values: Tuple of tuples; each of the tuples represents a row of
         values.  The row contains values of columns as specified by
-        'init_columns' in the given count and order and of types required by
+        `init_columns` in the given count and order and of types required by
         SQLAlchemy for given columns.
 
-    See also '_SQLTabular' properties.
+    See also `_SQLTabular` properties.
 
     """
     _DB_OBJECT = 'TABLE'
@@ -2835,9 +2822,8 @@ class SQLTable(_SQLIndexable, _SQLTabular):
         from another library or application.
 
         Arguments:
-
-          values -- each of the values represents a single init row, as
-            described in 'init_values' property
+          values: Each of the values represents a single init row, as described
+            in the `init_values` property.
 
         """
         class_.init_values = class_.init_values + values
@@ -2847,13 +2833,12 @@ class SQLForeignServer(with_metaclass(_PytisSimpleMetaclass,
                                       sqlalchemy.schema.DDLElement, SQLObject)):
     """Foreign server specification.
 
-    Properties:
-
-      name -- name of the declared server; string
-      wrapper -- name of the foreign-data wrapper that manages the server; string
-      host -- host name of the server; string
-      database -- database name on the server; string
-      port -- port of the database connection; integer
+    Attributes:
+      name: Name of the declared server; string.
+      wrapper: Name of the foreign-data wrapper that manages the server; string.
+      host: Host name of the server; string.
+      database: Database name on the server; string.
+      port: Port of the database connection; integer.
 
     """
     __visit_name__ = 'foreign_server'
@@ -2884,11 +2869,10 @@ def visit_foreign_server(element, compiler, **kw):
 class SQLForeignTable(_SQLTabular):
     """Foreign table specification.
 
-    Properties:
-
-      fields -- tuple of 'Column' instances defining table columns in their
-        order, excluding inherited columns
-      server -- server of the table; 'SQLForeignServer' object
+    Attributes:
+      fields: Tuple of `Column` instances defining table columns in their order,
+        excluding inherited columns.
+      server: Server of the table; `SQLForeignServer` object.
 
     """
     _DB_OBJECT = 'FOREIGN TABLE'
@@ -2936,12 +2920,12 @@ class SQLForeignUser(with_metaclass(_PytisSimpleMetaclass,
                                     sqlalchemy.schema.DDLElement, SQLObject)):
     """Mapping of a user to a foreign server user.
 
-    Properties:
-
-      name -- name of the local user or one of the special values ('user', 'public'); string
-      server -- server of the table; 'SQLForeignServer' object
-      user -- name of the foreign user; string or 'None'
-      password -- password of the foreign user; string or 'None'
+    Attributes:
+      name: Name of the local user or one of the special values ('user',
+        'public'); string.
+      server: Server of the table; `SQLForeignServer` object.
+      user: Name of the foreign user; string or None.
+      password: Password of the foreign user; string or None.
 
     """
     __visit_name__ = 'foreign_user'
@@ -3050,17 +3034,17 @@ class _SQLQuery(SQLObject):
 
     @classmethod
     def _exclude(cls, tabular, *columns_tables, **kwargs):
-        """Return sequence of 'tabular' columns with some exclusions.
+        """Return sequence of `tabular` columns with some exclusions.
 
         Arguments:
-
-          tabular -- 'SQLTable' instance providing the initial sequence of columns
-          columns_tables -- sequence of objects to exclude from columns of
-            'tabular'.  The objects can be names of the columns to exclude
+          tabular: `SQLTable` instance providing the initial sequence of
+            columns.
+          *columns_tables: Sequence of objects to exclude from columns of
+            `tabular`.  The objects can be names of the columns to exclude
             (strings) or tables (or their aliases) in which case all columns
             with names present among those table column names are excluded.
-          inherited (in kwargs) -- iff true, exclude all inherited columns;
-            boolean
+          **kwargs: Keyword argument `inherited` (bool) -- iff true, exclude all
+            inherited columns.
 
         """
         inherited = kwargs.get('inherited', True)
@@ -3221,37 +3205,34 @@ class SQLView(_SQLBaseView):
     view columns are not defined in the view specification directly, they are
     defined implicitly by included tables and their columns.
 
-    The primary specification element of this class is 'query()' class method
-    which returns the expression defining the view.  The method must return an
-    'sqlalchemy.ClauseElement' instance (as all the SQLAlchemy expressions do).
+    The primary specification element of this class is `query` class method
+    which returns the expression defining the view.  The method must return a
+    `sqlalchemy.ClauseElement` instance (as all the SQLAlchemy expressions do).
 
-    Special specification element is 'join_columns()' class method returning
-    tuple of tuples of equivalent columns ('sqlalchemy.Column' instances).  If
-    the view is made by joining some relations, duplicate join columns are
-    excluded from the view and there are modification rules defined for the
-    view then it is necessary to enumerate all equivalent relation columns in
-    'join_columns()' tuples in order to make gensqlalchemy generate complete
-    and correct rules.
+    Special specification element is `join_columns` class method returning tuple
+    of tuples of equivalent columns (`sqlalchemy.Column` instances).  If the
+    view is made by joining some relations, duplicate join columns are excluded
+    from the view and there are modification rules defined for the view then it
+    is necessary to enumerate all equivalent relation columns in `join_columns`
+    tuples in order to make gensqlalchemy generate complete and correct rules.
 
-    The expression in 'query()' method is typically constructed using means
+    The expression in `query` method is typically constructed using means
     provided by SQLAlchemy.  The class defines a few additional utility class
-    methods which may be useful for constructing the expression:
-    'SQLView._exclude()', 'SQLView._alias()', 'SQLView._reorder()'.  See their
-    documentation strings for more information.
+    methods which may be useful for constructing the expression: `_exclude`,
+    `_alias`, `_reorder`.  See their documentation strings for more information.
 
-    Properties:
-
-      primary_column -- name (label) of the "key" column; basestring.  It can
-        be left 'None' in most cases.  It must be defined only when the view is
-        a part of another view which defines update or delete rules modifying
-        the view.  The primary column is the view column uniquely identifying
-        the view rows.
-      lock_tables -- sequence of table aliases to be locked on update as
-        strings.  The names must refer to the aliases used in view definition.
-        Left joined tables can not be present, because an attempt to lock them
-        would cause a database error.
-      lock_key -- reference to the key column in the view definition.  As in
-        'lock_tables', we need to refer to the columns in view definition, not
+    Attributes:
+      primary_column: Name (label) of the "key" column; basestring.  It can be
+        left None in most cases.  It must be defined only when the view is a
+        part of another view which defines update or delete rules modifying the
+        view.  The primary column is the view column uniquely identifying the
+        view rows.
+      lock_tables: Sequence of table aliases to be locked on update as strings.
+        The names must refer to the aliases used in view definition. Left joined
+        tables can not be present, because an attempt to lock them would cause a
+        database error.
+      lock_key: Reference to the key column in the view definition.  As in
+        `lock_tables`, we need to refer to the columns in view definition, not
         to the resulting view columns.  Typically it will be a fully qualified
         column name consisting of table name (or its alias in view definition),
         a dot and a column name.  SQL expressions are also allowed, for example
@@ -3310,21 +3291,20 @@ def visit_view(element, compiler, **kw):
 class SQLMaterializedView(_SQLIndexable, _SQLBaseView):
     """Materialized view specification.
 
-    Specifications of materialized views are similar to view specifications.
-    The primary difference is that materialized views can't have rules so rule
+    Specifications of materialized views are similar to view specifications. The
+    primary difference is that materialized views can't have rules so rule
     related facilities are not available.
 
-    Properties:
-
-      index_columns -- tuple of tuples or 'Arguments' instances.  Each of the
-        tuples or 'Arguments' instances contains names of columns or SQLAlchemy
+    Attributes:
+      index_columns: Tuple of tuples or `Arguments` instances.  Each of the
+        tuples or `Arguments` instances contains names of columns or SQLAlchemy
         expressions to include within a single index.  An additional keyword
-        argument 'method' may be provided in an 'Arguments' whose value
+        argument `method` may be provided in an `Arguments` whose value
         determines indexing method to be used for this index.  The optional
-        argument 'unique' in 'Arguments' marks the index as unique if the
-        argument value is true.  Use 'index_columns' only for multicolumn indexes
-        and functional indexes, plain single column indexes should be specified
-        directly in the corresponding 'Column' specifications.
+        argument `unique` in `Arguments` marks the index as unique if the
+        argument value is true.  Use `index_columns` only for multicolumn
+        indexes and functional indexes, plain single column indexes should be
+        specified directly in the corresponding `Column` specifications.
 
     """
     _DB_OBJECT = 'MATERIALIZED VIEW'
@@ -3345,9 +3325,9 @@ class SQLType(_SQLTabular):
     """Database type specification.
 
     Subclasses of this class define new types to be stored in the database.
-    There is rarely need to do this.  Typical use of database types is to
-    define return value types of functions returning multicolumn values which
-    is handled automatically in 'SQLFunctional' objects and there is no need to
+    There is rarely need to do this.  Typical use of database types is to define
+    return value types of functions returning multicolumn values which is
+    handled automatically in `SQLFunctional` objects and there is no need to
     define such types manually.
 
     This class doesn't introduce new properties.  You typically define just the
@@ -3390,46 +3370,47 @@ class SQLFunctional(_SQLReplaceable, _SQLTabular):
     There are several kinds of supported database functions (SQL, PL/pgSQL,
     PL/Python) but they share most their properties:
 
-      arguments -- tuple of function arguments represented by 'Column'
-        instances in the given order.  If there are output arguments, mark them
-        using 'out' argument in 'Column' constructor.
-      result_type -- return type of the function.  It can be either instance of
-        'pytis.data.Type' (simple return value of the given type) or a 'Column'
+    Attributes:
+      arguments: Tuple of function arguments represented by `Column` instances
+        in the given order.  If there are output arguments, mark them using
+        `out` argument in `Column` constructor.
+      result_type: Return type of the function.  It can be either instance of
+        `~pytis.data.Type` (simple return value of the given type) or a `Column`
         instance (simple return value of the given column type) or a tuple of
-        'Column' instances (composite return value of the given column types)
-        or a tabular specification (composite return value of values
-        corresponding to the given object columns) or 'SQLFunctional.RECORD'
-        constant (the return value is defined by output function arguments) or
-        'None' (there is no return value)
-      multirow -- iff true then the function may return multiple results
-        (rows); boolean
-      security_definer -- iff true then the function runs with permissions of
-        its creator rather than the user invoking it; boolean
-      stability -- information about stability of the function return values to
+        `Column` instances (composite return value of the given column types) or
+        a tabular specification (composite return value of values corresponding
+        to the given object columns) or :attr:`SQLFunctional.RECORD` constant
+        (the return value is defined by output function arguments) or None
+        (there is no return value).
+      multirow: Iff true then the function may return multiple results (rows);
+        boolean.
+      security_definer: Iff true then the function runs with permissions of its
+        creator rather than the user invoking it; boolean.
+      stability: Information about stability of the function return values to
         the database query optimizer, the given value (string) is used directly
         in the function definition.  This is useful to set if the function
         returns the same values for the same input data and without any side
         effects.
-      execution_cost -- 'cost' parameter of a PostgreSQL function; positive
-        integer or 'None'
-      expected_rows -- 'rows' parameter of a PostgreSQL function; positive
-        integer or 'None'
-      set_parameters -- parameters to be saved and possibly set on entering the
-        function.  It corresponds to 'set' parameter of PostgreSQL function.
+      execution_cost: `cost` parameter of a PostgreSQL function; positive
+        integer or None.
+      expected_rows: `rows` parameter of a PostgreSQL function; positive integer
+        or None.
+      set_parameters: Parameters to be saved and possibly set on entering the
+        function.  It corresponds to `set` parameter of PostgreSQL function.
         It's a sequence of pairs (PARAMETER, VALUE) where PARAMETER is the
         parameter name (basestring) and VALUE is its value (number or
         basestring).  VALUE must be properly surrounded by quotes if it should
-        be output as a string.  VALUE may be also 'None' in which case
-        'FROM CURRENT' is used.
-      sql_directory -- name of the directory where SQL files with function body
+        be output as a string.  VALUE may be also None in which case 'FROM
+        CURRENT' is used.
+      sql_directory: Name of the directory where SQL files with function body
         definitions are stored; the name is relative to the processed module
-        file name
-      replaces -- specification class being replaced by this specification.
-        The original function is renamed by prepending an underscore to its
-        name.  This is useful when some package needs to extend a function from
-        another package.  Note that the replacing function must have new,
-        unique, name defined in its specification; the original function name
-        is used in the database.
+        file name.
+      replaces: Specification class being replaced by this specification. The
+        original function is renamed by prepending an underscore to its name.
+        This is useful when some package needs to extend a function from another
+        package.  Note that the replacing function must have new, unique, name
+        defined in its specification; the original function name is used in the
+        database.
 
     Function body can be defined in two ways:
 
@@ -3438,13 +3419,13 @@ class SQLFunctional(_SQLReplaceable, _SQLTabular):
       property.  The file must be present in the current working directory when
       specifications are processed for SQL output.
 
-    - By redefining 'body()' function to return the function body as a
+    - By redefining `body` function to return the function body as a
       basestring.
 
     Functions can be used in SQL expressions of other specifications by calling
     their instances with corresponding function argument values (of the types
     required by SQLAlchemy).  You can get the function instance using
-    'TableLookup' accessor.
+    `TableLookup` accessor.
 
     """
     _DB_OBJECT = 'FUNCTION'
@@ -3620,12 +3601,11 @@ class SQLFunctional(_SQLReplaceable, _SQLTabular):
         return super(SQLFunctional, class_).pytis_name(real=real)
 
     def __call__(self, *arguments):
-        """Return 'sqlalchemy.ClauseElement' corresponding to function call.
+        """Return `~sqlalchemy.sql.expression.ClauseElement` for function call.
 
         Arguments:
-
-          arguments -- tuple of function argument values, of types as required
-            by SQLAlchemy
+          *arguments: Tuple of function argument values, of types as required by
+            SQLAlchemy.
 
         """
         function_name = self.pytis_name(real=True)
@@ -3706,9 +3686,9 @@ class SQLFunction(_SQLQuery, SQLFunctional):
     This class doesn't define anything new, see its superclass for information
     about function definition.
 
-    In addition to other classes, 'body()' may return
-    'SQLAlchemy.sql.ClauseElement' instance or sequence of
-    'SQLAlchemy.sql.ClauseElement' instances.
+    In addition to other classes, `body` may return
+    `~sqlalchemy.sql.expression.ClauseElement` instance or sequence of
+    `~sqlalchemy.sql.expression.ClauseElement` instances.
 
     """
     def _language(self):
@@ -3734,22 +3714,22 @@ class SQLPyFunction(SQLFunctional):
 
     Definitions of PL/Python functions are a bit different from other kinds of
     function definitions.  They share the same properties but their body is
-    defined in a different way (although nothing prevents you from defining
-    your own 'body()' method the same way as in other kinds of functions).
+    defined in a different way (although nothing prevents you from defining your
+    own `body` method the same way as in other kinds of functions).
 
-    The function itself is defined as static method of the specification
-    class.  The method must have the same name and arguments as the function.
-    Therefore there are some limits on the name of the function, e.g. it is not
-    a good idea to name a PL/Python function 'body'.
+    The function itself is defined as static method of the specification class.
+    The method must have the same name and arguments as the function. Therefore
+    there are some limits on the name of the function, e.g. it is not a good
+    idea to name a PL/Python function 'body'.
 
     You can define utility Python functions, methods and attributes for use in
-    the PL/Python function.  The utility objects are defined in 'Util' inner
-    class, see its documentation for more information.  Objects defined this
-    way are available for use in the PL/Python function.
+    the PL/Python function.  The utility objects are defined in `Util` inner
+    class, see its documentation for more information.  Objects defined this way
+    are available for use in the PL/Python function.
 
     Utility functions and classes are typically defined in a common base class
     inherited by specifications of PL/Python functions or in a common
-    'SQLPyFunction.Util' subclass inherited by 'Util' inner classes in
+    `SQLPyFunction.Util` subclass inherited by `Util` inner classes in
     specifications.
 
     """
@@ -3759,14 +3739,14 @@ class SQLPyFunction(SQLFunctional):
         """Inner class for utility definitions to be used in the function.
 
         All static methods, classes, and attributes containing primitive type
-        values or class instances providing proper 'repr' output defined in
-        this class are available to the PL/Python function with the exception
-        of objects whose names start with underscore.
+        values or class instances providing proper 'repr' output defined in this
+        class are available to the PL/Python function with the exception of
+        objects whose names start with underscore.
 
-        You can refer from the PL/Python function to the objects defined in
-        this class by their fully qualified names.  For example, if you define
-        auxiliary function 'bar' in 'Foo' PL/Python function specification, you
-        can call the function using the name 'Foo.Util.bar' in the function
+        You can refer from the PL/Python function to the objects defined in this
+        class by their fully qualified names.  For example, if you define
+        auxiliary function `bar` in `Foo` PL/Python function specification, you
+        can call the function using the name `Foo.Util.bar` in the function
         code.
 
         """
@@ -3892,16 +3872,16 @@ class SQLPy3Function(SQLPyFunction):
 class SQLAggregate(SQLFunctional):
     """Aggregate function definition.
 
-    Aggregate functions can be basically defined like other database
-    functions.  Function arguments define the internal state type (the first
-    argument) and the input data types (the rest of the arguments).  The
-    function definition itself serves as the internal state transition
-    function.
+    Aggregate functions can be basically defined like other database functions.
+    Function arguments define the internal state type (the first argument) and
+    the input data types (the rest of the arguments).  The function definition
+    itself serves as the internal state transition function.
 
     The following optional properties may be defined:
 
-      initial_value -- the initial state value; internal value of the internal
-        state pytis type
+    Attributes:
+      initial_value: The initial state value; internal value of the internal
+        state pytis type.
 
     """
     _DB_OBJECT = 'AGGREGATE'
@@ -3916,12 +3896,13 @@ class SQLEventHandler(SQLFunctional):
 
     This is basically a normal function defining just one additional property:
 
-      table -- specification of the table the function is bound to
+    Attributes:
+      table: Specification of the table the function is bound to.
 
-    If table is 'None' then the corresponding function (e.g. trigger function)
+    If `table` is `None` then the corresponding function (e.g. trigger function)
     is defined while the event handler itself (e.g. trigger) is not.  You can
     then assign the function to any number of table event handlers via
-    'SQLTable' properties (such as 'triggers').
+    `SQLTable` properties (such as `triggers`).
 
     Subclasses may define more additional properties.
 
@@ -3934,19 +3915,20 @@ class SQLTrigger(with_metaclass(_PytisTriggerMetaclass, SQLEventHandler)):
 
     Trigger is defined as a normal function, just note that SQL functions can't
     be used as triggers in PostgreSQL.  The following properties may be defined
-    in triggers in addition to 'SQLEventHandler' properties:
+    in triggers in addition to `SQLEventHandler` properties:
 
-      events -- tuple of table events the trigger should be invoked for; each
-        of the events must be one of strings 'insert', 'update', 'delete',
+    Attributes:
+      events: Tuple of table events the trigger should be invoked for; each of
+        the events must be one of strings 'insert', 'update', 'delete',
         'truncate'.
-      position -- whether the trigger should be invoked before or after table
-        modification; one of the strings 'before' and 'after'
-      each_row -- if true then the trigger should be invoked for each modified
-        table row otherwise it should be invoked once per statement
-      referencing -- tuple of (OLD|NEW, transitional_name) pairs for
-        statement triggers
-      when -- WHEN condition as basestring or sqlalchemy condition
-      call_arguments -- if the trigger function has any arguments then this
+      position: Whether the trigger should be invoked before or after table
+        modification; one of the strings 'before' and 'after'.
+      each_row: If true then the trigger should be invoked for each modified
+        table row otherwise it should be invoked once per statement.
+      referencing: Tuple of (OLD|NEW, transitional_name) pairs for statement
+        triggers.
+      when: WHEN condition as basestring or sqlalchemy condition.
+      call_arguments: If the trigger function has any arguments then this
         property must define their values and in the right order; tuple of
         values of types accepted by SQLAlchemy for given argument types.
 
@@ -4061,8 +4043,9 @@ class SQLRaw(with_metaclass(_PytisSchematicMetaclass, sqlalchemy.schema.DDLEleme
     extension of gensqlalchemy to handle your construction.  If this is not
     possible you may define the following properties:
 
-      name -- name of the raw definition, string
-      depends_on -- sequence of specification classes this class depends on
+    Attributes:
+      name: Name of the raw definition, string.
+      depends_on: Sequence of specification classes this class depends on.
 
     The raw definition must be returned from class method named 'sql'.
 
@@ -4540,31 +4523,30 @@ def gsql_file(file_name, regexp=None, no_deps=False, views=False, functions=Fals
     """Generate SQL code from given specification file.
 
     Arguments:
+      file_name: Name of the specification file to process; basestring.
+      regexp: If not None, generate SQL code only for specifications with
+        specification class names matching this regular expression and view and
+        function specifications dependent on those specifications; basestring.
+      no_deps: Iff true, don't output dependent objects when `regexp` is
+        specified.
+      views: Iff true, output just views; boolean.
+      functions: Iff true, output just functions; boolean.
+      names_only: Iff true, output only kinds and names of the database objects;
+        boolean.
+      pretty: Pretty output level; non-negative integer.
+      schema: If not None then create all objects in that schema; string.
+      source: Iff true, print source files and lines.
+      config_file: Name of pytis configuration file.
+      upgrade: Iff true, generate SQL commands for upgrade rather than creation.
+      plpython3: Iff true, use `plpython3u` for PL/Python functions.
+      debug: Iff true, print some debugging information to standard error
+        output.
+      limit_class: If not None, limit output to specifications derived from
+        given Python class.
+      compat: Iff true, normalize SA-version-dependent output differences for
+        easier comparison between SA 1.x and SA 2.x generated SQL.
 
-      file_name -- name of the specification file to process; basestring
-      regexp -- if not 'None', generate SQL code only for specifications with
-        specification class names matching this regular expression and
-        view and function specifications dependent on those specifications;
-        basestring
-      no_deps -- iff true, don't output dependent objects when 'regexp' is
-        specified
-      views -- iff true, output just views; boolean
-      functions -- iff true, output just functions; boolean
-      names_only -- iff true, output only kinds and names of the database
-        objects; boolean
-      pretty -- pretty output level; non-negative integer
-      schema -- if not 'None' then create all objects in that schema; string
-      source -- iff true, print source files and lines
-      config_file -- name of pytis configuration file
-      upgrade -- iff true, generate SQL commands for upgrade rather than creation
-      plpython3 -- iff true, use 'plpython3u' for PL/Python functions
-      debug -- iff true, print some debugging information to standard error output
-      limit_class -- if not None, limit output to specifications derived from given
-        Python class
-      compat -- iff true, normalize SA-version-dependent output differences for
-        easier comparison between SA 1.x and SA 2.x generated SQL
-
-    If both 'views' and 'functions' are specified, output both views and
+    If both `views` and `functions` are specified, output both views and
     functions.
 
     The SQL code is output on standard output.
@@ -4584,33 +4566,32 @@ def gsql_module(module_name, regexp=None, no_deps=False, views=False, functions=
     """Generate SQL code from given specification module.
 
     Arguments:
+      module_name: Name of the specification module to process; basestring.
+      regexp: If not None, generate SQL code only for specifications with
+        specification class names matching this regular expression and view and
+        function specifications dependent on those specifications; basestring.
+      no_deps: Iff true, don't output dependent objects when `regexp` is
+        specified.
+      views: Iff true, output just views; boolean.
+      functions: Iff true, output just functions; boolean.
+      names_only: Iff true, output only kinds and names of the database objects;
+        boolean.
+      pretty: Pretty output level; non-negative integer.
+      schema: If not None then create all objects in that schema; string.
+      source: Iff true, print source files and lines.
+      config_file: Name of pytis configuration file.
+      upgrade: Iff true, generate SQL commands for upgrade rather than creation.
+      plpython3: Iff true, use `plpython3u` for PL/Python functions.
+      debug: Iff true, print some debugging information to standard error
+        output.
+      limit_module: Iff true, limit output to specifications defined directly in
+        the given module.
+      limit_class: If not None, limit output to specifications derived from
+        given Python class.
+      compat: Iff true, normalize SA-version-dependent output differences for
+        easier comparison between SA 1.x and SA 2.x generated SQL.
 
-      module_name -- name of the specification module to process; basestring
-      regexp -- if not 'None', generate SQL code only for specifications with
-        specification class names matching this regular expression and
-        view and function specifications dependent on those specifications;
-        basestring
-      no_deps -- iff true, don't output dependent objects when 'regexp' is
-        specified
-      views -- iff true, output just views; boolean
-      functions -- iff true, output just functions; boolean
-      names_only -- iff true, output only kinds and names of the database
-        objects; boolean
-      pretty -- pretty output level; non-negative integer
-      schema -- if not 'None' then create all objects in that schema; string
-      source -- iff true, print source files and lines
-      config_file -- name of pytis configuration file
-      upgrade -- iff true, generate SQL commands for upgrade rather than creation
-      plpython3 -- iff true, use 'plpython3u' for PL/Python functions
-      debug -- iff true, print some debugging information to standard error output
-      limit_module -- iff true, limit output to specifications defined directly
-        in the given module
-      limit_class -- if not None, limit output to specifications derived from given
-        Python class
-      compat -- iff true, normalize SA-version-dependent output differences for
-        easier comparison between SA 1.x and SA 2.x generated SQL
-
-    If both 'views' and 'functions' are specified, output both views and
+    If both `views` and `functions` are specified, output both views and
     functions.
 
     The SQL code is output on standard output.
@@ -4657,13 +4638,13 @@ def specifications():
 
 
 def specifications_by_name(name):
-    """Return all loaded specifications of objects named 'name'.
+    """Return all loaded specifications of objects named `name`.
 
     Arguments:
+      name: Name of the database object; string.
 
-      name -- name of the database object; string
-
-    Set of specification classes with given database 'name' is returned.
+    Returns:
+      Set of specification classes with given database `name`.
 
     """
     return _PytisBaseMetaclass.specifications_by_name(name)

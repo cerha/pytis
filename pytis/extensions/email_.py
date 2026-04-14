@@ -19,6 +19,7 @@
 """Funkce a třídy pro práci s emailem.
 
 Do tohoto modulu patří pomocné funkce a třídy pro práci s email zprávami.
+
 """
 from __future__ import print_function
 from past.builtins import basestring
@@ -59,16 +60,15 @@ class SimpleEmail(object):
                  bcc=None, replyto=None, smtp='localhost', charset='UTF-8'):
         """Inicializuj instanci.
 
-        Argumenty:
-
-          to -- adresa příjemce nebo sekvence příjemců
-          from_ -- adresa odesílatele
-          subject -- předmět zprávy (může obsahovat buď ascii řetězec
-            nebo unicode řetězec nebo řetězec v kódování UTF-8)
-          content -- obsah zprávy
-          bcc -- adresa příjemce pro bcc nebo sekvence adres
-          replyto -- adresa odesilatele pro zaslání odpovědi
-          smtp -- adresa odesílacího serveru
+        Arguments:
+          to: Adresa příjemce nebo sekvence příjemců.
+          from_: Adresa odesílatele.
+          subject: Předmět zprávy (může obsahovat buď ascii řetězec nebo unicode
+            řetězec nebo řetězec v kódování UTF-8).
+          content: Obsah zprávy.
+          bcc: Adresa příjemce pro bcc nebo sekvence adres.
+          replyto: Adresa odesilatele pro zaslání odpovědi.
+          smtp: Adresa odesílacího serveru.
 
         """
         assert isinstance(to, (basestring, tuple, list))
@@ -96,7 +96,7 @@ class SimpleEmail(object):
         self.create_content()
 
     def _create_message(self):
-        """Return basic instance of Message."""
+        """Return basic instance of `Message`."""
         self.msg = self.get_content_text(self.content, self.html, self.charset)
 
     def _flatten_for_header(self, header):
@@ -207,21 +207,23 @@ class GPGEmail(SimpleEmail):
                  smtp='localhost', charset='UTF-8'):
         """Inicializuj instanci.
 
-          to -- adresa příjemce (zatím podporujeme jen jednoho příjemce)
-          from_ -- adresa odesílatele
-          subject -- předmět zprávy (může obsahovat buď řetězec nebo unicode
-          content -- vlastní obsah zprávy
-          key -- veřejný klíč, kterým má být zpráva zakryptována
-          html -- příznak, zda obsah je html
-          smtp -- adresa odesílacího serveru
-          charset -- v případě, že content není v unicode, je zde uveden charset pro content
+        Arguments:
+          to: Adresa příjemce (zatím podporujeme jen jednoho příjemce).
+          from_: Adresa odesílatele.
+          subject: Předmět zprávy (může obsahovat buď řetězec nebo unicode).
+          content: Vlastní obsah zprávy.
+          key: Veřejný klíč, kterým má být zpráva zakryptována.
+          html: Příznak, zda obsah je html.
+          smtp: Adresa odesílacího serveru.
+          charset: V případě, že content není v unicode, charset pro content.
+
         """
         super(GPGEmail, self).__init__(to, from_, subject, content, html=html,
                                        smtp=smtp, charset=charset)
         self.key = key
 
     def _create_message(self):
-        """Return basic instance of Message."""
+        """Return basic instance of `Message`."""
         self.msg = Message()
 
     def _gpg_encrypt_content(self):
@@ -242,7 +244,7 @@ class GPGEmail(SimpleEmail):
         encryption_result = gpg.encrypt(str(content), fingerprints[0])
         if not encryption_result.ok:
             raise pytis.util.ProgramError(encryption_result.stderr)
-        # BUG: There is no `keyring' defined here so the following
+        # BUG: There is no `keyring` defined here so the following
         # statement is effectively void:
         try:
             os.remove(keyring)
@@ -289,16 +291,15 @@ class ComplexEmail(SimpleEmail):
                  replyto=None, smtp='localhost', charset='UTF-8'):
         """Inicializuj instanci.
 
-        Argumenty:
-
-          to -- adresa příjemce nebo sekvence příjemců
-          from_ -- adresa odesílatele
-          subject -- předmět zprávy (může obsahovat buď řetězec nebo unicode
-          content -- obsah zprávy
-          html -- indikace, zda je obsah content v html podobě
-          bcc -- adresa příjemce pro bcc nebo sekvence adres
-          replyto -- adresa odesilatele pro zaslání odpovědi
-          smtp -- adresa odesílacího serveru
+        Arguments:
+          to: Adresa příjemce nebo sekvence příjemců.
+          from_: Adresa odesílatele.
+          subject: Předmět zprávy (může obsahovat buď řetězec nebo unicode).
+          content: Obsah zprávy.
+          html: Indikace, zda je obsah content v html podobě.
+          bcc: Adresa příjemce pro bcc nebo sekvence adres.
+          replyto: Adresa odesilatele pro zaslání odpovědi.
+          smtp: Adresa odesílacího serveru.
 
         """
         super(ComplexEmail, self).__init__(to, from_, subject, content, html=html,
@@ -323,7 +324,7 @@ class ComplexEmail(SimpleEmail):
         return MIMEText(data, subtype, _charset=charset)
 
     def get_content_data(self, data, filename, charset=None):
-        "Vrátí data jako instanci třídy odvozené od MIMEBase."
+        """Vrátí data jako instanci třídy odvozené od `MIMEBase`."""
         # Guess the content type based on the file's extension.  Encoding
         # will be ignored, although we should check for simple things like
         # gzip'd or compressed files.

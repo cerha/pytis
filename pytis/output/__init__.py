@@ -18,8 +18,9 @@
 
 """Formátování výstupů, zejména pro tisk.
 
-Tento modul poskytuje všechny funkce potřebné pro jednoduché sestavení výstupu.
-Konkrétně definuje jednoduché značkování textu a provádí jeho formátování.
+Tento modul poskytuje všechny funkce potřebné pro jednoduché sestavení
+výstupu. Konkrétně definuje jednoduché značkování textu a provádí jeho
+formátování.
 
 """
 from __future__ import print_function

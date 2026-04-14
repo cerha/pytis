@@ -18,8 +18,8 @@
 
 """Prostředky pro definici a zpracování konfigurace běhu aplikace.
 
-Celá konfigurace je definována instancí třídy 'Configuration', dokumentace
-v této třídě poví více.
+Celá konfigurace je definována instancí třídy `Configuration`, dokumentace v
+této třídě poví více.
 
 """
 from __future__ import print_function
@@ -56,23 +56,23 @@ class Configuration(object):
         """Specification of a configuration option (variable).
 
         Definicí potomka této třídy se jménem začínajícím prefixem '_Option_'
-        jako vnitřní třídy třídy 'Configuration' je automaticky definována nová
-        konfigurační volba aplikace.  Jméno volby je shodné s částí jména
-        takové třídy následující za prefixem '_Option_', její popis je
-        v docstringu třídy.  Ostatní vlastnosti volby jsou definovány metodami
-        a/nebo konstantami dané třídy.  Konkrétní hodnota je pak udržována
-        v její instanci.
+        jako vnitřní třídy třídy `Configuration` je automaticky definována nová
+        konfigurační volba aplikace.  Jméno volby je shodné s částí jména takové
+        třídy následující za prefixem '_Option_', její popis je v docstringu
+        třídy.  Ostatní vlastnosti volby jsou definovány metodami a/nebo
+        konstantami dané třídy.  Konkrétní hodnota je pak udržována v její
+        instanci.
 
         Docstring tříd nepodléhá obvyklým formátovacím pravidlům.  Měl by mít
-        podobu, jež se dobře vyjímá v komentáři pythonového zdrojového souboru.
+        podobu, jež se dobře vyjímá v komentáři pythonového zdrojového souboru.
 
         Standardní konfigurační volby jsou uvedeny přímo zde.  Aplikace může ve
-        svém definičním souboru definovat další, své vlastní, konfigurační
-        volby použitím potomka třídy 'Configuration' a doplněním dalších
-        vnitřních tříd v něm rozšířit dostupné konfigurační volby.
+        svém definičním souboru definovat další, své vlastní, konfigurační volby
+        použitím potomka třídy `Configuration` a doplněním dalších vnitřních
+        tříd v něm rozšířit dostupné konfigurační volby.
 
         Po zpracování konfiguračních voleb je zbývající, nezpracovaná, část
-        příkazové řádky přiřazena do 'sys.argv'.
+        příkazové řádky přiřazena do `sys.argv`.
 
         """
 
@@ -87,8 +87,8 @@ class Configuration(object):
         _DOC = None
         """Additional multiline description of the option to be displayed in the user interface.
 
-        May be defined only for options, which are supposed to be exposed in the user
-        interface and need more explanation than _DESCR gives..
+        May be defined only for options, which are supposed to be exposed in the
+        user interface and need more explanation than _DESCR gives..
 
         """
 
@@ -131,10 +131,9 @@ class Configuration(object):
         def __init__(self, configuration):
             """Inicializuj instanci volby.
 
-            Argumenty:
-
-              configuration -- instance třídy 'Configuration', ve které je
-                konfigurační volba přítomna
+            Arguments:
+              configuration: Instance třídy `Configuration`, ve které je
+                konfigurační volba přítomna.
 
             """
             self._configuration = configuration
@@ -174,13 +173,13 @@ class Configuration(object):
         def _type(self):
             """Return data type of the option value as 'pytis.data.Type' instance or None.
 
-            'None' stands for unspecified type, allowing the value to be any
+            `None` stands for unspecified type, allowing the value to be any
             Python object.  Otherwise the option values will need to be valid
             inner values of given type.
 
-            Instead of overriding this method directly, it is recommended to
-            use predefined classes 'StringOption', 'NumericOption' and
-            'BooleanOption'.
+            Instead of overriding this method directly, it is recommended to use
+            predefined classes `StringOption`, `NumericOption` and
+            `BooleanOption`.
 
             """
             return self._TYPE
@@ -191,10 +190,9 @@ class Configuration(object):
         def init_value(self, force=False):
             """Inicializuj hodnotu proměnné.
 
-            Argumenty:
-
-              force -- právě když je nepravdivé, inicializuj hodnotu jen tehdy,
-                je-li ještě nedefinována
+            Arguments:
+              force (bool): Pravdivá hodnota vynutí inicializaci i když je
+                hodnota již definována.
 
             """
             if force or self._value is self._undefined:
@@ -203,7 +201,7 @@ class Configuration(object):
 
         def value(self):
             """Return the current configuration option value."""
-            # Hodnotu nenastavujeme hned v konstruktoru, protože v té době
+            # Hodnotu nenastavujeme hned v konstruktoru, protože v té době
             # ještě nemusí být inicializovány jiné volby, na kterých tato volba
             # případně závisí.
             if self._value is self._undefined:
@@ -219,9 +217,9 @@ class Configuration(object):
         def changed(self):
             """Vrať pravdu, pokud hodnota volby byla změněna aplikací.
 
-            Za změnu je považováno jakékoliv nastavení volby na jinou hodnotu, než
-            jakou daná volba nabyla během inicializace (tj. při načítání voleb
-            příkazové řádky a konfiguračního souboru).
+            Za změnu je považováno jakékoliv nastavení volby na jinou hodnotu,
+            než jakou daná volba nabyla během inicializace (tj. při načítání
+            voleb příkazové řádky a konfiguračního souboru).
 
             """
             return self._changed
@@ -232,13 +230,13 @@ class Configuration(object):
             self._changed = False
 
         def long_option(self):
-            """Vrať specifikaci dlouhé volby pro 'getopt' jako string.
+            """Vrať specifikaci dlouhé volby pro getopt jako string.
 
-            Specifikace může mít například podobu 'debug' nebo 'datadir='.
-            Pokud konfigurační volba není spojena s žádnou volbou příkazové
-            řádky, vrať 'None'.
+            Specifikace může mít například podobu 'debug' nebo 'datadir='. Pokud
+            konfigurační volba není spojena s žádnou volbou příkazové řádky,
+            vrať None.
 
-            Specifikaci lze upravit předefinováním konstanty `_OPTION' v
+            Specifikaci lze upravit předefinováním konstanty _LONG_OPTION v
             odvozené třídě.
 
             """
@@ -257,14 +255,14 @@ class Configuration(object):
         def environment(self):
             """Vrať tuple jmen proměnných prostředí obsahujících hodnotu volby.
 
-            Jména proměnných jsou strings.  Proměnné prostředí jsou zkoumány
-            v uvedeném pořadí a platná je první z nich, která je v prostředí
-            přítomna (a to i když je třeba její hodnota prázdná).  Proměnné
-            prostředí mají nižší prioritu než volba příkazové řádky nebo
-            hodnota v konfiguračním souboru, avšak vyšší prioritu než hodnota
-            vrácená metodou 'default'.
+            Jména proměnných jsou strings.  Proměnné prostředí jsou zkoumány v
+            uvedeném pořadí a platná je první z nich, která je v prostředí
+            přítomna (a to i když je třeba její hodnota prázdná).  Proměnné
+            prostředí mají nižší prioritu než volba příkazové řádky nebo hodnota
+            v konfiguračním souboru, avšak vyšší prioritu než hodnota vrácená
+            metodou `default`.
 
-            Specifikaci lze upravit předefinováním konstanty `_ENVIRONMENT' v
+            Specifikaci lze upravit předefinováním konstanty _ENVIRONMENT v
             odvozené třídě.
 
             """
@@ -273,12 +271,12 @@ class Configuration(object):
         def default(self):
             """Return the default value of the configuration option.
 
-            The value returned by this method is used if the option value is
-            not set explicitly.
+            The value returned by this method is used if the option value is not
+            set explicitly.
 
             Option specification may define the default value by overriding the
-            constant `_DEFAULT' in simple cases or by overriding this
-            method if needed.
+            constant _DEFAULT in simple cases or by overriding this method if
+            needed.
 
             """
             return self._DEFAULT
@@ -287,15 +285,14 @@ class Configuration(object):
             """Vrať výchozí hodnotu konfigurační volby pro dump.
 
             Hodnota je vrácena jako řetězec, který bude vložen do vzorového
-            konfiguračního souboru.  Tuto metodu je užitečné předefinovat
-            v případě, že výchozí hodnota volby vrácená metodou 'default()' je
+            konfiguračního souboru.  Tuto metodu je užitečné předefinovat v
+            případě, že výchozí hodnota volby vrácená metodou `default` je
             závislá na konkrétním prostředí a/nebo nevystihuje způsob svého
             získání.
 
-            Specifikaci lze upravit předefinováním konstanty `_DEFAULT_STRING'
-            v odvozené třídě, nebo ve složitějších případech předefinováním
-            této metody.
-
+            Specifikaci lze upravit předefinováním konstanty _DEFAULT_STRING v
+            odvozené třídě, nebo ve složitějších případech předefinováním této
+            metody.
 
             """
 
@@ -306,7 +303,7 @@ class Configuration(object):
                 return pprint.PrettyPrinter().pformat(self.default())
 
         def type(self):
-            """Return data type of the option value as 'pytis.data.Type' instance or None."""
+            """Return data type of the option value as `pytis.data.Type` or None."""
             return self._type_
 
         def visible(self):
@@ -315,21 +312,22 @@ class Configuration(object):
             Vrácená hodnota určuje, zda má být volba přítomna ve vzorovém
             konfiguračním souboru.
 
-            Specifikaci lze upravit předefinováním konstanty `_VISIBLE'
-            v odvozené třídě.
+            Specifikaci lze upravit předefinováním konstanty _VISIBLE v odvozené
+            třídě.
 
             """
             return self._VISIBLE
 
         def description(self):
-            """Vrať stručný jednořádkový popis volby 'name' jako řetězec."""
+            """Vrať stručný jednořádkový popis volby jako řetězec."""
             return self._DESCR
 
         def documentation(self):
-            """Vrať podrobný popis volby 'name' jako řetězec nebo None.
+            """Vrať podrobný popis volby jako řetězec nebo None.
 
-            Řetězec tak může být víceřádkový a délka jednoho řádku může přesahovat 80 znaků.  Pokud
-            podrobný popis není definován, může vrátit též None.
+            Řetězec tak může být víceřádkový a délka jednoho řádku může
+            přesahovat 80 znaků.  Pokud podrobný popis není definován, může
+            vrátit též None.
 
             """
             return self._DOC
@@ -447,7 +445,7 @@ class Configuration(object):
     class _Option_debug(BooleanOption, CommandlineOption):
         u"""Příznak ladícího režimu.
 
-        Je-li zapnut, aplikace může běžet s více kontrolami a vypisovat spoustu
+        Je-li zapnut, aplikace může běžet s více kontrolami a vypisovat spoustu
         informací, obvykle však za cenu svého výrazného zpomalení.
 
         """
@@ -456,9 +454,9 @@ class Configuration(object):
     class _Option_debug_on_error(BooleanOption, CommandlineOption):
         u"""Příznak vyvolání debuggeru při chybě.
 
-        Dojde-li k odchycení neočekávané výjimky a tato volba je zapnuta, je
+        Dojde-li k odchycení neočekávané výjimky a tato volba je zapnuta, je
         vyvolán interaktivní debugger.  Je-li zapnuta volba 'debug', je
-        implicitně zapnuta i tato volba.  Užitečné pouze pro ladění.
+        implicitně zapnuta i tato volba.  Užitečné pouze pro ladění.
 
         """
 
@@ -466,27 +464,27 @@ class Configuration(object):
             return self._configuration.debug
 
     class _Option_debug_memory(BooleanOption, CommandlineOption):
-        u"""Příznak výpisu ladících informací o paměti.
+        u"""Příznak výpisu ladících informací o paměti.
 
         Je-li zapnuta, aplikace vypisuje informativní hlášky garbage collectoru
-        a jiné údaje o paměti.
+        a jiné údaje o paměti.
 
         """
         _DEFAULT = False
 
     class _Option_bug_report_address(StringOption):
-        u"""E-mailová adresa, na kterou mají být posílána oznámení o chybě."""
+        u"""E-mailová adresa, na kterou mají být posílána oznámení o chybě."""
         _DEFAULT = ''
 
     class _Option_bug_report_subject(StringOption):
-        u"""Subject mailu oznámení o chybě aplikace."""
+        u"""Subject mailu oznámení o chybě aplikace."""
         _DEFAULT = 'Bug report'
 
     class _Option_profile(BooleanOption, CommandlineOption):
         u"""Příznak profilování.
 
-        Je-li zapnut, aplikace se spustí v profilovacím režimu a ukládá
-        informace o trvání jednotlivých volání do souboru.  Zapnutí této volby
+        Je-li zapnut, aplikace se spustí v profilovacím režimu a ukládá
+        informace o trvání jednotlivých volání do souboru.  Zapnutí této volby
         velmi výrazně zpomaluje běh aplikace.
 
         """
@@ -495,16 +493,16 @@ class Configuration(object):
     class _Option_dump_queries(NumericOption, CommandlineOption):
         u"""Number of the most time consuming SQL queries to be printed.
 
-        This option may be practical for debugging the efficiency of SQL queries.
-        If non-zero, the times of all SQL queries throughout program execution
-        is collected and the given number of the most time consuming queries is
-        written to STDOUT when the program ends.
+        This option may be practical for debugging the efficiency of SQL
+        queries. If non-zero, the times of all SQL queries throughout program
+        execution is collected and the given number of the most time consuming
+        queries is written to STDOUT when the program ends.
 
         """
         _DEFAULT = 0
 
     class _Option_test_run_interactive(BooleanOption, HiddenOption):
-        u"""Příznak určující, zda mají být spouštěny i interaktivní testy.
+        u"""Příznak určující, zda mají být spouštěny i interaktivní testy.
 
         Týká se pouze regresivního testování.
 
@@ -531,7 +529,8 @@ class Configuration(object):
     class _Option_resolver(Option):
         """Specification name resolver.
 
-        Instance of 'pytis.util.Resolver' used globally to resolve specification names.
+        Instance of 'pytis.util.Resolver' used globally to resolve specification
+        names.
 
         """
 
@@ -556,10 +555,10 @@ class Configuration(object):
 
         The sequence should contain a full path at least to the 'resources'
         subdirectories found in the root of Pytis and LCG packages (these
-        resources such as images and CSS are needed by the Pytis help
-        system). Additionally it may contain application specific resource
-        directories if application refers to its own resources within the
-        contents displayed through the built in browser.
+        resources such as images and CSS are needed by the Pytis help system).
+        Additionally it may contain application specific resource directories if
+        application refers to its own resources within the contents displayed
+        through the built in browser.
 
         """
         _ENVIRONMENT = ('PYTIS_RESOURCE_PATH',)
@@ -574,7 +573,7 @@ class Configuration(object):
     class _Option_print_spec_dir(FileOption):
         u"""Adresář obsahující specifikace tiskových sestav.
 
-        Může být zadán absolutně i relativně vzhledem k aktuálnímu adresáři.
+        Může být zadán absolutně i relativně vzhledem k aktuálnímu adresáři.
 
         """
         _DEFAULT = './output'
@@ -586,9 +585,9 @@ class Configuration(object):
         _DEFAULT = './docs'
 
     class _Option_icon_dir(FileOption):
-        u"""Adresář s obrázkovými soubory.
+        u"""Adresář s obrázkovými soubory.
 
-        Může být zadán absolutně i relativně vzhledem k aktuálnímu adresáři.
+        Může být zadán absolutně i relativně vzhledem k aktuálnímu adresáři.
 
         """
         def default(self):
@@ -625,7 +624,7 @@ class Configuration(object):
     class _Option_logo(FileOption, CommandlineOption):
         u"""Cesta k souboru s logem.
 
-        Může být zadán absolutně i relativně vzhledem k aktuálnímu adresáři.
+        Může být zadán absolutně i relativně vzhledem k aktuálnímu adresáři.
 
         """
         _DEFAULT = './icons/logo.bmp'
@@ -665,25 +664,25 @@ class Configuration(object):
         _DEFAULT = None
 
     class _Option_dbconnections(HiddenOption):
-        """Alternative database connections"
+        """Alternative database connections.
 
-        The default database connection is normally defined by 'dbconnection'.
+        The default database connection is normally defined by dbconnection.
         Certain applications, however, may require multiple database
         connections, which are configured using this option.  The value is a
         dictionary assigning a connection specification to each connection by
         name.  Connection names are defined by applications (each application
         should mention the names of used conections in its documentation).  The
         connection specification (the value assigned to a connection name) is a
-        dictionary with keys 'dbname', 'dbhost', 'dbport', 'dbuser', 'dbpass'
-        and 'dbsslm'.  Only 'dbname' is mandatory.  Their meaning and default
-        values are the same as for the configuration options of the same names
-        specifying the properties of the default connection.
+        dictionary with keys dbname, dbhost, dbport, dbuser, dbpass and dbsslm.
+        Only dbname is mandatory.  Their meaning and default values are the same
+        as for the configuration options of the same names specifying the
+        properties of the default connection.
 
         """
         _DEFAULT = {}
 
     class _Option_dbconnection(HiddenOption):
-        """Database connection specification instance ('pytis.data.DBConnection').
+        """Database connection specification instance (`pytis.data.DBConnection`).
 
         The instance is constructed from the above db* option by default.
 
@@ -718,10 +717,10 @@ class Configuration(object):
     class _Option_session_variables(HiddenOption):
         """Custom session variables.
 
-        Dictionary of custom session variables which will be set for
-        each connection.
-        The dictionary keys have the form 'class.variable' and values
-        have to be strings, e.g. {'myvars.myid': '10'}.
+        Dictionary of custom session variables which will be set for each
+        connection. The dictionary keys have the form 'class.variable' and
+        values have to be strings, e.g. {'myvars.myid': '10'}.
+
         """
         _DEFAULT = {}
 
@@ -757,11 +756,10 @@ class Configuration(object):
     class _Option_use_dmp_roles(BooleanOption):
         u"""Use of dmp roles if available.
 
-        This option specifies if access groups should be taken
-        from the database specific dmp tables. If True
-        and if valid view 'ev_pytis_user_roles' is in the database
-        then these specific application roles (groups) will be used,
-        otherwise normal postgresql cluster roles will be used.
+        This option specifies if access groups should be taken from the database
+        specific dmp tables. If True and if valid view 'ev_pytis_user_roles' is
+        in the database then these specific application roles (groups) will be
+        used, otherwise normal postgresql cluster roles will be used.
 
         """
         _DEFAULT = True
@@ -770,10 +768,9 @@ class Configuration(object):
         u"""Use of dmp rights if available.
 
         This option specifies if access rights for menus, application
-        specifications and actions are stored in dmp tables.
-        If True and valid dmp tables exists and 'use_dmp_roles' is set
-        then dmp rights will be used, otherwise access rights from
-        specifications will be used.
+        specifications and actions are stored in dmp tables. If True and valid
+        dmp tables exists and 'use_dmp_roles' is set then dmp rights will be
+        used, otherwise access rights from specifications will be used.
 
         """
         _DEFAULT = True
@@ -783,11 +780,11 @@ class Configuration(object):
     class _Option_log_logger(Option):
         """Logging class specification.
 
-        "Tuple of (CLASS, ARGS, KWARGS), where CLASS is a logging class and
-        ARGS, KWARGS are its constructor arguments and keyword argumnets.
+        Tuple of (CLASS, ARGS, KWARGS), where CLASS is a logging class and ARGS,
+        KWARGS are its constructor arguments and keyword arguments.
 
-        Standard availavle classes are SyslogLogger and StreamLogger.  More
-        about them in their documentation.
+        Standard available classes are :class: and :class:.  More about them in
+        their documentation.
 
         """
 
@@ -800,8 +797,7 @@ class Configuration(object):
     class _Option_log_exclude(Option):
         u"""Seznam typů logovacích hlášek, které mají být odfiltrovány.
 
-        V seznamu lze použít konstanty 'OPERATIONAL', 'ACTION', 'EVENT' a
-        'DEBUG'.
+        V seznamu lze použít konstanty `OPERATIONAL`, `ACTION`, `EVENT` a `DEBUG`.
 
         """
         _DEFAULT_STRING = '[DEBUG]'
@@ -816,7 +812,7 @@ class Configuration(object):
     class _Option_log_one_line_preferred(BooleanOption):
         u"""Určuje, zda je preferováno stručné nebo jednotné formátování.
 
-        Je-li tato volba nastavena na pravdu, jsou krátká data v logovacích
+        Je-li tato volba nastavena na pravdu, jsou krátká data v logovacích
         hláškách doporučujících stručnost připojena ihned za hlášku místo
         vypsání na samostatný řádek.
 
@@ -826,7 +822,7 @@ class Configuration(object):
     class _Option_log_module_filter(StringOption):
         u"""Prefix jména modulu, jehož debugovací hlášky jsou propuštěny.
 
-        Debugovací logovací hlášky modulů s jiným prefixem jsou odfiltrovány.
+        Debugovací logovací hlášky modulů s jiným prefixem jsou odfiltrovány.
         Není-li definováno, jsou propuštěny všechny hlášky (nestanoví-li jiný
         filtr jinak).  Užitečné pouze pro ladění.
 
@@ -838,7 +834,7 @@ class Configuration(object):
         u"""Sekvence jmen tříd, jejichž debugovací hlášky jsou propuštěny.
 
         Debugovací logovací hlášky ostatních tříd jsou odfiltrovány.  Je-li
-        'None', jsou propuštěny všechny hlášky (nestanoví-li jiný filtr jinak).
+        `None`, jsou propuštěny všechny hlášky (nestanoví-li jiný filtr jinak).
         Užitečné pouze pro ladění.
 
         """
@@ -894,9 +890,9 @@ class Configuration(object):
         u"""Jméno aplikace.
 
         Jméno může být libovolné, používá se např. jako titulek okna nebo při
-        logování.  Od něho je také odvozeno jméno výchozího souboru pro
-        ukládání uživatelských změn v konfiguraci (po vypuštění speciálních
-        znaků a diakritiky)
+        logování.  Od něho je také odvozeno jméno výchozího souboru pro ukládání
+        uživatelských změn v konfiguraci (po vypuštění speciálních znaků a
+        diakritiky)
 
         """
         _DEFAULT = 'Pytis'
@@ -904,8 +900,8 @@ class Configuration(object):
     class _Option_date_time_format(StringOption):
         u"""Formát společně uvedeného data a času.
 
-        Řetězec ve tvaru vyžadovaném parametrem `format' konstruktoru třídy
-        'pytis.data.DateTime'.
+        Řetězec ve tvaru vyžadovaném parametrem format konstruktoru třídy
+        `pytis.data.DateTime`.
 
         """
 
@@ -916,7 +912,7 @@ class Configuration(object):
     class _Option_date_format(StringOption):
         u"""Formát data.
 
-        Řetězec ve tvaru vyžadovaném parametrem `format' konstruktoru třídy
+        Řetězec ve tvaru vyžadovaném parametrem format konstruktoru třídy
         'pytis.data.Date'.
 
         """
@@ -928,7 +924,7 @@ class Configuration(object):
     class _Option_time_format(StringOption):
         u"""Formát času.
 
-        Řetězec ve tvaru vyžadovaném parametrem `format' konstruktoru třídy
+        Řetězec ve tvaru vyžadovaném parametrem format konstruktoru třídy
         'pytis.data.Time'.
 
         """
@@ -940,8 +936,8 @@ class Configuration(object):
     class _Option_export_encoding(StringOption):
         """Exported data encoding.
 
-        The exported files in CSV format will be saved using this
-        encoding.  Must be one of Python supported encodings.
+        The exported files in CSV format will be saved using this encoding. Must
+        be one of Python supported encodings.
 
         """
         _DESCR = _("Exported data encoding.")
@@ -989,8 +985,8 @@ class Configuration(object):
     class _Option_form_statistics(BooleanOption):
         u"""Flag povolující ukládání statistických informací o otevírání formulářů.
 
-        Flag určující, zda mají být do databáze ukládány statistické informace
-        o otevíraných formulářích.
+        Flag určující, zda mají být do databáze ukládány statistické informace o
+        otevíraných formulářích.
 
         """
         _DEFAULT = False
@@ -1015,9 +1011,9 @@ class Configuration(object):
     class _Option_edit_form_timeout(NumericOption):
         u"""Časový limit pro uzavření editačního formuláře při nečinnosti.
 
-        Po uvedeném počtu sekund, během nichž uživatel nepracoval s editačním
-        formulářem, se tento formulář automaticky uzavře.  Nastavením hodnoty
-        na 'None' se automatické uzavírání editačních formulářů vypne.
+        Po uvedeném počtu sekund, během nichž uživatel nepracoval s editačním
+        formulářem, se tento formulář automaticky uzavře.  Nastavením hodnoty na
+        None se automatické uzavírání editačních formulářů vypne.
 
         """
         _DEFAULT = None
@@ -1075,8 +1071,8 @@ class Configuration(object):
     class _Option_show_splash(BooleanOption):
         """Show the initial splash screen.
 
-        The splash screen is actually displayed by application specific code,
-        so the filal interpretation of this option depends on the application.
+        The splash screen is actually displayed by application specific code, so
+        the filal interpretation of this option depends on the application.
 
         """
         _DESCR = _("Show the initial splash screen.")
@@ -1101,6 +1097,7 @@ class Configuration(object):
 
     class _Option_autostart_saved_forms(BooleanOption):
         """Dont' ask whether to start forms saved on last exit.
+
         """
         _DOC = _("Start forms saved on last exit without asking.")
         _DOC = _("If true, the forms saved on last exit will be automatically "
@@ -1117,8 +1114,8 @@ class Configuration(object):
         is the label for the UI layout selector (basestring), 'icon' is the
         corresponding icon identifier for 'pytis.form.get_icon()' -- name of a
         file located in 'config.icon_path' without suffix (.png or .svg)
-        (basestring) and 'command' is the system command to be invoked to
-        switch to given layout (basestring).
+        (basestring) and 'command' is the system command to be invoked to switch
+        to given layout (basestring).
 
         """
         _DEFAULT = ()
@@ -1209,8 +1206,8 @@ class Configuration(object):
         of rows, so that lighter colored rows are followed by darker colored
         rows and vice versa.  The color specification in this option determines
         the level and the tone of the darker rows.  When combined with white
-        rows, the darker rows will have exactly the same color as specified.
-        But some rows may be already colored otherwise and in this case the two
+        rows, the darker rows will have exactly the same color as specified. But
+        some rows may be already colored otherwise and in this case the two
         colors are combined.
 
         """
@@ -1249,10 +1246,9 @@ class Configuration(object):
     def add_command_line_options(self, command_line):
         """Nastav volby dle příkazové řádky.
 
-        Argumenty:
-
-          command_line -- volby příkazové řádky jako sekvence strings; typicky
-            'sys.argv'
+        Arguments:
+          command_line (list): Volby příkazové řádky jako sekvence strings;
+            typicky sys.argv.
 
         """
         self._init_options(command_line=command_line)
@@ -1358,18 +1354,17 @@ class Configuration(object):
         Previously set configuration values may get reset during that process.
 
         Arguments:
-
-          filename -- name of the pytis configuration file, basestring
+          filename (str): Name of the pytis configuration file.
 
         """
         assert isinstance(filename, basestring), filename
         return self._read_configuration_file(filename)
 
     def __getattr__(self, name):
-        """Return the current value of configuration option 'name'.
+        """Return the current value of configuration option name.
 
-        'name' must be a string name of an existing configuration option.  'AttributeError' is
-        raised if no such option exists.
+        name must be a string name of an existing configuration option.
+        `AttributeError` is raised if no such option exists.
 
         """
         if __debug__ and name not in ('config_file', 'user_config_file'):
@@ -1393,8 +1388,8 @@ class Configuration(object):
     def __setattr__(self, name, value):
         """Set the value of configuration option 'name'.
 
-        'name' must be a string name of an existing configuration option.  'AttributeError' is
-        raised if no such option exists.
+        name must be a string name of an existing configuration option.
+        `AttributeError` is raised if no such option exists.
 
         """
         if name in self.__dict__['_options']:
@@ -1412,16 +1407,16 @@ class Configuration(object):
     def merge(self, dict, override_cmdline=False):
         """Nastav aktuální konfiguraci z hodnot daného slovníku.
 
-        Argumenty:
-          dict -- slovník, ze kterého mají být převzaty nové hodnoty.
+        Arguments:
+          dict (dict): Slovník, ze kterého mají být převzaty nové hodnoty.
             Převezmou se pouze hodnoty klíčů, jejichž názvy odpovídají
             definovaným konfiguračním volbám a to pouze v případě, že jsou
             definovány (obsahují jinou hodnotu než None).  Ostatní budou
             ignorovány.
-          override_cmdline -- implicitně nejsou přenastavovány hodnoty převzaté
-            z příkazové řádky.  Pravdivá hodnota tohoto argumentu způsobí, že
-            budou přenastaveny všechny nalezené konfigurační volby včetně těch
-            z příkazového řádku.
+          override_cmdline (bool): Implicitně nejsou přenastavovány hodnoty
+            převzaté z příkazové řádky.  Pravdivá hodnota tohoto argumentu
+            způsobí, že budou přenastaveny všechny nalezené konfigurační volby
+            včetně těch z příkazového řádku.
 
         """
         options = self._options
@@ -1452,9 +1447,13 @@ class Configuration(object):
                 stream.write('#%s = %s\n\n' % (option.name(), value.replace("\n", "\n#" + indent)))
 
     def options(self, sort=False):
-        """Return a tuple of all configuration options as 'Configuration.Option' instances.
+        """Return a tuple of all configuration options.
 
-        If 'sort' is true, the options will be returned in the order of their definition.
+        Returns a tuple of `Configuration.Option` instances.
+
+        Arguments:
+          sort (bool): If true, options are returned in the order of their
+            definition.
 
         """
         options = tuple(self._options.values())
@@ -1465,8 +1464,8 @@ class Configuration(object):
     def option(self, name):
         """Return the 'Configuration.Option' instance for the option of given 'name'.
 
-        'name' must be a string name of an existing configuration option.  'AttributeError' is
-        raised if no such option exists.
+        name must be a string name of an existing configuration option.
+        `AttributeError` is raised if no such option exists.
 
         """
         try:
@@ -1479,9 +1478,8 @@ def set_configuration_file(configuration_file):
     """Set configuration file and reset all configuration options.
 
     Arguments:
-
-      configuration_file -- name of the configuration file, basestring, or
-        'None' (in which case nothing happens)
+      configuration_file (str): Name of the configuration file, or `None` (in
+        which case nothing happens).
 
     """
     if configuration_file is not None:

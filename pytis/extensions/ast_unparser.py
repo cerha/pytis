@@ -33,14 +33,21 @@ def interleave(inter, f, seq):
 
 
 class Unparser(object):
-    """Methods in this class recursively traverse an AST and
-    output source code for the abstract syntax; original formatting
-    is disregarded.
+    """Methods in this class recursively traverse an AST and output source code.
+
+    Output source code for the abstract syntax; original formatting is
+    disregarded.
+
     """
 
     def __init__(self, tree, file=sys.stdout):
-        """AstUnparser(tree, file=sys.stdout) -> None.
-         Print the source for tree to file."""
+        """Print the source for tree to file.
+
+        Arguments:
+          tree: AST tree to unparse.
+          file: Output file object.
+
+        """
         self.f = file
         self.future_imports = []
         self._indent = 0
@@ -49,24 +56,24 @@ class Unparser(object):
         self.f.flush()
 
     def fill(self, text=""):
-        "Indent a piece of text, according to the current indentation level"
+        """Indent a piece of text, according to the current indentation level."""
         self.f.write("\n" + "    " * self._indent + text)
 
     def write(self, text):
-        "Append a piece of text to the current line."
+        """Append a piece of text to the current line."""
         self.f.write(text)
 
     def enter(self):
-        "Print ':', and increase the indentation."
+        """Print ':', and increase the indentation."""
         self.write(":")
         self._indent += 1
 
     def leave(self):
-        "Decrease the indentation level."
+        """Decrease the indentation level."""
         self._indent -= 1
 
     def dispatch(self, tree):
-        "Dispatcher function, dispatching tree type T to method _T."
+        """Dispatcher function, dispatching tree type T to method _T."""
         if isinstance(tree, list):
             for t in tree:
                 self.dispatch(t)

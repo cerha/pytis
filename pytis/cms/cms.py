@@ -18,11 +18,12 @@
 
 """Pytis CMS specifications.
 
-Pytis CMS is a fat client application for management of database structures, which define the
-behavior of a web application.
+Pytis CMS is a fat client application for management of database structures,
+which define the behavior of a web application.
 
-Wiking modules which implement a Wiking application, which reads these database structures and
-behaves according to them can be found in the 'web' submodule of this module.
+Wiking modules which implement a Wiking application, which reads these
+database structures and behaves according to them can be found in the `web`
+submodule of this module.
 
 """
 from __future__ import unicode_literals

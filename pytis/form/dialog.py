@@ -58,12 +58,11 @@ unistr = type(u'')  # Python 2/3 transition hack.
 class Dialog(KeyHandler, CommandHandler, object):
     """Common base class for all dialogs.
 
-    This class defines the public API.  All dialog classes used within Pytis
-    are derived from it.
+    This class defines the public API.  All dialog classes used within Pytis are
+    derived from it.
 
     Creating a dialog instance only sets its properties.  No UI elements are
-    created at that point.  Those are created by calling 'run()' on the
-    instance.
+    created at that point.  Those are created by calling `run` on the instance.
 
     """
     @classmethod
@@ -78,10 +77,11 @@ class Dialog(KeyHandler, CommandHandler, object):
     def run(self):
         """Construct the dialog, display it and wait for user interaction.
 
-        Returns: The result depends on the dialog type.
+        The call blocks until the dialog is submitted, typically by pressing one
+        of its buttons.
 
-        The call blocks until the dialog is submitted, typically by pressing
-        one of its buttons.
+        Returns:
+          The result depends on the dialog type.
 
         """
         return True
@@ -146,7 +146,7 @@ class GenericDialog(Dialog):
     _DEFAULT_BUTTON = None
     """Initially selected button.
 
-    One of the instances present in _BUTTONS or None.  The default button has
+    One of the instances present in `_BUTTONS` or None.  The default button has
     initial focus so it is pressed on Enter and Space keys.  The default button
     press is also simulated on dialog force commit command (Ctrl-Enter) even if
     it does not currently have keyboard focus.
@@ -157,15 +157,13 @@ class GenericDialog(Dialog):
     _STYLE = wx.CAPTION | wx.CLOSE_BOX | wx.MINIMIZE_BOX | wx.SYSTEM_MENU
 
     def __init__(self, parent, title=None, content=None):
-
         """Initialize the dialog.
 
         Arguments:
-
-          parent -- wx parent; 'wx.Frame' or 'wx.Dialog' instance
-          title -- title to show in the dialog title bar as a string
-          content -- additional content to be displayed under the message in a
-            possibly scrollable view.  May be passed as 'lcg.Content' instance
+          parent: wx parent; `wx.Frame` or `wx.Dialog` instance.
+          title: Title to show in the dialog title bar as a string.
+          content: Additional content to be displayed under the message in a
+            possibly scrollable view.  May be passed as a `lcg.Content` instance
             which is exported and displayed in an HTML component or a string
             which is displayed as plain text.
 
@@ -180,14 +178,14 @@ class GenericDialog(Dialog):
     def _create_dialog(self):
         """Create the dialog wx instance and build its contents.
 
-        The goal is of this method is to assign the wx instance to
-        'self._dialog' and initialize its contents.
+        The goal of this method is to assign the wx instance to `self._dialog`
+        and initialize its contents.
 
-        The base class creates a 'wx.Dialog' and calls
-        '_create_dialog_elements()'.  Most subclasses will only need to
-        override the methods used by '_create_dialog_elements()' to build
-        specific dialog contents.  Overriding this method may be necessary when
-        another wx class is to be used instead of 'wx.Dialog'.
+        The base class creates a `wx.Dialog` and calls
+        `_create_dialog_elements`.  Most subclasses will only need to override
+        the methods used by `_create_dialog_elements` to build specific dialog
+        contents.  Overriding this method may be necessary when another wx class
+        is to be used instead of `wx.Dialog`.
 
         """
         style = self._STYLE
@@ -207,10 +205,10 @@ class GenericDialog(Dialog):
     def _create_dialog_elements(self):
         """Build the dialog UI.
 
-        The main dialog content is created by calling '_create_main_content()' and
-        'content' view and submit buttons are appended underneath.
+        The main dialog content is created by calling `_create_main_content` and
+        content view and submit buttons are appended underneath.
 
-        Most derived classes will just override '_create_main_content()' to
+        Most derived classes will just override `_create_main_content` to
         customize dialog appearance.
 
         """
@@ -267,6 +265,9 @@ class GenericDialog(Dialog):
 
         Builds the main dialog content area above the dialog buttons.
 
+        Arguments:
+          sizer: The top level `wx.Sizer` to add content to.
+
         """
         pass
 
@@ -305,15 +306,15 @@ class GenericDialog(Dialog):
         self._end_modal(event.GetId())
 
     def _buttons(self):
-        """Override if static definition through the '_BUTTONS' constant is not enough."""
+        """Override if static definition through the `_BUTTONS` constant is not enough."""
         return self._BUTTONS
 
     def _default_button(self, buttons):
-        """Override if static definition through the '_DEFAULT_BUTTON' constant is not enough."""
+        """Override if static definition through `_DEFAULT_BUTTON` constant is not enough."""
         return self._DEFAULT_BUTTON
 
     def _button(self, wxid):
-        """Return the GenericDialog.Button instance for given wx button id or None."""
+        """Return the `GenericDialog.Button` instance for given wx button id or None."""
         return self._buttons_map.get(wxid)
 
     def _is_committable_widget(self, widget):
@@ -346,12 +347,18 @@ class GenericDialog(Dialog):
         return self._customize_result(self._dialog.ShowModal())
 
     def _customize_result(self, wxid):
-        """Return the value to be returned by 'run()' for given wx '_run_dialog()' result.
+        """Return the value to be returned by `run` for given wx result.
 
-        Given 'wxid' is the integer returned by dialog's 'ShowModal()'.  The
-        default implementation returns the value of the dialog button pressed
-        or None if the dialog is ended otherwise (usually pressing escape or
+        Given `wxid` is the integer returned by dialog's `ShowModal`. The
+        default implementation returns the value of the dialog button pressed or
+        None if the dialog is ended otherwise (usually pressing escape or
         closing by mouse).  May be overridden in derived classes.
+
+        Arguments:
+          wxid: Integer returned by the dialog's `ShowModal`.
+
+        Returns:
+          The value associated with the pressed button, or None.
 
         """
         button = self._button(wxid)
@@ -377,8 +384,8 @@ class Message(GenericDialog):
 
     This class only displays a message and a button to accept the dialog.
 
-    The return value of 'run()' is simply the label of the button used to end
-    the dialog (None if it was closed in another way than by the button).
+    The return value of `run` is simply the label of the button used to end the
+    dialog (None if it was closed in another way than by the button).
 
     """
     ICON_INFO = 'information'
@@ -401,11 +408,11 @@ class Message(GenericDialog):
         """Initialize the dialog.
 
         Arguments:
-
-          parent -- wx parent; 'wx.Frame' or 'wx.Dialog' instance
-          title -- title to show in the dialog title bar as a string
-          message -- the message displayed in the main dialog area as a string (newlines respected).
-          icon -- One of ICON_* constants of the class.
+          parent: wx parent; `wx.Frame` or `wx.Dialog` instance.
+          title: Title to show in the dialog title bar as a string.
+          message: The message displayed in the main dialog area as a string
+            (newlines respected).
+          icon: One of the `ICON_*` constants of the class.
 
         """
         super(Message, self).__init__(parent, title=title, **kwargs)
@@ -467,14 +474,14 @@ class Error(Message):
 class Question(Message):
     """Dialog asking for answer to given question from list of answers (buttons).
 
-    The available answers are either specified explicitly or the default
-    answers are 'Yes' and 'No' ('Yes' being the default).
+    The available answers are either specified explicitly or the default answers
+    are 'Yes' and 'No' ('Yes' being the default).
 
-    With default answers 'Yes'/'No', 'run()' returns True if the user pressed the
+    With default answers 'Yes'/'No', `run` returns True if the user pressed the
     'Yes' button, False if the user pressed the 'No' button and None otherwise.
 
-    With answers explicitly passed to the constructor, 'run()' returns the
-    answer itself (string) of the pressed button or None.
+    With answers explicitly passed to the constructor, `run` returns the answer
+    itself (string) of the pressed button or None.
 
     """
     BUTTON_YES = GenericDialog.Button(_("Yes"), icon='yes', value=True)
@@ -485,28 +492,25 @@ class Question(Message):
         """Initialize the dialog.
 
         Arguments:
-
-          answers -- sequence of available answers to be presented as dialog
+          answers: Sequence of available answers to be presented as dialog
             submit buttons.  If None, the default buttons are 'Yes' returning
             True when pressed and 'No' returning False.  If not None the items
             of the sequence may be strings or dictionaries.  If strings, these
             are the labels of dialog submit buttons which return the string
             label itself when pressed.  Using dictionaries allows more control.
-            Each dictionary may have the following keys: 'label' (string) is
-            the button label, 'value' is the value returned by the dialog when
-            the button is pressed, 'descr' is the button tooltip and 'icon' is
-            the icon name (as in 'get_icon()').  Only 'label' is mandatory,
-            others are None by default.
-
-          default -- The initially selected answer value.  This means True or
+            Each dictionary may have the following keys: `label` (string) is the
+            button label, `value` is the value returned by the dialog when the
+            button is pressed, `descr` is the button tooltip and `icon` is the
+            icon name (as in `get_icon`). Only `label` is mandatory, others
+            are None by default.
+          default: The initially selected answer value.  This means True or
             False for the default answers 'Yes' and 'No', the button label for
-            answers passed as strings or the corresponding 'value' for the
+            answers passed as strings or the corresponding `value` for the
             answers passed as dictionaries.
-
-          timeout -- dialog timeout in seconds; integer.  When the dialog is
-            shown for more than the given time, it gets automatically closed
-            and 'None' is returned as the answer.  If the argument value is
-            'None' then the dialog is shown until user chooses an answer.
+          timeout: Dialog timeout in seconds; integer.  When the dialog is shown
+            for more than the given time, it gets automatically closed and None
+            is returned as the answer.  If None then the dialog is shown until
+            user chooses an answer.
 
         """
         super(Question, self).__init__(parent, message, title=title, icon=icon, **kwargs)
@@ -542,7 +546,7 @@ class Question(Message):
                 try:
                     self._dialog.EndModal(-1000)
                 except Exception:
-                    # The wx instance of `self' may already be inactive
+                    # The wx instance of `self` may already be inactive
                     pass
             wx.CallLater(self._timeout * 1000, destroy)
 
@@ -550,14 +554,14 @@ class Question(Message):
 class ProgressDialog(Message):
     """Dialog for execution of a long running operation in progress.
 
-    The dialog is displayed until the operation is finished and may inform
-    the user about the progress of the operation visually (by a progress
-    bar) and textually (by a gradually updated progress message).
+    The dialog is displayed until the operation is finished and may inform the
+    user about the progress of the operation visually (by a progress bar) and
+    textually (by a gradually updated progress message).
 
-    The operation is launched by executing the method 'run()' which will block
+    The operation is launched by executing the method `run` which will block
     until the operation is finished and will return its result.
 
-    This dialog implements the API defined by 'pytis.api.Application.run()' so
+    This dialog implements the API defined by `pytis.api.Application.run` so
     most of its documentation applies here.
 
     """
@@ -571,36 +575,38 @@ class ProgressDialog(Message):
         """Initialize the dialog.
 
         Arguments:
-
-          parent, title -- as in the parent class.
-          function -- function to be called and tracked by the progress dialog.
-            The function must accept the 'update' callback as its first
-            argument unless 'show_progress' is false (see the class docstring).
-          args, kwargs -- additional positional and keyword arguments to be
-            passed to 'function' after the 'update' callback.
-          message -- initial message displayed above the progress bar.  May be
-            changed later calling the 'update' callback with the 'message'
+          parent: As in the parent class.
+          title: As in the parent class.
+          function: Function to be called and tracked by the progress dialog.
+            The function must accept the `update` callback as its first argument
+            unless `show_progress` is false (see the class docstring).
+          args: Additional positional arguments to be passed to `function` after
+            the `update` callback.
+          kwargs: Additional keyword arguments to be passed to `function` after
+            the `update` callback.
+          message: Initial message displayed above the progress bar.  May be
+            changed later by calling the `update` callback with the `message`
             argument.
-          show_progress -- if false, the dialog desn't show progress and the
-            message can not be updated.  The 'function' does not receive the
-            'update' callback as the first argument in this case and all the
+          show_progress: If false, the dialog doesn't show progress and the
+            message can not be updated.  The `function` does not receive the
+            `update` callback as the first argument in this case and all the
             remaining arguments are irrelevant (and should not be passed).
-          maximum -- integer value determining the range in which the progress
-            is tracked (corresponds to 100% progress).
-          elapsed_time -- if true, show the time from the beginning.
-          estimated_time -- if true, show the estimated total time.
-          remaining_time -- if true, show the estimated time to the end.
-          time_precision -- elapsed/total/remaining time is by default
-            displayed with precision to seconds unless it has non-zero hours,
-            in which case it only displays hours and minutes.  Setting this
-            option to 'minutes' (a string literal) will suppress displaying
-            seconds in any case.
-          can_abort -- if true, display the "Abort" button.  Operation abortion
-            must be supported by the called operation through the 'update'
+          maximum: Integer value determining the range in which the progress is
+            tracked (corresponds to 100% progress).
+          elapsed_time: If true, show the time from the beginning.
+          estimated_time: If true, show the estimated total time.
+          remaining_time: If true, show the estimated time to the end.
+          time_precision: Elapsed/total/remaining time is by default displayed
+            with precision to seconds unless it has non-zero hours, in which
+            case it only displays hours and minutes.  Setting this option to
+            `'minutes'` (a string literal) will suppress displaying seconds in
+            any case.
+          can_abort: If true, display the "Abort" button.  Operation abortion
+            must be supported by the called operation through the `update`
             callback return value (see the class docstring).
 
-        See the documentation of 'pytis.api.Application.run()' for more
-        information about progress updates and arguemnt relations.
+        See the documentation of `pytis.api.Application.run` for more
+        information about progress updates and argument relations.
 
         """
         super(ProgressDialog, self).__init__(parent, message=message or '',
@@ -719,8 +725,8 @@ class ProgressDialog(Message):
 class Calendar(GenericDialog):
     """Dialog with calendar widget, allowing date selection.
 
-    Date can be preset using constructor arguemnt 'date'.  The method 'run()'
-    returns the selected date as a 'datetime.datetime' instance or None if the
+    Date can be preset using constructor argument `date`.  The method `run`
+    returns the selected date as a `datetime.datetime` instance or None if the
     dialog was canceled.
 
     """
@@ -731,17 +737,16 @@ class Calendar(GenericDialog):
                  monday_first=True):
         """Initialize the dialog.
 
+        If the `date` argument does not contain a string that can be parsed
+        using `wx.DateTime.ParseDate`, the date will be set to today's date.
+
         Arguments:
-
-          parent, title -- as in the parent class.
-          date -- preset date as a 'datetime.datetime' instance.
-          enable_year -- if true, show the year selector; boolean
-          enable_month -- if true, show the month selector; boolean
-          monday_first -- if true, Monday is the first day of the week;
-            boolean
-
-        If the date argument does not contain a string that can be parsed using
-        'wx.DateTime.ParseDate()', the date will be set to today's date.
+          parent: As in the parent class.
+          title: As in the parent class.
+          date: Preset date as a `datetime.datetime` instance.
+          enable_year: If true, show the year selector; boolean.
+          enable_month: If true, show the month selector; boolean.
+          monday_first: If true, Monday is the first day of the week; boolean.
 
         """
         super(Calendar, self).__init__(parent, title=title)
@@ -792,16 +797,17 @@ class Calendar(GenericDialog):
 
 
 class BugReport(GenericDialog):
-    """Dialog displaying information about unhandled exception.
+    """Dialog displaying information about an unhandled exception.
 
     It is possible to send a bug report by email before closing the dialog.
 
     The user may close the dialog by choosing between two options:
-      - Ignore the exception and try continuing running the program
-        (which may not always work).
-      - Exit the application
 
-    The return value is True if exit is requested or False otherwise.
+    - Ignore the exception and try continuing running the program
+      (which may not always work).
+    - Exit the application.
+
+    The return value of `run` is True if exit is requested or False otherwise.
 
     """
     BUTTON_IGNORE = GenericDialog.Button(_("Ignore"), value=False, icon='submit',
@@ -818,9 +824,8 @@ class BugReport(GenericDialog):
         """Initialize the dialog.
 
         Arguments:
-
-          parent -- wx parent window; 'wx.Frame' or 'wx.Dialog' instance
-          einfo -- exception information as returned by 'sys.exc_info()'
+          parent: wx parent window; `wx.Frame` or `wx.Dialog` instance.
+          einfo: Exception information as returned by `sys.exc_info`.
 
         """
         super(BugReport, self).__init__(parent, title=_("Unhandled exception"))
@@ -908,12 +913,12 @@ class CheckListDialog(Message):
     """A question dialog with a list of checkable items.
 
     The dialog displays a question with a list of items and a checkbox for each
-    of the items.  The question is passed as 'message' ('content' is allowed
-    too as in 'Message').
+    of the items.  The question is passed as `message` (`content` is allowed too
+    as in `Message`).
 
-    The result returned by the `run()' method is a sequence of boolean values,
-    one for each item of 'items' passed to the constructor.  The value is True
-    for items which were checked and False for unchecked items.
+    The result returned by the `run` method is a sequence of boolean values, one
+    for each item of `items` passed to the constructor.  The value is True for
+    items which were checked and False for unchecked items.
 
     """
     _STYLE = GenericDialog._STYLE | wx.RESIZE_BORDER
@@ -923,10 +928,9 @@ class CheckListDialog(Message):
         """Initialize the dialog.
 
         Arguments:
-          items -- a sequence of checkable items.  Each item is a pair of
-            (bool, unicode).  The bool value in indicates the initial checkbox
-            state for this item.  The unicode value is the textual label for
-            the item.
+          items: A sequence of checkable items.  Each item is a pair of (bool,
+            unicode).  The bool value indicates the initial checkbox state for
+            this item.  The unicode value is the textual label for the item.
 
         """
         super(CheckListDialog, self).__init__(parent, title=title, message=message, **kwargs)
@@ -954,21 +958,21 @@ class CheckListDialog(Message):
 class AggregationSetupDialog(GenericDialog):
     """A dialog for setting up an aggregated form.
 
-    The result returned by the `run()' is a tuple of two tuples
-    (name, group_by_columns, aggregation_columns).
+    The result returned by `run` is a tuple (name, group_by_columns,
+    aggregation_columns).
 
-    name -- user supplied human readable title of the aggregated view for
-      further reference (the values of group_by_columns and aggregation_columns
-      may be stored and further used under this title).
+    `name` is a user supplied human readable title of the aggregated view for
+    further reference (the values of `group_by_columns` and
+    `aggregation_columns` may be stored and further used under this title).
 
-    group_by_columns -- selected group by columns as a sequence of pairs
-      (column_id, function), where function is the name of the grouping
-      function from 'grouping_functions' constructor argument or None if the
-      column is used directly with no function applied.
+    `group_by_columns` is a sequence of selected group by columns as pairs
+    (column_id, function), where function is the name of the grouping function
+    from the `grouping_functions` constructor argument or None if the column is
+    used directly with no function applied.
 
-    aggregation_columns -- preselected aggregation columns as a sequence of
-      pairs (column_id, operation), where operation is the name of the
-      aggregation function from 'aggregation_functions' constructor argument.
+    `aggregation_columns` is a sequence of selected aggregation columns as pairs
+    (column_id, operation), where operation is the name of the aggregation
+    function from the `aggregation_functions` constructor argument.
 
     """
     _STYLE = GenericDialog._STYLE | wx.RESIZE_BORDER
@@ -980,27 +984,27 @@ class AggregationSetupDialog(GenericDialog):
         """Initialize the dialog.
 
         Arguments:
-
-             aggregation_functions -- specification of available aggregation
-               functions as a sequence of pairs (operation, label), where
-               operation is one of `pytis.data.AGG_*' constants and label is
-               the string title of given function.
-             grouping_functions -- specification of available functions
-               aplicable to group by columns in the same format as the
-               'ViewSpec' argument 'grouping_functions'.
-             columns -- sequence of available columns as tuples (column_id,
-               column_label, column_type).
-             aggregation_valid -- function of two arguments (operation,
-               column_type) returning true if given aggregation operation is
-               valid for given column type and false otherwise.
-             name -- user supplied human readable name as in the result of
-               run() described in the class docstring.
-             group_by_columns -- preselected group by columns in the same
-               format as in the result of run() as described in the class
-               docstring.
-             aggregation_columns -- preselected aggregation columns in the same
-               format as in the result of run() as described in the class
-               docstring.
+          parent: wx parent window; `wx.Frame` or `wx.Dialog` instance.
+          aggregation_functions: Specification of available aggregation
+            functions as a sequence of pairs (operation, label), where operation
+            is one of `pytis.data.AGG_*` constants and label is the string title
+            of given function.
+          grouping_functions: Specification of available functions applicable to
+            group by columns in the same format as the
+            `pytis.presentation.ViewSpec` argument `grouping_functions`.
+          columns: Sequence of available columns as tuples (column_id,
+            column_label, column_type).
+          aggregation_valid: Function of two arguments (operation, column_type)
+            returning true if given aggregation operation is valid for given
+            column type and false otherwise.
+          name (str): User supplied human readable name as in the result of
+            `run` described in the class docstring.
+          group_by_columns: Preselected group by columns in the same format as
+            in the result of `run` as described in the class docstring.
+          aggregation_columns: Preselected aggregation columns in the same
+            format as in the result of `run` as described in the class
+            docstring.
+          title (str): Dialog title.
 
         """
         super(AggregationSetupDialog, self).__init__(parent, title=title)
@@ -1105,7 +1109,7 @@ class AggregationSetupDialog(GenericDialog):
 class ColorSelector(Dialog):
     """Color selection dialog.
 
-    'run()' returns the selected color as an '#RRGGBB' string or None if the
+    `run` returns the selected color as an `#RRGGBB` string or None if the
     dialog was canceled.
 
     """
@@ -1114,9 +1118,8 @@ class ColorSelector(Dialog):
         """Initialize the dialog.
 
         Arguments:
-
-          parent, title -- as in the parent class.
-          color -- initial color as '#RRGGBB' string.
+          parent: wx parent window; `wx.Frame` or `wx.Dialog` instance.
+          color (str): Initial color as an `#RRGGBB` string or None.
 
         """
         super(ColorSelector, self).__init__(parent)
@@ -1163,21 +1166,21 @@ class FileDialog(Dialog):
         """Initialize the dialog.
 
         Arguments:
-          parent -- wx parent; 'wx.Frame' or 'wx.Dialog' instance
-          title -- title to show in the dialog title bar as a string
-          dir -- preselected directory name as a string or None.
-          file -- preselected file name as a string or None.
-          mode -- one of class constants 'OPEN' or 'SAVE'.
-          wildcards -- list of file masks and descriptions to filter by; a
+          parent: wx parent; `wx.Frame` or `wx.Dialog` instance.
+          title (str): Title to show in the dialog title bar.
+          dir (str): Preselected directory name or None.
+          file (str): Preselected file name or None.
+          mode (str): One of class constants `OPEN` or `SAVE`.
+          wildcards: List of file masks and descriptions to filter by; a
             sequence where each odd element is a description and each even
-            element is a wildcard string used for filtering when selected;
-            the default filtering is by the first pair. Example:
-            ("BMP files (*.bmp)", "*.bmp", "GIF files (*.gif)", "*.gif")
-          multi -- if true, allow selection of multiple files at once (will be
-            returned as a tuple); only relevant when 'mode' is 'OPEN'
-          overwrite_prompt -- if true, selection of an existing file for save
-            will invoke an overwrite confirmation dialog; only relevant when
-            'mode' is 'SAVE'
+            element is a wildcard string used for filtering when selected; the
+            default filtering is by the first pair.  Example: `("BMP files
+            (*.bmp)", "*.bmp", "GIF files (*.gif)", "*.gif")`.
+          multi (bool): If true, allow selection of multiple files at once
+            (returned as a tuple); only relevant when `mode` is `OPEN`.
+          overwrite_prompt (bool): If true, selection of an existing file for
+            save will invoke an overwrite confirmation dialog; only relevant
+            when `mode` is `SAVE`.
 
         """
         super(FileDialog, self).__init__(parent)
@@ -1230,8 +1233,8 @@ class FileDialog(Dialog):
 class DirDialog(Dialog):
     """Dialog for directory selection.
 
-    Displays a dialog to browse existing directories and also allows creation
-    of a new directory.
+    Displays a dialog to browse existing directories and also allows creation of
+    a new directory.
 
     """
     _last_directory = None
@@ -1240,10 +1243,10 @@ class DirDialog(Dialog):
         """Initialize the dialog.
 
         Arguments:
-
-          parent -- wx parent; 'wx.Frame' or 'wx.Dialog' instance
-          title -- title to show in the dialog title bar as a string
-          path -- initial derectory or None to use the last selected directory.
+          parent: wx parent; `wx.Frame` or `wx.Dialog` instance.
+          title (str): Title to show in the dialog title bar.
+          path (str): Initial directory or None to use the last selected
+            directory.
 
         """
         super(DirDialog, self).__init__(parent)
@@ -1253,10 +1256,10 @@ class DirDialog(Dialog):
         self._path = path
 
     def run(self):
-        """Show the dialog and return the selected directory path as a string.
+        """Show the dialog and return the selected directory path.
 
-        If the constructor argument 'multi' is true, a tuple of strings is
-        returned.
+        Returns:
+          The selected directory path as a string, or None if canceled.
 
         """
         dialog = wx.DirDialog(self._parent,

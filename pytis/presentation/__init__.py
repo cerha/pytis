@@ -19,11 +19,11 @@
 """Data transformations and presentation.
 
 This module is intended to solve processing of data which does not belong to
-the module 'pytis.data', is generally needed by user interfaces, but is not
-specific for any particular user interface.  The typical functionality solved
-by this module is computing the values of virtual fields, handling dynamic
-changes of editability of input fields, their validation and integrity
-checking, dynamic codebook filtering etc.
+the module `pytis.data`, is generally needed by user interfaces, but is not
+specific for any particular user interface.  The typical functionality
+solved by this module is computing the values of virtual fields, handling
+dynamic changes of editability of input fields, their validation and
+integrity checking, dynamic codebook filtering etc.
 
 """
 from __future__ import print_function

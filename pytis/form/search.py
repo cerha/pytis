@@ -20,7 +20,7 @@
 
 The module provides support for dialogs with functionality more or less
 corresponding to a basic search dialog.  The core is the common base class
-'Dialog', which is intended to be abstract.  Concrete dialog classes for
+`SFSDialog`, which is intended to be abstract.  Concrete dialog classes for
 specific use cases are derived from it.
 
 """
@@ -51,11 +51,9 @@ class SFSColumn(object):
         """Initialize column specification.
 
         Arguments:
-
-          id -- column data identifier as a string
-          type -- column data type as an instance of
-            'pytis.data.types_.Type'
-          label -- column name presented to the user as a string
+          id (str): Column data identifier.
+          type: Column data type as an instance of `pytis.data.types_.Type`.
+          label (str): Column name presented to the user.
 
         """
         self._id = id
@@ -86,10 +84,9 @@ class SFSDialog(GenericDialog):
         """Initialize the dialog.
 
         Arguments:
-
-          parent -- wx parent of the dialog window
-          columns -- a sequence of 'SFSColumn' instances
-          col -- current column identifier as a string
+          parent: wx parent of the dialog window.
+          columns: A sequence of `SFSColumn` instances.
+          col (str): Current column identifier.
 
         """
         self._parent = parent
@@ -158,9 +155,9 @@ class SFSDialog(GenericDialog):
 class SortingDialog(SFSDialog):
     """Dialog for selecting sorting parameters.
 
-    The 'run()' method returns a sorting specification used by
+    The `run` method returns a sorting specification used by
     `pytis.form.LookupForm`.  If the dialog is closed in any way other than by
-    clicking a button, 'None' is returned.
+    clicking a button, `None` is returned.
 
     """
 
@@ -181,14 +178,13 @@ class SortingDialog(SFSDialog):
         """Initialize the dialog.
 
         Arguments:
-
-          parent -- wx parent of the dialog window
-          columns -- a sequence of 'SFSColumn' instances
-          sorting -- current sorting specification in the form of the 'sort'
-            argument of 'pytis.data.Data.select()'
-          direction -- default sorting direction, one of
-            'pytis.data.ASCENDENT', 'pytis.data.DESCENDANT'
-          kwargs -- passed to the parent class constructor
+          parent: wx parent of the dialog window.
+          columns: A sequence of `SFSColumn` instances.
+          sorting: Current sorting specification in the form of the `sort`
+            argument of `pytis.data.Data.select`.
+          direction: Default sorting direction, one of `pytis.data.ASCENDENT` or
+            `pytis.data.DESCENDANT`.
+          **kwargs: Passed to the parent class constructor.
 
         """
         self._sorting = sorting
@@ -281,12 +277,12 @@ class SFDialog(SFSDialog):
         """Initialize the dialog.
 
         Arguments:
-
-          parent -- wx parent of the dialog window
-          columns -- a sequence of 'SFSColumn' instances
-          row -- current row as a 'pytis.data.Row' instance or 'None'
-          condition -- currently displayed condition as a 'pytis.data.Operator' instance.
-          kwargs -- passed to the parent class constructor
+          parent: wx parent of the dialog window.
+          columns: A sequence of `SFSColumn` instances.
+          row: Current row as a `pytis.data.Row` instance or None.
+          condition: Currently displayed condition as a `pytis.data.Operator`
+            instance.
+          **kwargs: Passed to the parent class constructor.
 
         """
         self._row = row
@@ -614,14 +610,14 @@ class SFDialog(SFSDialog):
 class SearchDialog(SFDialog):
     """Dialog for manipulation of the current search condition.
 
-    The 'run()' method of this dialog returns a pair (DIRECTION, CONDITION).
+    The `run` method of this dialog returns a pair (DIRECTION, CONDITION).
 
     DIRECTION is the selected search direction.  The value can be either
-    'pytis.data.FORWARD', 'pytis.data.BACKWARD' or 'None'.  'None' means that
+    `pytis.data.FORWARD`, `pytis.data.BACKWARD` or `None`.  `None` means that
     the search should not be performed (the dialog was escaped), the other two
-    values indicate, that next record should be located in given direction.
+    values indicate that next record should be located in given direction.
 
-    CONDITION is the selected search condition as a 'pytis.data.Operator'
+    CONDITION is the selected search condition as a `pytis.data.Operator`
     instance.
 
     """
@@ -649,21 +645,20 @@ class SearchDialog(SFDialog):
 class FilterDialog(SFDialog):
     """Dialog for manipulation of the filter condition and aggregations.
 
-    This dialog edits the current filter condition.  In addition it has a
-    simple aggregation panel, where the user can display the result of a
-    selected aggregation function.  These aggregations work with the data
-    filtered by the current selected condition without the need to actually
-    perform the filter to the underlying form.
+    This dialog edits the current filter condition.  In addition it has a simple
+    aggregation panel, where the user can display the result of a selected
+    aggregation function.  These aggregations work with the data filtered by the
+    current selected condition without the need to actually perform the filter
+    to the underlying form.
 
-    The 'run()' method of this dialog returns a pair (PERFORM, CONDITION).
+    The `run` method of this dialog returns a pair (PERFORM, CONDITION).
 
-    PERFORM is a boolean flag indicating whether the CONDITION should be
-    applied to the underlying form or not.  It is True when the user presses
-    the ``Filter'' or ``Unfilter'' button and False if the user cancels the
-    dialog.
+    PERFORM is a boolean flag indicating whether the CONDITION should be applied
+    to the underlying form or not.  It is True when the user presses the
+    "Filter" or "Unfilter" button and False if the user cancels the dialog.
 
     CONDITION is the current selected search condition as a
-    'pytis.data.Operator' instance or None.  'None' is used when the user
+    `pytis.data.Operator` instance or `None`.  `None` is used when the user
     wishes to unfilter the underlying form.
 
     """
@@ -688,15 +683,14 @@ class FilterDialog(SFDialog):
         """Initialize the dialog.
 
         Arguments:
-
-          parent -- wx parent of the dialog window
-          columns -- a sequence of 'SFSColumn' instances
-          row -- current row as a 'pytis.data.Row' instance or 'None'
-          compute_aggregate -- a callable object which takes three arguments
-            (OPERATION, COLUMN_ID, CONDITION) and returns the result of the
-            aggregation OPERATION on COLUMN_ID with given CONDITION as a
-            'pytis.data.Value' instance.
-          kwargs -- passed to the parent class constructor
+          parent: wx parent of the dialog window.
+          columns: A sequence of `SFSColumn` instances.
+          row: Current row as a `pytis.data.Row` instance or None.
+          compute_aggregate: A callable taking three arguments (operation,
+            column_id, condition) and returning the result of the aggregation
+            operation on column_id with given condition as a `pytis.data.Value`
+            instance.
+          **kwargs: Passed to the parent class constructor.
 
         """
         super(FilterDialog, self).__init__(parent, columns, row, **kwargs)
@@ -759,17 +753,20 @@ class FilterDialog(SFDialog):
 
 
 def sfs_columns(fields, data, labelfunc=Field.label):
-    """Return a list of 'SFSColumn' instances for SFS dialog construction.
+    """Return a list of `SFSColumn` instances for SFS dialog construction.
 
-    (SFS = Search, Filter, Sort)
+    SFS = Search, Filter, Sort.
 
     Arguments:
+      fields: Sequence of `pytis.presentation.Field` instances from the
+        specification.
+      data: Related data object.
+      labelfunc: Function of one argument (`pytis.presentation.Field` instance)
+        returning the column label used in the dialog or None to exclude the
+        field from the dialog.
 
-      fields -- sequence of 'Field' instances from specification
-      data -- related data object
-      labelfunc -- function of one argument ('Field' instance) returning the
-        column label used in the dialog or None to exclude the field from the
-        dialog.
+    Returns:
+      A sorted list of `SFSColumn` instances.
 
     """
     columns = []

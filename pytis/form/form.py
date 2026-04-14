@@ -18,10 +18,10 @@
 
 """Interactive forms for working with data.
 
-The base of all forms is the 'Form' class.  This module also contains its
+The base of all forms is the `Form` class.  This module also contains its
 descendants for specific use cases — simple edit forms (for displaying and
 editing a single record).  Simple list forms and dual forms are implemented
-in separate modules 'list' and 'dualform'.  See documentation of individual
+in separate modules `list` and `dualform`.  See documentation of individual
 classes for details.
 
 """
@@ -82,7 +82,7 @@ unistr = type(u'')  # Python 2/3 transition hack.
 
 
 class FormProfile(object):
-    """Temporary hack to avoid application crashes when unpickling old form profiles."""
+    """Temporary hack to avoid crashes when unpickling old form profiles."""
 
     def __init__(self, *args, **kwargs):
         log(OPERATIONAL, "%s instantiated:" % self.__class__.__name__, (args, kwargs))
@@ -95,27 +95,25 @@ class FormSettings(FormProfile):
 @pytis.api.implements(pytis.api.Form)
 @python_2_unicode_compatible
 class Form(wx.Panel, KeyHandler, CallbackHandler, CommandHandler):
-    """
-    Common base class for all forms.
+    """Common base class for all forms.
 
-    Based on the specification name passed to the constructor, the form asks
-    the resolver for the corresponding data and presentation specification.
-    From the data specification, a data object is created (an instance of a
-    class derived from 'pytis.data.Data').  The data object and the presentation
-    specification are stored as instance attributes ('self._view' and
-    'self._data').
+    Based on the specification name passed to the constructor, the form asks the
+    resolver for the corresponding data and presentation specification. From the
+    data specification, a data object is created (an instance of a class derived
+    from `pytis.data.Data`).  The data object and the presentation specification
+    are stored as instance attributes (`self._view` and `self._data`).
 
     Instances of classes derived from this class are then created by
-    interpreting the presentation specification and operate on data using
-    the data object and its API (which is independent of the concrete data
-    source).
+    interpreting the presentation specification and operate on data using the
+    data object and its API (which is independent of the concrete data source).
 
     Forms are able to describe their state and later restore it.  The methods
-    'save()' and 'restore()' are used for this purpose.
+    `save` and `restore` are used for this purpose.
 
     Used specification functions:
 
-      print_spec -- sequence of 'PrintAction' instances
+    Attributes:
+      print_spec: Sequence of `PrintAction` instances.
 
     """
 
@@ -128,17 +126,16 @@ class Form(wx.Panel, KeyHandler, CallbackHandler, CommandHandler):
     _focused_form = None
 
     class InitError(Exception):
-        """Exception signaling errors during form initialization."""
+        """Exception signalling errors during form initialization."""
         pass
 
     class _SavedSettingsAccessor(object):
-        """
-        Form-specific access to global form settings/profile managers.
+        """Form-specific access to global form settings/profile managers.
 
         Wraps access to global form settings/profile manager instances to
-        simplify calls for a particular form instance.  All manager methods
-        can be called on this instance without the initial arguments
-        identifying the form; these are prepended automatically.
+        simplify calls for a particular form instance.  All manager methods can
+        be called on this instance without the initial arguments identifying the
+        form; these are prepended automatically.
 
         """
         def __init__(self, spec_name, form_name, view_spec, data):
@@ -196,40 +193,39 @@ class Form(wx.Panel, KeyHandler, CallbackHandler, CommandHandler):
         """Initialize the instance.
 
         Arguments:
-
-          parent -- parent 'wx.Frame' instance.
-          resolver -- name resolver, instance of 'pytis.util.Resolver'
-          name -- resolver specification file name; string
-          guardian -- a form (an instance of an arbitrary class) in which this
-            form is embedded from the application's structural point of view;
-            if not specified, 'parent' is used.  This parameter is used, for
+          parent: Parent wx.Frame instance.
+          resolver: Name resolver, instance of `pytis.util.Resolver`.
+          name: Resolver specification file name; string.
+          guardian: A form (an instance of an arbitrary class) in which this
+            form is embedded from the application's structural point of view; if
+            not specified, `parent` is used.  This parameter is used, for
             example, when propagating key events "upwards".  Typically, it is
             the form that creates this instance.
-          transaction -- transaction to use when manipulating data
-          full_init -- iff false, don't perform full form initialization.  This
+          transaction: Transaction to use when manipulating data.
+          full_init: If false, don't perform full form initialization.  This
             means performing just necessary wx initialization to make the form
-            available without creating its content and data structures.  This
-            is useful when you need to define a form and to register it
-            somewhere (e.g. as a side form in a wx notebook) without actually
-            showing it and without delaying other actions (e.g. because of
-            unnecessary expensive querying database views in the hidden form).
-            If this option is used, you are fully responsible to call full from
-            initialization before the form is actually used for the first
-            time.  You must do it using 'full_init()' method and you may call
-            the method only once for the given form instance.
-          kwargs -- see below.
+            available without creating its content and data structures.  This is
+            useful when you need to define a form and to register it somewhere
+            (e.g. as a side form in a wx notebook) without actually showing it
+            and without delaying other actions (e.g. because of unnecessary
+            expensive querying database views in the hidden form). If this
+            option is used, you are fully responsible to call full form
+            initialization before the form is actually used for the first time.
+            You must do it using `full_init` and you may call the method only
+            once for the given form instance.
+          **kwargs: See below.
 
-        The resolver is used to obtain the data and presentation specification and
-        to subsequently create the data object.  The data object is then stored
-        together with the presentation specification as attributes of the newly
-        created instance.
+        The resolver is used to obtain the data and presentation specification
+        and to subsequently create the data object.  The data object is then
+        stored together with the presentation specification as attributes of the
+        newly created instance.
 
         A reference to the resolver itself is also remembered for later use
         (creating additional forms).
 
         Initialization is split into several steps.  First, all arguments common
         to all form classes are processed.  These are handled by the constructor
-        of the base class 'Form'.  Their processing should not be overridden in
+        of the base class `Form`.  Their processing should not be overridden in
         derived classes, and no additional arguments should be added.  The
         constructor may be overridden to perform some additional actions, but
         the arguments should not be changed.
@@ -239,16 +235,16 @@ class Form(wx.Panel, KeyHandler, CallbackHandler, CommandHandler):
 
         Then keyword arguments are processed.  Each derived class may define its
         own keyword arguments.  These are processed by overriding the
-        '_init_attributes()' method.  At that point, it may already use the
+        `_init_attributes` method.  At that point, it may already use the
         initialized data object and specifications and may initialize additional
-        attributes of the class.  The '_init_attributes()' method should always
+        attributes of the class.  The `_init_attributes` method should always
         process only the keyword arguments that are specific to the given class.
         The remaining ones should be passed to the parent class method via
-        **kwargs.  This should guarantee that all arguments are processed step
+        `**kwargs`.  This should guarantee that all arguments are processed step
         by step.
 
         Only after processing the constructor arguments and initializing the
-        attributes is the actual form content created (see '_create_form()').
+        attributes is the actual form content created (see `_create_form`).
         This should be followed in derived classes as well.
 
         """
@@ -311,10 +307,11 @@ class Form(wx.Panel, KeyHandler, CallbackHandler, CommandHandler):
     def _init_attributes(self):
         """Process constructor keyword arguments and initialize the attributes.
 
-        This method is called in the initial phase of form construction, before any UI widget
-        creation, but after initializing specifications and the data object.  Derived classes
-        should primarily process their specific constructor arguments and initialize instance
-        attributes.  See also the constructor documentation for more details.
+        This method is called in the initial phase of form construction, before
+        any UI widget creation, but after initializing specifications and the
+        data object.  Derived classes should primarily process their specific
+        constructor arguments and initialize instance attributes.  See also the
+        constructor documentation for more details.
 
         """
         pass
@@ -334,7 +331,7 @@ class Form(wx.Panel, KeyHandler, CallbackHandler, CommandHandler):
         sizer = wx.BoxSizer(wx.VERTICAL)
         self.SetSizer(sizer)
         self._create_form_parts()
-        sizer.Fit(self)  # Set the size of window `self' to the size of the sizer.
+        sizer.Fit(self)  # Set the size of window `self` to the size of the sizer.
 
     def _create_form_parts(self):
         pass
@@ -355,9 +352,8 @@ class Form(wx.Panel, KeyHandler, CallbackHandler, CommandHandler):
         """Return toolbar commands for this form's toolbar as a sequence of command groups.
 
         The returned sequence of sequences represents command groups which
-        should be added to the toolbar with visual separators between
-        individual groups.  Items of the inner sequences must be 'UICommand'
-        instances.
+        should be added to the toolbar with visual separators between individual
+        groups.  Items of the inner sequences must be `UICommand` instances.
 
         """
         # In this class, return those commands from global TOOLBAR_COMMANDS
@@ -440,18 +436,17 @@ class Form(wx.Panel, KeyHandler, CallbackHandler, CommandHandler):
         return self._view.title()
 
     def view_spec(self):
-        """Return 'ViewSpec' instance corresponding to the form."""
+        """Return `ViewSpec` instance corresponding to the form."""
         return self._view
 
     def guardian(self):
-        """Return the key 'guardian' passed to the constructor (or 'parent')."""
+        """Return the key `guardian` passed to the constructor (or `parent`)."""
         return self._guardian
 
     def check_permission(self, perm, quiet=True):
         """Return true if the current user has given rights to the form's data object.
 
         Arguments:
-
           perm: One of the `pytis.data.Permission` class constants.
           quiet: If true, a relevant error message is displayed in the echo area
             when the result is false (the permission is not granted).
@@ -499,7 +494,7 @@ class Form(wx.Panel, KeyHandler, CallbackHandler, CommandHandler):
         """Finish initialization of a mostly uninitialized form.
 
         This must be called before the first use of the form when
-        'soft_init=True' was used in the constructor.  It may not be called
+        `soft_init=True` was used in the constructor.  It may not be called
         otherwise nor may be called more than once.
 
         """
@@ -513,8 +508,8 @@ class Form(wx.Panel, KeyHandler, CallbackHandler, CommandHandler):
     def initialized(self):
         """Return true iff full form initialization was attempted.
 
-        If it wasn't, it is necessary to call 'full_init()' for this form to
-        use the form.
+        If it wasn't, it is necessary to call `full_init` for this form to use
+        the form.
 
         """
         return self._full_init_started
@@ -526,12 +521,12 @@ class Form(wx.Panel, KeyHandler, CallbackHandler, CommandHandler):
         return super(Form, self).command_enabled(command)
 
     def save(self):
-        """Save form state to be able to restore it later when 'restore()' is called."""
+        """Save form state to be able to restore it later when `restore` is called."""
         self._release_data()
         self._restored = False
 
     def restore(self):
-        """Restore form state as previously saved by 'save()'."""
+        """Restore form state as previously saved by `save`."""
         # When overriding this method, make sure to only perform any operations
         # when self._restored is False and don't forget to call the parent
         # class method at the end.
@@ -540,8 +535,10 @@ class Form(wx.Panel, KeyHandler, CallbackHandler, CommandHandler):
     def _exit_check(self):
         """Check whether it is ok to close the form.
 
-        Performed on user's attempt to close the form.  Returns True if the
-        form may be closed or False otherwise.
+        Performed on user's attempt to close the form.
+
+        Returns:
+          True if the form may be closed or False otherwise.
 
         """
         return True
@@ -549,8 +546,8 @@ class Form(wx.Panel, KeyHandler, CallbackHandler, CommandHandler):
     def close(self, force=False):
         """Close the form and destroy all its UI elements.
 
-        If 'force' is False, '_exit_check()' is performed and closing is only
-        really done if it returns True.  If 'force' is True, the form is closed
+        If `force` is False, `_exit_check` is performed and closing is only
+        really done if it returns True.  If `force` is True, the form is closed
         unconditionally.
 
         """
@@ -671,7 +668,7 @@ class InnerForm(Form):
     current form is a simple form, command processing is delegated to that form.
     If the current form is a dual form, it is necessary to decide whether the
     command should be handled directly by the dual form or by its active
-    subform.  Commands defined by the 'Form' class are always handled by the
+    subform.  Commands defined by the `Form` class are always handled by the
     top-level form (the dual form itself, if the current form is a dual form).
 
     Commands defined by this class and its derived classes are, however, always
@@ -797,10 +794,10 @@ class InnerForm(Form):
 
 
 class Refreshable(object):
-    """Abstract class defining the method 'refresh()' with the following meaning.
+    """Abstract class defining the method `refresh`.
 
     All forms that can be refreshed from their data source should derive from
-    this class and implement the '_refresh()' method.
+    this class and implement the `_refresh` method.
 
     """
     _block_refresh = 0
@@ -808,7 +805,7 @@ class Refreshable(object):
     @classmethod
     @contextlib.contextmanager
     def block_refresh(cls):
-        """Block performing any refresh within this contextmanager scope.
+        """Block performing any refresh within this context manager scope.
 
         Refresh is blocked globally for all existing forms.
 
@@ -821,11 +818,11 @@ class Refreshable(object):
         """Refresh form data from its data source.
 
         Arguments:
+          interactive: Indicates whether the refresh was invoked by an explicit
+            user request.
 
-          interactive -- indicates whether the refresh was invoked by an explicit
-            user request
-
-        Returns: True iff the refresh has been performed.
+        Returns:
+          True iff the refresh has been performed.
 
         """
         level = Refreshable._block_refresh
@@ -853,13 +850,10 @@ class PopupForm(object):
     """Mixin class displaying the form in a separate (pop-up) frame."""
 
     def _popup_frame(self, parent):
-        """Return the frame instance.
-
-        If the frame does not exist yet, create it.
+        """Return the frame instance, creating it if it does not exist yet.
 
         Arguments:
-
-          parent -- parent window, instance of 'wx.Window'
+          parent: Parent window, instance of `wx.Window`.
 
         """
         try:
@@ -889,8 +883,7 @@ class PopupForm(object):
         """Show the form as a modal dialog.
 
         Arguments:
-
-          lock_key -- lock the row with the given key
+          lock_key: Lock the row with the given key.
 
         """
         if (lock_key is not None and
@@ -932,45 +925,43 @@ class LookupForm(InnerForm):
         """Process constructor keyword arguments and initialize the attributes.
 
         Arguments:
-
-          filter -- initial filter condition as a 'pytis.data.Operator'
-            instance.  This filter is indicated to the user and can be modified
-            as any other user-defined filter (as opposed to the 'condition'
-            defined below).  If not None, overrides the filter of the default
-            form profile.
-          sorting -- specification of initial form sorting in the same format
-            as the argument 'sorting' of the 'Profile' constructor.  If not
-            None, overrides the sorting of the default form profile.
-          columns -- specification of initial form columns in the same format
-            as the argument 'columns' of the 'Profile' constructor.  If not
-            None, overrides the columns of the default form profile.  Columns
-            are actually used only by some derived classes (table forms).
-          grouping -- specification of initial visual grouping of table rows in
-            the same format as the argument 'grouping' of the 'Profile'
+          filter: Initial filter condition as a `pytis.data.Operator` instance.
+            This filter is indicated to the user and can be modified as any
+            other user-defined filter (as opposed to the `condition` defined
+            below).  If not None, overrides the filter of the default form
+            profile.
+          sorting: Specification of initial form sorting in the same format as
+            the argument `sorting` of the `Profile` constructor. If not None,
+            overrides the sorting of the default form profile.
+          columns: Specification of initial form columns in the same format as
+            the argument `columns` of the `Profile` constructor. If not None,
+            overrides the columns of the default form profile. Columns are
+            actually used only by some derived classes (table forms).
+          grouping: Specification of initial visual grouping of table rows in
+            the same format as the argument `grouping` of the `Profile`
             constructor.  If not None, overrides the grouping of the default
             form profile.  Grouping is actually used only by some derived
             classes (table forms).
-          profile_id -- id of the initial profile to be loaded.  If not None, it
+          profile_id: Id of the initial profile to be loaded.  If not None, it
             must be one of the available system profiles (defined in
-            specification) and the arguments 'filter', sorting', 'columns',
-             and 'grouping' must be None (they are all determined by
-            the profile).
-          condition -- 'pytis.data.Operator' instance filtering the rows of the
+            specification) and the arguments `filter`, `sorting`, `columns`, and
+            `grouping` must be None (they are all determined by the profile).
+          condition: `pytis.data.Operator` instance filtering the rows of the
             underlying data object.  This filter is not indicated to the user
             nor is there a chance to turn it off.
-          arguments -- dictionary of table function call arguments, with
-            function argument identifiers as keys and 'pytis.data.Value'
-            instances as values.  Useful only when the table is actually a row
-            returning function, otherwise ignored.
-          query_field_values -- sequence of name/value pairs or a dictionary
+          arguments: Dictionary of table function call arguments, with function
+            argument identifiers as keys and `pytis.data.Value` instances as
+            values.  Useful only when the table is actually a row returning
+            function, otherwise ignored.
+          query_field_values: Sequence of name/value pairs or a dictionary
             containing initial values to be used for query fields (as inner
-            Python values, not pytis.data.Value instances).  Only makes sense
-            if the form specification defines `query_fields'.  Query fields,
-            which don't have their initial values defined by this argument,
-            will use their default value from the query field specification.
-          kwargs -- arguments passed to the parent class
+            Python values, not pytis.data.Value instances).  Only makes sense if
+            the form specification defines `query_fields`.  Query fields which
+            don't have their initial values defined by this argument will use
+            their default value from the query field specification.
+          **kwargs: Arguments passed to the parent class.
 
-        If one of 'filter', 'sorting', 'columns' or 'grouping' is set, an
+        If one of `filter`, `sorting`, `columns` or `grouping` is set, an
         additional profile named "Initial Profile" is added to form profiles
         with given parameters and this profile becomes the initial profile
         regardless the default profile specification or user settings.  It is
@@ -1312,18 +1303,18 @@ class LookupForm(InnerForm):
         self.select_row(self._current_key())
 
     def _apply_profile_parameters(self, profile):
-        """Set the form state attributes according to given 'Profile' instance.
+        """Set the form state attributes according to given `Profile` instance.
 
-        This method doesn't actually refresh the form display.  It only sets
-        the profile related form attributes to match the parameters of given
+        This method doesn't actually refresh the form display.  It only sets the
+        profile related form attributes to match the parameters of given
         profile.  Only the attributes recognized by the class are set in the
         base class.  Derived classes, which also have attributes for other
         profile parameters should override this method to set their specific
         attributes too.
 
-        Note: The attribute '_current_profile' always contains the 'Profile'
-        instance passed to the last '_apply_profile_parameters()' call.  It is
-        not updated when the form state later changes due to user actions.
+        Note: The attribute `_current_profile` always contains the `Profile`
+        instance passed to the last `_apply_profile_parameters` call. It is not
+        updated when the form state later changes due to user actions.
 
         """
         sorting = profile.sorting()
@@ -1334,9 +1325,9 @@ class LookupForm(InnerForm):
         self._lf_sorting = sorting
 
     def _apply_profile(self, profile, refresh=True):
-        """Change the current form state according to given 'Profile' instance.
+        """Change the current form state according to given `Profile` instance.
 
-        Call '_apply_profile_parameters()' and redraw the form to match the new
+        Call `_apply_profile_parameters` and redraw the form to match the new
         state.
 
         """
@@ -1352,12 +1343,12 @@ class LookupForm(InnerForm):
     def _profile_parameters_to_save(self):
         """Return the profile parameters representing the current state of the form.
 
-        The returned dictionary is passed to 'Profile' constructor as keyword
-        arguments when saving a profile.  Note, that the profile instance
-        stored in `self._current_profile' may not have the same parameters if
-        the user changed them since he switched to that profile
-        (`self._current_profile' instance is not updated when the form state
-        changes, it represents the previously saved state).
+        The returned dictionary is passed to `Profile` constructor as keyword
+        arguments when saving a profile.  Note, that the profile instance stored
+        in `self._current_profile` may not have the same parameters if the user
+        changed them since he switched to that profile (`self._current_profile`
+        instance is not updated when the form state changes, it represents the
+        previously saved state).
 
         """
         return dict(filter=self._lf_filter, sorting=self._lf_sorting)
@@ -1408,9 +1399,8 @@ class LookupForm(InnerForm):
         """Apply the profile given by profile_id.
 
         Arguments:
-
-          profile_id -- id of the profile to be loaded.  It must be one of the
-            available profiles (defined in specification or user defined
+          profile_id (str): Id of the profile to be loaded.  It must be one of
+            the available profiles (defined in specification or user defined
             profiles).
 
         """
@@ -1594,14 +1584,13 @@ class LookupForm(InnerForm):
         """Change sorting.
 
         Arguments:
-
-          col -- column id to add/remove from current sorting or 'None' for
+          col (str): Column id to add/remove from current sorting or None for
             global changes such as switching sorting completely.
-          direction -- sorting direction as one of constants
-            'pytis.data.ASCENDENT', 'pytis.data.DESCENDANT' or
-            'pytis.form.LookupForm.UNSORT' (remove given column from sorting) .
-            If None, a dialog is displayed to select sorting interactively.
-          primary -- iff true, given column will be selected as the primary
+          direction: Sorting direction as one of constants
+            `pytis.data.ASCENDENT`, `pytis.data.DESCENDANT` or
+            `LookupForm.UNSORT` (remove given column from sorting). If None, a
+            dialog is displayed to select sorting interactively.
+          primary (bool): If true, given column will be selected as the primary
             (and the only) sorting column.  Otherwise it will be just added to
             the end of current sorting specification.
 
@@ -1613,7 +1602,7 @@ class LookupForm(InnerForm):
         return sorting
 
     def _can_sort(self, col=None, direction=None, primary=False):
-        # `col' is column identifier.
+        # `col` is column identifier.
         sorting_columns = tuple(self._sorting_columns())
         if direction == self.UNSORT:
             return bool(sorting_columns) and (col is None or col in sorting_columns)
@@ -1668,7 +1657,7 @@ class LookupForm(InnerForm):
     def apply_filter(self, condition, append=False):
         """Apply given filtering condition.
 
-        If 'append' is True, add the condition to the current filter, otherwise
+        If `append` is True, add the condition to the current filter, otherwise
         replace the current filter by given condition.
 
         """
@@ -1700,15 +1689,12 @@ class LookupForm(InnerForm):
         The instance will have the data select initialized with the current
         profile parameters (filter condition, sorting etc).  This is often
         practical within application defined procedures, which retrieve this
-        data object through the 'RecordForm.Record.data()' method.
+        data object through `RecordForm.Record.data`.
 
         Arguments:
-
-          init_select -- iff True the instance will have the data select
+          init_select (bool): If true the instance will have the data select
             initialized with the current filter condition and all its
-            attributes, such as sorting etc.  This is often practical within
-            application defined procedures, which retrieve this data object
-            through the 'RecordForm.Record.data()' method.
+            attributes, such as sorting etc.
 
         """
         data = super(LookupForm, self).data()
@@ -1719,8 +1705,8 @@ class LookupForm(InnerForm):
     def condition(self):
         """Return the specification of the current data selection condition.
 
-        The condition is returned in the format expected by the 'condition'
-        argument of the 'pytis.data.Data.select()' method.
+        The condition is returned in the format expected by the `condition`
+        argument of `pytis.data.Data.select`.
 
         """
         return self._current_condition()
@@ -1730,7 +1716,7 @@ class LookupForm(InnerForm):
         return self._lf_sorting
 
     def view(self):
-        """Return the form's presentation specification as a 'ViewSpec' instance."""
+        """Return the form's presentation specification as a `ViewSpec` instance."""
         return self._view
 
     def profiles(self):
@@ -1738,7 +1724,7 @@ class LookupForm(InnerForm):
         return self._profiles
 
     def current_profile(self):
-        """Return the current form profile as 'pytis.presentation.Profile' instance."""
+        """Return the current form profile as a `pytis.presentation.Profile` instance."""
         return self._current_profile
 
     def initial_profile(self):
@@ -1789,11 +1775,11 @@ class RecordForm(LookupForm):
     """Callback constant for record selection (change of the current record).
 
     The callback function receives the newly selected record as a
-    'RecordForm.Record' instance.
+    `RecordForm.Record` instance.
 
     """
     class Record(PresentedRow):
-        """PresentedRow extension allowing access to the public form API from application code."""
+        """`pytis.presentation.PresentedRow` extension allowing access to the public form API from application code."""
 
         def __init__(self, form, *args, **kwargs):
             self._form = form
@@ -1814,8 +1800,8 @@ class RecordForm(LookupForm):
         """Iterator yielding `PresentedRow` instances for the current form selection.
 
         May represent an error-only selection if the selection size exceeds
-        `MAX_ROWS`.  The first attempt to fetch a row from the iterator
-        displays an error message and stops iteration in this case.
+        `MAX_ROWS`.  The first attempt to fetch a row from the iterator displays
+        an error message and stops iteration in this case.
 
         Iteration may yield None values if the corresponding data rows are
         deleted from the data object during iteration.
@@ -1833,24 +1819,21 @@ class RecordForm(LookupForm):
         """
 
         def __init__(self, row_numbers, get_row_by_number, record, error=None, length=None):
-            """Arguments:
+            """Initialize the selection iterator.
 
-              row_numbers -- sequence of row numbers as integer indices of rows
+            Arguments:
+              row_numbers: Sequence of row numbers as integer indices of rows
                 selected within the form.  None if `error` is given.
-
-              get_row_by_number -- callable returning the data row for a given
-                row number.  None if `error` is given.
-
-              record -- `PresentedRow` instance to be used to produce the
+              get_row_by_number: Callable returning the data row for a given row
+                number.  None if `error` is given.
+              record: `PresentedRow` instance to be used to produce the
                 instances returned by the iterator.
-
-              error -- `RecordForm.SelectionLimitExceeded` instance if the
+              error: `RecordForm.SelectionLimitExceeded` instance if the
                 selection length exceeds `MAX_ROWS`.  `row_numbers` should be
                 None in this case and `length` should indicate the actual
                 selection length.
-
-              length -- number of selected rows in case `row_numbers` is None
-                and `error` is given.
+              length: Number of selected rows in case `row_numbers` is None and
+                `error` is given.
 
             """
             if error:
@@ -1914,15 +1897,16 @@ class RecordForm(LookupForm):
         def form(self):
             """Return the `pytis.api.Form` representation of the originating form.
 
-            This allows action handlers to access the form API when this iterator is
-            passed as an argument (e.g. for ActionContext.SELECTION).
+            This allows action handlers to access the form API when this
+            iterator is passed as an argument (e.g. for
+            `pytis.presentation.ActionContext`.SELECTION).
 
             """
             return self._record.form
 
 
     class SelectionLimitExceeded(Exception):
-        """Exception raised by 'form.selected_rows()' when the selection is too big."""
+        """Exception raised by `selected_rows` when the selection is too big."""
         pass
 
 
@@ -1930,13 +1914,12 @@ class RecordForm(LookupForm):
         """Process constructor keyword arguments and initialize the attributes.
 
         Arguments:
-
-          prefill -- a dictionary of values used to prefill the current form
-            row.  The meaning is the same as for the same 'PresentedRow'
-            constructor argument.
-          select_row -- The initially selected row.  Same as the argument
-            'position' of 'select_row()'.
-          kwargs -- arguments passed to the parent class
+          prefill: A dictionary of values used to prefill the current form row.
+            The meaning is the same as for the same `PresentedRow` constructor
+            argument.
+          select_row: The initially selected row.  Same as the argument
+            `position` of `select_row`.
+          **kwargs: Arguments passed to the parent class.
 
         """
         assert prefill is None or isinstance(prefill, dict)
@@ -2028,9 +2011,9 @@ class RecordForm(LookupForm):
             return row
 
     def _get_row_number(self, row):
-        """Return the row number corresponding to the given 'pytis.data.Row' instance.
+        """Return the row number corresponding to the given `pytis.data.Row` instance.
 
-        If no matching row is found, return None.
+        If no matching row is found, return `None`.
 
         """
         data = self._data
@@ -2509,8 +2492,8 @@ class RecordForm(LookupForm):
     def open_editor(self, field_id):
         """Open a standalone edit form for the current row and the given field.
 
-        It is assumed that structured text editing may take a "long time" and
-        it is not desired to block the database with a long-running transaction.
+        It is assumed that structured text editing may take a "long time" and it
+        is not desired to block the database with a long-running transaction.
         This method runs the editor in a virtual form (avoiding locking and the
         transaction of the ordinary edit form). The database is checked for
         possible conflicting changes before saving the result and the situation
@@ -2607,30 +2590,30 @@ class RecordForm(LookupForm):
     # Regular public methods
 
     def record(self, row, **kwargs):
-        """Create a new `RecordForm.Record' instance bound to this form."""
+        """Create a new `RecordForm.Record` instance bound to this form."""
         fields = self._view.fields()
         data = self._create_data_object()
         return self.Record(self, fields, data, row, transaction=self._open_transaction(),
                            singleline=self._SINGLE_LINE, **kwargs)
 
     def select_row(self, position, quiet=False, retry=True):
-        """Select a row according to 'position'.
+        """Select a row according to `position`.
 
-        The 'position' argument may have one of the following values:
+        The `position` argument may have one of the following values:
 
-          None -- no row will be selected.
-          A non-negative integer -- the row at the given position will be selected;
-            rows are numbered from 0.
-          A data key -- the row with this key will be selected; the key is a
-            'pytis.data.Value' instance or a tuple of them.
-          A dictionary of values -- the first matching row will be selected, i.e.
-            a row that contains the given values (as 'pytis.data.Value' instances)
-            in columns specified by the dictionary keys.
-          A 'pytis.data.Row' instance -- it will be converted to a data key and
-            the corresponding row will be displayed. The instance must be compatible
-            with the form's data object.
+        - None: no row will be selected. - A non-negative integer: the row at
+        the given position will be
+          selected; rows are numbered from 0.
+        - A data key: the row with this key will be selected; the key is a
+          `pytis.data.Value` instance or a tuple of them.
+        - A dictionary of values: the first matching row will be selected,
+          i.e. a row that contains the given values (as `pytis.data.Value`
+          instances) in columns specified by the dictionary keys.
+        - A `pytis.data.Row` instance: it will be converted to a data key and
+          the corresponding row will be displayed. The instance must be
+          compatible with the form's data object.
 
-        If no such record exists, display an error dialog. The 'quiet' argument
+        If no such record exists, display an error dialog. The `quiet` argument
         suppresses the error dialog. This allows silently ignoring a missing row
         or handling it in a custom way based on the return value.
 
@@ -2638,8 +2621,9 @@ class RecordForm(LookupForm):
         classes), e.g. highlighting a row in a table, showing the record in a
         preview form, etc.
 
-        Returns: True if the record was successfully found and selected; False
-        otherwise.
+        Returns:
+          True if the record was successfully found and selected; False
+          otherwise.
 
         """
         row = self._find_row(position)
@@ -2664,9 +2648,9 @@ class RecordForm(LookupForm):
         return self._select_row(row)
 
     def current_row(self):
-        """Return the PresentedRow instance of the currently active row.
+        """Return the `PresentedRow` instance of the currently active row.
 
-        If no row is selected, return 'None'.
+        If no row is selected, return `None`.
 
         """
         return self._row
@@ -2674,20 +2658,18 @@ class RecordForm(LookupForm):
     def selected_rows(self, fallback_to_current_row=False, raise_on_error=True):
         """Return an iterator over all currently selected rows.
 
+        The iterator returns all rows present in the current selection as
+        `PresentedRow` instances in the order of their appearance in the form.
+
         Arguments:
-
-          fallback_to_current_row -- if True and there is no selection,
-            return an iterator over the current row.
-
-          raise_on_error -- if True and the selection size exceeds
+          fallback_to_current_row: If True and there is no selection, return an
+            iterator over the current row.
+          raise_on_error: If True and the selection size exceeds
             `RecordForm.Selection.MAX_ROWS`, raise
             `RecordForm.SelectionLimitExceeded`.  If False, return
             `RecordForm.Selection` instance, which indicates the selection
             length, but does not yield any rows.  Instead it displays an error
             message on attempt to fetch the first row.
-
-        The iterator returns all rows present in the current selection as
-        `PresentedRow` instances in the order of their appearance in the form.
 
         """
         return self.Selection([], lambda x: None, self._row)
@@ -2699,8 +2681,9 @@ class RecordForm(LookupForm):
     def current_key(self):
         """Return the key of the currently selected row.
 
-        Returns: A sequence of 'pytis.data.Value' instances, or 'None' if
-        no row is selected.
+        Returns:
+          A sequence of `pytis.data.Value` instances, or None if no row is
+          selected.
 
         """
         return self._current_key()
@@ -2758,15 +2741,15 @@ class EditForm(RecordForm, Refreshable):
     """Form for editing a single record.
 
     The form consists of all fields defined by the specification.  These fields
-    are arranged according to the 'layout' specification.
+    are arranged according to the `layout` specification.
 
     Particular interactive fields in the UI are represented by
-    'pytis.form.InputField' instances (actually instances of a subclass given
-    by field type and specification).
+    `pytis.form.InputField` instances (actually instances of a subclass given by
+    field type and specification).
 
     The form is primarily designed for editing data for insert or update, but
     can be also used in read-only mode for viewing the records in their natural
-    layout.  See the constructor argument 'mode'.
+    layout.  See the constructor argument `mode`.
 
     """
 
@@ -2791,33 +2774,32 @@ class EditForm(RecordForm, Refreshable):
         """Process constructor keyword arguments and initialize the attributes.
 
         Arguments:
-
-          mode -- one of the 'MODE_*' constants.  Determines whether the form
-            is primarily for viewing, editing or insertion of records.
-          focus_field -- identifier of the field which should be activated for
+          mode: One of the `MODE_*` constants.  Determines whether the form is
+            primarily for viewing, editing or insertion of records.
+          focus_field: Identifier of the field which should be activated for
             user input on form startup.  If None, the first field is the
             default.  It is also possible to pass a function of one argument --
-            the PresentedRow instance representing the current record.  This
+            the `PresentedRow` instance representing the current record. This
             function must return a field identifier or None.
-          set_values -- dictionary of row values to set in the newly opened
-            form.  If not None, the dictionary keys are field identifiers and
-            values are either the corresponding internal Python values valid
-            for the fields's data type or pytis.data.Value() instances
-            directly.  These values will not affect the initial row state
-            (unlike the 'prefill' argument of the parent class) and thus will
-            appear as changed to the user.
-          layout -- custom layout of the form overriding the specification
-            defined layout.  Instance of 'pp.GroupSpec' or a sequence of items
-            to be passed to a vertical 'GroupSpec'.
-          inserted_data -- iterable providing items for batch insertion.  Each
-            item may be a 'pytis.data.Row' instance or a dictionary as in
-            'set_values'.  If not null, the form is gradually prefilled by
-            given data and the user can individually accept or skip each row.
-          on_commit_record -- callback to be called when the record is
+          set_values: Dictionary of row values to set in the newly opened form.
+            If not None, the dictionary keys are field identifiers and values
+            are either the corresponding internal Python values valid for the
+            field's data type or `pytis.data.Value` instances directly.  These
+            values will not affect the initial row state (unlike the `prefill`
+            argument of the parent class) and thus will appear as changed to the
+            user.
+          layout: Custom layout of the form overriding the specification defined
+            layout.  Instance of `pp.GroupSpec` or a sequence of items to be
+            passed to a vertical `GroupSpec`.
+          inserted_data: Iterable providing items for batch insertion.  Each
+            item may be a `pytis.data.Row` instance or a dictionary as in
+            `set_values`.  If not null, the form is gradually prefilled by given
+            data and the user can individually accept or skip each row.
+          on_commit_record: Callback to be called when the record is
             successfully saved after the submit button is pressed.  Similar to
-            'cleanup' in form specification and called just after cleanup when
+            `cleanup` in form specification and called just after cleanup when
             both defined.
-          kwargs -- arguments passed to the parent class
+          **kwargs: Arguments passed to the parent class.
 
         """
         assert mode in (self.MODE_EDIT, self.MODE_INSERT, self.MODE_VIEW)
@@ -3438,15 +3420,15 @@ class EditForm(RecordForm, Refreshable):
         return self._view.singular()
 
     def field(self, id):
-        """Return the 'InputField' instance for the field 'id'.
+        """Return the `InputField` instance for the field `id`.
 
-        Raises 'ProgramError' if the field of given id does not exist.
+        Raises `ProgramError` if the field of given id does not exist.
 
         """
         return self._field(id)
 
     def fields(self):
-        """Return all form fields as a tuple of 'InputField' instances."""
+        """Return all form fields as a tuple of `InputField` instances."""
         return self._fields
 
     def changed(self):
@@ -3479,7 +3461,7 @@ class EditForm(RecordForm, Refreshable):
 
 
 class PopupEditForm(PopupForm, EditForm):
-    """Same as 'EditForm', but displayed as a popup form."""
+    """Same as `EditForm`, but displayed as a popup form."""
 
     DESCR = _(u"edit form")
 
@@ -3550,11 +3532,11 @@ class PopupEditForm(PopupForm, EditForm):
         """Process constructor keyword arguments and initialize the attributes.
 
         Arguments:
-
-          multi_insert -- boolean flag indicating whether inserting multiple values is permitted.
-            This option is only relevant in insert mode.  False value will disable this feature and
-            the `Next' button will not be present on the form.
-          kwargs -- arguments passed to the parent class
+          multi_insert: Boolean flag indicating whether inserting multiple
+            values is permitted.  This option is only relevant in insert mode.
+            False value will disable this feature and the "Next" button will not
+            be present on the form.
+          **kwargs: Arguments passed to the parent class.
 
         """
         EditForm._init_attributes(self, **kwargs)
@@ -3693,15 +3675,15 @@ class _VirtualEditForm(EditForm):
     Forms derived from this class don't need to have a statically defined
     Specification class.  The specification is created at runtime according to
     keyword arguments passed to the form constructor and the data object is
-    created as a MemData object so no "real" database objects are needed as well.
+    created as a `pytis.data.MemData` object so no "real" database objects are
+    needed as well.
 
-    Special constructor arguments:
-
-      avoid_initial_selection -- the initial value of the initially focused
-        input field (determined by 'focus_field') is by default also selected
-        (when this is an editable text field).  This results in overwriting the
-        whole value when the user starts typing.  Passing False here avoids
-        this initial selection.
+    Arguments:
+      avoid_initial_selection: The initial value of the initially focused input
+        field (determined by `focus_field`) is by default also selected (when
+        this is an editable text field).  This results in overwriting the whole
+        value when the user starts typing.  Passing False here avoids this
+        initial selection.
 
     """
     class _SavedSettingsAccessor(Form._SavedSettingsAccessor):
@@ -3764,32 +3746,34 @@ class InputForm(_VirtualEditForm, PopupEditForm):
     """Dynamically created virtual form.
 
     This form is not bound to a specification acquired from the resolver, but
-    the specification is created on the fly based on keyword arguments passed
-    to the form constructor.  All keyword arguments passed to the constructor,
-    except for 'guardian' and 'transaction' (which have the same meaning as in
+    the specification is created on the fly based on keyword arguments passed to
+    the form constructor.  All keyword arguments passed to the constructor,
+    except for `guardian` and `transaction` (which have the same meaning as in
     the parent class) are used as attributes of the
-    'pytis.presentation.Specification' class.  The default 'data_cls' of the
-    specification is 'pytis.data.RestrictedMemData' so the form will by default
+    `pytis.presentation.Specification` class.  The default `data_cls` of the
+    specification is `pytis.data.RestrictedMemData` so the form will by default
     work with a virtual data object which is not bound to any database object.
 
     This form is mainly intended to be used as a single purpose input form when
     it is necessary to query the user for several values and the fields can be
-    easily described as standard pytis input fields.  All the features
-    supported by pytis input fields are available and can be defined through
-    standard pytis specification options.
+    easily described as standard pytis input fields.  All the features supported
+    by pytis input fields are available and can be defined through standard
+    pytis specification options.
 
     Example usage:
 
+    ```
     result = run_form(InputForm, title=_("Enter the values"),
                       fields=(Field('title', _(u"Title"), not_null=True),
                               Field('date', _(u"Date"), type=pytis.data.Date)))
+    ```
 
-    The 'result' is None if the form was escaped without confirmation.  If
-    confirmed, the 'result' is a 'pytis.presentation.PresentedRow' instance
+    The `result` is None if the form was escaped without confirmation.  If
+    confirmed, the `result` is a `pytis.presentation.PresentedRow` instance
     containing the entered values.  Other specification attributes, such as
-    'layout', 'check', etc. may be used.
+    `layout`, `check`, etc. may be used.
 
-    However the form should rather be used through 'app.input_form()' Pytis API
+    However the form should rather be used through `app.input_form` Pytis API
     method.
 
     """
@@ -3797,7 +3781,7 @@ class InputForm(_VirtualEditForm, PopupEditForm):
 
 
 class ResizableInputForm(InputForm):
-    """Resizable InputForm where the text field grows when the form is resized."""
+    """Resizable `InputForm` where the text field grows when the form is resized."""
     # Now only used with app.input_text() with height > 1.
 
     def _popup_frame_style(self):
@@ -3993,8 +3977,8 @@ class PopupInsertForm(PopupEditForm):
 class ShowForm(EditForm):
     """Form for viewing a record preview.
 
-    The layout is the same as in the edit form (i.e. 'EditForm'), only the title
-    has the same appearance as titles in forms of type 'ListForm'. Intended for
+    The layout is the same as in the edit form (i.e. `EditForm`), only the title
+    has the same appearance as titles in forms of type `ListForm`.  Intended for
     use within a dual form.
 
     """
@@ -4026,8 +4010,8 @@ class BrowsableShowForm(ShowForm):
     """Browsable form for viewing a record preview.
 
     The form is not editable, but it allows navigation across table records,
-    searching, etc. From the user's perspective, it is essentially a reduction
-    of the browsing capabilities of 'BrowseForm' down to a single record shown
+    searching, etc.  From the user's perspective, it is essentially a reduction
+    of the browsing capabilities of `BrowseForm` down to a single record shown
     using the edit form layout.
 
     """

@@ -18,18 +18,18 @@
 
 """Různé užitečné pomůcky usnadňující psaní pythonových programů.
 
-Modul obsahuje víceméně triviální funkce, které svým charakterem nepatří jinam
-a které slouží primárně pro zjednodušení zápisu často užívaných konstrukcí.
-Pokud se nějaký tématický okruh pomůcek rozmnoží, může být přesunut do
-samostatného modulu.
+Modul obsahuje víceméně triviální funkce, které svým charakterem nepatří
+jinam a které slouží primárně pro zjednodušení zápisu často užívaných
+konstrukcí. Pokud se nějaký tématický okruh pomůcek rozmnoží, může být
+přesunut do samostatného modulu.
 
 Tento modul je výjimečný ve dvou směrech:
 
-1. Vzhledem k triviálnímu charakteru zde obsažených funkcí a vzhledem k tomu,
-   že jejich primárním účelem je zkrátit a zčitelnit kód, je povoleno jej
-   importovat následujícím způsobem:
+1. Vzhledem k triviálnímu charakteru zde obsažených funkcí a vzhledem k
+tomu, že jejich primárním účelem je zkrátit a zčitelnit kód, je povoleno jej
+importovat následujícím způsobem:
 
-     from util import *
+from util import *
 
 """
 from __future__ import print_function
@@ -69,20 +69,20 @@ except ImportError:
 class ProgramError(Exception):
     """Výjimka signalizující programovou chybu.
 
-    Programová chyba je chyba, která by teoreticky neměla nikdy nastat.
-    Vznikla chybou programu, ať už přímo v místě, kde je detekována, nebo
-    chybným voláním kódu zvně (například nedodržení typů argumentů metody).
+    Programová chyba je chyba, která by teoreticky neměla nikdy nastat. Vznikla
+    chybou programu, ať už přímo v místě, kde je detekována, nebo chybným
+    voláním kódu zvně (například nedodržení typů argumentů metody).
 
     Programovou chybou naopak není systémová chyba, jejíž vznik lze za určitých
     okolností očekávat, ani chyba způsobená akcemi uživatele (například chybně
     zadaná data na vstupu).
 
-    Tato výjimka by neměla být odchytávána, s výjimkou funkcí pro ošetření
+    Tato výjimka by neměla být odchytávána, s výjimkou funkcí pro ošetření
     havárie programu.  Její výskyt znamená, že program se dostal do
-    nedefinovaného stavu a měl by být ukončen.  (V určitých, v dokumentačních
+    nedefinovaného stavu a měl by být ukončen.  (V určitých, v dokumentačních
     řetězcích jasně definovaných, případech tento požadavek nemusí být striktní
     a může znamenat pouze lokální zhroucení týkající se určitého modulu,
-    případně i s možností uzdravení reinicializací.)
+    případně i s možností uzdravení reinicializací.)
 
     Výjimka pouze dědí obecnou výjimkovou třídu a nedefinuje nic nového.
 
@@ -94,8 +94,8 @@ class InvalidAccessError(Exception):
     """Signalizace neautorizovaného přístupu.
 
     Tato výjimka je typicky vyvolávána na straně vzdáleného serveru, pokud se
-    klient pokouší volat vzdálenou metodu bez potřebné dodatečné autorizace
-    nebo s argumenty chybných typů.
+    klient pokouší volat vzdálenou metodu bez potřebné dodatečné autorizace nebo
+    s argumenty chybných typů.
 
     """
 
@@ -108,24 +108,23 @@ class InvalidAccessError(Exception):
 class FileError(Exception):
     """Výjimka vyvolávaná po chybě při práci se soubory.
 
-    Nejedná se o duplikát 'os.OSError', používá se například pokud nelze
-    z nějakého zvláštního důvodu vytvořit dočasný soubor.
+    Nejedná se o duplikát 'os.OSError', používá se například pokud nelze z
+    nějakého zvláštního důvodu vytvořit dočasný soubor.
 
     """
     pass
 
 
 class NotImplementedException(Exception):
-    """Exception raised on calling unimplemented methods.
-    """
+    """Exception raised on calling unimplemented methods."""
     pass
 
 
 class Counter(object):
     """Jednoduchý čítač.
 
-    Po svém vytvoření je inicializován na hodnotu 0 nebo hodnotu zadanou v konstruktoru
-    a při každém čtení metodou 'next()' je tato hodnota zvýšena.
+    Po svém vytvoření je inicializován na hodnotu 0 nebo hodnotu zadanou v
+    konstruktoru a při každém čtení metodou `next` je tato hodnota zvýšena.
 
     Třída není thread-safe.
 
@@ -136,7 +135,7 @@ class Counter(object):
         self._value = value
 
     def next(self):
-        """Zvyš hodnotu čítače o 1 a vrať ji."""
+        """Zvyš hodnotu čítače o 1 a vrať ji."""
         self._value = self._value + 1
         return self._value
 
@@ -150,38 +149,36 @@ class Counter(object):
 
 
 class Popen(object):
-    """Třída umožňující spouštění programů a komunikaci s nimi.
+    """Třída umožňující spouštění programů a komunikaci s nimi.
 
     Při vytváření instance třídy je vytvořen nový proces, se kterým je možno
     komunikovat pomocí zadaných nebo nově vytvořených streamů, blíže viz metoda
     '__init__()'.
 
-    Streamy pro komunikaci s procesem jsou dostupné prostřednictvím metod
-    'from_child()' a 'to_child()'.  Process id spuštěného programu je
-    dostupné přes metodu 'pid()'.
+    Streamy pro komunikaci s procesem jsou dostupné prostřednictvím metod
+    'from_child()' a 'to_child()'.  Process id spuštěného programu je dostupné
+    přes metodu 'pid()'.
 
     """
 
     def __init__(self, command, to_child=None, from_child=None,
                  directory=None):
-        """Spusť 'command' v samostatném procesu.
+        """Spusť command v samostatném procesu.
 
-        Argumenty:
-
-          command -- string nebo sekvence stringů definující spouštěný příkaz a
-            jeho argumenty
-          to_child -- file descriptor nebo file object obsahující file
-            descriptor otevřené pro zápis, prostřednictvím kterého bude
-            zapisováno na standardní vstup spuštěného procesu; může být též
-            'None', v kterémžto případě bude pro tyto účely vytvořena nová
-            roura
-          from_child -- file descriptor nebo file object obsahující file
-            descriptor otevřené pro čtení, prostřednictvím kterého bude
-            dostupný standardní výstup spuštěného procesu; může být též 'None',
-            v kterémžto případě bude pro tyto účely vytvořena nová roura
-          directory -- existující adresář (coby string), ve kterém má být
-            proces spuštěn, nebo 'None', v kterémžto případě je proces spuštěn
-            v aktuálním adresáři
+        Arguments:
+          command: String nebo sekvence stringů definující spouštěný příkaz a
+            jeho argumenty.
+          to_child: File descriptor nebo file object obsahující file descriptor
+            otevřené pro zápis, prostřednictvím kterého bude zapisováno na
+            standardní vstup spuštěného procesu; může být též None, v kterémžto
+            případě bude pro tyto účely vytvořena nová roura.
+          from_child: File descriptor nebo file object obsahující file
+            descriptor otevřené pro čtení, prostřednictvím kterého bude dostupný
+            standardní výstup spuštěného procesu; může být též None, v kterémžto
+            případě bude pro tyto účely vytvořena nová roura.
+          directory: Existující adresář (coby string), ve kterém má být proces
+            spuštěn, nebo None, v kterémžto případě je proces spuštěn v
+            aktuálním adresáři.
 
         """
         # Temporary hack for Python 2/3 compatibility.
@@ -260,17 +257,17 @@ class Popen(object):
 
 
 class Attribute(object):
-    """Definition of a 'Structure' attribute."""
+    """Definition of a `Structure` attribute."""
 
     def __init__(self, name, type=object, default=None, mutable=False):
-        """
-        Arguments:
+        """Initialize the instance.
 
-          name -- name of the attribute, string
-          type -- Python type or a sequence of Python types of the attribute
-          default -- default value of the attribute
-          mutable -- whether the given attribute is mutable; if so, a setter
-            function is defined for it
+        Arguments:
+          name (str): Name of the attribute.
+          type: Python type or a sequence of Python types of the attribute.
+          default: Default value of the attribute.
+          mutable (bool): Whether the given attribute is mutable; if so, a
+            setter function is defined for it.
 
         """
         self._name = name
@@ -295,8 +292,8 @@ class Attribute(object):
 class Structure (object):
     """Simple data structures.
 
-    Attribute names of the instance are listed in the sequence '_attributes'.
-    Each element of '_attributes' is an 'Attribute' instance.
+    Attribute names of the instance are listed in the sequence `_attributes`.
+    Each element of `_attributes` is an `Attribute` instance.
 
     """
     _attributes = ()
@@ -386,18 +383,18 @@ class DBParams(object):
 
     Shared parameters provide a way to share global and user specific values
     between the database and application code.  They are defined by
-    'Application.params()' and accessed through 'pytis.api.app'.
-    'app.param.foo' is a 'DBParams' instance for the 'SharedParams'
+    `Application.params` and accessed through `pytis.api.app`. `app.param.foo`
+    is a `DBParams` instance for the `pytis.presentation.SharedParams`
     specification named 'foo'.
 
-    The 'DBParams' instance provides access to the parameter values through its
+    The `DBParams` instance provides access to the parameter values through its
     public attributes.  Their names correspond to the names of the columns
     present in the data object represented by the instance.  When read, the
     attributes return the internal Python value of the column, when assigned,
     they update the value in the database.
 
-    It is not possible to use a parameter named 'add_callback', 'cbvalue' and
-    'reload' due to the presence of the public methods of the same name.
+    It is not possible to use a parameter named `add_callback`, `cbvalue` and
+    `reload` due to the presence of the public methods of the same name.
 
     """
     _lock = _thread.allocate_lock()
@@ -461,7 +458,7 @@ class DBParams(object):
                     callback()
 
     def add_callback(self, name, callback):
-        """Registger a callback called on given parameter change.
+        """Register a callback called on given parameter change.
 
         The callback function is called without arguments whenever the value of
         given parameter changes.
@@ -474,15 +471,16 @@ class DBParams(object):
         """Return the value of given codebook column for given parameter.
 
         Arguments:
+          name (str): Name of the parameter with a codebook (enumerator).
+          cbcolumn (str): Codebook column name.
 
-          name -- name of the parameter with a codebook (enumerator).
-          cbcolumn -- codebook column name
+        Returns:
+          The codebook column value, or None if the codebook doesn't include the
+          record for the current value of parameter name.
 
-        ValueError is raised if given column has no enunerator in the
-        underlying data object.
-
-        None is returned if the codebook doesn't include the record for the
-        current value of parameter 'name'.
+        Raises:
+          `ValueError`: If given column has no enumerator in the underlying data
+            object.
 
         """
         value = self._row[name]
@@ -497,19 +495,19 @@ class DBParams(object):
     def reload(self):
         """Explicitly reload parameter values.
 
-        Values normally reload automatically thanks to DB notifications.
-        However it may be practical in certain situations to make sure you are
-        working with up-to-date values.
+        Values normally reload automatically thanks to DB notifications. However
+        it may be practical in certain situations to make sure you are working
+        with up-to-date values.
 
         """
         self._on_change()
 
 
 class object_2_5(object):
-    """Base class emulating Python 2.5 'object' class.
+    """Base class emulating Python 2.5 object class.
 
-    Unlike 'object' class in Python 2.6 it consumes any keyword arguments.
-    This makes handling some multiple inheritance situations easier.
+    Unlike object class in Python 2.6 it consumes any keyword arguments. This
+    makes handling some multiple inheritance situations easier.
 
     """
 
@@ -520,12 +518,12 @@ class object_2_5(object):
 # Functions
 
 def identity(x):
-    """Vrať 'x'."""
+    """Vrať x."""
     return x
 
 
 def is_(x, y):
-    """Vrať pravdu, právě když je 'x' identické s 'y' ve smyslu operátoru 'is'.
+    """Vrať pravdu, právě když je 'x' identické s 'y' ve smyslu operátoru 'is'.
 
     'x' a 'y' mohou být libovolné objekty.
 
@@ -534,14 +532,14 @@ def is_(x, y):
 
 
 def xor(x, y):
-    """Vrať pravdivostní hodnotu exkluzivního OR výrazů 'x' a 'y'."""
+    """Vrať pravdivostní hodnotu exkluzivního OR výrazů x a y."""
     return (x and not y) or (not x and y)
 
 
 def xtuple(x):
     """Vrať 'x' jako tuple.
 
-    Je-li 'x' sekvence, vrať tuple, jehož prvky se shodují s prvky 'x'.  Jinak
+    Je-li 'x' sekvence, vrať tuple, jehož prvky se shodují s prvky 'x'.  Jinak
     vrať tuple, jehož jediným prvkem je 'x'.
 
     """
@@ -554,7 +552,7 @@ def xtuple(x):
 def xlist(x):
     """Vrať 'x' jako list.
 
-    Je-li 'x' sekvence, vrať list, jehož prvky se shodují s prvky 'x'.  Jinak
+    Je-li 'x' sekvence, vrať list, jehož prvky se shodují s prvky 'x'.  Jinak
     vrať list, jehož jediným prvkem je 'x'.
 
     """
@@ -565,13 +563,13 @@ def xlist(x):
 
 
 def position(element, sequence, key=identity):
-    """Vrať pozici 'element' v 'sequence'.
+    """Vrať pozici element v sequence.
 
-    Pokud se 'element' v 'sequence' nenachází, vrať 'None'.
+    Pokud se element v sequence nenachází, vrať `None`.
 
-    Porovnání prvků je prováděno operátorem '=='.  Hodnoty prvků 'sequence'
-    jsou získávány funkcí 'key', která musí jako svůj jediný argument přijímat
-    prvky 'sequence'.
+    Porovnání prvků je prováděno operátorem ==.  Hodnoty prvků sequence jsou
+    získávány funkcí key, která musí jako svůj jediný argument přijímat prvky
+    sequence.
 
     """
     for i in range(len(sequence)):
@@ -582,17 +580,16 @@ def position(element, sequence, key=identity):
 
 
 def find(element, sequence, key=identity, test=operator.eq):
-    """Vrať nejlevější prvek 'sequence' rovnající se 'element'.
+    """Vrať nejlevější prvek sequence rovnající se element.
 
-    Pokud se 'element' v 'sequence' nenachází, vrať 'None'.
+    Pokud se element v sequence nenachází, vrať `None`.
 
-    Argumenty:
-
-      key -- funkce jednoho argumentu, kterým je prvek 'sequence', vracející
-        hodnotu pro porovnání s 'element'
-      test -- funkce dvou argumentů, z nichž první je 'element' a druhý prvek
-        'sequence' po aplikaci 'key'.  Je-li zadáno, provádí se porovnání touto
-        funkcí, jinak se porovnání provádí operátorem '=='.
+    Arguments:
+      key: Funkce jednoho argumentu, kterým je prvek sequence, vracející hodnotu
+        pro porovnání s element.
+      test: Funkce dvou argumentů, z nichž první je element a druhý prvek
+        sequence po aplikaci key.  Je-li zadáno, provádí se porovnání touto
+        funkcí, jinak se porovnání provádí operátorem ==.
 
     """
     for elt in sequence:
@@ -603,24 +600,24 @@ def find(element, sequence, key=identity, test=operator.eq):
 
 
 def assoc(item, alist):
-    """Vrať nejlevější prvek z 'alist', jehož první prvek se rovná 'item'.
+    """Vrať nejlevější prvek z alist, jehož první prvek se rovná item.
 
-    Pokud takový prvek neexistuje, vrať 'None'.  Porovnání se provádí
-    operátorem '='.
+    Pokud takový prvek neexistuje, vrať `None`.  Porovnání se provádí operátorem
+    ==.
 
-    'alist' musí být sekvence neprázdných sekvencí.
+    alist musí být sekvence neprázdných sekvencí.
 
     """
     return find(item, alist, key=(lambda x: x[0]))
 
 
 def rassoc(item, alist):
-    """Vrať nejlevější prvek z 'alist', jehož druhý prvek se rovná 'item'.
+    """Vrať nejlevější prvek z alist, jehož druhý prvek se rovná item.
 
-    Pokud takový prvek neexistuje, vrať 'None'.  Porovnání se provádí
-    operátorem '='.
+    Pokud takový prvek neexistuje, vrať `None`.  Porovnání se provádí operátorem
+    ==.
 
-    'alist' musí být sekvence dvouprvkových sekvencí.
+    alist musí být sekvence dvouprvkových sekvencí.
 
     """
     return find(item, alist, key=(lambda x: x[1]))
@@ -632,14 +629,14 @@ def remove_duplicates(items):
 
 
 def flatten(list):
-    """Vrať 'list' bez vnořených sekvencí.
+    """Vrať list bez vnořených sekvencí.
 
-    Argumenty:
+    Arguments:
+      list: Libovolná sekvence.
 
-      list -- libovolná sekvence
-
-    Vrací: Sekvenci tvořenou prvky sekvence 'list', přičemž každý prvek, který
-      je sám sekvencí, je ve vrácené sekvenci rekurzivně nahrazen svými prvky.
+    Returns:
+      Sekvenci tvořenou prvky sekvence list, přičemž každý prvek, který je sám
+      sekvencí, je ve vrácené sekvenci rekurzivně nahrazen svými prvky.
 
     """
     result = []
@@ -651,13 +648,12 @@ def flatten(list):
 
 
 def nreverse(list):
-    """Vrať prvky 'list' v opačném pořadí.
+    """Vrať prvky list v opačném pořadí.
 
-    Argumenty:
+    Funkce je destruktivní, tj. hodnota list je v ní změněna.
 
-      list -- libovolný list
-
-    Funkce je destruktivní, tj. hodnota 'list' je v ní změněna.
+    Arguments:
+      list: Libovolný list.
 
     """
     list.reverse()
@@ -687,7 +683,7 @@ def sameclass(o1, o2, strict=False):
     """Vrať pravdu, právě když 'o1' a 'o2' jsou instance téže třídy.
 
     Je-li argument 'strict' pravdivý, musí se rovnat třídy obou objektů 'o1' a
-    'o2' ve smyslu operátoru '=='.  V opačném případě postačí rovnost jmen tříd
+    'o2' ve smyslu operátoru '=='.  V opačném případě postačí rovnost jmen tříd
     a jejich modulů.
 
     """
@@ -726,13 +722,13 @@ _public_attributes = {}
 def public_attributes(class_, prefix=None):
     """Vrať tuple všech jmen veřejných atributů třídy 'class_'.
 
-    Vrácená jména jsou strings a obsahují i poděděné atributy.  Nejsou mezi
-    nimi však žádná jména začínající podtržítkem.  Jména atributů jsou ve
-    vrácené sekvenci v pořadí dědičnosti počínaje od 'class_'.  Mohou se v nich
+    Vrácená jména jsou strings a obsahují i poděděné atributy.  Nejsou mezi nimi
+    však žádná jména začínající podtržítkem.  Jména atributů jsou ve vrácené
+    sekvenci v pořadí dědičnosti počínaje od 'class_'.  Mohou se v nich
     vyskytovat duplicity.
 
-    Dojde-li od posledního volání této funkce v 'class_' ke změně atributů,
-    tato změna nemusí být zohledněna.
+    Dojde-li od posledního volání této funkce v 'class_' ke změně atributů, tato
+    změna nemusí být zohledněna.
 
     """
     global _public_attributes
@@ -749,10 +745,10 @@ def public_attributes(class_, prefix=None):
 
 
 def public_attr_values(class_, prefix=None):
-    """Return a tuple of values of all public attributes of class 'class_'.
+    """Return a tuple of values of all public attributes of class `class_`.
 
     Just a shorthand to get the values of attributes returned by
-    'public_attributes()'.
+    `public_attributes`.
 
     """
     # Note: This function should actually be used in most assertions for use of
@@ -766,8 +762,8 @@ def public_attr_values(class_, prefix=None):
 def argument_names(callable, var_positional=False, var_keyword=False):
     """Return names of all function/method arguments as a tuple of strings.
 
-    The method argument 'self' is ignored.  The names are returned in the order in which the
-    arguments are defined, including all keyword arguments.
+    The method argument 'self' is ignored.  The names are returned in the order
+    in which the arguments are defined, including all keyword arguments.
 
     Only named arguments are taken into account by default.  Set
     'var_positional' to True to also return variable positional arguments such
@@ -805,7 +801,7 @@ def argument_names(callable, var_positional=False, var_keyword=False):
 
 
 def direct_public_members(obj):
-    """Vrať tuple všech přímých veřejných atributů a metod třídy objektu 'obj'.
+    """Vrať tuple všech přímých veřejných atributů a metod třídy objektu obj.
 
     Přímými členy třídy jsou myšleny ty, které nejsou shodné se stejnojmenným
     členem některého předka třídy.  Veřejnými členy třídy jsou myšleny ty,
@@ -829,15 +825,15 @@ def direct_public_members(obj):
 
 
 def less(o1, o2):
-    """Similar to '<' operator but handles 'None' values.
+    """Similar to < operator but handles `None` values.
 
     Arguments:
+      o1: First object to compare.
+      o2: Second object to compare.
 
-      o1, o2 -- objects to compare
-
-    If 'o2' is 'None', return False.
-    Else if 'o1' is 'None', return True.
-    Else return the result of 'o1 < o2'.
+    Returns:
+      False if o2 is None.  True if o1 is None.  Otherwise the result of o1 <
+      o2.
 
     """
     if o2 is None:
@@ -848,16 +844,15 @@ def less(o1, o2):
 
 
 def less_equal(o1, o2):
-    """Similar to '<=' operator but handles 'None' values.
+    """Similar to <= operator but handles `None` values.
 
     Arguments:
+      o1: First object to compare.
+      o2: Second object to compare.
 
-      o1, o2 -- objects to compare
-
-    If 'o1' is None and 'o2' is 'None', return True.
-    Else if 'o2' is 'None', return False.
-    Else if 'o1' is 'None', return True.
-    Else return the result of 'o1 <= o2'.
+    Returns:
+      True if both o1 and o2 are None.  False if o2 is None.  True if o1 is
+      None.  Otherwise the result of o1 <= o2.
 
     """
     if o2 is None:
@@ -868,16 +863,15 @@ def less_equal(o1, o2):
 
 
 def hash_attr(self, attributes):
-    """Vrať hash-kód instance 'self'.
+    """Vrať hash-kód instance self.
 
-    Kód je vytvářen dle hodnot 'attributes' instance, v souladu s pythonovými
+    Kód je vytvářen dle hodnot attributes instance, v souladu s pythonovými
     pravidly pro hash kód.
 
-    Argumenty:
-
-      self -- instance třídy, pro níž má být hash kód vytvořen
-      attributes -- sekvence jmen atributů (strings), jejichž hodnoty mají být
-        při vytváření kódu uvažovány
+    Arguments:
+      self: Instance třídy, pro níž má být hash kód vytvořen.
+      attributes: Sekvence jmen atributů (strings), jejichž hodnoty mají být při
+        vytváření kódu uvažovány.
 
     """
     dict = self.__dict__
@@ -890,25 +884,25 @@ def hash_attr(self, attributes):
 
 
 def is_sequence(x):
-    """Vrať pravdu, právě když 'x' je list nebo tuple."""
+    """Vrať pravdu, právě když x je list nebo tuple."""
     return isinstance(x, (tuple, list))
 
 
 def ecase(value, *settings):
-    """Vrať hodnotu ze 'settings' odpovídající 'value'.
+    """Vrať hodnotu ze settings odpovídající value.
 
-    Pokud 'value' není v 'settings' obsaženo, vyvolej výjimku 'ProgramError'.
-    Je-li v 'settings' 'value' obsaženo vícekrát, je uvažován první výskyt.
+    Pokud value není v settings obsaženo, vyvolej výjimku `ProgramError`. Je-li
+    v settings value obsaženo vícekrát, je uvažován první výskyt.
 
-    Argumenty:
+    Arguments:
+      value: Libovolný objekt; je porovnáván s prvními prvky prvků settings
+        operátorem ==.
+      settings: Sekvence dvojic (KEY, VALUE), kde KEY odpovídá některé z možných
+        hodnot value a VALUE je hodnota, kterou má funkce vrátit v případě shody
+        KEY a value.
 
-      value -- libovolný objekt; je porovnáván s prvními prvky prvků 'settings'
-        operátorem '='
-      settings -- sekvence dvojic (KEY, VALUE), kde KEY odpovídá některé
-        z možných hodnot 'value' a VALUE je hodnota, kterou má funkce vrátit
-        v případě shody KEY a 'value' vrátit
-
-    Vrací: VALUE z dvojice ze 'settings', jejíž KEY odpovídá 'value'.
+    Returns:
+      VALUE z dvojice ze settings, jejíž KEY odpovídá value.
 
     """
     s = assoc(value, settings)
@@ -920,14 +914,7 @@ def ecase(value, *settings):
 class Locked(object):
     """Context manager for code protected by locking.
 
-    Usage:
-
-       with Locked(my_lock):
-           do_something()
-
-    Constructor arguments:
-
-      lock -- 'thread.lock' instance to be used for locking
+    Typical usage: `with Locked(my_lock):`.
 
     It is recommended to use this context manager instead of direct locking for
     the following reasons:
@@ -936,6 +923,9 @@ class Locked(object):
 
     - locking is wrapped with some additional code for debugging and deadlock
       prevention.
+
+    Arguments:
+      lock: thread.lock instance to be used for locking.
 
     """
 
@@ -973,13 +963,12 @@ class Locked(object):
 def dev_null_stream(mode):
     """Vrať bezdatový stream.
 
-    Vrácený stream je plnohodnotné file object a funguje jako zařízení
-    '/dev/null' -- neposkytuje žádná data a všechna přijatá data zahazuje.
+    Vrácený stream je plnohodnotné file object a funguje jako zařízení /dev/null
+    -- neposkytuje žádná data a všechna přijatá data zahazuje.
 
-    Argumenty:
-
-      mode -- jeden ze stringů 'r' (nechť je vrácený stream otevřen pro čtení)
-        nebo 'w' (nechť je vrácený stream otevřen pro zápis)
+    Arguments:
+      mode (str): Jeden ze stringů 'r' (nechť je vrácený stream otevřen pro
+        čtení) nebo 'w' (nechť je vrácený stream otevřen pro zápis).
 
     """
     assert mode in ('r', 'w')
@@ -990,17 +979,17 @@ _mktempdir_counter = None
 
 
 def mktempdir(prefix='pytis'):
-    """Vytvoř podadresář v adresáři pro dočasné soubory.
+    """Vytvoř podadresář v adresáři pro dočasné soubory.
 
-    Adresář pro dočasné soubory je dán konfigurací.  Jméno podadresáře se
-    skládá ze zadaného 'prefix', kterým musí být string, a generované přípony.
+    Adresář pro dočasné soubory je dán konfigurací.  Jméno podadresáře se skládá
+    ze zadaného 'prefix', kterým musí být string, a generované přípony.
 
-    Podadresář je vytvořen s přístupovými právy 0o700.  Není-li možné adresář
-    z nějakého důvodu vytvořit, je vyvolána výjimka 'FileError'.
+    Podadresář je vytvořen s přístupovými právy 0o700.  Není-li možné adresář z
+    nějakého důvodu vytvořit, je vyvolána výjimka `FileError`.
 
     Vrací: Jméno vytvořeného adresáře včetně kompletní cesty.  Žádná dvě volání
-    této funkce nevrátí stejné jméno; to však neplatí v případě použití
-    threads, protože funkce není thread-safe.
+    této funkce nevrátí stejné jméno; to však neplatí v případě použití threads,
+    protože funkce není thread-safe.
 
     """
     import pytis
@@ -1052,11 +1041,11 @@ def camel_case_to_lower(string, separator='-'):
 def nextval(seq, connection_name=None):
     """Return a function generating next value from given DB sequence.
 
-    The argument 'seq' is the string name of a database sequence object.  The
+    The argument seq is the string name of a database sequence object.  The
     returned function accepts one optional argument transaction and returns the
     next value from given sequence when called.
 
-    Designed for convenient specification of 'default' argument in 'Field'
+    Designed for convenient specification of the default argument in the `Field`
     constructor, such as default=nextval('my_table_id_seq').
 
     """
@@ -1070,14 +1059,13 @@ def nextval(seq, connection_name=None):
 
 
 def rsa_encrypt(key, text):
-    """Return text encrypted using RSA 'key' and base64 encoded as 'bytes'.
+    """Return text encrypted using RSA key and base64 encoded as bytes.
 
-    If key is 'None', return 'text'.
+    If key is `None`, return `text`.
 
     Arguments:
-
-      key -- public key to use for encryption as 'str' or 'None'
-      text -- text to encrypt
+      key (str): Public key to use for encryption, or `None`.
+      text: Text to encrypt.
 
     """
     if key:
@@ -1098,13 +1086,12 @@ def rsa_encrypt(key, text):
 
 
 def load_module(module_name):
-    """Load and return module named 'module_name'.
+    """Load and return module named `module_name`.
 
     The module is loaded including its parent modules.
 
     Arguments:
-
-      module_name -- the module name, it may contain dots; basestring
+      module_name (str): The module name, it may contain dots.
 
     """
     module = __import__(module_name)
@@ -1122,16 +1109,17 @@ def data_object(spec, kwargs=None):
     """Create a data object for given specification.
 
     Arguments:
+      spec: Specification name as a string, `pytis.data.DataFactory` instance,
+        or gensqlalchemy database object specification
+        (`pytis.data.gensqlalchemy.SQLTable` or
+        `pytis.data.gensqlalchemy.SQLView` instance).
+      kwargs (dict): Keyword arguments passed to the data object constructor.
+        The argument connection_data is added automatically if the data class is
+        derived from `pytis.data.DBData`.
 
-      spec -- specification name as a string, 'pytis.data.DataFactory'
-        instance, or gensqlalchemy database object specification
-        (pytis.data.gensqlalchemy.SQLTable or pytis.data.gensqlalchemy.SQLView
-        instance).
-      kwargs -- a dictionary of keyword arguments passed to the data object
-        constructor.  The argument 'connection_data' is added automatically
-        if the data class is derived from 'pytis.data.DBData'.
-
-    Raises 'ResolverError' or 'ProgramError' if data object creation fails.
+    Raises:
+      `ResolverError`: If data object creation fails due to name resolution.
+      `ProgramError`: If data object creation fails for other reasons.
 
     """
     import pytis
@@ -1168,16 +1156,15 @@ def data_object(spec, kwargs=None):
 
 
 def form_view_data(resolver, name, dbconnection_spec=None):
-    """Return pair of specification objects (VIEW, DATA) for specification 'name'.
+    """Return pair of specification objects (VIEW, DATA) for specification name.
 
     VIEW is instance of view specification and DATA is instance of the
-    specification data object related to specification named 'name'.
+    specification data object related to specification named name.
 
     Arguments:
-
-      resolver -- resolver to use to find the given specification;
-        'pytis.util.Resolver' instance
-      name -- name of the specification; basestring
+      resolver (pytis.util.Resolver): Resolver to use to find the given
+        specification.
+      name (str): Name of the specification.
 
     """
     import pytis
@@ -1193,17 +1180,17 @@ def form_view_data(resolver, name, dbconnection_spec=None):
 
 
 class Attachment:
-    """Representation of  e-mail attachment for 'send_mail()' 'attachments' argument.
+    """Representation of an e-mail attachment for `send_mail` attachments.
 
-    Constructor arguments:
+    Arguments:
 
-      filename -- file name of the attachment as a string (mandatory)
-      data -- attachment data as 'bytes' instance or an open file to read the
-        attachment data from it; may be also None in which case the data is
-        read from the file given by 'filename' (which must be a full path which
-        exists and is readable).
-      mime_type -- MIME type of the attachment as a string; if None, the MIME
-        type is automatically guessed from the 'filename' extension.
+      filename (str): File name of the attachment (mandatory).
+      data: Attachment data as bytes instance or an open file to read the
+        attachment data from it; may be also None in which case the data is read
+        from the file given by filename (which must be a full path which exists
+        and is readable).
+      mime_type (str): MIME type of the attachment; if None, the MIME type is
+        automatically guessed from the filename extension.
 
     """
 
@@ -1250,51 +1237,42 @@ def send_mail(subject, text, to, sender, sender_name=None, cc=(), bcc=(),
     """Send a MIME e-mail message.
 
     Arguments:
-
-      subject -- message subject as a string
-      text -- message text as a string
-      to -- recipient address(es) as a string or a sequence of strings
-      sender -- sender address as a string
-      sender_name -- optional human readable sender name as a string; if not
-        None, the name is added to the 'From' header in the standard form:
-        "sender name" <sender@email>.
-      cc -- "carbon copy" recipient address(es) (string or their sequence)
-      bcc -- "blind carbon copy" recipient address(es) (string or their sequence)
-      html -- iff True, the message 'text' is considered HTML
-      attachments -- sequence of 'Attachment' instances defining the files to
-        attach to the message.  Items may also be strings which will be
-        automatically converted to 'Attachment' instances passing the string as
-        its 'filename'.
-      encryption_key -- public PGP key used to encrypt the message in OpenPGP
-        message format (don't encrypt when None)
-      message_id -- message id (string) to be used for the Message-Id header.
-        The format must follow the RFC 2822 specification.
-      headers -- additional headers to insert into the mail; it must be a tuple
-        of pairs (HEADER, VALUE) where HEADER is an ASCII string containing the
-        header name (without the final colon) and value is a string containing
+      subject (str): Message subject.
+      text (str): Message text.
+      to (str or list): Recipient address(es).
+      sender (str): Sender address.
+      sender_name (str): Optional human readable sender name; if not None, the
+        name is added to the From header in the standard form: "sender name"
+        <sender@email>.
+      cc (str or list): "Carbon copy" recipient address(es).
+      bcc (str or list): "Blind carbon copy" recipient address(es).
+      html (bool): If True, the message text is considered HTML.
+      attachments (tuple): Sequence of `Attachment` instances defining the files
+        to attach to the message.  Items may also be strings which will be
+        automatically converted to `Attachment` instances passing the string as
+        their filename.
+      encryption_key (str): Public PGP key used to encrypt the message in
+        OpenPGP message format (don't encrypt when None).
+      message_id (str): Message id to be used for the Message-Id header. The
+        format must follow the RFC 2822 specification.
+      headers (tuple): Additional headers to insert into the mail; a tuple of
+        pairs (HEADER, VALUE) where HEADER is an ASCII string containing the
+        header name (without the final colon) and VALUE is a string containing
         the header value.
-      smtp_server -- Specific SMTP server to use instead of the default given by
-        configuration option 'smtp_server'.
-      smtp_port -- Specific SMTP server to use instead of default 25.
+      smtp_server (str): Specific SMTP server to use instead of the default
+        given by configuration option smtp_server.
+      smtp_port (int): Specific SMTP port to use instead of default 25.
 
-    May raise the following exceptions:
-
-    'EncryptionKeyError' ... Invalid encryption key.  The key can not be
-      imported. The data may be corrupted or in an unsupported format.
-
-    'EncryptionError' ... Encryption failed by given key.  Typically trying
-      to use an expired key.
-
-    'socket.gaierror', 'socket.herror' ... Invalid SMTP server host name or
-      address.
-
-    'socket.timeout', 'socket.error' ... SMTP server refused connection.
-      Possibly invalid port or the server requires authentication or TLS.
-
-    'smtplib.SMTPException' ... Error during SMTP communication.  The server
-      may refuse the sender address of have some other problem.  The exception
-      will actually be one of SMTPException subclasses (see smtplib
-      documentation more details).
+    Raises:
+      `EncryptionKeyError`: Invalid encryption key.  The key can not be imported.
+        The data may be corrupted or in an unsupported format.
+      `EncryptionError`: Encryption failed by given key.  Typically trying to use
+        an expired key.
+      `socket.gaierror`: Invalid SMTP server host name or address. socket.timeout:
+      SMTP server refused connection.  Possibly invalid port or the server
+        requires authentication or TLS.
+      `smtplib.SMTPException`: Error during SMTP communication.  The server may
+        refuse the sender address or have some other problem.
 
     """
     import smtplib
@@ -1315,16 +1293,16 @@ def send_mail(subject, text, to, sender, sender_name=None, cc=(), bcc=(),
 def send_bug_report(einfo, message=None, sender=None):
     """Send bug report for given exception info.
 
-    Arguments:
-      einfo -- exception details as obtained from 'sys.exc_info()'.
-      message -- additional information (string) added to the error message
-        composed automatically based in 'einfo'.
-      sender -- sender email address as a string or None.
-        ('pytis.config.sender_address' is used by default).
-
-    The message is sent to 'pytis.config.sender_address'.  Success is logged.
-    In case of any problem during sending the message, the problem is logged as
+    The message is sent to `pytis.config.sender_address`.  Success is logged. In
+    case of any problem during sending the message, the problem is logged as
     well as the unsent bug report message.
+
+    Arguments:
+      einfo: Exception details as obtained from sys.exc_info().
+      message (str): Additional information added to the error message composed
+        automatically based on einfo.
+      sender (str): Sender email address, or None (pytis.config.sender_address
+        is used by default).
 
     """
     import email.utils
@@ -1373,7 +1351,7 @@ def send_bug_report(einfo, message=None, sender=None):
 
 
 class SendMailError(Exception):
-    """Base class for exceptions raised by 'send_mail()'."""
+    """Base class for exceptions raised by `send_mail`."""
     def __init__(self, message, **kwargs):
         super(SendMailError, self).__init__(message)
         self.__dict__.update(kwargs)
@@ -1382,8 +1360,8 @@ class SendMailError(Exception):
 class EncryptionKeyError(SendMailError):
     """Invalid encryption key.
 
-    The key can not be imported.  The data may be corrupted or in an
-    unsupported format.
+    The key can not be imported.  The data may be corrupted or in an unsupported
+    format.
 
     """
     pass
@@ -1514,8 +1492,8 @@ def _compose_mail(subject, text, to, sender, sender_name=None, cc=(), bcc=(),
 UNDEFINED = object()
 """Object representing an undefined value.
 
-Typically used as a default value of optional arguments to avoid the need to
-define and check using **kwargs.
+    Typically used as a default value of optional arguments to avoid the need to
+    define and check using **kwargs.
 
 """
 
@@ -1537,7 +1515,7 @@ _mem_info = None
 
 
 def mem_info():
-    """Vypiš na standardní chybový výstup informaci o paměti.
+    """Vypiš na standardní chybový výstup informaci o paměti.
 
     Užitečné pouze pro ladění.
 
@@ -1624,15 +1602,14 @@ def format_traceback():
 
 
 def exception_info(einfo=None):
-    """Vrať podrobný výpis informací o aktuální výjimce, jako string.
+    """Vrať podrobný výpis informací o aktuální výjimce, jako string.
 
-    Tento výpis je založen na funkcích modulu 'cgitb', avšak místo HTML vrací
+    Tento výpis je založen na funkcích modulu cgitb, avšak místo HTML vrací
     obyčejný textový string.
 
-    Argumenty:
-
-      einfo -- informace o výjimce ve tvaru vraceném funkcí 'sys.exc_info()',
-        nebo 'None' (v kterémžto případě je tato informace získána automaticky)
+    Arguments:
+      einfo: Informace o výjimce ve tvaru vraceném funkcí sys.exc_info(), nebo
+        None (v kterémžto případě je tato informace získána automaticky).
 
     """
     # Inicializace
@@ -1710,9 +1687,8 @@ def exception_info(einfo=None):
 def stack_info(depth=None):
     """Vrať obsah zásobníku volání, jako string.
 
-    String je zformátovaný podobně jako Pythonový traceback.  Poslední volání
-    je na konci.  Argument 'depth' může omezit hloubku jen na určitý počet
-    frames.
+    String je zformátovaný podobně jako Pythonový traceback.  Poslední volání je
+    na konci.  Argument depth může omezit hloubku jen na určitý počet frames.
 
     Funkce je typicky určena k ladění.
 
@@ -1730,20 +1706,19 @@ def lcg_node(content, title=None, resource_path=(), resources=()):
     """Return lcg.ContentNode for given content with given resources.
 
     Arguments:
-
-      content -- 'lcg.Content' instance or a sequence of such instances.
-      resource_path -- sequence of filesystem directory names where resource
-        files referred from the document (images, style sheets, scripts) are
-        searched.  The LCG's resource directory is appended automatically.  The
-        arrangement of files in resource directories must follow the standard
-        expected by 'lcg.ResourceProvider'.
-      resources -- list of 'lcg.Resource' instances or string resource file
-        names.  The 'lcg.Resource' instances will be passed to the resource
+      content: lcg.Content instance or a sequence of such instances.
+      resource_path (tuple): Sequence of filesystem directory names where
+        resource files referred from the document (images, style sheets,
+        scripts) are searched.  The LCG's resource directory is appended
+        automatically.  The arrangement of files in resource directories must
+        follow the standard expected by lcg.ResourceProvider.
+      resources (list): List of lcg.Resource instances or string resource file
+        names.  The lcg.Resource instances will be passed to the resource
         provider as statically defined resources.  The string names will be
-        allocated through the resource provider (searched within
-        'resource_path').
+        allocated through the resource provider (searched within resource_path).
 
-    The content is returned as an 'lcg.ContentNode' instance.
+    Returns:
+      The content as an lcg.ContentNode instance.
 
     """
     import lcg
@@ -1763,11 +1738,12 @@ def parse_lcg_text(text, resource_path=(), resources=()):
     """Return lcg.ContentNode created by parsing given LCG Structured Text.
 
     Arguments:
+      text (str): The source text in LCG structured text format.
+      resource_path: As in `lcg_node`.
+      resources: As in `lcg_node`.
 
-      text -- The source text in LCG structured text format.
-      resource_path, resources -- as in 'lcg_node()' above.
-
-    The content is returned as an 'lcg.ContentNode' instance.
+    Returns:
+      The content as an lcg.ContentNode instance.
 
     """
     import lcg
@@ -1778,24 +1754,21 @@ def content(content, format=None, resources=()):
     """Return lcg.ContentNode created from given content.
 
     Arguments:
-
-      content -- content as a string, 'lcg.Content' instance or a sequence of
-        'lcg.Content' instances.  'lcg.Content' instance is returned as is,
-        sequence of 'lcg.Content' instances is wrapped in a newly created
-        'lcg.Container' instance (passing it given 'resources') and a string is
-        converted to 'lcg.Content' according to the 'format' argument value.
-      format -- input format of the text content as one of 'TextFormat'
-        constants.  'TextFormat.PLAIN' for preformatted plain text,
-        'TextFormat.HTML' for HTML source fragment (excluding <html>, <head>
-        and <body> tags) or 'TextFormat.LCG' for LCG structured text source to
-        be processed by LCG Parser.  This argument is irrelevant if content is
-        not given as a string.  If None, the default format is
-        'TextFormat.LCG'.
-      resources -- list of 'lcg.Resource' instances or string resource file
-        names.  The 'lcg.Resource' instances will be passed to the resource
+      content: Content as a string, lcg.Content instance or a sequence of
+        lcg.Content instances.  lcg.Content instance is returned as is, sequence
+        of lcg.Content instances is wrapped in a newly created lcg.Container
+        instance (passing it given resources) and a string is converted to
+        lcg.Content according to the format argument value.
+      format: Input format of the text content as one of TextFormat constants.
+        TextFormat.PLAIN for preformatted plain text, TextFormat.HTML for HTML
+        source fragment (excluding <html>, <head> and <body> tags) or
+        TextFormat.LCG for LCG structured text source to be processed by LCG
+        Parser.  This argument is irrelevant if content is not given as a
+        string.  If None, the default format is TextFormat.LCG.
+      resources (list): List of lcg.Resource instances or string resource file
+        names.  The lcg.Resource instances will be passed to the resource
         provider as statically defined resources.  The string names will be
-        allocated through the resource provider (searched within
-        'resource_path').
+        allocated through the resource provider (searched within resource_path).
 
     The content is returned as an 'lcg.ContentNode' instance.
 
@@ -1826,18 +1799,18 @@ def lcg_to_html(text, styles=('default.css',), resource_path=()):
     """Return given LCG structured text converted to HTML.
 
     Arguments:
+      text (str): The source text in LCG structured text format.
+      styles (tuple): Sequence of style sheet file names to be embedded as
+        inline styles in the final document.  These files must be located in
+        resource directories specified by resource_path.
+      resource_path (tuple): Sequence of filesystem directory names where
+        resource files (style sheets) are searched.  The LCG's resource
+        directory is appended automatically.  The arrangement of files in
+        resource directories must follow the standard expected by
+        lcg.ResourceProvider.
 
-      text -- The source text in LCG structured text format.
-      styles -- sequence of style sheet file names to be embedded as inline
-        styles in the final document.  These files must be located in resource
-        directories specified by 'resource_path'.
-      resource_path -- sequence of filesystem directory names where resource
-        files (style sheets) are searched.  The LCG's resource directory is
-        appended automatically.  The arrangement of files in resource
-        directories must follow the standard expected by
-        'lcg.ResourceProvider'.
-
-    The exported HTML is returned as UTF-8 encoded string.
+    Returns:
+      The exported HTML as UTF-8 encoded string.
 
     """
     import lcg
@@ -1861,15 +1834,17 @@ def html_diff(text1, text2, name1, name2, wrapcolumn=80, context=True, numlines=
     """Return a human readable overview of differences between given two texts.
 
     Arguments:
-      text1 -- first text as a basestring
-      text2 -- second text as a basestring
-      name1 -- name of the first text as a basestring
-      name2 -- name of the second text as a basestring
-      wrapcolumn -- column to wrap longer lines in both texts as int or None
-      context -- a context diff is returned if true, full diff otherwise
-      numlines -- number of lines before and after change to show in context diff
+      text1 (str): First text.
+      text2 (str): Second text.
+      name1 (str): Name of the first text.
+      name2 (str): Name of the second text.
+      wrapcolumn (int): Column to wrap longer lines in both texts, or None.
+      context (bool): A context diff is returned if true, full diff otherwise.
+      numlines (int): Number of lines before and after change to show in context
+        diff.
 
-    Returns a string containing a complete HTML document.
+    Returns:
+      A string containing a complete HTML document.
 
     """
     import difflib
@@ -1908,11 +1883,10 @@ def current_language():
 
 
 def set_current_language(language):
-    """Set current language to 'language'.
+    """Set current language to language.
 
     Arguments:
-
-      language -- language code (without any variant), string
+      language (str): Language code (without any variant).
 
     """
     global _current_language
@@ -1922,11 +1896,10 @@ def set_current_language(language):
 def environment_language(default=None):
     """Return code of the language of the current locale environment.
 
-    Arguments:
-
-      default -- default language code; string or 'None'
-
     Just the basic code, without any variant, is returned.
+
+    Arguments:
+      default (str): Default language code, or None.
 
     """
     for env in ('LANGUAGE', 'LC_ALL', 'LC_MESSAGES', 'LANG'):
@@ -1945,16 +1918,16 @@ def environment_language(default=None):
 def translation_status():
     """Return the current status of translations in all available translation files.
 
-    Returns a list of dictionaries, where each dictionary contains the
-    following information:
+    Returns a list of dictionaries, where each dictionary contains the following
+    information:
 
-       filename -- translation file name as a string (such as 'pytis-wx.en.po'),
-       percent_translated -- percent of translated entries as integer
-       count_untranslated -- number of untranslated entries as integer
-       count_fuzzy -- number of fuzzy entriues as integer
+    - filename: translation file name as a string (such as 'pytis-wx.en.po') -
+    percent_translated: percent of translated entries as integer -
+    count_untranslated: number of untranslated entries as integer - count_fuzzy:
+    number of fuzzy entries as integer
 
     The list contains an entry for every PO file found within the current
-    translation path (see 'translation_path()').  Note, that the actual
+    translation path (see `translation_path`).  Note, that the actual
     translations visible within the application may not exactly correspond to
     returned information, because they are retrieved from MO files (compiled PO
     files) but the returned information is read from the PO files directly.
@@ -2017,8 +1990,8 @@ def translations(domain, origin='en'):
     any of the other supported locales when used properly.  This is necessary
     for those parts of pytis, which define translatable strings which may be
     used both in web and desktop applications (desktop applications expect
-    strings translated to the current locale, web applications need to
-    translate the strings later when a particular client is served).
+    strings translated to the current locale, web applications need to translate
+    the strings later when a particular client is served).
 
     """
     try:
@@ -2065,17 +2038,16 @@ def translations(domain, origin='en'):
 def translate(text):
     """Return translation object for given text.
 
-    This function is suitable for use as '_' to mark translatable texts.  It is
-    now used in applications to quickly define the '_' function explicitly
-    after it was removed from builtins in Pytis.  To really translate the
-    texts, use the 'translations()' function defined above and set up creation
-    of message catalogs.
+    This function is suitable for use as _ to mark translatable texts.  It is
+    now used in applications to quickly define the _ function explicitly after
+    it was removed from builtins in Pytis.  To really translate the texts, use
+    the `translations` function defined above and set up creation of message
+    catalogs.
+
+    The function just returns text.
 
     Arguments:
-
-      text -- text to translate; basestring
-
-    The function just returns 'text'.
+      text (str): Text to translate.
 
     """
     return text
@@ -2095,8 +2067,8 @@ def run_as_script(function):
 
     Returns the value returned by the function.
 
-    The first line of function's docstring is used in the usage information
-    page when --help is passed or if invalid command line options are found.
+    The first line of function's docstring is used in the usage information page
+    when --help is passed or if invalid command line options are found.
 
     """
     def usage(msg=None):

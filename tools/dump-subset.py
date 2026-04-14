@@ -24,13 +24,13 @@ are required to satisfy foreign-key references (recursively).  The result is
 a minimal, self-contained subset of the database that preserves referential
 integrity.
 
-Tables are emitted in the correct insertion order (parents first).  Output can
-be generated either as COPY ... FROM STDIN blocks or as INSERT statements with
-ON CONFLICT DO NOTHING, depending on the selected options.
+Tables are emitted in the correct insertion order (parents first).  Output
+can be generated either as COPY ... FROM STDIN blocks or as INSERT
+statements with ON CONFLICT DO NOTHING, depending on the selected options.
 
-This makes it possible to export a consistent data slice from one database and
-import it into another, or to merge multiple subsets safely into the same target
-database.
+This makes it possible to export a consistent data slice from one database
+and import it into another, or to merge multiple subsets safely into the
+same target database.
 
 """
 
@@ -131,9 +131,13 @@ def get_table_columns(connection, table):
 
 
 def build_parent_graph(fks_rows):
-    """Return:
-       - parents_by_child[child] -> [...]
-       - children_by_parent[parent] -> {child}
+    """Return parents_by_child and children_by_parent mappings.
+
+    Returns:
+      Tuple of (parents_by_child, children_by_parent) where
+      parents_by_child[child] -> [...] and children_by_parent[parent] ->
+      {child}.
+
     """
     parents_by_child = collections.defaultdict(list)
     children_by_parent = collections.defaultdict(set)
@@ -201,13 +205,10 @@ def get_primary_key(connection, table):
 def build_child_fk_map(foreign_keys):
     """Return child foreign key map: child -> list of dicts.
 
-    dict = {'parent': 'schema.table',
-       'child_cols': [...],
-       'parent_cols': [...],
-       'cons': 'name',
-    }
+    Each dict has the following keys: `parent` (`'schema.table'`), `child_cols`
+    (list), `parent_cols` (list), `cons` (name). Multi-column FKs are grouped
+    and ordered by col_order.
 
-    Multi-column FKs are grouped and ordered by col_order.
     """
     tmp = collections.defaultdict(lambda: collections.defaultdict(list))
     for fk in foreign_keys:
@@ -289,7 +290,7 @@ def get_owned_sequences_for_tables(connection, tables):
     This includes sequences owned by columns (SERIAL/IDENTITY) and sequences
     referenced from column defaults (nextval(...)).
 
-    Each dict has the following keys: 'schema', 'name', 'value'.
+    Each dict has the following keys: `schema`, `name`, `value`.
 
     If a sequence has never been called, its start value is returned.
 
@@ -351,9 +352,10 @@ def build_selection_sets(connection, reachable_tables, start_table, seed_where,
                          pk_by_table, child_fk_map, debug_sql=False):
     """Create temp selection tables and populate them with PKs to be dumped.
 
-    For each table in reachable_tables, a TEMP table tmp_sel_* is created with the
-    same PK columns and types, and filled iteratively so that for every selected
-    child row all referenced parent rows are also selected (recursively).
+    For each table in reachable_tables, a TEMP table tmp_sel_* is created with
+    the same PK columns and types, and filled iteratively so that for every
+    selected child row all referenced parent rows are also selected
+    (recursively).
 
     """
     def dbg_sql(lines, **kwargs):

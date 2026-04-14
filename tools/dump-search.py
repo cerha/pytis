@@ -27,7 +27,7 @@ The script has two subcommands:
 
   Default dumped columns:
   - key columns (primary key; else NOT NULL unique key; else ctid),
-  - plus text-like columns (typcategory='S', incl. citext).
+  - plus text-like columns (`typcategory='S'`, incl. citext).
 
 - search:
   Searches the dump for a list of terms and reports counts and locations

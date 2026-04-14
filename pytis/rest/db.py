@@ -34,7 +34,7 @@ class Database:
     """Encapsulates database engine and session factory.
 
     Create once at application startup via Database.create(config_path) and
-    pass the instance to add_api_routes().  Call dispose() on shutdown to
+    pass the instance to `add_api_routes()`.  Call `dispose()` on shutdown to
     release all pooled connections.
 
     """
@@ -47,25 +47,23 @@ class Database:
     def create(cls, config_path: str) -> 'Database':
         """Initialise pytis config and create engine and session factory.
 
-        Args:
-            config_path: Path to the pytis configuration file.
+        Arguments:
+          config_path: Path to the pytis configuration file.
 
         Returns:
-            A ready-to-use Database instance.
+          A ready-to-use Database instance.
 
-        Note on sync vs async
-        ---------------------
-
-        This implementation uses a synchronous psycopg2 driver and
-        SQLAlchemy 1.4 (with future=True for 2.0-style API).  FastAPI
-        dispatches synchronous route handlers in a thread pool, so there
-        is no event-loop blocking even without async I/O.
+        **Note on sync vs async**
+        This implementation uses a synchronous psycopg2 driver and SQLAlchemy
+        1.4 (with future=True for 2.0-style API).  FastAPI dispatches
+        synchronous route handlers in a thread pool, so there is no event-loop
+        blocking even without async I/O.
 
         Once pytis applications are migrated to SQLAlchemy 2.0, this class
-        should be rewritten to use create_async_engine + async_sessionmaker
-        with the asyncpg driver, and all handler methods converted to
-        async def.  The 2.0-style session API (future=True) used throughout
-        this module is intentional to make that migration straightforward.
+        should be rewritten to use create_async_engine + async_sessionmaker with
+        the asyncpg driver, and all handler methods converted to async def.  The
+        2.0-style session API (future=True) used throughout this module is
+        intentional to make that migration straightforward.
 
         """
         pytis.config.add_command_line_options(('pytis', '--config', config_path))
@@ -101,11 +99,10 @@ class Database:
     async def lifespan(self, app: typing.Any):
         """FastAPI lifespan context manager.
 
-        Disposes the connection pool on application shutdown.  Pass as::
+        Disposes the connection pool on application shutdown.  Pass as
+        `app = FastAPI(lifespan=db.lifespan)`.
 
-            app = FastAPI(lifespan=db.lifespan)
-
-        The ``app`` argument is provided by FastAPI but is not used here.
+        The `app` argument is provided by FastAPI but is not used here.
 
         """
         yield
@@ -121,8 +118,8 @@ class PayloadError(ValueError):
 class DataConsistencyError(RuntimeError):
     """Raised when stored relational data references a non-existent row.
 
-    Signals a referential-integrity gap not enforced by the database (e.g. a
-    FK value that no longer has a matching row in the target table).  Relation
+    Signals a referential-integrity gap not enforced by the database (e.g. a FK
+    value that no longer has a matching row in the target table).  Relation
     handlers raise this; CRUD methods catch it and map it to HTTP 500.
 
     """
@@ -167,10 +164,9 @@ Sorting = tuple[tuple[str, str], ...]
 
 
 class Operator:
-    """Base class for all condition operators accepted by PytisAccessor.
+    """Base class for all condition operators accepted by `PytisAccessor`.
 
-    Design
-    ------
+    **Design**
 
     Operator instances represent query conditions as plain Python objects.
     Column references are plain strings (column names), not SA Column objects,
@@ -178,48 +174,43 @@ class Operator:
 
     Each subclass implements expression(table), which translates the condition
     to a SQLAlchemy ColumnElement bound to a specific table.  Column-name
-    validation (PayloadError on unknown names) is performed there via the
-    shared _col() helper.  PytisAccessor passes its own table and calls
+    validation (PayloadError on unknown names) is performed there via the shared
+    _col() helper.  PytisAccessor passes its own table and calls
     condition.expression(table) directly — it never builds SA clauses itself.
 
-    Relation to pytis.data operators
-    ---------------------------------
-
+    **Relation to pytis.data operators**
     pytis.data defines a parallel Operator hierarchy with the same conceptual
     operators (EQ, NE, LT, LE, GT, GE, AND, OR, NOT, WM, IN, …).  The key
-    difference is that pytis.data operands are pytis.data.Value instances
-    (value + pytis type), because the pytis data layer owns both type
-    validation and query construction.
+    difference is that pytis.data operands are pytis.data.Value instances (value
+    + pytis type), because the pytis data layer owns both type validation and
+    query construction.
 
     Here, FastAPI/Pydantic already handle type validation before values reach
     the accessor, so wrapping plain Python values in pytis.data.Value would be
-    pure overhead.  Plain Python values are used directly and SQLAlchemy
-    handles type coercion at the driver level.
+    pure overhead.  Plain Python values are used directly and SQLAlchemy handles
+    type coercion at the driver level.
 
     Operator names are aligned with pytis.data where semantics match:
 
-        EQ, NE, LT, LE, GT, GE, AND, OR, NOT
-            Identical semantics to their pytis.data counterparts.
+    EQ, NE, LT, LE, GT, GE, AND, OR, NOT Identical semantics to their pytis.data
+    counterparts.
 
-        IN
-            Simple value-list membership (SQL: col IN (...)).
-            pytis.data uses ANY_OF for this pattern (expanded to OR-of-EQ)
-            and reserves IN for a subquery form.  We use SQL IN directly.
+    IN Simple value-list membership (SQL: col IN (...)). pytis.data uses ANY_OF
+    for this pattern (expanded to OR-of-EQ) and reserves IN for a subquery form.
+    We use SQL IN directly.
 
-        LIKE
-            Pattern matching with SQL LIKE / ILIKE syntax (% and _ wildcards).
-            pytis.data calls the equivalent WM ("wildcard match") and uses its
-            own wildcard syntax (* → %, ? → _).
+    LIKE Pattern matching with SQL LIKE / ILIKE syntax (% and _ wildcards).
+    pytis.data calls the equivalent WM ("wildcard match") and uses its own
+    wildcard syntax (* → %, ? → _).
 
-        EQ('col', None) / NE('col', None)
-            Translate to IS NULL / IS NOT NULL respectively, mirroring the
-            pytis.data convention of EQ('col', Value(type, None)) for null
-            tests.  No separate IsNull/IsNotNull classes are needed.
+    EQ('col', None) / NE('col', None) Translate to IS NULL / IS NOT NULL
+    respectively, mirroring the pytis.data convention of EQ('col', Value(type,
+    None)) for null tests.  No separate IsNull/IsNotNull classes are needed.
 
     """
 
     def _col(self, table: sa.Table, name: str) -> sa.Column:
-        """Return the SA Column for name, raising PayloadError if unknown."""
+        """Return the SA Column for name, raising `PayloadError` if unknown."""
         c = table.c.get(name)
         if c is None:
             raise PayloadError(f"Unknown column in condition: {name!r}")
@@ -228,11 +219,11 @@ class Operator:
     def expression(self, table: sa.Table) -> ColumnElement:
         """Translate this operator to a SQLAlchemy WHERE clause element.
 
-        Args:
-            table: The SA Table whose columns are referenced by name.
+        Arguments:
+          table: The SA Table whose columns are referenced by name.
 
         Raises:
-            PayloadError: If a column name does not exist in table.
+          `PayloadError`: If a column name does not exist in table.
 
         """
         raise NotImplementedError
@@ -306,8 +297,8 @@ class GE(Operator):
 class IN(Operator):
     """Value-list membership: column IN (values).
 
-    Translates to a SQL IN clause.  An empty values tuple produces a
-    condition that never matches any row (equivalent to SQL FALSE).
+    Translates to a SQL IN clause.  An empty values tuple produces a condition
+    that never matches any row (equivalent to SQL FALSE).
 
     """
     column: str
@@ -323,8 +314,8 @@ class IN(Operator):
 class LIKE(Operator):
     """Pattern match: column LIKE pattern (or ILIKE when ignore_case=True).
 
-    Use standard SQL wildcard syntax: % matches any sequence of characters,
-    _ matches exactly one character.
+    Use standard SQL wildcard syntax: % matches any sequence of characters, _
+    matches exactly one character.
 
     """
     column: str
@@ -374,20 +365,19 @@ class NOT(Operator):
 class PytisAccessor:
     """Low-level database accessor built on SQLAlchemy ORM.
 
-    This class provides a thin, explicit abstraction over a single SQLTable/SQLView
-    definition. It exposes:
+    This class provides a thin, explicit abstraction over a single
+    SQLTable/SQLView definition. It exposes:
 
-        - mapped ORM entity (imperative mapping),
-        - filtered column metadata (excluding technical columns),
-        - CRUD operations working with API-level keys (dict of column→value).
+    - mapped ORM entity (imperative mapping), - filtered column metadata
+    (excluding technical columns), - CRUD operations working with API-level keys
+    (dict of column→value).
 
     Design principles:
 
-        - No hidden policy or business logic.
-        - No automatic translation between API keys and primary keys.
-        - Explicit error signaling (PayloadError, NonUniqueKeyError,
-          ConstraintViolationError).
-        - Single-column database primary key is required internally.
+    - No hidden policy or business logic. - No automatic translation between API
+    keys and primary keys. - Explicit error signaling (`PayloadError`,
+    `NonUniqueKeyError`, `ConstraintViolationError`). - Single-column database
+    primary key is required internally.
 
     This class is transport-agnostic and framework-agnostic. It does not know
     about FastAPI or HTTP semantics.
@@ -400,12 +390,12 @@ class PytisAccessor:
     def __init__(self, spec: SQLTabular):
         """Initialize accessor for a specific SQLTable/SQLView spec.
 
-        Args:
-            spec: Table/view specification class.
+        Arguments:
+          spec: Table/view specification class.
 
         Raises:
-            ValueError: If the underlying table has no primary key or a
-                        multi-column primary key (currently unsupported).
+          `ValueError`: If the underlying table has no primary key or a multi-
+            column primary key (currently unsupported).
 
         """
         with pytis.data.gensqlalchemy.local_search_path(spec.default_search_path()):
@@ -441,8 +431,8 @@ class PytisAccessor:
 
         The lock ensures that concurrent first-calls for the same spec do not
         both execute __init__ (and therefore map_imperatively) simultaneously.
-        After the first call the cached result is returned inside the lock,
-        so the overhead for subsequent calls is just one lock acquire/release.
+        After the first call the cached result is returned inside the lock, so
+        the overhead for subsequent calls is just one lock acquire/release.
 
         """
         with cls._lock:
@@ -476,21 +466,21 @@ class PytisAccessor:
     def row(self, session: orm.Session, condition: Operator):
         """Return a single row matching condition.
 
-        Args:
-            session: SQLAlchemy session.
-            condition: Filter condition as an Operator tree.  For a typical
-                single-column key lookup, pass ``EQ('column', value)``.
+        Arguments:
+          session: SQLAlchemy session. condition: Filter condition as an
+            Operator tree.  For a typical single-column key lookup,
+            pass `EQ('column', value)`.
 
         Returns:
-            ORM entity instance or None if no matching row exists.
+          ORM entity instance or None if no matching row exists.
 
         Raises:
-            PayloadError: If a column name in the condition is unknown.
-            NonUniqueKeyError: If the condition matches more than one row.
+          `PayloadError`: If a column name in the condition is unknown.
+          `NonUniqueKeyError`: If the condition matches more than one row.
 
         Notes:
-            The condition is not required to match the primary key; it may
-            represent any unique constraint chosen by the API layer.
+          The condition is not required to match the primary key; it may represent
+          any unique constraint chosen by the API layer.
 
         """
         stmt = (
@@ -512,23 +502,21 @@ class PytisAccessor:
              offset: int | None = None):
         """Return rows, optionally filtered, ordered, and paged.
 
-        Args:
-            session: SQLAlchemy session.
-            condition: Optional filter condition as an Operator tree.
-                None means no filtering (all rows returned).
-            sorting: Optional ordering specification as a sequence of
-                ``(column_name, direction)`` pairs, where direction is
-                ``ASCENDENT`` or ``DESCENDANT``.
-                Defaults to ascending order by primary key.
-            limit: Maximum number of rows.  None means no limit.
-            offset: Number of rows to skip.  None means no offset.
+        Arguments:
+          session: SQLAlchemy session. condition: Optional filter condition as an
+            Operator tree. None means no filtering (all rows returned). sorting:
+            Optional ordering specification as a sequence of `(column_name,
+            direction)` pairs, where direction is `ASCENDENT` or `DESCENDANT`.
+            Defaults to ascending order by primary key. limit: Maximum number of
+            rows.  None means no limit. offset: Number of rows to skip.  None means
+            no offset.
 
         Returns:
-            List of ORM entity instances.
+          List of ORM entity instances.
 
         Raises:
-            PayloadError: If a column name in the sorting spec is unknown.
-            ValueError: If an unknown direction is given.
+          `PayloadError`: If a column name in the sorting spec is unknown.
+          `ValueError`: If an unknown direction is given.
 
         """
         if sorting is None:
@@ -556,16 +544,15 @@ class PytisAccessor:
     def insert(self, session: orm.Session, **values):
         """Insert a new row.
 
-        Args:
-            session: SQLAlchemy session.
-            **values: Column values.
+        Arguments:
+          session: SQLAlchemy session. **values: Column values.
 
         Returns:
-            Newly created ORM entity instance.
+          Newly created ORM entity instance.
 
         Raises:
-            PayloadError: If unknown columns are provided.
-            ConstraintViolationError: On database constraint violation.
+          `PayloadError`: If unknown columns are provided. ConstraintViolationError:
+          On database constraint violation.
 
         """
         unknown = set(values) - self._column_names
@@ -586,19 +573,18 @@ class PytisAccessor:
     def update(self, session: orm.Session, condition: Operator, **values):
         """Update a row matching condition.
 
-        Args:
-            session: SQLAlchemy session.
-            condition: Filter condition identifying the row to update.
-            **values: Columns to update.
+        Arguments:
+          session: SQLAlchemy session. condition: Filter condition identifying the
+            row to update. **values: Columns to update.
 
         Returns:
-            Updated entity instance or None if not found.
+          Updated entity instance or None if not found.
 
         Raises:
-            PayloadError: On unknown columns, attempt to modify the primary
-                key, or unknown column names in the condition.
-            NonUniqueKeyError: If condition matches multiple rows.
-            ConstraintViolationError: On database constraint violation.
+          `PayloadError`: On unknown columns, attempt to modify the primary key, or
+            unknown column names in the condition. NonUniqueKeyError: If condition
+            matches multiple rows. ConstraintViolationError: On database constraint
+            violation.
 
         """
         unknown = set(values) - self._column_names
@@ -620,17 +606,17 @@ class PytisAccessor:
     def delete(self, session: orm.Session, condition: Operator) -> bool:
         """Delete a row matching condition.
 
-        Args:
-            session: SQLAlchemy session.
-            condition: Filter condition identifying the row to delete.
+        Arguments:
+          session: SQLAlchemy session. condition: Filter condition identifying the
+            row to delete.
 
         Returns:
-            True if deleted, False if not found.
+          True if deleted, False if not found.
 
         Raises:
-            PayloadError: If a column name in the condition is unknown.
-            NonUniqueKeyError: If condition matches multiple rows.
-            ConstraintViolationError: On database constraint violation.
+          `PayloadError`: If a column name in the condition is unknown.
+          `NonUniqueKeyError`: If condition matches multiple rows.
+          `ConstraintViolationError`: On database constraint violation.
 
         """
         obj = self.row(session, condition)
@@ -646,14 +632,13 @@ class PytisAccessor:
     def delete_instance(self, session: orm.Session, obj: typing.Any) -> None:
         """Mark an already-loaded ORM instance for deletion without flushing.
 
-        Unlike delete(), this method does not flush the session.  It is
-        intended for use in batch-delete loops where the caller controls when
-        the deletes are flushed (and wraps the flush in a ConstraintViolationError
-        handler if needed).
+        Unlike delete(), this method does not flush the session.  It is intended
+        for use in batch-delete loops where the caller controls when the deletes
+        are flushed (and wraps the flush in a `ConstraintViolationError` handler
+        if needed).
 
-        Args:
-            session: SQLAlchemy session.
-            obj: ORM entity instance to delete.
+        Arguments:
+          session: SQLAlchemy session. obj: ORM entity instance to delete.
 
         """
         session.delete(obj)

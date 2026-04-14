@@ -23,14 +23,13 @@ cms_rights_rw = sql.SQLFlexibleValue('app_cms_rights_rw',
 def use_cms(classes=None):
     """Declare usage of Pytis CMS DB objects.
 
-    Pytis CMS classes are by default marked as 'external' and thus are not
-    included in gsql output after mere import of pytis.dbdefs.db_pytis_cms.
+    Pytis CMS classes are by default marked as `external` and thus are not
+    included in gsql output after mere import of `pytis.dbdefs.db_pytis_cms`.
     Calling this function will setup the classes for usage.
 
     Arguments:
-
-      classes -- the set of classes to mark for usage as an iterable.  If None,
-        the default set of Pytis CMS classes is used.
+      classes: The set of classes to mark for usage as an iterable. If None, the
+        default set of Pytis CMS classes is used.
 
     """
     if not classes:
@@ -60,7 +59,7 @@ class CmsExtensible:
     """Extensible CMS DB specification.
 
     All Pytis CMS DB specification classes are derived from this class and thus
-    may be extended (customized for project needs) via the method 'extend()' of
+    may be extended (customized for project needs) via the method `extend` of
     this class.
 
     """
@@ -69,27 +68,31 @@ class CmsExtensible:
     def extend(cls, extension_class):
         """Extend existing Pytis CMS class by attributes of given extension class.
 
-        We need to alter the existing classes, because it is not possible to create
-        new derived classes and use them instead of the original classes.  This is
-        because gsql will fail if it finds two classes with the same name (even
-        though one of them is marked as 'external').  So we need to define a new
-        class (not inherited from the original gsql class) and dynamically override
-        all public attributes of the original 'cls' by the attributes of the
-        'extension_class'.
+        Arguments:
+          extension_class: Class whose public attributes will be applied to
+            `cls`.
 
-        This makes it possible for example to add application specific columns to
-        the tables defined by Pytis CMS.
+        We need to alter the existing classes, because it is not possible to
+        create new derived classes and use them instead of the original classes.
+        This is because gsql will fail if it finds two classes with the same
+        name (even though one of them is marked as `external`). So we need to
+        define a new class (not inherited from the original gsql class) and
+        dynamically override all public attributes of the original `cls` by the
+        attributes of the `extension_class`.
+
+        This makes it possible for example to add application specific columns
+        to the tables defined by Pytis CMS.
 
         Example:
 
-        @pytis.dbdefs.db_pytis_cms.CmsRoles.extend
-        class CmsRoles:
-            fields = tuple(
-                list(pytis.dbdefs.db_pytis_cms.CmsRoles.fields) + [
-                    sql.Column('project', pytis.data.String(maxlen=6),
-                               references=sql.a(sql.r.Projects.code)),
-                ]
-            )
+          @pytis.dbdefs.db_pytis_cms.CmsRoles.extend
+          class CmsRoles:
+              fields = tuple(
+                  list(pytis.dbdefs.db_pytis_cms.CmsRoles.fields) + [
+                      sql.Column('project', pytis.data.String(maxlen=6),
+                                 references=sql.a(sql.r.Projects.code)),
+                  ]
+              )
 
 
         """
@@ -285,8 +288,10 @@ class CmsRoles(sql.SQLTable, CmsExtensible):
 
 class CmsActions(sql.SQLTable, CmsExtensible):
     """Enumeration of valid actions.
-    (Including both module independent actions and per module actions.)
-    Module independent actions have NULL in the mod_id column.
+
+    Including both module independent actions and per module actions. Module
+    independent actions have NULL in the `mod_id` column.
+
     """
     name = 'cms_actions'
     external = True

@@ -268,10 +268,12 @@ class PytisCryptoTUserContact(sql.SQLType):
 
 
 class PytisCryptoDbKeys(sql.SQLTable):
-    """
-    Table of asymetric encryption keys.
-    It is currently used to encrypt user passwords passed to some database functions.
-    Use select pytis_crypto_create_db_key('pytis', 1024) to create a key for that purpose.
+    """Table of asymetric encryption keys.
+
+    It is currently used to encrypt user passwords passed to some database
+    functions. Use `select pytis_crypto_create_db_key('pytis', 1024)` to create
+    a key for that purpose.
+
     """
     name = 'pytis_crypto_db_keys'
     schemas = pytis_schemas.value(globals())

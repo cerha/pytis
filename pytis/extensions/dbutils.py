@@ -34,14 +34,15 @@ _ = translations('pytis-wx')
 def dbselect(spec, condition=None, sort=(), transaction=None, arguments={}):
     """Vrať řádky dané db tabulky jako sekvenci.
 
-    Argumenty:
+    Arguments:
+      spec: Název specifikace datového objektu nebo přímo instance třídy
+        `pd.DataFactory`.
+      condition: Podmínka volání `pd.postgresql.select`.
+      sort: Řazení pro volání `pd.postgresql.select`.
+      transaction: Transakce pro volání `pd.postgresql.select`.
 
-      spec -- název specifikace datového objektu nebo přímo instance třídy
-        'pd.DataFactory'
-      condition, sort, transaction -- argumenty volání
-        'pd.postgresql.select()'.
-
-    Vrací všechny řádky vrácené z databáze jako list.
+    Returns:
+      Všechny řádky vrácené z databáze jako list.
 
     """
     data = pytis.util.data_object(spec)
@@ -60,15 +61,14 @@ def dbselect(spec, condition=None, sort=(), transaction=None, arguments={}):
 def dbinsert(spec, row, transaction=None):
     """Provede insert do tabulky dané specifikací.
 
-    Argumenty:
-
-      spec -- název specifikace datového objektu nad kterým má být proveden
+    Arguments:
+      spec: Název specifikace datového objektu nad kterým má být proveden
         insert.
-      row -- sekvence dvouprvkových sekvencí (id, value) nebo instance
-        pd.Row
-      transaction -- database transaction instance
+      row: Sekvence dvouprvkových sekvencí (id, value) nebo instance `pd.Row`.
+      transaction: Instance databázové transakce.
 
-    Vrací počet vložených řádků.
+    Returns:
+      Počet vložených řádků.
 
     """
     assert isinstance(row, (pd.Row, tuple, list)), row
@@ -94,13 +94,12 @@ def dbinsert(spec, row, transaction=None):
 def dbupdate(row, values=(), transaction=None):
     """Provede update nad předaným řádkem.
 
-    Argumenty:
-
-      row -- předaná instance aktuálního PresentedRow
-      values -- sekvence dvouprvkových sekvencí ('id', value) ,
-        kde 'id' je řetězcový identifikátor políčka a value je
-        instance, kterou se bude políčko aktualizovat
-      transaction -- database transaction instance
+    Arguments:
+      row: Předaná instance aktuálního `PresentedRow`.
+      values: Sekvence dvouprvkových sekvencí ('id', value), kde 'id' je
+        řetězcový identifikátor políčka a value je instance, kterou se bude
+        políčko aktualizovat.
+      transaction: Instance databázové transakce.
 
     """
     import pytis.form
@@ -122,15 +121,15 @@ def dbupdate_many(spec, condition=None, update_row=None,
                   transaction=None):
     """Provede update nad tabulkou danou specifikací.
 
-    Argumenty:
+    Arguments:
+      spec: Specifikace datového objektu nad kterým má být proveden select;
+        string.
+      condition: Podmínka updatovaní.
+      update_row: Řádek kterým se provede update.
+      transaction: Instance databázové transakce.
 
-      spec -- specifikace datového objektu nad kterým má být proveden
-        select; string'
-      condition -- podmínka updatovaní.
-      update_row -- řádek kterým se provede update,
-      transaction -- database transaction instance
-
-    Vrací počet updatovaných řádků.
+    Returns:
+      Počet updatovaných řádků.
 
     """
     if not isinstance(condition, pd.Operator):
@@ -144,27 +143,28 @@ def dbupdate_many(spec, condition=None, update_row=None,
 
 
 def dbfunction(name, *args, **kwargs):
-    """Deprecated.  Use pytis.data.dbfunction instead.
+    """Deprecated. Use `pytis.data.dbfunction` instead.
 
-    Nová funkce pytis.data.dbfunction má oproti této původní funkci několik
+    Nová funkce `pytis.data.dbfunction` má oproti této původní funkci několik
     odlišností, které je potřeba zohlednit při přepisu starého kódu na použití
     nové funkce.
 
     1. Tato (původní) funkce vrací None pokud je hodnota některého z argumentů
-    None aniž by došlo ke skutečnému vyvolání DB funkce (čemuž lze zabránit
-    argumentem proceed_with_empty_values=False).  Nová funkce toto nedělá a
-    argument proceed_with_empty_values nemá.
+      None aniž by došlo ke skutečnému vyvolání DB funkce (čemuž lze zabránit
+      argumentem proceed_with_empty_values=False). Nová funkce toto nedělá a
+      argument proceed_with_empty_values nemá.
 
     2. Argumenty nové funkce se předávají vnitřní hodnotou a nikoliv jako
-    sekvence dvouprvkových tuplů, ale přímo jako argumenty funkce.
+      sekvence dvouprvkových tuplů, ale přímo jako argumenty funkce.
 
-    3. Funkci je možné předat jako DB specifikaci.  V tom případě je prováděna
-    typová kontrola argumentů a výsledek může být jak množina řádků (tabulkové
-    funkce), tak jednoduchá hodnota dle atributu multirow ve specifikaci.
+    3. Funkci je možné předat jako DB specifikaci. V tom případě je prováděna
+      typová kontrola argumentů a výsledek může být jak množina řádků
+      (tabulkové funkce), tak jednoduchá hodnota dle atributu multirow ve
+      specifikaci.
 
-    4. pd.dbfunction nepoužívá obalení pomocí pf.db_operation(), takže to je
-    potřeba případně přidat explicitně, kde je to potřeba (většinou by to
-    potřeba být nemělo.).
+    4. `pytis.data.dbfunction` nepoužívá obalení pomocí `pf.db_operation`,
+      takže to je potřeba případně přidat explicitně, kde je to potřeba
+      (většinou by to potřeba být nemělo.).
 
     """
     # TODO PY3: define keyword arguments in function definition.
@@ -188,10 +188,10 @@ def dbfunction(name, *args, **kwargs):
 
 
 def enum(name, **kwargs):
-    """Vytvoř instanci 'DataEnumerator' nad danou specifikací.
+    """Vytvoř instanci `DataEnumerator` nad danou specifikací.
 
-    Takto vytvořený enumerátor lze použít jako argument 'enumerator'
-    konstruktoru datového typu.  Argument 'name' je řetězec určující název
+    Takto vytvořený enumerátor lze použít jako argument `enumerator`
+    konstruktoru datového typu. Argument `name` je řetězec určující název
     specifikace, ze které bude získán datový objekt enumerátoru.
 
     """
@@ -217,10 +217,11 @@ def safe_commit(transaction, msg=None):
     """Commit transaction and handle possible timeout errors.
 
     Arguments:
-      transaction -- transaction to commit
-      msg -- message to show, when database error occurs
+      transaction: Transaction to commit.
+      msg: Message to show when database error occurs.
 
-    Returns True if commit was successful, otherwise returns False.
+    Returns:
+      True if commit was successful, otherwise False.
 
     """
     import pytis.form
@@ -237,10 +238,12 @@ def safe_rollback(transaction, msg=None):
     """Rollback transaction and handle possible timeout errors.
 
     Arguments:
-      transaction -- transaction to commit
-      msg -- message to show, when database error occurs
+      transaction: Transaction to roll back.
+      msg: Message to show when database error occurs.
 
-    Returns True if rollback was successful, otherwise return False.
+    Returns:
+      True if rollback was successful, otherwise False.
+
     """
     import pytis.form
     DEFAULT_MSG = _("The database connection was closed because of long inactivity.")

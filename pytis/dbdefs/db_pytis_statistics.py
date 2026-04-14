@@ -45,14 +45,15 @@ $$ language plpgsql stable;
 
 
 class EPytisFormLog(sql.SQLTable):
-    """
-    Statistics about using forms by users and form opening performance.
-    form is fully qualified specification name.
-    class is pytis class name of the form instance.
-    login is login name of the user who has opened the form.
-    info is optional extra information provided by the form (e.g. sorting used).
-    t_start is the time when user invoked the form opening command.
-    t_show is the time when the form got actually ready for operation after its start.
+    """Statistics about using forms by users and form opening performance.
+
+    `form` is fully qualified specification name. `class` is pytis class name of
+    the form instance. `login` is login name of the user who has opened the
+    form. `info` is optional extra information provided by the form (e.g.
+    sorting used). `t_start` is the time when user invoked the form opening
+    command. `t_show` is the time when the form got actually ready for operation
+    after its start.
+
     """
     name = 'e_pytis_form_log'
     schemas = pytis_schemas.value(globals())

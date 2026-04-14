@@ -18,15 +18,15 @@
 
 """Classes for specification of presentational propertis of pytis data views.
 
-The class 'Specification' defines the actual properties of the view.  Other
-classes of this module ('Field', 'Binding', 'GroupSpec', ...) are mostly used
-for specification of particular attributes of the 'Specification'.
+The class `Specification` defines the actual properties of the view. Other
+classes of this module (`Field`, `Binding`, `GroupSpec`, ...) are mostly
+used for specification of particular attributes of the `Specification`.
 
-Form instances of particular backends (wx forms, web forms) then interpret the
-properties defined in specifications.
+Form instances of particular backends (wx forms, web forms) then interpret
+the properties defined in specifications.
 
-All classes of this module are of specificational nature and can be considered
-immutable.  Thus they can be shared as needed.
+All classes of this module are of specificational nature and can be
+considered immutable.  Thus they can be shared as needed.
 
 """
 from __future__ import print_function
@@ -65,15 +65,17 @@ unistr = type(u'')  # Python 2/3 transition hack.
 def specification_path(specification_name):
     """Return specification path and the relative specification name.
 
-    Given the fully qualified specification name, return pair (PATH, NAME)
-    where PATH is the search path (one of 'pytis.config.search_modules'
-    members) of the specification name and NAME is the specification name
-    without the path.  If no path is identified then PATH is empty and NAME is
-    'specification_name'.
+    Given the fully qualified specification name, return pair (PATH, NAME) where
+    PATH is the search path (one of `pytis.config.search_modules` members) of
+    the specification name and NAME is the specification name without the path.
+    If no path is identified then PATH is empty and NAME is specification_name.
 
     Arguments:
+      specification_name (basestring): Name of the specification.
 
-      specification_name -- name of the specification; basestring
+    Returns:
+      A pair (path, name) where path is the matched search module prefix (or
+      empty string) and name is the specification name without the prefix.
 
     """
     path = ''
@@ -90,7 +92,7 @@ class TextFormat(object):
     """Constants for definition of text format.
 
     Not all formats defined below must be supported at all places where
-    'TextFormat' is specified.  The documentation of each such place should
+    `TextFormat` is specified.  The documentation of each such place should
     specify the behavior for each of the supported text formats.
 
     """
@@ -121,7 +123,7 @@ class TextFormat(object):
 
 
 class Color(object):
-    """Independent definition of generic named colors to be used within 'Style' specifications."""
+    """Independent definition of generic named colors to be used within `Style` specs."""
     WHITE = (255, 255, 255)
     BLACK = (0, 0, 0)
     RED = (255, 0, 0)
@@ -150,9 +152,9 @@ class Color(object):
 class Style(object):
     """Text style specification.
 
-    Style instance is returned by the 'style' attribute of 'Field' or
-    'row_style' attribute of 'ViewSpec'.  Both specifiers may be functions and
-    compute the style based on the values of the current row.  They may also
+    Style instance is returned by the `style` attribute of `Field` or
+    `row_style` attribute of `ViewSpec`.  Both specifiers may be functions and
+    compute the style based on the values of the current row. They may also
     return None to indicate the default style.  Field style has a higher
     precedence, so all properties not defined by field style default to those
     defined by row style and if they are not defined by row style, global
@@ -163,25 +165,26 @@ class Style(object):
 
     def __init__(self, foreground=None, background=None, bold=None, slanted=None,
                  overstrike=None, underline=None, name=None):
-        """Arguments:
+        """Initialize the instance.
 
-          foreground -- foreground color as one of 'Color' constants, a tuple
-            of three integers (RGB), or a hexadecimal string representation
-            (such as '#ff0000')
-          background -- background color in the same format as the foreground
-            color
-          bold -- flag indicating bold text
-          slanted -- flag indicating slanted (italics) text
-          overstrike -- flag indicating that the text should be stroked through
-          underline -- flag indicating that the text should be underlined
-          name -- style name (string) refering to a common style definition in
-            a stylesheet
+        Font flags bold, slanted, overstrike, and underline may be set to True,
+        False or None, where None (the default) is the same as False, but is
+        less aggressive when composing styles together (such as for cell/row
+        styles).  Setting False explicitly will override True, while None will
+        not.
 
-        Font flags 'bold', 'slanted', 'overstrike', and 'underline' may be set
-        to True, False or None, where None (the default) is the same as False,
-        but is less aggressive when composing styles together (such as for
-        cell/row styles).  Setting False explicitly will override True, while
-        None will not.
+        Arguments:
+          foreground: Foreground color as one of `Color` constants, a tuple of
+            three integers (RGB), or a hexadecimal string representation (such
+            as '#ff0000').
+          background: Background color in the same format as the foreground
+            color.
+          bold: Flag indicating bold text.
+          slanted: Flag indicating slanted (italics) text.
+          overstrike: Flag indicating that the text should be stroked through.
+          underline: Flag indicating that the text should be underlined.
+          name (str): Style name refering to a common style definition in a
+            stylesheet.
 
         """
         def color(c):
@@ -294,7 +297,7 @@ class Orientation(object):
 class Text(object):
     """Specification of a text embedded within form layout.
 
-    Instances of this class may be included within form layout (in 'GroupSpec'
+    Instances of this class may be included within form layout (in `GroupSpec`
     constructor) to place arbitrary text to forms.
 
     """
@@ -310,38 +313,44 @@ class Text(object):
 class Button(object):
     """Specification of a button embedded within form layout.
 
-    Instances of this class may be included within form layout (in 'GroupSpec'
+    Instances of this class may be included within form layout (in `GroupSpec`
     constructor) to place action buttons into forms.  These buttons may invoke
-    actions (defined by 'Action') or a user defined function.
+    actions (defined by `Action`) or a user defined function.
 
     """
 
     def __init__(self, label=None, handler=None, enabled=None, action=None, width=None,
                  tooltip=None, active_in_popup_form=True, active_in_readonly_form=False):
-        """Arguments:
+        """Initialize the instance.
 
-          label -- button label as a string.  Can be None when 'action' is specified -- in this
-            case the action title is used.
-          handler -- function of one argument -- the 'PresentedRow' instance representing the
-            current state of the form.  If None, 'action' must be specified.
-          enabled -- function of one argument -- the 'PresentedRow' instance representing the
-            current state of the form -- which returns True if the button is enabled or False
-            otherwise.  This function will be called periodically on each user interface update, so
-            the result may change during form editing.  Only relevant if 'handler' is used.  For
-            'action' the button state depends on the referred action and its 'enabled' parameter.
-          action -- name of an 'Action' specification as a string.  This allows to handle the
-            button press by invoking one of 'actions' defined in the same 'ViewSpec' instead of
-            passing the 'handler' function directly.  If used, 'handler' must be None, if None,
-            'handler' must be specified.
-          width -- button with (number of characters).  The default width is set automatically to
-            fit the label, but this argument may override this default.
-          tooltip -- button's tooltip text as a string.
-          active_in_popup_form -- False value deactivate the button in popup (modal) forms.  This
-            may be particularly useful when the button opens a new form, which is impossible in
-            modal forms.
-          active_in_readonly_form -- buttons are inactive in read-only forms by default, since they
-            often modify form data.  True value will activate the button in even for readonly
-            forms.  This may be particularly useful when the button performs some action, which
+        Arguments:
+          label (str): Button label.  Can be None when action is specified — in
+            this case the action title is used.
+          handler: Function of one argument — the `PresentedRow` instance
+            representing the current state of the form.  If None, action must be
+            specified.
+          enabled: Function of one argument — the `PresentedRow` instance
+            representing the current state of the form — which returns True if
+            the button is enabled or False otherwise.  This function will be
+            called periodically on each user interface update, so the result may
+            change during form editing.  Only relevant if handler is used. For
+            action the button state depends on the referred action and its
+            enabled parameter.
+          action (str): Name of an `Action` specification.  This allows to
+            handle the button press by invoking one of actions defined in the
+            same `ViewSpec` instead of passing the handler function directly. If
+            used, handler must be None; if None, handler must be specified.
+          width (int): Button width (number of characters).  The default width
+            is set automatically to fit the label, but this argument may
+            override this default.
+          tooltip (str): Button's tooltip text.
+          active_in_popup_form (bool): False value deactivates the button in
+            popup (modal) forms.  This may be particularly useful when the
+            button opens a new form, which is impossible in modal forms.
+          active_in_readonly_form (bool): Buttons are inactive in read-only
+            forms by default, since they often modify form data.  True value
+            will activate the button even for readonly forms.  This may be
+            particularly useful when the button performs some action which
             doesn't modify the data.
 
         """
@@ -393,12 +402,12 @@ class Button(object):
 
 
 class ActionContext(object):
-    """Enumeration class defining available constants for 'Action' context specification."""
+    """Enumeration class defining available constants for `Action` context specification."""
 
     RECORD = 'RECORD'
     """Action is performed on the current record (table row, show form record etc.).
 
-    The action handler will receive the record as a 'PresentedRow' instance as
+    The action handler will receive the record as a `PresentedRow` instance as
     its first positional argument.
 
     """
@@ -409,9 +418,9 @@ class ActionContext(object):
     """Action is performed on the current selection (records selected in the UI).
 
     The action handler will receive the selection as an iterable object itering
-    over the 'PresentedRow' instances as its first positional argument.  If no
-    selection is currently active, the iterator will iter over just one item --
-    the current row.
+    over the `PresentedRow` instances as its first positional argument. If no
+    selection is currently active, the iterator will iter over just one item
+    (the current row).
 
     """
     GLOBAL = 'GLOBAL'
@@ -419,8 +428,8 @@ class ActionContext(object):
 
     Global actions don't operate on particular records, they either don't
     operate on records at all or they operate on all records or they implement
-    their own method of selecting the record(s) for the operation (e.g. pop-up
-    a dialog).  The handler will receive no positional argument.
+    their own method of selecting the record(s) for the operation (e.g. pop-up a
+    dialog).  The handler will receive no positional argument.
 
     """
     # TODO: There could be another value here to define universal actions that
@@ -430,10 +439,10 @@ class ActionContext(object):
 class Action(object):
     """User action specification.
 
-    Actions typically appear in the user interface as action buttons or menu items and instances of
-    this class define their properties, such as label, identifier, description, context in which
-    they appear etc.  Instances of this class are used to define the 'actions' argument of
-    'ViewSpec'.
+    Actions typically appear in the user interface as action buttons or menu
+    items and instances of this class define their properties, such as label,
+    identifier, description, context in which they appear etc.  Instances of
+    this class are used to define the `actions` argument of `ViewSpec`.
 
     """
 
@@ -443,71 +452,66 @@ class Action(object):
                  **kwargs_):
         """Initialize the instance.
 
-        Argumenty:
-
-          id -- action identifier as a string.  It must be unique among all
-            objects identifiers within a given form.
-          title -- action title displayed in the user interface.
-          descr -- brief textual description of the action to be displayed in
-            the user intercace (for example as a tooltip).  Should be more
+        Arguments:
+          id (str): Action identifier.  It must be unique among all objects
+            identifiers within a given form.
+          title (str): Action title displayed in the user interface.
+          descr (str): Brief textual description of the action to be displayed
+            in the user interface (for example as a tooltip).  Should be more
             descriptive than title, but should not exceed one or two sentences.
-          handler -- callable object implementing the action.  This argument is
+          handler: Callable object implementing the action.  This argument is
             only applicable for wx forms (fat client).  Web interface (based on
             Wiking) implements actions as Wiking module's methods of the name
             determined by the action id.  The handler will be called on action
-            invocation and will receive the arguments according to the
-            'context' and 'secondary_context' (see below).  This argument may
-            also be specified as positional.
-          context -- action context as one of 'ActionContext' constants.
+            invocation and will receive the arguments according to the context
+            and secondary_context (see below).  This argument may also be
+            specified as positional.
+          context: Action context as one of `ActionContext` constants.
             Determines the context in which the action is available and the
             first positional argument passed to the context sensitive methods
-            ('handler', 'enabled' and 'visible').  See 'ActionContext'
-            constants for description of what is passed for which kind of
-            context.
-          secondary_context -- secondary action context in dual form as one of
-            'ActionContext' constants or None.  Certain actions may need also a
+            (handler, enabled and visible).  See `ActionContext` constants for
+            description of what is passed for which kind of context.
+          secondary_context: Secondary action context in dual form as one of
+            `ActionContext` constants or None.  Certain actions may need also a
             contextual information from another form of a dual form.  If this
-            argument is not None, the action is only available in dual forms
-            and context sensitive methods ('handler', 'enabled', 'visible')
-            will receive a second positional argument representing the second
-            form's context (current record or selection).
-          enabled -- a boolean value determining action availability in the
-            user interface or a callable object (function) determining action
-            availability dynamically.  The function receives arguments
-            according to the 'context' (see above) and returns true iff the
-            action should be available or false otherwise.  Uvavailable actions
-            are still present in the user interface, but they are inactive
-            (grayed out).  See 'visible' for hiding the action completely under
-            certain conditions.
-          visible -- a boolean value determining action visibility in the user
-            interface or a callable object (function) determining the
-            visibility dynamically.  The function receives arguments according
-            to the 'context' (see above).  If 'False' or if 'False' is returned
-            by the function, the action is competely removed from the user
-            interface.  See 'enabled' for making the action inactive, but still
-            visible.  Note: Visibility is currently not implemented in wx
-            forms, so the argument only has effect in web applications.
-          access_groups -- sequence of authorized DB user group names.  If not
+            argument is not None, the action is only available in dual forms and
+            context sensitive methods (handler, enabled, visible) will receive a
+            second positional argument representing the second form's context
+            (current record or selection).
+          enabled: A boolean value determining action availability in the user
+            interface or a callable object (function) determining action
+            availability dynamically.  The function receives arguments according
+            to the context (see above) and returns true iff the action should be
+            available or false otherwise.  Unavailable actions are still present
+            in the user interface, but they are inactive (grayed out).  See
+            visible for hiding the action completely under certain conditions.
+          visible: A boolean value determining action visibility in the user
+            interface or a callable object (function) determining the visibility
+            dynamically.  The function receives arguments according to the
+            context (see above).  If False or if False is returned by the
+            function, the action is completely removed from the user interface.
+            See enabled for making the action inactive, but still visible.
+            Note: Visibility is currently not implemented in wx forms, so the
+            argument only has effect in web applications.
+          access_groups: Sequence of authorized DB user group names.  If not
             None, only users who belong to given DB groups (roles) will be able
             to invoke the action.  Ignored when DMP rights are active (when
-            pytis.config.use_dmp_rights is set to True).
-          kwargs -- dictionary of additional keyword arguments passed to the
-            action handler (and 'enabled' and 'visible' functions if defined
-            dynamically) in runtime.  In Wiking web applications these
-            arguments are passed as ordinary request parameters.  These
-            arguments may also be passed directly as additional Action
-            constructor keyword arguments for backwards compatibility, but this
-            practice is deprecated.
-          hotkey -- keyboard shortcut (implemented only in wx forms).
-          icon -- action icon string identifier.  Implemented only in web
+            `pytis.config.use_dmp_rights` is set to True).
+          kwargs (dict): Additional keyword arguments passed to the action
+            handler (and enabled and visible functions if defined dynamically)
+            in runtime.  In Wiking web applications these arguments are passed
+            as ordinary request parameters.  These arguments may also be passed
+            directly as additional Action constructor keyword arguments for
+            backwards compatibility, but this practice is deprecated.
+          hotkey: Keyboard shortcut (implemented only in wx forms).
+          icon (str): Action icon string identifier.  Implemented only in web
             forms, where the identifier refers to a CSS class name.
-          form_content -- function of a three arguments 'generator', 'record'
-            and 'enabled' returning list of additional form elements to prepend
-            to the action button; applicable only to Wiking applications.
-            'generator' is an HTML generator instance, 'record' is current
-            record instance, 'enabled' is a boolean defining whether the given
-            action is enabled.  If the argument is 'None', no additional
-            content is added.
+          form_content: Function of three arguments generator, record and
+            enabled returning list of additional form elements to prepend to the
+            action button; applicable only to Wiking applications. generator is
+            an HTML generator instance, record is current record instance,
+            enabled is a boolean defining whether the given action is enabled.
+            If the argument is None, no additional content is added.
 
         """
         assert isinstance(title, basestring), title
@@ -541,7 +545,7 @@ class Action(object):
         return self._id
 
     def name(self):
-        """Deprecated: Use id() instead."""
+        """Deprecated: Use `id` instead."""
         return self.id()
 
     def title(self, raw=False):
@@ -581,16 +585,15 @@ class Action(object):
         return self._kwargs
 
     def form_content(self, generator, record, enabled):
-        """Return result of calling 'form_content' function given in constructor.
+        """Return result of calling `form_content` function given in constructor.
 
         Arguments:
+          generator: HTML generator instance.
+          record: Current record instance.
+          enabled (bool): Whether the action is enabled.
 
-          generator -- HTML generator instance
-          record -- current 'Record' instance
-          enabled -- boolean indicating whether the action is enabled
-
-        Return value is a list of extra form elements (as produced by the
-        generator).
+        Returns:
+          A list of extra form elements (as produced by the generator).
 
         """
         if self._form_content is None:
@@ -602,24 +605,23 @@ class PrintAction(object):
     """Output (print) action specification."""
 
     def __init__(self, id, title, name, language=None, handler=None, context=None):
-        """Arguments:
+        """Initialize the instance.
 
-          id -- action identifier as a string.  It must be unique among all
-            objects identifiers within a given form.
-          title -- action title displayed in the user interface
-          name -- name of the print specification, string
-          language -- output language; two letter language code or None
-          handler -- custom print handler function as a callable object; If
-            None, the printing is by default performed by Pytis.  If a function
-            is given, the function will be called on PrintAction invocation
-            with one or no positional argument, according to 'context'.  By
-            default, the context is 'ActionContext.RECORD', so one positional
-            argument is passed (the current form row as a 'PresentedRow'
-            instance).
-          context -- context of records on which the action operates.
-            Only relevant when 'handler' is defined.  It determines which
-            arguments the handler receives.  The value is one of
-            'ActionContext' constants.
+        Arguments:
+          id (str): Action identifier.  It must be unique among all objects
+            identifiers within a given form.
+          title (str): Action title displayed in the user interface.
+          name (str): Name of the print specification.
+          language (str): Output language; two letter language code or None.
+          handler: Custom print handler function as a callable object.  If None,
+            the printing is by default performed by Pytis.  If a function is
+            given, the function will be called on `PrintAction` invocation with
+            one or no positional argument, according to context.  By default,
+            the context is `ActionContext.RECORD`, so one positional argument is
+            passed (the current form row as a `PresentedRow` instance).
+          context: Context of records on which the action operates.  Only
+            relevant when handler is defined.  It determines which arguments the
+            handler receives.  The value is one of `ActionContext` constants.
 
         """
         assert isinstance(id, basestring), id
@@ -661,7 +663,7 @@ class PrintAction(object):
         return self._context
 
     def dmp_name(self):
-        """Return print action name in the form useable for DMP."""
+        """Return print action name in the form usable for DMP."""
         return self._name.replace('/', '#')
 
 
@@ -682,11 +684,11 @@ class _TitledGroup(object):
     Nested sequences represent visually separated unnamed subgroups."""
 
     def __init__(self, title, *items):
-        """Arguments:
+        """Initialize the instance.
 
-          title -- group title as basestring
-          items -- group items are passed as subsequent positional arguments of
-            group constructor
+        Arguments:
+          title (basestring): Group title.
+          *items: Group items passed as subsequent positional arguments.
 
         """
         assert isinstance(title, basestring), title
@@ -730,8 +732,8 @@ class ActionGroup(_TitledGroup):
     """Specification of titled group of user interface actions.
 
     Action groups can be used to group user interface actions into logical
-    sections.  More details in the documentation of the argument 'actions' in
-    'ViewSpec' constructor.
+    sections.  More details in the documentation of the argument `actions` in
+    `ViewSpec` constructor.
 
     """
     _ITEM_TYPE = Action
@@ -742,10 +744,11 @@ class Folding(object):
     """Specification of foldable form folding state."""
 
     def __init__(self, level):
-        """Arguments:
+        """Initialize the instance.
 
-          level -- defines the folding level as integer (0=everything folded,
-            1=single level unfolded, etc.) or None for everything unfolded.
+        Arguments:
+          level: Folding level as integer (0=everything folded, 1=single level
+            unfolded, etc.) or None for everything unfolded.
 
         """
         self._level = level
@@ -764,46 +767,46 @@ class Profile(object):
 
     The user interface allows simple switching between available profiles and
     may also implement the option of saving user defined profiles.  Thus
-    instances of this class may originate either from specification or from
-    user data.
+    instances of this class may originate either from specification or from user
+    data.
 
     """
 
     def __init__(self, id, title, filter=None, descr=None, sorting=None, columns=None,
                  grouping=None, aggregations=None, folding=None, column_widths=None, errors=()):
-        """Arguments:
+        """Initialize the instance.
 
-          id -- profile identifier as a string.  It must be unique among all
-            profile identifiers within a given form.
-          title -- user visible profile name as a string.
-          descr -- profile description as a string.
-          filter -- filtering condition as a 'pytis.data.Operator' instance.
-            This condition is always applied together (in conjunction) with the
-            forms default 'condition' given by it's specification (if not None).
-          sorting -- sorting in the same format as accepted by the 'sort'
-            argument of 'pytis.data.Data.select()'.  If None, the default
-            'ViewSpec' sorting applies.
-          columns -- sequence of visible form columns (string field
-            identifiers) in the order in which they appear in the table.  If
-            None, the 'ViewSpec' columns are displayed.
-          grouping -- visual grouping of table rows in the same format as
-            accepted by the 'grouping' argument of 'ViewSpec'.  If None, the
-            'ViewSpec' grouping applies.
-          aggregations -- aggregation functions enabled in this profile in the
-            same format as accepted by the 'aggregations' argument of
-            'ViewSpec'.  If None, 'ViewSpec' aggregations apply.
-          folding -- initial folding state as a 'Folding' instance.  If None,
-            default 'ViewSpec' folding applies.
-          column_widths -- dictionary of table column widths keyed by string
+        Arguments:
+          id (str): Profile identifier.  It must be unique among all profile
+            identifiers within a given form.
+          title (str): User visible profile name.
+          descr (str): Profile description.
+          filter: Filtering condition as a `pytis.data.Operator` instance. This
+            condition is always applied together (in conjunction) with the
+            form's default `condition` given by its specification (if not None).
+          sorting: Sorting in the same format as accepted by the `sort` argument
+            of `pytis.data.Data.select`.  If None, the default `ViewSpec`
+            sorting applies.
+          columns: Sequence of visible form columns (string field identifiers)
+            in the order in which they appear in the table.  If None, the
+            `ViewSpec` columns are displayed.
+          grouping: Visual grouping of table rows in the same format as accepted
+            by the `grouping` argument of `ViewSpec`.  If None, the `ViewSpec`
+            grouping applies.
+          aggregations: Aggregation functions enabled in this profile in the
+            same format as accepted by the `aggregations` argument of
+            `ViewSpec`.  If None, `ViewSpec` aggregations apply.
+          folding: Initial folding state as a `Folding` instance.  If None,
+            default `ViewSpec` folding applies.
+          column_widths: Dictionary of table column widths keyed by string
             column identifiers with integer values representing pixel width.
             This is not designed to be used in specifications, but rather for
-            saving UI form state, so this is why the widths are in pixels...
-          errors -- profile validation errors as a sequence of tuples (param,
-            error), where 'param' is the string name of a profile parameter
-            (one of the above arguments) and `error' is the related error
-            message.  Not designed to be used in specifications.  This value is
-            set automatically by profile manager when validating saved
-            profiles.
+            saving UI form state, so this is why the widths are in pixels.
+          errors: Profile validation errors as a sequence of tuples (param,
+            error), where param is the string name of a profile parameter (one
+            of the above arguments) and error is the related error message. Not
+            designed to be used in specifications.  This value is set
+            automatically by profile manager when validating saved profiles.
 
         """
         assert isinstance(id, basestring)
@@ -888,7 +891,7 @@ class Profile(object):
         return self._aggregations
 
     def folding(self):
-        """Return folding in the format produced by 'FoldableForm.Folding.folding_state()'."""
+        """Return folding in the format produced by `FoldableForm.Folding.folding_state`."""
         return self._folding
 
     def column_widths(self):
@@ -907,7 +910,7 @@ class ProfileGroup(_TitledGroup):
 
     Profile groups can be used to group profiles in the user interface selector
     into logical sections.  More details in the documentation of the argument
-    'profiles' in 'ViewSpec' constructor.
+    `profiles` in `ViewSpec` constructor.
 
     """
     _ITEM_TYPE = Profile
@@ -917,32 +920,32 @@ class AggregatedView(object):
     """Predefined aggregated view specification.
 
     Aggregated view can be displayed for any pytis form.  It displays form data
-    aggregated using given aggregation functions and grouped by given "group
-    by" columns.
+    aggregated using given aggregation functions and grouped by given "group by"
+    columns.
 
     The user interface allows simple invocation of aggregated views defined in
-    specification as well as management of user defined aggregated views.  Thus
-    instances of this class may originate either from specification or from
-    user data.
+    specification as well as management of user defined aggregated views. Thus
+    instances of this class may originate either from specification or from user
+    data.
 
     """
 
     def __init__(self, id, name, group_by_columns, aggregation_columns):
-        """Arguments:
+        """Initialize the instance.
 
-          id -- aggregation identifier as a string.  It must be unique among all
+        Arguments:
+          id (str): Aggregation identifier.  It must be unique among all
             aggregations within a given specification.
-          name -- user visible name as a string.
-          group_by_columns -- columns to be used in the "group by" clause of
-            the aggregated view as a sequence of pairs (column_id, function),
-            where column_id is a string column identifier and function is the
-            name of the grouping function from 'grouping_functions'
-            specification option or None if the column is used directly with no
-            function applied.
-          aggregation_columns -- tuple of aggregation column specifications,
-            where each item is a pair of string column identifier and the
-            aggregation function as one of pytis.data.Data AGG_* constants.
-            May only be used if 'group_by_columns' are also defiend.
+          name (str): User visible name.
+          group_by_columns: Columns to be used in the "group by" clause of the
+            aggregated view as a sequence of pairs (column_id, function), where
+            column_id is a string column identifier and function is the name of
+            the grouping function from `grouping_functions` specification option
+            or None if the column is used directly with no function applied.
+          aggregation_columns: Tuple of aggregation column specifications, where
+            each item is a pair of string column identifier and the aggregation
+            function as one of `pytis.data.Data` AGG_* constants.  May only be
+            used if group_by_columns are also defined.
 
         """
         assert isinstance(id, basestring), id
@@ -970,10 +973,10 @@ class AggregatedView(object):
 class Profiles(list):
     """A sequence of form profiles with an optional specification of the default profile.
 
-    Form profiles can be passed as an ordinary sequence to 'ViewSpec'
-    constructor's 'profiles' argument, but when you need to specify which
+    Form profiles can be passed as an ordinary sequence to `ViewSpec`
+    constructor's `profiles` argument, but when you need to specify which
     profile is selected by default in the user interface, you need to use this
-    class and pass the 'default' argument to the constructor.
+    class and pass the `default` argument to the constructor.
 
     """
     _ID_MATCHER = re.compile('[a-z0-9_]+')
@@ -982,16 +985,16 @@ class Profiles(list):
         return list.__new__(cls, args)
 
     def __init__(self, *profiles, **kwargs):
-        """Arguments:
+        """Initialize the instance.
 
-          profiles -- Profiles can be passed as a single argument (tuple or
-            list of 'Profile' or 'ProfileGroup' instances) or as separate
-            arguments (one 'Profile' or 'ProfileGroup' instance per one
-            positional argument).
-
-          default -- identifier of the profile (from 'profiles') to be selected
-            by default
-          label -- optional label of the profile selector in the user interface
+        Arguments:
+          *profiles: Profiles can be passed as a single argument (tuple or list
+            of `Profile` or `ProfileGroup` instances) or as separate arguments
+            (one `Profile` or `ProfileGroup` instance per one positional
+            argument).
+          default: Identifier of the profile (from profiles) to be selected by
+            default.
+          label: Optional label of the profile selector in the user interface
             (currently only used in web forms).  A default label will be used
             when None.
 
@@ -1036,50 +1039,51 @@ class Filter(Profile):
 
 
 Condition = Filter
-"""Deprecated: Use 'Profile' instead."""
+"""Deprecated: Use `Profile` instead."""
 
 
 class IN(pytis.data.Operator):
     """Symbolic specification of pytis.data.IN operator.
 
     This class creates a pytis data operator instance based on symbolic
-    arguments and resolves these symbolic arguments into real arguments
-    accepted by pytis.data.IN.  This makes it possible to display this operator
-    in the user interface and save it within user profiles, because the data
-    object and filter condition is defined by name rather than directly.
+    arguments and resolves these symbolic arguments into real arguments accepted
+    by `pytis.data.IN`.  This makes it possible to display this operator in the
+    user interface and save it within user profiles, because the data object and
+    filter condition is defined by name rather than directly.
 
-    See constructor arguments for details how they differ from pytis.data.IN
+    See constructor arguments for details how they differ from `pytis.data.IN`
     arguments.
 
     """
+
     def __init__(self, column_id, spec_name, table_column_id, profile_id,
                  profile_name=None, condition=None, arguments=None):
-        """Arguments:
+        """Initialize the instance.
 
-          column_id -- string identifier of the column, the value of which is
-            tested for presence in the subquery; same as 'column_id' argument
-            of 'pytis.data.IN'.
-          spec_name -- string name of the specification defining the subquery;
-            data object of this specification will be created and passed to
-            'pytis.data.IN' as 'data'.
-          table_column_id -- string identifier of the column in 'spec_name'
-            used to search for the value of 'column_id'; same as
-            'table_column_id' argument of 'pytis.data.IN'.
-          profile_id -- string identifier of an existing profile within
-            'spec_name'.  It can also be an id of a user defined profile saved
-            through the profile manager by the current user, but in this case
-            the profile name must be passed as 'profile_name' and the
-            corresponding filter condition must be passed as 'condition'.  If
-            None, no additional condition will be applied.
-          profile_name -- user visible profile title.  If given, 'profile_id'
+        Arguments:
+          column_id (str): Identifier of the column, the value of which is
+            tested for presence in the subquery; same as `column_id` argument of
+            `pytis.data.IN`.
+          spec_name (str): Name of the specification defining the subquery; data
+            object of this specification will be created and passed to
+            `pytis.data.IN` as `data`.
+          table_column_id (str): Identifier of the column in spec_name used to
+            search for the value of column_id; same as `table_column_id`
+            argument of `pytis.data.IN`.
+          profile_id (str): Identifier of an existing profile within spec_name.
+            It can also be an id of a user defined profile saved through the
+            profile manager by the current user, but in this case the profile
+            name must be passed as profile_name and the corresponding filter
+            condition must be passed as condition.  If None, no additional
+            condition will be applied.
+          profile_name (str): User visible profile title.  If given, profile_id
             is not searched within the specification, but it is supposed, that
-            'profile_id' corresponds to a user defined profile obtained from
-            form profile manager and its condition is passed within
-            'condition'.
-          condition -- additional condition to be applied together with the
-            condition of the current profile (given by 'profile_id') or 'None'
-          arguments -- arguments passed to the data object (if it is a table
-            function); dictionary or 'None'
+            profile_id corresponds to a user defined profile obtained from form
+            profile manager and its condition is passed within condition.
+          condition: Additional condition to be applied together with the
+            condition of the current profile (given by profile_id) or None.
+          arguments: Arguments passed to the data object (if it is a table
+            function); dictionary or None.
 
         """
         view_spec = pytis.config.resolver.get(spec_name, 'view_spec')
@@ -1135,16 +1139,16 @@ class GroupSpec(object):
       * string identifier refering to one of the fields present in fields
         specification,
 
-      * 'Button' instance to place action button inside the layout,
+      * `Button` instance to place action button inside the layout,
 
-      * 'Text' instance to place arbitrary text inside the layout,
+      * `Text` instance to place arbitrary text inside the layout,
 
-      * recursively embedded group as a 'GroupSpec' instance,
+      * recursively embedded group as a `GroupSpec` instance,
 
-      * callable object (function) which returns one of the above.  The
-        function must accept the current record ('PresentedRow' instance) as an
-        argument.  This allows building layouts dynamically depending on the
-        properties of the record to be displayed within the layout.
+      * callable object (function) which returns one of the above.  The function
+        must accept the current record (`PresentedRow` instance) as an argument.
+        This allows building layouts dynamically depending on the properties of
+        the record to be displayed within the layout.
 
     The items are composed either vertically (above each other) or horizontally
     (side by side).  Sophisticated layouts may be created by combining multiple
@@ -1154,41 +1158,38 @@ class GroupSpec(object):
 
     def __init__(self, items, orientation=Orientation.HORIZONTAL, label=None,
                  gap=2, border=3, align_hgroups=True, flexible=False):
-        """Arguments:
+        """Initialize the instance.
 
-          items -- contents of the group as a sequence of layout items (see
-            'GroupSpec' for details about possible types of items).
-
-          orientation -- defines how the fields are composed together as one of
-            'Orientation' class constants.  Vertical group has items above each
+        Arguments:
+          items: Contents of the group as a sequence of layout items (see
+            `GroupSpec` for details about possible types of items).
+          orientation: Defines how the fields are composed together as one of
+            `Orientation` class constants.  Vertical group has items above each
             other, horizontal has items side by side.
-
-          label -- Group label as a (localizable) string displayed at the top
-            of the group or None for unlabeled group.  Labeled groups are
-            always framed.
-
-          gap, border -- Depracated and unsupported by
-            some form types (particularly by web forms).
-
-          align_hgroups -- align contained horizontal groups so that their
+          label: Group label as a (localizable) string displayed at the top of
+            the group or None for unlabeled group.  Labeled groups are always
+            framed.
+          gap: Deprecated and unsupported by some form types.
+          border: Deprecated and unsupported by some form types (particularly by
+            web forms).
+          align_hgroups (bool): Align contained horizontal groups so that their
             first field aligns with the fields of this group.  Contained
             horizontal groups within a vertical group of labeled fields are by
-            default aligned with its parent group so that the label of the
-            first field of the nested group is aligned with the labels of the
-            fields of the parent group.  This option, when applied on the
-            parent group, makes it possible to disable this alignment when it
-            is not desired.  It is currently only implemented for web forms.
-
-          flexible -- this option currently only makes a difference in web
+            default aligned with its parent group so that the label of the first
+            field of the nested group is aligned with the labels of the fields
+            of the parent group.  This option, when applied on the parent group,
+            makes it possible to disable this alignment when it is not desired.
+            It is currently only implemented for web forms.
+          flexible (bool): This option currently only makes a difference in web
             forms.  When False (the default), the layout is enforced using
-            tables.  Such layouts are fixed and cannot accommodate to
-            different screen sizes.  When True, tables are avoided which makes
-            the layout more flexible.  Horizontal groups will be automatically
-            wrapped when there is not enough space to fit the items side by
-            side.  Vertical groups will not align fields and labels, but may
-            may be styled easily.  It is actually recommended to make all
-            horizontal groups flexible to allow responsive layout, but the
-            default is False for legacy reasons.
+            tables.  Such layouts are fixed and cannot accommodate to different
+            screen sizes.  When True, tables are avoided which makes the layout
+            more flexible.  Horizontal groups will be automatically wrapped when
+            there is not enough space to fit the items side by side.  Vertical
+            groups will not align fields and labels, but may be styled easily.
+            It is actually recommended to make all horizontal groups flexible to
+            allow responsive layout, but the default is False for legacy
+            reasons.
 
         """
         import lcg
@@ -1234,7 +1235,7 @@ class GroupSpec(object):
         return self._label
 
     def orientation(self):
-        """Return the orientation of item layout; a constant from 'Orientation'."""
+        """Return the orientation of item layout; a constant from `Orientation`."""
         return self._orientation
 
     def gap(self):
@@ -1253,7 +1254,7 @@ class GroupSpec(object):
 
 
 class HGroup(GroupSpec):
-    """Horizontal group in 'layout' specification passed to 'ViewSpec'.
+    """Horizontal group in `layout` specification passed to `ViewSpec`.
 
     The items contained in this group are arranged horizontally (side by side),
     while the default arrangement (when items are passed as a list or tuple) is
@@ -1266,11 +1267,11 @@ class HGroup(GroupSpec):
 
 
 class FieldSet(GroupSpec):
-    """Labeled group with a border in 'layout' specification passed to 'ViewSpec'.
+    """Labeled group with a border in `layout` specification passed to `ViewSpec`.
 
     The items inside this group will be visually surrounded by a thin border
-    around and given label will be displayed at the top of this rectangle.  The
-    items are arranged vertically inside the rectangle.  Use an 'HGroup' within
+    around and given label will be displayed at the top of this rectangle. The
+    items are arranged vertically inside the rectangle.  Use an `HGroup` within
     group items to force horizontal arrangement.
 
     """
@@ -1283,11 +1284,13 @@ class TabGroup(GroupSpec):
     """Tabbed layout specification."""
 
     def __init__(self, *tabs):
-        """Arguments:
+        """Initialize the instance.
 
-          tabs -- tab specifications as (LABEL, GROUP) pairs, where LABEL is the tab label and
-            GROUP is the tab contents as a 'GroupSpec' instance.  If GROUP is a sequence, it will
-            be automatically turned into a vertical group.
+        Arguments:
+          *tabs: Tab specifications as (LABEL, GROUP) pairs, where LABEL is the
+            tab label and GROUP is the tab contents as a `GroupSpec` instance.
+            If GROUP is a sequence, it will be automatically turned into a
+            vertical group.
 
         """
         items = [GroupSpec(xtuple(group), label=label, orientation=Orientation.VERTICAL)
@@ -1307,7 +1310,7 @@ class VGroup(GroupSpec):
 
 
 class LHGroup(HGroup):
-    """Deprecated: Use FieldSet with a HGroup."""
+    """Deprecated: Use `FieldSet` with a `HGroup`."""
 
     def __init__(self, label, *items, **kwargs):
         kwargs['label'] = label
@@ -1315,7 +1318,7 @@ class LHGroup(HGroup):
 
 
 class LVGroup(VGroup):
-    """Deprecated: Use FieldSet instead."""
+    """Deprecated: Use `FieldSet` instead."""
 
     def __init__(self, label, *items, **kwargs):
         kwargs['label'] = label
@@ -1334,49 +1337,50 @@ class QueryFields(object):
     def __init__(self, fields=(), autoapply=False, autoinit=False, layout=None, load=None,
                  save=None, on_main_form_selection=None, on_apply=None,
                  materialized_view=False, last_refresh=None, on_refresh=None, **kwargs):
-        """Arguments:
+        """Initialize the instance.
 
-        fields -- field specifications as in ViewSpec
-
-        autoapply -- if True, the query fields will be applied automatically
-          after each change in field values.  When False (the default), the
-          user needs to press a button to apply the field values explicitly.
-        autoinit -- if True, the query fields will be applied with their
-          default values automatically when the form is opened.  Otherwise, the
-          form is initially displayed empty and query field values must be
-          applied manually when the fields are filled.
-        layout -- form layout as in ViewSpec, with the difference, that a tuple
-          or list is converted to a horizontal group containing all fields
-          (ViewSpec default layout is vertical).
-        load -- callable for loading query field values as a function of one
-          argument which is the query fields PresentedRow instance.
-        save -- function for saving query field values as a function of one
-          argument which is the query fields PresentedRow instance.
-        on_main_form_selection -- when the form is used as a side form of a
-          dual form, given callback function will be called on each row
-          selection change in the main form.  Two arguments are passed to the
-          callback, both are PresentedRow instances.  The first argument
-          represents the selected main form row and the second represents the
-          query fields.
-        on_apply -- callback called when the "Apply" button is pressed (when
-          autoapply is False) or when the form is automatically reloaded after
-          a query fields change (when autoapply is True).  The callback is
-          called before calling 'argument_provider' or 'condition_provider' and
-          receives a single argument — a 'PresentedRow' instance.
-        materialized_view -- if True, the underlying DB object is supposed to
-          be an SQL materialized view.  This slightly changes query fields
-          behavior.  The "Apply" button is replaced by a "Refresh view" button,
-          which does three things: 1) refreshes the underlying materialized view,
-          2) applies the query fields (if defined and if 'autoapply' is not
-          set) as the "Apply" button would, 3) updates the last refresh time
-          displayed under the "Refresh view" button.
-        last_refresh -- a function to obtain the last refresh time.  Only
-          applicable if materialized_view is True.  Called without arguments.
-          Returns a Python 'datatime.datatime' instance.
-        on_refresh -- callback function called when "Refresh view" button is
-          pressed after refreshing the form's underlying materialized view in
-          the database.
-        kwargs -- other ViewSpec constructor arguments
+        Arguments:
+          fields: Field specifications as in `ViewSpec`.
+          autoapply (bool): If True, the query fields will be applied
+            automatically after each change in field values.  When False (the
+            default), the user needs to press a button to apply the field values
+            explicitly.
+          autoinit (bool): If True, the query fields will be applied with their
+            default values automatically when the form is opened. Otherwise, the
+            form is initially displayed empty and query field values must be
+            applied manually when the fields are filled.
+          layout: Form layout as in `ViewSpec`, with the difference, that a
+            tuple or list is converted to a horizontal group containing all
+            fields (`ViewSpec` default layout is vertical).
+          load: Callable for loading query field values as a function of one
+            argument which is the query fields `PresentedRow` instance.
+          save: Function for saving query field values as a function of one
+            argument which is the query fields `PresentedRow` instance.
+          on_main_form_selection: When the form is used as a side form of a dual
+            form, given callback function will be called on each row selection
+            change in the main form.  Two arguments are passed to the callback,
+            both are `PresentedRow` instances.  The first argument represents
+            the selected main form row and the second represents the query
+            fields.
+          on_apply: Callback called when the "Apply" button is pressed (when
+            autoapply is False) or when the form is automatically reloaded after
+            a query fields change (when autoapply is True).  The callback is
+            called before calling `argument_provider` or `condition_provider`
+            and receives a single argument — a `PresentedRow` instance.
+          materialized_view (bool): If True, the underlying DB object is
+            supposed to be an SQL materialized view.  This slightly changes
+            query fields behavior.  The "Apply" button is replaced by a "Refresh
+            view" button, which does three things: 1) refreshes the underlying
+            materialized view, 2) applies the query fields (if defined and if
+            autoapply is not set) as the "Apply" button would, 3) updates the
+            last refresh time displayed under the "Refresh view" button.
+          last_refresh: A function to obtain the last refresh time.  Only
+            applicable if materialized_view is True.  Called without arguments.
+            Returns a Python `datetime.datetime` instance.
+          on_refresh: Callback function called when "Refresh view" button is
+            pressed after refreshing the form's underlying materialized view in
+            the database.
+          **kwargs: Other `ViewSpec` constructor arguments.
 
         """
         assert isinstance(fields, (tuple, list)), fields
@@ -1431,7 +1435,7 @@ class QueryFields(object):
         return self._save
 
     def on_main_form_selection(self):
-        """Return value of the argument 'on_main_form_selection' passed to the constructor."""
+        """Return value of the argument `on_main_form_selection` passed to the constructor."""
         return self._on_main_form_selection
 
     def on_apply(self):
@@ -1439,34 +1443,34 @@ class QueryFields(object):
         return self._on_apply
 
     def materialized_view(self):
-        """Return value of the argument 'materialized_view' passed to the constructor."""
+        """Return value of the argument `materialized_view` passed to the constructor."""
         return self._materialized_view
 
     def last_refresh(self):
-        """Return value of the argument 'last_refresh' passed to the constructor."""
+        """Return value of the argument `last_refresh` passed to the constructor."""
         return self._last_refresh
 
     def on_refresh(self):
-        """Return value of the argument 'on_refresh' passed to the constructor."""
+        """Return value of the argument `on_refresh` passed to the constructor."""
         return self._on_refresh
 
     def view_spec_kwargs(self):
-        """Return constructor arguments for ViewSpec instance creation."""
+        """Return constructor arguments for `ViewSpec` instance creation."""
         return dict(fields=self._fields, layout=self._layout, **self._kwargs)
 
 
 class ViewSpec(object):
     """Complete specification of presentational properties for forms.
 
-    An instance of this class knows all presentational properties of a given entity
-    (a table from the application's point of view). The class defines an API for
-    accessing these properties. This API is used by the form classes.
+    An instance of this class knows all presentational properties of a given
+    entity (a table from the application's point of view). The class defines an
+    API for accessing these properties. This API is used by the form classes.
 
     Each instance of this class defines properties for all presentation modes
     (edit form, editable list, etc.).
 
-    Each form backend then uses only the part of the specification that is relevant
-    to it.
+    Each form backend then uses only the part of the specification that is
+    relevant to it.
 
     """
 
@@ -1474,303 +1478,264 @@ class ViewSpec(object):
         """Initialize the instance.
 
         Arguments:
-
-          title -- the title of this view as a (unicode) string.  The title is
-            used in browse form headings and in other contexts, where the
-            entity is referred as whole (all the records).  Thus the title
-            should mostly be in plural (for example 'Invoices').
-
-          singular -- the title of a single item (one record) of the entity as
-            a (unicode) string.  If None, 'title' is used in both contexts.
-
-          layout -- single record form layout specification as a 'GroupSpec'
+          title (str): The title of this view.  The title is used in browse form
+            headings and in other contexts, where the entity is referred as
+            whole (all the records).  Thus the title should mostly be in plural
+            (for example 'Invoices').
+          fields: The field specifications as a sequence of `Field` instances.
+          singular (str): The title of a single item (one record) of the entity.
+            If None, title is used in both contexts.
+          layout: Single record form layout specification as a `GroupSpec`
             instance.  It is also possible to pass a sequence of items, which
-            are automatically wrapped into a newly created 'GroupSpec' instance
-            with vertical arrangement.  The items must be compatible with
-            item types supported by 'GroupSpec'.  If None, the default layout
-            will automatically be a vertical group containing all fields
-            defined by 'fields'.
-
-          list_layout -- specification of list layout as a 'ListLayout'
-            instance or None.
-
-          columns -- specification of table form columns as a sequence of field
-            identifiers from 'fields'.  If not defined, the default column list
-            will include all fields which don't have 'column_width' set to zero
-            or 'disable_column' to true.
-
-          actions -- specification of available user intercafe actions as a
-            sequence of 'Action' instances, nested sequences, or 'ActionGroup'
-            instances.  Using 'ActionGroup' instances allows grouping of
-            actions into titled groups for presentation purposes.  Titled
-            groups are typically represented as nested submenus.  Nested
-            sequences (tuples or lists), on the other hand, may be used to
-            create unnamed groups which are visually separated from their
-            neighbours.  Nested groups may be used inside other groups
-            recursively.
-
-          sorting -- default sorting in the same format as accepted by the
-            'sort' argument of 'pytis.data.Data.select()'.  If None, the
-            records will be sorted by the key column.
-
-          grouping -- default visual grouping of table rows.  The value is a
+            are automatically wrapped into a newly created `GroupSpec` instance
+            with vertical arrangement. The items must be compatible with item
+            types supported by `GroupSpec`.  If None, the default layout will
+            automatically be a vertical group containing all fields defined by
+            fields.
+          list_layout: Specification of list layout as a `ListLayout` instance
+            or None.
+          columns: Specification of table form columns as a sequence of field
+            identifiers from fields.  If not defined, the default column list
+            will include all fields which don't have `column_width` set to zero
+            or `disable_column` to true.
+          actions: Specification of available user interface actions as a
+            sequence of `Action` instances, nested sequences, or `ActionGroup`
+            instances.  Using `ActionGroup` instances allows grouping of actions
+            into titled groups for presentation purposes.  Titled groups are
+            typically represented as nested submenus.  Nested sequences (tuples
+            or lists), on the other hand, may be used to create unnamed groups
+            which are visually separated from their neighbours.  Nested groups
+            may be used inside other groups recursively.
+          sorting: Default sorting in the same format as accepted by the `sort`
+            argument of `pytis.data.Data.select`.  If None, the records will
+            be sorted by the key column.
+          grouping: Default visual grouping of table rows.  The value is a
             column identifier or a sequence of column identifiers.  Grouping
             allows you to visually group table rows, which have the same
-            value(s) in grouping columns(s).  This usually only makes sense
-            when the table is sorted by these columns.  Grouping is typically
+            value(s) in grouping columns(s).  This usually only makes sense when
+            the table is sorted by these columns.  Grouping is typically
             represented by slight changes in the background color.  Rows with
             the same values in grouping columns always have the same background
             color.  This color changes whenever one of the values changes.
-
-          group_heading -- group heading allows additional representation of
-            `grouping' (see above) and thus is only relevant when grouping is
-            on.  If a column identifier is specified, the value of this column
-            will apeear as a separate table row whenever a new group starts.
-            An 'lcg.TranslatableText' instance can also be passed as an
+          group_heading: Group heading allows additional representation of
+            grouping (see above) and thus is only relevant when grouping is on.
+            If a column identifier is specified, the value of this column will
+            appear as a separate table row whenever a new group starts. An
+            `lcg.TranslatableText` instance can also be passed as an
             interpolation template.  In this case the group heading will be
             produced by interpolation of the template (with python string
-            formatting syntax such as '%(field_id)s') by formatted field values
+            formatting syntax such as `%(field_id)s`) by formatted field values
             of the first row of the group.  Most often, you will want to show
             group headings when the grouping columns are actually not shown in
             the table.  Group heading is currently only supported by web forms.
-            In this case the title will be produced by interpolation of
-            formatted row values within given string (with python string
-            formatting syntax).
-
-          check -- function to verify the integrity of the whole record.  May
-            be specified as a single computer function (automatically wrapped
-            by 'computer()') or a sequence of such functions/computers.  In the
-            later case all functions will be called in the order in which they
-            appear in the sequence.  As opposed to "validation" which only
-            verifies whether a single value matches its data type and
-            constraints (values of other fields are not available during
-            validation), the check function verifies mutual compatibility of
-            all form values.  The check function is called only after
-            successful validation of all fields.  The check function returns
-            None in case of success or an error message as a string in case of
-            failure.  It is also possible to return a pair (field_id, message)
-            where field_id is the id of the field which causes the problem.
-            Given field will receive focus in this case, but it is recommended
-            to use separate check functions in 'Field' specification for this
-            purpose.
-
-          cleanup -- a function for final actions after inserting/updating a
-            record.  The function must accept two arguments -- the first one is
+          check: Function to verify the integrity of the whole record.  May be
+            specified as a single computer function (automatically wrapped by
+            `computer`) or a sequence of such functions/computers. In the later
+            case all functions will be called in the order in which they appear
+            in the sequence.  As opposed to "validation" which only verifies
+            whether a single value matches its data type and constraints (values
+            of other fields are not available during validation), the check
+            function verifies mutual compatibility of all form values.  The
+            check function is called only after successful validation of all
+            fields.  The check function returns None in case of success or an
+            error message as a string in case of failure.  It is also possible
+            to return a pair (field_id, message) where field_id is the id of the
+            field which causes the problem. Given field will receive focus in
+            this case, but it is recommended to use separate check functions in
+            `Field` specification for this purpose.
+          cleanup: A function for final actions after inserting/updating a
+            record.  The function must accept two arguments — the first one is
             the row after performing the database operation (insert/update) and
             the second is the edited/inserted row before the database operation
-            (row values may be changed by the operation -- default values may
-            be supplied and/or triggers/rules may modify the data).  Both
-            arguments are `PresentedRow' instances.  Note, that you can also
-            access the values before any user changes throught the
-            'original_row()' method on the second argument.  The cleanup
-            function is run after comitting the edit/insert form (using the
-            ``Ok'' button) or after committing inline edit/insert
-            regardless whether the record has been changed or not.  Note, that
-            unlike 'check', 'cleanup' is called after the database operation,
-            but you can still abort the operation by rollback of the
+            (row values may be changed by the operation — default values may be
+            supplied and/or triggers/rules may modify the data). Both arguments
+            are `PresentedRow` instances. Note, that you can also access the
+            values before any user changes through the `original_row` method
+            on the second argument. The cleanup function is run after committing
+            the edit/insert form (using the "Ok" button) or after committing
+            inline edit/insert regardless whether the record has been changed or
+            not.  Note, that unlike check, cleanup is called after the database
+            operation, but you can still abort the operation by rollback of the
             transaction (if the underlying database engine supports it).
-
-          on_new_record -- user defined record insertion function.  The default
+          on_new_record: User defined record insertion function.  The default
             response to the users request to insert a new record is opening a
             form and inserting a new row into the underlying database object
             after its submission.  The user defined function may completely (or
             partially, see return value) override this behavior.  The function
-            must accept a keyword argument 'prefill' which contains a
-            dictionary with field identifiers as keys and 'Value' instances as
-            values.  Optionally, the function may also accept a keyword
-            argument 'transaction' containing the transaction for database
-            operations.  When the insertion is successful, the function should
-            return the inserted row as a 'PresentedRow' instance.  The user
-            interface will refresh the current form and display this row as the
-            current row if possible.  If the insertion didn't succeed (either
-            for error or user's exit), None should be returned.  The third
-            option is to return a dictionary.  In this case the dictionary is
-            used as 'prefill' and default handling is invoked with this prefill
+            must accept a keyword argument `prefill` which contains a dictionary
+            with field identifiers as keys and `Value` instances as values.
+            Optionally, the function may also accept a keyword argument
+            `transaction` containing the transaction for database operations.
+            When the insertion is successful, the function should return the
+            inserted row as a `PresentedRow` instance.  The user interface will
+            refresh the current form and display this row as the current row if
+            possible.  If the insertion didn't succeed (either for error or
+            user's exit), None should be returned.  The third option is to
+            return a dictionary.  In this case the dictionary is used as
+            `prefill` and default handling is invoked with this prefill
             replacing the original one.
-
-          on_copy_record -- user defined record copying function.  If defined,
-            it will be used instead of 'on_new_record' when the new record is
-            created by copying an existing record.  This function (unlike
-            'on_new_record') will receive one additional keyword argument 'row'
-            which contains the copied record as a 'PresentedRow' instance.  The
-            other arguments ('prefill' and 'transaction') have the same meaning
-            as in 'on_new_record'.  If not defined and 'on_new_record' is
-            defined, 'on_new_record' is used also for copying.  Handling the
-            return value is the same as for 'on_new_record'.
-
-          on_edit_record -- user defined record edit function.  The default
+          on_copy_record: User defined record copying function.  If defined, it
+            will be used instead of on_new_record when the new record is created
+            by copying an existing record.  This function (unlike on_new_record)
+            will receive one additional keyword argument `row` which contains
+            the copied record as a `PresentedRow` instance.  The other arguments
+            (`prefill` and `transaction`) have the same meaning as in
+            on_new_record.  If not defined and on_new_record is defined,
+            on_new_record is used also for copying. Handling the return value is
+            the same as for on_new_record.
+          on_edit_record: User defined record edit function.  The default
             response to the users request to edit an existing record is opening
             a form and updating the underlying database object after its
-            submission.  The user defined function may completely (or
-            partially) override this behavior.  The function must accept a
-            keyword argument 'row' which contains the edited row as a
-            'PresentedRow' instance.  The function may alco define a keyword
-            argument 'transaction'.  In this case the current database
-            transaction is passed through this argument.  Otherwise the
-            transaction may be also accessed through 'row.transaction()'.  The
-            function will receive an additional keyword argument 'prefill' in
-            case that row editing is invoked from within a ListField
-            (codebook field with selection_type='SelectionType.LIST') which
-            defines 'codebook_update_prefill' (see 'Field' constructor
-            arguments).  The function's return value is ignored.
-
-          on_delete_record -- user defined record deletion function.  If
-            defined, it must be a function of one argument (the current record
-            as a PresentedRow instance) which will be called on users request
-            to delete a record.  Further processing of the deletion request
-            will depend on the result value of the function as follows: If the
+            submission.  The user defined function may completely (or partially)
+            override this behavior.  The function must accept a keyword argument
+            `row` which contains the edited row as a `PresentedRow` instance.
+            The function may also define a keyword argument `transaction`.  In
+            this case the current database transaction is passed through this
+            argument.  Otherwise the transaction may be also accessed through
+            `row.transaction`. The function will receive an additional keyword
+            argument `prefill` in case that row editing is invoked from within a
+            `pytis.form.ListField` (codebook field with
+            `selection_type='SelectionType.LIST'`) which defines
+            `codebook_update_prefill` (see `Field` constructor arguments). The
+            function's return value is ignored.
+          on_delete_record: User defined record deletion function.  If defined,
+            it must be a function of one argument (the current record as a
+            `PresentedRow` instance) which will be called on users request to
+            delete a record.  Further processing of the deletion request will
+            depend on the result value of the function as follows: If the
             function returns True, the deletion will continue by the default
-            action (user is asked for confirmation and record is deleted) as it
+            action (user is asked for confirmation and record is deleted) as if
             the function was not defined.  If None or False is returned the
             deletion is aborted.  If a string or unicode is returned, the
             message is printed as an error message and the deletion is aborted.
             If 1 is returned, the deletion is considered being already
-            successfuly applied so only after-deletion actions (such as
-            refresh) are performed.  Finally, if a 'pytis.data.Operator'
-            instance is returned, all records matching given condition are
-            deleted without further prompting.
-
-          redirect -- redirection for single record view/editing specified as
-            a callable object (function) of one argument - the 'PresentedRow'
+            successfuly applied so only after-deletion actions (such as refresh)
+            are performed.  Finally, if a `pytis.data.Operator` instance is
+            returned, all records matching given condition are deleted without
+            further prompting.
+          redirect: Redirection for single record view/editing specified as a
+            callable object (function) of one argument — the `PresentedRow`
             instance.  The function should return the name of the specification
             to use for given record.  If the function is not defined or it
-            returns None, no redirection takes place.  Redirection may be
-            useful when a form lists records of different types (displaying
-            only the fields which are common for all the subtypes) and you want
-            to be able to open each particular record in a form which matches
-            its subtype.  Note, that the same effect would be possible by
-            defining the 'on_edit_record' function.
-
-          focus_field -- identifier of the field, which should automatically
-            gain focus when a form is open.  You may also pass a function of
-            one argument ('PresentedRow' instance), which returns the field
+            returns None, no redirection takes place. Redirection may be useful
+            when a form lists records of different types (displaying only the
+            fields which are common for all the subtypes) and you want to be
+            able to open each particular record in a form which matches its
+            subtype.  Note, that the same effect would be possible by defining
+            the on_edit_record function.
+          focus_field: Identifier of the field, which should automatically gain
+            focus when a form is open.  You may also pass a function of one
+            argument (`PresentedRow` instance), which returns the field
             identifier.  When None, or None is returned by the function, the
             first form field is focused by default.
-
-          description -- brief description of the view.  A short text (one or
-            two sentences) without formatting.  Use the 'help' argument below
-            to supply a detailed description.  But even if 'help' is present,
+          description (str): Brief description of the view.  A short text (one
+            or two sentences) without formatting.  Use the `help` argument below
+            to supply a detailed description.  But even if `help` is present,
             this short description should still be defined.
-
-          help -- detailed description of the view as a formatted text in the
-            LCG Structured Text format.  This text is used for generating the
-            on-line help and it is also possible to supply it in a separate
+          help (str): Detailed description of the view as a formatted text in
+            the LCG Structured Text format.  This text is used for generating
+            the on-line help and it is also possible to supply it in a separate
             file.  See the Help tutorial for more information.
-
-          row_style -- a 'Style' instance determining the base style for all
-            fields or a function of one argument (the 'PresentedRow' instance)
-            returning the 'Style' for one row (based on its values).
-
-          profiles -- predefined form profiles as 'Profiles' instance or an
-            ordinary sequence of 'Profile' or 'ProfileGroup' instances which
-            will be automatically turned into a 'Profiles' instance.  If not
+          row_style: A `Style` instance determining the base style for all
+            fields or a function of one argument (the `PresentedRow` instance)
+            returning the `Style` for one row (based on its values).
+          profiles: Predefined form profiles as `Profiles` instance or an
+            ordinary sequence of `Profile` or `ProfileGroup` instances which
+            will be automatically turned into a `Profiles` instance.  If not
             empty, the user interface will allow the user to switch between
-            given profiles easily.  You will mostly need to use a 'Profiles'
-            instance if you want to specify which of the profiles is selected
-            in the user interface by default.  Using 'ProfileGroup' instances
+            given profiles easily.  You will mostly need to use a `Profiles`
+            instance if you want to specify which of the profiles is selected in
+            the user interface by default.  Using `ProfileGroup` instances
             allows grouping of profiles into titled groups for presentation
             purposes.
-
-          aggregations -- a sequence aggregation functions which should be
-            turned on automatically for this view (in forms which support
-            that).  The items are 'AGG_*' constants of 'pytis.data.Data'.
-
-          grouping_functions -- specification of available functions aplicable
-            to group by columns in an aggregated view as a sequence of
-            (function, label, input_type, return_type), where function is
-            identifier of an SQL function, label is the string title of given
-            function, input_type is pytis data type class of function argument
-            (the function must have just one argument) and return_type is the
-            pytis data type instance of the function result.  When a user
-            attempts to open an aggregated view of the form, she can select the
-            columns used in the group by caluse.
-
-          aggregated_views -- specification of predefined aggregated views as a
-            sequence of 'AggregatedView' instances.
-
-          bindings -- a sequence of binding specifications as 'Binding'
-            instances.  Defines the related side forms displayed typically as
-            notebook tabs under the main form (or on the right side when
-            'orientation' is vertical).
-
-          orientation -- orientation of the splitter between the main form and
-            side forms (defined by 'bindings').  One of the 'Orientation' class
-            constants.  The defualt orientation is horizontal, so the side
-            forms are displayed under the main form.  When set to
-            'Orientation.VERTICAL', the side forms will be displayed on the
+          aggregations: A sequence of aggregation functions which should be
+            turned on automatically for this view (in forms which support that).
+            The items are `AGG_*` constants of `pytis.data.Data`.
+          grouping_functions: Specification of available functions applicable to
+            group by columns in an aggregated view as a sequence of (function,
+            label, input_type, return_type), where function is identifier of an
+            SQL function, label is the string title of given function,
+            input_type is pytis data type class of function argument (the
+            function must have just one argument) and return_type is the pytis
+            data type instance of the function result.  When a user attempts to
+            open an aggregated view of the form, she can select the columns used
+            in the group by clause.
+          aggregated_views: Specification of predefined aggregated views as a
+            sequence of `AggregatedView` instances.
+          bindings: A sequence of binding specifications as `Binding` instances.
+            Defines the related side forms displayed typically as notebook tabs
+            under the main form (or on the right side when `orientation` is
+            vertical).
+          orientation: Orientation of the splitter between the main form and
+            side forms (defined by `bindings`).  One of the `Orientation` class
+            constants.  The default orientation is horizontal, so the side forms
+            are displayed under the main form. When set to
+            `Orientation.VERTICAL`, the side forms will be displayed on the
             right side.
-
-          folding -- initial folding state as a 'Folding' instance.  'None'
-            means use the standard folding.
-
-          arguments -- sequence of 'DBBinding' instances defining table
-            arguments, when the table is actually a row returning function.
-            Otherwise it must be 'None'.
-
-          query_fields -- 'QueryFields' instance defining fields of a "query
+          folding: Initial folding state as a `Folding` instance. None means use
+            the standard folding.
+          arguments: Sequence of `DBBinding` instances defining table arguments,
+            when the table is actually a row returning function. Otherwise it
+            must be None.
+          query_fields: `QueryFields` instance defining fields of a "query
             panel" or None when query fields are not used.  If defined, an
             additional panel containing these fields is attached to the list
-            form.  The user can interactively enter values into these fields
-            and refresh the form.  These values are automatically passed to the
-            'argument_provider' and 'condition_provider' functions so the form
+            form.  The user can interactively enter values into these fields and
+            refresh the form.  These values are automatically passed to the
+            `argument_provider` and `condition_provider` functions so the form
             data may reflect these interactively entered values from the user
             interface.  If a sequence of field specifications is passed, it is
-            automatically converted to a 'QueryFields' instance with given
+            automatically converted to a `QueryFields` instance with given
             fields.
+          argument_provider: Function returning a dictionary of database
+            function argument names (strings) as keys and `pytis.data.Value`
+            instances as corresponding database function argument values.  If it
+            is None, no arguments are provided.  If it returns None, the select
+            should be cancelled.  The function is called with various keyword
+            arguments, same as for condition_provider.  These arguments are
+            described below in section Provider Arguments. Defining
+            argument_provider makes sense only for database table functions.  It
+            should be None for standard tables and views.
+          condition_provider: Function returning a form filtering condition as a
+            `pytis.data.Operator` instance.  If used (not None), the returned
+            condition is applied in addition to any other conditions, such as
+            the static condition defined by `condition` or conditions implied by
+            form profiles, filtering, etc.  The function is called with various
+            keyword arguments, same as for argument_provider.  These arguments
+            are described below in section Provider Arguments.
+          referer (str): Id of the referer column (one of the ids defined by
+            fields) or None.  If None, the id of the data key column is used.
+            The exported value of the referer column is used to refer to the
+            given record in URIs.  Thus it should be a unique column and its
+            exported values must contain only characters valid in the context of
+            URI.  For example, if the referer column value is 123 and given
+            pytis view (module) is mapped to the base URI '/some/path' by the
+            web application, the record's URI will look like '/some/path/123'.
+            Obviously, this attribute is currently only used in web
+            applications.
+          spec_name (str): Name of the original form specification if any.
+          public (bool): Boolean flag indicating a public specification.
 
-          argument_provider -- function returning a dictionary of database
-            function argument names (strings) as keys and 'pytis.data.Value'
-            instances as corresponding database function argument values.  If
-            it is 'None', no arguments are provided.  If it returns 'None', the
-            select should be cancelled.  The function is called with various
-            keyword arguments, same as for 'condition_provider'.  These
-            arguments are described below in section Provider Arguments.
-            Defining 'argument_provider' makes sense only for database table
-            functions.  It should be 'None' for standard tables and views.
+        The arguments `layout` and `columns` may be omitted.  Default layout and
+        column list will be generated automatically based on the order of the
+        field specifications in `fields`.
 
-          condition_provider -- function returning a form filtering condition
-            as a 'pytis.data.Operator' instance.  If used (not None), the
-            returned condition is applied in addition to any other conditions,
-            such as the static condition defined by 'condition' or conditions
-            implied by form profiles, filtering, etc.  The function is called
-            with various keyword arguments, same as for 'argument_provider'.
-            These arguments are described below in section Provider Arguments.
+        Provider Arguments:
 
-          referer -- id of the referer column as a string (one of the id's
-            defined by 'fields') or None.  If None, the id of the data key
-            column is used.  The exported value of the referer column is used
-            to refer to the given record in URI's.  Thus it should be a unique
-            column and its exported values must contain only characters valid
-            in the context of URI.  For example, if the referer column value is
-            123 and given pytis view (module) is mapped to the base URI
-            '/some/path' by the web application, the record's URI will look
-            like '/some/path/123'.  Obviously, this attribute is currently only
-            used in web applications.
-
-          spec_name -- name of the original form specification if any, string.
-
-          public -- boolean flag indicating a public specification.
-
-        The arguments 'layout' and 'columns' may be omitted.  Default layout
-        and column list will be generated automatically based on the order of
-        the field specifications in 'fields'.
-
-        Provider Arguments
-
-        Functions 'condition_provider' and 'argument_provider' are called with
+        Functions `condition_provider` and `argument_provider` are called with
         various keyword arguments.  Their list is below.  Only those arguments,
-        which make sense in given case are actually passed.  The function
-        should generally consume only the arguments it needs, but still accept
-        all other keyword arguments (**kwargs) for the possibility of extending
+        which make sense in given case are actually passed.  The function should
+        generally consume only the arguments it needs, but still accept all
+        other keyword arguments (`**kwargs`) for the possibility of extending
         the available arguments in future pytis versions.
 
-          query_fields -- 'PresentedRow' instance with the current query field
-            values from the user interface.  Only passed, when 'query_fields'
+          - query_fields: `PresentedRow` instance with the current query field
+            values from the user interface.  Only passed, when `query_fields`
             are defined in form specification.
-          main_form_row -- 'PresentedRow' instance with the current main form
+          - main_form_row: `PresentedRow` instance with the current main form
             row values.  Only passed, when the form is displayed as a side form
             and currently only supported by wx forms (not web forms).
-          req -- current request object.  Only passed in web applications (not
+          - req: Current request object.  Only passed in web applications (not
             in wx forms).
 
         """
@@ -1854,7 +1819,7 @@ class ViewSpec(object):
                                         attr, f.id(), dep)
             if referer is not None:
                 assert referer in [f.id() for f in fields], referer
-        # Initialize `columns' specification parameter
+        # Initialize `columns` specification parameter
         if columns is None:
             columns = tuple([f.id() for f in self._fields
                              if f.column_width() and not f.disable_column()])
@@ -1989,11 +1954,11 @@ class ViewSpec(object):
         self._referer = referer
 
     def clone(self, other):
-        """Clone this instance with another 'ViewSpec' instance and return the cloned instance.
+        """Clone this instance with another `ViewSpec` instance and return the clone.
 
-        The cloned instance inherits all attributes from this instance and from the
-        other instance passed as an argument, where the attributes of the latter
-        instance take precedence.
+        The cloned instance inherits all attributes from this instance and from
+        the other instance passed as an argument, where the attributes of the
+        latter instance take precedence.
 
         """
         assert isinstance(other, ViewSpec), other
@@ -2009,11 +1974,11 @@ class ViewSpec(object):
         return self._singular
 
     def fields(self):
-        """Return a tuple of all field specifications as 'Field' instances."""
+        """Return a tuple of all field specifications as `Field` instances."""
         return self._fields
 
     def field(self, id):
-        """Return the field specification for the given 'id' as a 'Field' instance.
+        """Return the field specification for the given id as a `Field` instance.
 
         If no such field exists, return None.
 
@@ -2021,11 +1986,11 @@ class ViewSpec(object):
         return self._field_dict.get(id)
 
     def layout(self):
-        """Return form layout as a 'GroupSpec' instance."""
+        """Return form layout as a `GroupSpec` instance."""
         return self._layout
 
     def list_layout(self):
-        """Return list layout as a 'ListLayout' instance."""
+        """Return list layout as a `ListLayout` instance."""
         return self._list_layout
 
     def columns(self):
@@ -2118,7 +2083,7 @@ class ViewSpec(object):
         return self._orientation
 
     def folding(self):
-        """Return folding in the format produced by 'FoldableForm.Folding.folding_state()'."""
+        """Return folding in the format produced by `FoldableForm.Folding.folding_state`."""
         return self._folding
 
     def arguments(self):
@@ -2134,7 +2099,7 @@ class ViewSpec(object):
         return self._condition_provider
 
     def query_fields(self):
-        """Return a 'QueryFields' instance or None if no query fields are defined."""
+        """Return a `QueryFields` instance or None if no query fields are defined."""
         return self._query_fields
 
     def referer(self):
@@ -2151,65 +2116,63 @@ class ViewSpec(object):
 
 
 class BindingSpec(object):
-    """DEPRECATED: Use 'Binding' instead.
+    """DEPRECATED: Use `Binding` instead.
 
-    Defines the properties of binding two forms when combined into a dual
-    form.  Both the data binding and some presentation properties of the
-    connection are defined.
+    Defines the properties of binding two forms when combined into a dual form.
+    Both the data binding and some presentation properties of the connection are
+    defined.
 
     Usage is as follows:
 
-    The 'binding_spec' function in the specification of any view returns a
+    The `binding_spec` function in the specification of any view returns a
     dictionary of all possible bindings of this view with other views.  The
     dictionary is keyed by specification names and the value is the
-    'BindingSpec' instance.
+    `BindingSpec` instance.
 
-    For example, when creating a dual form 'A::B', the 'binding_spec' entry
-    for view 'B' (in the role of the side form) is retrieved from view 'A'
-    (in the role of the main form).
+    For example, when creating a dual form 'A::B', the `binding_spec` entry for
+    view 'B' (in the role of the side form) is retrieved from view 'A' (in the
+    role of the main form).
 
     """
 
     def __init__(self, title=None, binding_column=None, side_binding_column=None,
                  hide_binding_column=True, append_condition=None, condition=None, description=None,
                  help=None, orientation=Orientation.HORIZONTAL):
-        """Inicialize the specification.
+        """Initialize the specification.
 
         Arguments:
-
-          title -- The title of the dual form as a string.  If omitted, the title will be
-            provided automatically as a concatenation of the titles of both involved forms.
-
-          binding_column -- the identifier of the binding column (string).  The binding column
-            determines filtering of the side form depending on the current main form row.  If
-            specified, side form will be filtered to contain only the rows, which have the same
-            values in the binding column as the current main form row.  Use the argument
-            'side_binding_column' if the identifier of the binding column is different in the side
-            form.  Using the binding column is optional and if omitted, the filtering depends
-            solely on the 'condition' argument.
-
-          side_binding_column -- identifier of the binding column in the side form.  The default
-            value None means to use the same identifier as given by 'binding_column'.
-
-          hide_binding_column -- the binding column is hidden by default in the side form.  Pass a
-            false value to this argument to unhide it.
-
-          condition -- a function of one argument (the PresentedRow instance) returning the current
-            side form condition (a 'pytis.data.Operator' instance) for given main form row.  If
-            used together with the binding column, the condition will be used in conjunction with
-            the binding column condition.  If 'binding_column' is None, this condition will be used
-            solely.
-
-          description -- a brief description of this dual connection of the forms.
-
-          help -- detailed description of this dual connection as a formatted text in the LCG
-            Structured Text format.  This text is used for generating the on-line help and it is
-            also possible to supply it in a separate file.  See the Help tutorial for more
-            information.
-
-          orientation -- the default orientation of the dual form separator as one of 'Orientation'
-            constants.  In horizontal orientation, the main form is above the side form, in
-            vertical it is on the left side.
+          title (str): The title of the dual form.  If omitted, the title will
+            be provided automatically as a concatenation of the titles of both
+            involved forms.
+          binding_column (str): The identifier of the binding column.  The
+            binding column determines filtering of the side form depending on
+            the current main form row.  If specified, side form will be filtered
+            to contain only the rows, which have the same values in the binding
+            column as the current main form row.  Use the argument
+            side_binding_column if the identifier of the binding column is
+            different in the side form.  Using the binding column is optional
+            and if omitted, the filtering depends solely on the `condition`
+            argument.
+          side_binding_column (str): Identifier of the binding column in the
+            side form.  The default value None means to use the same identifier
+            as given by binding_column.
+          hide_binding_column (bool): The binding column is hidden by default in
+            the side form.  Pass a false value to this argument to unhide it.
+          condition: A function of one argument (the `PresentedRow` instance)
+            returning the current side form condition (a `pytis.data.Operator`
+            instance) for given main form row.  If used together with the
+            binding column, the condition will be used in conjunction with the
+            binding column condition.  If binding_column is None, this condition
+            will be used solely.
+          description (str): A brief description of this dual connection of the
+            forms.
+          help (str): Detailed description of this dual connection as a
+            formatted text in the LCG Structured Text format.  This text is used
+            for generating the on-line help and it is also possible to supply it
+            in a separate file.  See the Help tutorial for more information.
+          orientation: The default orientation of the dual form separator as one
+            of `Orientation` constants.  In horizontal orientation, the main
+            form is above the side form, in vertical it is on the left side.
 
         """
         assert title is None or isinstance(title, basestring), title
@@ -2268,13 +2231,13 @@ class BindingSpec(object):
 class Binding(object):
     """Specification of a binding to other view.
 
-    Defines the relation of two specifications for their use within a
-    dual/multi form.  The presentation is usually implemented as a pair of
-    forms where one is master (main form) and the other is slave (side form).
-    Multi form has one main form and several side forms, but one binding always
-    defines the relation of one main form and one side form.  This relation is
-    defiend within the 'bindings' parameter of 'ViewSpec' specification of the
-    main form and defines its connection to the side form.
+    Defines the relation of two specifications for their use within a dual/multi
+    form.  The presentation is usually implemented as a pair of forms where one
+    is master (main form) and the other is slave (side form). Multi form has one
+    main form and several side forms, but one binding always defines the
+    relation of one main form and one side form.  This relation is defined
+    within the `bindings` parameter of `ViewSpec` specification of the main form
+    and defines its connection to the side form.
 
     """
 
@@ -2282,91 +2245,87 @@ class Binding(object):
                  descr=None, single=False, enabled=True, arguments=None,
                  prefill=None, search=None,
                  content=None, content_type='lcg', uri=None):
-        """Arguments:.
+        """Initialize the instance.
 
-          id -- identifier of the binding as a string.  It must be unique among
-            all objects identifiers within a given form.
-          title -- title used for the list of related records
-          name -- name of the related specification.
-          binding_column -- the string identifier of the binding column.  The
+        Arguments:
+          id (str): Identifier of the binding.  It must be unique among all
+            objects identifiers within a given form.
+          title (str): Title used for the list of related records.
+          name (str): Name of the related specification.
+          binding_column (str): The string identifier of the binding column. The
             meaning depends on the type of the binding.  The binding can be 1:1
-            or 1:N and is determined by the 'single' argument (below).  Binding
-            column can be combined with a 'condition' to further restrict the
+            or 1:N and is determined by the `single` argument (below). Binding
+            column can be combined with a `condition` to further restrict the
             relation or can be completely omitted and only a generic condition
             may be used to define the relation.  In this case, however, the
-            application has no information about the type of the binding and
-            may not be able to offer some features which require this
-            knowledge.  This argument may be used as positional.
-          condition -- a function of one argument (the 'PresentedRow' instance)
-            returning the current binding condition (a 'pytis.data.Operator'
+            application has no information about the type of the binding and may
+            not be able to offer some features which require this knowledge.
+            This argument may be used as positional.
+          condition: A function of one argument (the `PresentedRow` instance)
+            returning the current binding condition (a `pytis.data.Operator`
             instance) to filter the data of the dependent form for given main
             form row.  If used together with the binding column, the condition
             will be used in conjunction with the binding column condition.  If
-            'binding_column' is None, this condition will be used solely.
-          arguments -- function of a single argument ('PresentedRow'
-            instance) returning a dictionary of table arguments.  This function
-            may be provided only when the side form table is actually a row
-            returning function.  Otherwise 'arguments' must be 'None'.
-          descr -- binding description text (to be used in on-line help etc).
-          single -- boolean flag indicating whether this binding corresponds to
-            a 1:1 relation (True value) or 1:N relation (False value).  Simply
-            put, when single is False (the default), the side form is a list of
-            related records (browse form), when True, the side form is a view
-            of a single related record (show form).  Consequently, the value of
-            this flag determines the meaning of the 'binding_column' argument.
-            For the 1:1 relation, there is exactly one record in the related
-            view corresponding to one record of the main form.  The
-            'binding_column' in this case is the identifier of a column in main
-            form specification which must have a codebook specification
-            pointing to the related view.  For the 1:N relation the binding
-            column must exist in the related view and must have a codebook
-            (foreign key) specification pointing to the main form (the view for
-            which the binding is used).
-          enabled -- boolean value or a function of one argument
-            ('PresentedRow' instance).  If the value is True or if the function
-            returns True for given main form row, the side form defined by this
-            binding is displayed, otherwise it is inactive (currently only
-            implemented for web forms, where the side form is actually
-            completely left out).
-          prefill -- function of one argument (the main form record) returning
-            a dictionary of values to prefill in the side form's new record.
-            The dictionary keys are field identifiers and values are internal
-            (python) values.  If 'prefill' is None and 'binding_column' is
+            binding_column is None, this condition will be used solely.
+          arguments: Function of a single argument (`PresentedRow` instance)
+            returning a dictionary of table arguments.  This function may be
+            provided only when the side form table is actually a row returning
+            function.  Otherwise arguments must be None.
+          descr (str): Binding description text (to be used in on-line help
+            etc).
+          single (bool): Flag indicating whether this binding corresponds to a
+            1:1 relation (True value) or 1:N relation (False value). Simply put,
+            when single is False (the default), the side form is a list of
+            related records (browse form), when True, the side form is a view of
+            a single related record (show form). Consequently, the value of this
+            flag determines the meaning of the binding_column argument.  For the
+            1:1 relation, there is exactly one record in the related view
+            corresponding to one record of the main form. The binding_column in
+            this case is the identifier of a column in main form specification
+            which must have a codebook specification pointing to the related
+            view.  For the 1:N relation the binding column must exist in the
+            related view and must have a codebook (foreign key) specification
+            pointing to the main form (the view for which the binding is used).
+          enabled: Boolean value or a function of one argument (`PresentedRow`
+            instance).  If the value is True or if the function returns True for
+            given main form row, the side form defined by this binding is
+            displayed, otherwise it is inactive (currently only implemented for
+            web forms, where the side form is actually completely left out).
+          prefill: Function of one argument (the main form record) returning a
+            dictionary of values to prefill in the side form's new record. The
+            dictionary keys are field identifiers and values are internal
+            (python) values.  If prefill is None and binding_column is
             specified, the default prefill is automatically generated using the
             binding column value.
-          search -- function of one argument ('PresentedRow' instance)
-            returning search parameters to perform side form search on main
-            form navigation.  The function will receive the current main form
-            record and should return a side form search condition.  The first
-            matching side form row will be automatically selected on each main
-            form record change (after side form filtering by
+          search: Function of one argument (`PresentedRow` instance) returning
+            search parameters to perform side form search on main form
+            navigation.  The function will receive the current main form record
+            and should return a side form search condition.  The first matching
+            side form row will be automatically selected on each main form
+            record change (after side form filtering by
             binding_column/condition).  The returned condition may be a
-            'pytis.data.Operator' instance, 'pytis.data.Value' instance
+            `pytis.data.Operator` instance, `pytis.data.Value` instance
             representing the side form key column value or a dictionary of
             column values (keys are column identifiers and values are
-            pytis.data.Value instances).
-          content -- function of one argument (PresentedRow instance) returning
+            `pytis.data.Value` instances).
+          content: Function of one argument (`PresentedRow` instance) returning
             the content to be displayed in the side form.  If not None, the
-            binding is not a standard data form, but an embedded "viewer" of
-            the content returned by this function.  In this case the arguments
-            'name', 'binding_column', 'condition', 'arguments' and 'prefill'
-            make no sense and must be None.  The argument 'content_type'
-            further specifies which kind of content is returned by this
-            function.  A string may also be passed instead of a function.  This
-            string is the identifier of the main form column containing the
-            content to be displayed ('content_type' also specifying its type).
-          content_type -- determines what the 'content' function actually
-            returns.  Possible string values are:
-            'html' ... HTML string to be displayed in a web browser.  Use
-              'pytis.util.lcg_to_html()' to convert LCG structured text into
-              HTML.
-            'lcg' ... 'lcg.ContentNode' instance to be exported to HTML and
-              displayed in a web browser.  Use 'pytis.util.parse_lcg_text()' to
-              convert LCG Structured Text into 'lcg.ContentNode'.
-            'uri' ... URI string to load into a web browser.
-            'pdf' ... binary value containing a serialized PDF document or a
-              'fitz.Document' instance to be displayed in a PDF viewer.
-          uri -- Deprecated.  Use 'content' with 'content_type' = 'uri'.
+            binding is not a standard data form, but an embedded "viewer" of the
+            content returned by this function.  In this case the arguments name,
+            binding_column, condition, arguments and prefill make no sense and
+            must be None.  The argument content_type further specifies which
+            kind of content is returned by this function.  A string may also be
+            passed instead of a function.  This string is the identifier of the
+            main form column containing the content to be displayed
+            (content_type also specifying its type).
+          content_type (str): Determines what the content function actually
+            returns.  Possible string values are: `'html'` — HTML string to be
+            displayed in a web browser; `'lcg'` — `lcg.ContentNode` instance to
+            be exported to HTML and displayed in a web browser; `'uri'` — URI
+            string to load into a web browser; `'pdf'` — binary value containing
+            a serialized PDF document or a `fitz.Document` instance to be
+            displayed in a PDF viewer.
+          uri: Deprecated.  Use content with content_type = 'uri'.
 
         """
         assert isinstance(id, basestring), id
@@ -2470,9 +2429,9 @@ class SelectionType(object):
     """List with a checkbox for each enumeration value (only for multi-value/Array fields)."""
     # Backwards compatibility options
     RADIO_BOX = RADIO
-    """Deprecated.  Equivalent to 'RADIO'"""
+    """Deprecated.  Equivalent to `RADIO`."""
     LIST_BOX = LISTBOX
-    """Deprecated.  Equivalent to 'LISTBOX'"""
+    """Deprecated.  Equivalent to `LISTBOX`."""
 
 
 class PostProcess(object):
@@ -2500,12 +2459,14 @@ class TextFilter(object):
 
     The validator checks whether the user input is contained in the list and
     reports an error if it is not.
+
     """
     EXCLUDE_LIST = 'EXCLUDE_LIST'
     """Use an exclude list.
 
     The validator checks whether the user input is contained in the list and
     reports an error if it is.
+
     """
 
 
@@ -2513,10 +2474,10 @@ class TextFilter(object):
 class Computer(object):
     """Specification of a function computing a value based on row values.
 
-    Computer functions compute a value that depends on values of fields within
-    a 'PresentedRow' instance and possibly also on other properties of the row.
+    Computer functions compute a value that depends on values of fields within a
+    `PresentedRow` instance and possibly also on other properties of the row.
     This class wraps the function (any callable object) and keeps track of the
-    fields (their identifiers) on which the result depends. This allows Pytis
+    fields (their identifiers) on which the result depends.  This allows Pytis
     to decide when it is necessary to recompute the value (by calling the
     function again).
 
@@ -2528,59 +2489,56 @@ class Computer(object):
       - dynamic filters and runtime arguments for codebook field enumerators,
       - integrity checks of the row.
 
-    The computer function is invoked when fields it depends on change.
-    The Computer specification allows defining whether the computer function
-    should wait for its input values to become valid or whether it should be
-    executed on every change even if the field values are currently invalid
-    according to the constraints defined by their data types.
+    The computer function is invoked when fields it depends on change.  The
+    Computer specification allows defining whether the computer function should
+    wait for its input values to become valid or whether it should be executed
+    on every change even if the field values are currently invalid according to
+    the constraints defined by their data types.
 
-    If some (or all) inputs are defined to be validated (using the 'validate'
-    and 'novalidate' arguments), the computer function is not called until all
-    validated fields become valid and the value defined by the 'fallback'
-    argument is used instead of the computed result. This avoids the need to
-    handle invalid values inside the computer function, because the function
+    If some (or all) inputs are defined to be validated (using the validate and
+    novalidate arguments), the computer function is not called until all
+    validated fields become valid and the value defined by the fallback argument
+    is used instead of the computed result.  This avoids the need to handle
+    invalid values inside the computer function, because the function
     implementation may rely on the inputs being valid.
 
     Note: When using validated inputs, validation may cause infinite recursion
-    because of circular dependencies. Pytis automatically detects computers
+    because of circular dependencies.  Pytis automatically detects computers
     with such circular dependencies and forces the developer to avoid them by
-    excluding certain fields from validation (adding them to 'novalidate') when
+    excluding certain fields from validation (adding them to novalidate) when
     necessary.
 
     """
 
     def __init__(self, function, depends=None, fallback=UNDEFINED, validate=False,
                  novalidate=()):
-        """Arguments:
+        """Initialize the instance.
 
-          function -- callable object taking one argument, the 'PresentedRow'
-            instance, and returning the computed value. The meaning of the
+        Arguments:
+          function: Callable object taking one argument, the `PresentedRow`
+            instance, and returning the computed value.  The meaning of the
             returned value depends on the purpose for which the computer is
             used.
-
-          depends -- sequence of field identifiers (strings) on which the
-            function result depends. It should contain all fields used in the
-            computation. The computed value will only be recomputed when the
-            value of one of these fields changes. An empty sequence means no
+          depends: Sequence of field identifiers (strings) on which the function
+            result depends.  It should contain all fields used in the
+            computation.  The computed value will only be recomputed when the
+            value of one of these fields changes.  An empty sequence means no
             recomputation (the value is computed only once during
             initialization).
-
-          validate -- specifies which input fields from 'depends' should be
-            validated before running the computer function. Passing False (the
-            default) means no fields are validated. Passing True means all
-            fields are validated except those listed in 'novalidate'. Passing a
+          validate: Specifies which input fields from depends should be
+            validated before running the computer function.  Passing False (the
+            default) means no fields are validated.  Passing True means all
+            fields are validated except those listed in novalidate. Passing a
             sequence means only the listed fields are validated.
-
-          novalidate -- sequence of fields excluded from computer input
-            validation. Only relevant when 'validate' is True. In that case,
-            all fields except those listed here are validated.
-
-          fallback -- value used instead of the function result when at least
-            one of the validated input fields contains an invalid value. The
+          novalidate: Sequence of fields excluded from computer input
+            validation.  Only relevant when validate is True.  In that case, all
+            fields except those listed here are validated.
+          fallback: Value used instead of the function result when at least one
+            of the validated input fields contains an invalid value.  The
             computer function is not called in this case and the fallback value
-            is returned instead. If 'fallback' is undefined, the previously
-            computed value remains in effect until all input values become
-            valid again.
+            is returned instead.  If fallback is undefined, the previously
+            computed value remains in effect until all input values become valid
+            again.
 
         """
         assert callable(function), function
@@ -2632,63 +2590,44 @@ class Computer(object):
 
 
 def computer(function=None, validate=False, novalidate=(), fallback=UNDEFINED):
-    """Return a 'Computer' instance for the given function.
+    """Return a `Computer` instance for the given function.
 
-    If necessary, wrap 'function' so that row values are converted to named
+    If necessary, wrap function so that row values are converted to named
     arguments.
 
-    Computer functions take one argument, a 'PresentedRow' instance, and return
+    Computer functions take one argument, a `PresentedRow` instance, and return
     a result based on a computation that typically uses current row values
-    and/or other row properties. This wrapper makes it easy to define computer
+    and/or other row properties.  This wrapper makes it easy to define computer
     functions that work directly with field values by passing them as function
     arguments.
 
-    If 'function' is None or if it already is a Computer instance, it is
-    returned unchanged. Otherwise it must be a function of one positional
-    argument and zero or more additional arguments (positional or keyword).
-    The first positional argument is the 'PresentedRow' instance. If the
-    function defines additional arguments, it is wrapped so that row values of
-    fields matching the argument names are passed as those arguments.
+    If function is None or if it already is a `Computer` instance, it is
+    returned unchanged.  Otherwise it must be a function of one positional
+    argument and zero or more additional arguments (positional or keyword).  The
+    first positional argument is the `PresentedRow` instance.  If the function
+    defines additional arguments, it is wrapped so that row values of fields
+    matching the argument names are passed as those arguments.
 
-    The arguments 'validate', 'novalidate', and 'fallback' correspond to the
-    arguments of the 'Computer' constructor and are passed through unchanged.
+    The arguments validate, novalidate, and fallback correspond to the arguments
+    of the `Computer` constructor and are passed through unchanged.
 
-    For example:
+    For example, `@computer def x(row, a, b):` or `x = computer(lambda r, a, b: a + b)`
+    is equivalent to `def x(row):`.
 
-        @computer
-        def x(row, a, b):
-            return a + b
+    In the special case that validate is not False and function is None, the
+    function returns a decorator which passes these arguments along, so you can
+    also simply write decorators as `@computer(validate=True, fallback=None) def x(row, a, b):`,
+    which is equivalent to `x = Computer(lambda r: row['a'].value() + row['b'].value(), fallback=None)`.
 
-    or:
-
-        x = computer(lambda r, a, b: a + b)
-
-    is equivalent to:
-
-        def x(row):
-             return row['a'].value() + row['b'].value()
-
-    In the special case that 'validate' is not False and 'function' is None,
-    the function returns a decorator which passes these arguments along, so you
-    can also simply write decorators as below:
-
-        @computer(validate=True, fallback=None):
-        def x(row, a, b):
-            return a + b
-
-    which is equivalent to:
-
-        x = Computer(lambda r: row['a'].value() + row['b'].value(), fallback=None)
-
-    Note: Pytis specifications accept 'Computer' instances for many of its
+    Note: Pytis specifications accept `Computer` instances for many of its
     properties.  Some of them explicitly state in documentation, that they are
-    automatically wrapped by 'computer()'.  In this case you may define the
+    automatically wrapped by `computer`.  In this case you may define the
     computer functions in the readable form and pass them directly to those
-    properties.  They will be automatically wrapped by 'computer()' behind the
-    scenes and converted to 'Computer' instances if needed.  It is actually
-    planned to wrap by 'computer()' in all cases but it is added gradually so
-    you can rely on it only where documented.  In other cases use 'computer()'
-    explicitly or pass 'Computer' instances directly.
+    properties.  They will be automatically wrapped by `computer` behind the
+    scenes and converted to `Computer` instances if needed.  It is actually
+    planned to wrap by `computer` in all cases but it is added gradually so you
+    can rely on it only where documented.  In other cases use `computer`
+    explicitly or pass `Computer` instances directly.
 
     """
     if function is None and validate is not False:
@@ -2712,18 +2651,18 @@ def computer(function=None, validate=False, novalidate=(), fallback=UNDEFINED):
 
 
 def procedure(function):
-    """Decorator marking procedures intended to be invoked via 'app.run_procedure()'.
+    """Decorator marking procedures intended to be invoked via `app.run_procedure`.
 
     Currently this is only informational, indicating that a function or method
     represents a "pytis procedure".
 
     In the future it may be used to impose restrictions (for example, allowing
-    only marked procedures to be run via 'app.run_procedure()') or to add other
+    only marked procedures to be run via `app.run_procedure`) or to add other
     functionality.
 
     In general, it is recommended to avoid running code through
-    'app.run_procedure()' and instead import and call it directly.
-    'app.run_procedure()' remains mainly for backwards compatibility.
+    `app.run_procedure` and instead import and call it directly.
+    `app.run_procedure` remains mainly for backwards compatibility.
 
     """
     return function
@@ -2732,15 +2671,15 @@ def procedure(function):
 class CbComputer(Computer):
     """Specialized computer that retrieves values from a codebook.
 
-    This computer automatically provides a computation function that retrieves
-    a value from a column of a codebook bound to another field of the same view.
+    This computer automatically provides a computation function that retrieves a
+    value from a column of a codebook bound to another field of the same view.
     This is useful for fields that merely display supplementary information
     derived from a related codebook.
 
-    Although the same effect could be achieved using a standard Computer with
+    Although the same effect could be achieved using a standard `Computer` with
     a custom computation function, the user interface would then have no
     knowledge of the relationship between the computed field and the codebook
-    field. As a result, it would not be able to provide additional useful
+    field.  As a result, it would not be able to provide additional useful
     features such as opening the codebook view from a context menu, displaying
     the codebook key when a cell is activated, automatically determining the
     data type of the virtual field, etc.
@@ -2751,13 +2690,13 @@ class CbComputer(Computer):
         """Initialize the instance.
 
         Arguments:
-
-          field -- identifier of a field in the same specification that provides
-            codebook values. This field must have an enumerator of type
-            'DataEnumerator' (i.e. it must be a codebook field).
-
-          column -- identifier of a column within the enumerator's data object.
-            The computer returns the value of this column as its result.
+          field (str): Identifier of a field in the same specification that
+            provides codebook values.  This field must have an enumerator of
+            type `DataEnumerator` (i.e. it must be a codebook field).
+          column (str): Identifier of a column within the enumerator's data
+            object.  The computer returns the value of this column as its
+            result.
+          default: Default value returned when the codebook value is None.
 
         """
         assert isinstance(field, basestring)
@@ -2794,55 +2733,51 @@ class CbComputer(Computer):
 class CodebookSpec(object):
     """Specification of codebook-related properties of a view.
 
-    A view specification may define how the view behaves when used as a
-    codebook (see the 'codebook' argument of the 'Field' specification).
+    A view specification may define how the view behaves when used as a codebook
+    (see the `codebook` argument of the `Field` specification).
 
-    A 'CodebookSpec' instance may be defined as the 'cb' attribute of a
-    'Specification'.
+    A `CodebookSpec` instance may be defined as the `cb` attribute of a
+    `Specification`.
 
     """
 
     def __init__(self, columns=None, sorting=None, display=None, prefer_display=False,
                  display_size=20, enable_autocompletion=True, begin_search=None):
-        """Arguments:
+        """Initialize the instance.
 
-          display -- defines how the user-visible value of a codebook item is
-            obtained. None (the default) means the internal codebook value is
-            used directly. A string refers to a column in the codebook data
-            object whose value will be displayed. A callable may also be used;
+        Arguments:
+          columns: Deprecated.  Use a derived specification instead.
+          sorting: Deprecated.  Use a derived specification instead.
+          display: Defines how the user-visible value of a codebook item is
+            obtained.  None (the default) means the internal codebook value is
+            used directly.  A string refers to a column in the codebook data
+            object whose value will be displayed.  A callable may also be used;
             it receives the internal codebook value and must return a string.
-            If the callable defines a single argument named 'row', it will
+            If the callable defines a single argument named `row`, it will
             receive the full data row instead of just the code value.
-
-          prefer_display -- if True, the user interface will prefer displaying
-            the user-visible value over the internal code wherever possible.
-
-          display_size -- width of the codebook display field in characters.
+          prefer_display (bool): If True, the user interface will prefer
+            displaying the user-visible value over the internal code wherever
+            possible.
+          display_size (int): Width of the codebook display field in characters.
             It is possible to override this value by the argument of the same
             name within the field specification (for particular field).
-
-          enable_autocompletion -- enable or disable autocompletion for fields
-            referring to this codebook.  This may be practical for example for
-            slow codebooks where autocompletion queries would slow down user
-            interaction within the codebook field.
-
-          begin_search -- identifier of a column where incremental search
+          enable_autocompletion (bool): Enable or disable autocompletion for
+            fields referring to this codebook.  This may be practical for
+            example for slow codebooks where autocompletion queries would slow
+            down user interaction within the codebook field.
+          begin_search (str): Identifier of a column where incremental search
             should automatically start when a codebook form is opened (GUI
             only).
 
         The user visible value of the codebook is used in several situations.
-        The codebook field ('SelectionType.CODEBOOK') will show it in a display
+        The codebook field (`SelectionType.CODEBOOK`) will show it in a display
         next to the form control for entering the codebook value.  Other fields
-        (such as 'CHOICE' or 'RADIO') will directly show the user value (if
-        'display' was defined) and the internal value is not visible.  Another
+        (such as `CHOICE` or `RADIO`) will directly show the user value (if
+        display was defined) and the internal value is not visible. Another
         usage is in browse forms (tables), where the value of the display is
         shown in the application status line (GUI) or in a tooltip (web).  If
-        'prefer_display' is true, however, the display value will be used in
+        prefer_display is true, however, the display value will be used in
         browse forms directly.
-
-        Arguments 'columns' and 'sorting' are deprecated.  Use a derived
-        specification if you need to modify the parameters of the underlying
-        view.
 
         """
         assert columns is None or is_sequence(columns)
@@ -2918,41 +2853,35 @@ class FormType(object):
 class Link(object):
     """Specification of a link from a field to a different view.
 
-    Used as the value of the 'link' argument in the 'Field' constructor.
+    Used as the value of the `link` argument in the `Field` constructor.
 
     """
 
     def __init__(self, name, column, type=FormType.BROWSE, binding=None, label=None,
                  enabled=True, filter=None, arguments=None):
-        """Arguments:
+        """Initialize the instance.
 
-          name -- name of the referenced specification.
-
-          column -- column identifier in the referenced specification. This
+        Arguments:
+          name (str): Name of the referenced specification.
+          column (str): Column identifier in the referenced specification. This
             column is used to locate the record corresponding to the current
             value of the referring field.
-
-          type -- type of the form used to display the referenced view or
-            record, as one of the 'FormType' constants.  This argument may also
-            be used as positional.
-
-          binding -- identifier of a 'Binding' specification determining the
+          type: Type of the form used to display the referenced view or record,
+            as one of the `FormType` constants.  This argument may also be used
+            as positional.
+          binding (str): Identifier of a `Binding` specification determining the
             side view shown together with the referenced record.
-
-          label -- link label shown in the menu. If omitted, the link is named
-            automatically and grouped among automatically generated links. If
-            specified, the link is shown separately before automatic links.
-
-          enabled -- boolean or function taking a 'PresentedRow' instance and
+          label (str): Link label shown in the menu.  If omitted, the link is
+            named automatically and grouped among automatically generated links.
+            If specified, the link is shown separately before automatic links.
+          enabled: Boolean or function taking a `PresentedRow` instance and
             returning True if the link is active for the given record.
-
-          filter -- function taking a 'PresentedRow' instance and returning a
-            filtering condition ('pytis.data.Operator' instance) for the newly
-            opened form. Only relevant for 'FormType.BROWSE'.
-
-          arguments -- function taking a 'PresentedRow' instance and returning
-            a dictionary of table function arguments. Only relevant for
-            'FormType.BROWSE' when the target specification is based on a table
+          filter: Function taking a `PresentedRow` instance and returning a
+            filtering condition (`pytis.data.Operator` instance) for the newly
+            opened form.  Only relevant for `FormType.BROWSE`.
+          arguments: Function taking a `PresentedRow` instance and returning a
+            dictionary of table function arguments.  Only relevant for
+            `FormType.BROWSE` when the target specification is based on a table
             function.
 
         """
@@ -3008,53 +2937,47 @@ class ListLayout(object):
 
     Currently implemented only in web forms.
 
-    This layout defines an alternative presentation of record lists. Records
-    are not displayed as a table but as sections, where each record has its own
+    This layout defines an alternative presentation of record lists. Records are
+    not displayed as a table but as sections, where each record has its own
     heading, meta information, and content.
 
     """
 
     def __init__(self, title, meta=(), layout=None, content=(), image=None, anchor=None,
                  meta_labels=False, columns=1, allow_index=False, popup_actions=False):
-        """Arguments:
+        """Initialize the instance.
 
-          title -- identifier of a field used as the title for each list item.
-            An 'lcg.TranslatableText' instance may also be used as an
-            interpolation template (with python string formatting syntax
-            replacing variables by formatted row values).
-
-          meta -- sequence of field identifiers shown as meta information below
+        Arguments:
+          title: Identifier of a field used as the title for each list item. An
+            `lcg.TranslatableText` instance may also be used as an interpolation
+            template (with python string formatting syntax replacing variables
+            by formatted row values).
+          meta: Sequence of field identifiers shown as meta information below
             the item title.  A single item may be passed as a string directly.
-
-          layout -- 'GroupSpec' instance describing the layout of fields within
-            each item section.  If used (not None), the fields will be
-            displayed for each record in a manner simillar to a show form.
-            Similarly as for the 'layout' argument in 'ViewSpec', it is also
-            possible to pass a sequence of fields (or 'GroupFpec' instances)
-            which will be turned into a vertical group automatically.
-
-          content -- content provider: a field identifier or a function.  A
-            function receives a PresentedRow instance and returns 'lcg.Content'
-            or None.  If a field identifier is used, the field value must be a
-            string formatted as LCG structured text.  The field text is parsed
-            to produce the content.  A sequence of functions or field
-            identifiers may also be used to provide more pieces of content
+          layout: `GroupSpec` instance describing the layout of fields within
+            each item section.  If used (not None), the fields will be displayed
+            for each record in a manner similar to a show form. Similarly as for
+            the `layout` argument in `ViewSpec`, it is also possible to pass a
+            sequence of fields (or `GroupSpec` instances) which will be turned
+            into a vertical group automatically.
+          content: Content provider: a field identifier or a function.  A
+            function receives a `PresentedRow` instance and returns
+            `lcg.Content` or None.  If a field identifier is used, the field
+            value must be a string formatted as LCG structured text. The field
+            text is parsed to produce the content.  A sequence of functions or
+            field identifiers may also be used to provide more pieces of content
             concatenated together on the output.
-
-          image -- identifier of a field providing an image to be displayed
-            along with each record.
-
-          meta_labels -- boolean or sequence specifying whether meta fields
-            should be labeled.  A sequence specifies identifiers of labeled
-            fields.
-
-          columns -- number of columns.
-
-          allow_index -- whether to show an index of all records at the top.
-
-          popup_actions -- whether row actions should be displayed as a popup
-            menu attached to the record title (rather than action buttons below
-            the item content).
+          image: Identifier of a field providing an image to be displayed along
+            with each record.
+          anchor: Anchor field identifier.
+          meta_labels: Boolean or sequence specifying whether meta fields should
+            be labeled.  A sequence specifies identifiers of labeled fields.
+          columns (int): Number of columns.
+          allow_index (bool): Whether to show an index of all records at the
+            top.
+          popup_actions (bool): Whether row actions should be displayed as a
+            popup menu attached to the record title (rather than action buttons
+            below the item content).
 
         """
         if isinstance(layout, (list, tuple)):
@@ -3113,16 +3036,16 @@ class Enumeration(object):
     """Specification of a code-based enumeration.
 
     This class defines an enumeration based directly on code, as opposed to
-    database-based enumerations typically implemented using codebooks with
-    their own specifications.
+    database-based enumerations typically implemented using codebooks with their
+    own specifications.
 
-    You can define an enumeration directly within 'Field' specification by
-    defining 'enumerator', 'display', 'selection_type', 'prefer_display' and,
-    'default' attributes.  The same combination of those attributes, however,
-    typically tends to repeat several times within one application.  This is
-    why you may group them into this class and refer to the same class several
-    times.  When a class derived from 'Enumeration' is passed to the
-    'enumerator' attribute of a 'Field' specification, all the above named
+    You can define an enumeration directly within `Field` specification by
+    defining `enumerator`, `display`, `selection_type`, `prefer_display` and
+    `default` attributes.  The same combination of those attributes, however,
+    typically tends to repeat several times within one application. This is why
+    you may group them into this class and refer to the same class several
+    times.  When a class derived from `Enumeration` is passed to the
+    `enumerator` attribute of a `Field` specification, all the above named
     attributes (when not redefined explicitly for given field) will default to
     values defined by this enumeration.
 
@@ -3134,19 +3057,19 @@ class Enumeration(object):
     enumeration = ()
     """Sequence of (value, label) pairs defining internal values and displayed labels.
 
-    The inner values must correspond to the python value of the data type of
-    the 'Field' specification where the enumeration is used (typically python
+    The inner values must correspond to the python value of the data type of the
+    `Field` specification where the enumeration is used (typically python
     strings or ints).  The resulting enumerator will be a
-    'pytis.data.FixedEnumerator' with these values.
+    `pytis.data.FixedEnumerator` with these values.
 
     Labels are user interface strings representing the corresponding inner
-    value.  The default 'display' of a Field using this enumeration will return
-    these labels.
+    value.  The default `display` of a `Field` using this enumeration will
+    return these labels.
 
     """
 
     default = None
-    """Overrides the Field 'default' attribute.
+    """Overrides the `Field` `default` attribute.
 
     Must be one of the enumeration's inner values.
 
@@ -3185,328 +3108,274 @@ class Field(object):
     etc.
 
     Only a certain subset of the information defined here is relevant for each
-    situation. The exact interpretation of this specification depends on the
-    classes implementing the user interface, and the details also depend on
-    the kind of user interface (GUI forms, web forms, printed reports). Not all
+    situation.  The exact interpretation of this specification depends on the
+    classes implementing the user interface, and the details also depend on the
+    kind of user interface (GUI forms, web forms, printed reports).  Not all
     features may be supported by all user interface implementations.
 
     """
 
     def __init__(self, id=None, label=None, column_label=None, inherit=None, **kwargs):
-        """Arguments:
+        """Initialize the instance.
 
-          id -- field identifier as a string. This identifier is used to refer
-            to the field within all pytis operations. It is also used as the
-            name of the related column in the underlying data object by
-            default, but this may be overridden by the 'dbcolumn' argument.
-            This argument is typically passed positionally.
-
-          label -- user-visible field label as a string or unicode. This
-            argument is also typically passed positionally.
-
-          column_label -- optional field label used in column views. By default
-            it is the same as 'label', but it may be overridden by passing a
-            string or unicode value. This argument (unlike most others) may
+        Arguments:
+          id (str): Field identifier.  This identifier is used to refer to the
+            field within all pytis operations.  It is also used as the name of
+            the related column in the underlying data object by default, but
+            this may be overridden by the `dbcolumn` argument. This argument is
+            typically passed positionally.
+          label (str): User-visible field label.  This argument is also
+            typically passed positionally.
+          column_label (str): Optional field label used in column views.  By
+            default it is the same as label, but it may be overridden by passing
+            a string or unicode value.  This argument (unlike most others) may
             also be passed positionally.
-
-          inherit -- deprecated; use the 'clone()' method to implement field
+          inherit: Deprecated; use the `clone` method to implement field
             inheritance.
-
-          descr -- brief field description, typically one sentence, suitable
+          descr (str): Brief field description, typically one sentence, suitable
             for use as tooltip text.
-
-          virtual -- boolean flag indicating that the field is not bound to the
-            underlying data object. The value of a virtual field is most often
-            computed on the fly using a 'Computer' (see the 'computer'
-            argument). Since the data type of a virtual field cannot be
-            obtained from the data object, the default type of virtual fields
-            is 'pytis.data.String'. Use the 'type' argument to override it.
-
-          dbcolumn -- name of the related column in the underlying data object.
-            By default this is the same as the field identifier. Using a
-            different column name is discouraged unless there is a strong
+          virtual (bool): Flag indicating that the field is not bound to the
+            underlying data object.  The value of a virtual field is most often
+            computed on the fly using a `Computer` (see the `computer`
+            argument).  Since the data type of a virtual field cannot be
+            obtained from the data object, the default type of virtual fields is
+            `pytis.data.String`.  Use the `type` argument to override it.
+          dbcolumn (str): Name of the related column in the underlying data
+            object.  By default this is the same as the field identifier. Using
+            a different column name is discouraged unless there is a strong
             reason.
-
-          type -- explicit data type as a 'pytis.data.Type' class or instance.
-            A value of None means that the default type determined from the
-            underlying data object is used (or 'pytis.data.String' for virtual
-            fields not present in the data object). If a class is passed, an
+          type: Explicit data type as a `pytis.data.Type` class or instance. A
+            value of None means that the default type determined from the
+            underlying data object is used (or `pytis.data.String` for virtual
+            fields not present in the data object).  If a class is passed, an
             instance of that class is created automatically and the system
-            supplies all arguments it can determine. If an instance is passed,
+            supplies all arguments it can determine.  If an instance is passed,
             it is used as-is, even if the system would normally construct it
-            with different arguments. In all cases, the specified type must be
+            with different arguments.  In all cases, the specified type must be
             compatible with the type determined by the underlying data object.
             If None or a class is specified, individual constructor arguments
-            may be passed as additional keyword arguments to 'Field' and they
-            take precedence over values determined by the system. The
-            'codebook' and 'enumerator' arguments determine the enumerator of
+            may be passed as additional keyword arguments to `Field` and they
+            take precedence over values determined by the system.  The
+            `codebook` and `enumerator` arguments determine the enumerator of
             the constructed type.
-
-          width -- field width in characters (integer). If not specified, the
-            default width is determined automatically. Some field types may
-            interpret this differently (e.g. as number of columns).
-
-          height -- field height in characters (integer). Some field types may
+          width (int): Field width in characters.  If not specified, the default
+            width is determined automatically.  Some field types may interpret
+            this differently (e.g. as number of columns).
+          height (int): Field height in characters.  Some field types may
             interpret this differently (e.g. as number of rows).
-
-          column_width -- table column width in characters (integer). Defaults
-            to 'width' if not specified.
-
-          disable_column -- if True, the field cannot be displayed as a table
-            column. Such fields do not appear in column selection and their
-            presence in default columns ('ViewSpec.columns') is reported as an
-            error.
-
-          fixed -- if True, automatic scaling of column width when the table
-            size changes is disabled. By default, column widths are adjusted
-            so that available space is evenly distributed. Fixed columns keep
-            their previous widths.
-
-          editable -- one of the 'Editable' constants or a 'Computer' instance.
+          column_width (int): Table column width in characters.  Defaults to
+            width if not specified.
+          disable_column (bool): If True, the field cannot be displayed as a
+            table column.  Such fields do not appear in column selection and
+            their presence in default columns (`ViewSpec.columns`) is reported
+            as an error.
+          fixed (bool): If True, automatic scaling of column width when the
+            table size changes is disabled.  By default, column widths are
+            adjusted so that available space is evenly distributed.  Fixed
+            columns keep their previous widths.
+          editable: One of the `Editable` constants or a `Computer` instance.
             Constants define static editability; a computer may compute it
             dynamically based on other field values and must return True if the
-            field is editable. The default is 'Editable.ALWAYS'.
-
-          visible -- boolean or a 'Computer' instance computing visibility
-            dynamically. Returning False excludes the field from all forms
-            (tables and layouts). For table columns, visibility is not computed
+            field is editable.  The default is `Editable.ALWAYS`.
+          visible: Boolean or a `Computer` instance computing visibility
+            dynamically.  Returning False excludes the field from all forms
+            (tables and layouts).  For table columns, visibility is not computed
             per row; the computer is called once with an empty initialized
-            'PresentedRow' instance. Currently implemented only in web forms.
-
-          compact -- if True, the field label is displayed above the field
-            instead of on the left, allowing the field to span the full width
-            of its group.
-
-          nocopy -- if True, the field value is omitted when copying a record
-            (creating a new record as a copy of an existing one). Key columns
-            and computed fields depending on key columns are omitted
+            `PresentedRow` instance.  Currently implemented only in web forms.
+          compact (bool): If True, the field label is displayed above the field
+            instead of on the left, allowing the field to span the full width of
+            its group.
+          nocopy (bool): If True, the field value is omitted when copying a
+            record (creating a new record as a copy of an existing one). Key
+            columns and computed fields depending on key columns are omitted
             automatically.
-
-          default -- default value or a function computing the default value.
-            Used when initializing a new record. If 'computer' is defined, it
-            takes precedence over the default. A callable is invoked with no
-            arguments and its return value is used. The value must be
-            compatible with the field's data type. If not defined, the default
+          default: Default value or a function computing the default value. Used
+            when initializing a new record.  If `computer` is defined, it takes
+            precedence over the default.  A callable is invoked with no
+            arguments and its return value is used.  The value must be
+            compatible with the field’s data type.  If not defined, the default
             is determined by the data type (usually None).
-
-          computer -- a 'Computer' instance computing the field value from
-            other fields of the same record.  The computation is only performed
-            when necessary (if the value is not available from the data source
-            or if one of this field’s dependencies changes).  Dependencies
-            between computed fields may be transitive, but the dependency graph
-            must be acyclic.
-
-          null_display -- display value (string) used for the unselected state
-            of an enumeration field.  Enumerations don't define null values,
-            but if the field is nullable, it will contain an item represinting
-            the null value.  This will be its label.
-
-          inline_display -- name of the codebook display column available in
-            the current table. If 'prefer_display' is true, this prevents
+          computer: A `Computer` instance computing the field value from other
+            fields of the same record.  The computation is only performed when
+            necessary (if the value is not available from the data source or if
+            one of this field’s dependencies changes). Dependencies between
+            computed fields may be transitive, but the dependency graph must be
+            acyclic.
+          null_display (str): Display value used for the unselected state of an
+            enumeration field.  Enumerations don’t define null values, but if
+            the field is nullable, it will contain an item representing the null
+            value.  This will be its label.
+          inline_display (str): Name of the codebook display column available in
+            the current table.  If `prefer_display` is true, this prevents
             nested database queries by using already joined data instead of
-            querying the codebook table for each row.  The application
-            developer must ensure that this column is present in the underlying
-            database view (typically via a join with the codebook table). The
+            querying the codebook table for each row.  The application developer
+            must ensure that this column is present in the underlying database
+            view (typically via a join with the codebook table).  The
             inline_display column does not need to be explicitly defined in
-            'fields'; it is appended automatically if not present.
-
-          inline_referer -- name of the codebook referer column available in
-            the current table. When the referer is different from the value
+            `fields`; it is appended automatically if not present.
+          inline_referer (str): Name of the codebook referer column available in
+            the current table.  When the referer is different from the value
             column, this avoids nested database queries by using already joined
-            data instead of querying the codebook table. The application
+            data instead of querying the codebook table.  The application
             developer must ensure that this column is present in the underlying
             database view (typically via a join with the codebook table).
-
-          formatter -- function used to format the field value for presentation.
-            The function receives the field's internal value and must return a
-            basestring. It replaces the field type's export method and is applied
-            by 'PresentedRow.format()', i.e. for all read-only presentations of
-            the field in the user interface. Editable fields always work with the
-            internally exported (unformatted) value.
-
-          line_separator -- string used to join multiline values into a single
-            line for presentation. 'PresentedRow.format()' concatenates lines
-            using this separator. If 'formatter' is defined, the separator is
-            applied to its result when needed.
-
-          codebook -- name (string) of the specification acting as a codebook for
-            this field. It is used as the default value of 'enumerator' (if not
+          formatter: Function used to format the field value for presentation.
+            The function receives the field’s internal value and must return a
+            basestring.  It replaces the field type’s export method and is
+            applied by `PresentedRow.format`, i.e. for all read-only
+            presentations of the field in the user interface.  Editable fields
+            always work with the internally exported (unformatted) value.
+          line_separator (str): String used to join multiline values into a
+            single line for presentation.  `PresentedRow.format` concatenates
+            lines using this separator.  If `formatter` is defined, the
+            separator is applied to its result when needed.
+          codebook (str): Name of the specification acting as a codebook for
+            this field.  It is used as the default value of `enumerator` (if not
             set explicitly) and determines the specification used for codebook
-            form invocation when 'selection_type' is 'SelectionType.CODEBOOK'.
-            Setting 'codebook' causes 'selection_type' to default to
-            'SelectionType.CODEBOOK'; conversely, 'SelectionType.CODEBOOK'
-            requires 'codebook' to be defined.
-
-          enumerator -- determines the field's data enumerator. It may be an
-            instance of 'pytis.data.Enumerator', a specification name (converted
-            to 'pytis.data.DataEnumerator'), a 'pytis.data.DataFactory' instance,
-            a list or tuple (converted to 'pytis.data.FixedEnumerator'), or a
-            class derived from 'Enumeration'. When an 'Enumeration' class is
-            used, it is converted to 'FixedEnumerator' and may also influence
-            other field attributes (such as 'display', 'prefer_display', etc.)
-            as described in the class documentation. If None, the enumerator
-            defaults to the value of 'codebook'.
-
-          display -- overrides the corresponding 'CodebookSpec' option for this
-            field. If not defined, the value from the related codebook is used.
-
-          prefer_display -- overrides the corresponding 'CodebookSpec' option
-            for this field. If not defined, the value from the related codebook
+            form invocation when `selection_type` is `SelectionType.CODEBOOK`.
+            Setting `codebook` causes `selection_type` to default to
+            `SelectionType.CODEBOOK`; conversely, `SelectionType.CODEBOOK`
+            requires `codebook` to be defined.
+          enumerator: Determines the field’s data enumerator.  It may be an
+            instance of `pytis.data.Enumerator`, a specification name (converted
+            to `pytis.data.DataEnumerator`), a `pytis.data.DataFactory`
+            instance, a list or tuple (converted to
+            `pytis.data.FixedEnumerator`), or a class derived from
+            `Enumeration`.  When an `Enumeration` class is used, it is converted
+            to `FixedEnumerator` and may also influence other field attributes
+            (such as `display`, `prefer_display`, etc.) as described in the
+            class documentation.  If None, the enumerator defaults to the value
+            of `codebook`.
+          display: Overrides the corresponding `CodebookSpec` option for this
+            field.  If not defined, the value from the related codebook is used.
+          prefer_display (bool): Overrides the corresponding `CodebookSpec`
+            option for this field.  If not defined, the value from the related
+            codebook is used.
+          display_size (int): Overrides the corresponding `CodebookSpec` option
+            for this field.  If not defined, the value from the related codebook
             is used.
-
-          display_size -- overrides the corresponding 'CodebookSpec' option for
-            this field. If not defined, the value from the related codebook is
-            used.
-
-          allow_codebook_insert -- if True, enables a button for inserting new
-            records into the codebook. The button is displayed next to the
+          allow_codebook_insert (bool): If True, enables a button for inserting
+            new records into the codebook.  The button is displayed next to the
             codebook field.
-
-          codebook_insert_spec -- name of the specification to use for codebook
-            insertion when 'allow_codebook_insert' is True. If None, the value
-            defined by 'codebook' is used.
-
-          codebook_insert_prefill -- function returning a dictionary of values to
+          codebook_insert_spec (str): Name of the specification to use for
+            codebook insertion when `allow_codebook_insert` is True.  If None,
+            the value defined by `codebook` is used.
+          codebook_insert_prefill: Function returning a dictionary of values to
             prefill a new codebook record when it is created from the context of
-            this field. The function receives a 'PresentedRow' instance
+            this field.  The function receives a `PresentedRow` instance
             representing the current record. Only relevant when
-            'allow_codebook_insert' is True.
-
-          codebook_update_prefill -- function returning a dictionary of values to
+            `allow_codebook_insert` is True.
+          codebook_update_prefill: Function returning a dictionary of values to
             set when a codebook record is edited from an active value of a
-            ListField. The function receives a 'PresentedRow' instance
-            representing the current record. If the codebook specification
-            defines 'on_edit_record', the result is passed to it as the
-            'set_values' keyword argument; otherwise, the values are directly
-            prefilled in the edit form.
-
-          runtime_filter -- provider of a runtime enumeration filter as a
-            'Computer' instance. The computer computes a filtering condition
-            based on the current row data. The condition is used to filter
-            enumerator values for codebook fields and available completions
-            when autocompletion is enabled. It is typically used to restrict
+            `pytis.form.ListField`.  The function receives a `PresentedRow`
+            instance representing the current record.  If the codebook
+            specification defines `on_edit_record`, the result is passed to it
+            as the `set_values` keyword argument; otherwise, the values are
+            directly prefilled in the edit form.
+          runtime_filter: Provider of a runtime enumeration filter as a
+            `Computer` instance.  The computer computes a filtering condition
+            based on the current row data.  The condition is used to filter
+            enumerator values for codebook fields and available completions when
+            autocompletion is enabled.  It is typically used to restrict
             available codebook values based on other field values in the form.
-            The function must return a 'pytis.data.Operator' when the enumerator
-            is a 'pytis.data.DataEnumerator', or a predicate function otherwise.
+            The function must return a `pytis.data.Operator` when the enumerator
+            is a `pytis.data.DataEnumerator`, or a predicate function otherwise.
             In both cases, None may be returned to indicate that no filtering
             should be applied.
-
-          runtime_arguments -- provider of arguments for a codebook table
-            function as a 'Computer' instance. Similar to 'runtime_filter', but
-            the computer returns a dictionary of table function arguments. This
-            may be used only when the field is a codebook field and the
-            codebook is implemented as a row-returning function; otherwise it
-            must be None.
-
-          completer -- enumerator used for automatic completion. If the field
-            has an enumerator (defined by 'enumerator' or 'codebook'), it is
-            used automatically unless disabled by the related 'CodebookSpec'.
-            This option allows a completer to be specified even for fields
-            without an enumerator, where validation constraints are not
-            desirable. The value may be an enumerator instance, a specification
-            name, or a list or tuple converted to 'FixedEnumerator'.
-
-          selection_type -- one of the 'SelectionType' constants defining the
-            user interface control used to present the enumeration. Only
-            relevant for fields with an enumerator (defined by 'codebook' or
-            'enumerator'). If 'codebook' is not None, this defaults to
-            'SelectionType.CODEBOOK'. If set to 'SelectionType.CODEBOOK',
-            'codebook' must be defined.
-
-          orientation -- field orientation as one of the 'Orientation' class
-            constants. Relevant only for certain field types, such as radio
+          runtime_arguments: Provider of arguments for a codebook table function
+            as a `Computer` instance.  Similar to `runtime_filter`, but the
+            computer returns a dictionary of table function arguments.  This may
+            be used only when the field is a codebook field and the codebook is
+            implemented as a row-returning function; otherwise it must be None.
+          completer: Enumerator used for automatic completion.  If the field has
+            an enumerator (defined by `enumerator` or `codebook`), it is used
+            automatically unless disabled by the related `CodebookSpec`. This
+            option allows a completer to be specified even for fields without an
+            enumerator, where validation constraints are not desirable.  The
+            value may be an enumerator instance, a specification name, or a list
+            or tuple converted to `FixedEnumerator`.
+          selection_type: One of the `SelectionType` constants defining the user
+            interface control used to present the enumeration.  Only relevant
+            for fields with an enumerator (defined by `codebook` or
+            `enumerator`).  If `codebook` is not None, this defaults to
+            `SelectionType.CODEBOOK`.  If set to `SelectionType.CODEBOOK`,
+            `codebook` must be defined.
+          orientation: Field orientation as one of the `Orientation` class
+            constants.  Relevant only for certain field types, such as radio
             buttons, which may be arranged vertically or horizontally.
-
-          post_process -- function applied to the text value while the user is
-            typing. It receives the current string value and returns the value
-            to be stored. The function is called on every change of a text
-            field. Typical uses include automatic case conversion or other
-            input normalization. The value may also be one of the constants of
-            the 'PostProcess' class, representing commonly used functions.
-
-          filter -- one of the 'TextFilter' class constants used to filter user
+          post_process: Function applied to the text value while the user is
+            typing.  It receives the current string value and returns the value
+            to be stored.  The function is called on every change of a text
+            field.  Typical uses include automatic case conversion or other
+            input normalization.  The value may also be one of the constants of
+            the `PostProcess` class, representing commonly used functions.
+          filter: One of the `TextFilter` class constants used to filter user
             input.
-
-          filter_list -- sequence of included or excluded characters for
-            'filter', used with 'TextFilter.INCLUDE_LIST' or
-            'TextFilter.EXCLUDE_LIST'.
-
-          style -- visual field appearance as a 'Style' instance or a function
-            of one argument (a 'PresentedRow' instance) returning a 'Style'
-            dynamically. If not None, it overrides the row-level style defined
-            by 'ViewSpec.row_style'. Useful for conditional highlighting of
+          filter_list: Sequence of included or excluded characters for filter,
+            used with `TextFilter.INCLUDE_LIST` or `TextFilter.EXCLUDE_LIST`.
+          style: Visual field appearance as a `Style` instance or a function of
+            one argument (a `PresentedRow` instance) returning a `Style`
+            dynamically.  If not None, it overrides the row-level style defined
+            by `ViewSpec.row_style`.  Useful for conditional highlighting of
             cells (e.g. negative numbers in red).
-
-          link -- specification of one or more links to other forms related to
-            the current field value. The value is a 'Link' instance or a
-            sequence of them. Links are presented as menu items in the GUI
-            context menu; web forms currently support only one link per field
-            and present it as a hyperlink on the field value. The links open
-            the related form and locate the record corresponding to the field
-            value.
-
-          filename -- provides the filename for downloading or saving the field
-            value. The value may be a function of one argument (a
-            'PresentedRow' instance representing the current row) or the name
-            of another field containing the filename. Relevant primarily for
+          link: Specification of one or more links to other forms related to the
+            current field value.  The value is a `Link` instance or a sequence
+            of them.  Links are presented as menu items in the GUI context menu;
+            web forms currently support only one link per field and present it
+            as a hyperlink on the field value.  The links open the related form
+            and locate the record corresponding to the field value.
+          filename: Provides the filename for downloading or saving the field
+            value.  The value may be a function of one argument (a
+            `PresentedRow` instance representing the current row) or the name of
+            another field containing the filename.  Relevant primarily for
             binary fields, but may also be used for string fields to force the
             user interface to offer download/save controls.
-
-          inline -- if True, forces downloadable fields (binary or with
-            'filename') to be displayed inline. Otherwise they are downloaded
+          inline (bool): If True, forces downloadable fields (binary or with
+            `filename`) to be displayed inline.  Otherwise they are downloaded
             and saved.
-
-          filename_extensions -- sequence of allowed filename extensions used
-            to filter the file selection dialog when choosing a file as a
-            field value. Relevant for binary fields, but may also be used for
-            string fields with 'filename' set.
-
-          text_format -- one of the 'TextFormat' constants defining the format
-            of the field text. Relevant only for textual fields of type
-            'pytis.data.String'. The default 'TextFormat.PLAIN' denotes ordinary
-            text. 'TextFormat.LCG' indicates specially formatted text processed
-            by LCG before display, and the user interface may provide extended
-            editing controls. Other formats are currently unsupported.
-
-          attachment_storage -- instance of an 'AttachmentStorage' subclass,
-            None, or a function of one argument (a 'PresentedRow' instance)
-            returning one of those. Attachments are used with rich text fields
-            to represent external resources such as images or media files.
+          filename_extensions: Sequence of allowed filename extensions used to
+            filter the file selection dialog when choosing a file as a field
+            value.  Relevant for binary fields, but may also be used for string
+            fields with `filename` set.
+          text_format: One of the `TextFormat` constants defining the format of
+            the field text.  Relevant only for textual fields of type
+            `pytis.data.String`.  The default `TextFormat.PLAIN` denotes
+            ordinary text.  `TextFormat.LCG` indicates specially formatted text
+            processed by LCG before display, and the user interface may provide
+            extended editing controls.  Other formats are currently unsupported.
+          attachment_storage: Instance of an `AttachmentStorage` subclass, None,
+            or a function of one argument (a `PresentedRow` instance) returning
+            one of those. Attachments are used with rich text fields to
+            represent external resources such as images or media files.
             Currently supported by wx forms for fields with
-            text_format='TextFormat.LCG'.
-
-          printable -- if True, the user interface allows the field value to be
-            printed as a separate document. Most useful for fields containing
-            structured text that can be directly exported to PDF.
-
-          slider -- if True, adds a slider control to a numeric field. The slider
-            allows setting the value interactively instead of typing it. Use
-            the 'minimum' and 'maximum' type constructor arguments to define
-            the slider range. If unset, the default range is 0..100.
-
-          crypto_name -- if not None, the field values are stored encrypted in
-            the database and the argument specifies the name of the protection
-            area. Multiple protection areas with different passwords may be
-            defined in the application. Not all data types support encryption;
-            setting this option for unsupported types is an error.
-
-          check -- 'Computer' instance (or a function automatically converted
-            to one) used to verify the integrity of the whole record. Unlike
-            validation, which checks only a single value, this function
-            verifies mutual consistency of all form values and is called only
-            after successful validation. It must return None on success or an
-            error message string on failure.
-
-          encrypt_empty -- if True (default), None and empty values are also
-            encrypted. If False, empty values are stored as NULL in the
-            database. Encrypting empty values hides the presence of secret
+            `text_format=’TextFormat.LCG’`.
+          printable (bool): If True, the user interface allows the field value
+            to be printed as a separate document.  Most useful for fields
+            containing structured text that can be directly exported to PDF.
+          slider (bool): If True, adds a slider control to a numeric field. The
+            slider allows setting the value interactively instead of typing it.
+            Use the `minimum` and `maximum` type constructor arguments to define
+            the slider range.  If unset, the default range is 0..100.
+          crypto_name (str): If not None, the field values are stored encrypted
+            in the database and the argument specifies the name of the
+            protection area.  Multiple protection areas with different passwords
+            may be defined in the application.  Not all data types support
+            encryption; setting this option for unsupported types is an error.
+          check: `Computer` instance (or a function automatically converted to
+            one) used to verify the integrity of the whole record.  Unlike
+            validation, which checks only a single value, this function verifies
+            mutual consistency of all form values and is called only after
+            successful validation.  It must return None on success or an error
+            message string on failure.
+          encrypt_empty (bool): If True (default), None and empty values are
+            also encrypted.  If False, empty values are stored as NULL in the
+            database.  Encrypting empty values hides the presence of secret
             data, but setting this to False may be useful when allowing
             unauthorized users to insert records with empty protected fields.
-
-          **kwargs -- remaining keyword arguments are passed to the field data
-            type constructor, overriding automatically determined values.  It
-            is preferred to overriding the type completely by passing a
-            'pytis.data.Type' instance as the 'type' argument.
+          **kwargs: Remaining keyword arguments are passed to the field data
+            type constructor, overriding automatically determined values. It is
+            preferred to overriding the type completely by passing a
+            `pytis.data.Type` instance as the `type` argument.
 
         """
         for key, value in (('id', id), ('label', label), ('column_label', column_label)):
@@ -3802,11 +3671,12 @@ class Field(object):
         return self._dbcolumn
 
     def type(self):
-        """Return the specified 'type' argument passed to the constructor.
+        """Return the specified type argument passed to the constructor.
 
-        This method should not be used outside the 'pytis.presentation' module.  The actual field
-        type instance is initialized during the data object and 'PresentedRow' construction and
-        their instances should always be queried to obtain the actual field type instance.
+        This method should not be used outside the `pytis.presentation` module.
+        The actual field type instance is initialized during the data object and
+        `PresentedRow` construction and their instances should always be queried
+        to obtain the actual field type instance.
 
         """
         return self._type
@@ -3831,7 +3701,7 @@ class Field(object):
             return self._width
 
     def column_width(self, default=10):
-        """Return the specified 'column_width', 'width' or 'default' whichever is not None."""
+        """Return the specified `column_width`, `width` or `default` whichever is not `None`."""
         if self._column_width is None:
             return self.width(default)
         else:
@@ -3875,7 +3745,7 @@ class Field(object):
         return self._line_separator
 
     def codebook(self):
-        """Return the 'codebook' name passeed to the constructor as a string."""
+        """Return the codebook name passed to the constructor as a string."""
         return self._codebook
 
     def display(self):
@@ -3966,7 +3836,7 @@ class Field(object):
         return self._encrypt_empty
 
     def completer(self):
-        """Return field completer as a 'pytis.data.Enumerator' instance."""
+        """Return field completer as a `pytis.data.Enumerator` instance."""
         completer = self._completer
         if isinstance(completer, basestring):
             # Completer was defined as a specification name.
@@ -3977,7 +3847,8 @@ class Field(object):
     def type_kwargs(self):
         """Return the keyword arguments for field's data type construction.
 
-        This method should never be called from outside of the 'pytis.presentation' module.
+        This method should never be called from outside of the
+        `pytis.presentation` module.
 
         """
         kwargs = dict(self._type_kwargs)
@@ -4009,7 +3880,7 @@ class Field(object):
 
 
 class Fields(object):
-    """Deprecated -- use `Specification._inherited_fields()' instead."""
+    """Deprecated -- use `Specification._inherited_fields` instead."""
 
     def __init__(self, fields):
         self._fields = tuple(fields)
@@ -4033,40 +3904,40 @@ class AttachmentStorage(object):
     """Abstract base class defining the API for storing file attachments.
 
     Attachments are external file resources used within LCG Structured text
-    content (within fields with text_format='TextFormat.LCG').  If it is
-    desired to let the user use attachments within a particular structured text
-    field, an instance of an 'AttachmentStorage' subclass must be passed as
-    'attachment_storage' argument to the 'Field' specification.
+    content (within fields with text_format='TextFormat.LCG').  If it is desired
+    to let the user use attachments within a particular structured text field,
+    an instance of an `AttachmentStorage` subclass must be passed as
+    `attachment_storage` argument to the `Field` specification.
 
     This class only defines an abstract API.  Use subclasses defined here or
-    define your own subclasses implementing this API.  Different subclasses
-    will usually define theyr own constructor arguments, but otherwise they
-    will obey the here defined interface.
+    define your own subclasses implementing this API.  Different subclasses will
+    usually define their own constructor arguments, but otherwise they will obey
+    the here defined interface.
 
     It is up to the application developer's decision to choose the appropriate
     level on which the attachments are shared.  There can be just one common
     storage for the whole application, separate storage for each view, separate
-    for each record (the 'attachment_storage' argument of 'Field' can be a row
+    for each record (the `attachment_storage` argument of `Field` can be a row
     function) or any other logic.  It just depends on how the instances are
     created (which constructor arguments they receive).
 
-    All public methods transaction accept the argument 'transaction'.  The
-    particular attachment storage implementation may choose to use or ignore
-    this argument as approppriate (obviously, it makes sense only when they
-    store something in the same database from which the transaction
-    originates).  The caller should always pass the transaction, however,
-    unless he surely knows which storage implementation is in use.  Of course,
-    the transaction may only be passed in contexts where one exists.  If there
-    is no transaction in progress, None is passed.
+    All public methods accept the argument `transaction`.  The particular
+    attachment storage implementation may choose to use or ignore this argument
+    as appropriate (obviously, it makes sense only when they store something in
+    the same database from which the transaction originates).  The caller should
+    always pass the transaction, however, unless he surely knows which storage
+    implementation is in use.  Of course, the transaction may only be passed in
+    contexts where one exists.  If there is no transaction in progress, None is
+    passed.
 
     """
 
     class StorageError(Exception):
-        """Exception raised by storage methods when a storage access problem occurres."""
+        """Exception raised by storage methods when a storage access problem occurs."""
         pass
 
     class InvalidImageFormat(StorageError):
-        """Exception raised by 'insert()' when image of unknown or invalid type is inserted."""
+        """Exception raised by `insert` when image of unknown or invalid type is inserted."""
         pass
 
     def _resource(self, filename, title=None, descr=None, size=None,
@@ -4074,17 +3945,15 @@ class AttachmentStorage(object):
         """Return the corresponding resource instance for given filename and args.
 
         This is a helper method for simple creation of resource instances in
-        derived classes.  This method is not designed to be overriden in
-        derived classes but used by the implementation of methods 'resource()'
-        and 'resources()'.  It implements the logic which should be common to
-        all derived classes - autodetection of resource class by resource
-        filename and automatic creation of thumbnail resource for image
-        resources.
+        derived classes.  This method is not designed to be overridden in
+        derived classes but used by the implementation of methods `resource` and
+        `resources`.  It implements the logic which should be common to all
+        derived classes -- autodetection of resource class by resource filename
+        and automatic creation of thumbnail resource for image resources.
 
-        The derived classes will typically override the methods
-        '_resource_uri()', '_image_uri()', '_thumbnail_uri()',
-        '_resource_src_file()', '_image_src_file()' and
-        '_thumbnail_src_file()'.
+        The derived classes will typically override the methods `_resource_uri`,
+        `_image_uri`, `_thumbnail_uri`, `_resource_src_file`, `_image_src_file`
+        and `_thumbnail_src_file`.
 
         """
         import lcg
@@ -4113,9 +3982,9 @@ class AttachmentStorage(object):
         return lcg.Resource.subclass(filename)
 
     def _resource_uri(self, filename):
-        """Return the URI of a resource of given 'filename'.
+        """Return the URI of a resource of given filename.
 
-        Used by '_resource()' to get the value for 'uri' argument for non-image
+        Used by `_resource` to get the value for `uri` argument for non- image
         resources and image resources which don't have a thumbnail (are
         displayed full-size within the document).
 
@@ -4123,9 +3992,9 @@ class AttachmentStorage(object):
         pass
 
     def _image_uri(self, filename):
-        """Return the URI of an image resource of given 'filename'.
+        """Return the URI of an image resource of given filename.
 
-        Used by '_resource()' to get the value for 'uri' argument for image
+        Used by `_resource` to get the value for `uri` argument for image
         resources which have a thumbnail (this URI should lead to an enlarged
         variant of the image (not necessarily the original)).
 
@@ -4133,47 +4002,47 @@ class AttachmentStorage(object):
         pass
 
     def _thumbnail_uri(self, filename):
-        """Return the URI of an image thumbnail returned by '_resource()'.
+        """Return the URI of an image thumbnail returned by `_resource`.
 
-        Used by '_resource()' to get the value for 'uri' argument for an image
+        Used by `_resource` to get the value for `uri` argument for an image
         thumbnail.
 
         """
         pass
 
     def _resource_src_file(self, filename):
-        """Return source file path of a resource of given 'filename' or None.
+        """Return source file path of a resource of given filename or None.
 
-        Used by '_resource()' to get the value for 'src_file' argument for
-        non-image resources.  May return None when the storage doesn't support
+        Used by `_resource` to get the value for `src_file` argument for non-
+        image resources.  May return None when the storage doesn't support
         source files.
 
         """
         return None
 
     def _image_src_file(self, filename):
-        """Return image source file path of a resource of given 'filename' or None.
+        """Return image source file path of a resource of given filename or None.
 
-        Used by '_resource()' to get the value for 'src_file' argument for
-        image resources which have a thumbnail (this path should point to an
-        enlarged variant of the image (not necessarily the original)).  May
-        return None when the storage doesn't support source files.
+        Used by `_resource` to get the value for `src_file` argument for image
+        resources which have a thumbnail (this path should point to an enlarged
+        variant of the image (not necessarily the original)).  May return None
+        when the storage doesn't support source files.
 
         """
         return None
 
     def _thumbnail_src_file(self, filename):
-        """Return thumbnail source file path of a resource of given 'filename' or None.
+        """Return thumbnail source file path of a resource of given filename or None.
 
-        Used by '_resource()' to get the value for 'src_file' argument for
-        image thumbnails.  May return None when the storage doesn't support
-        source files.
+        Used by `_resource` to get the value for `src_file` argument for image
+        thumbnails.  May return None when the storage doesn't support source
+        files.
 
         """
         return None
 
     def _resized_image(self, image, size):
-        """Return the given PIL.Image instance resized to 'size' as a PIL.Image instance.
+        """Return the given PIL.Image instance resized to size as a PIL.Image instance.
 
         Helper method to be used by derived classes.
 
@@ -4187,21 +4056,22 @@ class AttachmentStorage(object):
         """Insert a new attachment into the storage.
 
         Arguments:
-          filename -- unique file name of the attachment as a basestring.
-          data -- file-like object which may be read to retrieve the attachment
+          filename (str): Unique file name of the attachment.
+          data: File-like object which may be read to retrieve the attachment
             data.  The calling side is responsible for closing the file after
             this method returns.
-          values -- dictionary of values of attachment parameters to set.  The
-            keys may be 'title', 'descr' (corresponding to 'resource.title()'
-            and 'resource.descr()') or any additional application defined
-            attachment parameters (usually passed through 'resource.info()').
-          transaction -- current database transaction instance or None.  See
-            the class docstring for more details.
+          values (dict): Dictionary of values of attachment parameters to set.
+            The keys may be 'title', 'descr' (corresponding to
+            `resource.title` and `resource.descr`) or any additional
+            application defined attachment parameters (usually passed through
+            `resource.info`).
+          transaction: Current database transaction instance or None.  See the
+            class docstring for more details.
 
-
-        Raises 'InvalidImageFormat' exception if an image of unknown or invalid
-          type is inserted.
-        Raises 'IOError' if storing the file fails.
+        Raises:
+          `InvalidImageFormat`: If an image of unknown or invalid type is
+            inserted.
+          `IOError`: If storing the file fails.
 
         """
         pass
@@ -4210,67 +4080,64 @@ class AttachmentStorage(object):
         """Update the information about given attachment.
 
         Arguments:
-
-          filename -- unique file name (basestring) identifying the resource.
-            Must be one of existing filenames as returned by
-            'resource.filename()' of one of the resources returned by
-            'resources()'.
-          values -- dictionary of values of attachment parameters to
+          filename (str): Unique file name identifying the resource.  Must be
+            one of existing filenames as returned by `resource.filename` of
+            one of the resources returned by `resources`.
+          values (dict): Dictionary of values of attachment parameters to
             update.  The keys may be 'title', 'descr' (corresponding to
-            'resource.title()' and 'resource.descr()') or any additional
+            `resource.title` and `resource.descr`) or any additional
             application defined attachment parameters (usually passed through
-            'resource.info()').
-          transaction -- current database transaction instance or None.  See
-            the class docstring for more details.
+            `resource.info`).
+          transaction: Current database transaction instance or None.  See the
+            class docstring for more details.
 
-        Returns None when the update is performed ok or an error message string
-        when error occurres.
+        Returns:
+          None when the update is performed ok or an error message string when
+          an error occurs.
 
         """
         pass
 
     def delete(self, filename, transaction=None):
-        """Not supported yet"""
+        """Not supported yet."""
         pass
 
     def retrieve(self, filename, transaction=None):
-        """Retieve the contents of an attachment file of given name.
+        """Retrieve the contents of an attachment file of given name.
 
         Arguments:
+          filename (str): Unique file name identifying the resource.  Must be
+            one of existing filenames as returned by `resource.filename` of
+            one of the resources returned by `resources`.
+          transaction: Current database transaction instance or None.  See the
+            class docstring for more details.
 
-          filename -- unique file name (basestring) identifying the resource.
-            Must be one of existing filenames as returned by
-            'resource.filename()' of one of the resources returned by
-            'resources()'.
-          transaction -- current database transaction instance or None.  See
-            the class docstring for more details.
-
-        The returned value is an open file like object with methods 'read()'
-        and 'close()'.  The calling side is responsible for calling 'close()'
-        after reading file data.
-
-        None is returned when a corresponding attachment is not found.
+        Returns:
+          An open file-like object with methods `read` and `close`.  The
+          calling side is responsible for calling `close` after reading file
+          data.  None is returned when a corresponding attachment is not found.
 
         """
         pass
 
     def resource(self, filename, transaction=None):
-        """Return a 'lcg.Resource' instance for given 'filename' if it exists or None.
+        """Return an `lcg.Resource` instance for given `filename` if it exists or `None`.
 
         Arguments:
+          filename (str): Unique file name identifying the resource.  Must be
+            one of existing filenames as returned by `resource.filename` of
+            one of the resources returned by `resources`.
+          transaction: Current database transaction instance or None.  See the
+            class docstring for more details.
 
-          filename -- unique file name (basestring) identifying the resource.
-            Must be one of existing filenames as returned by
-            'resource.filename()' of one of the resources returned by
-            'resources()'.
-          transaction -- current database transaction instance or None.  See
-            the class docstring for more details.
-
-        Image resources will automatically have a 'thumbnail' attribute if the
-        user requested to display a smaller version of the image.  The storage
-        may pass also additional information about the attachment in the 'info'
-        argument of 'lcg.Resource' (available through the method
-        'resource.info()').
+        Returns:
+          An `lcg.Resource` instance if the resource exists, otherwise `None`.
+            Image
+          resources will automatically have a `thumbnail` attribute if the user
+          requested to display a smaller version of the image.  The storage may
+          also pass additional information about the attachment in the `info`
+          argument of lcg.Resource (available through the method
+          `resource.info`).
 
         """
         pass
@@ -4279,13 +4146,13 @@ class AttachmentStorage(object):
         """Return a list of all files currently present in the storage.
 
         Arguments:
+          transaction: Current database transaction instance or None.  See the
+            class docstring for more details.
 
-          transaction -- current database transaction instance or None.  See
-            the class docstring for more details.
-
-        The returned list consists of 'lcg.Resource' instances corresponding to
-        attachment files.  See 'resource()' for more information about the
-        returned resource instances.
+        Returns:
+          A list of lcg.Resource instances corresponding to attachment files.
+          See : meth:`resource` for more information about the returned
+          resource instances.
 
         """
         pass
@@ -4296,15 +4163,14 @@ class AttachmentStorage(object):
         """Find resource corresponding to given resource URI.
 
         Arguments:
+          uri (str): The searched resource URI.
+          transaction: Current database transaction instance or None.  See the
+            class docstring for more details.
 
-          uri -- the searched resource URI as a basestring.
-          transaction -- current database transaction instance or None.  See
-            the class docstring for more details.
-
-        Searches all the resources returned by 'resources()' including nested
-        resources, such as thumbnails of Image resources.
-
-        None is returned when a corresponding resource is not found.
+        Returns:
+          Searches all the resources returned by : meth:`resources` including
+          nested resources, such as thumbnails of Image resources.  None is
+          returned when a corresponding resource is not found.
 
         """
         import lcg
@@ -4319,17 +4185,17 @@ class AttachmentStorage(object):
 
 
 class FileAttachmentStorage(AttachmentStorage):
-    """Simple AttachmentStorage API implementation storing files in a filesystem.
+    """Simple `AttachmentStorage` implementation storing files in a filesystem.
 
-    The constructor argument 'directory' determines the filesystem path where
+    The constructor argument `directory` determines the filesystem path where
     attachment files are stored.  This directory must either exist and be
     writable by the users who are expected to edit the field for which the
     storage is used or when it doesn't exist, it will be created automatically,
     but in this case one of its parent directories must exist and be writable.
 
-    The files are store the directory in a certain arrangement.  Normal files
-    have just one file per resource in given directory, but images may have a
-    resized version in the 'resized' subdirectory and a thumbnail in
+    The files are stored in the directory in a certain arrangement.  Normal
+    files have just one file per resource in given directory, but images may
+    have a resized version in the 'resized' subdirectory and a thumbnail in
     'thumbnails' subdirectory.  In such case the image is represented by a
     resource pointing to the resized version of the image, which defines the
     'thumbnail' pointing to the thumbnailed version.
@@ -4345,14 +4211,15 @@ class FileAttachmentStorage(AttachmentStorage):
     """
 
     def __init__(self, directory, base_uri=None):
-        """Arguments:
+        """Initialize the instance.
 
-          directory -- full path name of the directory where file attachments
-            are stored.  See class description for more information.
-          base_uri -- attachments base URI as a string or None.  If not None,
-            the resource instances will have their uri attribute set.  The
-            base_uri will be used as a common prefix.  Otherwise the resources
-            have their uri unset.
+        Arguments:
+          directory (str): Full path name of the directory where file
+            attachments are stored.  See class description for more information.
+          base_uri (str): Attachments base URI or None.  If not None, the
+            resource instances will have their uri attribute set.  The base_uri
+            will be used as a common prefix.  Otherwise the resources have their
+            uri unset.
 
         """
         assert isinstance(directory, basestring)
@@ -4482,39 +4349,37 @@ class FileAttachmentStorage(AttachmentStorage):
 
 
 class HttpAttachmentStorage(AttachmentStorage):
-    """Remote AttachmentStorage implementation storing files through HTTP.
+    """Remote `AttachmentStorage` implementation storing files through HTTP.
 
-    The constructor argument 'uri' determines the HTTP uri of a server
+    The constructor argument `uri` determines the HTTP uri of a server
     application implementing the attachment storage protocol.  One sample
     implementation of the server side as a Wiking module is the module
-    'pytis.cms.web.HttpAttachmentStorageBackend'.
+    `pytis.cms.web.HttpAttachmentStorageBackend`.
 
     The storage provides its own authorization mechanism.  When the instance is
     created, an access key is generated as a random string.  This string is
-    saved in the database table 'e_pytis_http_attachment_storage_keys' for
-    given database user and storage URI.  The HTTP requests generated by the
-    storage then pass the username and access key to the server side via the
-    HTTP headers 'X-Pytis-Attachment-Storage-Username' and
-    'X-Pytis-Attachment-Storage-Key'.  The server side is expected to check
-    that these headers match with the values saved in the DB table
-    'e_pytis_http_attachment_storage_keys' (the server side must have access to
-    the same database).  This should limit the access to the server only to
-    currently active instances of 'HttpAttachmentStorage' and avoid
-    unauthorized access.
+    saved in the database table 'e_pytis_http_attachment_storage_keys' for given
+    database user and storage URI.  The HTTP requests generated by the storage
+    then pass the username and access key to the server side via the HTTP
+    headers 'X-Pytis-Attachment-Storage-Username' and 'X-Pytis-Attachment-
+    Storage-Key'.  The server side is expected to check that these headers match
+    with the values saved in the DB table 'e_pytis_http_attachment_storage_keys'
+    (the server side must have access to the same database).  This should limit
+    the access to the server only to currently active instances of
+    `HttpAttachmentStorage` and avoid unauthorized access.
 
-    The value of 'readonly' argument passed to the constructor is also saved in
+    The value of `readonly` argument passed to the constructor is also saved in
     the database table, which allows the server side to limit the access to
     read-only for particular client requests.
 
     """
 
     def __init__(self, uri, readonly=True):
-        """Arguments:
+        """Initialize the instance.
 
-          uri -- full URI of the attachment storage server application
-            (including the initial 'http://' or 'https://' protocol
-            specification).
-          readonly -- True if the storage is read only, False if read/write
+        Arguments:
+          uri (str): Full URI of the attachment storage server application (including the initial 'http://' or 'https://' protocol specification).
+          readonly (bool): True if the storage is read only, False if read/write
             access should be allowed by the server side.
 
         """
@@ -4652,24 +4517,16 @@ class HttpAttachmentStorage(AttachmentStorage):
 
 
 class DbAttachmentStorage(AttachmentStorage):
-    """AttachmentStorage implementation storing files in the database.
+    """`AttachmentStorage` implementation storing files in the database.
 
-    Attachments are stored within a database table si binary data and some
+    Attachments are stored within a database table as binary data and some
     additional information about them.  The table must have at least the
     following columns:
 
-       file_id serial primary key,
-       file_name text not null,
-       byte_size int not null,
-       width int,
-       height int,
-       resized_width int,
-       resized_height int,
-       thumbnail_width int,
-       thumbnail_height int,
-       file bytea not null,
-       resized bytea,
-       thumbnail bytea
+      file_id serial primary key, file_name text not null, byte_size int not
+      null, width int, height int, resized_width int, resized_height int,
+      thumbnail_width int, thumbnail_height int, file bytea not null, resized
+      bytea, thumbnail bytea
 
     The table will additionally include one foreign key column referencing to
     the entity, to which the attachments are related.  Typically, attachments
@@ -4678,23 +4535,22 @@ class DbAttachmentStorage(AttachmentStorage):
     For example, when pages are stored in table 'pages', the additional column
     will look like:
 
-       page_id int not null references pages(page_id) on delete cascade,
+      page_id int not null references pages(page_id) on delete cascade,
 
     and we will typically want to ensure that there are only unique file names
     for one page, so there will be a constraint:
 
-       unique page_id, file_name
+      unique page_id, file_name
 
-    See 'pytis.dbdefs.demo.CmsAttachments' for sample DB specification.
-
+    See `pytis.dbdefs.demo.CmsAttachments` for sample DB specification.
 
     """
 
     class HTTPHandler(http.server.BaseHTTPRequestHandler):
         """Simple HTTP server to serve attachments to the built-in pytis browser.
 
-        It is only intended for serving attachments in pytis wx application.
-        The client is the built-in webkit browser.
+        It is only intended for serving attachments in pytis wx application. The
+        client is the built-in webkit browser.
 
         """
 
@@ -4713,14 +4569,16 @@ class DbAttachmentStorage(AttachmentStorage):
             self.send_error(404, 'Not Found: %s' % self.path)
 
     def __init__(self, table, ref_column, ref_value, base_uri=None):
-        """Arguments:
+        """Initialize the instance.
 
-          table -- string name of the database table to use for storing the
+        Arguments:
+          table (str): Name of the database table to use for storing the
             attachments.  The table schema must match the specification
             described in the class docstring.
-          ref_column -- Reference column name (foreign key).
-          ref_value -- Reference column value matching the reference column data type.
-          base_uri -- Unused; Kept only for backwards compatibility.
+          ref_column (str): Reference column name (foreign key).
+          ref_value: Reference column value matching the reference column data
+            type.
+          base_uri: Unused; kept only for backwards compatibility.
 
         """
         self._data = pytis.data.dbtable(table,
@@ -4891,10 +4749,10 @@ class DbAttachmentStorage(AttachmentStorage):
             return None
 
     def get_data_for_uri(self, uri):
-        """Special method for the DbAttachmentStorage HTTP server communication.
+        """Special method for the `DbAttachmentStorage` HTTP server communication.
 
-        This method is not part of the AttachmentStorage API and should not be
-        used by applications.  It is only intended for communicatuion with the
+        This method is not part of the `AttachmentStorage` API and should not be
+        used by applications.  It is only intended for communication with the
         built-in HTTP server serving attachments in pytis application (the
         client is the built-in webkit browser).
 
@@ -4921,7 +4779,7 @@ class StatusField(object):
     """Status bar field specification.
 
     Defines properties of a status bar fields returned by
-    'Application.status_fields'.
+    `Application.status_fields`.
 
     """
     ICON_LEFT = 'ICON_LEFT'
@@ -4931,38 +4789,38 @@ class StatusField(object):
 
     def __init__(self, id, label=None, refresh=None, refresh_interval=None, width=10,
                  icon_position=ICON_LEFT, on_click=None):
-        """Arguments:
+        """Initialize the instance.
 
-          id -- field identifier as a basestring.
-          label -- field label as a basestring.  The label will be displayed
-            as a tooltip.
-          refresh -- callable object returning the current field state when
-            called with no arguments.  The returned value may be either a
-            basestring or a tuple.  If basestring is returned, it is used as
-            the diplayed field value text.  If a tuple is returned it may be
-            either a pair of (value, icon) or a tripple (value, icon, tooltip).
-            Icon is the icon identifier as in 'pytis.form.get_icon()' and
-            tooltip is a basestring to be displayed as the field's tooltip.
-            Note that field label is displeyed in field tooltip by default, so
-            you may want to add the label manually here to make the meaning of
-            the field clear.  The tooltip may be also passed as a function in
-            which case the function will be called without arguments only when
-            the tooltip is needed and should return the tooltip string.  The
-            function will be called periodically on user interface refresh
-            events (on idle).  The function should not perform any demanding
-            processing and should return promptly.  If None the field will not
-            be updated periodically.  Such fields may be updated imperatively
-            by calling 'app.statusbar.field.id.update()'.
-          refresh_interval -- minimal delay between two successive calls of the
-            'refresh' function in milliseconds.  If None, refresh is called in
+        Arguments:
+          id (str): Field identifier.
+          label (str): Field label.  The label will be displayed as a tooltip.
+          refresh: Callable object returning the current field state when called
+            with no arguments.  The returned value may be either a string or a
+            tuple.  If a string is returned, it is used as the displayed field
+            value text.  If a tuple is returned it may be either a pair of
+            (value, icon) or a triple (value, icon, tooltip). Icon is the icon
+            identifier as in `pytis.form.get_icon` and tooltip is a string to be
+            displayed as the field's tooltip.  Note that field label is
+            displayed in field tooltip by default, so you may want to add the
+            label manually here to make the meaning of the field clear.  The
+            tooltip may also be passed as a function in which case the function
+            will be called without arguments only when the tooltip is needed and
+            should return the tooltip string.  The function will be called
+            periodically on user interface refresh events (on idle).  The
+            function should not perform any demanding processing and should
+            return promptly.  If None the field will not be updated
+            periodically.  Such fields may be updated imperatively by calling
+            `app.statusbar.field.id.update`.
+          refresh_interval (int): Minimal delay between two successive calls of
+            the `refresh` function in milliseconds.  If None, refresh is called
             repeatedly during UI refreshes.  If zero, refresh will be called
             just once.
-          width -- field width as a number of characters.  Add 4 characters if
-            the field is using an icon.
-          icon_position -- position to be used for placement of an icon
-            if the field status is set to contain an icon.  It may be
-            one of class constants 'ICON_LEFT' or 'ICON_RIGHT'.
-          on_click -- function called with no arguments when user clicks the
+          width (int): Field width as a number of characters.  Add 4 characters
+            if the field is using an icon.
+          icon_position: Position to be used for placement of an icon if the
+            field status is set to contain an icon.  It may be one of class
+            constants `ICON_LEFT` or `ICON_RIGHT`.
+          on_click: Function called with no arguments when user clicks the
             status bar field.
 
         """
@@ -5016,36 +4874,36 @@ class SharedParams(object):
 
     Shared parameters provide a way to share global and user specific values
     between the database and the application code.  Once defined in
-    'Application.params()', they may be accessed through
-    'app.param.name.parameter', where 'app' is imported from 'pytis.form',
-    'name' corresponds to the first constructor argument of this class and
-    'parameter' is the column name present in the data object defined by
-    'spec_name' constructor argument.
+    `Application.params`, they may be accessed through
+    `app.param.name.parameter`, where `app` is imported from `pytis.form`,
+    `name` corresponds to the first constructor argument of this class and
+    `parameter` is the column name present in the data object defined by
+    `spec_name` constructor argument.
 
-    So one SharedParams instance defines one data object from which the shared
-    parameters are read and to which they may be written.  It is assumed, that
+    So one `SharedParams` instance defines one data object from which the shared
+    parameters are read and to which they may be written.  It is assumed that
     this data object always returns just one row.
 
     Setting a value (assigning to it) automatically propagates the change into
     the database and also database changes should be reflected in the
-    application through automatic update on DB change notificationss.
+    application through automatic update on DB change notifications.
 
     """
     def __init__(self, name, spec_name, condition=None):
-        """Arguments:
+        """Initialize the instance.
 
-          name -- name used to access this set of shared parameters under
-            'app.param' as 'app.param.name'.  Must be a valid python
-            identifier.  See the class docstring for more details.
-
-          spec_name -- the resolver name of the specification defining the data
-            object holding the configuration parameter values in its columns.
-
-          condition -- Additional condition restricting the selection of the
-           configuration table row as a 'pytis.data.Operator' instance or None
-           if no additional condition is necessary.  The configuration data
-           object must return exactly one row when its 'select()' is called
-           with given condition (even if None).
+        Arguments:
+          name (str): Name used to access this set of shared parameters under
+            `app.param` as `app.param.name`.  Must be a valid Python identifier.
+            See the class docstring for more details.
+          spec_name (str): The resolver name of the specification defining the
+            data object holding the configuration parameter values in its
+            columns.
+          condition: Additional condition restricting the selection of the
+            configuration table row as a `pytis.data.Operator` instance or None
+            if no additional condition is necessary.  The configuration data
+            object must return exactly one row when its `select` is called
+            with given condition (even if None).
 
         """
         self._name = name
@@ -5053,15 +4911,15 @@ class SharedParams(object):
         self._condition = condition
 
     def name(self):
-        """Return 'name' given to the constructor."""
+        """Return the name given to the constructor."""
         return self._name
 
     def spec_name(self):
-        """Return 'spec_name' given to the constructor."""
+        """Return the `spec_name` given to the constructor."""
         return self._spec_name
 
     def condition(self):
-        """Return 'condition' given to the constructor."""
+        """Return the condition given to the constructor."""
         return self._condition
 
 
@@ -5072,16 +4930,17 @@ class Menu(object):
     WINDOW_MENU = 'window-menu'  # Deprecated.
 
     def __init__(self, title, items, id=None, autoindex=True):
-        """Arguments:
+        """Initialize the instance.
 
-          title -- menu title as a string.
-          items -- sequence of menu items as 'Menu', 'MenuItem' and
-            'MenuSeparator' instances.
-          id -- menu identifier used to recognize menus with specific dynamic
-            behavior managed by the application.  Available menu identifiers
-            are defined as constants of this class.
-          autoindex -- allow automatic keyboard access index numbers on this
-            menu.
+        Arguments:
+          title (str): Menu title.
+          items: Sequence of menu items as `Menu`, `MenuItem` and
+            `MenuSeparator` instances.
+          id (str): Menu identifier used to recognize menus with specific
+            dynamic behavior managed by the application.  Available menu
+            identifiers are defined as constants of this class.
+          autoindex (bool): Allow automatic keyboard access index numbers on
+            this menu.
 
         """
         assert isinstance(title, basestring), title
@@ -5117,9 +4976,9 @@ class Menu(object):
 class Command(object):
     """Generic support for definition and handling of user interface commands.
 
-    Commands are defined by classes.  A class derived form 'CommandHandler' can
-    define its own commands as instance methods decorated by '@Command.define'.
-    Such method may be used to create a 'Command' instances.
+    Commands are defined by classes.  A class derived from `CommandHandler` can
+    define its own commands as instance methods decorated by `@Command.define`.
+    Such method may be used to create `Command` instances.
 
     Example:
 
@@ -5142,10 +5001,10 @@ class Command(object):
     >>> command.args
     {'position': 3}
 
-    Command instances created on unbound methods (referred through their class)
-    are unbound commands, command instances created on bound methods (referred
-    through a particular instance) are bound commands.  The command in the
-    previous example was unbound.
+    `Command` instances created on unbound methods (referred through their
+    class) are unbound commands, command instances created on bound methods
+    (referred through a particular instance) are bound commands.  The command in
+    the previous example was unbound.
 
     Note: The command method is actually always an instance method, so unbound
     commands still need to find their instance in order to be invoked, but more
@@ -5165,7 +5024,7 @@ class Command(object):
     >>> command.invoke()
     5
 
-    Bound commands can also be created from unbound commands using 'bind()':
+    Bound commands can also be created from unbound commands using `bind`:
 
     >>> unbound_command = Command(Form.select_row, 7)
     >>> unbound_command
@@ -5178,12 +5037,12 @@ class Command(object):
     >>> command.invoke()
     7
 
-    Unbound commands need cooperation of their defining class ('CommandHandler'
+    Unbound commands need cooperation of their defining class (`CommandHandler`
     subclass) to find their handling instance by implementing the method
-    'command_handler_instance()'.  In the application this is typically the
+    `command_handler_instance`.  In the application this is typically the
     currently active component, which handles all compatible unbound commands.
     The example below tracks the active instances and uses them in
-    'command_handler_instance()'
+    `command_handler_instance`:
 
     >>> class Greeter(CommandHandler):
     ...     _active_instance = None
@@ -5228,16 +5087,17 @@ class Command(object):
     >>> command.invoke()
     'Hi, my name is Bob.'
 
-    Regardless of the active instance, bound command is invoked on its own instance:
+    Regardless of the active instance, bound command is invoked on its own
+    instance:
 
     >>> Command(g1.greet).invoke()
     'Hello, my name is Peter.'
 
-    Command availability (returned by the property 'enabled') is in the first
-    place determined by availability of an instance to invoke the command on.
-    In addition it can be limited by defining the instance method
-    '_can_<name>', where '<name>' is the command method name, which accepts the
-    same arguments as the command method.
+    Command availability (returned by the property `enabled`) is in the first
+    place determined by availability of an instance to invoke the command on. In
+    addition it can be limited by defining the instance method `_can_<name>`,
+    where `<name>` is the command method name, which accepts the same arguments
+    as the command method.
 
     >>> class MorningGreeter(Greeter):
     ...     def _can_greet(self, greeting):
@@ -5257,7 +5117,7 @@ class Command(object):
     True
 
     But instances of the previous classes can still greet happily (they don't
-    have the '_enabled_*' method).
+    have the `_enabled_*` method).
 
     >>> g1.activate()
     >>> evening_greeting.enabled
@@ -5266,7 +5126,7 @@ class Command(object):
     'Good evening, my name is Peter.'
 
     Commands are considered equal if they call the same method with the same
-    arguents and are both unbound or bound to the same instance.
+    arguments and are both unbound or bound to the same instance.
 
     >>> Command(Greeter.greet, 'Hi') == Command(Greeter.greet, 'Hi')
     True
@@ -5284,15 +5144,18 @@ class Command(object):
 
     """
     def __init__(self, method, *args, **kwargs):
-        """Arguments:
+        """Initialize the instance.
 
-        method -- command method callable as an unbound class method (to create
-          an unbound command) or instance method (to create a bound command).
-          In any case the method must be defined by a class derived from
-          'CommandHandler' and must be decorated by 'Command.define'.  See the
-          class docstring for more information.
-        args, kwargs -- positional and keyword arguments to pass to the method
-          on command invocation.
+        Arguments:
+          method: Command method callable as an unbound class method (to create
+            an unbound command) or instance method (to create a bound command).
+            In any case the method must be defined by a class derived from
+            `CommandHandler` and must be decorated by `Command.define`.  See the
+            class docstring for more information.
+          *args: Positional arguments to pass to the method on command
+            invocation.
+          **kwargs: Keyword arguments to pass to the method on command
+            invocation.
 
         """
         assert callable(method), method
@@ -5333,9 +5196,9 @@ class Command(object):
     def define(cls, method):
         """Define given method as a command handling method.
 
-        Methods passed to the 'Command' constructor must belong to a class
-        derived from 'CommandHandler' and must be decorated by this decorator.
-        See 'Command' docstring for more details.
+        Methods passed to the `Command` constructor must belong to a class
+        derived from `CommandHandler` and must be decorated by this decorator.
+        See `Command` docstring for more details.
 
         """
         # This attribute will be asigned a real value automatically in
@@ -5361,16 +5224,16 @@ class Command(object):
 
     @property
     def args(self):
-        """Return all aruments of this command as a dictionary.
+        """Return all arguments of this command as a dictionary.
 
         Arguments passed to the constructor as positional are mapped to
         corresponding argument names by inspecting the command method
-        definition, so whwther the arguments are passed as positional or
-        keyword can't be distinguished.
+        definition, so whether the arguments are passed as positional or keyword
+        can't be distinguished.
 
         When the command method accepts variable positional arguments, such as
-        '*args', and these arguments will appear in the returned dictionary as
-        a tuple keyed by the argument name including the initial '*'.
+        `*args`, these arguments will appear in the returned dictionary as a
+        tuple keyed by the argument name including the initial `*`.
 
         >>> class Greeter(CommandHandler):
         ...     @Command.define
@@ -5419,12 +5282,12 @@ class Command(object):
         return dict(named_positionals, **self._kwargs)
 
     def bind(self, handler):
-        """Return a new instance of this command bound to given 'CommandHandler' instance.
+        """Return a new instance of this command bound to given handler instance.
 
         Unless the command is bound to a particular handler instance, the
         instance will be obtained from the defining class of the handler method
-        (passed to the constructor) using its 'command_handler_instance()'
-        class method.
+        (passed to the constructor) using its `command_handler_instance` class
+        method.
 
         """
         assert isinstance(handler, CommandHandler), handler
@@ -5436,7 +5299,7 @@ class Command(object):
     def handler(self):
         """Return the corresponding command handler instance.
 
-        The command is either statically bound to a particular 'CommandHandler'
+        The command is either statically bound to a particular `CommandHandler`
         instance (if the method passed to the constructor was a bound instance
         method) or the instance is determined in runtime (if the method passed
         to the constructor was unbound).
@@ -5463,7 +5326,7 @@ class Command(object):
         Invokes the command method on command handler instance, passing it all
         positional and keyword arguments from the constructor.
 
-        Availability of the command is first checked using the 'enabled'
+        Availability of the command is first checked using the `enabled`
         property and if it returns True, the method is invoked and its return
         value is returned.  If the command is not enabled, None is returned.
 
@@ -5496,25 +5359,25 @@ class CommandHandler(with_metaclass(CommandHandlerMetaClass, object)):
     This class adds the ability to define user commands and process them.
 
     Classes derived from this class are capable of handling user commands
-    defined using the 'Command' class.  Commands are defined by command handler
-    classes (classes derived from 'CommandHandler') and handled by their
+    defined using the `Command` class.  Commands are defined by command handler
+    classes (classes derived from `CommandHandler`) and handled by their
     instances.  To locate the handler instance, the derived classes must
-    implement the method 'command_handler_instance()'.  The handler instance is
+    implement the method `command_handler_instance`.  The handler instance is
     then queried for availability of the particular command using the
-    'command_enabled()' instance method and if the command is available, it is
-    invoked on the instance using the 'invoke_command()' instance method.
+    `command_enabled` instance method and if the command is available, it is
+    invoked on the instance using the `invoke_command` instance method.
 
     """
 
     @classmethod
     def command_handler_instance(cls):
-        """Find the CommandHandler instance capable of handling commands.
+        """Find the `CommandHandler` instance capable of handling commands.
 
         Commands are either bound to a particular command handler instance or
-        the instance must be looked up.  The lookup is performed by calling
-        this mehod on the class that defines given command.
+        the instance must be looked up.  The lookup is performed by calling this
+        method on the class that defines given command.
 
-        Each class derived from 'CommandHandler' must define this method and
+        Each class derived from `CommandHandler` must define this method and
         return an instance of itself which is currently active to process its
         commands or None if no such instance is active in the application.
 
@@ -5524,12 +5387,12 @@ class CommandHandler(with_metaclass(CommandHandlerMetaClass, object)):
     def command_enabled(self, command):
         """Return true if given command is enabled (can be invoked).
 
-        The commands which are not compatible with this 'CommandHandler'
+        The commands which are not compatible with this `CommandHandler`
         instance are automatically inactive (compatible handler is of the same
         class or its descendant as the command defining class).  For compatible
         handlers, command availability is further determined by calling the
-        heandler's method '_can_<command-name>()' matching the command name.
-        If that method returns True or if no such method is defined, True is
+        handler's method `_can_<command-name>` matching the command name. If
+        that method returns True or if no such method is defined, True is
         returned.
 
         """
@@ -5547,9 +5410,10 @@ class CommandHandler(with_metaclass(CommandHandlerMetaClass, object)):
             return False
 
     def invoke_command(self, command):
-        """Invoke given comand.
+        """Invoke given command.
 
-        Returns: The return value of the command handler method.
+        Returns:
+          The return value of the command handler method.
 
         """
         # Note, we need the corresponding instance method of the
@@ -5567,22 +5431,23 @@ class MenuItem(object):
     """Menu item specification."""
 
     def __init__(self, title, command, state=None, help=None, hotkey=None, icon=None):
-        """Arguments:
+        """Initialize the instance.
 
-          title -- menu item title, non-empty string
-          command -- defines the command invoked when this menu item is
-            activated as a 'Command' instance.
-          state -- function (called without arguments) that returns True/False
+        Arguments:
+          title (str): Menu item title, non-empty string.
+          command: Defines the command invoked when this menu item is activated
+            as a `Command` instance.
+          state: Function (called without arguments) that returns True/False
             depending on whether this item is in the 'on' or 'off' state.
-          help -- string describing the menu item's action in more detail,
-             but still not longer than one line.  May be displayed for example
-             in status line or as a tooltip.
-          hotkey -- string or a sequence of strings defining the shortcut to
+          help (str): String describing the menu item's action in more detail,
+            but still not longer than one line.  May be displayed for example in
+            status line or as a tooltip.
+          hotkey: String or a sequence of strings defining the shortcut to
             invoke this menu item from keyboard.  The form of the specification
-            is described in the module 'command'.
-          icon -- explicit icon for this menu item.  Must be a valid argument
-            of function 'get_icon()'.  If not defined, default command icon may
-            be used if defined by pytis.
+            is described in the `command` module.
+          icon (str): Explicit icon for this menu item.  Must be a valid
+            argument of function `get_icon`.  If not defined, default command
+            icon may be used if defined by pytis.
 
         """
         assert isinstance(command, Command), command
@@ -5638,19 +5503,19 @@ class Application(SpecificationBase):
     name 'Application' and override its methods and attributes described below
     to customize the application's look and behavior.
 
-    Custom DMP commands may be used in menu items using string identifiers.
-    For all such identifiers, the derived class must also define a method named
-    as this identider with a prefix 'cmd_'.  This method, when called with no
-    arguments, must return the 'pytis.presentation.Command' instance.  For
+    Custom DMP commands may be used in menu items using string identifiers. For
+    all such identifiers, the derived class must also define a method named as
+    this identifier with a prefix `cmd_`.  This method, when called with no
+    arguments, must return the `pytis.presentation.Command` instance. For
     example when command identifier is 'my_form', the application must define a
-    method named 'cmd_my_form'.
+    method named `cmd_my_form`.
 
     """
 
     def init(self):
         """Run custom application initialization code before startup forms are opened.
 
-        This code is run before any forms are opened.  Use 'post_init()' for
+        This code is run before any forms are opened.  Use `post_init` for
         initialization after all automatically started forms are opened.
 
         """
@@ -5659,7 +5524,7 @@ class Application(SpecificationBase):
     def post_init(self):
         """Run custom application initialization code after startup forms are opened.
 
-        This code is run after all startup forms are opened.  Use 'init()' for
+        This code is run after all startup forms are opened.  Use `init` for
         initialization before any automatically started forms are opened.
 
         """
@@ -5678,48 +5543,50 @@ class Application(SpecificationBase):
         """
 
     def params(self):
-        """Return a sequence 'pytis.presentation.SharedParams' instances.
+        """Return a sequence of `pytis.presentation.SharedParams` instances.
 
-        Shared parameters provide a way to share global and user specific
-        values between the database and the application code.  Once defined
-        here, they may be accessed through
-        'pytis.form.app.param.namespace.parameter'.
+        Shared parameters provide a way to share global and user specific values
+        between the database and the application code.  Once defined here, they
+        may be accessed through `pytis.form.app.param.namespace.parameter`.
 
-        Each 'pytis.presentation.SharedParams' instance defines one namespace
-        of application specific shared parameters.  See its docstring for more
+        Each `pytis.presentation.SharedParams` instance defines one namespace of
+        application specific shared parameters.  See its docstring for more
         info.
 
         """
         return ()
 
     def menu(self):
-        """Return the application's main menu as a sequence of 'pytis.form.Menu' instances."""
+        """Return the application's main menu as a sequence of `Menu` instances."""
         return ()
 
     def keymap(self):
         """Return the sequence of custom keyboard shortcuts as (KEY, COMMAND) pairs.
 
-        See the docstring of 'pytis.form.Keymap.define_key()' for description of
-        the items of the squence.  COMMAND may be a tuple (COMMAND, ARGS) when
+        See the docstring of `pytis.form.Keymap.define_key` for description of
+        the items of the sequence.  COMMAND may be a tuple (COMMAND, ARGS) when
         arguments need to be passed.
 
         """
         return ()
 
     def status_fields(self):
-        """Return status bar fields as a list of 'StatusField' instances.
+        """Return status bar fields as a list of `StatusField` instances.
 
         The application's main window status bar will be created according to
         this specification.  By default, the following fields are returned:
 
-         - message: Displays various non-interactive messages
-           set by 'app.echo()'.
-         - list-positin: Displays the current position in the list of
-           records (such as 3/168) when a list form is active.
-         - user: Displays the current DB username and DB name and host in the tooltip.
-         - remote-status: Displays the current status of remote communication.
+        - message: Displays various non-interactive messages
+          set by `app.echo`.
+        - list-position: Displays the current position in the list of
+          records (such as 3/168) when a list form is active.
+        - user: Displays the current DB username and DB name and host in
+          the tooltip.
+        - remote-status: Displays the current status of remote
+          communication.
 
-        Derived application can extend, reorder or redefine the fields as needed.
+        Derived application can extend, reorder or redefine the fields as
+        needed.
 
         """
         import pytis.form
@@ -5729,7 +5596,7 @@ class Application(SpecificationBase):
 class HelpProc(object):
     """Special class to mark procedures allowed to be called from pytis help.
 
-    Don't use directly, just mark the procedure using the 'help_proc' decorator.
+    Don't use directly, just mark the procedure using the `help_proc` decorator.
 
     """
     def __init__(self, func):
@@ -5751,7 +5618,7 @@ def help_proc(func):
     Use this decorator on Python functions which are allowed to be called from
     within the Pytis help content using the link in the form:
 
-    [call:module_name.procedure_name?argument=value Link label]
+    `[call:module_name.procedure_name?argument=value Link label]`
 
     Note that module_name is a full Python module name and not a specification
     name and thus it is not limited to Pytis resolver modules.  Thus help
@@ -5791,20 +5658,20 @@ class Specification(with_metaclass(_SpecificationMetaclass, SpecificationBase)):
 
     Meaning of attributes: Some attributes are defined directly by this class
     and their meaning is documented in their docstrings. The class may also
-    define attributes corresponding to the constructor arguments of 'ViewSpec'.
-    The default value of the 'help' argument for 'ViewSpec' is the docstring of
+    define attributes corresponding to the constructor arguments of `ViewSpec`.
+    The default value of the `help` argument for `ViewSpec` is the docstring of
     the specification class.
 
-    Set the 'public' attribute to True in specifications intended to be used
-    for opening forms or running procedures in the user interface.
+    Set the `public` attribute to True in specifications intended to be used for
+    opening forms or running procedures in the user interface.
 
     """
     public = False
     """Flag indicating whether the specification may be used in interactive calls.
 
-    Specifications can be either public or private. Public specifications can
-    be used by forms and procedures run by the user. Private specifications
-    are only available to internal procedures.
+    Specifications can be either public or private. Public specifications can be
+    used by forms and procedures run by the user. Private specifications are
+    only available to internal procedures.
 
     Each specification should explicitly set this attribute to make the status
     of the specification clear. Set it to True iff the specification is public.
@@ -5817,12 +5684,12 @@ class Specification(with_metaclass(_SpecificationMetaclass, SpecificationBase)):
     table = None
     """Database specification of the data table, view or function.
 
-    It must be a subclass of 'pytis.sqlalchemy.SQLObject'.
+    It must be a subclass of `pytis.sqlalchemy.SQLObject`.
 
-    For backward compatibility the value of this attribute may also be a
-    string, the name of the database object. In such a case there is no
-    database specification available and all fields must be defined explicitly,
-    while database introspection is used to define some of their attributes.
+    For backward compatibility the value of this attribute may also be a string,
+    the name of the database object. In such a case there is no database
+    specification available and all fields must be defined explicitly, while
+    database introspection is used to define some of their attributes.
 
     """
 
@@ -5830,16 +5697,16 @@ class Specification(with_metaclass(_SpecificationMetaclass, SpecificationBase)):
     """Data object key column identifier as a string or a sequence of strings.
 
     A sequence may be used if the data object has a multi-column key. In any
-    case, all named columns must exist in the 'fields' specification. If 'key'
-    is not defined, the first column from 'fields' is used.
+    case, all named columns must exist in the `fields` specification. If `key`
+    is not defined, the first column from `fields` is used.
 
     """
 
     fields = ()
-    """Field specification as a sequence of 'Field' instances.
+    """Field specification as a sequence of `Field` instances.
 
     Default fields are created from the underlying database specification given
-    by the 'table' attribute. You can specify here additional (virtual) fields
+    by the `table` attribute. You can specify here additional (virtual) fields
     and add or override attributes of fields created from the database
     specification. All fields and attributes are merged together, with fields
     specified here taking precedence.
@@ -5849,7 +5716,7 @@ class Specification(with_metaclass(_SpecificationMetaclass, SpecificationBase)):
     """
 
     arguments = None
-    """Specification of all table arguments as a sequence of 'Field' instances.
+    """Specification of all table arguments as a sequence of `Field` instances.
 
     Useful only when the table is actually a row-returning function; otherwise
     it must be None.
@@ -5862,11 +5729,10 @@ class Specification(with_metaclass(_SpecificationMetaclass, SpecificationBase)):
     """Function generating database table function arguments.
 
     It is a function of a single argument returning a dictionary mapping
-    database function argument names (strings) to 'pytis.data.Value' instances.
+    database function argument names (strings) to `pytis.data.Value` instances.
     If it is None, no arguments are provided. If it returns None, the select
     should be cancelled. The function argument is the current dictionary of
-    arguments; this is useful, e.g. when updating previously supplied
-    arguments.
+    arguments; this is useful, e.g. when updating previously supplied arguments.
 
     This specification makes sense only for database table functions; it should
     be None for standard tables and views.
@@ -5874,7 +5740,7 @@ class Specification(with_metaclass(_SpecificationMetaclass, SpecificationBase)):
     """
 
     access_rights = None
-    """Access rights for the view as an 'AccessRights' instance.
+    """Access rights for the view as an `AccessRights` instance.
 
     May also be defined as a method of the same name.
 
@@ -5884,10 +5750,10 @@ class Specification(with_metaclass(_SpecificationMetaclass, SpecificationBase)):
     """Sequence of crypto names (strings) required by the table.
 
     Field crypto names are added to this sequence automatically. Explicitly
-    setting other crypto names here is useful when the underlying database
-    table is actually a view or a function performing decryption (and possibly
-    also encryption) transparently, assuming the passwords for given crypto
-    names are already provided.
+    setting other crypto names here is useful when the underlying database table
+    is actually a view or a function performing decryption (and possibly also
+    encryption) transparently, assuming the passwords for given crypto names are
+    already provided.
 
     """
 
@@ -5897,7 +5763,7 @@ class Specification(with_metaclass(_SpecificationMetaclass, SpecificationBase)):
     This condition is applied permanently and the user cannot switch it off or
     even know that it exists. It has the same effect as implementing the
     condition in the underlying data source. The value is a
-    'pytis.data.Operator' instance.
+    `pytis.data.Operator` instance.
 
     """
 
@@ -5911,7 +5777,7 @@ class Specification(with_metaclass(_SpecificationMetaclass, SpecificationBase)):
     """Name of the database connection to use.
 
     If None, the default database connection is used. Otherwise the value is a
-    string identifier of connection options defined in the 'dbconnections'
+    string identifier of connection options defined in the `dbconnections`
     configuration option.
 
     """
@@ -5920,7 +5786,7 @@ class Specification(with_metaclass(_SpecificationMetaclass, SpecificationBase)):
     """Specification of bindings for use in dual forms.
 
     A dictionary where the key is the name of the side form specification and
-    the value is a 'BindingSpec' instance describing how the current view is
+    the value is a `BindingSpec` instance describing how the current view is
     connected to the given side form in a dual form.
 
     May also be defined as a method of the same name.
@@ -5928,7 +5794,7 @@ class Specification(with_metaclass(_SpecificationMetaclass, SpecificationBase)):
     """
 
     cb = CodebookSpec()
-    """'CodebookSpec' instance defining properties of the view when used as a codebook.
+    """`CodebookSpec` instance defining properties of the view when used as a codebook.
 
     May also be defined as a method of the same name.
 
@@ -5945,7 +5811,7 @@ class Specification(with_metaclass(_SpecificationMetaclass, SpecificationBase)):
     """A sequence of print specifications as pairs (TITLE, NAME)."""
 
     folding = None
-    """Initial folding state as a 'Folding' instance.
+    """Initial folding state as a `Folding` instance.
 
     None means use the standard folding.
 
@@ -5967,9 +5833,9 @@ class Specification(with_metaclass(_SpecificationMetaclass, SpecificationBase)):
     """MemData object initial data rows.
 
     May contain initial data for a MemData data object as a sequence of
-    'pytis.data.Row' instances or a sequence of tuples of internal Python
-    values. In the latter case the values appear in the order of 'columns' and
-    must match their types ('TypeError' is raised if not).
+    `pytis.data.Row` instances or a sequence of tuples of internal Python
+    values. In the latter case the values appear in the order of `columns` and
+    must match their types (`TypeError` is raised if not).
 
     """
 
@@ -5979,19 +5845,19 @@ class Specification(with_metaclass(_SpecificationMetaclass, SpecificationBase)):
     class _Fields(list):
         """Wrapper around a field list.
 
-        Behaves like a normal field list but adds helper methods for
-        retrieving, setting, removing and modifying fields.
+        Behaves like a normal field list but adds helper methods for retrieving,
+        setting, removing and modifying fields.
 
         """
 
         def get(self, id_):
-            """Return the field with id 'id_' from the field list.
+            """Return the field with given id from the field list.
 
             Arguments:
+              id_ (str): Id of the field.
 
-              id_ -- id of the field; basestring
-
-            If no such field exists, raise 'KeyError'.
+            Raises:
+              `KeyError`: If no such field exists.
 
             """
             for f in self:
@@ -6000,14 +5866,15 @@ class Specification(with_metaclass(_SpecificationMetaclass, SpecificationBase)):
             raise KeyError(id_)
 
         def set(self, id_, field):
-            """Replace the field with id 'id_' by 'field' in the field list.
+            """Replace the field with given id by field in the field list.
 
             Arguments:
+              id_ (str): Id of the replaced field.
+              field: New field to be put at the given position as a `Field`
+                instance.
 
-              id_ -- id of the replaced field; basestring
-              field -- new field to be put at the given position; 'Field' instance
-
-            If no such field exists, raise 'KeyError'.
+            Raises:
+              `KeyError`: If no such field exists.
 
             """
             for i in range(len(self)):
@@ -6022,68 +5889,69 @@ class Specification(with_metaclass(_SpecificationMetaclass, SpecificationBase)):
                 self.set(id_, self.get(id_).clone(property_field))
 
         def modify(self, field_id, **properties):
-            """Modify properties of the field identified by 'field_id'.
+            """Modify properties of the field identified by `field_id`.
 
             Arguments:
+              field_id (str): Id of the field to modify.
+              **properties: Mapping of property names (strings) to their values.
 
-              field_id -- id of the field to modify; basestring
-              properties -- dictionary mapping property names (strings) to their values
-
-            If field_id is not found, raise 'KeyError'.
+            Raises:
+              `KeyError`: If field_id is not found.
 
             """
             self._modify((field_id,), **properties)
 
         def modify_many(self, field_ids, **properties):
-            """Modify properties of the fields identified by 'field_ids'.
+            """Modify properties of the fields identified by `field_ids`.
 
             Arguments:
+              field_ids: Sequence of field ids (strings) to modify.
+              **properties: Mapping of property names (strings) to their values.
 
-              field_ids -- sequence of field ids (basestrings) to modify
-              properties -- dictionary mapping property names (strings) to their values
-
-            If any of the field_ids is not found, raise 'KeyError'.
+            Raises:
+              `KeyError`: If any of the field_ids is not found.
 
             """
             self._modify(field_ids, **properties)
 
         def modify_except(self, field_ids, **properties):
-            """Modify properties of all fields except those with 'field_ids'.
+            """Modify properties of all fields except those with given `field_ids`.
 
             Arguments:
-
-              field_ids -- sequence of field ids (basestrings) to exclude from modification
-              properties -- dictionary mapping property names (strings) to their values
+              field_ids: Sequence of field ids (strings) to exclude from
+                modification.
+              **properties: Mapping of property names (strings) to their values.
 
             If you want to modify properties of all fields, pass an empty
-            sequence as 'field_ids'.
+            sequence as `field_ids`.
 
             """
             field_ids_to_modify = set([f.id() for f in self]) - set(field_ids)
             self._modify(field_ids_to_modify, **properties)
 
         def set_property(self, property_, **settings):
-            """Set the field property named 'property_' on several fields.
+            """Set the field property named `property_` on several fields.
 
             Arguments:
+              property_ (str): Name of the field property to set.
+              **settings: Mapping of field ids (strings) to property values.
 
-              property_ -- name of the field property to set; basestring
-              settings -- dictionary mapping field ids (basestrings) to property values
-
-            If any of the field ids is not found, raise 'KeyError'.
+            Raises:
+              `KeyError`: If any of the field ids is not found.
 
             """
             for id_, value in settings.items():
                 self._modify((id_,), **{property_: value})
 
         def exclude(self, field_ids):
-            """Remove fields with ids in 'field_ids' from the list.
+            """Remove fields with ids in `field_ids` from the list.
 
             Arguments:
+              field_ids: Sequence of field ids (strings) identifying fields to
+                remove.
 
-              field_ids -- sequence of field ids (basestrings) identifying fields to remove
-
-            If any of the field ids is not found, raise 'KeyError'.
+            Raises:
+              `KeyError`: If any of the field ids is not found.
 
             """
             fields_to_remove = [self.get(id_) for id_ in field_ids]
@@ -6098,8 +5966,7 @@ class Specification(with_metaclass(_SpecificationMetaclass, SpecificationBase)):
         """Read access rights of data specifications from the database.
 
         Arguments:
-
-          connection_data -- 'pytis.data.DBConnection' instance
+          connection_data: `pytis.data.DBConnection` instance.
 
         This is actually a public method, but pytis doesn't allow its name to
         start with anything other than an underscore.
@@ -6406,11 +6273,11 @@ class Specification(with_metaclass(_SpecificationMetaclass, SpecificationBase)):
         """Customize fields defined by the parent class or db specification.
 
         This method may be used to manipulate the list of specification fields.
-        The 'fields' argument is a 'Specification._Fields' instance.  Use the
+        The `fields` argument is a `Specification._Fields` instance. Use the
         methods of this class to customize the fields.
 
         An alternative way of modifying inherited fields is the method
-        '_customize_fields()'.  Use which ever makes more sense in your case.
+        `_inherited_fields`.  Use whichever makes more sense in your case.
 
         """
         pass
@@ -6418,24 +6285,15 @@ class Specification(with_metaclass(_SpecificationMetaclass, SpecificationBase)):
     def _inherited_fields(self, cls, override=(), exclude=()):
         """Helper method for simplification of field inheritance.
 
-        Sample usage:
-
-        def fields(self):
-            return self._inherited_fields(SpecName,
-                override=(
-                    Field('x', editable=NEVER, default='09'),
-                    Field('y', editable=NEVER),
-                    Field('z', maxlen=8)),
-                exclude=('a', 'b'))
+        Sample usage: `def fields(self):`.
 
         This will return a tuple of all fields defined by the parent class
-        except for fields 'a' and 'b'.  Fields 'x', 'y' and 'z' will be
-        modified by the attributes passed to the corresponding Field
-        constructors, but their other attributes will remain as in the parent
-        class.
+        except for fields 'a' and 'b'.  Fields 'x', 'y' and 'z' will be modified
+        by the attributes passed to the corresponding `Field` constructors, but
+        their other attributes will remain as in the parent class.
 
         An alternative way of modifying inherited fields is the method
-        '_customize_fields()'.  Use which ever makes more sense in your case.
+        `_customize_fields`.  Use whichever makes more sense in your case.
 
         """
         fields = super(cls, self).fields
@@ -6456,7 +6314,7 @@ class Specification(with_metaclass(_SpecificationMetaclass, SpecificationBase)):
         return self._inherited_fields(self.__class__, **kwargs)
 
     def view_spec(self):
-        """Return the presentation specification as a 'ViewSpec' instance."""
+        """Return the presentation specification as a `ViewSpec` instance."""
         try:
             spec = self._view_spec
         except AttributeError:
@@ -6466,7 +6324,7 @@ class Specification(with_metaclass(_SpecificationMetaclass, SpecificationBase)):
         return spec
 
     def data_spec(self):
-        """Return the data specification as an instance of the data class."""
+        """Return the data specification as a `pytis.data.DataFactory` instance."""
         try:
             spec = self._data_spec
         except AttributeError:
@@ -6474,7 +6332,7 @@ class Specification(with_metaclass(_SpecificationMetaclass, SpecificationBase)):
         return spec
 
     def cb_spec(self):
-        """Return the codebook specification as a 'CodebookSpec' instance."""
+        """Return the codebook specification as a `CodebookSpec` instance."""
         return self.cb
 
     def binding_spec(self):
@@ -6491,19 +6349,20 @@ class Specification(with_metaclass(_SpecificationMetaclass, SpecificationBase)):
                 for i, p in enumerate(prints)]
 
     def access_spec(self):
-        """Return the 'access_rights' attribute value.
+        """Return the `access_rights` attribute value.
 
-        This is here to make access rights easily accessible by method call from resolvers.
+        This is here to make access rights easily accessible by method call from
+        resolvers.
 
         """
         return self.access_rights
 
     @classmethod
     def data_access_rights(class_, name):
-        """Return form 'name' AccessRights read from the database.
+        """Return `pytis.data.AccessRights` for form name read from the database.
 
         If no access rights (of any form) are stored in the database, return
-        'None'.
+        `None`.
 
         """
         if class_._access_rights is None:

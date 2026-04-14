@@ -18,15 +18,15 @@
 
 """Web forms.
 
-This module provides an implementation of Pytis forms which can be used for web
-interfaces to Pytis informations systems.  The intention is to be able to
-generate web forms from the same specification as GUI forms implemented by the
-`pytis.form' package.
+This module provides an implementation of Pytis forms which can be used for
+web interfaces to Pytis informations systems.  The intention is to be able
+to generate web forms from the same specification as GUI forms implemented
+by the `pytis.form` package.
 
 Pytis currently does not include support running the actual web application.
 Application framework which makes use of pytis web forms is implemented
-separately.  See the Wiking project at http://www.freebsoft.org/wiking for more
-information.
+separately.  See the Wiking project at http://www.freebsoft.org/wiking for
+more information.
 
 All the content generation is done using the LCG framework.  See
 http://www.freebsoft.org/lcg.
@@ -59,15 +59,15 @@ HORIZONTAL = Orientation.HORIZONTAL
 
 
 class BadRequest(Exception):
-    """Exception raised by 'EditForm.ajax_response()' on invalid request parameters."""
+    """Exception raised by `EditForm.ajax_response` on invalid request parameters."""
     pass
 
 
 class Exporter(lcg.Content):
     """Helper class to simplify returning exported content in AJAX responses.
 
-    The constructor's 'exporter' argument is a callable object of one
-    argument -- the LCG's export context (lcg.HtmlExporter.Context instance).
+    The constructor's exporter argument is a callable object of one argument --
+    the LCG's export context (`lcg.HtmlExporter.Context` instance).
 
     """
 
@@ -92,28 +92,25 @@ class Form(lcg.Content):
     scheme.  It is a function which returns concrete URIs for different
     situations (determined by function arguments).
 
-    The function 'uri_provider' must accept three positional arguments:
+    The function `uri_provider` must accept three positional arguments:
 
-      record -- the 'PresentedRow' instance
-      kind -- one of 'UriType' constants.  It is used for distinction of
-        the purpose, for which the uri is used (eg. for a field link, image
-        src, action link etc.).
-      target -- the target for which the URI is requested.  This is the
-        'Action' instance for 'UriType.ACTION'.  For other kinds this is
-        either a field identifier (str) or None when requesting an
-        URI for the whole record.
+      record: the `PresentedRow` instance
+      kind: one of `UriType` constants.  It is used for distinction of the
+        purpose, for which the uri is used (eg. for a field link, image src,
+        action link etc.).
+      target: the target for which the URI is requested.  This is the Action
+        instance for UriType.ACTION.  For other kinds this is either a field
+        identifier (str) or None when requesting an URI for the whole record.
 
     The return value may be:
-      - None when there should be no link,
-      - string URI if the field links to that URI,
-      - a 'pytis.web.Link' instance if it is necessary to specify also
-        some extended link attributes, such as title (tooltip text) or
-        target (such as _blank).
-      - For array fields (when 'cid' belongs to a field of type
-        'pytis.data.Array'), the return value must be a function of one
-        argument -- the internal python value of the field's inner type.
-        The function will return an URI or Link instance as above for
-        given array value.
+      - None when there should be no link, - string URI if the field links to
+      that URI, - a `pytis.web.Link` instance if it is necessary to specify also
+        some extended link attributes, such as title (tooltip text) or target
+        (such as _blank).
+      - For array fields (when cid belongs to a field of type
+        `pytis.data.Array`), the return value must be a function of one argument
+        (the internal python value of the field's inner type). The function will
+        return an URI or Link instance as above for given array value.
 
     """
     _HTTP_METHOD = 'POST'
@@ -121,25 +118,27 @@ class Form(lcg.Content):
 
     def __init__(self, view, req, uri_provider, row, hidden=(), name=None,
                  actions=None, **kwargs):
-        """Arguments:
+        """Initialize the form.
 
-          view -- presentation specification as a 'ViewSpec' instance.
-          req -- instance of a class implementing the 'Request' API.
-          uri_provider -- callable object (function) returning URIs for form
-            fields.  The function must have the interface
-            described in the class docstring.
-          row -- 'PresentedRow' instance.
-          hidden -- hardcoded hidden form fields as a sequence of pairs (name,
+        Arguments:
+          view: presentation specification as a `ViewSpec` instance.
+          req: instance of a class implementing the Request API.
+          uri_provider: callable object (function) returning URIs for form
+            fields.  The function must have the interface described in the class
+            docstring.
+          row: `PresentedRow` instance.
+          hidden: hardcoded hidden form fields as a sequence of pairs (name,
             value).
-          name -- form name as a string or None.  This name will be sent as a
-            hidden field and used to distinguish which request parameters
-            belong to which form.
-          actions -- form actions as a sequence of 'Action' instances or a
-            callable object returning such a sequence when given two positional
-            arguments: (FORM, RECORD), where FORM is the 'Form' instance and
-            RECORD is the form record as a 'PresentedRow' instance or None when
-            asking for global actions (see 'ActionContext').  The default value
-            (None) means to use the actions as defined in the specification.
+          name: form name as a string or None.  This name will be sent as a
+            hidden field and used to distinguish which request parameters belong
+            to which form.
+          actions: form actions as a sequence of Action instances or a callable
+            object returning such a sequence when given two positional
+            arguments: (FORM, RECORD), where FORM is the Form instance and
+            RECORD is the form record as a `PresentedRow` instance or None when
+            asking for global actions (see `pytis.presentation.ActionContext`).
+            The default value (None) means to use the actions as defined in the
+            specification.
 
         """
         super().__init__(**kwargs)
@@ -220,16 +219,16 @@ class Form(lcg.Content):
         Knowing the HTML id can be usefull for example in JavaScript code
         accessing the form's DOM elements or its JavaScript instance.
 
-        The form can be theoretically exported several times but usually
-        there's just one export alltogether.  In any case, the HTML id is
-        generated when the export starts, so calling this method before
-        exporting the form will raise an AttributeError exception.
+        The form can be theoretically exported several times but usually there's
+        just one export alltogether.  In any case, the HTML id is generated when
+        the export starts, so calling this method before exporting the form will
+        raise an `AttributeError` exception.
 
         """
         return self._form_id
 
     def row(self):
-        """Return the form row as a PresentedRow' instance."""
+        """Return the form row as a `pytis.presentation.PresentedRow` instance."""
         return self._row
 
     def export(self, context):
@@ -258,10 +257,10 @@ class Form(lcg.Content):
     def heading_info(self):
         """Return string to be possibly put into a document heading.
 
-        If the return value is 'None' or an empty string, nothing is added
-        to the document heading.  Otherwise the returned string may or may
-        not be added to some document heading, based on decision of the code
-        making the final document.
+        If the return value is 'None' or an empty string, nothing is added to
+        the document heading.  Otherwise the returned string may or may not be
+        added to some document heading, based on decision of the code making the
+        final document.
 
         """
         return None
@@ -330,7 +329,7 @@ class LayoutForm(FieldForm):
         """Export helper class.
 
         This class tries to encapsulate some of the group export logic to make
-        the '_export_group()' method more readable.
+        the `_export_group` method more readable.
 
         """
         class Item:
@@ -351,26 +350,26 @@ class LayoutForm(FieldForm):
 
         def append(self, content, label=None, fullsize=True, right_aligned=False,
                    cls=None, needs_panel=False):
-            """Append exported content to the group .
+            """Append exported content to the group.
 
             Arguments:
-              content -- exported content of one group item.
-              label -- exported label of one group item.  This is typically
-                used for fields, but there may be also a labeled nested group.
-              fullsize -- boolean flag only relevent for vertical group, where
+              content: exported content of one group item.
+              label: exported label of one group item.  This is typically used
+                for fields, but there may be also a labeled nested group.
+              fullsize: boolean flag only relevant for vertical group, where
                 fullsize content spans across the label and field column (if
                 there are any labeled fields).  Fullsize content has no label,
                 but having no label doesn't imply being fullsize.
-              right_aligned -- only relevent for vertical group.  Group allows
+              right_aligned: only relevant for vertical group.  Group allows
                 right aligned fields are aligned to the right, if at least two
                 right aligned fields appear above each other.
-              cls -- CSS class for this item's container or None.
-              needs_panel -- boolean indicating that the appended content
-                should appear on a visually distinct panel.  A group will be
-                rendered as a panel if there is at least one item which needs a
-                panel.  If the group is only a composition of nested groups, it
-                does not need a panel, if it contains fields and other directly
-                visible content needs a panel.
+              cls: CSS class for this item's container or None.
+              needs_panel: boolean indicating that the appended content should
+                appear on a visually distinct panel.  A group will be rendered
+                as a panel if there is at least one item which needs a panel. If
+                the group is only a composition of nested groups, it does not
+                need a panel, if it contains fields and other directly visible
+                content needs a panel.
 
             """
             self._content.append(self.Item(label, content, fullsize, right_aligned, cls))
@@ -558,7 +557,7 @@ class _SingleRecordForm(LayoutForm):
 
         If the current request is a pytis form update request, return True,
         Otherwise return False.  If True is returned, the request should return
-        the result of the method 'ajax_response()'.
+        the result of the method `ajax_response`.
 
         """
         return req.param('_pytis_inline_form_request') is not None
@@ -566,16 +565,16 @@ class _SingleRecordForm(LayoutForm):
     def ajax_response(self, req):
         """Return the AJAX request response data.
 
-        This method acts as the server side counter-part of the client side
-        code defined in the pytis form JavaScript code in 'pytis.js'.  The
-        returned value is typically a data structure to be encoded into a JSON
-        string and sent back to the client within the response body with the
+        This method acts as the server side counter-part of the client side code
+        defined in the pytis form JavaScript code in 'pytis.js'.  The returned
+        value is typically a data structure to be encoded into a JSON string and
+        sent back to the client within the response body with the
         'application/json' content type set in HTTP response headers.  That way
         the client side code will be able to process it.  Alternatively, the
         result may be an 'lcg.Content' instance which should be exported and
         sent back to the client as 'text/html'.
 
-        May raise 'pytis.web.BadRequest' exception if the request parameters
+        May raise `pytis.web.BadRequest` exception if the request parameters
         don't make sense.
 
         """
@@ -588,24 +587,24 @@ class _SubmittableForm(Form):
 
     def __init__(self, view, req, uri_provider, row, submit_buttons=None,
                  show_cancel_button=False, show_reset_button=True, **kwargs):
-        """Arguments:
+        """Initialize the form.
 
-          submit_buttons -- submit buttons as a sequence of (NAME, LABEL, ICON)
+        Arguments:
+          submit_buttons: submit buttons as a sequence of (NAME, LABEL, ICON)
             triples, where LABEL is the button label, NAME is the name of the
             corresponding request parameter which has the value '1' if the form
             was submitted using given submit button and ICON is the icon CSS
             class name.  If NAME is None, no request parameter is sent by the
-            button.  Just two items (NAME, LABEL) may be present when no icon
-            is desired.  The actual icon properties for given class name must
-            be defined within the stylesheet.  The default is just one button
+            button.  Just two items (NAME, LABEL) may be present when no icon is
+            desired.  The actual icon properties for given class name must be
+            defined within the stylesheet.  The default is just one button
             labeled "Submit" with no NAME and the default submit icon.
-          show_cancel_button -- boolean flag indicating whether the cancel
-            button is displayed.  The cancel button will appear as another
-            submit button with name '_cancel'.  If pressed, the form is
-            submitted, so the server processing must take the appropriate
-            action if the request parameter '_cancel' is present (with value
-            '1').
-          show_reset_button -- boolean flag indicating whether the form reset
+          show_cancel_button: boolean flag indicating whether the cancel button
+            is displayed.  The cancel button will appear as another submit
+            button with name '_cancel'.  If pressed, the form is submitted, so
+            the server processing must take the appropriate action if the
+            request parameter '_cancel' is present (with value '1').
+          show_reset_button: boolean flag indicating whether the form reset
             button is displayed.  Pressing this button will reset all form
             fields to their initial state.
 
@@ -750,18 +749,18 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
     _EDITABLE = True
 
     def __init__(self, view, req, uri_provider, row, multipart=None, show_footer=True, **kwargs):
-        """Arguments:
+        """Initialize the form.
 
-          multipart -- force form encoding type to 'multipart/form-data'.  If
+        Arguments:
+          multipart: force form encoding type to 'multipart/form-data'.  If
             None, the encoding is set to 'multipart/form-data' automatically
             when the form includes any binary (file upload) fields.  If False,
             the form will always use the default encoding type (The 'enctype'
             HTML form attribute is not used) and if True, encoding is always
             forced to 'multipart/form-data'.
-          show_footer -- boolean flag which may be used to disable showing the
+          show_footer: boolean flag which may be used to disable showing the
             form footer.  The footer is the area below the submit buttons that
-            includes the note that "Fields marked by an asterisk are
-            mandatory".
+            includes the note that "Fields marked by an asterisk are mandatory".
 
           See the parent classes for definition of the remaining arguments.
 
@@ -988,15 +987,15 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
             return super().ajax_response(req)
 
     def set_error(self, field_id, error):
-        """Arguments:
+        """Set an error for a given field.
 
-           field_id -- identifier of the field to which the error relates.  Can
-             be None for messages which don't belong to any particular field
-             and it is also legal to pass field identifiers, which don't appear
-             in the form or even don't exist in its specification (typically
-             for fields which only appear in the underlying database objects).
-
-           error -- error message.
+        Arguments:
+          field_id: identifier of the field to which the error relates.  Can be
+            None for messages which don't belong to any particular field and it
+            is also legal to pass field identifiers, which don't appear in the
+            form or even don't exist in its specification (typically for fields
+            which only appear in the underlying database objects).
+          error: error message.
 
         """
         self._error = (field_id, error)
@@ -1182,186 +1181,185 @@ class BrowseForm(LayoutForm):
                  cell_editable=None, expand_row=None, async_row_expansion=False,
                  on_update_row=None, inline_editable=False, embed=False, show_summary=True,
                  **kwargs):
-        """Arguments:
+        """Initialize the form.
 
-          view, req, uri_provider, row -- as in the parent class.
-          condition -- current condition for filtering the records as
-            'pytis.data.Operator' instance or None.
-          arguments -- dictionary of table function call arguments, with
-            function argument identifiers as keys and 'pytis.data.Value'
-            instances as values.  Useful only when the table is actually a row
-            returning function, otherwise ignored.
-          columns -- sequence of column identifiers to be displayed.  If not
-            None, this value overrides the default columns defined by the
-            specification, but may be further overriden by the columns defined
-            by the currently selected form profile (see 'profiles').
-          sorting -- form sorting specification in the format recognized by the
-            'sort' argument of 'pytis.data.Data.select()'.  If not None, this
-            value overrides the default sorting defined by the specification,
-            but may be further overriden by the sorting defined by the
-            currently selected form profile (see 'profiles').
-          transform_sorting -- function of one argument (sorting specification)
+        Arguments:
+          view: as in the parent class.
+          req: as in the parent class.
+          uri_provider: as in the parent class.
+          row: as in the parent class.
+          condition: current condition for filtering the records as
+            `pytis.data.Operator` instance or None.
+          arguments: dictionary of table function call arguments, with function
+            argument identifiers as keys and `pytis.data.Value` instances as
+            values.  Useful only when the table is actually a row returning
+            function, otherwise ignored.
+          columns: sequence of column identifiers to be displayed.  If not None,
+            this value overrides the default columns defined by the
+            specification, but may be further overridden by the columns defined
+            by the currently selected form profile (see profiles).
+          sorting: form sorting specification in the format recognized by the
+            sort argument of `pytis.data.Data.select`.  If not None, this value
+            overrides the default sorting defined by the specification, but may
+            be further overridden by the sorting defined by the currently
+            selected form profile (see profiles).
+          transform_sorting: function of one argument (sorting specification)
             returning a transformed sorting specification.  If not None, this
             function is applied to form sorting specification (visible in the
             user interface) before passing it to the actual data select.
-          grouping -- visual grouping of table rows.  The value is a column
-            identifier or a sequence of column identifiers.  Grouping allows
-            you to visually distinguish table rows, which have the same
-            value(s) in grouping columns(s).  This usually only makes sense
-            when the table is sorted by these columns so grouping is ignored
-            when the user changes sorting.  If not None, this value overrides
-            the default grouping defined by the specification, but may be
-            further overriden by the grouping defined by the currently selected
-            form profile (see 'profiles').
-          message -- function returning a custom search result message.  If
-            none, a default message will be used, such as 'Found 5 records
-            matching the search expression.'.  A function of one argument (the
-            form instance) may be used to return a custom message as a string
-            (possibly an 'lcg.Localizable' instance).  An example of a custom
+          grouping: visual grouping of table rows.  The value is a column
+            identifier or a sequence of column identifiers.  Grouping allows you
+            to visually distinguish table rows, which have the same value(s) in
+            grouping columns(s).  This usually only makes sense when the table
+            is sorted by these columns so grouping is ignored when the user
+            changes sorting.  If not None, this value overrides the default
+            grouping defined by the specification, but may be further overridden
+            by the grouping defined by the currently selected form profile (see
+            profiles).
+          message: function returning a custom search result message.  If none,
+            a default message will be used, such as 'Found 5 records matching
+            the search expression.'.  A function of one argument (the form
+            instance) may be used to return a custom message as a string
+            (possibly an lcg.Localizable instance).  An example of a custom
             message might be 'Found 15 articles in category Python'.
-          limit -- maximal number of rows per page.  If the current condition
+          limit: maximal number of rows per page.  If the current condition
             produces more rows, the listing will be split into pages and the
-            form will include controls for navigation between these pages.
-            None value results in an unlimited list -- all records will be
-            printed on just one page and paging controls will be disabled.  The
-            request parameter 'limit' overrides this value and it is stored as
-            a cookie.  The cookie has lower precedence than the request
-            parameter, but still higher than the 'limit' constructor argument,
-            so this argument really only serves as a default value.  The
-            request parameter/cookie is checked against the 'limits' argument
-            (see below) and if it is not one of the values defined there, it is
-            ignored, so the user may only use one of the allowed limits.
-          limits -- a sequence of available 'limit' values.  These values are
-            used to create the limit selection control and also determine valid
-            values of the 'limit' request parameter and cookie (described
-            above).
-          offset -- determines the page within paged listing.  The number
+            form will include controls for navigation between these pages. None
+            value results in an unlimited list -- all records will be printed on
+            just one page and paging controls will be disabled. The request
+            parameter 'limit' overrides this value and it is stored as a cookie.
+            The cookie has lower precedence than the request parameter, but
+            still higher than the limit constructor argument, so this argument
+            really only serves as a default value. The request parameter/cookie
+            is checked against the limits argument (see below) and if it is not
+            one of the values defined there, it is ignored, so the user may only
+            use one of the allowed limits.
+          limits: a sequence of available limit values.  These values are used
+            to create the limit selection control and also determine valid
+            values of the limit request parameter and cookie (described above).
+          offset: determines the page within paged listing.  The number
             indicates the offset of the record within all the records of the
             current select.  The page, which contains this record will be
             displayed if possible.  If not (the listing is shorter than given
             number), the nearest page is displayed.  The request argument
             'offset' overrides this value.  Also request arguments 'next' and
             'prev' modify this value.
-          search -- search condition as a 'pytis.data.Operator' instance or
-            None.  If used, the offset will be set automatically to ensure,
-            that the first record matching the search condition will be
-            displayed on the current page.  The request parameters 'search' or
-            'index_search' can be also used to initialize the search condition
-            (if this constructor argument is not used).  The request parameter
-            'search' is for searching by the value of the key column.  The
-            request parameter 'index_search' is for searching by a prefix
-            string and is always performed on the primary sorting column.  If
-            no search condition is passed (either to the constructor or through
-            the request), the offset is controlled by the 'offset' argument.
-            Searching is ignored when the current limit is greater than the
-            total number of records.
-          allow_text_search -- explicitly enable or disable displaying the
-            search controls.  Search controls allow filtering the form records
-            by a text string.  By default (when None), search controls are
-            displayed automatically when the number of records exceeds one
-            page.  The controls initially contain only a "Search" button,
-            which, when pressed, displays a text field for entering the search
-            string above the form.  When the search string is submitted, the
-            form is filtered to contain only matching records (see
-            'text_search_condition' for explanation how the filtering condition
-            is constructed).  Passing True to this argument will force
-            displaying the search field without any user action.  Passing
-            False, on the other hand, will disable the search controls
-            altogether.
-          text_search_condition -- define a custom text search condition. A
-            function of one argument -- the search string.  If None, the
-            default condition is created by splitting the search string into
-            separate words by blank characters.  Matching records must contain
-            all the words in any of its string columns.
-          permanent_text_search -- set to True to make the text search
-            permanent.  The search string for given form will be saved in
-            browser's cookies to make the searching permanent until the user
-            explicitly cancels the search using the Cancel button.  Query
-            fields, profiles and filters normally behave this way.  Text search
-            does not by default, but you may turn it on using this argument.
-          filter -- filter condition as a 'pytis.data.Operator' instance.  This
-            condition will be appended to 'condition', but the difference is
-            that 'condition' is invisible to the user, but 'filter' may be
-            indicated in the user interface.
-          profiles -- specification of form profiles as a 'Profiles' instance
-            or a sequence of 'Profile' instances.  These profiles will be
-            available in the user interface for user's selection.  If None, the
-            default set of profiles defined by specification is used.  If not
-            None, the profiles from specification are ignored.  This argument
-            is mostly useful to construct the list of profiles dynamically
-            (specification profiles are static).
-          query_fields -- Specification of query fields as a sequence of
-            'Field' instances.  Overrides the form specification attribute
-            'query_fields'.
-          condition_provider -- Overrides the form specification attribute
-            'condition_provider'.
-          argument_provider -- Overrides the form specification attribute
-            'argument_provider'.
-          immediate_filters -- when True, filters and profiles apply
-            immediately after their selection in the corresponding selector;
-            when False, there is a separate button for filter application.
-            When 'query_fields' are present, filters must always be applied
-            using a button, so this argument is ignored in this case.
-          top_actions -- boolean flag to control the presence of the
-            global action buttons above the form.
-          bottom_actions -- boolean flag to control the presence of the
-            global action buttons menu below the form.
-          row_actions -- boolean flag to control the presence of the row level
+          search: search condition as a `pytis.data.Operator` instance or None.
+            If used, the offset will be set automatically to ensure, that the
+            first record matching the search condition will be displayed on the
+            current page.  The request parameters 'search' or 'index_search' can
+            be also used to initialize the search condition (if this constructor
+            argument is not used).  The request parameter 'search' is for
+            searching by the value of the key column.  The request parameter
+            'index_search' is for searching by a prefix string and is always
+            performed on the primary sorting column.  If no search condition is
+            passed (either to the constructor or through the request), the
+            offset is controlled by the offset argument. Searching is ignored
+            when the current limit is greater than the total number of records.
+          allow_text_search: explicitly enable or disable displaying the search
+            controls.  Search controls allow filtering the form records by a
+            text string.  By default (when None), search controls are displayed
+            automatically when the number of records exceeds one page.  The
+            controls initially contain only a "Search" button, which, when
+            pressed, displays a text field for entering the search string above
+            the form.  When the search string is submitted, the form is filtered
+            to contain only matching records (see text_search_condition for
+            explanation how the filtering condition is constructed).  Passing
+            True to this argument will force displaying the search field without
+            any user action.  Passing False, on the other hand, will disable the
+            search controls altogether.
+          text_search_condition: define a custom text search condition. A
+            function of one argument -- the search string.  If None, the default
+            condition is created by splitting the search string into separate
+            words by blank characters.  Matching records must contain all the
+            words in any of its string columns.
+          permanent_text_search: set to True to make the text search permanent.
+            The search string for given form will be saved in browser's cookies
+            to make the searching permanent until the user explicitly cancels
+            the search using the Cancel button.  Query fields, profiles and
+            filters normally behave this way.  Text search does not by default,
+            but you may turn it on using this argument.
+          filter: filter condition as a `pytis.data.Operator` instance. This
+            condition will be appended to condition, but the difference is that
+            condition is invisible to the user, but filter may be indicated in
+            the user interface.
+          profiles: specification of form profiles as a `Profiles` instance or a
+            sequence of `Profile` instances.  These profiles will be available
+            in the user interface for user's selection.  If None, the default
+            set of profiles defined by specification is used.  If not None, the
+            profiles from specification are ignored.  This argument is mostly
+            useful to construct the list of profiles dynamically (specification
+            profiles are static).
+          query_fields: specification of query fields as a sequence of `Field`
+            instances.  Overrides the form specification attribute query_fields.
+          condition_provider: overrides the form specification attribute
+            condition_provider.
+          argument_provider: overrides the form specification attribute
+            argument_provider.
+          immediate_filters: when True, filters and profiles apply immediately
+            after their selection in the corresponding selector; when False,
+            there is a separate button for filter application. When query_fields
+            are present, filters must always be applied using a button, so this
+            argument is ignored in this case.
+          top_actions: boolean flag to control the presence of the global action
+            buttons above the form.
+          bottom_actions: boolean flag to control the presence of the global
+            action buttons menu below the form.
+          row_actions: boolean flag to control the presence of the row level
             action buttons within the form.  Row actions are normally disabled,
             so that the user must visit the ShowForm by clicking the row link
             and invoke actions from there.  Including action buttons directly
             within the browse form allows direct access but clutters the UI.
-          async_load -- boolean flag indicating whether form data can be loaded
-            asynchronously through AJAX.  If True, the form will not be
-            rendered on export.  Only a container is created with a JavaScript
-            code which loads the data through AJAX in a separate request.  This
-            may dramatically reduce the time needed for form export so the page
-            can be returned to the client more promptly.  If allowed, the
+          async_load: boolean flag indicating whether form data can be loaded
+            asynchronously through AJAX.  If True, the form will not be rendered
+            on export.  Only a container is created with a JavaScript code which
+            loads the data through AJAX in a separate request. This may
+            dramatically reduce the time needed for form export so the page can
+            be returned to the client more promptly.  If allowed, the
             application must also support the asynchronous requests (the
             parameter '_pytis_async_load_request' is added for such requests).
-          cell_editable -- function of two arguments (the form row as a
-            'PresentedRow' instance and the column's field id) returning
+          cell_editable: function of two arguments (the form row as a
+            `PresentedRow` instance and the column's field id) returning
             boolean, indicating whether the cell is editable inline.  By
             default, no cells are editable inline.
-          expand_row -- function of two arguments.  The first argument is the
-            form row as a 'PresentedRow' instance, the second is the form
-            instance.  The function returns expanded row content as lcg.Content
-            instance.  When present (not null) each row may be expanded in the
-            user interface to display this additional content for each row.
-            Typically some additional columns which don't fit in the table can
-            be displayed this way eliminating the need to go to another page
-            and back to display more details about certain records.
-          async_row_expansion -- boolean indicating whether row expansion
-            should be loaded asynchronously.  When True, the expanded content
-            is loaded on demand for each row.  When False, expansion for all
-            rows is part of the initial form data (regardless whether the
-            initial form data is loaded synchronously or asynchronously).
-          on_update_row -- callback to perform the row update operation after
-            the cell has been edited.  If None, the row is saved using the the
-            standard 'update()' method on forms's data object.  If not None, it
-            must be a function of one argument -- the PresentedRow instance.
-            This function is called instead of of the standard update and is
-            responsible for saving the changed row.  The return value is None
-            on success or a tuple (FIELD_ID, ERROR) on error, where FIELD_ID is
-            the id of the field causing the error or None when the error is not
-            related to a particular field and ERROR is the error message
-            string.
-          inline_editable -- allow editing table rows inline.  If True, the
-            'update' action will not open the 'EditForm' on a separate page (by
+          expand_row: function of two arguments.  The first argument is the form
+            row as a `PresentedRow` instance, the second is the form instance.
+            The function returns expanded row content as `lcg.Content` instance.
+            When present (not null) each row may be expanded in the user
+            interface to display this additional content for each row. Typically
+            some additional columns which don't fit in the table can be
+            displayed this way eliminating the need to go to another page and
+            back to display more details about certain records.
+          async_row_expansion: boolean indicating whether row expansion should
+            be loaded asynchronously.  When True, the expanded content is loaded
+            on demand for each row.  When False, expansion for all rows is part
+            of the initial form data (regardless whether the initial form data
+            is loaded synchronously or asynchronously).
+          on_update_row: callback to perform the row update operation after the
+            cell has been edited.  If None, the row is saved using the standard
+            update() method on forms's data object.  If not None, it must be a
+            function of one argument -- the PresentedRow instance. This function
+            is called instead of the standard update and is responsible for
+            saving the changed row.  The return value is None on success or a
+            tuple (FIELD_ID, ERROR) on error, where FIELD_ID is the id of the
+            field causing the error or None when the error is not related to a
+            particular field and ERROR is the error message string.
+          inline_editable: allow editing table rows inline.  If True, the
+            'update' action will not open the EditForm on a separate page (by
             following the 'update' action URI retrieved form the URI provider),
             but will submit this URI in an asynchronous request and display the
             result returned from this URI inside the table row replacing the
             original row content.
-          embed -- if True, the form will not include any controls, such as
+          embed: if True, the form will not include any controls, such as
             paging, query fields etc. and thus its HTML export will not include
-            any <form> elements.  This alows embedding the form in another
+            any <form> elements.  This allows embedding the form in another
             submittable form with its own <form> element (<form> elements are
-            not allowed to nest in HTML).  Support is experimantal and may not
+            not allowed to nest in HTML).  Support is experimental and may not
             work in all cases, so please test before relying on it...
-          show_summary -- if True, the summary line at the end of the table will
+          show_summary: if True, the summary line at the end of the table will
             display the total number of records.
 
-        See the parent classes for definition of the remaining arguments.
+          See the parent classes for definition of the remaining arguments.
 
         """
         def uri_provider_(row, kind, target):
@@ -2214,20 +2212,20 @@ class BrowseForm(LayoutForm):
     def query_field_values(self):
         """Return the current query field values as a list of pairs (field_id, value).
 
-        Field ids match those from the 'query_fields' specification.  Values
-        are 'pytis.data.Value' instances.  All fields present in the
-        'query_fields' specification are returned.
+        Field ids match those from the 'query_fields' specification.  Values are
+        `pytis.data.Value` instances.  All fields present in the 'query_fields'
+        specification are returned.
 
         """
         row = self._query_fields_form.row()
         return [(key, row[key]) for key in row.keys()]
 
     def current_profile(self):
-        """Return the current form profile as 'Profile' instance."""
+        """Return the current form profile as `Profile` instance."""
         return self._current_profile
 
     def condition(self):
-        """Return the current form condition as 'pytis.data.Operator' instance."""
+        """Return the current form condition as `pytis.data.Operator` instance."""
         return self._conditions()
 
     def arguments(self):
@@ -2235,7 +2233,7 @@ class BrowseForm(LayoutForm):
         return self._arguments
 
     def rows(self):
-        """Return a generator returning all form data rows as 'pytis.data.Row' instances.
+        """Return a generator returning all form data rows as `pytis.data.Row` instances.
 
         This method can not be called inside 'export()' and vice versa (export
         can not be called before the row generator is exhausted).
@@ -2246,7 +2244,8 @@ class BrowseForm(LayoutForm):
     def row_count(self):
         """Return the number of rows in the form as integer.
 
-        This method will return None before either 'export()' or 'rows()' is called.
+        This method will return `None` before either `export` or `rows` is
+        called.
 
         """
         return self._row_count
@@ -2260,7 +2259,7 @@ class BrowseForm(LayoutForm):
 
         If the current request is a pytis form update request, return True,
         Otherwise return False.  If True is returned, the request should return
-        the result of the method 'ajax_response()'.
+        the result of the method `ajax_response`.
 
         BrowseForm may emit ajax requests for query fields form updates.
 
@@ -2276,7 +2275,8 @@ class BrowseForm(LayoutForm):
     def ajax_response(self, req):
         """Return the AJAX request response as a JSON encoded data structure.
 
-        Same rules for the returned value apply as in 'EditForm.ajax_response()'.
+        Same rules for the returned value apply as in
+        'EditForm.ajax_response()'.
 
         """
         if req.param('_pytis_expand_row'):
@@ -2291,12 +2291,11 @@ class ListView(BrowseForm):
     """Listing with a customizable layout for each record.
 
     This form behaves similarly to a regular 'BrowseForm', but the records are
-    not represented as table rows but as individual (sub)sections of a
-    document.  Field values can be displayed within each section and their
-    layout can be customized through the 'list_layout' argument within
-    specification (see 'ViewSpec').  If 'list_layout' is not defined, the form
-    presentation will degrade to the regular table presentation as in
-    'BrowseForm'.
+    not represented as table rows but as individual (sub)sections of a document.
+    Field values can be displayed within each section and their layout can be
+    customized through the 'list_layout' argument within specification (see
+    'ViewSpec').  If 'list_layout' is not defined, the form presentation will
+    degrade to the regular table presentation as in 'BrowseForm'.
 
     If list layout is used, each record is wrapped in a div with CSS class
     `list-item' and also all class identifiers supported by 'BrowseForm', such
@@ -2439,26 +2438,28 @@ class ItemizedView(BrowseForm):
 
     This form behaves similarly to a regular 'BrowseForm', but the records are
     presented as items in an unordered bullet list rather than as table rows.
+
     """
 
     _CSS_CLS = 'itemized-view'
 
     def __init__(self, view, req, uri_provider, row, columns=None, separator=', ',
                  template=None, **kwargs):
-        """Arguments:
+        """Initialize the form.
 
-          columns -- an explicit list of fields shown for each record.  Only
-            the first column of the underlying view is shown by default, but if
-            a sequence of column identifierrs is passed, multiple values will
-            be shown (separated by the 'separator').
-          separator -- string used to separate individual values when multiple
-          'columns' are shown.
-          template -- if used, the list items will be formatted using given
-            template string.  The string must be an 'lcg.TranslatableText'
+        Arguments:
+          columns: an explicit list of fields shown for each record.  Only the
+            first column of the underlying view is shown by default, but if a
+            sequence of column identifiers is passed, multiple values will be
+            shown (separated by the separator).
+          separator: string used to separate individual values when multiple
+            columns are shown.
+          template: if used, the list items will be formatted using given
+            template string.  The string must be an `lcg.TranslatableText`
             instance.  The final item text will be produced by interpolating
             variables in the string by the formatted values of corresponding
             fields.  The argument may also be a callable object (function),
-            which returns the template string when called with a 'PresentedRow'
+            which returns the template string when called with a `PresentedRow`
             instance as an argument.
 
           See the parent classes for definition of the remaining arguments.
@@ -2501,8 +2502,8 @@ class CheckRowsForm(BrowseForm, _SubmittableForm):
 
     The form is rendered as an ordinary table, but boolean columns (all or only
     the selected) are represented by a checkbox in each row and the form has
-    submit controls.  Thus the user can modify the values in all rows and
-    submit the changes in one step.
+    submit controls.  Thus the user can modify the values in all rows and submit
+    the changes in one step.
 
     *Processing the submitted form:*
 
@@ -2515,9 +2516,10 @@ class CheckRowsForm(BrowseForm, _SubmittableForm):
 
     def __init__(self, view, req, uri_provider, row, check_columns=None,
                  limits=(), limit=None, **kwargs):
-        """Arguments:
+        """Initialize the form.
 
-          check_columns -- a sequence of column identifiers for which the
+        Arguments:
+          check_columns: a sequence of column identifiers for which the
             checkboxes will be created.  If the argument is omitted, checkboxes
             will automatically appear for all boolean columns.
 
@@ -2547,35 +2549,35 @@ class EditableBrowseForm(BrowseForm):
     """Web BrowseForm with editable fields in certain columns.
 
     The form is rendered as an ordinary table, but columns given by constructor
-    argument 'editable_columns' are rendered as editable fields in each row.
-    The form has no submit controls -- it must be used inside another
-    submittable form.  Note the difference to inline editable 'BrowseForm'
-    (argument 'inline_editable' set to True), where the rows can be edited
-    individually, while this forms edits all form rows at once.
+    argument 'editable_columns' are rendered as editable fields in each row. The
+    form has no submit controls -- it must be used inside another submittable
+    form.  Note the difference to inline editable 'BrowseForm' (argument
+    'inline_editable' set to True), where the rows can be edited individually,
+    while this forms edits all form rows at once.
 
-    Editable fields use row key in field identifier to allow processing the
-    form values on submit.  So for example, The value of column 'count' for the
-    row with exported key value '654' will be submitted as parameter
-    'count-654'.
+    Editable fields use row key in field identifier to allow processing the form
+    values on submit.  So for example, The value of column 'count' for the row
+    with exported key value '654' will be submitted as parameter 'count-654'.
 
     """
     _EXPORT_EMPTY_TABLE = True
 
     def __init__(self, view, req, uri_provider, row, editable_columns=None, set_row_callback=None,
                  allow_insertion=False, extra_rows=0, limits=(), limit=None, **kwargs):
-        """Arguments:
+        """Initialize the form.
 
-            editable_columns -- a sequence of column identifiers whoose fields
-              will be editable.
-            set_row_callback -- callback function called on each form row
-              initialization.  Function of one argument - PresentedRow instance.
-            allow_insertion -- boolean flag indicating whether insertion of new
-              table rows is allowed.
-            extra_rows -- number of extra rows to insert into the form
-              (allow_insertion must be True)
+        Arguments:
+          editable_columns: a sequence of column identifiers whose fields will
+            be editable.
+          set_row_callback: callback function called on each form row
+            initialization.  Function of one argument - PresentedRow instance.
+          allow_insertion: boolean flag indicating whether insertion of new
+            table rows is allowed.
+          extra_rows: number of extra rows to insert into the form
+            (allow_insertion must be True)
 
-          See the parent classes for definition of the remaining arguments.
-          The arguments 'limits' and 'limit' are ignored.
+          See the parent classes for definition of the remaining arguments. The
+          arguments 'limits' and 'limit' are ignored.
 
         """
         assert isinstance(editable_columns, (list, tuple)), editable_columns
@@ -2706,7 +2708,8 @@ class EditableBrowseForm(BrowseForm):
     def ajax_response(self, req):
         """Return the AJAX request response as a JSON encoded data structure.
 
-        Same rules for the returned value apply as in 'EditForm.ajax_response()'.
+        Same rules for the returned value apply as in
+        'EditForm.ajax_response()'.
 
         """
         try:
@@ -2753,18 +2756,18 @@ class EditableBrowseForm(BrowseForm):
         return valid
 
     def valid_rows(self):
-        """Return validated form data as a tuple of 'pytis.data.Row' instances.
+        """Return validated form data as a tuple of `pytis.data.Row` instances.
 
-        Returns a tuple of rows, where each row contains all non-virtual
-        columns plus also values of all editable virtual columns.  'validate()'
-        must be called before.  Invalid field values (when 'validate()'
-        returned false) will not be present in the returned data.
+        Returns a tuple of rows, where each row contains all non-virtual columns
+        plus also values of all editable virtual columns.  'validate()' must be
+        called before.  Invalid field values (when 'validate()' returned false)
+        will not be present in the returned data.
 
         """
         return self._valid_rows
 
     def removed_rows(self):
-        """Return all rows removed from the form as a tuple of 'pytis.data.Row' instances.
+        """Return all rows removed from the form as a tuple of `pytis.data.Row` instances.
 
         'validate()' must be called before.
 

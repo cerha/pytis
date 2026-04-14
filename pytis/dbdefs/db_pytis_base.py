@@ -171,8 +171,7 @@ class Base_PyKontrolaFunction(sql.SQLPy3Function):
 
 
 class XInserts(sql.SQLTable):
-    """Tabulka zaznamenávající přidávání záznamů standardních
-    tabulek."""
+    """Tabulka zaznamenávající přidávání záznamů standardních tabulek."""
     name = '_inserts'
     fields = (
         sql.PrimaryColumn('id', pytis.data.Serial(), doc="identifikace řádku"),
@@ -187,8 +186,7 @@ class XInserts(sql.SQLTable):
 
 
 class XUpdates(sql.SQLTable):
-    """Tabulka zaznamenávající změny v záznamech standardních
-    tabulek."""
+    """Tabulka zaznamenávající změny v záznamech standardních tabulek."""
     name = '_updates'
     fields = (
         sql.PrimaryColumn('id', pytis.data.Serial(), doc="identifikace změnového řádku"),
@@ -204,8 +202,7 @@ class XUpdates(sql.SQLTable):
 
 
 class XDeletes(sql.SQLTable):
-    """Tabulka zaznamenávající vymazávání záznamů ve standardních
-    tabulkách."""
+    """Tabulka zaznamenávající vymazávání záznamů ve standardních tabulkách."""
     name = '_deletes'
     fields = (
         sql.PrimaryColumn('id', pytis.data.Serial(), doc="identifikace řádku"),

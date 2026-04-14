@@ -46,9 +46,8 @@ from .event import top_level_exception
 class DataTable(object):
     """Access a database table as a grid of numbered rows and columns.
 
-    This class exposes table data as a visual grid of cells addressed by
-    numeric row and column indices. Grid requests are translated into database
-    requests.
+    This class exposes table data as a visual grid of cells addressed by numeric
+    row and column indices. Grid requests are translated into database requests.
 
     Database rows are not cached, but displayed values and computed cell styles
     are cached for a limited number of rows (an LRU window roughly matching the
@@ -65,15 +64,19 @@ class DataTable(object):
 
     def __init__(self, data, record, columns, row_count,
                  sorting=(), grouping=(), row_style=None):
-        """Arguments:
+        """Initialize the table.
 
-          data -- 'pytis.data.Data' instance representing the data object whose
-            current selection is displayed in the table. Its 'select()' method
+        Arguments:
+          data: `pytis.data.Data` instance representing the data object whose
+            current selection is displayed in the table.  Its `select` method
             must have been called.
-          record -- 'pytis.presentation.PresentedRow' instance
-          columns, row_count, sorting, grouping -- as described in 'update()'
-          row_style -- row style as a 'pytis.presentation.Style()' instance,
-            a callable returning a Style instance, or None
+          record: `pytis.presentation.PresentedRow` instance.
+          columns: As described in `update`.
+          row_count: As described in `update`.
+          sorting: As described in `update`.
+          grouping: As described in `update`.
+          row_style: Row style as a `pytis.presentation.Style` instance, a
+            callable returning a Style instance, or None.
 
         """
         self._data = data
@@ -158,12 +161,12 @@ class DataTable(object):
         """Update table parameters.
 
         Arguments:
-          columns -- sequence of 'pytis.presentation.Field' instances representing
+          columns: Sequence of `pytis.presentation.Field` instances representing
             table columns.
-          row_count -- row count as returned by 'pytis.data.Data.select()'
-          sorting -- sorting as accepted by 'pytis.data.Data.select()'
-          grouping -- grouping as a sequence of column identifiers used
-            for visual grouping of table rows
+          row_count: Row count as returned by `pytis.data.Data.select`.
+          sorting: Sorting as accepted by `pytis.data.Data.select`.
+          grouping (tuple): Grouping as a sequence of column identifiers used
+            for visual grouping of table rows.
 
         """
         assert isinstance(grouping, tuple)
@@ -197,8 +200,10 @@ class DataTable(object):
     def current_row(self):
         """Return the number of the current row of the table's data object.
 
-        Rows are numbered from 0. If the current row number is not known,
-        return None.
+        Rows are numbered from 0.
+
+        Returns:
+          The current row number as an int, or None if not known.
 
         """
         current = self._current_row
@@ -217,25 +222,25 @@ class DataTable(object):
             return count
 
     def data_row(self, row):
-        """Return the data row for given row number as a 'pytis.data.Row' instance.
+        """Return the data row for given row number as a `pytis.data.Row` instance.
 
         Arguments:
+          row (int): Row number within the database select, starting from 0.
 
-          row -- row number within the *database select*, starting from 0
-
-        Returns None if the given row number does not exist in the data table.
+        Returns:
+          A `pytis.data.Row` instance, or None if the row does not exist.
 
         """
         return self._retrieve_row(row)
 
     def record(self, row):
-        """Return the record for given `row` number as a `PresentedRow` instance.
+        """Return the record for given row number as a `PresentedRow` instance.
 
         Arguments:
+          row (int): Row number within the database select, starting from 0.
 
-          row -- row number within the *database select*, starting from 0
-
-        Returns None if the given row number does not exist in the data table.
+        Returns:
+          A `PresentedRow` instance, or None if the row does not exist.
 
         """
         current = self._current_row
@@ -253,7 +258,9 @@ class DataTable(object):
 
         `row` and `col` are 0-based.
 
-        Returns None if the given cell does not exist in the data table.
+        Returns:
+          The formatted cell value as a string, or None if the cell does not
+          exist in the data table.
 
         """
         if self._data is not None and col < self._column_count:
@@ -266,12 +273,14 @@ class DataTable(object):
 
         `row` and `col` are 0-based.
 
-        Returns None if the given cell does not exist in the data table.
+        Note: The returned style does not include grouping highlighting.
+        Grouping highlighting can be queried via `group` and then applied
+        afterwards.  This is necessary because grouping is not deterministic (it
+        depends on the recent access window), while cell styles are.
 
-        Note: the returned style does not include grouping highlighting.
-        Grouping highlighting can be queried via `group()` and then applied
-        afterwards. This is necessary because grouping is not deterministic
-        (it depends on the recent access window), while cell styles are.
+        Returns:
+          A `pytis.presentation.Style` instance, or None if the cell does not
+          exist in the data table.
 
         """
         if row >= self.number_of_rows(min_value=(row + 1)) or col >= self._column_count:
@@ -290,9 +299,15 @@ class DataTable(object):
         """Return True if `row` belongs to a highlighted group, otherwise False.
 
         The result is deterministic only within a limited window of most
-        recently queried rows. Group assignment may be restarted for a distant
+        recently queried rows.  Group assignment may be restarted for a distant
         range of rows, and revisiting an old row may therefore return a
         different result.
+
+        Arguments:
+          row (int): Row number, 0-based.
+
+        Returns:
+          bool: True if the row belongs to a highlighted group.
 
         """
         grouping = self._grouping
@@ -416,7 +431,7 @@ class GridTable(wx.grid.GridTableBase, DataTable):
     def GetNumberRows(self):
         # We intentionally return only an approximate row count here. wxWidgets
         # calls this during form creation, before we can afford a full count.
-        # Our code should use `number_of_rows()` directly.
+        # Our code should use `number_of_rows` directly.
         return self.number_of_rows(timeout=0)
 
     def GetNumberCols(self):
@@ -431,7 +446,7 @@ class GridTable(wx.grid.GridTableBase, DataTable):
     # Optional wx grid methods.
 
     # def GetColLabelValue(self, col):
-    # Now implemented in `ListForm._on_column_header_paint()`.
+    # Now implemented in `ListForm._on_column_header_paint`.
 
     def GetTypeName(self, row, col):
         # We pretend everything is a string to use our own formatting for
@@ -474,10 +489,10 @@ class GridTable(wx.grid.GridTableBase, DataTable):
 class CustomCellRenderer(wx.grid.GridCellRenderer):
     """Custom renderer that highlights the current row with a rectangle.
 
-    The base renderer cannot be easily extended to keep the default behavior
-    and only add a border, so we draw everything ourselves as the default
-    renderer would, and then additionally draw a rectangle around the current
-    row (the row containing the grid cursor).
+    The base renderer cannot be easily extended to keep the default behavior and
+    only add a border, so we draw everything ourselves as the default renderer
+    would, and then additionally draw a rectangle around the current row (the
+    row containing the grid cursor).
 
     """
 
@@ -490,7 +505,7 @@ class CustomCellRenderer(wx.grid.GridCellRenderer):
         dc.DrawLabel(value, label_rect, wx.ALIGN_CENTER_VERTICAL | align)
 
     def Draw(self, grid, attr, dc, rect, row, col, isSelected):
-        "Customisation: Draw the data from grid in the rectangle with attributes using the dc."
+        """Draw the data from grid in the rectangle with attributes using the dc."""
         dc.SetClippingRegion(rect.x, rect.y, rect.width, rect.height)
         try:
             if isSelected:

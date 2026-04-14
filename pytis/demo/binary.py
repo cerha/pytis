@@ -47,8 +47,8 @@ class BinaryData(Specification):
     The table only stores the file contents in a binary field.  It is possible
     to load and save the binary values as files.  The file name is stored in
     another field, which is initialized through a computer.  The computer uses
-    the method 'Binary.Data.filename()' to obtain the original file name from
-    the inner value of the field 'data'.
+    the method `pytis.data.Binary.Data.filename` to obtain the original file
+    name from the inner value of the field `data`.
 
     """
     public = True
@@ -159,20 +159,20 @@ class BinaryData(Specification):
 class Images(Specification):
     """Simple table containing images as binary data.
 
-    This view demonstrates the use of the 'Image' data type and 'ImageField'
-    input field (which is used automatically for fields of this type).  The
-    'ImageField' displays an image thumbnail within the input form.  The
-    arguments 'width' and 'height' of the field specification determine the
-    thumbnail size in pixels (in contrast to the common case, where these
-    values are interpreted as character sizes).  Cliking the thumbnail opens
-    the image in an image viewer.
+    This view demonstrates the use of the `pytis.data.Image` data type and
+    `pytis.form.ImageField` input field (which is used automatically for fields
+    of this type).  The `ImageField` displays an image thumbnail within the
+    input form.  The arguments `width` and `height` of the field specification
+    determine the thumbnail size in pixels (in contrast to the common case,
+    where these values are interpreted as character sizes). Clicking the
+    thumbnail opens the image in an image viewer.
 
     As opposed to the generic binary field, this field will not allow loading
     data other than a valid image in one of the supported image formats.
 
     Practical examples of computers computing their values from various image
-    properties are also demonstrated.  The actual image as a 'PIL.Image'
-    instance can be accessed through the 'image()' method of the binary field's
+    properties are also demonstrated.  The actual image as a `PIL.Image`
+    instance can be accessed through the `image` method of the binary field's
     value.
 
     """

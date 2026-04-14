@@ -33,14 +33,14 @@ def interactive(test):
 
 
 class TestRemote:
-    """Test functions in 'pytis.remote' in remote mode.
+    """Test functions in `pytis.remote` in remote mode.
 
     This test must be run through Pytis2go.  Launch a terminal through Pytis2go
     client and run the test inside the terminal.
 
-    This test is only run if the remote environment exists.  Particularly if
-    the environment variable 'X2GO_SESSION' exists and the session file in
-    ~/.x2go/ssh contains connection data.
+    This test is only run if the remote environment exists.  Particularly if the
+    environment variable X2GO_SESSION exists and the session file in ~/.x2go/ssh
+    contains connection data.
 
     """
 

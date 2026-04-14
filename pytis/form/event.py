@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2024 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2026 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2002-2013 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -19,22 +19,22 @@
 """Event handling.
 
 The main goal of this module is to allow processing a wx event while another
-wx event is being processed. wxWidgets events are blocking: while an event is
-being handled, other events must wait until it finishes. This has some
+wx event is being processed. wxWidgets events are blocking: while an event
+is being handled, other events must wait until it finishes. This has some
 unpleasant consequences, such as the inability to update window contents
 incrementally, or the inability for the user to interrupt long-running event
 processing. This module tries to work around these issues.
 
 To make the module fulfill its purpose, you must ensure the following:
 
-- All callback bindings (the 'EVT_*' functions) must be performed via
-  'wx_callback()'.
+- All callback bindings (the `EVT_*` functions) must be performed via
+`wx_callback`.
 
 - Somewhere, ideally in the top-level UI code, start the watcher thread by
-  calling 'interrupt_watcher()'.
+calling : func:`interrupt_watcher`.
 
-- Ensure periodic calls to 'yield_()'. Often it is convenient to use a hook in
-  'pytis.util.log()'.
+- Ensure periodic calls to `yield_`. Often it is convenient to use a hook in
+`pytis.util.log`.
 
 """
 
@@ -107,9 +107,11 @@ _last_user_event = None
 
 
 def last_user_event():
-    """Return the last received user event as a 'wx.Event' instance.
+    """Return the last received user event as a `wx.Event` instance.
 
-    Return None before the first user event is received.
+    Returns:
+      The last received user event, or None before the first user event is
+      received.
 
     """
     return _last_user_event
@@ -121,7 +123,9 @@ _last_user_event_time = None
 def last_event_age():
     """Return the age of the last user event in seconds.
 
-    Return -1 before the first user event is invoked.
+    Returns:
+      Age of the last user event in seconds, or -1 before the first user event
+      is invoked.
 
     """
     if _last_user_event_time is None:
@@ -154,13 +158,17 @@ _system_callback_access_lock = _thread.allocate_lock()
 def wx_callback(event_kind, handler, callback, **kwargs):
     """Wrap wx callback by a guard code.
 
-    The function calls handler.Bind(event_kind, callback, **kwargs).  The
-    callback is wrapped by a code which ensures event handling even in case
-    that the event ocures during processing another event.
+    Calls `handler.Bind(event_kind, callback, **kwargs)`.  The callback is
+    wrapped by a code which ensures event handling even in case that the event
+    occurs during processing another event.
 
-    Typical usage:
+    Typical usage: `wx_callback(EVT_BUTTON, button, self.on_button)`.
 
-      wx_callback(EVT_BUTTON, button, self.on_button)
+    Arguments:
+      event_kind: The wx event type to bind.
+      handler: The wx object to bind the event on.
+      callback: The callable to invoke when the event fires.
+      **kwargs: Additional keyword arguments passed to `handler.Bind`.
 
     """
     assert callable(callback)
@@ -286,7 +294,8 @@ def unlock_callbacks():
 def yield_():
     """Check for user break of the event.
 
-    If the user requests a break, raise 'UserBreakException'.
+    Raises:
+      `UserBreakException`: If the user requests a break.
 
     """
     global _interrupted
@@ -312,14 +321,13 @@ def block_idle(block):
 
     Normally, idle event handlers should implement their own reasonable checks
     whether to run idle actions or not, e.g. by checking for busy cursor.  But
-    in some rare cases it is necessary to block idle events completely.  In
-    such a case you can use this method; but don't forget to unblock events in
+    in some rare cases it is necessary to block idle events completely.  In such
+    a case you can use this function; but don't forget to unblock events in the
     finally part!
 
     Arguments:
-
-      block -- flag indicating whether to block (true) or unblock (false) idle
-        events
+      block: Flag indicating whether to block (true) or unblock (false) idle
+        events.
 
     """
     global _idle_blocked
@@ -366,9 +374,13 @@ def _stop_check(start_time, confirmed, command_number):
 def standard_stop_check_function():
     """Return standard stop check function.
 
-    The returned function is suitable as 'stop_check' argument value in
-    database 'select' operations.  It raises 'UserBreakException' when
-    'run_form_timeout' given in configuration gets exceeded.
+    The returned function is suitable as `stop_check` argument value in database
+    `select` operations.  It raises `UserBreakException` when `run_form_timeout`
+    given in configuration gets exceeded.
+
+    Returns:
+      A callable suitable as the `stop_check` argument to database select
+      operations.
 
     """
     confirmed = [False]

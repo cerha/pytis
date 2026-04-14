@@ -110,7 +110,7 @@ DEFAULT_WINDOW_BACKGROUND_COLOUR = '#181818' if darkmode else '#e8e8e8'
 FIELD_PADDING = (24, 11)
 """Text field padding as a tuple of (x-padding, y-padding) in pixels.
 
-This padding is used to compute the size of a wx.TextCtrl in 'field_size()'.
+    This padding is used to compute the size of a `wx.TextCtrl` in `field_size`.
 
 """
 if wx.version().split(' ')[1] == 'gtk2':
@@ -118,23 +118,29 @@ if wx.version().split(' ')[1] == 'gtk2':
 
 
 def field_size(parent, width, height):
-    """Return the pixel size of a wx.TextCtrl that fits text of the given character width/height.
+    """Return the pixel size of a `wx.TextCtrl` fitting text of given character dimensions.
 
     Text fields are the most common fields so some other widgets, such as
-    buttons etc. may also use 'field_size()' to match text field sizes and
-    align with them nicely.
+    buttons etc. may also use `field_size` to match text field sizes and align
+    with them nicely.
 
     Note that the width computation cannot exactly suit any text when
     proportional fonts are used.  It usually suits an average text with even
     occurrence of wide and narrow letters.  The computation is tuned to make
-    small fields (up to three chars) wide enough to fit exactly the given
-    number of letters even if these are the widest possible capital letters,
-    such as G.  With higher width values (4 and above) the wide letters will
-    stop to fit but the field size will match well for numbers.  So if wide
-    letters are expected in field values, their width should be set
-    proportionally higher than the number of characters intended to fit.
+    small fields (up to three chars) wide enough to fit exactly the given number
+    of letters even if these are the widest possible capital letters, such as G.
+    With higher width values (4 and above) the wide letters will stop to fit but
+    the field size will match well for numbers.  So if wide letters are expected
+    in field values, their width should be set proportionally higher than the
+    number of characters intended to fit.
 
-    Returns: Pixel size as a tuple of two integers (width, height)
+    Arguments:
+      parent: wx.Window instance used for font metrics.
+      width (int): Desired width in characters.
+      height (int): Desired height in characters.
+
+    Returns:
+      tuple: Pixel size as a tuple of two integers (width, height).
 
     """
     return tuple(a + b for a, b in zip(char2px(parent, width, height), FIELD_PADDING))
@@ -149,20 +155,19 @@ def beep():
 
 
 def microsleep(miliseconds=100):
-    """Sleep for 'milliseconds' without doing anything."""
+    """Sleep for `miliseconds` without doing anything."""
     wx.MicroSleep(miliseconds)
 
 
 def busy_cursor(enable):
     """Enable or disable the busy cursor.
 
-    Arguments:
-
-      enable -- if true, the cursor will be enabled; otherwise it will be
-        disabled.
-
     Note: The application's main window automatically disables the busy cursor
     in the idle handler.
+
+    Arguments:
+      enable: If true, the cursor will be enabled; otherwise it will be
+        disabled.
 
     """
     if enable:
@@ -174,15 +179,15 @@ def busy_cursor(enable):
 
 
 def is_busy_cursor():
-    """Return true iff the busy cursor is currently enabled."""
+    """Return True iff the busy cursor is currently enabled."""
     return wx.IsBusy()
 
 
 def modal(window):
-    """Return true iff 'window' is a modal window.
+    """Return True iff `window` is a modal window.
 
-    'window' is considered modal if it is an instance of 'PopupForm' or
-    'Dialog'.
+    `window` is considered modal if it is an instance of `PopupForm` or
+    `Dialog`.
 
     """
     return (window and
@@ -190,7 +195,7 @@ def modal(window):
 
 
 def copy_to_clipboard(text):
-    """Copy given text into system clipboard."""
+    """Copy given `text` into system clipboard."""
     assert isinstance(text, basestring)
     log(EVENT, 'Copy text to system clipboard.')
     # Using the wx clipboard doesn't work depending on how the application is
@@ -210,12 +215,12 @@ def copy_to_clipboard(text):
 
 
 def paste_from_clipboard(ctrl):
-    """Paste text from clipboard to 'wx.TextCtrl' widget.
+    """Paste text from clipboard to a `wx.TextCtrl` widget.
 
     The text will be pasted from the current preferred clipboard -- the remote
     windows clipboard if it is available or the local system clipboard
     otherwise.  Except for the source of the text, it should behave exactly as
-    'wx.TextCtrl.Paste()'.
+    `wx.TextCtrl.Paste`.
 
     """
     assert isinstance(ctrl, wx.TextCtrl)
@@ -245,7 +250,7 @@ def paste_from_clipboard(ctrl):
 
 
 def hotkey_string(hotkey):
-    """Return the human readable hotkey representation of Keymap.lookup_command() result."""
+    """Return human readable hotkey representation of `Keymap.lookup_command` result."""
     return ' '.join([k.replace(' ', _("Space")) for k in hotkey])
 
 
@@ -407,18 +412,18 @@ class WxKey(object):
         return result
 
     def is_true_key(self, event):
-        """Return true iff 'event' is not just a modifier key."""
+        """Return True iff `event` is not just a modifier key."""
         code = event.GetKeyCode()
         # Meta/Alt key codes are not available in wx here, so we hardcode 307...
         return code not in (wx.WXK_SHIFT, wx.WXK_CONTROL, 307)
 
     def is_event_of_key(self, event, key):
-        """Return true iff 'event' was triggered by 'key'.
+        """Return True iff `event` was triggered by `key`.
 
         Arguments:
-
-          event -- instance wx.Event
-          key -- string defining the key according to the specification in module 'command'
+          event: wx.Event instance.
+          key (str): String defining the key according to the specification in
+            module `command`.
 
         """
         if not isinstance(event, wx.KeyEvent) or key is None:
@@ -441,7 +446,7 @@ class WxKey(object):
         return code == event.GetKeyCode()
 
     def event_key(self, event):
-        """Return the string representation of the key event 'event'.
+        """Return the string representation of the key event `event`.
 
         Not all events necessarily return a reasonable or correct string
         representation; only recognized key events are supported.
@@ -476,11 +481,11 @@ class Keymap(object):
     """Assignment of keyboard shortcuts to commands."""
 
     def __init__(self, parent=None):
-        """Arguments:
+        """Initialize a new keymap.
 
-          parent -- parent key map as a 'Keymap' instance or None.  If not
-            None, all assignments from the parent map are inherited if not
-            overridden.
+        Arguments:
+          parent (`Keymap`): Parent key map or None.  If not None, all
+            assignments from the parent map are inherited if not overridden.
 
         """
         if parent is None:
@@ -513,37 +518,29 @@ class Keymap(object):
             log(OPERATIONAL, "Key '%s' is already used as a prefix key." % (prefix,))
 
     def define_key(self, key, command):
-        """Assign given 'command' to given 'key'.
-
-        Arguments:
-
-          key -- string or a sequence of strings defining the keyboard shortcut
-            or a sequence of keyboard shortcuts (see below).
-          command -- the assigned command as a 'Command' instance.
+        """Assign given `command` to given `key`.
 
         Keyboard shortcut strings are constructed as follows:
 
         - Keys corresponding to the characters of English alphabet are
           represented by strings of that character.  Characters are case
           sensitive (see also the Shift modifier below).
-
-        - Function keys F1 to F12 are represented by strings 'F1' to 'F12'.
-
-        - Arrow keys are represented by strings 'Up', 'Down', 'Left', 'Right'.
-
-        - Keys 'Escape', 'Enter', 'Tab', 'Insert', 'Delete', 'Backspace',
+        - Function keys F1 to F12 are represented by strings 'F1' to 'F12'. -
+        Arrow keys are represented by strings 'Up', 'Down', 'Left', 'Right'. -
+        Keys 'Escape', 'Enter', 'Tab', 'Insert', 'Delete', 'Backspace',
           'Home', 'End', 'Prior' and 'Next' are represented by these strings.
-
         - Key with the Control modifier is written as 'Ctrl-<KEY>', where
           '<KEY>' is the representation of the key without this modifier.
+        - Key with the Alt modifier is written as 'Alt-<KEY>'. - Key with the
+        Shift modifier is written as 'Shift-<KEY>'. - Modifiers can be combined.
+        In this case they are always written in
+          the order Ctrl, Alt, Shift (for example 'Ctrl-Alt-s' or 'Alt-Shift-
+          Tab', not 'Alt-Ctrl-x').
 
-        - Key with the Alt modifier is written as 'Alt-<KEY>'.
-
-        - Key with the Shift modifier is written as 'Shift-<KEY>'.
-
-        - Modifiers can be combined.  In this case they are always written in
-          the order Ctrl, Alt, Shift (for example 'Ctrl-Alt-s' or 'Alt-Shift-Tab',
-          not 'Alt-Ctrl-x').
+        Arguments:
+          key: String or a sequence of strings defining the keyboard shortcut or
+            a sequence of keyboard shortcuts (see above).
+          command (`Command`): The assigned command.
 
         """
         key = xtuple(key)
@@ -551,16 +548,15 @@ class Keymap(object):
             self._define_key(key, command)
 
     def lookup_key(self, key):
-        """Return the command associated with given 'key'.
+        """Return the command associated with given `key`.
 
         Arguments:
+          key (str): Key string representation in the notation described by
+            `define_key`.
 
-          key -- key string representation in notation described by
-          'define_key()' docstring.
-
-        Returns the 'Command' instance if key defines a command or a 'Keymap'
-        instance in case of a multi-key definition or 'None' if given key
-        doesn't define anything.
+        Returns:
+          `Command` if `key` defines a command, a `Keymap` instance in case of a
+          multi-key definition, or None if given key doesn't define anything.
 
         """
         try:
@@ -569,17 +565,15 @@ class Keymap(object):
             return None
 
     def lookup_command(self, command):
-        """Return the keyboard shortcut associated with given 'command'.
+        """Return the keyboard shortcut associated with given `command`.
 
         Arguments:
+          command (`Command`): The command to look up.
 
-          command -- the 'Command' instance
-
-        Returns a keyboard shortcut definition if given command with its
-        arguments is bound to a keyboard shortcut.  The returned keyboard
-        shortcut definition is always returned as a tuple (even if it contains
-        just a single key).  Returns none if there is no key defined for given
-        command (after previously calling the 'define_key()').
+        Returns:
+          tuple: Keyboard shortcut definition as a tuple (even if it contains
+          just a single key), or None if there is no key defined for given
+          command.
 
         """
         for key, keydef in self._keymap.items():
@@ -593,27 +587,28 @@ class Keymap(object):
         return None
 
     def keys(self):
-        """Return the sequence of all valid keys."""
+        """Return the sequence of all valid key strings."""
         return self._keymap.keys()
 
 
 class KeyHandler(object):
     """Class capable of translating key events into commands.
 
-    The constructor registers 'on_key_down()' as the key handler, which
-    translates key presses into commands and invokes their handlers.  A keymap
-    is created from this instance's commands plus all of its guardians'.  When
-    keys conflict, those closer to the current class take precedence.
+    The constructor registers `on_key_down` as the key handler, which translates
+    key presses into commands and invokes their handlers.  A keymap is created
+    from this instance's commands plus all of its guardians'.  When keys
+    conflict, those closer to the current class take precedence.
 
     Intended to be mixed into classes that want to handle key events.
 
     """
 
     def __init__(self, widgets=None):
-        """Arguments:
+        """Initialize key handling for given widgets.
 
-          widgets -- wx widget, or their sequence, for which key handling
-            should be initialized.  If None, 'self' is used as the widget.
+        Arguments:
+          widgets: wx widget, or their sequence, for which key handling should
+            be initialized.  If None, `self` is used as the widget.
 
         """
         if widgets is None:
@@ -633,7 +628,7 @@ class KeyHandler(object):
         self._key_guardian = key_guardian
 
     def _handle_keys(self, *widgets):
-        """Register 'self.on_key_down' as key event handler for given 'wx.Window' instances."""
+        """Register `self.on_key_down` as key event handler for given `wx.Window` instances."""
         for widget in widgets:
             wx_callback(wx.EVT_KEY_DOWN, widget, self.on_key_down)
 
@@ -671,30 +666,29 @@ class KeyHandler(object):
         """Define a keyboard shortcut in this instance's keymap.
 
         The keymap may not be available at instance initialization time, so
-        shortcuts cannot always be defined immediately. This method ensures
+        shortcuts cannot always be defined immediately.  This method ensures
         that the provided shortcuts will be applied sooner or later.
 
-        Arguments are the same as in 'Keymap.define_key()'.
+        Arguments are the same as in `Keymap.define_key`.
 
         """
         keymap = self._get_keymap()
         keymap.define_key(key, command)
 
     def on_key_down(self, event, dont_skip=False):
-        """Process key event 'event'.
+        """Process key event `event`.
 
         If there is a command bound to the given key in this instance, invoke
-        its handler. If there is no such command, or if the handler refuses
-        to handle it, leave 'event' for further processing.
+        its handler.  If there is no such command, or if the handler refuses to
+        handle it, leave `event` for further processing.
 
         Arguments:
+          event: wx key event.
+          dont_skip (bool): If true, the event is not skipped even when it does
+            not match any command.
 
-          event -- wx key event
-          dont_skip -- if true, the event is not skipped even when it does not
-            match any command
-
-        Returns: True iff the event was successfully translated into a command.
-
+        Returns:
+          bool: True iff the event was successfully translated into a command.
 
         """
         if __debug__:
@@ -746,13 +740,12 @@ class KeyHandler(object):
 class CallbackHandler(object):
     """Mixin class for elements that support registering and running callbacks.
 
-    A class inheriting 'CallbackHandler' gets 'set_callback()' and
-    '_run_callback()'.  'set_callback()' is intended for users of the derived
-    class and sets the function to be invoked for a particular action.
-    '_run_callback()' is intended for internal use in places where the
-    callback should be invoked.
+    A class inheriting `CallbackHandler` gets `set_callback` and
+    `_run_callback`.  `set_callback` is intended for users of the derived class
+    and sets the function to be invoked for a particular action. `_run_callback`
+    is intended for internal use in places where the callback should be invoked.
 
-    The derived class must define constants with the 'CALL_' prefix, whose
+    The derived class must define constants with the `CALL_` prefix, whose
     values distinguish the different callback kinds.
 
     """
@@ -762,17 +755,16 @@ class CallbackHandler(object):
     def set_callback(self, kind, function):
         # This must be a standalone method (not just a constructor argument),
         # among other reasons due to cyclic callback dependencies in dual forms.
-        """Set 'function' for callback kind 'kind'.
+        """Set `function` for callback kind `kind`.
 
-        If another function was previously set for callback kind 'kind', the
+        If another function was previously set for callback kind `kind`, the
         previous setting is replaced.
 
         Arguments:
-
-          kind -- callback kind, one of the class 'CALL_*' constants
-          function -- function to be invoked. The number and meaning of
-            arguments is defined by the derived class and should be documented
-            in its documentation.
+          kind (str): Callback kind, one of the class `CALL_*` constants.
+          function: Function to be invoked.  The number and meaning of arguments
+            is defined by the derived class and should be documented in its
+            documentation.
 
         """
         assert kind[:5] == 'CALL_' and hasattr(self, kind), kind
@@ -785,18 +777,17 @@ class CallbackHandler(object):
         return self._callbacks.get(kind)
 
     def _run_callback(self, kind, *args, **kwargs):
-        """Invoke the function registered for callback kind 'kind'.
+        """Invoke the function registered for callback kind `kind`.
 
-        If no function was registered for this callback kind via
-        'set_callback()', do nothing and return False; otherwise return True.
+        If no function was registered for this callback kind via `set_callback`,
+        do nothing and return False; otherwise return True.
 
         Arguments:
-
-          kind -- callback kind, one of the class 'CALL_*' constants
-
-          args, kwargs -- arguments passed to the callback. The number and
-            meaning of arguments is defined by the derived class and should be
-            documented with the callback constant.
+          kind (str): Callback kind, one of the class `CALL_*` constants.
+          *args: Arguments passed to the callback.  The number and meaning of
+            arguments is defined by the derived class and should be documented
+            with the callback constant.
+          **kwargs: Keyword arguments passed to the callback.
 
         """
         try:
@@ -879,7 +870,7 @@ class StatusBar(object):
     The status bar is located at the bottom of the main application window and
     may be used to display global application status information in a set of
     dedicated fields.  The application defines the available status bar fields
-    through the specification method 'Application.status_fields()'.
+    through the specification method `Application.status_fields`.
 
     """
     @pytis.api.implements(pytis.api.StatusField)
@@ -1023,10 +1014,11 @@ class StatusBar(object):
 
 
     def __init__(self, parent, fields):
-        """Arguments:
+        """Initialize the status bar.
 
-          parent -- parent wx Window.
-          fields -- list of 'pytis.presentation.StatusField' instances.
+        Arguments:
+          parent: Parent wx.Window.
+          fields (list): List of `pytis.presentation.StatusField` instances.
 
         """
         # Insert a dummy first field because wx uses the first field
@@ -1113,10 +1105,11 @@ class InfoWindow(object):
         """Display information window in a standalone frame.
 
         Arguments:
-
-          title -- Frame title as a basestring.
-          parent -- parent wx Frame or None to use the main application frame
-          text, format, **kwargs -- passed to 'wx_text_view()' ('text' as 'content').
+          title (str): Frame title.
+          parent: Parent wx.Frame or None to use the main application frame.
+          text: Passed to `wx_text_view` as `content`.
+          format: Passed to `wx_text_view`.
+          **kwargs: Additional arguments passed to `wx_text_view`.
 
         """
         frame = wx.Dialog(parent or pytis.form.app.GetTopWindow(), title=title, name=_name,
@@ -1131,11 +1124,11 @@ class InfoWindow(object):
 
 
 class ProfileSelectorPopup(wx.ComboPopup):
-    """Profile selection menu implemented using wx.ListCtrl.
+    """Profile selection menu implemented using `wx.ListCtrl`.
 
-    This class implements the 'wx.ComboPopup' API and thus can be used as a
-    popup selection of the 'ProfileSelector' control, which is derived from
-    'wx.ComboCtrl'.
+    This class implements the `wx.ComboPopup` API and thus can be used as a
+    popup selection of the `ProfileSelector` control, which is derived from
+    `wx.ComboCtrl`.
 
     """
     def __init__(self):
@@ -1400,12 +1393,13 @@ class FormStateToolbarControl(wx.BitmapButton):
     """Special toolbar control for form commands with current state indication.
 
     A custom toolbar control indicating the current form state by changing the
-    visible icon.  Available icons are defined by '_ICONS' and the currently
-    displayed icon is returned by '_current_icon_index()'.
+    visible icon.  Available icons are defined by `_ICONS` and the currently
+    displayed icon is returned by `_current_icon_index`.
 
     """
+
     _ICONS = ()
-    """Sequence of all possible icons as values for the first argument to 'get_icon()'."""
+    """Sequence of all possible icons as values for the first argument to `get_icon`."""
 
     def __init__(self, parent, command, size=None):
         self._toolbar = parent
@@ -1436,12 +1430,12 @@ class FormStateToolbarControl(wx.BitmapButton):
             event.Enable(False)
 
     def _current_icon_index(self, form):
-        """Implement this method to return the index of the active icon in _ICONS."""
+        """Implement this method to return the index of the active icon in `_ICONS`."""
         pass
 
 
 class DualFormSwitcher(FormStateToolbarControl):
-    """Special toolbar control for DualForm.other_form.
+    """Special toolbar control for `pytis.form.DualForm`.other_form.
 
     The current icon indicates whether the current form is the main form or the
     side form and takes the dual form split mode into account.
@@ -1463,9 +1457,10 @@ class DualFormSwitcher(FormStateToolbarControl):
 
 
 class DualFormResplitter(FormStateToolbarControl):
-    """Special toolbar control for DualForm.resplit.
+    """Special toolbar control for `pytis.form.DualForm`.resplit.
 
-    The current icon indicates whether the form is currently split vertically or horizontally.
+    The current icon indicates whether the form is currently split vertically or
+    horizontally.
 
     """
 
@@ -1562,24 +1557,25 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler, KeyHandler):
     class ResourceServer(socketserver.TCPServer):
         """HTTP server to handle external resources for the current browser document.
 
-        An instance of HTTP server is run for each browser instance.  The
-        server runs in a separate thread and is shut down when the browser is
-        deallocated (see Browser.__del__).  Its purpose is to serve external
+        An instance of HTTP server is run for each browser instance.  The server
+        runs in a separate thread and is shut down when the browser is
+        deallocated (see `Browser.__del__`).  Its purpose is to serve external
         resources (images, scripts, css, ...) for the current document loaded
-        within the browser.  The resources are part of the 'lcg.Content'
-        instance when the document is loaded through 'load_content()' or may be
-        passed separately through the 'resource_provider' argument when the
-        document is loaded through 'load_html'.  Resources are not handled when
-        a document is loaded through 'load_uri()' as it is assumed that network
-        document resources are loaded through their network URIs.
+        within the browser.  The resources are part of the `lcg.Content`
+        instance when the document is loaded through `Browser.load_content` or
+        may be passed separately through the `resource_provider` argument when
+        the document is loaded through `Browser.load_html`. Resources are not
+        handled when a document is loaded through `Browser.load_uri` as it is
+        assumed that network document resources are loaded through their network
+        URIs.
 
-        Note, it would seem reasonable to load resources through a custom
-        scheme handler derived from 'wx.html2.WebViewHandler' (registered by
-        'wx.html2.WebView.RegisterHandler'), but it is not the best fit,
-        because wx uses a single global handler instance shared by all webview
-        instances. This complicates our use case because we keep a separate set
-        of resources for every loaded document so we need a separate handler
-        for each browser instance.
+        Note, it would seem reasonable to load resources through a custom scheme
+        handler derived from `wx.html2.WebViewHandler` (registered by
+        `wx.html2.WebView.RegisterHandler`), but it is not the best fit, because
+        wx uses a single global handler instance shared by all webview
+        instances.  This complicates our use case because we keep a separate set
+        of resources for every loaded document so we need a separate handler for
+        each browser instance.
 
         """
         def __init__(self):
@@ -1587,23 +1583,23 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler, KeyHandler):
             socketserver.TCPServer.__init__(self, ('', 0), Browser.ResourceHandler)
 
         def load_resources(self, resource_provider):
-            """Make resources of given 'lcg.ResourceProvider' available on the server.
+            """Make resources of given `lcg.ResourceProvider` available on the server.
 
-            Use given 'lcg.RecourceProvider' instance as the source of
-            currently available resources for the related browser instance.
+            Use given `lcg.ResourceProvider` instance as the source of currently
+            available resources for the related browser instance.
 
-            The browser should call this method after every document load.
-            This allows the server to serve the related resources included
-            within the LCG document.  Pass None to unload.
+            The browser should call this method after every document load. This
+            allows the server to serve the related resources included within the
+            LCG document.  Pass None to unload.
 
             """
             self._resource_provider = resource_provider
 
         def find_resource(self, uri):
-            """Return the 'lcg.Resource' instance for given URI.
+            """Return the `lcg.Resource` instance for given URI.
 
-            Searches the resources of the 'lcg.ResourceProvider' instance most
-            recently loaded using the 'load_resources()' method.
+            Searches the resources of the `lcg.ResourceProvider` instance most
+            recently loaded using `load_resources`.
 
             Returns None when there is no matching resource.
 
@@ -1844,11 +1840,10 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler, KeyHandler):
         """Load browser content from given URL.
 
         Arguments:
-          uri -- URI of the document to load.
-          restrict_navigation -- URI prefix (string) to restrict further
+          uri: URI of the document to load.
+          restrict_navigation: URI prefix (string) to restrict further
             navigation.  None means no restriction.  If a string is passed, the
-            user will not be able to navigate to URIs not matching given
-            prefix.
+            user will not be able to navigate to URIs not matching given prefix.
 
         """
         self._resource_server.load_resources(None)
@@ -1859,11 +1854,11 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler, KeyHandler):
         return self._guardian
 
     def toolbar(self, parent):
-        """Create browser toolbar and return it as a 'wx.ToolBar' instance.
+        """Create browser toolbar and return it as a `wx.ToolBar` instance.
 
         The toolbar is not part of the browser pane.  If a toolbar is desired,
         it must be created separately using this method and added to the user
-        interface together with the main browser pane (the 'Browser' instance
+        interface together with the main browser pane (the `Browser` instance
         itself).
 
         """
@@ -1890,19 +1885,17 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler, KeyHandler):
         """Load browser content from given HTML string.
 
         Arguments:
-          html -- HTML document to be loaded into the browser.
-          base_uri -- base URI of the document.  Relative URIs within the
-            document are relative to this URI.  Browser policies may also
-            restrict loading further resources according to this URI.
-          restrict_navigation -- URI prefix (string) to restrict further
+          html: HTML document to be loaded into the browser.
+          base_uri: Base URI of the document.  Relative URIs within the document
+            are relative to this URI.  Browser policies may also restrict
+            loading further resources according to this URI.
+          restrict_navigation: URI prefix (string) to restrict further
             navigation.  None means no restriction.  If a string is passed, the
-            user will not be able to navigate to URIs not matching given
-            prefix.
-          resource_provider -- 'lcg.ResourceProvider' instance providing
-            external resources for the loaded document (images, scripts,
-            stylesheets).  The HTML may refer to these resources and the
-            browser will be able to load them if they can be obtained from the
-            provider.
+            user will not be able to navigate to URIs not matching given prefix.
+          resource_provider: `lcg.ResourceProvider` instance providing external
+            resources for the loaded document (images, scripts, stylesheets).
+            The HTML may refer to these resources and the browser will be able
+            to load them if they can be obtained from the provider.
 
         """
         # Avoid dismissing the page contents on reload (form refresh in web form).
@@ -1921,21 +1914,20 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler, KeyHandler):
         self._webview.SetPage(html, base_uri)
 
     def load_content(self, content, base_uri='', exporter_class=None):
-        """Load browser content from 'lcg.ContentNode' instance.
+        """Load browser content from `lcg.ContentNode` instance.
 
         Arguments:
-
-          content -- 'lcg.ContentNode' instance representing the document to be
+          content: `lcg.ContentNode` instance representing the document to be
             loaded into the browser.  The node content will be exported into
-            HTML and displayed.  Can also be 'lcg.Content' which will be
-            automatically wrapped by untitled 'lcg.ContentNode'.
-          base_uri -- base URI of the document.  Relative URIs within the
-            document are relative to this URI.  Browser policies may also
-            restrict loading further resources according to this URI.
-          exporter_class -- 'pytis.form.Browser.Exporter' is used by default
-            for exporting the node's contents into HTML.  You may pass another
-            exporter class derived from the default one if you want to
-            customize the export.
+            HTML and displayed.  Can also be `lcg.Content` which will be
+            automatically wrapped by untitled `lcg.ContentNode`.
+          base_uri: Base URI of the document.  Relative URIs within the document
+            are relative to this URI.  Browser policies may also restrict
+            loading further resources according to this URI.
+          exporter_class: `pytis.form.Browser.Exporter` is used by default for
+            exporting the node's contents into HTML.  You may pass another
+            exporter class derived from the default one if you want to customize
+            the export.
 
         """
         if isinstance(content, lcg.ContentNode):
@@ -2033,7 +2025,7 @@ class mupdfProcessor(wx.lib.pdfviewer.viewer.mupdfProcessor):
 
 
 class FileViewerButtonPanel(wx.lib.pdfviewer.pdfButtonPanel):
-    """Button panel for FileViewer"""
+    """Button panel for `FileViewer`"""
 
     def CreateButtons(self):
         import wx.lib.pdfviewer.images as images
@@ -2108,7 +2100,7 @@ class FileViewer(wx.lib.pdfviewer.viewer.pdfViewer):
 
     Wx window displaying file preview in its main content area.
 
-    Only PDF files are currently supported (using 'wx.lib.pdfviewer') but the
+    Only PDF files are currently supported (using `wx.lib.pdfviewer`) but the
     intention is to possibly have one such widget supporting multiple file
     formats, such as images.
 
@@ -2144,9 +2136,9 @@ class FileViewer(wx.lib.pdfviewer.viewer.pdfViewer):
     def load_file(self, data):
         """Display preview of given document in the viewer.
 
-        'data' is either a file-like object or a 'pymupdf.Document' instance.
+        `data` is either a file-like object or a `pymupdf.Document` instance.
 
-        If 'data' is None, empty, or of unsupported format, display an empty
+        If `data` is None, empty, or of unsupported format, display an empty
         (gray) area.
 
         """
@@ -2186,11 +2178,12 @@ class FileViewerFrame(wx.Frame):
     """Standalone frame displaying file content preview."""
 
     def __init__(self, title, data, size=(800, 600)):
-        """
+        """Initialize the frame.
+
         Arguments:
-          title -- Frame title (string)
-          data -- File-like object to show preview of
-          size -- Initial frame size as a tuple of pixels
+          title: Frame title (string).
+          data: File-like object to show preview of.
+          size: Initial frame size as a tuple of pixels.
 
         """
         wx.Frame.__init__(self, None, title=title)
@@ -2208,14 +2201,14 @@ class FileViewerFrame(wx.Frame):
 
 def make_in_operator(column_id, spec_name, table_column_id, profile_id,
                      profile_name=None, condition=None, arguments=None):
-    """Return pytis.presentation.IN operator instance for given args.
+    """Return `pytis.presentation.IN` operator instance for given args.
 
-    Arguments match the arguments of the 'pytis.presentation.IN' constructor.
+    Arguments match the arguments of the `pytis.presentation.IN` constructor.
 
-    User defined profiles (managed by 'FormProfileManager', recognized by
-    'profile_id' prefix) are resolved to 'profile_name' and 'condition' and
+    User defined profiles (managed by `FormProfileManager`, recognized by
+    `profile_id` prefix) are resolved to `profile_name` and `condition` and
     passed on.  Other profiles are left to be resolved by
-    'pytis.presentation.IN' constructor.
+    `pytis.presentation.IN` constructor.
 
     """
     if profile_id and profile_id.startswith(FormProfileManager.USER_PROFILE_PREFIX):
@@ -2240,12 +2233,12 @@ def char2px(window, x, y):
     widget.
 
     Arguments:
+      window: `wx.Window` instance inside which the dimension applies.
+      x: Width as an integer (number of characters).
+      y: Height as an integer (number of characters).
 
-      window -- wx.Window instance inside which the dimension applies
-      x -- width as an integer (number of characters)
-      y -- height as an integer (number of characters)
-
-    Returns: Pixel size as a tuple of two integers (width, height).
+    Returns:
+      Pixel size as a tuple of two integers (width, height).
 
     """
     return dlg2px(window, 4 * x, 8 * y)
@@ -2259,13 +2252,13 @@ def dlg2px(window, x, y=None):
     the character is one "common" character displayed in given widget.
 
     Arguments:
+      window: `wx.Window` instance inside which the dimension applies.
+      x: Width as an integer (number of 1/4 characters).
+      y: Height as an integer (number of 1/8 characters).
 
-      window -- wx.Window instance inside which the dimension applies
-      x -- width as an integer (number of 1/4 characters)
-      y -- height as an integer (number of 1/8 characters)
-
-    Returns: Pixel size as a tuple of two integers (width, height) if y was
-    passed (not None) or width directly as a single integer in the other case.
+    Returns:
+      Pixel size as a tuple of two integers (width, height) if `y` was passed
+      (not None) or width directly as a single integer in the other case.
 
     """
     if y is None:
@@ -2291,7 +2284,7 @@ def acceskey_prefix(i):
 
 
 def orientation2wx(orientation):
-    """Convert an 'Orientation' constant to a wx representation."""
+    """Convert an `Orientation` constant to a wx representation."""
     if orientation == Orientation.VERTICAL:
         return wx.VERTICAL
     elif orientation == Orientation.HORIZONTAL:
@@ -2306,11 +2299,11 @@ def make_fullname(form_class, spec_name):
     """Return a fullname string for given form class and specification name.
 
     Arguments:
-      form_class -- particular form class derived from 'pytis.form.Form'
-      spec_name -- string name of a pytis specification (for resolver)
+      form_class: Particular form class derived from `pytis.form.Form`.
+      spec_name: String name of a pytis specification (for resolver).
 
-    The fullname string is used to refer to a form in DMP and other places
-    where python objects (form instances) cannot be referred to directly (the
+    The fullname string is used to refer to a form in DMP and other places where
+    python objects (form instances) cannot be referred to directly (the
     reference is stored in the database).
 
     """
@@ -2324,7 +2317,7 @@ def make_fullname(form_class, spec_name):
 
 
 def uicommand_mitem(uicmd):
-    """Return a 'MenuItem' instance for given 'UICommand' instance."""
+    """Return a `MenuItem` instance for given `UICommand` instance."""
     return MenuItem(uicmd.title(), command=uicmd.command(), help=uicmd.descr())
 
 
@@ -2334,13 +2327,13 @@ def command_icon(command):
     """Return the icon identifier for given command and its arguments.
 
     Arguments:
+      command: `Command` instance.
 
-      command -- 'Command' instance.
+    The icon which best matches with given command with its arguments is
+    searched within `COMMAND_ICONS` specification.
 
-    The icon which best matches with given command with its arguments is searched
-    within 'COMMAND_ICONS' specification.
-
-    The returned value is the icon identifier as accepted by 'get_icon()'.
+    Returns:
+      The icon identifier as accepted by : func:`get_icon`.
 
     """
     def score(iargs):
@@ -2377,22 +2370,23 @@ def command_icon(command):
 
 
 def get_icon(icon_id, type=wx.ART_MENU, size=(16, 16)):
-    """Get icon by id and return the corresponding 'wx.Bitmap' instance.
+    """Get icon by id and return the corresponding `wx.Bitmap` instance.
 
     Arguments:
-
-      icon_id -- icon identifier.  It may be either one of 'wx.ART_*' constants
-        resolved by 'wx.ArtProvider' (refers to icons in the current user
-        interface theme) or a string identifier used to search for the icon
-        file within 'pytis.config.icon_path' with either '.png' or '.svg' file
-        name extension (added automatically, so the identifier is just the the
-        base file name without extension).
-      type -- only relevant for 'wx.ArtProvider' icons.
-      size -- unused for PNG icons, selects the preferred size (if available)
-        for 'wx.ArtProvider' icons and used to scale SVG icons to given target
+      icon_id: Icon identifier.  It may be either one of `wx.ART_*` constants
+        resolved by `wx.ArtProvider` (refers to icons in the current user
+        interface theme) or a string identifier used to search for the icon file
+        within `pytis.config.icon_path` with either `.png` or `.svg` file name
+        extension (added automatically, so the identifier is just the base file
+        name without extension).
+      type: Only relevant for `wx.ArtProvider` icons.
+      size: Unused for PNG icons, selects the preferred size (if available) for
+        `wx.ArtProvider` icons and used to scale SVG icons to given target
         bitmap size.
 
-    Returns None if an icon for given identifier is not found.
+    Returns:
+      The `wx.Bitmap` instance or None if an icon for given identifier is not
+      found.
 
     """
     def find_file(icon_id, size):
@@ -2433,7 +2427,7 @@ def get_icon(icon_id, type=wx.ART_MENU, size=(16, 16)):
 
 
 def wx_focused_window():
-    """Return the currently focused wx window as a 'wx.Window' instance."""
+    """Return the currently focused wx window as a `wx.Window` instance."""
     return wx.Window.FindFocus()
 
 
@@ -2459,38 +2453,39 @@ def wx_button(parent, label=None, icon=None, bitmap=None, id=-1, noborder=False,
               size=None, width=None, height=None):
     """Create and setup a button.
 
-    This is a convenience helper to allow simple button creation and setup in one step.
+    This is a convenience helper to allow simple button creation and setup in
+    one step.
 
     Arguments:
+      parent: wx parent window.
+      label: Button label; the label is only used when no icon was specified or
+        if the specified icon was not found.  Label should be always specified
+        when using named icons (not stock icons), since it must be available in
+        case the icon cannot be found.
+      icon: Button icon identifier as used with `get_icon`; if the icon is
+        found, the label is ignored.
+      bitmap: Button bitmap; overrides both label and icon.
+      id: wx id of the button; integer; may be useful for creating "stock
+        buttons".
+      noborder: If true, the button will not have the visible border.
+      command: Pytis command to invoke when button is pressed.  If defined,
+        `callback` must be None.
+      callback: If specified, the given function will be associated with button
+        press event.  The function will be called with `wx.Event` instance as
+        first argument.
+      enabled: If false, the button will be disabled.
+      update: CURRENTLY IGNORED!  If true the button availability will be
+        periodically checked and the changes will be reflected by
+        enabling/disabling the button when the `command` becomes
+        enabled/disabled.  Currently not supported if `callback` is used instead
+        of `command`.
+      tooltip: Tooltip string.
+      size: Button size in pixels as a two-tuple (width, height).
+      width: Width in pixels, overrides the width given by `size`.
+      height: Height in pixels, overrides the height given by `size`.
 
-      parent -- wx parent window
-      label -- button label; the label is only used when no icon was specified
-        or if the specified icon was not found.  Label should be always
-        specified when using named icons (not stock icons), since it must be
-        available in case the icon cannot be found
-      icon -- button icon identifier as used with 'get_icon'; if the icon is
-        found, the label is ignored
-      bitmap -- button bitmap; overrides both label and icon
-      id -- wx id of the button; integer; may be useful for creating ``stock
-        buttons''
-      noborder -- if true, the button will not have the visible border
-      command -- pytis command to invoke when button is pressed.  If defined,
-        'callback' must be None
-      callback -- if specified, the given function will be associated with
-        button press event.  The function will be called with `wx.Event'
-        instance as first argument
-      enabled -- if false, the button will be disabled
-      update -- CURRENTLY IGNORED!
-        if true the button availability will be periodically checked and the
-        changes will be reflected by enabling/disabling the button when the
-        'command' becomes enabled/disabled.  Currently not supported if
-        'callback' is used instead of 'command'.
-      tooltip -- tooltip string
-      size -- button size in pixels as a two-tuple (width, height)
-      width -- width in pixels, overrides the width given by 'size'
-      height -- height in pixels, overrides the height given by 'size'
-
-    Returns a 'wx.Button' or 'wx.BitmapButton' instance.
+    Returns:
+      A `wx.Button` or `wx.BitmapButton` instance.
 
     """
     if not bitmap and icon:
@@ -2564,26 +2559,29 @@ def wx_choice(parent, choices, selected=None, tooltip=None, on_change=None,
               enabled=True, size=None, width=None, height=None, _combo=False):
     """Create and setup a choice control.
 
-    This is just a convenience helper to allow choice creation and setup in one step.
+    This is just a convenience helper to allow choice creation and setup in one
+    step.
 
     Arguments:
+      parent: wx parent window.
+      choices: A sequence of available choices; the items may be directly
+        strings or you can pass a sequence of (LABEL, VALUE) pairs, where VALUE
+        is an arbitrary object.  VALUE will be used as choice data and may be
+        later retrieved using the control's `GetClientData` method.
+      selected: The initially selected item; one of the `choices` items.  If
+        (LABEL, VALUE) pairs were used as `choices`, `selected` refers to VALUE,
+        otherwise directly to the choice string.
+      tooltip: Tooltip string.
+      on_change: If specified, the given function will be associated with the
+        change event.  The function will be called with `wx.Event` instance as
+        first argument.
+      enabled: If false, the control will be disabled.
+      size: Button size in pixels as a two-tuple (width, height).
+      width: Width in pixels, overrides the width given by `size`.
+      height: Height in pixels, overrides the height given by `size`.
 
-      parent -- wx parent window
-      choices -- a sequence of available choices; the items may be directly strings or you can pass
-        a sequence of (LABEL, VALUE) pairs, where VALUE is an arbitrary object.  VALUE will be used
-        as choice data and may be later retrieved using the control's 'GetClientData()' method.
-      selected -- the initially selected item; one of the 'choices' items.  If (LABEL, VALUE) pairs
-        were used as 'choices', 'selected' refers to VALUE, otherwise directly to the choice
-        string.
-      tooltip -- tooltip string
-      on_change -- if specified, the given function will be associated with the change event.  The
-        function will be called with `wx.Event' instance as first argument.
-      enabled -- if false, the control will be disabled.
-      size -- button size in pixels as a two-tuple (width, height).
-      width -- width in pixels, overrides the width given by 'size'.
-      height -- height in pixels, overrides the height given by 'size'.
-
-    Returns a 'wx.Choice' instance.
+    Returns:
+      A `wx.Choice` instance.
 
     """
     if _combo:
@@ -2621,11 +2619,13 @@ def wx_choice(parent, choices, selected=None, tooltip=None, on_change=None,
 def wx_combo(parent, choices, **kwargs):
     """Create and setup a combo box control.
 
-    This is just a convenience helper to allow combo box creation and setup in one step.
+    This is just a convenience helper to allow combo box creation and setup in
+    one step.
 
-    Arguments are the same as for 'wx_choice()'.
+    Arguments are the same as for `wx_choice`.
 
-    Returns a 'wx.ComboBox' instance.
+    Returns:
+      A `wx.ComboBox` instance.
 
     """
     return wx_choice(parent, choices, _combo=True, **kwargs)
@@ -2670,29 +2670,28 @@ def wx_text_view(parent, content, format=None, width=None, height=None, resource
     """Return a wx widget displaying given text content.
 
     Arguments:
-
-      content -- text content to be displayed as a string or a 'lcg.Content'
+      content: Text content to be displayed as a string or a `lcg.Content`
         instance.  If string, its formatting must be further specified by the
-        argument 'format' (see below).
-      format -- input format of the text content as one of 'TextFormat'
-        constants.  In case of plain text ('TextFormat.PLAIN'), the text is
-        displayed as is in a 'wx.TextCtrl' widget.  In case of
-        'TextFormat.HTML', the HTML content is displayed within an embedded
-        HTML 'Browser' window.  The content can be either a complete document
-        (including <html>, <head> and <body> tags) or an HTML fragment (the
-        surrounding tags will be added automatically).  In case of
-        'TextFormat.LCG', the text is first processed by LCG Parser and
-        exported into HTML and further treated as HTML.
-     width -- window width in characters.  If None, the width is automatically
-       set to fit the text width (the longest line length) when 'format' is
-       TextFormat.PLAIN or 90 characters for other formats.
-     height -- window height in characters.  If None, the width is
-       automatically set to fit the text height (number of lines with maximum
-       of 20 characters) when 'format' is TextFormat.PLAIN or 30 characters for
-       other formats.
-     resources -- sequence of statically defined 'lcg.Resource' instances
-       representing external files (such as images) used within the content.
-       Only applicable when 'format' is 'TextFormat.LCG'.
+        argument `format` (see below).
+      format: Input format of the text content as one of `TextFormat` constants.
+        In case of plain text (`TextFormat.PLAIN`), the text is displayed as is
+        in a `wx.TextCtrl` widget.  In case of `TextFormat.HTML`, the HTML
+        content is displayed within an embedded HTML `Browser` window.  The
+        content can be either a complete document (including `<html>`, `<head>`
+        and `<body>` tags) or an HTML fragment (the surrounding tags will be
+        added automatically).  In case of `TextFormat.LCG`, the text is first
+        processed by LCG Parser and exported into HTML and further treated as
+        HTML.
+      width: Window width in characters.  If None, the width is automatically
+        set to fit the text width (the longest line length) when `format` is
+        `TextFormat.PLAIN` or 90 characters for other formats.
+      height: Window height in characters.  If None, the height is automatically
+        set to fit the text height (number of lines with maximum of 20
+        characters) when `format` is `TextFormat.PLAIN` or 30 characters for
+        other formats.
+      resources: Sequence of statically defined `lcg.Resource` instances
+        representing external files (such as images) used within the content.
+        Only applicable when `format` is `TextFormat.LCG`.
 
     """
     import wx
@@ -2720,11 +2719,11 @@ def wx_text_view(parent, content, format=None, width=None, height=None, resource
 
 
 def wx_toolbar(parent, items):
-    """Return wx.ToolBar instance created from given specification of items.
+    """Return `wx.ToolBar` instance created from given specification of items.
 
     Arguments:
-      parent -- parent wx.Window instance
-      items -- sequence of toolbar items as 'UICommand' instances or such
+      parent: Parent `wx.Window` instance.
+      items: Sequence of toolbar items as `UICommand` instances or such
         sequences (representing groups to be delimited by a separator).
 
     """

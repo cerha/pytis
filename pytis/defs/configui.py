@@ -77,8 +77,8 @@ def edit_config(title, layout):
 def ui_settings():
     """Edit configuration options related to user interface.
 
-    BEWARE: This procedure is referred from DMP identifiers of existing applications:
-    'proc/export_settings/configui/',
+    BEWARE: This procedure is referred from DMP identifiers of existing
+    applications ('proc/export_settings/configui/').
 
     """
     return edit_config(_("User interface settings"), VGroup(
@@ -109,8 +109,8 @@ def ui_settings():
 def export_settings():
     """Edit configuration options related to export.
 
-    BEWARE: This procedure is referred from DMP identifiers of existing applications:
-    'proc/export_settings/configui/',
+    BEWARE: This procedure is referred from DMP identifiers of existing
+    applications ('proc/export_settings/configui/')
 
     """
     return edit_config(_("Export settings"), VGroup('export_encoding'))

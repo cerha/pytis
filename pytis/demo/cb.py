@@ -42,13 +42,13 @@ class Continents(Specification):
     Codebook is a regular view.  Any view can be used as a codebook.  It is,
     however, possible to define several properties of a view, which influence
     its use in the codebook context.  They are all covered by the
-    'CodebookSpec' instance passed as the 'cb' argument of the specification.
-    See the 'CodebookSpec' documentation for more information about the
-    available options.
+    `pytis.presentation.CodebookSpec` instance passed as the `cb` argument of
+    the specification.  See the `CodebookSpec` documentation for more
+    information about the available options.
 
-    Using a view as a codebook for a particular field is than done by passing
-    its name as the 'codebook' argument in the field specification.  See the
-    specification of 'Countries' below for an example.
+    Using a view as a codebook for a particular field is then done by passing
+    its name as the `codebook` argument in the field specification.  See the
+    specification of `Countries` below for an example.
 
     """
     public = True

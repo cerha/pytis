@@ -18,10 +18,10 @@
 
 """Funkce a třídy pro zjednodušení a zpřehlednění tvorby specifikačních souborů.
 
-Do tohoto modulu patří vše, co nějakým způsobem obaluje API Pytisu.  Jedná se
-většinou o funkce, které se hodí v různých konkrétních situacích, kde vyjádření
-nějaké konstrukce vyžaduje složitější zápis, ale protože se tato konstrukce
-často opakuje, je možné ji parametrizovaně vytvořit automaticky.
+Do tohoto modulu patří vše, co nějakým způsobem obaluje API Pytisu.  Jedná
+se většinou o funkce, které se hodí v různých konkrétních situacích, kde
+vyjádření nějaké konstrukce vyžaduje složitější zápis, ale protože se tato
+konstrukce často opakuje, je možné ji parametrizovaně vytvořit automaticky.
 
 """
 from __future__ import print_function
@@ -137,11 +137,11 @@ def mf(title, name, hotkey=None, **kwargs):
 # Další funkce pro zjednodušení často používaných konstrukcí
 
 def get_value(value, default=None):
-    """Return the Python value of given 'pd.Value' instance.
+    """Return the Python value of given `pd.Value` instance.
 
-    Accepts a 'pd.Value' instance or None.  If the 'value' is None, the 'default' value
-    will be returned without complaining.  If the 'value' is a 'pd.Value' instance, its
-    internal (Python) value will be returned.
+    Accepts a `pd.Value` instance or None.  If value is None, the default value
+    will be returned without complaining.  If value is a `pd.Value` instance,
+    its internal (Python) value will be returned.
 
     """
     if value is None:
@@ -151,11 +151,11 @@ def get_value(value, default=None):
 
 
 def format_value(value, default=None):
-    """Return the formatted (string) value of given 'pd.Value' instance.
+    """Return the formatted (string) value of given `pd.Value` instance.
 
-    Accepts a 'pd.Value' instance or None.  If the 'value' is None, the 'default' value
-    will be returned without complaining.  If the 'value' is a 'pd.Value' instance, its
-    formatted (string) value will be returned.
+    Accepts a `pd.Value` instance or None.  If value is None, the default value
+    will be returned without complaining.  If value is a `pd.Value` instance,
+    its formatted (string) value will be returned.
 
     """
     if value is None:
@@ -182,19 +182,18 @@ def rp_handler(spec_name, proc_name, *args, **kwargs):
 def cb2colvalue(value, column=None, transaction=None):
     """Převeď hodnotu políčka na hodnotu uvedeného sloupce navázaného číselníku.
 
-    Argumenty:
+    Arguments:
+      value: Instance `pd.Value`, jejíž typ má definován enumerátor typu
+        `pd.DataEnumerator`.
+      column: název sloupce číselníku poskytujícího výslednou hodnotu.
+      transaction: transakce pro předání datovým operacím.
 
-      value -- Instance `Value', jejíž typ má definován enumerátor typu
-        'pd.DataEnumerator'.
-      column -- název sloupce číselníku poskytujícího výslednou hodnotu.
-      transaction -- transakce pro předání datovým operacím.
-
-    Pokud odpovídající řádek není nalezen, bude vrácena instance 'Value'
-    stejného typu, jako je typ argumentu 'value' s hodnotou nastavenou na
-    'None'.  Takováto hodnota nemusí být validní hodnotou typu, ale
-    zjednodušuje se tím práce s výsledkem.  Pokud je zapotřebí korektnějšího
-    chování, je doporučeno použít přímo metodu 'DataEnumerator.row()'
-    (například voláním 'value.type().enumerator().row(value.value())'.
+    Pokud odpovídající řádek není nalezen, bude vrácena instance `pd.Value`
+    stejného typu, jako je typ argumentu value s hodnotou nastavenou na None.
+    Takováto hodnota nemusí být validní hodnotou typu, ale zjednodušuje se tím
+    práce s výsledkem.  Pokud je zapotřebí korektnějšího chování, je doporučeno
+    použít přímo metodu `DataEnumerator.row` (například voláním
+    `value.type().enumerator().row(value.value())`).
 
     """
     assert isinstance(value, pd.Value)
@@ -214,21 +213,21 @@ def run_cb(spec, begin_search=None, condition=None, sort=(),
            filter=None, transaction=None):
     """Vyvolá číselník určený specifikací.
 
-    Argumenty:
-
-      spec -- název specifikace číselníku.
-      begin_search -- None nebo jméno sloupce, nad kterým se má vyvolat
+    Arguments:
+      spec: název specifikace číselníku.
+      begin_search: None nebo jméno sloupce, nad kterým se má vyvolat
         inkrementální vyhledávání.
-      condition -- podmínka pro filtrování záznamů.
-      sort -- řazení (viz pd.select())
-      columns -- seznam sloupců, pokud se má lišit od seznamu uvedeného
-        ve specifikaci.
-      select_row -- řádek, na který se má nastavit kurzor.
-      multirow -- umožní výběr více řádků.
-      transaction -- transakce pro předání CodebookFormu.
+      condition: podmínka pro filtrování záznamů.
+      sort: řazení (viz `pd.select`)
+      columns: seznam sloupců, pokud se má lišit od seznamu uvedeného ve
+        specifikaci.
+      select_row: řádek, na který se má nastavit kurzor.
+      multirow: umožní výběr více řádků.
+      transaction: transakce pro předání CodebookFormu.
 
-    Vrací None (pokud není vybrán žádný řádek) nebo vybraný řádek nebo
-    tuple vybraných řádků (pokud je argument multirow nastaven).
+    Returns:
+      None (pokud není vybrán žádný řádek) nebo vybraný řádek nebo tuple
+      vybraných řádků (pokud je argument multirow nastaven).
 
     """
     import pytis.form
@@ -256,7 +255,8 @@ def make_presented_row(specname, prefill={}):
 def run_any_form():
     """Allows runnung a user selected form type on user selected specification.
 
-    BEWARE: This function is referred from DMP identifiers of existing applications:
+    BEWARE: This function is referred from DMP identifiers of existing
+    applications:
 
     'handle/pytis.extensions.spec.run_any_form/'
 
@@ -314,18 +314,19 @@ def print2mail(resolver, spec_name, template_id, row, to, from_, subject, msg, f
                charset='UTF-8', **kwargs):
     """Tiskni specifikaci a odešli jako přílohu e-mailu.
 
-    Argumenty:
-
-      spec_name -- název specifikace pro PrintResolver
-      template_id -- název tiskové specifikace pro pytis.output.Formatter
-      row -- řádek s daty pro PrintResolver
-      to -- adresát
-      from_ -- adresa odesílatele
-      subject -- subject emailu
-      msg -- tělo emailu
-      filename -- název pro soubor s přílohou;
-
-    Klíčové argumenty jsou dále předány PrintResolver pro použití v tiskové proceduře.
+    Arguments:
+      resolver: resolver pro tiskové specifikace
+      spec_name: název specifikace pro PrintResolver
+      template_id: název tiskové specifikace pro `pytis.output.Formatter`
+      row: řádek s daty pro PrintResolver
+      to: adresát
+      from_: adresa odesílatele
+      subject: subject emailu
+      msg: tělo emailu
+      filename: název pro soubor s přílohou
+      charset: kódování e-mailu
+      **kwargs: klíčové argumenty předané PrintResolver pro použití v tiskové
+        proceduře
 
     """
     assert filename, filename
@@ -349,10 +350,10 @@ def print2mail(resolver, spec_name, template_id, row, to, from_, subject, msg, f
 def mime_type_constraint(*allowed_mime_types):
     """Return a validation function checking the binary vaslue's MIME type.
 
-    The function is designed to be used in 'pd.Binary' data type's
-    constraints as follows:
+    The function is designed to be used in 'pd.Binary' data type's constraints
+    as follows:
 
-       type = pd.Binary(constraints=(mime_type_constraint('application/pdf'),))
+      type = pd.Binary(constraints=(mime_type_constraint('application/pdf'),))
 
     """
     import magic

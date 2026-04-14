@@ -18,20 +18,12 @@
 
 """Demonstration of separate database definitions.
 
-It's possible to process either complete database definitions using
+It's possible to process either complete database definitions using `gsql dbdefs`
+or just definitions in this module using `gsql dbdefs.special`.
 
-  gsql dbdefs
-
-or just definitions in this module using
-
-  gsql dbdefs.special
-
-Whether definitions from dbdefs.special are included in
-
-  gsql dbdefs
-
-output or not is determined by the presence or absence of 'special' import in
-dbdefs/__init__.py.
+Whether definitions from `dbdefs.special` are included in `gsql dbdefs`
+output or not is determined by the presence or absence of the `special`
+import in `dbdefs/__init__.py`.
 
 """
 

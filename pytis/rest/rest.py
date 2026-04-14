@@ -36,19 +36,21 @@ _api_key_header = fastapi.security.APIKeyHeader(name='X-API-Key', auto_error=Tru
 def api_key_dependency(get_key: typing.Callable[[], str | None]) -> fastapi.params.Depends:
     """Return a FastAPI dependency that validates the X-API-Key request header.
 
-    *get_key* is called on every request to retrieve the expected key, so the
-    value can change without restarting the process::
+    `get_key` is called on every request to retrieve the expected key, so the
+    value can change without restarting the process:
 
-        router = fastapi.APIRouter(
-            dependencies=[api_key_dependency(lambda: pytis.config.api_key)],
-        )
+    ```
+    router = fastapi.APIRouter(
+        dependencies=[api_key_dependency(lambda: pytis.config.api_key)],
+    )
+    ```
 
-    Args:
-        get_key: Zero-argument callable returning the expected API key string,
-            or ``None`` / empty string when not configured.
+    Arguments:
+      get_key: Zero-argument callable returning the expected API key string, or
+        `None` / empty string when not configured.
 
     Returns:
-        A ``fastapi.Depends`` instance ready for use in ``dependencies=``.
+      A `fastapi.Depends` instance ready for use in `dependencies=`.
 
     """
     def verify(api_key: str = fastapi.Security(_api_key_header)) -> None:
@@ -69,15 +71,15 @@ def api_key_dependency(get_key: typing.Callable[[], str | None]) -> fastapi.para
 def datafield(*, default=dataclasses.MISSING, doc: str | None = None):
     """Create a dataclass field with optional documentation metadata.
 
-    This helper keeps dataclass specs readable while still attaching
-    attribute-level documentation in a structured way.
+    This helper keeps dataclass specs readable while still attaching attribute-
+    level documentation in a structured way.
 
-    Args:
-        default: Field default value. If omitted, the field is required.
-        doc: Human-readable documentation string for this attribute.
+    Arguments:
+      default: Field default value. If omitted, the field is required. doc: Human-
+        readable documentation string for this attribute.
 
     Returns:
-        A `dataclasses.Field` instance suitable for use in dataclass specs.
+      A `dataclasses.Field` instance suitable for use in dataclass specs.
 
     """
     metadata = {'doc': doc} if doc else None
@@ -90,24 +92,22 @@ def datafield(*, default=dataclasses.MISSING, doc: str | None = None):
 class ForeignKey:
     """Describe a simple foreign-key relation between parent and child table.
 
-    This relation type represents a direct reference stored in the parent
-    table. It is typically used for 1:1 or N:1 relations (the parent references
-    exactly one target record).
+    This relation type represents a direct reference stored in the parent table.
+    It is typically used for 1:1 or N:1 relations (the parent references exactly
+    one target record).
 
-    The target column does not have to be a primary key. The referenced
-    table and column are resolved by introspecting the SQLAlchemy table
-    definition of the parent table.
+    The target column does not have to be a primary key. The referenced table
+    and column are resolved by introspecting the SQLAlchemy table definition of
+    the parent table.
 
-    The API layer may:
-        * accept nested object data instead of a raw FK value
-        * resolve the target entity by its API-level key
-        * insert/update the target record and assign its internal PK
-          automatically
+    The API layer may: * accept nested object data instead of a raw FK value *
+    resolve the target entity by its API-level key * insert/update the target
+    record and assign its internal PK automatically
 
     Notes:
-        We intentionally do not bake an assumption "FK always targets PK" into
-        the spec. The exact referenced column is obtained from SQLAlchemy
-        metadata on the parent column.
+      We intentionally do not bake an assumption "FK always targets PK" into the
+      spec. The exact referenced column is obtained from SQLAlchemy metadata on
+      the parent column.
 
     """
     fk: str = datafield(doc='FK column on parent table.')
@@ -155,10 +155,7 @@ class BindingTable:
 
         expose = False (default)
             The binding table is projected:
-                - technical columns (PK, FK columns) are hidden
-                - additional binding columns may be merged into the nested
-                  target object
-                - the API user does not interact with the join table directly
+
     """
 
     table: SQLTabular = datafield(doc='Binding table definition.')
@@ -178,85 +175,72 @@ class BindingTable:
 class ResourceSpec:
     """Declarative specification of a REST resource derived from database metadata.
 
-    A ResourceSpec is a long-lived, module-level object describing how a database
-    table (or view) is exposed through the API.
+    A ResourceSpec is a long-lived, module-level object describing how a
+    database table (or view) is exposed through the API.
 
     It defines:
 
-        - the underlying database structure (``table``),
-        - the API-visible unique key (``key``),
-        - optional nested resources (``relations``),
-        - how a nested resource is linked to its parent (``via``),
-        - high-level write policy (``upsert``),
-        - a base filter condition (``condition``),
-        - a default sort order (``sorting``),
-        - and columns to hide from the API (``exclude``).
+    - the underlying database structure (`table`), - the API-visible unique key
+    (`key`), - optional nested resources (`relations`), - how a nested resource
+    is linked to its parent (`via`), - high-level write policy (`upsert`), - a
+    base filter condition (`condition`), - a default sort order (`sorting`), -
+    and columns to hide from the API (`exclude`).
 
-    Top-level vs nested resources
-    -----------------------------
+    **Top-level vs nested resources**
 
     A ResourceSpec may represent:
 
-        * a top-level API endpoint (``via=None``),
-          exposed under ``/<name>``
+    * a top-level API endpoint (`via=None`), exposed under `/<name>`
 
-        * a nested resource, linked to its parent using either
-          ``ForeignKey`` or ``BindingTable`` via ``via=...``
+    * a nested resource, linked to its parent using either `ForeignKey` or
+    `BindingTable` via `via=...`
 
     Nested resources are not separate API endpoints unless explicitly exposed.
     They are materialized inside their parent’s JSON representation.
 
-    Unified relation model
-    ----------------------
+    **Unified relation model**
 
     All relations follow a single conceptual model:
 
-        Nested values represent the desired final state of the relation.
+    Nested values represent the desired final state of the relation.
 
     This is a state-based API, not an operation-based RPC interface.
 
     On write operations (POST / PUT / PATCH):
 
-        - The nested JSON structure expresses the target state.
-        - Target entities are identified by their API-level key,
-          not by internal database primary keys.
-        - Upsert behavior (create-missing / update-existing) is controlled
-          by policy (``upsert``).
+    - The nested JSON structure expresses the target state. - Target entities
+    are identified by their API-level key, not by internal database primary
+    keys. - Upsert behavior (create-missing / update-existing) is controlled by
+    policy (`upsert`).
 
-    Relation-specific realization
-    -----------------------------
+    **Relation-specific realization**
 
     ForeignKey (1:1 or N:1):
 
-        - JSON shape: single object or null.
-        - Writing assigns or clears the FK column.
-        - Target record may be matched, updated, created, or rejected
-          according to policy.
+    - JSON shape: single object or null. - Writing assigns or clears the FK
+    column. - Target record may be matched, updated, created, or rejected
+    according to policy.
 
     BindingTable (1:N or N:N):
 
-        - JSON shape: list of objects.
-        - The list represents the complete desired set of related entities.
-        - The implementation synchronizes the binding table:
-            * removes obsolete bindings,
-            * creates new bindings,
-            * updates existing bindings as needed.
+    - JSON shape: list of objects. - The list represents the complete desired
+    set of related entities. - The implementation synchronizes the binding
+    table:
 
-    In both cases the client does not manipulate internal FK values
-    or binding-table rows directly unless explicitly exposed.
+    In both cases the client does not manipulate internal FK values or binding-
+    table rows directly unless explicitly exposed.
 
-    Key semantics
-    -------------
+    **Key semantics**
 
-    The API-level key (``key``) is distinct from the internal primary key:
+    The API-level key (`key`) is distinct from the internal primary key:
 
-        - It defines how entities are identified in URLs and nested structures.
-        - It may correspond to a unique constraint rather than the DB PK.
-        - It allows avoiding exposure of internal surrogate identifiers.
+    - It defines how entities are identified in URLs and nested structures. - It
+    may correspond to a unique constraint rather than the DB PK. - It allows
+    avoiding exposure of internal surrogate identifiers.
 
     For composite keys the values are encoded into a single URL path segment
-    using ``key_separator`` (default ``"-"``), e.g. ``/accounts/1234567890-0100``
-    for ``key=('account_id', 'bank_code')``.
+    using `key_separator` (default `"-"`), e.g. `/accounts/1234567890-0100` for
+    `key=('account_id', 'bank_code')`.
 
     """
     name: str = datafield(doc='Public API name of the resource.')
@@ -319,12 +303,10 @@ def annotate(fn: typing.Callable[..., typing.Any], **params: typing.Any) -> None
 
     Pass desired public parameters as keyword arguments in their intended order.
 
-    Example:
-        annotate(fn, iban=str, payload=PatchModel)
+    Example: `annotate(fn, iban=str, payload=PatchModel)`.
 
-    This sets:
-        - fn.__annotations__ for those names
-        - fn.__signature__ with POSITIONAL_OR_KEYWORD parameters in that order
+    This sets `fn.__annotations__` for those names and `fn.__signature__` with
+    POSITIONAL_OR_KEYWORD parameters in that order.
 
     """
     fn.__annotations__ = dict(getattr(fn, '__annotations__', {}) or {})
@@ -351,36 +333,33 @@ OperationAuth = bool | typing.Callable | list[typing.Callable]
 
 def add_api_routes(router: fastapi.APIRouter, db: Database, spec: ResourceSpec,
                    operations: dict[str, OperationAuth]) -> None:
-    """Register CRUD-ish REST endpoints for a ResourceSpec.
+    """Register CRUD-ish REST endpoints for a `ResourceSpec`.
 
-    Args:
-        router: FastAPI router to register routes on.
-        spec: Resource specification.
-        db: Database instance.
-        operations: Mapping of operation name to authorisation spec.  A missing
-            key or ``False`` disables that operation.  ``True`` enables it
-            without restrictions.  A callable is auto-wrapped in
-            ``fastapi.Depends`` and run as an authorisation check before the
-            handler.  A list of callables runs all checks.
-            Valid keys: 'get', 'list', 'create', 'update', 'delete'.
+    Arguments:
+      router: FastAPI router to register routes on. spec: Resource specification.
+      db: Database instance. operations: Mapping of operation name to
+        authorisation spec.  A missing key or `False` disables that operation.
+        `True` enables it without restrictions.  A callable is auto-wrapped in
+        `fastapi.Depends` and run as an authorisation check before the handler.  A
+        list of callables runs all checks. Valid keys: 'get', 'list', 'create',
+        'update', 'delete'.
 
     Raises:
-        ValueError: If ``operations`` contains unknown keys.
+      `ValueError`: If `operations` contains unknown keys.
 
-    Route closures and **kwargs
-    ---------------------------
+    **Route closures and `**kwargs`**
 
     FastAPI discovers path/query parameters from a function's *real* call
-    signature (via ``inspect.signature``), not from ``__annotations__`` alone.
-    The path-key name and type differ per resource (e.g. ``account_number: int``
-    for accounts, ``code: str`` for code-tables), so a static parameter list
-    is not possible here.
+    signature (via `inspect.signature`), not from `__annotations__` alone. The
+    path-key name and type differ per resource (e.g. `account_number: int` for
+    accounts, `code: str` for code-tables), so a static parameter list is not
+    possible here.
 
-    ``annotate()`` patches both ``__annotations__`` and ``__signature__`` with
-    the correct name/type immediately after the ``def``, giving FastAPI and
-    OpenAPI/Swagger everything they need.  ``**kwargs`` in the closure source
-    is the mechanism that lets the function accept that dynamically-named
-    argument at runtime without knowing its name at definition time.
+    `annotate` patches both `__annotations__` and `__signature__` with the
+    correct name/type immediately after the `def`, giving FastAPI and
+    OpenAPI/Swagger everything they need.  `**kwargs` in the closure source is
+    the mechanism that lets the function accept that dynamically-named argument
+    at runtime without knowing its name at definition time.
 
     """
     unknown = set(operations) - _VALID_OPERATIONS
@@ -508,32 +487,27 @@ class ResourceHandler:
 
     Provides everything needed to read and write a single resource table:
 
-    Responsibilities
-    ----------------
+    **Responsibilities**
 
-        - Access the database via PytisAccessor.
-        - Provide Pydantic models derived from SQLAlchemy column metadata.
-        - Implement internal helpers (_materialize, _insert, _update)
-          invoked by relation handlers and TopLevelResourceHandler.
+    - Access the database via `PytisAccessor`. - Provide Pydantic models derived
+    from SQLAlchemy column metadata. - Implement internal helpers (_materialize,
+    _insert, _update) invoked by relation handlers and
+    `TopLevelResourceHandler`.
 
-    Non-responsibilities
-    --------------------
+    **Non-responsibilities**
 
-        - HTTP routing (handled by add_api_routes / FastAPI).
-        - Direct manipulation of FastAPI objects.
-        - Session / transaction lifecycle (owned by TopLevelResourceHandler).
-        - Schema caching across unrelated resources.
+    - HTTP routing (handled by `add_api_routes` / FastAPI). - Direct
+    manipulation of FastAPI objects. - Session / transaction lifecycle (owned by
+    `TopLevelResourceHandler`). - Schema caching across unrelated resources.
 
-    Separation of concerns
-    ----------------------
+    **Separation of concerns**
 
-        spec                     → declarative (ResourceSpec)
-        ResourceHandler          → database access + model generation (shared base)
-        NestedResourceHandler    → target-resolution + relation interface
-        ForeignRelationHandler   → FK relation read/write
-        BindingRelationHandler   → binding-table relation read/write
-        TopLevelResourceHandler  → session lifecycle + CRUD endpoints
-        add_api_routes           → transport layer (route registration only)
+    spec                     → declarative (`ResourceSpec`) ResourceHandler →
+    database access + model generation (shared base) NestedResourceHandler →
+    target-resolution + relation interface ForeignRelationHandler   → FK
+    relation read/write BindingRelationHandler   → binding-table relation
+    read/write TopLevelResourceHandler  → session lifecycle + CRUD endpoints
+    add_api_routes           → transport layer (route registration only)
 
     """
 
@@ -576,7 +550,7 @@ class ResourceHandler:
                 raise ValueError(f"Unknown column in ResourceSpec.exclude: {name!r}")
 
     def _check_exclude_for_inserts(self) -> None:
-        """Raise ValueError if any explicitly excluded column would prevent INSERT."""
+        """Raise `ValueError` if any explicitly excluded column would prevent INSERT."""
         # FK columns handled by a ForeignRelationHandler and the primary key are
         # exempt — the handler fills in FK values automatically, and the PK is
         # managed separately.
@@ -612,7 +586,7 @@ class ResourceHandler:
         return fks[0].column
 
     def _init_fk_relation(self, rel: ResourceSpec) -> 'ForeignRelationHandler':
-        """Validate and construct a ForeignRelationHandler for a ForeignKey spec."""
+        """Validate and construct a `ForeignRelationHandler` for a `ForeignKey` spec."""
         if rel.via.fk not in self._accessor.table.c:
             raise ValueError(f"Unknown FK column {rel.via.fk!r} on {self._spec.name!r}")
         fk_col = self._accessor.table.c[rel.via.fk]
@@ -625,7 +599,7 @@ class ResourceHandler:
         return relation
 
     def _init_binding_relation(self, rel: ResourceSpec) -> 'BindingRelationHandler':
-        """Validate and construct a BindingRelationHandler for a BindingTable spec."""
+        """Validate and construct a `BindingRelationHandler` for a `BindingTable` spec."""
         if rel.via.expose:
             raise ValueError("BindingTable expose=True is not supported yet")
         binding_accessor = PytisAccessor.create(rel.via.table)
@@ -745,24 +719,24 @@ class ResourceHandler:
     def model(self, kind: str) -> type[pydantic.BaseModel]:
         """Return a Pydantic model for this resource.
 
-        Args:
-            kind: 'out' | 'create' | 'patch' | 'nested'
+        Arguments:
+          kind: 'out' | 'create' | 'patch' | 'nested'
 
         Returns:
-            Pydantic model class.
+          Pydantic model class.
 
         Pydantic models are generated from SQLAlchemy column metadata:
 
-            - 'out'    model: full record representation (from_attributes=True).
-            - 'create' model: excludes DB-generated PKs.
-            - 'patch'  model: all fields optional; PK never present.
-            - 'nested' model: for nested writes; includes API key columns and
-              excludes DB PK if it is not part of the API key.
+        - 'out'    model: full record representation (from_attributes=True). -
+        'create' model: excludes DB-generated PKs. - 'patch'  model: all fields
+        optional; PK never present. - 'nested' model: for nested writes;
+        includes API key columns and excludes DB PK if it is not part of the API
+        key.
 
-        Models are created per handler instance and not globally cached.
-        In the current architecture each ResourceSpec is typically registered once
-        during application startup, so model caching provides no practical benefit
-        and would only add complexity.
+        Models are created per handler instance and not globally cached. In the
+        current architecture each ResourceSpec is typically registered once
+        during application startup, so model caching provides no practical
+        benefit and would only add complexity.
 
         """
         try:
@@ -822,18 +796,18 @@ class ResourceHandler:
 
 
 class NestedResourceHandler(ResourceHandler):
-    """Base for ForeignRelationHandler and BindingRelationHandler.
+    """Base for `ForeignRelationHandler` and `BindingRelationHandler`.
 
-    Extends ResourceHandler with the interface and target-resolution logic
+    Extends `ResourceHandler` with the interface and target-resolution logic
     shared by both relation handler types:
 
-        - name property derived from spec
-        - materialize / collect_updates / apply_nested protocol
-        - _key_from_payload / _resolve_target target-resolution helpers
+    - name property derived from spec - materialize / collect_updates /
+    apply_nested protocol - _key_from_payload / _resolve_target target-
+    resolution helpers
 
     Subclasses provide concrete materialize implementations and override
-    collect_updates (ForeignRelationHandler) or apply_nested
-    (BindingRelationHandler) as appropriate.
+    collect_updates (`ForeignRelationHandler`) or apply_nested
+    (`BindingRelationHandler`) as appropriate.
 
     """
 
@@ -859,12 +833,13 @@ class NestedResourceHandler(ResourceHandler):
     def _key_from_payload(self, payload: dict[str, typing.Any]) -> Operator:
         """Extract and validate API-level key columns from payload.
 
-        Returns an EQ operator for a single-column key, or an AND of EQ
+        Returns an `EQ` operator for a single-column key, or an `AND` of `EQ`
         operators for a composite key.
 
         Raises:
-            PayloadError: If any key column is absent or its value has the
-                wrong Python type.
+          `PayloadError`: If any key column is absent or its value has the wrong
+            Python type.
+
         """
         conditions: list[Operator] = []
         for name in self._key_cols:
@@ -898,10 +873,10 @@ class NestedResourceHandler(ResourceHandler):
           True; raises PayloadError otherwise).
 
         Raises:
-            PayloadError: Key columns missing or of wrong type, target not
-                found when upsert is False, updates attempted when upsert is
-                False, or the row disappears between the initial lookup and
-                the subsequent update (TOCTOU).
+          `PayloadError`: Key columns missing or of wrong type, target not found
+            when upsert is False, updates attempted when upsert is False, or the row
+            disappears between the initial lookup and the subsequent update
+            (TOCTOU).
 
         """
         condition = self._key_from_payload(payload)
@@ -929,10 +904,10 @@ class NestedResourceHandler(ResourceHandler):
 
 
 class ForeignRelationHandler(NestedResourceHandler):
-    """Nested handler for ForeignKey relations (1:1 or N:1).
+    """Nested handler for `ForeignKey` relations (1:1 or N:1).
 
-    IS the resource handler for the target table, extended with the FK
-    column metadata needed to read and write the relation.
+    IS the resource handler for the target table, extended with the FK column
+    metadata needed to read and write the relation.
 
     """
 
@@ -952,7 +927,7 @@ class ForeignRelationHandler(NestedResourceHandler):
         return super().model('out' if kind == 'out' else 'nested')
 
     def materialize(self, session: orm.Session, parent_row: typing.Any):
-        """Return nested object (or None) for a ForeignKey relation."""
+        """Return nested object (or None) for a `ForeignKey` relation."""
         fk_value = getattr(parent_row, self._fk_column.name)
         if fk_value is None:
             return None
@@ -981,7 +956,7 @@ class ForeignRelationHandler(NestedResourceHandler):
 
 
 class BindingRelationHandler(NestedResourceHandler):
-    """Nested handler for BindingTable relations (1:N or N:N).
+    """Nested handler for `BindingTable` relations (1:N or N:N).
 
     IS the resource handler for the target table, extended with the binding
     table metadata needed to read and synchronize the relation.
@@ -1009,8 +984,8 @@ class BindingRelationHandler(NestedResourceHandler):
 
         Binding items have only two distinct shapes: 'out' for read responses
         and 'nested' for all write payloads.  The parent model kinds 'create'
-        and 'patch' are both normalised to 'nested' so the write model is
-        shared and built only once.
+        and 'patch' are both normalised to 'nested' so the write model is shared
+        and built only once.
 
         """
         return super().model('out' if kind == 'out' else 'nested')
@@ -1038,7 +1013,7 @@ class BindingRelationHandler(NestedResourceHandler):
         )
 
     def materialize(self, session: orm.Session, parent_row: typing.Any):
-        """Return list of nested objects for a BindingTable relation."""
+        """Return list of nested objects for a `BindingTable` relation."""
         parent_value = getattr(parent_row, self._parent_ref_column.name)
         bindings = self._binding_accessor.rows(
             session,
@@ -1149,43 +1124,33 @@ class BindingRelationHandler(NestedResourceHandler):
 class TopLevelResourceHandler(ResourceHandler):
     """Resource handler for top-level API endpoints.
 
-    Extends ResourceHandler with the concerns exclusive to top-level resources:
+    Extends `ResourceHandler` with the concerns exclusive to top-level
+    resources:
 
-        - Enforcement of a single-column key (required for URL path parameters).
-        - A ResourceKey encapsulating the path parameter name and Python type.
-        - The five public CRUD methods that own the session/transaction lifecycle.
+    - Enforcement of a single-column key (required for URL path parameters). - A
+    `ResourceKey` encapsulating the path parameter name and Python type. - The
+    five public CRUD methods that own the session/transaction lifecycle.
 
-    Created exclusively by add_api_routes(); never used as a nested target.
+    Created exclusively by `add_api_routes`; never used as a nested target.
 
-    CRUD semantics
-    --------------
+    **CRUD semantics**
 
-        GET:
-            Returns ORM instances; Pydantic serializes via from_attributes=True.
+    GET:
 
-        POST:
-            Inserts a new record.
-            Primary key handling depends on DB-generation heuristics.
+    POST:
 
-        PATCH:
-            Partial update.
-            Only fields explicitly present in the payload are applied.
-            (The route closure calls model_dump(exclude_unset=True) before
-            handing the dict to update_one.)
+    PATCH:
 
-        DELETE:
-            Removes a record by key.
+    DELETE:
 
-    Key handling
-    ------------
+    **Key handling**
 
-        - Single-column keys: path parameter name matches the column name,
-          type matches the column's Python type.
-        - Composite keys: all column values are joined by ``key_separator``
-          (default ``"-"``) into a single path segment of type ``str``.
-          The path parameter name is the column names joined by ``"__"``,
-          e.g. ``account_id__bank_code`` for key ``(account_id, bank_code)``.
-        - Internal database primary keys may differ from API-level keys.
+    - Single-column keys: path parameter name matches the column name, type
+    matches the column's Python type. - Composite keys: all column values are
+    joined by `key_separator` (default `"-"`) into a single path segment of type
+    `str`. The path parameter name is the column names joined by `"__"`, e.g.
+    `account_id__bank_code` for key `(account_id, bank_code)`. - Internal
+    database primary keys may differ from API-level keys.
 
     """
 
@@ -1194,14 +1159,14 @@ class TopLevelResourceHandler(ResourceHandler):
         """API-level identifier of a resource.
 
         Encapsulates the URL path parameter name, its Python type, the
-        underlying key column names, and (for composite keys) the separator
-        used to encode multiple values into a single path segment.
+        underlying key column names, and (for composite keys) the separator used
+        to encode multiple values into a single path segment.
 
         For a single-column key the path parameter carries the column value
         directly with its natural Python type.  For a composite key the path
-        parameter is always ``str`` and encodes all column values joined by
-        *separator*, e.g. ``"1234567890-0100"`` for
-        ``(account_id, bank_code)`` with separator ``"-"``.
+        parameter is always `str` and encodes all column values joined by
+        `separator`, e.g. `"1234567890-0100"` for `(account_id, bank_code)` with
+        separator `"-"`.
 
         """
         name: str
@@ -1212,13 +1177,13 @@ class TopLevelResourceHandler(ResourceHandler):
         def condition(self, raw_value: typing.Any) -> Operator:
             """Build a filter condition from a URL path segment value.
 
-            For a single-column key returns ``EQ(col, raw_value)``.
-            For a composite key splits *raw_value* on the separator and
-            returns ``AND(EQ(col1, part1), EQ(col2, part2), ...)``.
+            For a single-column key returns `EQ` `(col, raw_value)`. For a
+            composite key splits `raw_value` on the separator and returns `AND`
+            of `EQ` instances for each part.
 
             Raises:
-                ValueError: If the composite key value does not contain the
-                    expected number of parts.
+              `ValueError`: If the composite key value does not contain the expected
+                number of parts.
 
             """
             if len(self.columns) == 1:

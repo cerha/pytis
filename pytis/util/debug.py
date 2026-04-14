@@ -38,10 +38,10 @@ class Rdb(pdb.Pdb):
     """
 
     def __init__(self, port=1111):
-        """
-        Arguments:
+        """Initialize the remote debugger.
 
-          port -- port to listen on for incoming client connections; integer
+        Arguments:
+          port (int): Port to listen on for incoming client connections.
 
         """
         self._rdb_stdout = sys.stdout
@@ -77,7 +77,7 @@ _rdb = None
 
 
 def rdb(port=1111):
-    "Return the shared 'Rdb' instance."
+    """Return the shared `Rdb` instance."""
     global _rdb
     if _rdb is None:
         _rdb = Rdb(port=port)

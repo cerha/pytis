@@ -68,9 +68,10 @@ class CommandHandler(with_metaclass(WxCommandHandlerMetaClass, pytis.presentatio
     def command_running(cls):
         """Return whether there is a running command.
 
-        Return pair (RUNNING, NUMBER) where RUNNING is a boolean flag
-        indicating whether some command is being handled and NUMBER is a
-        sequential number of the last handled command.
+        Returns:
+          Pair (RUNNING, NUMBER) where RUNNING is a boolean flag indicating
+          whether some command is being handled and NUMBER is a sequential
+          number of the last handled command.
 
         """
         return CommandHandler._command_running, CommandHandler._command_counter.current()
@@ -86,23 +87,26 @@ class UICommand(object):
 
     """
     def __init__(self, command, title, descr, icon=None, hotkey=None, ctrl=None):
-        """Arguments:
+        """Initialize UICommand.
 
-          command -- The Command instance.
-          title -- user interface title shown as menu item title, toolbar
-            button tooltip, etc.
-          descr -- brief description (longer than title) used in status-bar
-            help or so.
-          icon, hotkey -- currently unused, but planned to replace the
-            'DEFAULT_KEYMAP' and 'icons' specifications.
-          ctrl -- class of a wx widget representing the command control in the
-            user interface (toolbar).  May also be a tuple (ctrl, kwargs),
-            where kwargs are passed to ctrl constructor on its creation.  If
-            None, the command is represented by a simple button which invokes
-            the command when pressed.  If not None, the class must accept two
-            positional constructor arguments (parent, uicmd), where parent is
-            the parent wx widget (toolbar) and uicmd is this UICommand instance
-            (plus any keyword arguments if defined as described above).
+        Arguments:
+          command: The `Command` instance.
+          title: User interface title shown as menu item title, toolbar button
+            tooltip, etc.
+          descr: Brief description (longer than title) used in status-bar help
+            or so.
+          icon: Currently unused, but planned to replace the 'DEFAULT_KEYMAP'
+            and 'icons' specifications.
+          hotkey: Currently unused, but planned to replace the 'DEFAULT_KEYMAP'
+            and 'icons' specifications.
+          ctrl: Class of a wx widget representing the command control in the
+            user interface (toolbar).  May also be a tuple (ctrl, kwargs), where
+            kwargs are passed to ctrl constructor on its creation.  If None, the
+            command is represented by a simple button which invokes the command
+            when pressed.  If not None, the class must accept two positional
+            constructor arguments (parent, uicmd), where parent is the parent wx
+            widget (toolbar) and uicmd is this UICommand instance (plus any
+            keyword arguments if defined as described above).
 
         """
         assert isinstance(command, Command), command

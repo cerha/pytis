@@ -27,8 +27,8 @@ The module defines:
 
 - Data source abstraction (see the module 'data').
 
-- Support for data sources connected to a relational
-  database (see the module 'dbdata').
+- Support for data sources connected to a relational database (see the
+module 'dbdata').
 
 """
 from __future__ import print_function

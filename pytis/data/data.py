@@ -16,23 +16,23 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Třídy pro zpřístupnění tabulkových dat z různých zdrojů.
+"""Třídy pro zpřístupnění tabulkových dat z různých zdrojů.
 
-Základem přístupu k datům je třída 'Data' definující obecné rozhraní přístupu
-k tabulkovým datům.  Předpokládá se, že právě s touto třídou budou schopny
-pracovat ostatní moduly programu, které potřebují získávat nebo předávat větší
-množství tabulkových dat, zejména z objektů jako jsou databáze.  Specializované
-podtřídy umožňují přístup k různým zdrojům dat, viz například třída
-'dbdata.DBData'.
+Základem přístupu k datům je třída `Data` definující obecné rozhraní
+přístupu k tabulkovým datům.  Předpokládá se, že právě s touto třídou budou
+schopny pracovat ostatní moduly programu, které potřebují získávat nebo
+předávat větší množství tabulkových dat, zejména z objektů jako jsou
+databáze. Specializované podtřídy umožňují přístup k různým zdrojům dat, viz
+například třídu `DBData`.
 
-Kromě třídy 'Data' modul definuje ještě pomocnou třídu 'Row' reprezentující
-jeden řádek dat a pomocnou třídu 'ColumnSpec' používanou pro specifikaci
-sloupců instancí třídy 'Data'.
+Kromě třídy `Data` modul definuje ještě pomocnou třídu `Row` reprezentující
+jeden řádek dat a pomocnou třídu `ColumnSpec` používanou pro specifikaci
+sloupců instancí třídy `Data`.
 
-K dispozici jsou také abstraktní třídy pro pokročilejší databázové funkce, viz
-například třídy 'Counter' a 'Function'.  Tyto třídy je nutno chápat jako
-volitelné, konkrétní databázový backend nemusí nabízet žádnou jejich konkrétní
-implementaci.
+K dispozici jsou také abstraktní třídy pro pokročilejší databázové funkce,
+viz například třídy `Counter` a `Function`.  Tyto třídy je nutno chápat jako
+volitelné, konkrétní databázový backend nemusí nabízet žádnou jejich
+konkrétní implementaci.
 
 """
 from __future__ import print_function
@@ -58,16 +58,15 @@ _ = translations('pytis-data')
 unistr = type(u'')  # Python 2/3 transition hack.
 
 FORWARD = 'FORWARD'
-"""Konstanta pro dopředný posun v 'Data.fetch'."""
+"""Konstanta pro dopředný posun v `Data.fetch`."""
 BACKWARD = 'BACKWARD'
-"""Konstanta pro zpětný posun v 'Data.fetch'."""
+"""Konstanta pro zpětný posun v `Data.fetch`."""
 
 
 def opposite_direction(direction):
-    """Vrať směr opačný k 'direction'.
+    """Vrať směr opačný k direction.
 
-    'direction' i vrácený výsledek jsou některé z konstant 'FORWARD' a
-    'BACKWARD'.
+    direction i vrácený výsledek jsou některé z konstant `FORWARD` a `BACKWARD`.
 
     """
     if direction == FORWARD:
@@ -89,18 +88,18 @@ DESCENDANT = 'DESCENDANT'
 
 @python_2_unicode_compatible
 class Operator(object):
-    """Conditional operator for the 'select()' method.
+    """Conditional operator for the `Data.select` method.
 
     The instances of this class define a data filtering condition.  An operator
     is given by its name, operands (constructor arguments) and parameters
-    (keyword arguments).  See the functions 'AND', 'OR', 'NOT', 'EQ', 'NE',
-    'LE', 'GT', 'WM' and others for convenient constructors of some well known
+    (keyword arguments).  See the functions `AND`, `OR`, `NOT`, `EQ`, `NE`,
+    `LE`, `GT`, `WM` and others for convenient constructors of some well known
     operators.
 
     The instances of this class are immutable and hashable.
 
     When the operators are compared or hashed, the data type of all operands
-    (arguments passed to the constructor) which are 'Value' instances are
+    (arguments passed to the constructor) which are `Value` instances are
     ignored.  Thus two operators are considered equal if just the inner python
     values of their operands match.  This is because they represent the same
     condition even if the data types of the operands differ in their parameters
@@ -145,15 +144,13 @@ class Operator(object):
             return hash(self._value)
 
     def __init__(self, name, *args, **kwargs):
-        """Vytvoř operátor 'name' s argumenty 'args' a 'kwargs'.
+        """Vytvoř operátor name s argumenty args a kwargs.
 
-        Argumenty:
-
-          name -- jméno operátoru jako řetězec
-          args -- argumenty operátoru
-          translation -- překlad operátoru na primitivní operátory, instance
-            'Operator'
-          kwargs -- pojmenované (klíčové) argumenty operátoru
+        Arguments:
+          name (str): jméno operátoru jako řetězec
+          args: argumenty operátoru
+          translation (`Operator`): překlad operátoru na primitivní operátory
+          kwargs: pojmenované (klíčové) argumenty operátoru
 
         """
         self._name = name
@@ -191,7 +188,7 @@ class Operator(object):
                 hash(tuple(self._kwargs.items())))
 
     def _relaxed_args(self):
-        """Return self._args, with Value instances transformed to ignore their type attributes.
+        """Return self._args with `Value` instances' type attributes ignored.
 
         So the attributes of data type instances don't figure in the result.
         Only their class is taken into account.  This is necessary to avoid the
@@ -214,25 +211,25 @@ class Operator(object):
         return [relax(arg) for arg in self._args]
 
     def name(self):
-        """Vrať jméno operátoru zadané v konstruktoru."""
+        """Vrať jméno operátoru zadané v konstruktoru."""
         return self._name
 
     def translation(self):
-        """Vrať překlad operátoru zadaný v konstruktoru."""
+        """Vrať překlad operátoru zadaný v konstruktoru."""
         return self._translation
 
     def args(self):
-        """Vrať tuple argumentů operátoru zadaných v konstruktoru."""
+        """Vrať tuple argumentů operátoru zadaných v konstruktoru."""
         return self._args
 
     def kwargs(self):
-        """Vrať dictionary klíčových argumentů zadaných v konstruktoru."""
+        """Vrať dictionary klíčových argumentů zadaných v konstruktoru."""
         return self._kwargs
 
     def logical(self):
-        """Vrať pravdu, právě když se jedná o logický operátor.
+        """Vrať pravdu, právě když se jedná o logický operátor.
 
-        Logické operátory jsou 'AND', 'OR' a 'NOT'.  Ostatní operátory jsou
+        Logické operátory jsou `AND`, `OR` a `NOT`.  Ostatní operátory jsou
         relační.
 
         """
@@ -240,49 +237,51 @@ class Operator(object):
 
 
 class Data(object_2_5):
-    """Základní abstrakce přístupu k tabulkovým datům.
+    """Základní abstrakce přístupu k tabulkovým datům.
 
-    Tabulková data jsou rozdělena do sloupců a řádků.  Třída umožňuje pracovat
-    s řádky dat způsobem analogickým práci s daty nad relační databází.
-    Specifikace sloupců je fixní vzhledem k dané instanci třídy.  Jeden nebo
-    více sloupců třídy jsou definovány jako klíčové, hodnoty těchto sloupců
-    v jednotlivých řádcích tyto řádky jednoznačně identifikují.  Obsah řádků je
+    Tabulková data jsou rozdělena do sloupců a řádků.  Třída umožňuje pracovat s
+    řádky dat způsobem analogickým práci s daty nad relační databází.
+    Specifikace sloupců je fixní vzhledem k dané instanci třídy.  Jeden nebo
+    více sloupců třídy jsou definovány jako klíčové, hodnoty těchto sloupců v
+    jednotlivých řádcích tyto řádky jednoznačně identifikují.  Obsah řádků je
     dynamický, získávaný ze zdroje dat, počet řádků se může během existence
     instance třídy měnit.
 
-    Třída definuje následující skupiny metod pro přístup k datům:
+    Třída definuje následující skupiny metod pro přístup k datům:
 
-    - Metodu pro výběr konkrétního řádku: 'row()'.  Řádek je vybrán podle
-      zadaného klíče.
+    - Metodu pro výběr konkrétního řádku: `row`.  Řádek je vybrán
+      podle zadaného klíče.
 
-    - Metody pro výběr všech řádků: 'select()', 'fetch()', 'fetchone()',
-      'skip()' a 'close()'.  Po zavolání metody 'select()' je možno postupně
-      získávat jednotlivé řádky pomocí metod 'fetch()', resp. 'fetchone()'.
-      Tento způsob umožňuje předávání i většího množství dat z externích zdrojů
-      bez nutnosti je všechna najednou držet v paměti.  Metoda 'select'
-      umožňuje kdykoliv zpřístupnění dat reinicializovat (\"rewind\").
+    - Metody pro výběr všech řádků: `select`, `fetch`,
+      `fetchone`, `skip` a `close`.  Po zavolání
+      metody : meth:`select` je možno postupně získávat jednotlivé řádky
+      pomocí metod : meth:`fetch`, resp. `fetchone`.  Tento způsob
+      umožňuje předávání i většího množství dat z externích zdrojů bez nutnosti
+      je všechna najednou držet v paměti.  Metoda `select` umožňuje
+      kdykoliv zpřístupnění dat reinicializovat (\"rewind\").
 
-    - Metody pro modifikaci dat: 'insert()', 'update()' a 'delete()'.
+    - Metody pro modifikaci dat: `insert`, `update` a
+      `delete`.
 
-    - Metody pro získání informací o tabulce: 'columns()' a 'key()'.
+    - Metody pro získání informací o tabulce: `columns` a `key`.
 
     - Metody pro nastavení callbacků při modifikaci dat:
-      'add_callback_on_change()', 'remove_callback_on_change()'.
+      `add_callback_on_change`, `remove_callback_on_change`.
 
     Tato třída má charakter abstraktní třídy a chová se jako prázdná tabulka,
-    tj. jako read-only tabulka s definovanými sloupci, avšak žádnými řádky.
+    tj. jako read-only tabulka s definovanými sloupci, avšak žádnými řádky.
 
     """
     AGG_MIN = 'AGG_MIN'
-    """Konstanta získání minimální hodnoty pro metodu 'select()'."""
+    """Konstanta získání minimální hodnoty pro metodu `select`."""
     AGG_MAX = 'AGG_MAX'
-    """Konstanta získání maximální hodnoty pro metodu 'select()'."""
+    """Konstanta získání maximální hodnoty pro metodu `select`."""
     AGG_COUNT = 'AGG_COUNT'
-    """Konstanta získání počtu položek pro metodu 'select()'."""
+    """Konstanta získání počtu položek pro metodu `select`."""
     AGG_SUM = 'AGG_SUM'
-    """Konstanta získání součtu položek pro metodu 'select()'."""
+    """Konstanta získání součtu položek pro metodu `select`."""
     AGG_AVG = 'AGG_AVG'
-    """Konstanta získání průměrné hodnoty položek pro metodu 'select()'."""
+    """Konstanta získání průměrné hodnoty položek pro metodu `select`."""
 
     _CACHEABLE = True
 
@@ -292,7 +291,7 @@ class Data(object_2_5):
         """Signalizuje, že byla žádána nepodporovaná operace."""
 
     class Selection:
-        """Iterator over 'select()' rows."""
+        """Iterator over `select` rows."""
         def __init__(self, data, count):
             assert isinstance(count, int)
             self._data = data
@@ -332,24 +331,25 @@ class Data(object_2_5):
 
 
     def __init__(self, columns, key, ordering=None, condition=None, full_init=True, **kwargs):
-        """
-        Arguments:
+        """Initialize the data object.
 
-          columns -- sequence of 'ColumnSpec' instances, it uniquely identifies
-            table columns and their order (by their ordering in 'columns')
-          key -- key column or a list of key columns uniquely identifying table
-            rows; all those columns must be present in 'columns'
-          ordering -- specification of automatically retained sorting, it is a
-            column id or a tuple of column ids or 'None'.  If it is not 'None',
-            rows are automatically ordered by the given column (or the first of
-            the given columns) in 'select*' operations.  This ordering column
-            must be of type 'types_.Integer'.  If the argument is a tuple, only
-            rows with the same values in the second and following columns of
-            the tuple are mutually ordered.
-          condition -- condition limiting selection of lines in all 'select*'
-            and 'row' operations; 'Operator' instance or 'None'
-          full_init -- iff true, call the 'after_init' method in the constructor
-          kwargs -- given to the ancestor constructor
+        Arguments:
+          columns: sequence of `ColumnSpec` instances, it uniquely identifies
+            table columns and their order (by their ordering in columns)
+          key: key column or a list of key columns uniquely identifying table
+            rows; all those columns must be present in columns
+          ordering: specification of automatically retained sorting, it is a
+            column id or a tuple of column ids or None.  If it is not None, rows
+            are automatically ordered by the given column (or the first of the
+            given columns) in select* operations.  This ordering column must be
+            of type types_.Integer.  If the argument is a tuple, only rows with
+            the same values in the second and following columns of the tuple are
+            mutually ordered.
+          condition (`Operator`): condition limiting selection of lines in all
+            select* and `row` operations; or None
+          full_init (bool): iff true, call the `after_init` method in the
+            constructor
+          kwargs: given to the ancestor constructor
 
         """
         super(Data, self).__init__(columns=columns, key=key, ordering=ordering,
@@ -382,52 +382,51 @@ class Data(object_2_5):
         pass
 
     def columns(self):
-        """Return 'columns' specification given to constructor."""
+        """Return columns specification given to constructor."""
         return self._columns
 
     def condition(self):
-        """Return 'condition' specification given to constructor."""
+        """Return condition specification given to constructor."""
         return self._condition
 
     def find_column(self, id):
-        """Vrať 'ColumnSpec' identifikovanou 'id'.
+        """Vrať `ColumnSpec` identifikovanou id.
 
-        Pokud taková specifikace neexistuje, vrať 'None'.
+        Pokud taková specifikace neexistuje, vrať `None`.
 
         """
         return find(id, self.columns(), key=ColumnSpec.id)
 
     def key(self):
-        """Vrať klíčové sloupce zadané v konstruktoru, jako tuple."""
+        """Vrať klíčové sloupce zadané v konstruktoru, jako tuple."""
         return self._key
 
     def row_key(self, row):
-        """Vrať hodnoty klíče z 'row' jako tuple instancí 'Value'."""
+        """Vrať hodnoty klíče z row jako tuple instancí `Value`."""
         return row.columns([c.id() for c in self.key()])
 
     def row(self, key, columns=None, transaction=None, arguments={}):
-        """Return row instance 'Row' identified by 'key'.
+        """Return row instance `Row` identified by key.
 
-        If there is no such row, return 'None'.
+        If there is no such row, return `None`.
 
         Arguments:
-
-          key -- instance or a sequence of instances of the class
-            'types_.Value' corresponding to the columns of the key,
-            representing key values of the row being looked for
-          columns -- sequence of names of the columns to retrieve; if not
-            given, all columns are retrieved; if given, all key columns must be
+          key: instance or a sequence of instances of the class `Value`
+            corresponding to the columns of the key, representing key values of
+            the row being looked for. Length must correspond to the number of
+            key columns.
+          columns: sequence of names of the columns to retrieve; if not given,
+            all columns are retrieved; if given, all key columns must be
             included
-          transaction -- transaction object encapsulating the database
-            operation environment or 'None' (meaning default environment)
-          arguments -- dictionary of table function call arguments, with
-            function argument identifiers as keys and 'pytis.data.Value'
-            instances as values.  Useful only when the table is actually a row
-            returning database function, otherwise ignored.
+          transaction: transaction object encapsulating the database operation
+            environment or None (meaning default environment)
+          arguments (dict): dictionary of table function call arguments, with
+            function argument identifiers as keys and `Value` instances as
+            values.  Useful only when the table is actually a row returning
+            database function, otherwise ignored.
 
-        Length of 'key' must correspond to the number of key columns.
-
-        The method always returns 'None' in this class.
+        Returns:
+          The method always returns None in this class.
 
         """
         return None
@@ -438,65 +437,65 @@ class Data(object_2_5):
 
         The method itself does not necessarily load any data, the selection is
         only initialized if necessary.  The actual data may be obtained by
-        repetitive calls to 'fetch()' (or 'fetchone()') after calling this
-        method.  Rows can also be skipped using the 'skip()' method.  The
-        number of corresponding rows is returned if possible, but None may be
-        returned if this feature is not implemented.
+        repetitive calls to `fetch` (or `fetchone`) after calling this method.
+        Rows can also be skipped using the `skip` method. The number of
+        corresponding rows is returned if possible, but None may be returned if
+        this feature is not implemented.
 
         Repeated calls to this method may not result in the same data if the
         data source changes in the meanwhile.
 
         Arguments:
-          condition -- condition limiting the set of resulting rows as an
-            'Operator' instance or 'None'
-          reuse -- boolean flag indicating, that the data of the previous
-            select may be reused if the condition matches
-          sort -- sequence of sorting specifiers.  Each specifier is a column
-            identifier or a pair (ID, DIRECTION).  DIRECTION os one of module
-            constants 'ASCENDENT' or 'DESCENDANT'.  The default value is
-            'ASCENDENT'.
-          columns -- sequence of IDs of columns to select; if not given, all
+          condition (`Operator`): condition limiting the set of resulting rows
+            or None
+          reuse (bool): flag indicating that the data of the previous select may
+            be reused if the condition matches
+          sort: sequence of sorting specifiers.  Each specifier is a column
+            identifier or a pair (ID, DIRECTION).  DIRECTION is one of module
+            constants ASCENDENT or DESCENDANT.  The default value is ASCENDENT.
+          columns: sequence of IDs of columns to select; if not given, all
             columns are selected
-          transaction -- transaction object encapsulating the database
-            operation environment or 'None' (meaning default environment)
-          async_count -- if true, try to count result lines asynchronously
-          timeout_callback -- ignored
-          limit -- limit maximum number of selected rows, integer or 'None' (no
-            limit)
+          transaction: transaction object encapsulating the database operation
+            environment or None (meaning default environment)
+          async_count (bool): if true, try to count result lines asynchronously
+          timeout_callback: ignored
+          limit (int): limit maximum number of selected rows, or None (no limit)
 
-        If 'condition' is not None, it specifies a filter for row selection.
+        If condition is not None, it specifies a filter for row selection.
         Subclasses are not required to support conditions; they may omit them
         entirely or support only a subset.  In such cases, this must be
-        documented, and the method must raise UnsupportedOperation if an
+        documented, and the method must raise `UnsupportedOperation` if an
         unsupported condition is provided.
 
-        Sorting is controlled by the columns listed in the sort argument, in
-        the order of their priority.  Sorting is optional, and subclasses are
-        not required to implement it; if not supported, this must be stated in
-        the documentation.
+        Sorting is controlled by the columns listed in the sort argument, in the
+        order of their priority.  Sorting is optional, and subclasses are not
+        required to implement it; if not supported, this must be stated in the
+        documentation.
 
-        The method always returns 0 in this class.
+        Returns:
+          The method always returns 0 in this class.
 
         """
         self._select_last_row_number = -1
         return 0
 
     def select_map(self, function, transaction=None, **kwargs):
-        """Apply `function` to all rows of the selection and return the results.
+        """Apply function to all rows of the selection and return the results.
 
-        Calls the `select()` method with the given `kwargs` arguments, then
-        applies `function` to each returned row. The results of all `function`
-        calls are returned as a list, with the same number and order of
-        elements as the returned data rows.
+        Calls the `select` method with the given kwargs arguments, then applies
+        function to each returned row. The results of all function calls are
+        returned as a list, with the same number and order of elements as the
+        returned data rows.
 
         Arguments:
-          function -- a callable taking a single argument, the `Row` instance.
-          transaction -- a transaction object encapsulating the database
-            operation environment, or `None` (to use the default environment).
-          kwargs -- additional arguments passed to `select()`.
+          function (callable): a callable taking a single argument, the `Row`
+            instance.
+          transaction: a transaction object encapsulating the database operation
+            environment, or None (to use the default environment).
+          kwargs: additional arguments passed to `select`.
 
-        It is usually more readable to use list comprehension with `rows()`
-        rather than this method.
+        It is usually more readable to use list comprehension with `rows` rather
+        than this method.
 
         """
         return [function(row) for row in self.rows(transaction=transaction, **kwargs)]
@@ -504,19 +503,18 @@ class Data(object_2_5):
     def rows(self, condition=None, async_count=False, **kwargs):
         """Return an iterator over all rows of the selection with given arguments.
 
-        Calls the `select()` method with the given `condition` and `kwargs`
-        arguments and returns an iterator over all returned rows.
+        Calls the `select` method with the given condition and kwargs arguments
+        and returns an iterator over all returned rows.
 
         Arguments:
-          condition -- condition limiting the set of resulting rows as an
-            'Operator' instance or 'None' (as in 'select()').  May be passed as
-            positional.
-          kwargs -- other arguments passed to `select()`.
+          condition (`Operator`): condition limiting the set of resulting rows
+            or None (as in `select`).  May be passed as positional.
+          kwargs: other arguments passed to `select`.
 
         The caller should either make sure to exhaust the returned iterator or
         enclose the call in a `with` statement in order to ensure the select is
-        closed properly.  The third option, of course, is to call data object's
-        `close()` explicitly as with `select()`.
+        closed properly.  The third option, of course, is to call the data
+        object's `close` explicitly as with `select`.
 
         """
         if async_count:
@@ -526,50 +524,50 @@ class Data(object_2_5):
     def select_aggregate(self, operation, condition=None, transaction=None):
         """Return the result of an aggregate function.
 
-        Performs a `select` whose value is the result of the aggregate function
+        Performs a select whose value is the result of the aggregate function
         applied to the complete selection of data.  If invoked during an open
-        `select`, the selection is not interrupted; if its `condition` matches
-        the current selection, the result reflects the content of that
-        selection (e.g., by processing within a single transaction).
+        select, the selection is not interrupted; if its condition matches the
+        current selection, the result reflects the content of that selection
+        (e.g., by processing within a single transaction).
 
         Arguments:
-          operation -- a pair (OPERATION, COLUMN), where OPERATION is one of the
-            class `AGG_*` constants and COLUMN is the ID of the column on which
+          operation: a pair (OPERATION, COLUMN), where OPERATION is one of the
+            class AGG_* constants and COLUMN is the ID of the column on which
             the operation is to be performed.
-          condition -- same as the argument of the same name in `select()`
-          transaction -- transaction object encapsulating the database
-            operation environment, or `None` (to use the default environment)
+          condition: same as the argument of the same name in `select`
+          transaction: transaction object encapsulating the database operation
+            environment, or None (to use the default environment)
 
         Returns:
           A `Value` instance representing the requested aggregate function.
 
-        Subclasses are not required to implement this method; they may omit it
-        entirely or implement only some conditions.  In such cases this must be
-        documented, and if an unsupported condition is provided the method must
-        raise `UnsupportedOperation`.
-
-        In this class, the method always raises `UnsupportedOperation`.
+        Raises:
+          `UnsupportedOperation`: always in this class.  Subclasses are not
+            required to implement this method; they may omit it entirely or
+            implement only some conditions.  In such cases this must be
+            documented, and if an unsupported condition is provided the method
+            must raise `UnsupportedOperation`.
 
         """
         raise self.UnsupportedOperation()
 
     def select_and_aggregate(self, operation, condition=None, reuse=False, sort=(),
                              columns=None, transaction=None):
-        """Combination of 'select' and 'select_aggregate' methods.
+        """Combination of `select` and `select_aggregate` methods.
 
         The method returns a pair (SELECT_RESULT, AGGREGATE_RESULT) where:
 
-        - SELECT_RESULT is a result of `select' call with the same arguments
-          (except for 'operation').
+        - SELECT_RESULT is a result of `select` call with the same
+          arguments (except for operation).
 
-        - AGGREGATE_RESULT is a 'Row' instance containing the same columns as
-          the corresponding select.  Row values of columns with the type
-          corresponding to the type of the 'operation' are results of the
-          aggregate function defined by the 'operation' argument that must be
-          one of the 'AGG_*' class constants.  Other row values are 'None'.
+        - AGGREGATE_RESULT is a `Row` instance containing the same
+          columns as the corresponding select.  Row values of columns with the
+          type corresponding to the type of the operation are results of the
+          aggregate function defined by the operation argument that must be one
+          of the AGG_* class constants.  Other row values are None.
 
-        If 'select_aggregate' is unsupported in the given class then
-        'select_and_aggregate' is unsupported as well.
+        If `select_aggregate` is unsupported in the given class then
+        `select_and_aggregate` is unsupported as well.
 
         """
         if columns is None:
@@ -599,26 +597,26 @@ class Data(object_2_5):
         """Return data row from given position or next in given direction.
 
         Arguments:
+          position: either an absolute position as int or a direction (one of
+            FORWARD, BACKWARD).  When int, the internal selection pointer is
+            moved to given position and the item at given position is returned.
+            If direction, the pointer is incremented (on FORWARD) or decremented
+            (on BACKWARD) and the item from the new position is returned (if it
+            exists).
 
-          position -- either an absolute position as int or a direction (one of
-            'FORWARD', 'BACKWARD').  When int, the internal selection pointer
-            is moved to given position and the item at given position is
-            returned.  If direction, the pointer is incremented (on 'FORWARD')
-            or decremented (on 'BACKWARD') and the item from the new position
-            is returned (if it exists).
+        Returns:
+          None if there is no data row at the requested position (we got outside
+          the rows available within the current selection).
 
-        If there is no data row at the requested position (we got outside the
-        rows available within the current selection) 'None' is returned.
+        The first call to this method must be preceded by calling `select`.
+        Otherwise the behavior of this method is undefined. Subsequent calls to
+        `select` reset the buffer so a following `fetch` will start from the
+        beginning.
 
-        The first call to this method must be preceeded by calling 'select()'.
-        Otherwise the behavior of this method is undefined.  Subsequent calls
-        to 'select()' resets the buffer so a following 'fetch()' will start
-        from the beginning.
+        Calls to `select`, `fetch` and `skip` should not be interspersed by
+        calls to other public methods, otherwise the behavior is undefined.
 
-        Calls to 'select()', 'fetch()' and 'skip()' should not be interspersed
-        by calls to other public methods, otherwise the behavior is undefined.
-
-        After the last call to this method 'close()' should be called.
+        After the last call to this method `close` should be called.
 
         In this class always returns None.
 
@@ -626,40 +624,39 @@ class Data(object_2_5):
         return None
 
     def fetchone(self):
-        """Convenience alias for 'fetch(FORWARD)'."""
+        """Convenience alias for `fetch` (FORWARD)."""
         return self.fetch(FORWARD)
 
     def last_row_number(self):
-        """Vrať pořadí řádku posledně vráceného metodou 'fetch()'.
+        """Vrať pořadí řádku posledně vráceného metodou `fetch`.
 
-        Řádky jsou číslovány od 0.  Pokud v aktuálním selectu dosud nebyl žádný
-        řádek přes 'fetch()' získán, vrať -1.
+        Řádky jsou číslovány od 0.  Pokud v aktuálním selectu dosud nebyl žádný
+        řádek přes `fetch` získán, vrať -1.
 
         """
         return self._select_last_row_number
 
     def skip(self, count, direction=FORWARD):
-        """Přeskoč 'count' řádků ve směru 'direction'.
+        """Přeskoč count řádků ve směru direction.
 
-        Argumenty:
-
-          count -- počet řádků, které mají být přeskočeny; musí to být
+        Arguments:
+          count (int): počet řádků, které mají být přeskočeny; musí to být
             nezáporný integer
-          direction -- jedna z konstant 'FORWARD' a 'BACKWARD', určuje směr
-            pohybu při přeskakování
+          direction: jedna z konstant FORWARD a BACKWARD, určuje směr pohybu při
+            přeskakování
 
-        Vrací: Počet skutečně přeskočených řádků (může být nižší, dojde-li
-        k překročení hranic dat) nebo 'None', pokud tento údaj není znám.
+        Returns:
+          Počet skutečně přeskočených řádků (může být nižší, dojde-li k
+          překročení hranic dat) nebo None, pokud tento údaj není znám.
 
-        Pokud při skákání dojde k překročení hranic dat, nadbytečné
-        přeskakování řádků se ignoruje.
+        Pokud při skákání dojde k překročení hranic dat, nadbytečné přeskakování
+        řádků se ignoruje.
 
         Metodu je možno použít pouze během otevřeného selectu (viz metody
-        'select()' a 'close()').
+        `select` a `close`).
 
-        V této třídě metoda přeskakuje řádky prostřednictvím volání metody
-        'fetch()' a vrací počet řádků, pro které tato volání nevrátila
-        'None'.
+        V této třídě metoda přeskakuje řádky prostřednictvím volání metody
+        `fetch` a vrací počet řádků, pro které tato volání nevrátila None.
 
         """
         for i in range(count):
@@ -671,52 +668,50 @@ class Data(object_2_5):
         """Vrať se před začátek dat aktuálního selectu.
 
         Metodu je možno použít pouze během otevřeného selectu (viz metody
-        'select()' a 'close()').
+        `select` a `close`).
 
         """
         while self.fetch(BACKWARD) is not None:
             pass
 
     def search(self, condition, direction=FORWARD, transaction=None, arguments={}):
-        """Vyhledej nejbližší výskyt řádku splňujícího 'condition'.
+        """Vyhledej nejbližší výskyt řádku splňujícího condition.
 
-        Argumenty:
+        Arguments:
+          condition (`Operator`): podmínkový výraz, který musí hledaný prvek
+            splňovat
+          direction: směr vyhledávání, jedna z konstant FORWARD a BACKWARD
+          transaction: transaction object encapsulating the database operation
+            environment or None (meaning default environment)
 
-          condition -- podmínkový výraz, který musí hledaný prvek splňovat,
-            instance třídy 'Operator'
-          direction -- směr vyhledávání, jedna z konstant 'FORWARD' a
-            'BACKWARD'
-          transaction -- transaction object encapsulating the database
-            operation environment or 'None' (meaning default environment)
-
-        Vrací: Vzdálenost hledaného řádku od aktuálního řádku v počtu řádků
-        jako kladný integer.  Pokud řádek nebyl nalezen, je vrácena 0.
+        Returns:
+          Vzdálenost hledaného řádku od aktuálního řádku v počtu řádků jako
+          kladný integer.  Pokud řádek nebyl nalezen, je vrácena 0.
 
         Aktuální řádek je řádek, na který ukazuje ukazovátko.  Tj. například
-        řádek bezprostředně předtím vytažený metodou 'fetch()'.
+        řádek bezprostředně předtím vytažený metodou `fetch`.
 
         Metodu je možno použít pouze během otevřeného selectu (viz metody
-        'select()' a 'close()'), vyhledávání se provádí pouze mezi řádky
-        tohoto selectu.  Pozice ukazovátka selectu není touto metodou změněna.
+        `select` a `close`), vyhledávání se provádí pouze mezi řádky tohoto
+        selectu.  Pozice ukazovátka selectu není touto metodou změněna.
 
-        Podtřídy nejsou povinny tuto metodu implementovat (mohou ji
-        neimplementovat vůbec nebo mohou implementovat pouze některé podmínky),
-        v takovém případě to musí být uvedeno v dokumentaci a při zadání
-        nepodporované podmínky musí metoda vyvolat výjimku
-        'UnsupportedOperation'.
-
-        V této třídě metoda vždy vyvolává výjimku 'UnsupportedOperation'.
+        Raises:
+          `UnsupportedOperation`: Podtřídy nejsou povinny tuto metodu
+            implementovat (mohou ji neimplementovat vůbec nebo mohou
+            implementovat pouze některé podmínky), v takovém případě to musí být
+            uvedeno v dokumentaci a při zadání nepodporované podmínky musí
+            metoda vyvolat `UnsupportedOperation`. V této třídě metoda vždy
+            vyvolává `UnsupportedOperation`.
 
         """
         raise self.UnsupportedOperation()
 
     def search_key(self, key, direction=FORWARD):
-        """Stejné jako 'search()', ale hledá podle 'key' místo podmínky.
+        """Stejné jako `search`, ale hledá podle key místo podmínky.
 
-        Argumenty:
-
-          key -- sekvence hodnot klíče
-          direction -- stejné jako v 'search()'
+        Arguments:
+          key: sekvence hodnot klíče
+          direction: stejné jako v `search`
 
         """
         condition = AND(*[EQ(c.id(), v) for c, v in zip(self.key(), key)])
@@ -726,177 +721,167 @@ class Data(object_2_5):
         """Ukonči aktuální select.
 
         Tato metoda umožňuje explicitně uzavřít aktuální čtení dat pomocí
-        'select()' + 'fetch()' a uvolnit tak již případné dále nepotřebné
-        datové struktury nebo prostředky systému.
+        `select` + `fetch` a uvolnit tak již případné dále nepotřebné datové
+        struktury nebo prostředky systému.
 
-        Metoda může být volána pouze když je aktivní 'select()' spojení.
-        Pokud tomu tak není, je její chování nedefinováno.
+        Metoda může být volána pouze když je aktivní `select` spojení. Pokud
+        tomu tak není, je její chování nedefinováno.
 
-        V této třídě tato metoda nedělá nic.
+        V této třídě tato metoda nedělá nic.
 
         """
         self._select_last_row_number = None
 
     def insert(self, row, after=None, before=None, transaction=None):
-        """Vlož 'row' do tabulky.
+        """Vlož row do tabulky.
 
-        Argumenty:
+        Arguments:
+          row (`Row`): instance třídy `Row`
+          after: None nebo klíč řádku, za který má být nový řádek vložen
+          before: None nebo klíč řádku, před který má být nový řádek vložen
+          transaction: transaction object encapsulating the database operation
+            environment or None (meaning default environment)
 
-          row -- instance třídy 'Row'
-          after -- 'None' nebo klíč řádku, za který má být nový řádek vložen
-          before -- 'None' nebo klíč řádku, před který má být nový řádek vložen
-          transaction -- transaction object encapsulating the database
-            operation environment or 'None' (meaning default environment)
+        Argumenty after a before mají smysl pouze tehdy, pokud byl v
+        konstruktoru specifikován argument ordering.  Nesmí být specifikovány
+        oba současně.  Pokud řádek určený některým z těchto argumentů
+        neexistuje, není nový řádek vložen.  Pokud je v novém řádku uvedena
+        hodnota pořadového sloupce, je tato ignorována.  Pokud má datový objekt
+        ordering a oba argumenty after a before jsou None, nový řádek může být
+        vložen na kteroukoliv pozici.
 
-        Argumenty 'after' a 'before' mají smysl pouze tehdy, pokud byl
-        v konstruktoru specifikován argument 'ordering'.  Nesmí být
-        specifikovány oba současně.  Pokud řádek určený některým z těchto
-        argumentů neexistuje, není nový řádek vložen.  Pokud je v novém řádku
-        uvedena hodnota pořadového sloupce, je tato ignorována.  Pokud má
-        datový objekt ordering a oba argumenty 'after' a 'before' jsou 'None',
-        nový řádek může být vložen na kteroukoliv pozici.
-
-        'row' nemusí obsahovat obsahovat hodnoty pro všechny sloupce tabulky a
-        může obsahovat i další sloupce, které tabulka neobsahuje.  Záleží na
-        implementaci tabulkové třídy, jak s takovým sloupcem naloží -- může
+        row nemusí obsahovat hodnoty pro všechny sloupce tabulky a může
+        obsahovat i další sloupce, které tabulka neobsahuje.  Záleží na
+        implementaci tabulkové třídy, jak s takovým sloupcem naloží -- může
         například chybějící sloupce doplnit implicitními hodnotami nebo je
-        dopočítat nebo také může sloupec odmítnout do tabulky vložit.  V každém
-        případě platí, že pořadí sloupců v 'row' je z hlediska této metody
+        dopočítat nebo také může sloupec odmítnout do tabulky vložit.  V každém
+        případě platí, že pořadí sloupců v row je z hlediska této metody
         nepodstatné, sloupce jsou rozeznávány svými názvy.
 
-        Pokud 'row' obsahuje klíč a řádek s takovým klíčem již v tabulce
-        existuje, neprováděj nic.  Pakliže 'row' obsahuje pouze některé a ne
-        všechny sloupce klíče, záleží na konkrétní implementaci, zda jej vloží
-        či nikoliv.
+        Pokud row obsahuje klíč a řádek s takovým klíčem již v tabulce existuje,
+        neprováděj nic.  Pakliže row obsahuje pouze některé a ne všechny sloupce
+        klíče, záleží na konkrétní implementaci, zda jej vloží či nikoliv.
 
         Není specifikováno, na které místo tabulky má být řádek vložen, obvykle
         je to konec tabulky, není to však vyžadováno.
 
-        Je-li sloupec do tabulky úspěšně vložen, vrať dvojici (ROW, 'True'),
-        kde ROW je skutečný nový řádek tabulky, který na základě vložení 'row'
-        vzniknul.  Pokud nemůže být obsah nového řádku zjištěn, vrať dvojici
-        ('None', 'True').  Pokud řádek nebyl do tabulky úspěšně vložen, vrať
-        dvojici ('None', 'False') v případě, že popis chyby není definován,
-        příp. dvojici (text, 'False'), kde text je popis příčiny neúspěchu.
-
-        V této třídě metoda vždy pouze vrací ('None', 'False').
+        Returns:
+          Je-li řádek do tabulky úspěšně vložen, vrátí dvojici (ROW, True), kde
+          ROW je skutečný nový řádek tabulky, který na základě vložení row
+          vzniknul.  Pokud nemůže být obsah nového řádku zjištěn, vrátí dvojici
+          (None, True).  Pokud řádek nebyl do tabulky úspěšně vložen, vrátí
+          dvojici (None, False) v případě, že popis chyby není definován, příp.
+          dvojici (text, False), kde text je popis příčiny neúspěchu. V této
+          třídě metoda vždy pouze vrací (None, False).
 
         """
         return None, False
 
     def update(self, key, row, transaction=None):
-        """Nahraď řádek identifikovaný klíčem 'key' řádkem 'row'.
+        """Nahradť řádek identifikovaný klíčem key řádkem row.
 
-        Argumenty:
+        Arguments:
+          key: instance nebo seznam instancí třídy Value, musí odpovídat všem
+            sloupcům klíče tabulky
+          row (`Row`): instance třídy `Row`
+          transaction: transaction object encapsulating the database operation
+            environment or None (meaning default environment)
 
-          key -- instance nebo seznam instancí třídy 'types._Value', musí
-            odpovídat všem sloupcům klíče tabulky
-          row -- instance třídy 'Row'
-          transaction -- transaction object encapsulating the database
-            operation environment or 'None' (meaning default environment)
+        row nesmí obsahovat hodnoty pro všechny sloupce tabulky a může obsahovat
+        i další sloupce, které tabulka neobsahuje.  Záleží na implementaci
+        tabulkové třídy, jak s takovým sloupcem naloží -- může například
+        chybějící sloupce doplnit implicitními hodnotami nebo je dopočítat nebo
+        také může sloupec odmítnout do tabulky vložit.  V každém případě platí,
+        že pořadí sloupců v row je z hlediska této metody nepodstatné, sloupce
+        jsou rozeznávány svými názvy.
 
-        'row' nemusí obsahovat hodnoty pro všechny sloupce tabulky a může
-        obsahovat i další sloupce, které tabulka neobsahuje.  Záleží na
-        implementaci tabulkové třídy, jak s takovým sloupcem naloží -- může
-        například chybějící sloupce doplnit implicitními hodnotami nebo je
-        dopočítat nebo také může sloupec odmítnout do tabulky vložit.  V každém
-        případě platí, že pořadí sloupců v 'row' je z hlediska této metody
-        nepodstatné, sloupce jsou rozeznávány svými názvy.
+        Pokud key v tabulce neidentifikuje žádný existující řádek, neprováděj
+        nic a vrať None.  Pokud row obsahuje klíč různý od key a řádek s takovým
+        klíčem již v tabulce existuje, neprováděj nic a vrať None. Pakliže row
+        obsahuje pouze některé a ne všechny sloupce klíče, záleží na konkrétní
+        implementaci, jak s tím naloží.
 
-        Pokud 'key' v tabulce neidentifikuje žádný existující řádek, neprováděj
-        nic a vrať 'None'.  Pokud 'row' obsahuje klíč různý od 'key' a řádek
-        s takovým klíčem již v tabulce existuje, neprováděj nic a vrať 'None'.
-        Pakliže 'row' obsahuje pouze některé a ne všechny sloupce klíče, záleží
-        na konkrétní implementaci, jak s tím naloží.
+        Byl-li pro datový objekt v konstruktoru specifikován argument ordering,
+        není pořadí řádku updatem změněno.  Případná nově zadaná hodnota
+        kteréhokoliv \"ordering\" sloupce je ignorována a je nahrazena starou
+        hodnotou.  Z toho plyne, že updatem není možno změnit hodnotu žádného
+        sloupce uvedeného v ordering.
 
-        Byl-li pro datový objekt v konstruktoru specifikován argument
-        'ordering', není pořadí řádku updatem změněno.  Případná nově zadaná
-        hodnota kteréhokoliv \"ordering\" sloupce je ignorována a je nahrazena
-        starou hodnotou.  Z toho plyne, že updatem není možno změnit hodnotu
-        žádného sloupce uvedeného v 'ordering'.
-
-        Je-li sloupec úspěšně updatován, vrať dvojici (ROW, 'True'), kde ROW
-        je skutečný updatovaný řádek tabulky, který na základě vložení 'row'
-        vzniknul.  Pokud takový řádek nelze zjistit, vrať ('None', 'True').
-        V opačném případě (tj. pokud řádek s 'key' neexistuje nebo pokud je
-        problematický klíč 'row', jak je uvedeno výše) vrať dvojici
-        ('None', 'False') v případě, že popis chyby není definován,
-        příp. dvojici (text, 'False'), kde text je popis příčiny neúspěchu.
-
-        V této třídě metoda vždy pouze vrací dvojici ('None', 'False').
+        Returns:
+          Je-li řádek úspěšně updatován, vratí dvojici (ROW, True), kde ROW je
+          skutečný updatovaný řádek tabulky, který na základě vložení row
+          vzniknul.  Pokud takový řádek nelze zjistit, vratí (None, True). V
+          opačném případě (tj. pokud řádek s key neexistuje nebo pokud je
+          problematický klíč row, jak je uvedeno výše) vratí dvojici (None,
+          False) v případě, že popis chyby není definován, příp. dvojici (text,
+          False), kde text je popis příčiny neúspěchu. V této třídě metoda vždy
+          pouze vrací dvojici (None, False).
 
         """
         return None, False
 
     def update_many(self, condition, row, transaction=None):
-        """Update rows given by 'condition' by data of given 'row'.
+        """Update rows given by condition by data of given row.
 
         Arguments:
+          condition (`Operator`): condition which limits the rows to be updated
+          row (`Row`): row instance
+          transaction: transaction object encapsulating the database operation
+            environment or None (meaning default environment)
 
-          condition -- condition which limits the rows to be updated;
-            'Operator' instance
-          row -- 'Row' instance
-          transaction -- transaction object encapsulating the database
-            operation environment or 'None' (meaning default environment)
-
-        'row' nemusí obsahovat hodnoty pro všechny sloupce tabulky a může
-        obsahovat i další sloupce, které tabulka neobsahuje.  Záleží na
-        implementaci tabulkové třídy, jak s takovým sloupcem naloží -- může
+        row nemusí obsahovat hodnoty pro všechny sloupce tabulky a může
+        obsahovat i další sloupce, které tabulka neobsahuje.  Záleží na
+        implementaci tabulkové třídy, jak s takovým sloupcem naloží -- může
         například chybějící sloupce doplnit implicitními hodnotami nebo je
-        dopočítat nebo také může sloupec odmítnout do tabulky vložit.  V každém
-        případě platí, že pořadí sloupců v 'row' je z hlediska této metody
+        dopočítat nebo také může sloupec odmítnout do tabulky vložit.  V každém
+        případě platí, že pořadí sloupců v row je z hlediska této metody
         nepodstatné, sloupce jsou rozeznávány svými názvy.
 
-        Pokud by změna řádků měla mít za následek změnu klíče některého řádku
-        na klíč po updatu existující v jiném řádku, je vyvolána výjimka a data
+        Pokud by změna řádků měla mít za následek změnu klíče některého řádku na
+        klíč po updatu existující v jiném řádku, je vyvolána výjimka a data
         nejsou změněna.
 
-        Byl-li pro datový objekt v konstruktoru specifikován argument
-        'ordering', není pořadí řádku updatem změněno.  Případná nově zadaná
-        hodnota kteréhokoliv \"ordering\" sloupce je ignorována.  Z toho plyne,
-        že updatem není možno změnit hodnotu žádného sloupce uvedeného
-        v 'ordering'.
+        Byl-li pro datový objekt v konstruktoru specifikován argument ordering,
+        není pořadí řádku updatem změněno.  Případná nově zadaná hodnota
+        kteréhokoliv "ordering" sloupce je ignorována.  Z toho plyne, že updatem
+        není možno změnit hodnotu žádného sloupce uvedeného v ordering.
 
-        Vrací: Počet updatovaných řádků.
+        Returns:
+          Počet updatovaných řádků.
 
-        V této třídě metoda vždy pouze vrací '0'.
+        V této třídě metoda vždy pouze vrací 0.
 
         """
         return 0
 
     def delete(self, key, transaction=None):
-        """Smaž řádek identifikovaný 'key'.
+        """Smaž řádek identifikovaný key.
 
-        Argumenty:
+        Arguments:
+          key: instance nebo seznam instancí třídy Value, musí odpovídat všem
+            sloupcům klíče tabulky; určuje řádek, který má být smazán
+          transaction: transaction object encapsulating the database operation
+            environment or None (meaning default environment)
 
-          key -- instance nebo seznam instancí třídy 'types._Value', musí
-            odpovídat všem sloupcům klíče tabulky; určuje řádek, který má být
-            smazán
-          transaction -- transaction object encapsulating the database
-            operation environment or 'None' (meaning default environment)
-
-        Pokud je řádek smazán, vrať 1.
-        Pokud takový řádek nelze smazat (včetně situace, kdy neexistuje),
-        nedělej nic a vrať 0.
-
-        V této třídě metoda vždy pouze vrací 0.
+        Returns:
+          Pokud je řádek smazán, vrátí 1.  Pokud takový řádek nelze smazat
+          (včetně situace, kdy neexistuje), nedělá nic a vrátí 0. V této třídě
+          metoda vždy pouze vrací 0.
 
         """
         return 0
 
     def delete_many(self, condition, transaction=None):
-        """Smaž řádky identifikované 'condition'.
+        """Smaž řádky identifikované condition.
 
-        Argumenty:
+        Arguments:
+          condition (`Operator`): podmínka odpovídající řádkům, které mají být
+            smazány
+          transaction: transaction object encapsulating the database operation
+            environment or None (meaning default environment)
 
-          condition -- podmínka odpovídající řádkům, které mají být
-            smazány; instance třídy 'Operator'
-          transaction -- transaction object encapsulating the database
-            operation environment or 'None' (meaning default environment)
-
-        Vrací: Počet smazaných řádků.
-
-        V této třídě metoda vždy pouze vrací 0.
+        Returns:
+          Počet smazaných řádků.  V této třídě metoda vždy pouze vrací 0.
 
         """
         return 0
@@ -907,37 +892,37 @@ class Data(object_2_5):
         Tento počet je větší nebo roven 0 a každá následující návratová hodnota
         je větší nebo rovna předchozí návratové hodnotě.  Nic jiného
         garantovaného není, zejména ne že počet odpovídá skutečnému počtu změn
-        dat, jedná se pouze o orientační hodnotu.  Pro podrobnější diskusi
-        spolehlivosti viz dokumentace metody `add_callback_on_change()'.
+        dat, jedná se pouze o orientační hodnotu.  Pro podrobnější diskusi
+        spolehlivosti viz dokumentaci metody `add_callback_on_change`.
 
         """
         return self._change_number.current()
 
     def add_callback_on_change(self, function):
-        """Zaregistruj 'function' do seznamu modifikačních callbacků.
+        """Zaregistruj function do seznamu modifikačních callbacků.
 
-        Dojde-li k oznámení o modifikaci dat, může pak být 'function' zavolána,
-        bez parametrů.  Zda je 'function' skutečně zavolána, závisí na
-        konkrétní implementaci datové třídy.  Některé implementace mohou toto
-        volání garantovat, některé mohou volání provádět bez garance a některé
-        nemusí volání provádět nikdy.  Tato zpětná volání jsou tedy pouze
-        pomocným mechanismem, který může být pro určité účely (například
-        překreslení tabulky na obrazovce) užitečný, nelze na něj však spoléhat.
+        Dojde-li k oznámení o modifikaci dat, může pak být function zavolána,
+        bez parametrů.  Zda je function skutečně zavolána, závisí na konkrétní
+        implementaci datové třídy.  Některé implementace mohou toto volání
+        garantovat, některé mohou volání provádět bez garance a některé nemusí
+        volání provádět nikdy.  Tato zpětná volání jsou tedy pouze pomocným
+        mechanismem, který může být pro určité účely (například překreslení
+        tabulky na obrazovce) užitečný, nelze na něj však spoléhat.
 
-        **Pozor:** Vzhledem k tomu, že se jedná o callbacky, bude 'function'
-        obvykle volána v samostatném threadu, je v ní tedy třeba dbát na
-        případné možné kolize s hlavním threadem.
+        **Pozor:** Vzhledem k tomu, že se jedná o callbacky, bude function
+        obvykle volána v samostatném threadu, je v ní tedy třeba dbát na
+        případné možné kolize s hlavním threadem.
 
-        V této třídě k žádným modifikacím dat nedochází a tudíž se ani
-        neprovádí zpětná volání.
+        V této třídě k žádným modifikacím dat nedochází a tudíž se ani neprovádí
+        zpětná volání.
 
         """
         self._on_change_callbacks.append(function)
 
     def remove_callback_on_change(self, function):
-        """Odstraň 'function' ze seznamu modifikačních callbacků.
+        """Odstraň function ze seznamu modifikačních callbacků.
 
-        Pokud 'function' v seznamu modifikačních callbacků není, nedělej nic.
+        Pokud function v seznamu modifikačních callbacků není, nedělej nic.
 
         """
         try:
@@ -954,7 +939,7 @@ class Data(object_2_5):
     def cacheable(class_):
         """Return whether it is possible to cache instances of this class.
 
-        This information is intended to be used in the 'DataFactory' class.
+        This information is intended to be used in the `DataFactory` class.
 
         """
         return class_._CACHEABLE
@@ -963,15 +948,15 @@ class Data(object_2_5):
 class Counter(object):
     """Abstrakce přístupu ke generátoru tickets.
 
-    Jedná se o jednoduchý čítač vracející postupně sekvenci unikátních
-    vzestupných čísel, blíže viz metoda 'next()'.
+    Jedná se o jednoduchý čítač vracející postupně sekvenci unikátních
+    vzestupných čísel, blíže viz metoda `next`.
 
     """
 
     def next(self):
         """Vrať další hodnotu čítače jako integer.
 
-        V této třídě metoda pouze vyvolává 'NotImplementedException'.
+        V této třídě metoda pouze vyvolává `NotImplementedException`.
 
         """
         raise NotImplementedException()
@@ -988,13 +973,12 @@ class Function(object):
     def call(self, row):
         """Zavolej funkci a vrať výsledek.
 
-        Argumenty:
+        Arguments:
+          row (`Row`): instance třídy `Row` odpovídající argumentům funkce, je
+            důležité pořadí prvků v row
 
-          row -- instance třídy 'Row' odpovídající argumentům funkce, je
-            důležité pořadí prvků v 'row'
-
-        Vrací: Sekvenci instancí třídy 'Row' odpovídající výsledku volání
-        funkce.
+        Returns:
+          Sekvenci instancí třídy `Row` odpovídající výsledku volání funkce.
 
         """
         raise NotImplementedException()
@@ -1017,16 +1001,16 @@ class MemData(Data):
     _CACHEABLE = False
 
     def __init__(self, columns, key=None, data=(), **kwargs):
-        """Initialize data source according to given 'columns' specification.
+        """Initialize data source according to given columns specification.
 
         Arguments:
-          'columns' -- same as in parent class.
-          'key' -- same as in parent class but may be also None, in which
-             case the first columns is used as a key.
-          'data' -- may contain initial data as a sequence of 'pytis.data.Row'
-             instances or a sequence of tuples of internal python values.  In
-             the later case the values appear in the order of 'columns' and
-             must match their types ('TypeError' is raised if not).
+          columns: same as in parent class.
+          key: same as in parent class but may be also None, in which case the
+            first column is used as a key.
+          data: may contain initial data as a sequence of `pytis.data.Row`
+            instances or a sequence of tuples of internal python values.  In the
+            latter case the values appear in the order of columns and must match
+            their types (TypeError is raised if not).
 
         """
         super(MemData, self).__init__(columns, key if key is not None else columns[0], **kwargs)
@@ -1125,9 +1109,8 @@ class MemData(Data):
                arguments={}, async_count=False, stop_check=None, timeout_callback=None, limit=None):
         """Inicializace vytahování záznamů.
 
-        Bližší popis viz nadtřída.  Argumenty 'condition', 'sort',
-        'transaction', 'arguments', 'async_count', 'stop_check' a 'timeout_callback'
-        jsou ignorovány.
+        Bližší popis viz nadtřída.  Argumenty condition, sort, transaction,
+        arguments, async_count, stop_check a timeout_callback jsou ignorovány.
 
         """
         if self._condition is not None:
@@ -1173,14 +1156,12 @@ class MemData(Data):
         return self._mem_cursor
 
     def insert(self, row, transaction=None):
-        """Vlož 'row' do tabulky.
+        """Vlož row do tabulky.
 
         Pro bližší popis viz nadtřída.
 
-        'row' je vložen na konec tabulky.  Chybějící sloupce jsou nastaveny na
-        'None'.
-
-        Argument 'transaction' je ignorován.
+        row je vložen na konec tabulky.  Chybějící sloupce jsou nastaveny na
+        None.  Argument transaction je ignorován.
 
         """
         assert isinstance(row, Row)
@@ -1191,14 +1172,12 @@ class MemData(Data):
         return new_row, True
 
     def update(self, key, row, transaction=None):
-        """Updatuj 'row' v tabulce.
+        """Updatuj row v tabulce.
 
         Pro bližší popis viz nadtřída.
 
-        'row' je v tabulce vložen na místo řádku identifikovaného 'key''.
-        Chybějící sloupce jsou nastaveny na 'None'.
-
-        Argument 'transaction' je ignorován.
+        row je v tabulce vložen na místo řádku identifikovaného key. Chybějící
+        sloupce jsou nastaveny na None.  Argument transaction je ignorován.
 
         """
         index = self._mem_find_index(key)
@@ -1211,8 +1190,10 @@ class MemData(Data):
         return new_row, True
 
     def delete(self, key, transaction=None):
-        """
-        Argument 'transaction' is ignored.
+        """Delete row identified by key.
+
+        Argument transaction is ignored.
+
         """
         index = self._mem_find_index(key)
         if index is None:
@@ -1225,14 +1206,13 @@ class MemData(Data):
 
 
 def EQ(x, y, ignore_case=False):
-    """Podmínkový operátor 'EQ' relace rovnosti '='.
+    """Podmínkový operátor `EQ` relace rovnosti '='.
 
-    Argumenty:
-
-      x -- column identifier (basestring), or an 'OpFunction' value
-      y -- hodnota sloupce, instance třídy 'types._Value'
-      ignore_case -- zda má být ignorována velikost písmen (má-li to pro daný
-        typ smysl)
+    Arguments:
+      x (str): column identifier, or an `OpFunction` value
+      y: hodnota sloupce, instance třídy Value
+      ignore_case (bool): zda má být ignorována velikost písmen (má-li to pro
+        daný typ smysl)
 
     Tento operátor je primitivní.
 
@@ -1243,12 +1223,11 @@ def EQ(x, y, ignore_case=False):
 def NE(x, y, ignore_case=False):
     """Podmínkový operátor nerovnosti.
 
-    Argumenty:
-
-      x -- column identifier (basestring), or an 'OpFunction' value
-      y -- hodnota sloupce, instance třídy 'types._Value'
-      ignore_case -- zda má být ignorována velikost písmen (má-li to pro daný
-        typ smysl)
+    Arguments:
+      x (str): column identifier, or an `OpFunction` value
+      y: hodnota sloupce, instance třídy Value
+      ignore_case (bool): zda má být ignorována velikost písmen (má-li to pro
+        daný typ smysl)
 
     Tento operátor je vyjádřený pomocí jiných operátorů.
 
@@ -1258,16 +1237,15 @@ def NE(x, y, ignore_case=False):
 
 
 def WM(x, y, ignore_case=True):
-    """Podmínkový operátor 'WM' (\"wildcard matches\") porovnání dle vzoru.
+    """Podmínkový operátor `WM` (\"wildcard matches\") porovnání dle vzoru.
 
-    Argumenty:
-
-      x -- column identifier (basestring), or an 'OpFunction' value
-      y -- instance 'WMValue' definující vzor; její hodnota může jako wildcars
-        obsahovat znaky '*' (lze substituovat čímkoliv) a '?' (lze substituovat
-        libovolným znakem)
-      ignore_case -- zda má být ignorována velikost písmen (má-li to pro daný
-        typ smysl)
+    Arguments:
+      x (str): column identifier, or an `OpFunction` value
+      y (`WMValue`): instance `WMValue` definující vzor; její hodnota může jako
+        wildcards obsahovat znaky '*' (lze substituovat čímkoliv) a '?' (lze
+        substituovat libovolným znakem)
+      ignore_case (bool): zda má být ignorována velikost písměn (má-li to pro
+        daný typ smysl)
 
     Tento operátor je primitivní.
 
@@ -1278,13 +1256,12 @@ def WM(x, y, ignore_case=True):
 def NW(x, y, ignore_case=True):
     """Podmínkový operátor negace porovnání dle vzoru.
 
-    Argumenty:
-
-      x -- column identifier (basestring), or an 'OpFunction' value
-      y -- string definující vzor; jako wildcars může obsahovat znaky '*' (lze
-        substituovat čímkoliv) a '?' (lze substituovat libovolným znakem)
-      ignore_case -- zda má být ignorována velikost písmen (má-li to pro daný
-        typ smysl)
+    Arguments:
+      x (str): column identifier, or an `OpFunction` value
+      y (str): string definující vzor; jako wildcards může obsahovat znaky '*'
+        (lze substituovat čímkoliv) a '?' (lze substituovat libovolným znakem)
+      ignore_case (bool): zda má být ignorována velikost písmen (má-li to pro
+        daný typ smysl)
 
     Tento operátor je vyjádřený pomocí jiných operátorů.
 
@@ -1294,14 +1271,13 @@ def NW(x, y, ignore_case=True):
 
 
 def LT(x, y, ignore_case=False):
-    """Podmínkový operátor 'LT' relace '<'.
+    """Podmínkový operátor `LT` relace '<'.
 
-    Argumenty:
-
-      x -- column identifier (basestring), or an 'OpFunction' value
-      y -- hodnota sloupce, instance třídy 'types._Value'
-      ignore_case -- zda má být ignorována velikost písmen (má-li to pro daný
-        typ smysl)
+    Arguments:
+      x (str): column identifier, or an `OpFunction` value
+      y: hodnota sloupce, instance třídy Value
+      ignore_case (bool): zda má být ignorována velikost písmen (má-li to pro
+        daný typ smysl)
 
     Tento operátor je primitivní.
 
@@ -1312,12 +1288,11 @@ def LT(x, y, ignore_case=False):
 def LE(x, y, ignore_case=False):
     """Podmínkový operátor relace '<='.
 
-    Argumenty:
-
-      x -- column identifier (basestring), or an 'OpFunction' value
-      y -- hodnota sloupce, instance třídy 'types._Value'
-      ignore_case -- zda má být ignorována velikost písmen (má-li to pro daný
-        typ smysl)
+    Arguments:
+      x (str): column identifier, or an `OpFunction` value
+      y: hodnota sloupce, instance třídy Value
+      ignore_case (bool): zda má být ignorována velikost písmen (má-li to pro
+        daný typ smysl)
 
     Tento operátor je vyjádřený pomocí jiných operátorů.
 
@@ -1330,12 +1305,11 @@ def LE(x, y, ignore_case=False):
 def GT(x, y, ignore_case=False):
     """Podmínkový operátor relace '>'.
 
-    Argumenty:
-
-      x -- column identifier (basestring), or an 'OpFunction' value
-      y -- hodnota sloupce, instance třídy 'types._Value'
-      ignore_case -- zda má být ignorována velikost písmen (má-li to pro daný
-        typ smysl)
+    Arguments:
+      x (str): column identifier, or an `OpFunction` value
+      y: hodnota sloupce, instance třídy Value
+      ignore_case (bool): zda má být ignorována velikost písmen (má-li to pro
+        daný typ smysl)
 
     Tento operátor je vyjádřený pomocí jiných operátorů.
 
@@ -1348,12 +1322,11 @@ def GT(x, y, ignore_case=False):
 def GE(x, y, ignore_case=False):
     """Podmínkový operátor relace '>='.
 
-    Argumenty:
-
-      x -- column identifier (basestring), or an 'OpFunction' value
-      y -- hodnota sloupce, instance třídy 'types._Value'
-      ignore_case -- zda má být ignorována velikost písmen (má-li to pro daný
-        typ smysl)
+    Arguments:
+      x (str): column identifier, or an `OpFunction` value
+      y: hodnota sloupce, instance třídy Value
+      ignore_case (bool): zda má být ignorována velikost písmen (má-li to pro
+        daný typ smysl)
 
     Tento operátor je vyjádřený pomocí jiných operátorů.
 
@@ -1364,11 +1337,10 @@ def GE(x, y, ignore_case=False):
 
 
 def NOT(x):
-    """Logical operator 'NOT' for logical negation.
+    """Logical operator `NOT` for logical negation.
 
     Arguments:
-
-      x -- operand as 'Operator' instance
+      x (`Operator`): operand as `Operator` instance
 
     This operator is primitive.
 
@@ -1377,11 +1349,10 @@ def NOT(x):
 
 
 def AND(*args):
-    """Logical operator 'AND' for logical conjunction.
+    """Logical operator `AND` for logical conjunction.
 
     Arguments:
-
-      args -- sequence of operands as 'Operator' instances (may be also empty).
+      args: sequence of operands as `Operator` instances (may be also empty).
         The operands may also be None in which case they are ignored.
 
     The operator is commutative so the order of operands doesn't matter.
@@ -1393,11 +1364,10 @@ def AND(*args):
 
 
 def OR(*args):
-    """Logical operator 'OR' for logical disjunction.
+    """Logical operator `OR` for logical disjunction.
 
     Arguments:
-
-      args -- sequence of operands as 'Operator' instances (may be also empty).
+      args: sequence of operands as `Operator` instances (may be also empty).
 
     The operator is commutative so the order of operands doesn't matter.
 
@@ -1412,12 +1382,11 @@ def OR(*args):
 def ANY_OF(column, *args):
     """Matching one of the given values.
 
-    'column' value is equal to any of the 'args' values.
+    The column value is equal to any of the args values.
 
     Arguments:
-
-      column -- name of the table column; string
-      args -- 'Value' instances to check for
+      column (str): name of the table column
+      args: `Value` instances to check for
 
     This operator is not primitive - it may be expressed by a combination of
     other operators.
@@ -1432,13 +1401,13 @@ def IN(column_id, data, table_column_id, table_condition, table_arguments=None):
     """Operator testing presence in a subquery.
 
     Arguments:
-
-      column_id -- column id (basestring), the value of which is tested for
-        presence in the subquery
-      data -- 'Data' instance, to perform the subquery on
-      table_column_id -- column id (basestring) in 'data' returning the subquery values
-      table_condition -- condition limiting the selection from 'data'
-      table_arguments -- arguments passed to 'data' (if 'data' is on a table function).
+      column_id (str): column id, the value of which is tested for presence in
+        the subquery
+      data (`Data`): `Data` instance, to perform the subquery on
+      table_column_id (str): column id in data returning the subquery values
+      table_condition: condition limiting the selection from data
+      table_arguments: arguments passed to data (if data is on a table
+        function).
 
     This operator is primitive.
 
@@ -1453,11 +1422,11 @@ def FT(column_id, query):
     """Full text search.
 
     Arguments:
+      column_id (str): column identifier
+      query (str): string containing the PostgreSQL full text search expression
 
-      query -- string containing the PostgreSQL full text search expression
-
-    Using this operator is limited only to search conditions and to one
-    instance of this operator per one condition.
+    Using this operator is limited only to search conditions and to one instance
+    of this operator per one condition.
 
     This is a primitive operator.
 
@@ -1474,9 +1443,8 @@ def LTreeMatch(column_id, match):
     """ltree matching.
 
     Arguments:
-
-      column_id -- column identifier, string
-      match -- lquery, string
+      column_id (str): column identifier
+      match (str): lquery
 
     """
     return Operator('LTreeMatch', column_id, match)
@@ -1486,10 +1454,9 @@ def LTreeAncestor(x, y):
     """ltree comparison: The left an ancestor or equal to the right.
 
     Arguments:
-
-      x -- column identifier as a string
-      y -- column identifier as a string, or a non-NULL ltree value as a
-        'types._Value' instance
+      x (str): column identifier
+      y: column identifier as a string, or a non-NULL ltree value as a Value
+        instance
 
     """
     return Operator('LTreeAncestor', x, y)
@@ -1499,10 +1466,9 @@ def LTreeDescendant(x, y):
     """ltree comparison: The left a descendant or equal to the right.
 
     Arguments:
-
-      x -- column identifier as a string
-      y -- column identifier as a string, or a non-NULL ltree value as a
-        'types._Value' instance
+      x (str): column identifier
+      y: column identifier as a string, or a non-NULL ltree value as a Value
+        instance
 
     """
     return Operator('LTreeDescendant', x, y)
@@ -1512,9 +1478,8 @@ def RangeContains(column, value):
     """Range "contains" operator.
 
     Arguments:
-
-      range_ -- column identifier (string), or an 'OpFunction' value
-      value -- column identifier (string) or 'Value' instance (of a range type)
+      column (str): column identifier, or an `OpFunction` value
+      value: column identifier (string) or `Value` instance (of a range type)
 
     """
     return Operator('RangeContains', column, value)
@@ -1524,9 +1489,8 @@ def RangeContained(column, value):
     """Range "is contained by" operator.
 
     Arguments:
-
-      range_ -- column identifier (string), or an 'OpFunction' value
-      value -- column identifier (string) or 'Value' instance (of a range type)
+      column (str): column identifier, or an `OpFunction` value
+      value: column identifier (string) or `Value` instance (of a range type)
 
     """
     return Operator('RangeContained', column, value)
@@ -1536,9 +1500,8 @@ def RangeOverlap(column, value):
     """Range overlap test.
 
     Arguments:
-
-      range_ -- column identifier (string), or an 'OpFunction' value
-      value -- column identifier (string) or 'Value' instance (of a range type)
+      column (str): column identifier, or an `OpFunction` value
+      value: column identifier (string) or `Value` instance (of a range type)
 
     """
     return Operator('RangeOverlap', column, value)
@@ -1548,10 +1511,9 @@ def FunctionCondition(function, *args):
     """Function call.
 
     Arguments:
-
-      function -- function name as a string
-      args -- function arguments; each of the arguments is either a column
-        identifier as a string or a 'types_.Value' instance.
+      function (str): function name
+      args: function arguments; each of the arguments is either a column
+        identifier as a string or a `Value` instance.
 
     """
     return Operator('Function', function, *args)
@@ -1561,20 +1523,19 @@ def OpFunction(function, *args):
     """Function call to be used in relation operators.
 
     Arguments:
-
-      function -- function name as a string
-      args -- function arguments; each of the arguments is either a column
-        identifier as a string or a 'types_.Value' instance.
+      function (str): function name
+      args: function arguments; each of the arguments is either a column
+        identifier as a string or a `Value` instance.
 
     """
     return Operator('Function', function, *args)
 
 
 def reversed_sorting(sorting):
-    """Vrať specifikaci třídění reverzní ke specifikaci 'sorting'.
+    """Vrať specifikaci třídění reverzní ke specifikaci sorting.
 
     Prvky setříděné dle vrácené hodnoty mají přesně obrácené pořadí než prvky
-    setříděné dle 'sorting'.
+    setříděné dle sorting.
 
     """
     def revspec(spec):
@@ -1600,7 +1561,7 @@ class ColumnSpec(object):
     """Specifikace sloupce tabulkových dat.
 
     Každý sloupec je identifikován svým názvem (string) a typem (instance třídy
-    'types_.Type').  Blíže viz metoda '__init__()'.
+    `Type`).  Blíže viz metoda `__init__`.
 
     Instance třídy jsou považovány za immutable, tudíž je možno je sdílet.
 
@@ -1609,13 +1570,11 @@ class ColumnSpec(object):
     def __init__(self, id, type):
         """Inicializuj specifikaci sloupce.
 
-        Argumenty:
-
-          id -- string identifikující sloupec (název sloupce)
-          type -- typ sloupce, instance třídy 'types_.Type'
-
-        Názvem sloupce může být libovolný řetězec, nedoporučuje se však
-        používat prázdný řetězec jako regulérní název sloupce.
+        Arguments:
+          id (str): string identifikující sloupec (název sloupce). Názvem
+            sloupce může být libovolný řetězec, nedoporučuje se však používat
+            prázdný řetězec jako regulérní název sloupce.
+          type (`Type`): typ sloupce, instance třídy `Type`
 
         """
         assert isinstance(id, basestring), id
@@ -1640,11 +1599,11 @@ class ColumnSpec(object):
         return hash(self._id)
 
     def id(self):
-        """Vrať string identifikující sloupec zadaný v konstruktoru."""
+        """Vrať string identifikující sloupec zadaný v konstruktoru."""
         return self._id
 
     def type(self):
-        """Vrať typ sloupce jako instanci třídy 'types_.Type'."""
+        """Vrať typ sloupce jako instanci třídy `Type`."""
         return self._type
 
 
@@ -1652,34 +1611,32 @@ class ColumnSpec(object):
 class Row(object):
     """Reprezentace jednoho řádku řádkových dat.
 
-    V podstatě se jedná o uspořádaný seznam sloupců (položek) a jejich hodnot.
+    V podstatě se jedná o uspořádaný seznam sloupců (položek) a jejich hodnot.
     Data jsou identifikována buďto svým pořadím, nebo názvem příslušného
-    sloupce.  V prvním případě se na ně lze odkazovat číselným odkazem tak jako
-    u položek seznamů, v druhém případě stringy, tak jako u hash tabulek.
+    sloupce.  V prvním případě se na ně lze odkazovat číselným odkazem tak jako
+    u položek seznamů, v druhém případě stringy, tak jako u hash tabulek.
 
-    Hodnotami sloupců jsou instance třídy 'types_.Value'.
+    Hodnotami sloupců jsou instance třídy `Value`.
 
-    Třída emuluje sekvenci i hash tabulku.  Kromě této emulace třída
-    neposkytuje žádné další metody.  Iniciální data musí být předána
-    v konstruktoru, později lze modifikovat již jen existující sloupce.
-    Mazání sloupců není možné.
+    Třída emuluje sekvenci i hash tabulku.  Kromě této emulace třída neposkytuje
+    žádné další metody.  Iniciální data musí být předána v konstruktoru, později
+    lze modifikovat již jen existující sloupce. Mazání sloupců není možné.
 
     """
 
     def __init__(self, data=()):
         """Inicializuj řádek.
 
-        Argumenty:
+        Arguments:
+          data: sekvence dvouprvkových sekvencí, každá dvouprvková sekvence
+            obsahuje jako svůj první prvek identifikátor sloupce (string) a jako
+            druhý prvek jeho hodnotu (instance třídy `Value`); argument není
+            nutno klíčovat. Příklad:
 
-          data -- sekvence dvouprvkových sekvencí, každá dvouprvková sekvence
-            obsahuje jako svůj první prvek identifikátor sloupce (string) a
-            jako druhý prvek jeho hodnotu (instance třídy 'Value'); argument
-            není nutno klíčovat
-
-        Příklad obsahu 'data':
-
-          (('poradi', Value(Integer.make(), 1)),
-           ('popis', Value(String.make(), 'prvni prvek')))
+        ```
+        (('poradi', Value(Integer.make(), 1)),
+         ('popis', Value(String.make(), 'prvni prvek')))
+        ```
 
         """
         if __debug__:
@@ -1748,22 +1705,23 @@ class Row(object):
         return not self == other
 
     def __len__(self):
-        """Vrať počet sloupců v řádku."""
+        """Vrať počet sloupců v řádku."""
         return len(self._data)
 
     def __getitem__(self, key):
-        """Return the value(s) of column(s) given by 'key'.
+        """Return the value(s) of column(s) given by key.
 
         Arguments:
+          key: must be an existing key (column id as a string or column index as
+            integer) or a slice instance to get multiple column values at once.
 
-          key -- must be an existing key (column id as a string or column index
-            as integer) or a slice instance to get multiple column values at
-            once.
+        Returns:
+          The column value as a `Value` instance if key is a string or integer,
+          or a `Row` instance containing the given subset of values if key is a
+          slice.
 
-        Returns the column value as a 'Value' instance if 'key' is a string or
-        integer or a 'Row' instance containing given subset of values if 'key'is a slice.
-
-        Exception is raised if key refers to unknown column(s).
+        Raises:
+          `KeyError`: if key refers to unknown column(s).
 
         """
         if isinstance(key, slice):
@@ -1772,17 +1730,15 @@ class Row(object):
             return self._data[self._index(key)][1]
 
     def __setitem__(self, key, value):
-        """Set the value of given column 'key' to given 'value'.
+        """Set the value of given column key to given value.
 
         Arguments:
+          key: must be an existing key (column id as a string or column index as
+            integer) or a slice instance to set multiple columns at once.
+          value: new column value as a `Value` instance or a sequence of such
+            values when key is a slice.
 
-          key -- must be an existing key (column id as a string or column index
-            as integer) or a slice instance to set multiple columns at once.
-
-          value -- new column value as a 'types_.Value' instance or a sequence
-            of such values when 'key' is a slice.
-
-        The behavior is undefined if column/columns given by 'key' do not exist.
+        The behavior is undefined if column/columns given by key do not exist.
 
         The change does not propagate to instances which are copies of this
         instance.
@@ -1804,16 +1760,16 @@ class Row(object):
             data[index] = (data[index][0], value)
 
     def __contains__(self, key):
-        """Vrať pravdu, právě když řádek obsahuje sloupec jména 'key'."""
+        """Vrať pravdu, právě když řádek obsahuje sloupec jména key."""
         return key in self.keys()
 
     def has_key(self, key):
         return self.__contains__(key)
 
     def get(self, key, default=None):
-        """Return `key' column value.
+        """Return key column value.
 
-        In case there is no such column, return `default'.
+        In case there is no such column, return default.
 
         """
         try:
@@ -1833,7 +1789,7 @@ class Row(object):
     def items(self):
         """Vrať seznam dvojic [ID, VALUE] odpovídajících všem sloupcům.
 
-        ID je řetězec, VALUE je instance třídy 'types_.Value'.
+        ID je řetězec, VALUE je instance třídy `Value`.
 
         Pořadí dvojic vráceného seznamu je nedefinováno.
 
@@ -1843,32 +1799,32 @@ class Row(object):
     def values(self):
         """Vrať seznam hodnot všech sloupců v jejich pořadí.
 
-        Vrací list hodnot typu 'pytis.data.Value'.
+        Returns:
+          list hodnot typu `Value`.
 
         """
         return [value for key, value in self._data]
 
     def columns(self, keys):
-        """Vrať hodnoty sloupců odpovídající 'keys'.
+        """Vrať hodnoty sloupců odpovídající keys.
 
-        Argumenty:
+        Arguments:
+          keys: sekvence klíčů sloupců, viz též metoda `__getitem__`
 
-          keys -- sekvence klíčů sloupců, viz též metoda '__getitem__()'
-
-        Vrací: tuple hodnot sloupců, jejichž klíče jsou dány argumentem 'keys',
-        v odpovídajícím pořadí.
+        Returns:
+          tuple hodnot sloupců, jejichž klíče jsou dány argumentem keys, v
+          odpovídajícím pořadí.
 
         """
         return tuple([self[k] for k in keys])
 
     def append(self, key, value):
-        """Připoj na konec řádku sloupec 'key' s hodnotou 'value'.
+        """Připoj na konec řádku sloupec key s hodnotou value.
 
-        Argumenty:
-
-          key -- id sloupce jako string, nesmí být shodné s id žádného sloupce
-            v instanci již přítomného
-          value -- hodnota sloupce jako instance třídy 'types_.Value'
+        Arguments:
+          key (str): id sloupce jako string, nesmí být shodné s id žádného
+            sloupce v instanci již přítomného
+          value (`Value`): hodnota sloupce jako instance třídy `Value`
 
         """
         assert isinstance(key, basestring)
@@ -1878,15 +1834,13 @@ class Row(object):
         self._indexes[key] = len(self._data) - 1
 
     def update(self, dict):
-        """Updatuj hodnoty sloupců hodnotami z 'dict'.
+        """Updatuj hodnoty sloupců hodnotami z dict.
 
-        Argumenty:
+        Arguments:
+          dict (dict): slovník klíčovaný názvy sloupců obsahující nové hodnoty
+            pro tyto sloupce jako instance třídy `Value`.
 
-          dict -- slovník klíčovaný názvy sloupců obsahující nové hodnoty pro
-            tyto sloupce jako instance třídy 'types_.Value'.
-
-        Sloupcům v 'dict' neobsaženým zůstanou zachovány jejich původní
-        hodnoty.
+        Sloupcům v dict neobsaženým zůstanou zachovány jejich původní hodnoty.
 
         """
         for k in dict.keys():
@@ -1904,33 +1858,36 @@ class FetchBuffer(object):
     from a data object.  To minimize the communication overhead with the data
     source, the rows are typically read in chunks.
 
-    The items (typically data rows) are retrieved from the buffer using
-    'fetch()'.  If the requested item doesn't exist within the currently cached
-    range, it is automatically retrieved from the data source behind the scenes
-    using the method 'retrieve'
+    The items (typically data rows) are retrieved from the buffer using `fetch`.
+    If the requested item doesn't exist within the currently cached range, it is
+    automatically retrieved from the data source behind the scenes using the
+    method retrieve.
 
     The maximal total number of cached items is limited by the constructor
-    argument 'limit'.  The cache will grow up to this size if fetch requests
-    ask for rows which are near the currently cached range (up to 'fetch_size'
-    in distance).  If the newly requested item isn't in the reach of the
-    currently cached items, the cache is emptied and recreated.
+    argument limit.  The cache will grow up to this size if fetch requests ask
+    for rows which are near the currently cached range (up to fetch_size in
+    distance).  If the newly requested item isn't in the reach of the currently
+    cached items, the cache is emptied and recreated.
 
     """
 
     def __init__(self, retrieve, limit=1000, initial_fetch_size=100, fetch_size=50):
-        """Arguments:
+        """Initialize the fetch buffer.
 
-        retrieve -- Function retrieving buffer items from data source.  Must be
-          a function of two arguments (position, count).  Both arguments are
-          integers, where 'position' is the position of the first item to
-          retrieve numbered from zero and 'count' is the total number of items
-          to retrieve.  The function must return a list of items to store in
-          the buffer.  The number of returned items may be lower than requested
-          if the data source doesn't have any more data at given positions.
-        limit -- The maximal total number of items kept in the cache.
-        initial_fetch_size -- Number of items to fetch at once in the first
-          request (when the buffer is empty).
-        fetch_size -- Number of items to fetch at once in subsequent requests.
+        Arguments:
+          retrieve (callable): Function retrieving buffer items from the data
+            source.  Must be a function of two arguments (position, count). Both
+            arguments are integers, where position is the position of the first
+            item to retrieve numbered from zero and count is the total number of
+            items to retrieve.  The function must return a list of items to
+            store in the buffer.  The number of returned items may be lower than
+            requested if the data source doesn't have any more data at given
+            positions.
+          limit (int): The maximal total number of items kept in the cache.
+          initial_fetch_size (int): Number of items to fetch at once in the
+            first request (when the buffer is empty).
+          fetch_size (int): Number of items to fetch at once in subsequent
+            requests.
 
         """
         assert limit > fetch_size and limit > initial_fetch_size
@@ -1983,7 +1940,7 @@ class FetchBuffer(object):
     def position(self):
         """Return the current buffer position as int.
 
-        The position may point outside the currenty buffered data or even
+        The position may point outside the currently buffered data or even
         outside the source data range.
 
         """
@@ -1995,9 +1952,8 @@ class FetchBuffer(object):
         Moves buffer position relatively to the current position.
 
         Arguments:
-
-          count -- number of items to skip
-          direction -- One of the constants 'FORWARD'/'BACKWARD'
+          count (int): number of items to skip
+          direction: one of the constants FORWARD/BACKWARD
 
         """
         if direction == FORWARD:
@@ -2055,16 +2011,17 @@ class FetchBuffer(object):
         """Return buffer item from given position.
 
         Arguments:
-          position -- either an absolute position as int or a direction (one of
-            'FORWARD', 'BACKWARD').  When int, buffer pointer is moved to given
+          position: either an absolute position as int or a direction (one of
+            FORWARD, BACKWARD).  When int, buffer pointer is moved to given
             position and the item at given position is returned.  If direction,
-            buffer pointer is incremented (on 'FORWARD') or decremented (on
-            'BACKWARD') and the item from the new position is returned.
+            buffer pointer is incremented (on FORWARD) or decremented (on
+            BACKWARD) and the item from the new position is returned.
 
-        If the item at the requested position is not present in the buffer, it
-        is automatically retrieved from the data source and returned.  'None'
-        is returned if the data source doesn't contain any data at the
-        requested position.
+        Returns:
+          None if the data source doesn't contain any data at the requested
+          position.  If the item at the requested position is not present in the
+          buffer, it is automatically retrieved from the data source and
+          returned.
 
         Buffer position is updated in any case (set to given absolute position
         or incremented/decremented when fetching forward/backward).
@@ -2117,10 +2074,10 @@ class FetchBuffer(object):
 class DataFactory(object):
     """Factory na tvorbu datových objektů dle zadané specifikace.
 
-    V konstruktoru třídy jsou zadány parametry datového objektu, jehož instance
-    lze posléze vytvářet pomocí metody 'create()'.  Hlavní místo použití této
+    V konstruktoru třídy jsou zadány parametry datového objektu, jehož instance
+    lze posléze vytvářet pomocí metody `create`.  Hlavní místo použití této
     třídy jsou specifikační soubory načítané resolverem.  Resolver získá ze
-    statických specifikací instanci factory a s její pomocí pak na vyžádání, po
+    statických specifikací instanci factory a s její pomocí pak na vyžádání, po
     případném doplnění dynamických specifikací, vytváří instance datových
     objektů.
 
@@ -2135,15 +2092,14 @@ class DataFactory(object):
         return class_(*args, **kwargs)
 
     def __init__(self, class_, *args, **kwargs):
-        """Inicializuj instanci
+        """Inicializuj instanci.
 
-        Argumenty:
-
-          class_ -- třída 'Data' nebo její podtřída
-          args -- tuple argumentů, které mají být při vytváření instance
-            předány konstruktoru třídy 'class_'
-          kwargs -- dictionary klíčovaných argumentů, které mají být při
-            vytváření instance předány konstruktoru třídy 'class_'
+        Arguments:
+          class_: třída `Data` nebo její podtřída
+          args: tuple argumentů, které mají být při vytváření instance předány
+            konstruktoru třídy class_
+          kwargs: dictionary klíčovaných argumentů, které mají být při vytváření
+            instance předány konstruktoru třídy class_
 
         """
         assert issubclass(class_, Data)
@@ -2170,15 +2126,15 @@ class DataFactory(object):
         """Vytvoř a vrať novou instanci datového objektu.
 
         Instance je vytvořena dle specifikace třídy a argumentů jejího
-        konstruktoru zadaných v '__init__()'.
+        konstruktoru zadaných v `__init__`.
 
-        Argumenty:
+        Arguments:
+          kwargs: dictionary klíčovaných argumentů, které mají být dodatečně
+            předány konstruktoru datové třídy.  Je-li některý argument zadán zde
+            i v `__init__`, tak vyšší prioritu má ten zdejší.
 
-          kwargs -- dictionary klíčovaných argumentů, které mají být dodatečně
-            předány konstruktoru datové třídy.  Je-li některý argument zadán
-            zde i v '__init__()', tak vyšší prioritu má ten zdejší.
-
-        Tato metoda vrací vždy zbrusu novou instanci datové třídy.
+        Returns:
+          Tato metoda vrací vždy zbrusu novou instanci datové třídy.
 
         """
         _kwargs = copy.copy(self._kwargs)

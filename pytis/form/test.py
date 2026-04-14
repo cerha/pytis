@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2025 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2026 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2005 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -40,12 +40,11 @@ from pytis.data.test import DBTest, connector, dbconnection, execute
 from pytis.remote.test import interactive
 
 connection_data = {'database': 'test'}
-
 """Non-interactive tests of pytis.form (the wx application).
 
 Run this test in local mode like:
 
-  pytest pytis/form/test.py -v --disable-warnings
+pytest pytis/form/test.py -v --disable-warnings
 
 or in remote mode similarly through a Pytis2Go terminal.
 
@@ -360,9 +359,8 @@ class TestApp(DBTest):
     within its environment.  It may be useful for testing fetures which require
     the wx Application to exist.
 
-    To debug:
-    gdb python (in the appropriate venv)
-    (gdb) run -m pytest pytis/form/test.py::TestApp -v --disable-warnings
+    To debug: gdb python (in the appropriate venv) (gdb) run -m pytest
+    pytis/form/test.py::TestApp -v --disable-warnings
 
     """
     def test_api_form(self):

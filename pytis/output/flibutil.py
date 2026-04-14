@@ -29,27 +29,26 @@ _FONT_STEP = 1.2
 
 
 def f_larger(*contents):
-    """Nechť 'contents' je vysázeno fontem větší velikosti vzhledem k okolí."""
+    """Nechť `contents` je vysázeno fontem větší velikosti vzhledem k okolí."""
     return pytis.output.FontSize(_FONT_STEP, *contents)
 
 
 def f_smaller(*contents):
-    """Nechť 'contents' je vysázeno fontem menší velikosti vzhledem k okolí."""
+    """Nechť `contents` je vysázeno fontem menší velikosti vzhledem k okolí."""
     return pytis.output.FontSize(1.0 / _FONT_STEP, *contents)
 
 
 def f_table(*data, **kwargs):
     """Jednoduchá tabulka.
 
-    Argumenty:
+    Jedná se o zcela jednoduchou tabulku s automaticky zarovnanými sloupci,
+    nepřesahující velikost stránky.
 
-      data -- neprázdná sekvence neprázdných sekvencí, odpovídá řádkům (vnější
+    Arguments:
+      *data: neprázdná sekvence neprázdných sekvencí, odpovídá řádkům (vnější
         sekvence) formátovaným do sloupců (vnitřní sekvence); všechny vnitřní
         sekvence musí mít stejnou délku
-      kwargs -- argumenty předané konstruktoru třídy 'Table'
-
-    Jedná se o zcela jednoduchou tabulku s automaticky zarovnanými sloupci,
-    nepřesahující velikost stránky.
+      **kwargs: argumenty předané konstruktoru třídy `Table`
 
     """
     column_spec = pytis.output.Table.Column(alignment=pytis.output.Table.Column.ALIGN_LEFT)

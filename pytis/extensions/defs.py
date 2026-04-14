@@ -35,10 +35,9 @@ def get_form_defs(resolver=None, messages=None):
     """Return sequence of names of all public form specifications in the application.
 
     Arguments:
-
-      resolver -- resolver to use when exploring application definitions modules
-      messages -- list to use for adding notification messages about the
-        specification lookup; or 'None'
+      resolver: resolver to use when exploring application definitions modules
+      messages: list to use for adding notification messages about the
+        specification lookup; or None
 
     """
     assert resolver is None or isinstance(resolver, Resolver), resolver
@@ -136,10 +135,10 @@ class MenuChecker(object):
     _codebook_form_users_ = None
 
     def __init__(self, spec_name_prefix=None):
-        """
-        Arguments:
+        """Initialize the checker.
 
-          spec_name_prefix -- if not None then only specification with given
+        Arguments:
+          spec_name_prefix: if not None then only specifications with given
             prefix (basestring) are tested
 
         """
@@ -414,7 +413,8 @@ class DevelChecker(MenuChecker):
 def check_form():
     """Show report for user selected specification.
 
-    BEWARE: This function is referred from DMP identifiers of existing applications:
+    BEWARE: This function is referred from DMP identifiers of existing
+    applications:
 
     'handle/pytis.extensions.defs.check_form/'
 
@@ -458,7 +458,8 @@ def check_form():
 def check_menus_defs():
     """Check all specifications present in application menu interactively.
 
-    BEWARE: This function is referred from DMP identifiers of existing applications:
+    BEWARE: This function is referred from DMP identifiers of existing
+    applications:
 
     'handle/pytis.extensions.defs.check_menus_defs/'
 
@@ -470,7 +471,8 @@ def check_menus_defs():
 def check_access_rights():
     """Check access rights of all specifications present in application menu.
 
-    BEWARE: This function is referred from DMP identifiers of existing applications:
+    BEWARE: This function is referred from DMP identifiers of existing
+    applications:
 
     'handle/pytis.extensions.defs.check_access_rights/'
 

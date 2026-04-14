@@ -24,9 +24,9 @@ jednak definují formátování a jednak umožňují vkládat externí data do
 dokumentu.  Jsou používány v definičních souborech výstupních sestav.
 
 Každá veřejná třída modulu odpovídá formátovací značce použitelné v definici
-dokumentu.  Kromě těchto tříd je ještě možno používat obyčejné řetězce, které
-budou vloženy tak, jak jsou, včetně mezer a odřádkování, a sekvence obsahující
-elementy ke spojení dohromady.
+dokumentu.  Kromě těchto tříd je ještě možno používat obyčejné řetězce,
+které budou vloženy tak, jak jsou, včetně mezer a odřádkování, a sekvence
+obsahující elementy ke spojení dohromady.
 
 """
 from __future__ import print_function
@@ -83,7 +83,9 @@ class _Mark(object):
 
     def lcg(self):
         """Return LCG content corresponding to the mark and its content.
-        The return value is an 'lcg.Content' instance.
+
+        The return value is an `lcg.Content` instance.
+
         """
         if self._lcg_result is None:
             self._lcg_result = self._lcg()
@@ -105,9 +107,8 @@ class _Container(_Mark):
     def __init__(self, *contents, **kwargs):
         """Definuj odstavec.
 
-        Argumenty:
-
-          contents -- obsah odstavce, značky a řetězce
+        Arguments:
+          *contents: obsah odstavce, značky a řetězce
 
         """
         super(_Container, self).__init__()
@@ -147,8 +148,8 @@ class Null(_Mark):
 class Nbsp(_Mark):
     """Značka reprezentující znak nezalomitelné mezery.
 
-    Tento znak lze zapsat i v obyčejném stringovém zápisu textu jako ' '.
-    Značka slouží jako alternativní forma zápisu.
+    Tento znak lze zapsat i v obyčejném stringovém zápisu textu jako ' '. Značka
+    slouží jako alternativní forma zápisu.
 
     """
 
@@ -236,13 +237,11 @@ class VSpace(_Space):
     def __init__(self, height):
         """Inicializuj instanci.
 
-        Argumenty:
-
-          height -- požadovaná výška objektu v milimetrech, nezáporné číslo;
-            může být i instance 'lcg.Unit';
-            může být též 'None', v kterémžto případě objekt bude mít největší
-            rozumnou výšku, přičemž \"největší rozumná výška\" není nijak
-            exaktně definována
+        Arguments:
+          height: požadovaná výška objektu v milimetrech, nezáporné číslo; může
+            být i instance `lcg.Unit`; může být též None, v kterémžto případě
+            objekt bude mít největší rozumnou výšku, přičemž \"největší rozumná
+            výška\" není nijak exaktně definována
 
         """
         super(VSpace, self).__init__(height, VERTICAL)
@@ -254,13 +253,11 @@ class HSpace(_Space):
     def __init__(self, width):
         """Inicializuj instanci.
 
-        Argumenty:
-
-          width -- požadovaná šířka objektu v milimetrech, nezáporné číslo;
-            může být i instance 'lcg.Unit';
-            může být též 'None', v kterémžto případě objekt bude mít největší
-            rozumnou šířku, přičemž \"největší rozumná šířka\" není nijak
-            exaktně definována
+        Arguments:
+          width: požadovaná šířka objektu v milimetrech, nezáporné číslo; může
+            být i instance `lcg.Unit`; může být též None, v kterémžto případě
+            objekt bude mít největší rozumnou šířku, přičemž \"největší rozumná
+            šířka\" není nijak exaktně definována
 
         """
         super(HSpace, self).__init__(width, HORIZONTAL)
@@ -270,15 +267,16 @@ class HLine(_Mark):
     """Značka horizontální čáry vyplňující celý dostupný prostor."""
 
     def __init__(self, thickness=None, color=None, **kwargs):
-        """Arguments:
+        """Inicializuj instanci.
 
-        thickness -- Thickness of the line as 'lcg.Unit' or None for the
-          default thickness.  May be also passed directly as int or float which
-          will be automatically converted to 'UMm' (milimeters).
-        color -- line color as 'lcg.Color' or None for the (media dependent)
-          default color.  May be also passed directly as HTML string or a tuple
-          of ints or floats which will be automatically converted to 'Color'
-          instance with given constructor argument(s).
+        Arguments:
+          thickness: Thickness of the line as `lcg.Unit` or None for the default
+            thickness.  May be also passed directly as int or float which will
+            be automatically converted to `lcg.UMm` (milimeters).
+          color: line color as `lcg.Color` or None for the (media dependent)
+            default color.  May be also passed directly as HTML string or a
+            tuple of ints or floats which will be automatically converted to
+            `Color` instance with given constructor argument(s).
 
         """
         self._thickness = self._dimension(thickness)
@@ -351,17 +349,16 @@ class PageNumber(_Mark):
     def __init__(self, total=False):
         """Inicializuj instanci.
 
-        Argumenty:
-
-          total -- právě když je pravdivé, uveď kromě aktuální stránky
-            i celkový počet stran
+        Arguments:
+          total: právě když je pravdivé, uveď kromě aktuální stránky i celkový
+            počet stran
 
         """
         super(PageNumber, self).__init__()
         self._total = total
 
     def total(self):
-        """Vrať hodnotu argumentu 'total' z konstruktoru."""
+        """Vrať hodnotu argumentu `total` z konstruktoru."""
         return self._total
 
     def _lcg(self):
@@ -413,12 +410,10 @@ class FontSize(_Container):
     def __init__(self, size, *contents):
         """Definuj text.
 
-        Argumenty:
-
-          size -- float určující relativní velikost fontu vzhledem
-            k aktuálnímu, na daném místě použitému fontu; 1.0 značí shodnou
-            velikost
-          contents -- značky, na které je změna velikosti fontu aplikována
+        Arguments:
+          size: float určující relativní velikost fontu vzhůledem k aktuálnímu,
+            na daném místě použitému fontu; 1.0 značí shodnou velikost
+          *contents: značky, na které je změna velikosti fontu aplikována
 
         """
         super(FontSize, self).__init__(*contents)
@@ -450,10 +445,9 @@ class FontFamily(_Container):
     def __init__(self, family, *contents):
         """Definuj text.
 
-        Argumenty:
-
-          family -- jedna z konstant této třídy určující rodinu použitého fontu
-          contents -- značky, na které je změna velikosti fontu aplikována
+        Arguments:
+          family: jedna z konstant této třídy určující rodinu použitého fontu
+          *contents: značky, na které je změna velikosti fontu aplikována
 
         """
         super(FontFamily, self).__init__(*contents)
@@ -549,57 +543,58 @@ class HGroup(_Group):
     """Group of horizontally arranged items.
 
     Unlike when multiple items are grouped simply into a tuple, this element
-    allows specification of various parameters how the items are arranged:
+    allows specification of various parameters how the items are arranged.
 
-      boxed -- iff true, the group will have a box around
-      box_margin -- space between the box and the content as 'Unit' instance or None
-      box_width -- box line width as 'Unit' instance or None
-      box_color -- box line color as 'Color' instance.  May be also passed
+    All arguments which accept a `Unit` instance may be also given directly as
+    int or float which will be automatically converted to `lcg.UMm` (given
+    dimension in millimeters).
+
+    Arguments:
+      *contents: items to group
+      boxed: iff true, the group will have a box around
+      box_margin: space between the box and the content as `Unit` instance or
+        None
+      box_width: box line width as `Unit` instance or None
+      box_color: box line color as `Color` instance.  May be also passed
         directly as HTML string or a tuple of ints or floats which will be
-        automatically converted to 'Color' instance with given constructor
+        automatically converted to `Color` instance with given constructor
         argument(s).
-      box_radius -- if not None and not 0, box corners will be rounded
-        with given radius as 'Unit' instance
-      box_mask -- Mask of visible box sides as a sequence of 4 bools (top,
-        right, bottom, left) or None for all sides visible.
-      width -- explicit output width as 'Unit' instance or None for default
+      box_radius: if not None and not 0, box corners will be rounded with given
+        radius as `Unit` instance
+      box_mask: mask of visible box sides as a sequence of 4 bools (top, right,
+        bottom, left) or None for all sides visible.
+      width: explicit output width as `Unit` instance or None for default
         sizing.  Applies to the outer dimension of the whole box including any
         padding and/or box_margin.
-      height -- explicit output width as 'Unit' instance or None for default
+      height: explicit output height as `Unit` instance or None for default
         sizing.  Applies to the outer dimension of the whole box including any
         padding and/or box_margin.
-      padding -- space around group contents.  This space is added to
-        box_margin for a boxed group, but there are major differences between
-        box_margin and padding.  Box margin only applies to boxed groups and is
-        ignored for non boxed groups.  Padding applies to both.  Box margin is
-        inherited to any inner boxed groups which don't explicitly override it.
-        Padding only applies to the group for which it is defined.  Morover,
-        padding can be set differently for each side using 'padding_top',
-        'padding_bottom', 'padding_left', 'padding_right'.  None or 'Unit'
+      padding: space around group contents.  This space is added to box_margin
+        for a boxed group, but there are major differences between box_margin
+        and padding.  Box margin only applies to boxed groups and is ignored for
+        non boxed groups.  Padding applies to both.  Box margin is inherited to
+        any inner boxed groups which don't explicitly override it.  Padding only
+        applies to the group for which it is defined. Moreover, padding can be
+        set differently for each side using padding_top, padding_bottom,
+        padding_left, padding_right.  None or `Unit` instance.
+      padding_top: overrides padding for the top side.
+      padding_bottom: overrides padding for the bottom side.
+      padding_left: overrides padding for the left side.
+      padding_right: overrides padding for the right side.
+      spacing: space between the individual group items. None or `Unit`
         instance.
-      padding_top -- overrides 'padding' for the top side.
-      padding_bottom -- overrides 'padding' for the bottom side.
-      padding_left -- overrides 'padding' for the left side.
-      padding_right -- overrides 'padding' for the right side.
-      spacing -- space between the individual group items. None or 'Unit'
-        instance.
-      balance -- není-li 'None', jedná se o tuple o počtu prvků shodném
-        s počtem prvků skupiny, udávající vzájemný poměr velikostí pořadím
-        odpovídajících prvků.  Velikost prvků ve směru orientace skupiny
-        (horizontální nebo vertikální) bude patřičně upravena, velikost prvků
-        s udaným poměrem 0 zůstane nezměněna.  V LCG tisku není tento argument
-        podporován.
-      halign -- horizontal alignment of group items.  One of LEFT, RIGHT, CENTER.
-      valign -- vertical alignment of group items.  One of TOP, BOTTOM, MIDDLE.
-      color -- text color as a 'Color' instance.  May be also passed directly
-        as HTML string or a tuple of ints or floats which will be automatically
-        converted to 'Color' instance with given constructor argument(s).
-      background -- background color as a 'Color' instance, string or tuple (as
-        for 'color').
-
-    All argumentrs which accept a Unit instance may be also given directly as
-    int or float which will be automatically converted to Umm (given dimension
-    in mimimeters).
+      balance: není-li None, jedná se o tuple o počtu prvků shodném s počtem
+        prvků skupiny, udávající vzájemný poměr velikostí pořadím odpovídajících
+        prvků.  Velikost prvků ve směru orientace skupiny (horizontální nebo
+        vertikální) bude patřičně upravena, velikost prvků s udaným poměrem 0
+        zůstane nezměněna.  V LCG tisku není tento argument podporován.
+      halign: horizontal alignment of group items.  One of LEFT, RIGHT, CENTER.
+      valign: vertical alignment of group items.  One of TOP, BOTTOM, MIDDLE.
+      color: text color as a `Color` instance.  May be also passed directly as
+        HTML string or a tuple of ints or floats which will be automatically
+        converted to `Color` instance with given constructor argument(s).
+      background: background color as a `Color` instance, string or tuple (as
+        for color).
 
     """
 
@@ -635,22 +630,21 @@ class Document(_Container):
     Stránky uvnitř dokumentu mají své vlastní číslování počínaje od 1.  Pomocí
     této značky lze vytvořit \"několik dokumentů v jednom\".
 
-    Tato značka smí být použita pouze jako značka obalující celý obsah
-    dokumentu nebo jako značka všech prvků sekvence definující kompletní obsah
-    dokumentu.  Není-li značka použita vůbec, je jí celý dokument obalen
-    automaticky.
+    Tato značka smí být použita pouze jako značka obalující celý obsah dokumentu
+    nebo jako značka všech prvků sekvence definující kompletní obsah dokumentu.
+    Není-li značka použita vůbec, je jí celý dokument obalen automaticky.
 
-    Značce lze předat následující argumenty:
-
-      page_header -- značky specifikující hlavičku každé stránky nebo 'None'
+    Arguments:
+      *contents: obsah dokumentu
+      page_header: značky specifikující hlavičku každé stránky nebo None
         indikující implicitní hlavičku stránky danou specifikační funkcí
-        'page_header'
-      page_footer -- značky specifikující patičku každé stránky nebo 'None'
+        `page_header`
+      page_footer: značky specifikující patičku každé stránky nebo None
         indikující implicitní patičku stránky danou specifikační funkcí
-        'page_footer'
-      first_page_header -- značky specifikující hlavičku první stránky nebo
-        'None' indikující hlavičku stránky danou specifikační funkcí
-        'first_page_header'
+        `page_footer`
+      first_page_header: značky specifikující hlavičku první stránky nebo None
+        indikující hlavičku stránky danou specifikační funkcí
+        `first_page_header`
 
     """
     KWARGS = {'page_header': None,
@@ -661,11 +655,10 @@ class Document(_Container):
     _counter = pytis.util.Counter()
 
     def lcg_document(self, **kwargs):
-        """Return the document(s) as an 'lcg.ContentNode' instance.
+        """Return the document(s) as an `lcg.ContentNode` instance.
 
         Arguments:
-
-          kwargs -- kwargs to pass to 'lcg.ContentNode' constructor
+          **kwargs: kwargs to pass to `lcg.ContentNode` constructor
 
         """
         def arg(definition):
@@ -689,7 +682,7 @@ class Document(_Container):
 class Table(_Mark):
     """Nejvýše jednostránková tabulka s předpřipravenými daty.
 
-    Pro formátování větších tabulek lze použít značku 'LongTable'.
+    Pro formátování větších tabulek lze použít značku `LongTable`.
 
     """
     class Column(object):
@@ -706,17 +699,16 @@ class Table(_Mark):
                      label_alignment=ALIGN_CENTER):
             """Inicializuj instanci.
 
-            Argumenty:
-
-              label -- záhlaví sloupce, formátovací element; smí být též
-                'None', v kterémžto případě sloupec nemá žádné záhlaví a
-                nemá-li žádný sloupec záhlaví, nebude záhlaví vůbec generováno
-              width -- šířka sloupce ve znacích, přirozené číslo nebo 'None'
+            Arguments:
+              label: záhlaví sloupce, formátovací element; smí být též None,
+                v kterémžto případě sloupec nemá žádné záhlaví a nemá-li žádný
+                sloupec záhlaví, nebude záhlaví vůbec generováno
+              width: šířka sloupce ve znacích, přirozené číslo nebo None
                 (v kterémžto případě je šířka sloupce určena automaticky)
-              alignment -- způsob zarovnání obsahu sloupce, jedna z 'ALIGN_*'
+              alignment: způsob zarovnání obsahu sloupce, jedna z `ALIGN_*`
                 konstant třídy
-              label_alignment -- způsob zarovnání hlavičky sloupce, jedna z 'ALIGN_*'
-                konstant třídy
+              label_alignment: způsob zarovnání hlavičky sloupce, jedna
+                z `ALIGN_*` konstant třídy
 
             """
             self.label = label
@@ -727,22 +719,19 @@ class Table(_Mark):
     def __init__(self, columns, *data, **kwargs):
         """Inicializuj instanci.
 
-        Argumenty:
-
-          columns -- sekvence instancí třídy 'Table.Column', musí mít
-            nejméně 1 a nejvýše 26 prvků
-          data -- neprázdná sekvence neprázdných sekvencí, odpovídá řádkům
+        Arguments:
+          columns: sekvence instancí třídy `Table.Column`, musí mít nejméně 1 a
+            nejvýše 26 prvků
+          *data: neprázdná sekvence neprázdných sekvencí, odpovídá řádkům
             (vnější sekvence) formátovaným do sloupců (vnitřní sekvence);
             všechny vnitřní sekvence musí mít délku shodnou s délkou argumentu
-            'columns'.  Místo vnitřní sekvence smí být kdekoliv 'None', na
-            takovém místě bude místo řádku tabulky vygenerována horizontální
-            čára.
-          vmargin (jako klíčovaný argument) -- je-li 'None', je mezi řádky
-            tabulky ponechána implicitní mezera; je-li 0, není mezi řádky
-            tabulky žádná mezera; jiné hodnoty argumentu nejsou povoleny
-          compact (jako klíčovaný argument) -- If True, suppress default
-            padding in all table cells (including headings).  Use containers to
-            add custom padding.
+            `columns`.  Místo vnitřní sekvence smí být kdekoli None, na takovém
+            místě bude místo řádku tabulky vygenerována horizontální čára.
+          vmargin: je-li None, je mezi řádky tabulky ponechána implicitní
+            mezera; je-li 0, není mezi řádky tabulky žádná mezera; jiné hodnoty
+            argumentu nejsou povoleny
+          compact: if True, suppress default padding in all table cells
+            (including headings).  Use containers to add custom padding.
 
         """
         vmargin, compact = kwargs.pop('vmargin', None), kwargs.pop('compact', False)
@@ -762,15 +751,15 @@ class Table(_Mark):
         return self._columns
 
     def data(self):
-        """Vrať obsah argumentu 'data' zadaného v '__init__()'."""
+        """Vrať obsah argumentu `data` zadaného v `__init__`."""
         return self._data
 
     def vmargin(self):
-        """Vrať hodnotu argumentu 'vmargin' zadaného v '__init__()'."""
+        """Vrať hodnotu argumentu `vmargin` zadaného v `__init__`."""
         return self._vmargin
 
     def compact(self):
-        """Vrať hodnotu argumentu 'compact' zadanou v '__init__()'."""
+        """Vrať hodnotu argumentu `compact` zadanou v `__init__`."""
         return self._compact
 
     def _lcg_presentation(self):
@@ -839,22 +828,21 @@ class Table(_Mark):
 class LongTable(Table):
     """Tabulka, potenciálně vícestránková.
 
-    Tabulka je dána svými sloupci a funkcí generující její řádky.  Délka
-    tabulky není omezena, překročí-li tabulka hranice stránky, pokračuje na
-    stránkách další, přičemž na každé další stránce je uvozena stejnou
-    hlavičkou jako na svém začátku.
+    Tabulka je dána svými sloupci a funkcí generující její řádky.  Délka tabulky
+    není omezena, překročí-li tabulka hranice stránky, pokračuje na stránkách
+    další, přičemž na každé další stránce je uvozena stejnou hlavičkou jako na
+    svém začátku.
 
-    Pro krátké tabulky s víceméně fixním počtem řádků lze použít značku
-    'Table'.
+    Pro krátké tabulky s víceméně fixním počtem řádků lze použít značku `Table`.
 
     """
     class Column(Table.Column):
         """Specifikační třída sloupce dlouhé tabulky."""
 
         def __init__(self, label, width, **kwargs):
-            """Stejné jako v předkovi až na argumenty 'label' a 'width'.
+            """Stejné jako v předkovi až na argumenty `label` a `width`.
 
-            Argumenty 'label' a 'width' jsou povinné a nesmí být 'None'.
+            Argumenty `label` a `width` jsou povinné a nesmí být `None`.
 
             """
             Table.Column.__init__(self, label, width, **kwargs)
@@ -865,25 +853,24 @@ class LongTable(Table):
                  compact=False):
         """Inicializuj instanci.
 
-        Argumenty:
-
-          columns -- sekvence instancí třídy 'LongTable.Column', musí mít
-            nejméně 1 a nejvýše 26 prvků
-          row_generator -- funkce generující řádky datové tabulky.  Funkce je
+        Arguments:
+          columns: sekvence instancí třídy `LongTable.Column`, musí mít nejméně
+            1 a nejvýše 26 prvků
+          row_generator: funkce generující řádky datové tabulky.  Funkce je
             opakovaně volána, bez argumentů, a musí vždy vrátit nový řádek
             tabulky, v podobě sekvencí formátovacích elementů odpovídajících
-            sloupcům tabulky, včetně pořadí.  Pokud funkce vrátí 'None', je
+            sloupcům tabulky, včetně pořadí.  Pokud funkce vrátí None, je
             tabulka ukončena.
-          row_generator_init -- funkce volaná bez argumentů před prvním voláním
-            'row_generator', nebo 'None'
-          separator_height -- tloušťka oddělovací čáry mezi záhlavím tabulky a
-            jejími řádky v bodech, jako float nebo 'Unit'
-          line_separator_height -- tloušťka oddělovací čáry za každým řádkem
-            tabulky v bodech, jako float nebo 'Unit'
-          separator_margin -- vzdálenost oddělovací čáry záhlaví tabulky od
-            záhlaví v bodech, jako float nebo 'Unit'
-          line_separator_margin -- vzdálenost oddělovací čáry od každého řádku
-            tabulky v bodech, jako float nebo 'Unit'
+          row_generator_init: funkce volaná bez argumentů před prvním voláním
+            `row_generator`, nebo None
+          separator_height: tloušťka oddělovací čáry mezi záhlavím tabulky a
+            jejími řádky v bodech, jako float nebo `Unit`
+          line_separator_height: tloušťka oddělovací čáry za každým řádkem
+            tabulky v bodech, jako float nebo `Unit`
+          separator_margin: vzdálenost oddělovací čáry záhlaví tabulky od
+            záhlaví v bodech, jako float nebo `Unit`
+          line_separator_margin: vzdálenost oddělovací čáry od každého řádku
+            tabulky v bodech, jako float nebo `Unit`
 
         """
         super(LongTable, self).__init__(columns, compact=compact)
@@ -910,7 +897,7 @@ class LongTable(Table):
         return self._row_generator
 
     def row_generator_init(self):
-        """Vrať argument 'row_generator_init' metody '__init__()'."""
+        """Vrať argument `row_generator_init` metody `__init__`."""
         return self._row_generator_init
 
     def separator_height(self):
@@ -958,20 +945,21 @@ class Image(_Mark):
     """EPS image."""
 
     def __init__(self, file_or_data, standalone=True, width=None, height=None):
-        """Arguments:
+        """Initialize the image mark.
 
-          file_or_data -- image file name relative to the directory given by
-            configuration option 'print_spec_dir' or image as memory data
+        Arguments:
+          file_or_data: image file name relative to the directory given by
+            configuration option `print_spec_dir` or image as memory data
             (bytes).
-          width -- explicit output image width as lcg.Unit subclass instance.
-            If only one of width/height is specified (not None), the other
+          width: explicit output image width as `lcg.Unit` subclass instance. If
+            only one of width/height is specified (not None), the other
             dimension is computed to maintain the original image proportions.
-          height -- output image height as lcg.Unit subclass instance.  See
-            also 'width'.
-          standalone -- if True, the image is drawn separately.  If False, the
+          height: output image height as `lcg.Unit` subclass instance. See also
+            `width`.
+          standalone: if True, the image is drawn separately.  If False, the
             image is embedded within the surrounding paragraph text (if any).
             When inside paragraph (standalone is False) and size is not given
-            explicitly through 'width' and/or 'height' the output image may be
+            explicitly through `width` and/or `height` the output image may be
             resized automatically to fit inside the current context.
 
         """
@@ -1034,9 +1022,10 @@ class StructuredText(_Mark):
     _ITERATOR_MATCHER = re.compile(r'\|([^|]*\${(?:data\.|[^}]+\.(?:data|codebook)\.))')
 
     def __init__(self, text):
-        """Arguments:
+        """Initialize the structured text mark.
 
-          text -- the structured text; basestring
+        Arguments:
+          text: the structured text; basestring
 
         """
         super(StructuredText, self).__init__()
