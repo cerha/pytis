@@ -16,19 +16,8 @@ import socket
 import sys
 import time
 
-try:
-    import importlib.util as _importlib_util
-    def _load_module(name, path):
-        spec = _importlib_util.spec_from_file_location(name, path)
-        mod = _importlib_util.module_from_spec(spec)
-        spec.loader.exec_module(mod)
-        return mod
-except ImportError:
-    import imp  # Python 2
-    def _load_module(name, path):
-        return imp.load_source(name, path)
-
 import pytis.remote
+from pytis.remote.client import AuthError, RemoteError, ServiceClient
 
 
 def report(message):
@@ -68,20 +57,6 @@ def _connect_rpyc(password, port):
 
 
 def _connect_json(password, port):
-    client_py = os.path.join(os.path.dirname(os.path.abspath(pytis.remote.__file__)), 'client.py')
-    report("Loading JSON client from: %s" % client_py)
-    if not os.path.exists(client_py):
-        report("ERROR: client.py not found at %s" % client_py)
-        report("Make sure the pytis installation on this server includes client.py.")
-        return None
-    try:
-        mod = _load_module('pytis_remote_client', client_py)
-    except Exception as e:
-        report("ERROR loading client.py: %s: %s" % (type(e).__name__, e))
-        return None
-    ServiceClient = mod.ServiceClient
-    AuthError = mod.AuthError
-    RemoteError = mod.RemoteError
     client = ServiceClient(password)
     try:
         client.connect('localhost', port)

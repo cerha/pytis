@@ -37,6 +37,7 @@ import time
 import pytis
 from pytis.api import app
 from pytis.util import OPERATIONAL, log, translations
+from .client import FileProxy, ServiceClient
 
 _ = translations('pytis-wx')
 
@@ -394,20 +395,8 @@ def _connect_rpyc(password, port):
 
 
 def _connect_json(password, port):
-    import importlib.util
-    client_py = os.path.join(os.path.dirname(__file__), 'client.py')
-    log(OPERATIONAL, "JSON: connecting to localhost:{} via {}".format(port, client_py))
-    _spec = importlib.util.spec_from_file_location(
-        'pytis_remote_client',
-        client_py,
-    )
-    if _spec is None:
-        raise ImportError("client.py not found at: {}".format(client_py))
-    _mod = importlib.util.module_from_spec(_spec)
-    _spec.loader.exec_module(_mod)
-    ServiceClient = _mod.ServiceClient
-    RPCInfo.file_proxy_class = _mod.FileProxy
-
+    log(OPERATIONAL, "JSON: connecting to localhost:{}.".format(port))
+    RPCInfo.file_proxy_class = FileProxy
     client = ServiceClient(password)
     client.connect('localhost', port)
     RPCInfo.connection = client

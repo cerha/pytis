@@ -13,18 +13,6 @@ Usage:
 
 from __future__ import print_function
 
-try:
-    import importlib.util as _importlib_util
-    def _load_module(name, path):
-        spec = _importlib_util.spec_from_file_location(name, path)
-        mod = _importlib_util.module_from_spec(spec)
-        spec.loader.exec_module(mod)
-        return mod
-except ImportError:
-    import imp  # Python 2
-    def _load_module(name, path):
-        return imp.load_source(name, path)
-
 import json
 import os
 import socket
@@ -34,6 +22,7 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import pytis.remote
+from pytis.remote.client import AuthError, FileProxy, ServiceClient
 
 
 # ---------------------------------------------------------------------------
@@ -255,20 +244,10 @@ def connect():
         pytis.remote.write_python_version()
 
     if protocol == 'json':
-        client_py = os.path.join(
-            os.path.dirname(os.path.abspath(pytis.remote.__file__)), 'client.py'
-        )
-        if not os.path.exists(client_py):
-            print('ERROR: client.py not found at {}'.format(client_py))
-            sys.exit(1)
-
-        mod = _load_module('pytis_remote_client', client_py)
-        _mod = mod
-
-        client = mod.ServiceClient(password)
+        client = ServiceClient(password)
         try:
             client.connect('localhost', port)
-        except mod.AuthError as e:
+        except AuthError as e:
             print('ERROR: Authentication failed: {}'.format(e))
             sys.exit(1)
         except socket.error as e:
@@ -276,7 +255,7 @@ def connect():
             sys.exit(1)
 
         _raw_client = client
-        _adapter = _JsonAdapter(client, mod.FileProxy)
+        _adapter = _JsonAdapter(client, FileProxy)
 
     else:  # rpyc
         try:
