@@ -69,7 +69,7 @@ class ClientInfo(object):
     client_version = None
     display = None
 
-    # Values initialized through remote call (exposed_client_info in clientapi).
+    # Values initialized through remote call (client_info in clientapi).
     os_name = None
     os_version = None
     backend_name = None
@@ -195,7 +195,7 @@ def client_info():
 
 
 def connection_protocol():
-    """Return the active RPC protocol as 'rpyc', 'json', or None if not connected."""
+    """Return the active RPC protocol as 'rpyc', 'json', or `None` if not connected."""
     access_data = RPCInfo.access_data or _read_x2go_info_file()
     if access_data:
         return access_data.get('protocol', 'rpyc')
@@ -372,10 +372,10 @@ def _connect_rpyc(password, port):
                           "Your current version will stop working soon."))
     else:
         # We may be just reconnecting to a previously extended service instance.
-        if 'PytisClientAPIService' not in connection.root.extensions():
+        if 'RPyCPytisClientAPIService' not in connection.root.extensions():
             with open(os.path.join(os.path.dirname(__file__), 'clientapi.py')) as f:
                 clientapi = f.read()
-            error = connection.root.extend(clientapi, 'PytisClientAPIService')
+            error = connection.root.extend(clientapi, 'RPyCPytisClientAPIService')
             if error:
                 log(OPERATIONAL, "Client API push failed:", error)
             else:
@@ -404,28 +404,21 @@ def _connect_json(password, port):
     RPCInfo.client_api_pushed = False
     log(OPERATIONAL, "JSON client connection {} ({}) established.".format(
         RPCInfo.connection_order, RPCInfo.access_data_version))
-    # Push server-side handlers (session_password, GPG wrappers, etc.)
-    if 'session_password' not in client.request('extensions'):
-        with open(os.path.join(os.path.dirname(__file__), 'client_handlers.py')) as f:
-            handlers_code = f.read()
-        result = client.request('push_code', code=handlers_code)
-        if isinstance(result, str) and result.startswith('error:'):
-            log(OPERATIONAL, "Client handlers push failed:", result)
+    # Push the client API — same mechanism as RPyC's exposed_extend(), just
+    # over JSON.  The pytis2go service imports `PytisClientAPIService`'s public
+    # methods into its own MRO via __class__ rebinding; those methods become
+    # dispatchable as protocol actions.  No separate UI-backend setup step is
+    # needed: the pushed service creates the platform `ClientUIBackend` lazily
+    # in its `__getattr__` on first access.
+    if 'PytisClientAPIService' not in client.request('extensions'):
+        with open(os.path.join(os.path.dirname(__file__), 'clientapi.py')) as f:
+            clientapi = f.read()
+        error = client.request('extend', code=clientapi, class_name='PytisClientAPIService')
+        if error:
+            log(OPERATIONAL, "Client API push failed:", error)
         else:
-            log(OPERATIONAL, "Client handlers pushed successfully.")
+            log(OPERATIONAL, "Client API pushed successfully.")
             RPCInfo.client_api_pushed = True
-    # Push clientapi.py to replace the Stub UI backend with a real wx/zenity backend.
-    # clientapi.py is on the server; it is designed to run on the client (pytis2go)
-    # which has the GUI libraries available — same mechanism as RPyC's exposed_extend().
-    clientapi_path = os.path.join(os.path.dirname(__file__), 'clientapi.py')
-    if os.path.exists(clientapi_path):
-        with open(clientapi_path) as f:
-            clientapi_code = f.read()
-        result = client.request('setup_ui_backend', code=clientapi_code)
-        if isinstance(result, str) and result.startswith('error:'):
-            log(OPERATIONAL, "UI backend setup failed: %s" % result)
-        else:
-            log(OPERATIONAL, "UI backend set to: %s" % result)
     try:
         client_info = json.loads(client.request('client_info'))
     except Exception as e:
@@ -439,7 +432,7 @@ def _connect_json(password, port):
 
 
 def _make_file_proxy(result, mode):
-    """Wrap a JSON file-handle dict in a FileProxy for the JSON protocol."""
+    """Wrap a JSON file-handle dict in a `FileProxy` for the JSON protocol."""
     if result is None:
         return None
     cls = RPCInfo.file_proxy_class

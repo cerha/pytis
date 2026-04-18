@@ -9,6 +9,7 @@ Tests all non-interactive handlers automatically; interactive handlers
 
 Usage:
     python tools/test_handlers.py [--interactive]
+
 """
 
 from __future__ import print_function
@@ -83,10 +84,11 @@ def ok(condition, msg='condition is False'):
 # ---------------------------------------------------------------------------
 
 class _JsonAdapter:
-    """Adapter over ServiceClient providing a protocol-neutral file/service API.
+    """Adapter over `ServiceClient` providing a protocol-neutral file/service API.
 
-    File operations return FileProxy instances; binary data is transparently
+    File operations return `FileProxy` instances; binary data is transparently
     base64-encoded in transit so callers just pass and receive plain bytes.
+
     """
 
     def __init__(self, client, FileProxy_class):
@@ -102,9 +104,6 @@ class _JsonAdapter:
     def client_info(self):
         return self._c.request('client_info')
 
-    def session_password(self):
-        return self._c.request('session_password')
-
     def get_clipboard_text(self):
         return self._c.request('get_clipboard_text')
 
@@ -119,12 +118,6 @@ class _JsonAdapter:
 
     def select_directory(self, **kw):
         return self._c.request('select_directory', **kw)
-
-    def enter_text(self, **kw):
-        return self._c.request('enter_text', **kw)
-
-    def select_option(self, **kw):
-        return self._c.request('select_option', **kw)
 
     def launch_file(self, path):
         return self._c.request('launch_file', path=path)
@@ -150,10 +143,11 @@ class _JsonAdapter:
 
 
 class _RpycAdapter:
-    """Adapter over an RPyC connection providing the same interface as _JsonAdapter.
+    """Adapter over an RPyC connection providing the same interface as `_JsonAdapter`.
 
     File operations return RPyC NetRef proxies which are file-like objects;
     binary I/O works directly with bytes (no base64).
+
     """
 
     def __init__(self, conn):
@@ -164,10 +158,6 @@ class _RpycAdapter:
 
     def client_info(self):
         return str(self._conn.root.client_info())
-
-    def session_password(self):
-        result = self._conn.root.session_password()
-        return str(result) if result is not None else None
 
     def get_clipboard_text(self):
         text = self._conn.root.get_clipboard_text()
@@ -185,14 +175,6 @@ class _RpycAdapter:
 
     def select_directory(self, **kw):
         result = self._conn.root.select_directory(**kw)
-        return str(result) if result is not None else None
-
-    def enter_text(self, **kw):
-        result = self._conn.root.enter_text(**kw)
-        return str(result) if result is not None else None
-
-    def select_option(self, **kw):
-        result = self._conn.root.select_option(**kw)
         return str(result) if result is not None else None
 
     def launch_file(self, path):
@@ -300,59 +282,38 @@ def req(action, **kwargs):
     return _raw_client.request(action, **kwargs)
 
 
-def push_handlers():
-    """Push server-side handler code to the client. Protocol-aware."""
+def push_client_api():
+    """Push clientapi.py to the pytis2go service.  Protocol-aware."""
     remote_dir = os.path.dirname(os.path.abspath(pytis.remote.__file__))
+    clientapi_py = os.path.join(remote_dir, 'clientapi.py')
+    if not os.path.exists(clientapi_py):
+        print('  WARNING: clientapi.py not found at {}'.format(clientapi_py))
+        return False
+    with open(clientapi_py) as f:
+        code = f.read()
 
     if _protocol == 'json':
-        extensions = req('extensions')
-        if 'session_password' in extensions:
-            print('  (client_handlers already active, {} extensions)'.format(len(extensions)))
+        class_name = 'PytisClientAPIService'
+        if class_name in req('extensions'):
+            print('  ({} already active)'.format(class_name))
             return True
-
-        handlers_py = os.path.join(remote_dir, 'client_handlers.py')
-        if not os.path.exists(handlers_py):
-            print('  WARNING: client_handlers.py not found at {}'.format(handlers_py))
-            return False
-
-        with open(handlers_py) as f:
-            code = f.read()
-        result = req('push_code', code=code)
-        if isinstance(result, str) and result.startswith('error:'):
-            print('  WARNING: push_code failed:\n{}'.format(result))
-            return False
-        print('  (client_handlers pushed: {} extensions active)'.format(len(result)))
-
-        # Push clientapi.py to replace the Stub UI backend with a real wx/zenity backend.
-        clientapi_py = os.path.join(remote_dir, 'clientapi.py')
-        if os.path.exists(clientapi_py):
-            with open(clientapi_py) as f:
-                clientapi_code = f.read()
-            result = req('setup_ui_backend', code=clientapi_code)
-            if isinstance(result, str) and result.startswith('error:'):
-                print('  WARNING: setup_ui_backend failed: {}'.format(result))
-            else:
-                print('  (UI backend: {})'.format(result))
-        return True
-
-    else:  # rpyc
-        conn = _raw_client
-        if 'PytisClientAPIService' in list(conn.root.extensions()):
-            print('  (PytisClientAPIService already active)')
-            return True
-
-        clientapi_py = os.path.join(remote_dir, 'clientapi.py')
-        if not os.path.exists(clientapi_py):
-            print('  WARNING: clientapi.py not found at {}'.format(clientapi_py))
-            return False
-
-        with open(clientapi_py) as f:
-            code = f.read()
-        error = conn.root.extend(code, 'PytisClientAPIService')
+        error = req('extend', code=code, class_name=class_name)
         if error:
             print('  WARNING: extend() failed:\n{}'.format(error))
             return False
-        print('  (PytisClientAPIService pushed)')
+        print('  ({} pushed)'.format(class_name))
+        return True
+    else:  # rpyc
+        class_name = 'RPyCPytisClientAPIService'
+        conn = _raw_client
+        if class_name in list(conn.root.extensions()):
+            print('  ({} already active)'.format(class_name))
+            return True
+        error = conn.root.extend(code, class_name)
+        if error:
+            print('  WARNING: extend() failed:\n{}'.format(error))
+            return False
+        print('  ({} pushed)'.format(class_name))
         return True
 
 
@@ -411,8 +372,10 @@ def test_rpyc_protocol():
         print('       extensions={}'.format(exts))
     test('extensions', t_extensions)
 
-    # client_info is provided by PytisClientAPIService (pushed in push_handlers)
-    if 'PytisClientAPIService' in list(conn.root.extensions()):
+    # client_info is provided by the pushed PytisClientAPIService / RPyCPytisClientAPIService.
+    api_names = ('RPyCPytisClientAPIService', 'PytisClientAPIService')
+    exts = list(conn.root.extensions()) if _protocol == 'rpyc' else req('extensions')
+    if any(name in exts for name in api_names):
         def t_client_info():
             info = json.loads(_adapter.client_info())
             ok('os_name' in info, 'missing os_name in {!r}'.format(info))
@@ -421,7 +384,7 @@ def test_rpyc_protocol():
                 info.get('os_name'), info.get('python_version')))
         test('client_info', t_client_info)
     else:
-        skip('client_info', 'PytisClientAPIService not pushed')
+        skip('client_info', 'client API not pushed')
 
 
 def test_clipboard():
@@ -536,26 +499,6 @@ def test_run_python():
     test('run_python exit(42)', t_exit42)
 
 
-def test_pushed_handlers():
-    print('\n--- Pushed handlers ---')
-
-    extensions = _adapter.extensions()
-    pushed = ('session_password' in extensions if _protocol == 'json'
-              else 'PytisClientAPIService' in extensions)
-
-    if not pushed:
-        skip('session_password', 'handlers not active')
-        return
-
-    def t_session_password():
-        result = _adapter.session_password()
-        ok(result is None or isinstance(result, str),
-           'expected str or None, got {!r}'.format(result))
-        print('       session_password={}'.format(
-            repr(result) if result is None else '***({} chars)'.format(len(result))))
-    test('session_password', t_session_password)
-
-
 def test_interactive():
     print('\n--- Interactive tests (user action required) ---')
 
@@ -575,23 +518,6 @@ def test_interactive():
         ok(result is not None, 'dialog was cancelled or failed')
         print('       selected: {}'.format(result))
     test('select_directory', t_select_dir)
-
-    def t_enter_text():
-        print('    -> TYPE exactly "pytis-ok" in the dialog and click OK...')
-        result = _adapter.enter_text(title='test_handlers', label='Type "pytis-ok":')
-        eq(result, 'pytis-ok')
-    test('enter_text', t_enter_text)
-
-    def t_select_option():
-        print('    -> SELECT the second option ("beta") in the list dialog...')
-        result = _adapter.select_option(
-            title='test_handlers',
-            label='Select "beta":',
-            columns=['Name', 'Value'],
-            data=[['alpha', '1'], ['beta', '2'], ['gamma', '3']],
-            return_column=1)
-        eq(result, 'beta')
-    test('select_option', t_select_option)
 
     def t_open_selected():
         print('    -> SELECT any file in the open dialog...')
@@ -637,7 +563,7 @@ def main():
         pytis.remote.parse_x2go_info_file(
             pytis.remote.pytis_x2go_info_file()).get('port', '?')))
 
-    push_handlers()
+    push_client_api()
 
     if protocol == 'json':
         test_json_protocol()
@@ -647,7 +573,6 @@ def main():
     test_clipboard()
     test_file_io()
     test_run_python()
-    test_pushed_handlers()
 
     if interactive:
         test_interactive()

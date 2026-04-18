@@ -16,24 +16,61 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""This module defines the Client RPyC service API.
+"""Pytis client-side API, pushed to Pytis2Go at connect time.
 
-The service providing this API runs on the client which runs pytis
-application remotely through X2Go using the Pytis2Go client.  The service
-allows the Pytis application running on the server to perform certain tasks
-on the client machine, such as open local file through a GUI file dialog and
-pass that file to the server.  It simply attempts to transparently provide
-the functionality which is not directly available due to the fact that the
-application is running on a remote server.
+This module is the single source of truth for the API that a Pytis application
+calls on the user's machine through a Pytis2Go session — file dialogs,
+clipboard, GPG-aware file I/O, launching files in associated applications.
 
-This module is actually not part of the Pytis Python module.  It is not
-imported (executed) by Pytis on the server.  It is only read as a file and
-pushed to the Pytis2Go client which executes this code.  It comes with
-Pytis, because it defines the functionality consumed by Pytis.  The remote
-functions defined in remote.py rely on the API defined here so it belongs
-here to keep the API in sync with the consumer expectations.  This also
-means that the dependencies of this module don't need to be installed on the
-application server, but on the client machine running Pytis2Go.
+Pytis runs on a remote server; the actions have to happen on the user's local
+machine, so Pytis2Go hosts a small service and this module is pushed to it
+over the connection.  Pytis2Go itself provides **only infrastructure** —
+authentication, transport, a file-handle registry, an ``extend`` primitive.
+Every API method a Pytis application ever calls is defined here.  Adding or
+changing a method is a one-sided change: edit this file, restart Pytis; the
+next connect picks up the new code.  Pytis2Go does not need to be touched or
+re-released.
+
+This module is NOT imported by Pytis at runtime — it is only read as a file
+and pushed to Pytis2Go where it is exec'd.  Its imports (``rpyc``, platform
+GUI libraries, etc.) therefore do not need to exist on the application server,
+only on the client machine running Pytis2Go.
+
+Naming convention
+-----------------
+
+Methods that are callable from Pytis over the wire carry the ``exposed_``
+prefix.  RPyC's attribute-lookup machinery requires it; Pytis2Go's JSON
+`ClientService.dispatch` also looks up ``exposed_`` + action, so the same
+prefix serves both protocols.  The prefix is a **wire-level** marker — plain
+Python names on the class (e.g. ``__init__`` or an internal helper) remain
+callable from Python code in the usual way but are never reachable from the
+wire.
+
+Two protocols, one source
+-------------------------
+
+`PytisClientAPIService` holds all the API logic.  Its dispatchable methods
+are prefixed ``exposed_`` and return plain values — including `FileWrapper`
+for file-factory methods.
+
+Thin per-protocol adapters sit on top:
+
+- `RPyCPytisClientAPIService(PytisClientAPIService, rpyc.Service)` adds
+  `rpyc.Service` to the bases (required for RPyC's ``exposed_*`` attribute
+  dispatch) and overrides `_open_file` to wrap the result in
+  `ExposedFileWrapper` so the returned object carries RPyC-aware ``exposed_*``
+  file-operation methods as a NetRef.
+
+- For JSON, `PytisClientAPIService` is pushed unchanged.  Pytis2Go's JSON
+  `ClientService.dispatch` resolves ``action`` to ``exposed_`` + action, and
+  detects `FileWrapper` returns via the `FileWrapper._pytis_file_wrapper`
+  marker, registering them in its file-handle registry and converting the
+  reply to ``{'handle': id, 'path': name}``.
+
+This mirrors the long-standing RPyC design — one API definition, pushed via
+``extend`` — on the new JSON protocol.  Adding a new client API method is a
+single change to `PytisClientAPIService`; both protocols pick it up.
 
 """
 from __future__ import print_function
@@ -851,13 +888,43 @@ class PyZenityUIBackend(ClipboardUIBackend):
             return None
 
 
-class ExposedFileWrapper(object):
-    """Exposed file like object.
+class FileWrapper(object):
+    """Protocol-neutral file-like wrapper returned by factory methods.
 
-    This class makes it possible to open files across the remote connection. The
-    file resides on the client machine, but the server may access it.
+    Factory methods on `PytisClientAPIService` (`exposed_open_file`,
+    `exposed_open_selected_file`, `exposed_make_selected_file`,
+    `exposed_make_temporary_file`) return an instance of this class.  The
+    object is a plain file-like; how it crosses the wire depends on the
+    protocol:
+
+    - **RPyC**.  The RPyC subclass `RPyCPytisClientAPIService` overrides
+      `_open_file` to return `ExposedFileWrapper` instead — a subclass that
+      adds ``exposed_*`` aliases and NetRef-to-bytes coercion.  RPyC returns
+      that object to pytis as a NetRef proxy through which the usual
+      ``read`` / ``write`` / … calls work transparently.
+
+    - **JSON**.  The base class returns `FileWrapper` directly.  Pytis2Go's
+      `ClientService.dispatch` detects the ``_pytis_file_wrapper`` class
+      marker on the return value, registers the instance in its file-handle
+      registry via ``svc.alloc_handle(name, self)``, and replies with
+      ``{'handle': id, 'path': name}`` instead of the raw object.
+      Subsequent ``exposed_file_read`` / ``exposed_file_write`` / … actions
+      operate on the registered instance through the handle.
+
+    Both paths preserve the same semantics of the underlying file object
+    (including GPG encryption/decryption hooks — see ``__init__``).  The
+    RPyC-specific NetRef-to-bytes coercion lives in `ExposedFileWrapper`
+    only; the JSON side never sees a NetRef.
 
     """
+
+    _pytis_file_wrapper = True
+    """Duck-typing marker used by pytis2go's JSON dispatch to recognise a
+    factory result and convert it to a handle dict.  The class attribute
+    is inherited by `ExposedFileWrapper` (harmless — RPyC does not read
+    it).  See `pytis2go.service.protocol._is_file_like_result`.
+    """
+
     def __init__(self, filename, mode='r', handle=None, encoding=None,
                  encrypt=None, decrypt=False):
         """Initialize the instance.
@@ -908,7 +975,11 @@ class ExposedFileWrapper(object):
         return self
 
     def __exit__(self, exc_type, exc_value, exc_tb):
-        self.exposed_close()
+        self.close()
+
+    @property
+    def mode(self):
+        return getattr(self._f, 'mode', '')
 
     def _decode(self, data):
         # TODO: Remove when Python 2 support not needed and pass encoding to open().
@@ -917,44 +988,38 @@ class ExposedFileWrapper(object):
         return data
 
     @property
-    def exposed_name(self):
+    def name(self):
         return self._filename
 
-    def exposed_read(self, *args, **kwargs):
+    def read(self, *args, **kwargs):
         return self._decode(self._f.read(*args, **kwargs))
 
-    def exposed_readline(self):
+    def readline(self):
         return self._decode(self._f.readline())
 
-    def exposed_readlines(self):
+    def readlines(self):
         lines = self._f.readlines()
         if self._encoding is not None:
             lines = [self._decode(l) for l in lines]
         return lines
 
-    def exposed_write(self, data):
-        if sys.version_info[0] == 2 and isinstance(data, buffer):
+    def write(self, data):
+        if sys.version_info[0] == 2 and isinstance(data, buffer):  # noqa: F821
             data = data[:]
         elif self._encoding is not None and self._decrypted is None:
             data = data.encode(self._encoding)
-        if ((sys.version_info[0] > 2 and (isinstance(self._f, io.BytesIO) or 'b' in self._f.mode)
-             and not isinstance(data, (bytes, bytearray, memoryview)))):
-            # Although pytis.data.Binary.Data is derived from bytes, over RPyC it
-            # may arrive as a netref and file.write() complains:
-            # a bytes-like object is required, not 'pytis.data.types_.Data'
-            data = data[:]
         self._f.write(data)
 
-    def exposed_seek(self, *args, **kwargs):
+    def seek(self, *args, **kwargs):
         return self._f.seek(*args, **kwargs)
 
-    def exposed_flush(self):
+    def flush(self):
         return self._f.flush()
 
-    def exposed_fileno(self, *args, **kwargs):
+    def fileno(self, *args, **kwargs):
         return self._f.fileno(*args, **kwargs)
 
-    def exposed_close(self):
+    def close(self):
         if self._decrypted is not None:
             encrypted = self._f.getvalue()
             if encrypted:
@@ -966,7 +1031,113 @@ class ExposedFileWrapper(object):
         self._f.close()
 
 
-class PytisClientAPIService(rpyc.Service):
+class ExposedFileWrapper(FileWrapper, rpyc.Service):
+    """RPyC adapter for `FileWrapper`.
+
+    RPyC routes method calls via ``exposed_*`` attribute lookup on the netref
+    target.  This subclass aliases every public `FileWrapper` method as
+    ``exposed_<name>`` and also overrides `exposed_write` to add NetRef-to-
+    bytes coercion (see comment there for rationale).
+
+    RPyC 3.4.x (and later) uses ``allow_exposed_attrs=True`` in its default
+    connection config, which makes it look up ``exposed_<name>`` automatically
+    when ``<name>`` is requested over the wire.  Providing the full set of
+    ``exposed_*`` aliases here is therefore sufficient for all supported RPyC
+    versions.  Pre-3.4 RPyC used a simpler ``allow_getattr`` check that allowed
+    plain attribute access directly, so those versions work too.
+
+    """
+
+    @property
+    def exposed_name(self):
+        return self.name
+
+    def exposed_read(self, *args, **kwargs):
+        return self.read(*args, **kwargs)
+
+    def exposed_readline(self):
+        return self.readline()
+
+    def exposed_readlines(self):
+        return self.readlines()
+
+    def exposed_write(self, data):
+        # Although pytis.data.Binary.Data is derived from bytes, over RPyC it
+        # may arrive as a netref and file.write() complains:
+        # a bytes-like object is required, not 'pytis.data.types_.Data'.
+        # Coerce netrefs to bytes before the base write.
+        if ((sys.version_info[0] > 2
+             and (isinstance(self._f, io.BytesIO) or 'b' in getattr(self._f, 'mode', ''))
+             and not isinstance(data, (bytes, bytearray, memoryview)))):
+            data = data[:]
+        self.write(data)
+
+    def exposed_seek(self, *args, **kwargs):
+        return self.seek(*args, **kwargs)
+
+    def exposed_flush(self):
+        return self.flush()
+
+    def exposed_fileno(self, *args, **kwargs):
+        return self.fileno(*args, **kwargs)
+
+    def exposed_close(self):
+        return self.close()
+
+
+class PytisClientAPIService(object):
+    """Protocol-neutral client API service — the whole API lives here.
+
+    ``exposed_*`` methods on this class define every action that pytis calls
+    on the user's machine over the remote connection.  This class is pushed
+    to the pytis2go service at connect time via the ``extend`` action; the
+    pushed methods become dispatchable just like built-in infrastructure
+    methods on the pytis2go side.
+
+    Pytis2go ships only infrastructure (auth, transport, file-handle
+    registry, ``extend``) and carries none of this API surface itself —
+    that is what keeps pytis2go releases independent of pytis releases.
+    Edit this class, restart pytis, the next connect picks up the change.
+
+    **To add a new client-side API method**: define an ``exposed_<name>``
+    method here, that's it.  No pytis2go change is needed.
+
+    Naming convention — three namespaces, same as `ClientService` on the
+    pytis2go side:
+
+    - ``exposed_<name>`` — dispatchable as a protocol action on both
+      protocols.  RPyC looks up the prefixed name as part of its
+      attribute-dispatch protocol; pytis2go's JSON `ClientService.dispatch`
+      resolves ``exposed_`` + action to the same name.  The prefix is a
+      wire-level marker, nothing more.
+
+    - plain name (no prefix) — public Python method callable from inside
+      the class or from a subclass (e.g. `RPyCPytisClientAPIService`).
+      Not reachable over the wire.
+
+    - ``_<name>`` — class-private by Python convention.  The lazy
+      `ClientUIBackend` held on ``self._client`` and the GPG helpers
+      `_encrypt` / `_decrypt` / `_open_file` live here.
+
+    The RPyC path uses the thin `RPyCPytisClientAPIService` subclass
+    (defined further down) which adds `rpyc.Service` to the bases and
+    overrides `_open_file` to wrap factory results in `ExposedFileWrapper`
+    for NetRef transport.  The JSON path pushes this class unchanged.
+
+    File factory methods (`exposed_open_file`, `exposed_open_selected_file`,
+    `exposed_make_selected_file`, `exposed_make_temporary_file`) return a
+    `FileWrapper` instance.  Over RPyC the subclass overrides `_open_file` and
+    `exposed_make_temporary_file` to return `ExposedFileWrapper`; over JSON,
+    pytis2go's dispatch detects `FileWrapper` via its `_pytis_file_wrapper`
+    marker and converts the response to a file-handle dict — see `FileWrapper`
+    for details.
+
+    The UI backend (`ClientUIBackend` subclass for the platform) is created
+    lazily on first attribute access via `__getattr__`, the same mechanism
+    the RPyC-only version used.  Neither protocol needs an explicit setup
+    step.
+
+    """
 
     def __getattr__(self, name):
         if name == '_client':
@@ -1032,9 +1203,9 @@ class PytisClientAPIService(rpyc.Service):
             return None
 
     def _open_file(self, filename, mode, encoding, encrypt=None, decrypt=False):
-        return ExposedFileWrapper(filename, mode=mode, encoding=encoding,
-                                  encrypt=self._encrypt(encrypt),
-                                  decrypt=self._decrypt(decrypt))
+        return FileWrapper(filename, mode=mode, encoding=encoding,
+                           encrypt=self._encrypt(encrypt),
+                           decrypt=self._decrypt(decrypt))
 
     def exposed_client_info(self):
         os_name = platform.system()
@@ -1192,7 +1363,7 @@ class PytisClientAPIService(rpyc.Service):
     def exposed_make_temporary_file(self, suffix='', encoding=None, mode='wb', decrypt=False):
         """Create a temporary file and return its instance.
 
-        The return value is an `ExposedFileWrapper` instance.
+        The return value is a `FileWrapper` instance.
 
         Arguments:
           suffix (str): Suffix to use in the temporary file name; if a dot
@@ -1204,8 +1375,8 @@ class PytisClientAPIService(rpyc.Service):
 
         """
         handle, filename = tempfile.mkstemp(prefix='pytistmp', suffix=suffix)
-        return ExposedFileWrapper(filename, handle=handle, encoding=encoding, mode=mode,
-                                  decrypt=self._decrypt(decrypt))
+        return FileWrapper(filename, handle=handle, encoding=encoding, mode=mode,
+                           decrypt=self._decrypt(decrypt))
 
     def exposed_select_directory(self, directory=None, title=u"Výběr adresáře"):
         return self._client.select_directory(directory=directory, title=title)
@@ -1241,6 +1412,47 @@ class PytisClientAPIService(rpyc.Service):
         return self._client.select_file(filename=filename, directory=directory, title=title,
                                         patterns=patterns, pattern=pattern,
                                         save=save, multi=multi)
+
+
+class RPyCPytisClientAPIService(PytisClientAPIService, rpyc.Service):
+    """RPyC adapter for `PytisClientAPIService`.
+
+    `PytisClientAPIService` already names its dispatchable methods with the
+    ``exposed_`` prefix that RPyC's attribute lookup expects, so for most
+    methods this subclass needs only to add `rpyc.Service` to the bases.
+
+    All file-factory methods must return `ExposedFileWrapper` (a `FileWrapper`
+    subclass that adds ``exposed_*`` aliases and the NetRef-to-bytes coercion in
+    ``exposed_write``) so that factory return values travel back to the pytis
+    side as RPyC NetRefs that support attribute access.  On JSON the base
+    returns plain `FileWrapper`, which pytis2go's `ClientService.dispatch`
+    converts into a handle dict via its ``_pytis_file_wrapper`` marker.
+
+    RPyC 3.4.x uses ``allow_exposed_attrs=True`` (default) and
+    ``allow_public_attrs=False`` (default).  With these settings CALLATTR
+    'close' on a plain `FileWrapper` (no ``exposed_close``) fails because
+    `_check_attr` finds no exposed alias and falls through to raise
+    ``AttributeError("cannot access 'close'")``.  Returning `ExposedFileWrapper`
+    (which defines ``exposed_close``, ``exposed_write``, etc.) fixes this.
+
+    No API logic lives here.  The real API is in `PytisClientAPIService`.
+
+    """
+
+    def _open_file(self, filename, mode, encoding, encrypt=None, decrypt=False):
+        return ExposedFileWrapper(filename, mode=mode, encoding=encoding,
+                                  encrypt=self._encrypt(encrypt),
+                                  decrypt=self._decrypt(decrypt))
+
+    def exposed_make_temporary_file(self, suffix='', encoding=None, mode='wb', decrypt=False):
+        # Override the base implementation to return ExposedFileWrapper instead
+        # of plain FileWrapper.  The base method creates the file via
+        # tempfile.mkstemp() directly (not through _open_file), so it must be
+        # overridden here to ensure the RPyC NetRef carries the exposed_* aliases
+        # that allow attribute access through the connection.
+        handle, filename = tempfile.mkstemp(prefix='pytistmp', suffix=suffix)
+        return ExposedFileWrapper(filename, handle=handle, encoding=encoding, mode=mode,
+                                  decrypt=self._decrypt(decrypt))
 
 
 class PasswordAuthenticator(object):

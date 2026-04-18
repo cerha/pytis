@@ -7,6 +7,7 @@ Reads the pytis X2Go info file and tests the connection to the pytis2go
 service (RPyC or JSON protocol, auto-detected from the info file).
 
 Run this on the X2Go server inside an active pytis2go session.
+
 """
 
 from __future__ import print_function

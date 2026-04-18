@@ -14,25 +14,25 @@
 
 """Client connector for the JSON-over-TCP pytis2go service.
 
-This module replaces the RPyC-based 'Connector' in remote.py.  It speaks the
-protocol defined in pytis2go/service/protocol.py:
+This module replaces the RPyC-based `Connector` in remote.py.  It speaks the
+protocol defined in pytis2go/service/protocol.py.
 
-  Authentication (raw bytes)
-  --------------------------
-  1. Server -> Client : 64 random hex bytes  (server challenge)
-  2. Client -> Server : 64-byte client challenge
-                      + 64-byte SHA-256 hex of XOR(password, client_challenge)
-  3. Server -> Client : 64-byte SHA-256 hex of XOR(password, server_challenge)
+**Authentication** (raw bytes):
 
-  JSON framing (after auth)
-  -------------------------
-  Request:  {"id": N, "action": "NAME", ...params...}  + newline
-  Response: {"id": N, "result": VALUE}                  + newline
-         or {"id": N, "error": "MSG", "traceback": "..."}
+1. Server sends 64 random hex bytes (server challenge).
+2. Client sends 64-byte client challenge + SHA-256 hex of
+   XOR(password, client_challenge).
+3. Server sends SHA-256 hex of XOR(password, server_challenge).
 
-'ServiceClient' multiplexes concurrent requests over a single connection using
-per-request ID queues.  'FileProxy' provides a file-like interface backed by a
+**JSON framing** (after auth): each message is a newline-terminated JSON
+object.  Request: {"id": N, "action": "NAME", ...params...}.  Response:
+{"id": N, "result": VALUE} on success, or {"id": N, "error": "MSG",
+"traceback": "..."} on failure.
+
+`ServiceClient` multiplexes concurrent requests over a single connection using
+per-request ID queues.  `FileProxy` provides a file-like interface backed by a
 remote file handle ID.
+
 """
 
 import base64
@@ -83,7 +83,8 @@ class _ClientAuth:
     def authenticate(self, sock):
         """Perform client-side mutual auth against a connected socket.
 
-        Raises AuthError on failure.
+        Raises `AuthError` on failure.
+
         """
         server_challenge = _recv_exactly(sock, _CHALLENGE_LEN)
         client_challenge = self._challenge()
@@ -111,8 +112,9 @@ class ServiceClient:
     """Thread-safe JSON-over-TCP client for the pytis2go service.
 
     One instance covers one logical session (connection + optional reconnection).
-    Multiple threads may call 'request()' concurrently; each gets its own
+    Multiple threads may call `request` concurrently; each gets its own
     response queue keyed by the auto-incremented request ID.
+
     """
 
     def __init__(self, password):
@@ -133,7 +135,8 @@ class ServiceClient:
         """Open a connection to the service and authenticate.
 
         May be called again after a disconnect to reconnect.
-        Raises AuthError or OSError on failure.
+        Raises `AuthError` or `OSError` on failure.
+
         """
         sock = socket.create_connection((host, port), timeout=10)
         sock.settimeout(None)
@@ -169,7 +172,8 @@ class ServiceClient:
         """Send a request and block until the response arrives.
 
         Returns the 'result' value on success.
-        Raises RemoteError (with error message) on failure.
+        Raises `RemoteError` (with error message) on failure.
+
         """
         with self._lock:
             if self._sock is None:
@@ -199,12 +203,12 @@ class ServiceClient:
     # ------------------------------------------------------------------
 
     def open_file(self, path, mode, encoding=None):
-        """Open a remote file and return a FileProxy."""
+        """Open a remote file and return a `FileProxy`."""
         result = self.request('open_file', path=path, mode=mode, encoding=encoding)
         return FileProxy(self, result['handle'], result['path'], mode)
 
     def open_selected_file(self, directory=None, patterns=(), pattern=None, encrypt=None):
-        """Show a file-open dialog on the client; return FileProxy or None."""
+        """Show a file-open dialog on the client; return `FileProxy` or `None`."""
         result = self.request('open_selected_file', directory=directory,
                               patterns=list(patterns), pattern=pattern, encrypt=encrypt)
         if result is None:
@@ -213,7 +217,7 @@ class ServiceClient:
 
     def make_selected_file(self, directory=None, filename=None, patterns=(), pattern=None,
                            encoding=None, mode='wb'):
-        """Show a file-save dialog on the client; return FileProxy or None."""
+        """Show a file-save dialog on the client; return `FileProxy` or `None`."""
         result = self.request('make_selected_file', directory=directory, filename=filename,
                               patterns=list(patterns), pattern=pattern,
                               encoding=encoding, mode=mode)
@@ -222,7 +226,7 @@ class ServiceClient:
         return FileProxy(self, result['handle'], result['path'], mode)
 
     def make_temporary_file(self, suffix='', encoding=None, mode='wb'):
-        """Create a temporary file on the client; return FileProxy."""
+        """Create a temporary file on the client; return `FileProxy`."""
         result = self.request('make_temporary_file', suffix=suffix, encoding=encoding, mode=mode)
         return FileProxy(self, result['handle'], result['path'], mode)
 
@@ -269,6 +273,7 @@ class FileProxy:
     """A file-like object whose I/O is forwarded to a remote handle on the client.
 
     Binary data is transparently base64-encoded in transit.
+
     """
 
     def __init__(self, client, handle_id, path, mode):
