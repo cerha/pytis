@@ -17,6 +17,10 @@ with both Sphinx (Napoleon extension) and mkdocstrings (autorefs plugin).
 - Text inside docstrings wraps at 80 characters (total line length including
   indentation). The first line (summary) is never wrapped — it stays on one
   line even if it exceeds 80 characters.
+- Body prose uses `**bold**` for emphasis and standard lists (`-`, `1.`).
+  Avoid reStructuredText-only constructs such as underlined section headers
+  (`---`, `===`) and literal-block markers (`::`) — they break rendering in
+  Markdown-based tools.
 
 **Backticks and cross-references**
 
