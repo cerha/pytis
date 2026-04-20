@@ -18,73 +18,33 @@ import sys
 import time
 
 import pytis.remote
-from pytis.remote.client import AuthError, RemoteError, ServiceClient
 
 
 def report(message):
     sys.stderr.write(message + '\n')
 
 
-def _connect_rpyc(password, port):
-    import rpyc.utils.authenticators
-    connector = pytis.remote.Connector(password)
+def connect():
     try:
-        connection = connector.connect('localhost', port)
-    except rpyc.utils.authenticators.AuthenticationError:
-        report("Authentication failed")
-        return None
+        pytis.remote.connect()
     except socket.error as e:
-        report("Connection error -- tunnel not available? %s" % (e,))
-        return None
+        report("Connection error (tunnel not available?): %s" % e)
+        return False
     except EOFError as e:
-        report("Connection error -- RPyC server not connected or invalid password? %s" % (e,))
-        return None
+        report("Connection error (server not connected or invalid password?): %s" % e)
+        return False
+    except ValueError as e:
+        report("Connection failed (possible Python version mismatch?): %s" % e)
+        return False
     except Exception as e:
-        # Catch Python 2/3 RPyC wire-incompatibility (TypeError in vinegar.load)
-        report("Connection error -- possible Python version mismatch: %s: %s"
-               % (type(e).__name__, e))
-        return 'version_mismatch'
-    message = "hello client"
-    try:
-        echoed = connection.root.echo(message)
-    except Exception as e:
-        report("Echo failed -- possible Python version mismatch: %s: %s"
-               % (type(e).__name__, e))
-        return 'version_mismatch'
-    if echoed != message:
-        report("Invalid echo result: %r" % (echoed,))
-        return None
-    return connection
-
-
-def _connect_json(password, port):
-    client = ServiceClient(password)
-    try:
-        client.connect('localhost', port)
-    except AuthError as e:
-        report("Authentication failed: %s" % e)
-        return None
-    except socket.error as e:
-        report("Connection error -- tunnel not available? %s" % e)
-        return None
-    try:
-        result = client.request('echo', text='hello')
-    except RemoteError as e:
-        report("Echo request failed: %s" % e)
-        return None
-    if result != 'hello':
-        report("Invalid echo result: %r" % (result,))
-        return None
-    return client
-
-
-def _read_access_data(info_file):
-    try:
-        pytis.remote.keep_x2go_info_file()
-        return pytis.remote.parse_x2go_info_file(info_file)
-    except pytis.remote.X2GoInfoException as e:
-        report("Exception when parsing P2Go info file: %s" % (e.args,))
-        return None
+        # Catch rpyc.utils.authenticators.AuthenticationError and others by name (avoid import).
+        if type(e).__name__ == 'AuthenticationError':
+            report("Authentication failed: %s" % e)
+        else:
+            report("Connection failed (%s): %s" % (type(e).__name__, e))
+        return False
+    else:
+        return True
 
 
 def main():
@@ -103,54 +63,42 @@ def main():
         raw = f.read()
     report("Info file: %s" % info_file)
     report("Info file content (raw): %r" % raw)
-    access_data = _read_access_data(info_file)
-    if access_data is None:
+    pytis.remote.keep_x2go_info_file()
+    try:
+        access_data = pytis.remote.parse_x2go_info_file(info_file)
+    except pytis.remote.X2GoInfoException as e:
+        report("Exception when parsing P2Go info file: %s" % (e.args,))
         return
-    protocol = access_data.get('protocol', 'rpyc')
-    port = access_data['port']
-    password = access_data['password']
-    report("Protocol: %s  Port: %s" % (protocol, port))
+    if not access_data:
+        report("Parsing P2Go info file returned an empty result.")
+        return
+    report("Protocol: %s  Port: %s" % (access_data['protocol'], access_data['port']))
+    if connect():
+        report("Connection OK!")
+        return
 
-    if protocol == 'rpyc':
+    if access_data['protocol'] == 'rpyc':
         # Signal our Python version so pytis2go can (re)start the RPyC service
-        # with the matching Python executable.
+        # with the matching executable, then wait for the restart.
         pytis.remote.write_python_version()
         report("Python version %d written." % sys.version_info[0])
-
-    if protocol == 'json':
-        conn = _connect_json(password, port)
-    else:
-        conn = _connect_rpyc(password, port)
-        if conn == 'version_mismatch':
-            # The service is running a different Python version.  Pytis2go polls
-            # the python-version file every second and will restart the RPyC
-            # subprocess.  Wait and then retry with fresh credentials from the
-            # info file (the port will have changed after the restart).
-            report("Python version mismatch detected.  Waiting up to 30 seconds "
-                   "for pytis2go to restart the RPyC service...")
-            deadline = time.time() + 30
-            conn = None
-            while time.time() < deadline:
-                time.sleep(2)
-                access_data = _read_access_data(info_file)
-                if access_data is None:
-                    continue
-                new_port = access_data['port']
-                new_password = access_data['password']
-                if new_port == port:
-                    continue  # Service not restarted yet
-                report("Service restarted on port %s, retrying..." % new_port)
-                conn = _connect_rpyc(new_password, new_port)
-                if conn != 'version_mismatch' and conn is not None:
-                    break
-                port = new_port
-                password = new_password
-            if conn is None or conn == 'version_mismatch':
-                report("Timed out waiting for service restart.")
+        # Poll for new credentials (pytis2go writes them when the new service is
+        # up) rather than hammering the service on every retry.
+        report("Waiting for service restart (up to 30 s)...")
+        deadline = time.time() + 30
+        while time.time() < deadline:
+            time.sleep(2)
+            try:
+                new_data = pytis.remote.parse_x2go_info_file(info_file)
+            except pytis.remote.X2GoInfoException:
+                continue
+            if not new_data or new_data['password'] == access_data['password']:
+                continue
+            report("Service restarted on port %s, retrying..." % new_data['port'])
+            if connect():
+                report("Connection OK!")
                 return
-
-    if conn is not None:
-        report("Connection OK!")
+        report("Timed out waiting for service restart.")
 
 
 if __name__ == '__main__':

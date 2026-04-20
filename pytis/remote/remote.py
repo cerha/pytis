@@ -327,7 +327,27 @@ def _rpc_access_data():
         RPCInfo.access_data_version += 1
     return access_data
 
-def _connect():
+def connect():
+    """Establish the RPC connection to the Pytis2Go client.
+
+    Reads current access data from the info file, then connects using the
+    appropriate protocol (RPyC or JSON).  On success, stores the connection in
+    `RPCInfo.connection` and pushes the client API.  On failure, raises without
+    swallowing the exception, making it suitable for diagnostic callers.
+
+    Raises:
+        rpyc.utils.authenticators.AuthenticationError: Password mismatch —
+            the info file may be stale or the service was restarted with new
+            credentials.
+        socket.error: TCP-level failure — the SSH tunnel is not yet up, the
+            service is not listening, or the port is wrong.
+        EOFError: The RPyC service closed the connection unexpectedly — often
+            a Python version mismatch between client and service (brine wire
+            incompatibility).
+        ValueError: Protocol-level decode failure — typically a version
+            mismatch between the RPyC libraries on each end.
+
+    """
     access_data = _rpc_access_data()
     protocol = access_data.get('protocol', 'rpyc')
     password = access_data.get('password')
@@ -459,13 +479,13 @@ def _request(request, *args, **kwargs):
         else:
             return arg
     if RPCInfo.connection is None:
-        _connect()
+        connect()
     access_data = _rpc_access_data()
     if access_data and access_data.get('protocol') == 'json':
         # JSON protocol: connection is a ServiceClient
         conn = RPCInfo.connection
         if not conn.is_connected():
-            _connect()
+            connect()
             conn = RPCInfo.connection
         # Positional args are not supported in JSON protocol; callers must use kwargs
         assert not args, "Positional args not supported in JSON protocol"
@@ -475,7 +495,7 @@ def _request(request, *args, **kwargs):
         try:
             RPCInfo.connection.root.echo
         except Exception:
-            _connect()
+            connect()
         method = getattr(RPCInfo.connection.root, request)
         return method(*retype(args), **retype(kwargs))
 

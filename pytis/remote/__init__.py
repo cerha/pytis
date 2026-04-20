@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2025 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2026 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2011-2018 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -24,7 +24,7 @@ except ImportError as e:
         raise e
 
 from .remote import (  # noqa!
-    client_ip, client_available, client_connection_ok,
+    connect, client_ip, client_available, client_connection_ok,
     session_password, write_python_version,
     get_clipboard_text, set_clipboard_text,
     launch_file, launch_url,
