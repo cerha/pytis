@@ -55,12 +55,12 @@ _announce_obsolete_client_version = True
 class RPCInfo(object):
     """Container for RPC communication data."""
     connection = None
+    protocol = None
     connection_order = 0
     access_data = None
     access_data_version = 0
     client_api_pushed = False
     client_info = None
-    file_proxy_class = None
 
 class ClientInfo(object):
     """Container for information about the remote client."""
@@ -196,10 +196,7 @@ def client_info():
 
 def connection_protocol():
     """Return the active RPC protocol as 'rpyc', 'json', or `None` if not connected."""
-    access_data = RPCInfo.access_data or _read_x2go_info_file()
-    if access_data:
-        return access_data.get('protocol', 'rpyc')
-    return None
+    return RPCInfo.protocol
 
 
 def client_connection_ok():
@@ -349,115 +346,79 @@ def connect():
 
     """
     access_data = _rpc_access_data()
-    protocol = access_data.get('protocol', 'rpyc')
-    password = access_data.get('password')
-    port = access_data.get('port')
+    RPCInfo.protocol = protocol = access_data['protocol']
+    password = access_data['password']
+    port = access_data['port']
 
     try:
         if protocol == 'json':
-            return _connect_json(password, port)
+            connection = ServiceClient(password)
+            connection.connect('localhost', port)
+            api_class = 'PytisClientAPIService'
         else:
-            return _connect_rpyc(password, port)
+            connection = Connector(password).connect('localhost', port)
+            api_class = 'RPyCPytisClientAPIService'
+        RPCInfo.connection = connection
+        RPCInfo.connection_order += 1
+        RPCInfo.client_api_pushed = False
+        client_version = _request('x2goclient_version')
+        log(OPERATIONAL, "{} client connection {} ({}) established with version: {}".format(
+            protocol.upper(),
+            RPCInfo.connection_order,
+            RPCInfo.access_data_version,
+            client_version))
+        can_push = True
+        if protocol == 'rpyc':
+            try:
+                connection.root.extend
+            except AttributeError:
+                # Older client without API push support; contains a fixed API instead.
+                # Pushing is not necessary as long as we don't rely on newer API features.
+                can_push = False
+                global _announce_obsolete_client_version
+                if _announce_obsolete_client_version:
+                    _announce_obsolete_client_version = False
+                    log(OPERATIONAL, "Obsolete client version {}: {} from {}"
+                        .format(client_version, getpass.getuser(), client_ip()))
+                    app.warning(_("You are using an obsolete version of Pytis2Go.\n"
+                                  "Please, contact IT support to install a newer version.\n"
+                                  "Your current version will stop working soon."))
+        if can_push and api_class not in _request('extensions'):
+            # Pytis pushes its own API to the client using the service's extend() method.
+            # This solves the problem of synchronization between the API expected by
+            # pytis and the API provided by the Pytis2Go client.  The pytis2go service
+            # imports the pushed class's public methods into its own MRO via __class__
+            # rebinding, making them dispatchable as protocol actions.
+            # We may be reconnecting to a previously extended service instance, so check.
+            with open(os.path.join(os.path.dirname(__file__), 'clientapi.py')) as f:
+                clientapi = f.read()
+            error = _request('extend', code=clientapi, class_name=api_class)
+            if error:
+                log(OPERATIONAL, "Client API push failed:", error)
+            else:
+                log(OPERATIONAL, "Client API pushed successfully.")
+                RPCInfo.client_api_pushed = True
+        try:
+            client_info = json.loads(_request('client_info'))
+        except Exception as e:
+            log(OPERATIONAL, "Failed reading client info:", e)
+            client_info = {}
+        client_info.pop('pytis2go_version', None)
+        RPCInfo.client_info = ClientInfo(
+            client_version=client_version,
+            display=x2go_display(),
+            **client_info
+        )
     except Exception as e:
         log(OPERATIONAL, "Connection failed (protocol={}): {}: {}".format(
             protocol, type(e).__name__, e))
         raise
 
 
-def _connect_rpyc(password, port):
-    connector = Connector(password)
-    RPCInfo.connection = connection = connector.connect('localhost', port)
-    RPCInfo.connection_order += 1
-    RPCInfo.client_api_pushed = False
-    client_version = connection.root.x2goclient_version()
-    log(OPERATIONAL, "RPyC client connection {} ({}) established with version: {}".format(
-        RPCInfo.connection_order,
-        RPCInfo.access_data_version,
-        client_version,
-    ))
-    try:
-        connection.root.extend
-    except AttributeError:
-        # This is an older client version, which doesn't support API push, but
-        # contains a fixed API.  Pushing is not necessary in this case as long
-        # as we do not rely on newer API features.  Once we get rid of all
-        # "fixed API" clients, we can start relying on all API features.
-        global _announce_obsolete_client_version
-        if _announce_obsolete_client_version:
-            _announce_obsolete_client_version = False
-            log(OPERATIONAL, "Obsolete client version {}: {} from {}"
-                .format(client_version, getpass.getuser(), client_ip()))
-            app.warning(_("You are using an obsolete version of Pytis2Go.\n"
-                          "Please, contact IT support to install a newer version.\n"
-                          "Your current version will stop working soon."))
-    else:
-        # We may be just reconnecting to a previously extended service instance.
-        if 'RPyCPytisClientAPIService' not in connection.root.extensions():
-            with open(os.path.join(os.path.dirname(__file__), 'clientapi.py')) as f:
-                clientapi = f.read()
-            error = connection.root.extend(clientapi, 'RPyCPytisClientAPIService')
-            if error:
-                log(OPERATIONAL, "Client API push failed:", error)
-            else:
-                log(OPERATIONAL, "Client API pushed successfully.")
-                RPCInfo.client_api_pushed = True
-    try:
-        client_info = json.loads(_request('client_info'))
-    except Exception as e:
-        log(OPERATIONAL, "Failed reading client info:", e)
-        client_info = {}
-    RPCInfo.client_info = ClientInfo(
-        client_version=client_version,
-        display=x2go_display(),
-        **client_info
-    )
-    return connection
-
-
-def _connect_json(password, port):
-    log(OPERATIONAL, "JSON: connecting to localhost:{}.".format(port))
-    RPCInfo.file_proxy_class = FileProxy
-    client = ServiceClient(password)
-    client.connect('localhost', port)
-    RPCInfo.connection = client
-    RPCInfo.connection_order += 1
-    RPCInfo.client_api_pushed = False
-    log(OPERATIONAL, "JSON client connection {} ({}) established.".format(
-        RPCInfo.connection_order, RPCInfo.access_data_version))
-    # Push the client API — same mechanism as RPyC's exposed_extend(), just
-    # over JSON.  The pytis2go service imports `PytisClientAPIService`'s public
-    # methods into its own MRO via __class__ rebinding; those methods become
-    # dispatchable as protocol actions.  No separate UI-backend setup step is
-    # needed: the pushed service creates the platform `ClientUIBackend` lazily
-    # in its `__getattr__` on first access.
-    if 'PytisClientAPIService' not in client.request('extensions'):
-        with open(os.path.join(os.path.dirname(__file__), 'clientapi.py')) as f:
-            clientapi = f.read()
-        error = client.request('extend', code=clientapi, class_name='PytisClientAPIService')
-        if error:
-            log(OPERATIONAL, "Client API push failed:", error)
-        else:
-            log(OPERATIONAL, "Client API pushed successfully.")
-            RPCInfo.client_api_pushed = True
-    try:
-        client_info = json.loads(client.request('client_info'))
-    except Exception as e:
-        log(OPERATIONAL, "Failed reading client info:", e)
-        client_info = {}
-    extra = {k: v for k, v in client_info.items() if k != 'pytis2go_version'}
-    extra['client_version'] = client_info.get('pytis2go_version', '')
-    extra['display'] = x2go_display()
-    RPCInfo.client_info = ClientInfo(**extra)
-    return client
-
-
 def _make_file_proxy(result, mode):
     """Wrap a JSON file-handle dict in a `FileProxy` for the JSON protocol."""
-    if result is None:
-        return None
-    cls = RPCInfo.file_proxy_class
-    if cls is not None and isinstance(result, dict) and 'handle' in result:
-        return cls(RPCInfo.connection, result['handle'], result['path'], mode)
+    if RPCInfo.protocol == 'json' and isinstance(result, dict) and 'handle' in result:
+        result = FileProxy(RPCInfo.connection, result['handle'], result['path'], mode)
     return result
 
 
@@ -481,7 +442,7 @@ def _request(request, *args, **kwargs):
     if RPCInfo.connection is None:
         connect()
     access_data = _rpc_access_data()
-    if access_data and access_data.get('protocol') == 'json':
+    if access_data and access_data['protocol'] == 'json':
         # JSON protocol: connection is a ServiceClient
         conn = RPCInfo.connection
         if not conn.is_connected():
