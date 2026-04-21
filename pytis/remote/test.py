@@ -92,6 +92,25 @@ class TestRemote:
             assert list(f.readlines()) == [b'line one\n', b'line two\n', b'line three\n']
             assert f.name is not None
 
+    def test_file_explicit_close(self):
+        # Regression test: explicit write() and close() calls (not via context
+        # manager) must work.  The context manager routes through __exit__ which
+        # is in RPyC's safe_attrs, so it succeeds even without exposed_write /
+        # exposed_close on the remote object — but explicit CALLATTR 'write' and
+        # CALLATTR 'close' require the exposed_* aliases to be present.
+        # Previously, RPyCPytisClientAPIService.exposed_make_temporary_file
+        # returned a plain FileWrapper (no exposed_* methods), which caused
+        # AttributeError("cannot access 'close'") when close() was called
+        # explicitly (e.g. in application.py's api_launch_file() finally block).
+        test_data = b'explicit close test\n'
+        f = pytis.remote.make_temporary_file(suffix='.bin', mode='wb')
+        assert f is not None
+        fname = f.name
+        f.write(test_data)
+        f.close()  # Must not raise AttributeError("cannot access 'close'")
+        with pytis.remote.open_file(fname, mode='rb') as g:
+            assert g.read() == test_data
+
     def test_open_file(self):
         content = b'open_file test \xc4\x8d\xc5\x99'
         with pytis.remote.make_temporary_file(suffix='.bin', mode='wb') as f:
