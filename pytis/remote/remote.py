@@ -354,10 +354,8 @@ def connect():
         if protocol == 'json':
             connection = ServiceClient(password)
             connection.connect('localhost', port)
-            api_class = 'PytisClientAPIService'
         else:
             connection = Connector(password).connect('localhost', port)
-            api_class = 'RPyCPytisClientAPIService'
         RPCInfo.connection = connection
         RPCInfo.connection_order += 1
         RPCInfo.client_api_pushed = False
@@ -383,6 +381,7 @@ def connect():
                     app.warning(_("You are using an obsolete version of Pytis2Go.\n"
                                   "Please, contact IT support to install a newer version.\n"
                                   "Your current version will stop working soon."))
+        api_class = 'PytisClientAPIService'
         if can_push and api_class not in _request('extensions'):
             # Pytis pushes its own API to the client using the service's extend() method.
             # This solves the problem of synchronization between the API expected by

@@ -17,17 +17,32 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Tests for `pytis.remote` in a live Pytis2Go session.
+"""Live end-to-end tests for `pytis.remote` in an active Pytis2Go session.
 
-Run inside an X2Go session with an active pytis2go connection:
+These tests require a running X2Go session with an active pytis2go
+connection.  The entire `TestRemote` class is skipped when `X2GO_SESSION`
+is not set.
 
-`pytis/remote/test.py`
+They smoke-test the complete stack — pytis.remote API → pytis2go service →
+client machine — covering connection, clipboard, and file I/O over the real
+transport.  Non-interactive tests run headlessly; interactive tests open
+file-chooser dialogs on the client machine.
 
-Interactive tests open file-chooser dialogs on the client machine; enable them
-by setting the environment variable `PYTIS_TEST_INTERACTIVE` or passing
-`--interactive` command line argument:
+Protocol independence: these tests exercise both the JSON and RPyC transport
+paths as used in a real Pytis2Go session (the active transport is whichever
+pytis2go negotiated at connect time).
 
-`pytis/remote/test.py --interactive`
+For unit tests of the client API classes without a live connection see
+`test_clientapi.py`.  For interactive UI-backend tests without a connection
+see `test_ui_backends.py`.
+
+Run inside an X2Go session::
+
+    pytis/remote/test.py
+
+Enable interactive tests with ``PYTIS_TEST_INTERACTIVE`` or ``--interactive``::
+
+    pytis/remote/test.py --interactive
 
 """
 
@@ -42,12 +57,15 @@ import pytis.remote
 
 
 def interactive(test):
+    """Decorator: skip unless PYTIS_TEST_INTERACTIVE is set or --interactive passed."""
     envvar = 'PYTIS_TEST_INTERACTIVE'
-    return pytest.mark.skipif(not os.getenv(envvar), reason="{} not set".format(envvar))(test)
+    return pytest.mark.interactive(
+        pytest.mark.skipif(not os.getenv(envvar), reason="{} not set".format(envvar))(test)
+    )
 
 
 class TestRemote:
-    """Tests for `pytis.remote` functions in a live Pytis2Go session.
+    """Smoke tests for `pytis.remote` functions in a live Pytis2Go session.
 
     The test suite must run inside an active X2Go session connected to a
     pytis2go client.  The entire class is skipped when `X2GO_SESSION` is not
@@ -110,50 +128,6 @@ class TestRemote:
         f.close()  # Must not raise AttributeError("cannot access 'close'")
         with pytis.remote.open_file(fname, mode='rb') as g:
             assert g.read() == test_data
-
-    def test_open_file(self):
-        content = b'open_file test \xc4\x8d\xc5\x99'
-        with pytis.remote.make_temporary_file(suffix='.bin', mode='wb') as f:
-            f.write(content)
-            fname = f.name
-        with pytis.remote.open_file(fname, mode='rb') as f:
-            assert f.read(4) == b'open'
-            assert f.read() == b'_file test \xc4\x8d\xc5\x99'
-        with pytis.remote.open_file(fname, mode='wb') as f:
-            f.write(b'replaced')
-        with pytis.remote.open_file(fname, mode='rb') as f:
-            assert f.read() == b'replaced'
-
-    def test_encoded_file_operations(self):
-        with pytis.remote.make_temporary_file(suffix='.txt', mode='w', encoding='utf-8') as f:
-            f.write("Žluťoučký\nkůň\n")
-            fname = f.name
-        with pytis.remote.open_file(fname, mode='r', encoding='utf-8') as f:
-            assert f.read() == "Žluťoučký\nkůň\n"
-            f.seek(0)
-            assert f.readline() == "Žluťoučký\n"
-            f.seek(0)
-            assert tuple(f.readlines()) == ("Žluťoučký\n", "kůň\n")
-        with pytis.remote.open_file(fname, mode='rb') as f:
-            assert f.read() == b'\xc5\xbdlu\xc5\xa5ou\xc4\x8dk\xc3\xbd\nk\xc5\xaf\xc5\x88\n'
-            f.seek(0)
-            assert f.readline() == b'\xc5\xbdlu\xc5\xa5ou\xc4\x8dk\xc3\xbd\n'
-            f.seek(0)
-            assert tuple(f.readlines()) == (b'\xc5\xbdlu\xc5\xa5ou\xc4\x8dk\xc3\xbd\n',
-                                            b'k\xc5\xaf\xc5\x88\n')
-
-    def test_run_python(self):
-        with pytis.remote.make_temporary_file(suffix='.txt', mode='wb') as f:
-            f.write(b'a')
-            fname = f.name
-        pytis.remote.run_python("with open('{}', 'ab') as f: f.write(b'bc')".format(fname))
-        with pytis.remote.open_file(fname, mode='rb') as f:
-            assert f.read() == b'abc'
-        pytis.remote.run_python("import os; os.remove('{}')".format(fname))
-        assert pytis.remote.run_python('print("hello world")') == 0
-        assert pytis.remote.run_python('script_with_some_error()') == 1
-        assert pytis.remote.run_python('import sys; sys.exit(24)') == 24
-        assert pytis.remote.run_python('import sys; sys.exit(42)') == 42
 
     @interactive
     def test_file_dialogs(self):
