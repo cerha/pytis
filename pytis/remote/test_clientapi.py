@@ -15,19 +15,32 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Tests for `pytis.remote.clientapi` without a remote connection.
+"""Unit tests for `pytis.remote.clientapi`, `client`, and related classes.
 
-All tests run without a display, without SSH and without X2Go — they
-exercise `FileWrapper` and `PytisClientAPIService` in isolation, using a
-lightweight `MockClientUIBackend` to avoid any GUI dialogs.  No RPyC
-installation is required.
+All tests run without a display, without SSH and without X2Go.  No RPyC or
+pytis2go installation is required.
 
-Protocol independence: these tests are protocol-neutral — the classes under
-test carry no network I/O.  The RPyC transport adapter (`ExposedFileWrapper`,
-`_wrap_for_rpyc`) lives in pytis2go's ``service.py`` and is tested there.
+**Test classes**
 
-For live-connection smoke tests of the complete stack see `test.py`.
-For interactive UI-backend tests see `test_ui_backends.py`.
+- `TestFileWrapper` — exercises `FileWrapper` directly: read, write, seek,
+  encryption hooks, context manager.  Uses real files; no network.
+
+- `TestPytisClientAPIService` — exercises `PytisClientAPIService` via a
+  `MockClientUIBackend` that avoids any GUI dialogs.  No network.
+
+- `TestFileProxy` — exercises `FileProxy` (from `pytis.remote.client`) using
+  a `MockClient` that records `request` calls.  Verifies base64
+  encoding/decoding for binary modes, routing of each file operation to the
+  correct protocol action, close idempotency, and context manager behaviour.
+
+- `TestServiceClientFileMethods` — exercises `ServiceClient` file-factory
+  methods (`open_file`, `open_selected_file`, `make_selected_file`,
+  `make_temporary_file`) using the same `MockClient`.  Verifies that each
+  method returns a properly initialised `FileProxy` and that cancel responses
+  (`None`) propagate correctly.
+
+For live end-to-end tests inside an X2Go session see `test.py`.  For
+interactive UI-backend tests see `test_ui_backends.py`.
 
 """
 
@@ -39,10 +52,10 @@ import base64
 import io
 import json
 import os
-
 import pytest
 
 from pytis.remote import clientapi
+from pytis.remote.client import FileProxy, ServiceClient
 
 
 # ---------------------------------------------------------------------------
@@ -375,3 +388,169 @@ class TestPytisClientAPIService:
     def test_select_file_cancel(self, svc):
         svc._client._select_file_result = None
         assert svc.exposed_select_file() is None
+
+
+# ---------------------------------------------------------------------------
+# FileProxy — client-side encoding/decoding and protocol correctness
+# ---------------------------------------------------------------------------
+
+class MockClient:
+    """Records `request()` calls and returns pre-configured results."""
+
+    def __init__(self):
+        self.calls = []
+        self._results = {}
+
+    def set_result(self, action, result):
+        self._results[action] = result
+
+    def request(self, action, **kwargs):
+        self.calls.append((action, kwargs))
+        return self._results.get(action)
+
+
+class TestFileProxy:
+    """Unit tests for `FileProxy` — no server, no network, no pytis2go."""
+
+    def _make(self, mode='rb', handle=1, path='/tmp/f'):
+        client = MockClient()
+        fp = FileProxy(client, handle, path, mode)
+        return fp, client
+
+    def test_read_binary_decodes_base64(self):
+        fp, mock = self._make(mode='rb')
+        mock.set_result('file_read', base64.b64encode(b'hello').decode('ascii'))
+        assert fp.read() == b'hello'
+        assert mock.calls[-1] == ('file_read', {'handle': 1, 'size': -1})
+
+    def test_read_partial_passes_size(self):
+        fp, mock = self._make(mode='rb')
+        mock.set_result('file_read', base64.b64encode(b'ab').decode('ascii'))
+        assert fp.read(2) == b'ab'
+        assert mock.calls[-1] == ('file_read', {'handle': 1, 'size': 2})
+
+    def test_read_text_returns_as_is(self):
+        fp, mock = self._make(mode='r')
+        mock.set_result('file_read', 'hello text')
+        assert fp.read() == 'hello text'
+
+    def test_readline_binary_decodes_base64(self):
+        fp, mock = self._make(mode='rb')
+        mock.set_result('file_readline', base64.b64encode(b'line\n').decode('ascii'))
+        assert fp.readline() == b'line\n'
+        assert mock.calls[-1] == ('file_readline', {'handle': 1})
+
+    def test_readline_text_returns_as_is(self):
+        fp, mock = self._make(mode='r')
+        mock.set_result('file_readline', 'line\n')
+        assert fp.readline() == 'line\n'
+
+    def test_readlines_binary_decodes_each(self):
+        fp, mock = self._make(mode='rb')
+        mock.set_result('file_readlines', [
+            base64.b64encode(b'a\n').decode('ascii'),
+            base64.b64encode(b'b\n').decode('ascii'),
+        ])
+        assert fp.readlines() == [b'a\n', b'b\n']
+
+    def test_write_binary_encodes_base64(self):
+        fp, mock = self._make(mode='wb')
+        fp.write(b'\x00\xff')
+        action, kwargs = mock.calls[-1]
+        assert action == 'file_write'
+        assert base64.b64decode(kwargs['data']) == b'\x00\xff'
+
+    def test_write_text_passes_as_is(self):
+        fp, mock = self._make(mode='w')
+        fp.write('hello')
+        assert mock.calls[-1] == ('file_write', {'handle': 1, 'data': 'hello'})
+
+    def test_seek(self):
+        fp, mock = self._make()
+        fp.seek(4)
+        assert mock.calls[-1] == ('file_seek', {'handle': 1, 'pos': 4, 'whence': 0})
+
+    def test_flush(self):
+        fp, mock = self._make()
+        fp.flush()
+        assert mock.calls[-1] == ('file_flush', {'handle': 1})
+
+    def test_close_sends_request(self):
+        fp, mock = self._make()
+        fp.close()
+        assert mock.calls[-1] == ('file_close', {'handle': 1})
+
+    def test_close_is_idempotent(self):
+        fp, mock = self._make()
+        fp.close()
+        fp.close()
+        assert sum(1 for a, _ in mock.calls if a == 'file_close') == 1
+
+    def test_context_manager(self):
+        fp, mock = self._make()
+        with fp:
+            pass
+        assert mock.calls[-1][0] == 'file_close'
+
+    def test_name_property(self):
+        fp, mock = self._make(path='/tmp/named.bin')
+        mock.set_result('file_name', '/tmp/named.bin')
+        assert fp.name == '/tmp/named.bin'
+
+    def test_mode_property(self):
+        fp, mock = self._make(mode='rb')
+        assert fp.mode == 'rb'
+
+
+class TestServiceClientFileMethods:
+    """Unit tests for `ServiceClient` file-factory methods."""
+
+    def _make_client(self, handle_result=None):
+        client = ServiceClient.__new__(ServiceClient)
+        mock = MockClient()
+        if handle_result is not None:
+            mock.set_result(list(handle_result.keys())[0],
+                            list(handle_result.values())[0])
+        client.request = mock.request
+        return client, mock
+
+    def test_open_file_returns_file_proxy(self):
+        client, mock = self._make_client()
+        mock.set_result('open_file', {'handle': 7, 'path': '/tmp/x.bin'})
+        fp = client.open_file('/tmp/x.bin', 'rb')
+        assert isinstance(fp, FileProxy)
+        assert fp._handle == 7
+        assert fp.mode == 'rb'
+
+    def test_open_selected_file_returns_proxy(self):
+        client, mock = self._make_client()
+        mock.set_result('open_selected_file', {'handle': 3, 'path': '/tmp/sel.bin'})
+        fp = client.open_selected_file()
+        assert isinstance(fp, FileProxy)
+        assert fp._handle == 3
+
+    def test_open_selected_file_cancel_returns_none(self):
+        client, mock = self._make_client()
+        mock.set_result('open_selected_file', None)
+        assert client.open_selected_file() is None
+
+    def test_make_selected_file_returns_proxy(self):
+        client, mock = self._make_client()
+        mock.set_result('make_selected_file', {'handle': 5, 'path': '/tmp/save.bin'})
+        fp = client.make_selected_file(mode='wb')
+        assert isinstance(fp, FileProxy)
+        assert fp.mode == 'wb'
+
+    def test_make_selected_file_cancel_returns_none(self):
+        client, mock = self._make_client()
+        mock.set_result('make_selected_file', None)
+        assert client.make_selected_file() is None
+
+    def test_make_temporary_file_returns_proxy(self):
+        client, mock = self._make_client()
+        mock.set_result('make_temporary_file', {'handle': 9, 'path': '/tmp/pytistmpXXX.bin'})
+        fp = client.make_temporary_file(suffix='.bin', mode='wb')
+        assert isinstance(fp, FileProxy)
+        assert fp._path.endswith('.bin')
+
+
