@@ -749,12 +749,12 @@ class ListForm(RecordForm, Refreshable):
             # "len(selection) > selection.MAX_ROWS" if they need to, but
             # if they do not, the default behavior should be OK in most
             # cases.
-            return self.Selection(None, None, self._row, error=error, length=length)
+            return self.Selection(None, self._row, error=error, length=length)
         if length == 0 and fallback_to_current_row:
             row_numbers = [self._table.current_row()]
         elif row_numbers is None:
             row_numbers = [n for top, bottom in ranges for n in range(top, bottom + 1)]
-        return self.Selection(row_numbers, self._table.data_row, self._row)
+        return self.Selection([self._table.data_row(n) for n in row_numbers], self._row)
 
     def _select_cell(self, row=None, col=None, invoke_callback=True):
         # Returns True if the event can be performed (see _on_select_cell).

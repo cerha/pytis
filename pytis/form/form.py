@@ -1808,7 +1808,7 @@ class RecordForm(LookupForm):
 
         """
 
-        MAX_ROWS = 10000
+        MAX_ROWS = 1000
         """Maximum number of rows in the selection.
 
         If the form selection exceeds this limit, it will not be possible to
@@ -1818,27 +1818,24 @@ class RecordForm(LookupForm):
 
         """
 
-        def __init__(self, row_numbers, get_row_by_number, record, error=None, length=None):
+        def __init__(self, rows, record, error=None, length=None):
             """Initialize the selection iterator.
 
             Arguments:
-              row_numbers: Sequence of row numbers as integer indices of rows
+              rows: Sequence of row numbers as integer indices of rows
                 selected within the form.  None if `error` is given.
-              get_row_by_number: Callable returning the data row for a given row
-                number.  None if `error` is given.
               record: `PresentedRow` instance to be used to produce the
                 instances returned by the iterator.
               error: `RecordForm.SelectionLimitExceeded` instance if the
-                selection length exceeds `MAX_ROWS`.  `row_numbers` should be
+                selection length exceeds `MAX_ROWS`.  `rows` should be
                 None in this case and `length` should indicate the actual
                 selection length.
-              length: Number of selected rows in case `row_numbers` is None and
+              length: Number of selected rows in case `rows` is None and
                 `error` is given.
 
             """
             if error:
-                assert row_numbers is None
-                assert get_row_by_number is None
+                assert rows is None
                 assert length is not None
                 self._error = error
                 self._length = length
@@ -1847,28 +1844,8 @@ class RecordForm(LookupForm):
                 self._error = None
                 # Store keys as space efficient unique identifiers of rows present
                 # in the selection.
-                data = record.data()
-                key_columns = data.key()
-                if len(key_columns) == 1:
-                    # Eliminate single item tuples for this most common case.
-                    key_column_id = key_columns[0].id()
-                    key_column_type = key_columns[0].type()
-                    def get_key_value(row):
-                        return row[key_column_id].value()
-                    def get_row(key_value):
-                        return data.row(pytis.data.Value(key_column_type, key_value))
-                else:
-                    # Multi-column keys are deprecated, but we probably still need to support them.
-                    key_column_ids = [c.id() for c in key_columns]
-                    key_column_types = [c.type() for c in key_columns]
-                    def get_key_value(row):
-                        return tuple(row[k].value() for k in key_column_ids)
-                    def get_row(key_value):
-                        key = [pytis.data.Value(t, v) for t, v in zip(key_column_types, key_value)]
-                        return data.row(key)
-                self._keys = [get_key_value(get_row_by_number(n)) for n in row_numbers]
-                self._length = len(self._keys)
-                self._get_row = get_row
+                self._rows = rows
+                self._length = len(rows)
                 self._pointer = -1
             self._record = copy.copy(record)
 
@@ -1885,9 +1862,7 @@ class RecordForm(LookupForm):
             self._pointer += 1
             if self._pointer >= self._length:
                 raise StopIteration
-            row = self._get_row(self._keys[self._pointer])
-            if not row:
-                return None
+            row = self._rows[self._pointer]
             self._record.set_row(row)
             return copy.copy(self._record)
 
@@ -2672,7 +2647,7 @@ class RecordForm(LookupForm):
             message on attempt to fetch the first row.
 
         """
-        return self.Selection([], lambda x: None, self._row)
+        return self.Selection([], self._row)
 
     def clear_selection(self):
         """Completely clear the current selection of rows in the form."""
