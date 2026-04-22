@@ -19,8 +19,7 @@
 
 Each test opens a real GUI dialog on the local machine and verifies the
 result.  All tests in this file require a display and human interaction:
-they are skipped by default and only run when either `PYTIS_TEST_INTERACTIVE`
-is set or ``--interactive`` is passed to pytest.
+they are skipped by default and only run when ``--interactive`` is passed to pytest.
 
 Backend selection is controlled by the `TEST_UI_BACKENDS` environment
 variable: a comma-separated list of backend names (e.g. ``wx,tk``) or

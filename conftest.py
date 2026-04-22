@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import os
 import sys
 
 import pytest
@@ -25,16 +24,21 @@ def pytest_configure(config):
     )
 
 
-def pytest_sessionstart(session):
-    if session.config.getoption('--interactive', default=False):
-        os.environ['PYTIS_TEST_INTERACTIVE'] = '1'
-
-
 def pytest_collection_modifyitems(config, items):
-    run_interactive = config.getoption('--interactive') or os.getenv('PYTIS_TEST_INTERACTIVE')
-    if not run_interactive:
-        skip = pytest.mark.skip(reason='interactive test; use --interactive or set '
-                                        'PYTIS_TEST_INTERACTIVE to run')
+    if not config.getoption('--interactive'):
+        default_skip = pytest.mark.skip(reason='interactive test; use --interactive to run')
         for item in items:
             if item.get_closest_marker('interactive'):
-                item.add_marker(skip)
+                # If a parent class already carries a skipif that would fire,
+                # use its reason so all items in the class show the same message.
+                # Without this, the method-level skip mark would win because
+                # iter_markers yields own markers before parent markers.
+                reason = next(
+                    (m.kwargs.get('reason', 'skipif')
+                     for m in item.iter_markers('skipif') if m.args[0]),
+                    None,
+                )
+                item.add_marker(
+                    pytest.mark.skip(reason=reason) if reason else default_skip,
+                    append=False,
+                )

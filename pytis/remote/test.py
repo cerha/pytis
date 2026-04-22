@@ -40,7 +40,7 @@ Run inside an X2Go session::
 
     pytis/remote/test.py
 
-Enable interactive tests with ``PYTIS_TEST_INTERACTIVE`` or ``--interactive``::
+Enable interactive tests with ``--interactive``::
 
     pytis/remote/test.py --interactive
 
@@ -56,27 +56,18 @@ import pytest
 import pytis.remote
 
 
-def interactive(test):
-    """Decorator: skip unless PYTIS_TEST_INTERACTIVE is set or --interactive passed."""
-    envvar = 'PYTIS_TEST_INTERACTIVE'
-    return pytest.mark.interactive(
-        pytest.mark.skipif(not os.getenv(envvar), reason="{} not set".format(envvar))(test)
-    )
-
-
+@pytest.mark.skipif(not os.getenv('X2GO_SESSION'), reason="Not within an X2Go session.")
 class TestRemote:
     """Smoke tests for `pytis.remote` functions in a live Pytis2Go session.
 
-    The test suite must run inside an active X2Go session connected to a
-    pytis2go client.  The entire class is skipped when `X2GO_SESSION` is not
-    set.
+    The entire class is skipped when `X2GO_SESSION` is not set (collection-time
+    mark so it takes precedence over method-level marks such as
+    `@pytest.mark.interactive`).
 
     """
 
     @classmethod
     def setup_class(cls):
-        if not os.getenv('X2GO_SESSION'):
-            pytest.skip("Not within an X2Go session.")
         pytis.remote.keep_x2go_info_file()
         if not pytis.remote.client_connection_ok():
             pytest.skip("pytis2go connection not available.")
@@ -129,7 +120,7 @@ class TestRemote:
         with pytis.remote.open_file(fname, mode='rb') as g:
             assert g.read() == test_data
 
-    @interactive
+    @pytest.mark.interactive
     def test_file_dialogs(self):
         print("\n    -> SELECT any directory...")
         directory = pytis.remote.select_directory(title="Select a directory")
@@ -145,7 +136,7 @@ class TestRemote:
         print("    -> CHECK that the file opens on the client...")
         pytis.remote.launch_file(path)
 
-    @interactive
+    @pytest.mark.interactive
     def test_open_selected_file(self):
         print("\n    -> SELECT any file in the open dialog that appears on the client...")
         result = pytis.remote.open_selected_file(patterns=[], pattern=None)
@@ -154,7 +145,7 @@ class TestRemote:
         result.close()
         print("       first {} bytes read OK".format(len(data)))
 
-    @interactive
+    @pytest.mark.interactive
     def test_make_selected_file(self):
         print("\n    -> SAVE to any location in the save dialog that appears on the client...")
         result = pytis.remote.make_selected_file(mode='wb', patterns=[], pattern=None)
@@ -162,11 +153,3 @@ class TestRemote:
         result.write(b'pytis2go test write')
         result.close()
         print("       saved OK")
-
-
-if __name__ == '__main__':
-    import sys
-    args = [__file__, '-v', '-s']
-    if '--interactive' in sys.argv:
-        os.environ['PYTIS_TEST_INTERACTIVE'] = '1'
-    sys.exit(pytest.main(args))
