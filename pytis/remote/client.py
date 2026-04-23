@@ -39,7 +39,10 @@ import base64
 import hashlib
 import json
 import os
-import queue
+try:
+    import queue
+except ImportError:
+    import Queue as queue  # Python 2
 import random
 import socket
 import threading
