@@ -330,7 +330,7 @@ class TestPytisClientAPIService:
             f.write('Žluťoučký\nkůň\n')
             path = f.name
         try:
-            assert open(path, encoding='utf-8').read() == 'Žluťoučký\nkůň\n'
+            assert io.open(path, encoding='utf-8').read() == 'Žluťoučký\nkůň\n'
         finally:
             if os.path.exists(path):
                 os.unlink(path)
