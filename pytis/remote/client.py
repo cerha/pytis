@@ -111,7 +111,7 @@ def _recv_exactly(sock, n):
 # ServiceClient
 # ---------------------------------------------------------------------------
 
-class ServiceClient:
+class ServiceClient(object):
     """Thread-safe JSON-over-TCP client for the pytis2go service.
 
     One instance covers one logical session (connection + optional reconnection).
