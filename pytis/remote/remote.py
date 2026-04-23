@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2026 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2025 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2011-2018 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -97,11 +97,9 @@ class Connector(object):
         return bytes(bytearray([r.choice(b'0123456789abcdef') for i in range(len(self._password))]))
 
     def _password_hash(self, challenge):
-        if isinstance(challenge, bytes):
-            # decode('latin-1') preserves byte values as char ordinals, matching
-            # Python 2 str behavior.  str(bytes) in Python 3 gives repr like
-            # "b'...'" which differs from the Python 2 str and breaks auth.
-            challenge = challenge.decode('latin-1')
+        if not isinstance(challenge, str):
+            # Convert to str in python 3, leave alone in Python 2.
+            challenge = str(challenge)
         token = bytes(bytearray([ord(x) ^ ord(y) for x, y in zip(self._password, challenge)]))
         return hashlib.sha256(token).hexdigest().encode('ascii')
 
