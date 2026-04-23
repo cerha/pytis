@@ -88,6 +88,7 @@ class TestRemote:
         pytis.remote.set_clipboard_text('foo')
         assert pytis.remote.get_clipboard_text() == 'foo'
 
+    @pytest.mark.new_service
     def test_file_io(self):
         test_data = b'line one\nline two\nline three\n'
         with pytis.remote.make_temporary_file(suffix='.bin', mode='w+b') as f:
@@ -101,6 +102,7 @@ class TestRemote:
             assert list(f.readlines()) == [b'line one\n', b'line two\n', b'line three\n']
             assert f.name is not None
 
+    @pytest.mark.new_service
     def test_file_explicit_close(self):
         # Regression test: explicit write() and close() calls (not via context
         # manager) must work.  The context manager routes through __exit__ which
