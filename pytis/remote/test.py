@@ -133,7 +133,8 @@ class TestRemote:
                                         title="Select a PDF file in this directory")
         assert path
         with pytis.remote.open_file(path, mode='rb') as f:
-            assert f.read(4) == b'%PDF'
+            header = f.read(4)
+            assert header == b'%PDF', "Expected PDF header, got: {!r}".format(header)
         print("       selected: {}".format(path))
         print("    -> CHECK that the file opens on the client...")
         pytis.remote.launch_file(path)
