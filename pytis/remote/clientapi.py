@@ -603,14 +603,14 @@ class TkUIBackend(ClipboardUIBackend):
     _DEPENDS = ClipboardUIBackend._DEPENDS + ('tkinter', 'tkinter.ttk',
                                               'tkinter.simpledialog', 'tkinter.filedialog')
 
-    def __init__(self):
-        super(TkUIBackend, self).__init__()
+    def __new__(cls, *args, **kwargs):
         try:
             import tkinter
             root = tkinter.Tk()
             root.destroy()
         except Exception as e:
             raise BackendNotAvailable(str(e))
+        return super(TkUIBackend, cls).__new__(cls, *args, **kwargs)
 
     def init(self):
         import tkinter
