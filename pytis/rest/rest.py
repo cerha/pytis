@@ -392,7 +392,7 @@ def add_api_routes(router: fastapi.APIRouter, db: Database, spec: ResourceSpec,
         def get_one(**kwargs):  # **kwargs receives the dynamic path key; see docstring above.
             return handler.get_one(kwargs[key.name])
 
-        annotate(get_one, **{key.name: key.type})
+        annotate(get_one, **{key.name: key.annotation})
         router.add_api_route(
             prefix + '/{' + key.name + '}',
             get_one,
@@ -450,7 +450,7 @@ def add_api_routes(router: fastapi.APIRouter, db: Database, spec: ResourceSpec,
         def update_one(payload, **kwargs):  # **kwargs = dynamic path key; see docstring.
             return handler.update_one(kwargs[key.name], payload.model_dump(exclude_unset=True))
 
-        annotate(update_one, **{key.name: key.type, 'payload': handler.model('patch')})
+        annotate(update_one, **{key.name: key.annotation, 'payload': handler.model('patch')})
         router.add_api_route(
             prefix + '/{' + key.name + '}',
             update_one,
@@ -468,7 +468,7 @@ def add_api_routes(router: fastapi.APIRouter, db: Database, spec: ResourceSpec,
             handler.delete_one(kwargs[key.name])
             return fastapi.Response(status_code=204)
 
-        annotate(delete_one, **{key.name: key.type})
+        annotate(delete_one, **{key.name: key.annotation})
         router.add_api_route(
             prefix + '/{' + key.name + '}',
             delete_one,
@@ -1148,9 +1148,9 @@ class TopLevelResourceHandler(ResourceHandler):
     - Single-column keys: path parameter name matches the column name, type
     matches the column's Python type. - Composite keys: all column values are
     joined by `key_separator` (default `"-"`) into a single path segment of type
-    `str`. The path parameter name is the column names joined by `"__"`, e.g.
-    `account_id__bank_code` for key `(account_id, bank_code)`. - Internal
-    database primary keys may differ from API-level keys.
+    `str`. The path parameter is named `key`, e.g. `/accounts/{key}` for key
+    `(account_id, bank_code)`. - Internal database primary keys may differ from
+    API-level keys.
 
     """
 
@@ -1173,6 +1173,26 @@ class TopLevelResourceHandler(ResourceHandler):
         type: type
         columns: tuple[str, ...]
         separator: str
+
+        @property
+        def annotation(self) -> type:
+            """Type annotation for the FastAPI path parameter.
+
+            For single-column keys this is just `self.type`.  For composite
+            keys it wraps `str` in `typing.Annotated` with a `fastapi.Path`
+            description that explains the separator-encoded format so the
+            information appears in the generated OpenAPI documentation.
+
+            """
+            if len(self.columns) == 1:
+                return self.type
+            else:
+                parts = self.separator.join(f'{{{c}}}' for c in self.columns)
+                desc = (
+                    f'Composite key encoded as the {len(self.columns)} column values '
+                    f'joined by {self.separator!r}: {parts}.'
+                )
+                return typing.Annotated[str, fastapi.Path(description=desc)]
 
         def condition(self, raw_value: typing.Any) -> Operator:
             """Build a filter condition from a URL path segment value.
@@ -1204,7 +1224,7 @@ class TopLevelResourceHandler(ResourceHandler):
         else:
             t = str
         self._key = self.ResourceKey(
-            name='__'.join(self._key_cols),
+            name=self._key_cols[0] if len(self._key_cols) == 1 else 'key',
             type=t,
             columns=self._key_cols,
             separator=spec.key_separator,
