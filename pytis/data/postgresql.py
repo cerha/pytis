@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2025 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2026 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2017 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -3727,8 +3727,9 @@ class DBPostgreSQLTransaction(DBDataPostgreSQL):
 
     The transaction can also be used as a context manager:
 
-    with DBPostgreSQLTransaction(...) as transaction: ... # Explicit
-    transaction.commit() or transaction.rollback() is optional.
+     with DBPostgreSQLTransaction(...) as transaction:
+         ...
+         # Explicit transaction.commit() or transaction.rollback() is optional.
 
     If neither 'commit()' nor 'rollback()' is called explicitly inside the
     context, the transaction is committed on normal exit from the `with` block
