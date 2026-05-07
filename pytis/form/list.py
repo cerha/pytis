@@ -2872,8 +2872,10 @@ class BrowseForm(FoldableForm):
               for name, column, f, kwargs_ in links_])
             for name, (binding_, links_) in sorted(automatic_links.items())
         ]
-        self._explicit_in_operator_links.sort()
-        self._automatic_in_operator_links.sort()
+        def sort_key(x):
+            return [v or '' for v in (x[0], x[1], x[2].label(), x[3], x[4])]
+        self._explicit_in_operator_links.sort(key=sort_key)
+        self._automatic_in_operator_links.sort(key=sort_key)
 
     def _formatter_parameters(self):
         prefix = self._name + '/'
