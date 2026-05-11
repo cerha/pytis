@@ -622,7 +622,7 @@ class TypeRandomNumbers(sql.SQLType):
     access_rights = ()
 
 
-class RandomNumbers(Base_PyFunction):
+class RandomNumbers(sql.SQLFunction):
     name = 'random_numbers'
     arguments = (sql.Column('count', pytis.data.Integer()),
                  sql.Column('minimum', pytis.data.Integer()),
@@ -633,8 +633,6 @@ class RandomNumbers(Base_PyFunction):
     depends_on = (TypeRandomNumbers,)
     access_rights = ()
 
-    @staticmethod
-    def random_numbers(count, minimum, maximum):
-        count, minimum, maximum = args
-        import random
-        return [(i, random.randint(minimum, maximum),) for i in range(1, count + 1)]
+    def body(self):
+        return ("SELECT i, $2 + floor(random() * ($3 - $2 + 1))::int"
+                " FROM generate_series(1, $1) AS i")
