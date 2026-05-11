@@ -57,6 +57,11 @@ from pytis.util import (
 )
 import pytis.util
 
+try:
+    from typing import Any, Optional, Union
+except ImportError:
+    pass
+
 _ = pytis.util.translations('pytis-data')
 
 unistr = type(u'')  # Python 2/3 transition hack.
@@ -3215,11 +3220,11 @@ class _Value(object):
     def __hash__(self):
         return hash(self._type) ^ hash(self._value)
 
-    def type(self):
+    def type(self):  # type: () -> Type
         """Vrať typ hodnoty jako instanci třídy `Type` zadanou v konstruktoru."""
         return self._type
 
-    def value(self):
+    def value(self):  # type: () -> Any
         """Return value given in the constructor.
 
         In some derived classes the returned value may be modified, e.g. when it
@@ -3229,7 +3234,7 @@ class _Value(object):
         """
         return self._value
 
-    def true_value(self):
+    def true_value(self):  # type: () -> Any
         """Return true value of the instance.
 
         In some derived classes, the value returned by `value` may be
@@ -3280,7 +3285,7 @@ class Value(_Value):
     def __hash__(self):
         return hash(self._type) ^ hash(self._value)
 
-    def export(self, *args, **kwargs):
+    def export(self, *args, **kwargs):  # type: (*Any, **Any) -> str
         """Vrať stringovou reprezentaci hodnoty schopnou validace.
 
         Tato metoda je pouze zkratkou pro volání
@@ -3299,7 +3304,7 @@ class Value(_Value):
                 self._exported = exported
         return exported
 
-    def retype(self, type):
+    def retype(self, type):  # type: (Type) -> Value
         """Return instance of the same class and value, but of different type.
 
         It is responsibility of the caller to ensure that the new type is

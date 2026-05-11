@@ -57,6 +57,11 @@ from pytis.util import (
     log, EVENT, OPERATIONAL, ProgramError, UNDEFINED,
 )
 
+try:
+    from typing import List, Optional, Tuple, Union
+except ImportError:
+    pass
+
 # Needed for urllib.request, urllib.error (urllib2 in Python 2).
 standard_library.install_aliases()
 unistr = type(u'')  # Python 2/3 transition hack.
@@ -3664,13 +3669,13 @@ class Field(object):
                 new_field.set_type(type_.clone(type_.__class__(inner_type=inner_type)))
         return new_field
 
-    def id(self):
+    def id(self):  # type: () -> str
         return self._id
 
-    def dbcolumn(self):
+    def dbcolumn(self):  # type: () -> str
         return self._dbcolumn
 
-    def type(self):
+    def type(self):  # type: () -> Optional[pytis.data.Type]
         """Return the specified type argument passed to the constructor.
 
         This method should not be used outside the `pytis.presentation` module.
@@ -3681,39 +3686,39 @@ class Field(object):
         """
         return self._type
 
-    def virtual(self):
+    def virtual(self):  # type: () -> bool
         return self._virtual
 
-    def label(self):
+    def label(self):  # type: () -> str
         return self._label
 
-    def column_label(self):
+    def column_label(self):  # type: () -> str
         return self._column_label
 
-    def descr(self):
+    def descr(self):  # type: () -> Optional[str]
         return self._descr
 
-    def width(self, default=12):
+    def width(self, default=12):  # type: (int) -> int
         """Return the width specified in constructor or 'default' if specified width was None."""
         if self._width is None:
             return default
         else:
             return self._width
 
-    def column_width(self, default=10):
+    def column_width(self, default=10):  # type: (int) -> int
         """Return the specified `column_width`, `width` or `default` whichever is not `None`."""
         if self._column_width is None:
             return self.width(default)
         else:
             return self._column_width
 
-    def disable_column(self):
+    def disable_column(self):  # type: () -> bool
         return self._disable_column
 
-    def fixed(self):
+    def fixed(self):  # type: () -> bool
         return self._fixed
 
-    def height(self, default=1):
+    def height(self, default=1):  # type: (int) -> int
         """Return the height specified in constructor or 'default' if specified height was None."""
         if self._height is None:
             return default
@@ -3726,10 +3731,10 @@ class Field(object):
     def visible(self):
         return self._visible
 
-    def compact(self):
+    def compact(self):  # type: () -> bool
         return self._compact
 
-    def nocopy(self):
+    def nocopy(self):  # type: () -> bool
         return self._nocopy
 
     def default(self):
@@ -3744,7 +3749,7 @@ class Field(object):
     def line_separator(self):
         return self._line_separator
 
-    def codebook(self):
+    def codebook(self):  # type: () -> Optional[str]
         """Return the codebook name passed to the constructor as a string."""
         return self._codebook
 
@@ -3802,7 +3807,7 @@ class Field(object):
     def style(self):
         return self._style
 
-    def links(self):
+    def links(self):  # type: () -> Tuple[Link, ...]
         return self._links
 
     def filename(self):
