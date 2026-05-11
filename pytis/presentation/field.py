@@ -38,6 +38,13 @@ from pytis.util import (
 from .spec import CbComputer, CodebookSpec, Computer
 from .types_ import PrettyType
 
+try:
+    from typing import TYPE_CHECKING, List, Optional, Tuple
+    if TYPE_CHECKING:
+        from .spec import Field
+except ImportError:
+    pass
+
 _ = translations('pytis-data')
 
 unistr = type(u'')  # Python 2/3 transition hack.
@@ -291,7 +298,7 @@ class PresentedRow(object):
             info = '%x' % id(self)
         return "<%s: %s>" % (self.__class__.__name__, info)
 
-    def __getitem__(self, key, lazy=False):
+    def __getitem__(self, key, lazy=False):  # type: (str, bool) -> pytis.data.Value
         """Return the value of given field as a `pytis.data.Value` instance.
 
         Arguments:
@@ -613,7 +620,7 @@ class PresentedRow(object):
 
         return display_function
 
-    def get(self, key, default=None, lazy=False, secure=False):
+    def get(self, key, default=None, lazy=False, secure=False):  # type: (str, Optional[pytis.data.Value], bool, bool) -> Optional[pytis.data.Value]
         """Return the value for the key if it exists or the default otherwise.
 
         Arguments:
@@ -662,7 +669,7 @@ class PresentedRow(object):
         else:
             return None
 
-    def row(self):
+    def row(self):  # type: () -> pytis.data.Row
         """Return the current data row as a `pytis.data.Row` instance."""
         row_data = [(c.id, self[c.id].retype(c.data_column.type()),)
                     for c in self._columns if not c.virtual]
@@ -685,7 +692,7 @@ class PresentedRow(object):
         return self._resolver
 
     def format(self, key, pretty=False, form=None, secure=False, export=None, single=True,
-               **kwargs):
+               **kwargs):  # type: (str, bool, object, object, object, bool, **object) -> str
         """Return the string representation of the field value.
 
         Arguments:
@@ -785,30 +792,30 @@ class PresentedRow(object):
         """
         self._set_row(row, reset=reset, prefill=prefill)
 
-    def fields(self):
+    def fields(self):  # type: () -> List[Field]
         """Return the list of all field specifications."""
         return self._fields
 
-    def has_key(self, key):
+    def has_key(self, key):  # type: (str) -> bool
         return self.__contains__(key)
 
-    def keys(self):
+    def keys(self):  # type: () -> List[str]
         """Return the list of identifiers of all fields contained within the row."""
         return [c.id for c in self._columns]
 
-    def items(self):
+    def items(self):  # type: () -> List[Tuple[str, pytis.data.Value]]
         """Return the list of (KEY, VALUE) pairs for all fields contained within the row."""
         return [(c.id, self[c.id]) for c in self._columns]
 
-    def values(self):
+    def values(self):  # type: () -> List[pytis.data.Value]
         """Return the list of all values contained within the row."""
         return [self[c.id] for c in self._columns]
 
-    def key(self):
+    def key(self):  # type: () -> Tuple[pytis.data.Value, ...]
         """Return the data key for this row as a tuple of key column `Value` instances."""
         return tuple([self[c.id()] for c in self._data.key()])
 
-    def new(self):
+    def new(self):  # type: () -> bool
         """Return true if the row represents a new (inserted) record."""
         return self._new
 
@@ -835,7 +842,7 @@ class PresentedRow(object):
         else:
             return self._original_row
 
-    def changed(self):
+    def changed(self):  # type: () -> bool
         """Return true if the *data* row has been changed.
 
         The row is considered changed if the underlying data row is not equal to
@@ -849,7 +856,7 @@ class PresentedRow(object):
                 return True
         return False
 
-    def field_changed(self, key):
+    def field_changed(self, key):  # type: (str) -> bool
         """Return true if given field was changed compared to its original value.
 
         Warning: True is always returned for virtual fields (with no underlying
@@ -872,7 +879,7 @@ class PresentedRow(object):
             return column.last_validated_string != self.format(key)
         return False
 
-    def editable(self, key):
+    def editable(self, key):  # type: (str) -> bool
         """Return True if given field is currently editable."""
         if not self.permitted(key, permission=True):
             return False
@@ -880,7 +887,7 @@ class PresentedRow(object):
             return False
         return bool(self._computed_value(self._coldict[key].editable))
 
-    def visible(self, key):
+    def visible(self, key):  # type: (str) -> bool
         """Return True if given field is currently visible."""
         return bool(self._computed_value(self._coldict[key].visible))
 
@@ -888,7 +895,7 @@ class PresentedRow(object):
         """Return the result of 'check' for field identified by 'key'."""
         return self._computed_value(self._coldict[key].check)
 
-    def type(self, key):
+    def type(self, key):  # type: (str) -> pytis.data.Type
         """Return the data type of field identified by 'key'."""
         return self._coldict[key].type
 

@@ -53,6 +53,11 @@ from pytis.util import (
 )
 from .types_ import DateTime, Number, Type, Value, WMValue
 
+try:
+    from typing import Iterable, List, Optional, Tuple, Union
+except ImportError:
+    pass
+
 _ = translations('pytis-data')
 
 unistr = type(u'')  # Python 2/3 transition hack.
@@ -1704,11 +1709,11 @@ class Row(object):
         # Implied automatically in Python 3 so can be removed when dropping Python 2 support.
         return not self == other
 
-    def __len__(self):
+    def __len__(self):  # type: () -> int
         """Vrať počet sloupců v řádku."""
         return len(self._data)
 
-    def __getitem__(self, key):
+    def __getitem__(self, key):  # type: (Union[str, int, slice]) -> Union[Value, Row]
         """Return the value(s) of column(s) given by key.
 
         Arguments:
@@ -1759,14 +1764,14 @@ class Row(object):
             index = self._index(key)
             data[index] = (data[index][0], value)
 
-    def __contains__(self, key):
+    def __contains__(self, key):  # type: (str) -> bool
         """Vrať pravdu, právě když řádek obsahuje sloupec jména key."""
         return key in self.keys()
 
-    def has_key(self, key):
+    def has_key(self, key):  # type: (str) -> bool
         return self.__contains__(key)
 
-    def get(self, key, default=None):
+    def get(self, key, default=None):  # type: (str, Optional[Value]) -> Optional[Value]
         """Return key column value.
 
         In case there is no such column, return default.
@@ -1778,7 +1783,7 @@ class Row(object):
             result = default
         return result
 
-    def keys(self):
+    def keys(self):  # type: () -> Iterable[str]
         """Vrať seznam názvů všech sloupců jako strings.
 
         Pořadí položek vráceného seznamu je nedefinováno.
@@ -1786,7 +1791,7 @@ class Row(object):
         """
         return self._indexes.keys()
 
-    def items(self):
+    def items(self):  # type: () -> List[Tuple[str, Value]]
         """Vrať seznam dvojic [ID, VALUE] odpovídajících všem sloupcům.
 
         ID je řetězec, VALUE je instance třídy `Value`.
@@ -1796,7 +1801,7 @@ class Row(object):
         """
         return [copy.copy(x) for x in self._data]
 
-    def values(self):
+    def values(self):  # type: () -> List[Value]
         """Vrať seznam hodnot všech sloupců v jejich pořadí.
 
         Returns:
