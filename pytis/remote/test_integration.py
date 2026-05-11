@@ -56,6 +56,8 @@ _transports = ['rpyc'] + (['json'] if _json_transport_available else [])
 class MockClientUIBackend(object):
     """Mock UI backend for testing — no actual GUI required."""
 
+    _selected_file = None  # Set per-test to simulate file dialog selection.
+
     def __init__(self):
         self._clipboard = None
 
@@ -70,6 +72,9 @@ class MockClientUIBackend(object):
 
     def set_clipboard_text(self, text):
         self._clipboard = text
+
+    def select_file(self, **kwargs):
+        return type(self)._selected_file
 
 
 class _TestRPyCService(PytisClientAPIService, rpyc.Service):
