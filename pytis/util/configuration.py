@@ -501,6 +501,10 @@ class Configuration(object):
         """
         _DEFAULT = 0
 
+    class _Option_run_tests(BooleanOption, CommandlineOption):
+        u"""Run the pytest test suite against the running application and exit."""
+        _DEFAULT = False
+
     class _Option_test_run_interactive(BooleanOption, HiddenOption):
         u"""Příznak určující, zda mají být spouštěny i interaktivní testy.
 

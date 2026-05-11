@@ -55,6 +55,7 @@ Options:
   --debug-memory       display memory info
   --profile            run in profiler and write results to `%s'
   --dump-queries COUNT dump COUNT most time consuming SQL queries to STDOUT
+  --run-tests          run application test suite and exit
   --session-id         use the given session_id
 
 """ % (_PROFILE_RESULTS)
@@ -129,7 +130,14 @@ def gg():
 def run_application():
     gc.enable()  # just to be sure...
     import pytis.form  # must be after processing command line options
-    pytis.form.Application().run()
+    if pytis.config.run_tests:
+        pytis.form.Application(headless=True)
+        import pytest
+        os.environ['PYTIS_RUN_TESTS'] = '1'
+        test_file = os.path.join(os.path.dirname(__file__), 'demo', 'test_app.py')
+        sys.exit(pytest.main([test_file, '-v']))
+    else:
+        pytis.form.Application().run()
 
 
 if __name__ == '__main__':

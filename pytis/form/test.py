@@ -21,12 +21,19 @@ from __future__ import print_function
 from __future__ import division
 from builtins import range
 
+import functools
+import io
 import os
 import pytest
 import sys
+import tempfile
+import threading
 import time
 
-import pytis.form as pf
+import rpyc
+from rpyc.utils.server import ThreadedServer
+
+import pytis.form.application as _pfa
 import pytis.form.grid as grid
 import pytis.presentation as pp
 import pytis.data as pd
@@ -37,16 +44,23 @@ import pytis
 
 from pytis.api import app
 from pytis.data.test import DBTest, connector, dbconnection, execute
-from pytis.remote.test import interactive
+from pytis.remote.remote import RPCInfo
+from pytis.remote.test_integration import MockClientUIBackend, _TestRPyCService, _find_free_port
 
 connection_data = {'database': 'test'}
-"""Non-interactive tests of pytis.form (the wx application).
+"""Tests of pytis.form.
 
-Run this test in local mode like:
+Run in local mode:
 
-pytest pytis/form/test.py -v --disable-warnings
+  pytest pytis/form/test.py -v --disable-warnings
 
-or in remote mode similarly through a Pytis2Go terminal.
+or in remote mode through a Pytis2Go terminal.
+
+TestDataTable (grid) and TestAppDB run headlessly (DB only, no display).
+TestAppFileIO and TestAppWriteSelectedFile test file I/O through both local
+and RPyC (mocked) paths without a display.
+Tests requiring a live wx application live in pytis/demo/test_app.py and
+are invoked via 'python -m pytis.run --run-tests'.
 
 """
 
@@ -309,11 +323,6 @@ def initdb(execute):
                                     .replace(b'TYPE ', b'type if exists ')
                                     .replace(b'::', b' ')
                                     + b' cascade')
-    #init_sql.extend(("insert into c_pytis_crypto_names (name) values ('test')",
-    #          "insert into e_pytis_crypto_keys (name, username, key) "
-    #          "values ('test', current_user, "
-    #          "pytis_crypto_store_key('somekey', 'somepassword'))",
-    #          "create table cfoo (id serial, x bytea, y bytea, z bytea)"))
     try:
         for part in init_sql:
             execute(part)
@@ -330,85 +339,285 @@ def initconfig(dbconnection):
     pytis.config.dbconnection = dbconnection
 
 
-@pytest.fixture(scope='class')
-def initapp(initconfig, initdb):
-    if not os.getenv('DISPLAY'):
-        pytest.skip("DISPLAY not set.")
-    # Avoid removing the info file (to allow running tests multiple times).
-    pytis.remote.keep_x2go_info_file()
-    # TODO: When we start the main wx app thread, the tests randomly end with
-    # SIGABRT, SIGSEGV or SIGTRAP.  Probabbly because the wx app doesn't run in
-    # the main thread (see https://wiki.wxpython.org/MainLoopAsThread).  But for
-    # the currently present tests it doesn't seem to be necessary to run the app
-    # thread, so we just create the Application instance.
-    #threading.Thread(target=pf.Application(headless=True).run).start()
-    pf.Application(headless=True)
-    yield
-    # Release the pytis.form.Application instance from pytis.api.app to make sure
-    # the tests outside this class don't use the previously created instance.
-    pf.app.ExitMainLoop()
-    app.exit()
+class _TestApplication(object):
+    """Minimal stub exercising Application file I/O methods without wx.
+
+    Copies _api_attributes and _ExposedFileWrapper as class attributes so that
+    pytis.api.app.init() accepts the instance.  All other method lookups are
+    delegated to Application via __getattr__, which binds the method to this
+    instance at call time.  This lets us exercise the real Application
+    implementation without inheriting wx.App (which would need a display).
+    """
+    _api_attributes = _pfa.Application._api_attributes
+    _ExposedFileWrapper = _pfa.Application._ExposedFileWrapper
+
+    def __init__(self):
+        self._recent_directories = {}
+
+    def __getattr__(self, name):
+        method = getattr(_pfa.Application, name, None)
+        if callable(method):
+            return functools.partial(getattr(method, '__func__', method), self)
+        raise AttributeError(name)
+
+    def client_mode(self):
+        raise NotImplementedError("Patch via monkeypatch in each test")
+
+
+def _start_rpyc_server():
+    """Start an in-process RPyC server and return (server, connection)."""
+    port = _find_free_port()
+    server = ThreadedServer(
+        _TestRPyCService,
+        port=port,
+        protocol_config={'allow_all_attrs': True, 'allow_public_attrs': True},
+    )
+    t = threading.Thread(target=server.start)
+    t.daemon = True
+    t.start()
+    time.sleep(0.1)
+    connection = rpyc.connect(
+        'localhost', port,
+        config={'allow_all_attrs': True, 'allow_public_attrs': True},
+    )
+    return server, connection
+
+
+@pytest.fixture
+def pytis_app():
+    """Register _TestApplication with pytis.api.app for the duration of the test."""
+    instance = _TestApplication()
+    app.init(instance)
+    yield instance
     app.release()
 
 
-@pytest.mark.usefixtures('initapp')
-class TestApp(DBTest):
-    """Tests running inside wx Application environment.
+@pytest.fixture(params=['local', 'rpyc'])
+def app_mode(request, pytis_app, monkeypatch):
+    """Parametrized fixture exercising local and RPyC remote file I/O paths."""
+    if request.param == 'local':
+        monkeypatch.setattr(pytis_app, 'client_mode', lambda: 'local')
+        yield 'local'
+        return
 
-    Starts a headless wx application in a separate thread and runs test cases
-    within its environment.  It may be useful for testing fetures which require
-    the wx Application to exist.
+    server, connection = _start_rpyc_server()
+    old_connection = RPCInfo.connection
+    RPCInfo.connection = connection
+    monkeypatch.setattr(pytis_app, 'client_mode', lambda: 'remote')
+    yield 'rpyc'
 
-    To debug: gdb python (in the appropriate venv) (gdb) run -m pytest
-    pytis/form/test.py::TestApp -v --disable-warnings
+    RPCInfo.connection.close()
+    RPCInfo.connection = old_connection
+    server.close()
 
+
+@pytest.fixture
+def rpyc_app(pytis_app, monkeypatch):
+    """RPyC-only mode fixture for tests that simulate the remote file dialog."""
+    server, connection = _start_rpyc_server()
+    old_connection = RPCInfo.connection
+    RPCInfo.connection = connection
+    monkeypatch.setattr(pytis_app, 'client_mode', lambda: 'remote')
+    yield pytis_app
+
+    MockClientUIBackend._selected_file = None
+    RPCInfo.connection.close()
+    RPCInfo.connection = old_connection
+    server.close()
+
+
+class TestAppFileIO:
+    """Tests for pytis.api.app file I/O through local and RPyC remote paths."""
+
+    def test_write_and_read_binary(self, app_mode):
+        fd, fname = tempfile.mkstemp(suffix='.bin')
+        os.close(fd)
+        try:
+            app.write_file(b'\x00\xff\xaa', fname, mode='wb')
+            with app.open_file(fname, mode='rb') as f:
+                assert f.read() == b'\x00\xff\xaa'
+        finally:
+            os.remove(fname)
+
+    def test_write_and_read_text(self, app_mode):
+        """Text written via write_file must survive a round-trip through open_file."""
+        fd, fname = tempfile.mkstemp(suffix='.txt')
+        os.close(fd)
+        try:
+            app.write_file(u"Žluťoučký kůň\n", fname, mode='w')
+            with app.open_file(fname, mode='r') as f:
+                assert f.read() == u"Žluťoučký kůň\n"
+        finally:
+            os.remove(fname)
+
+    def test_open_file_default_encoding_is_utf8(self, app_mode):
+        """open_file(mode='r') must default to UTF-8, not the system locale."""
+        fd, fname = tempfile.mkstemp(suffix='.txt')
+        os.close(fd)
+        try:
+            with io.open(fname, 'wb') as f:
+                f.write(u"Žluťoučký kůň".encode('utf-8'))
+            with app.open_file(fname, mode='r') as f:
+                assert f.read() == u"Žluťoučký kůň"
+        finally:
+            os.remove(fname)
+
+    def test_file_name_attribute(self, app_mode):
+        """The file object returned by open_file must expose the path as .name."""
+        fd, fname = tempfile.mkstemp(suffix='.bin')
+        os.close(fd)
+        try:
+            app.write_file(b'test', fname, mode='wb')
+            with app.open_file(fname, mode='rb') as f:
+                assert f.name == fname
+        finally:
+            os.remove(fname)
+
+    def test_context_manager_closes_file(self, app_mode):
+        """File objects returned by open_file must support the context manager protocol."""
+        fd, fname = tempfile.mkstemp(suffix='.bin')
+        os.close(fd)
+        try:
+            app.write_file(b'abc', fname, mode='wb')
+            with app.open_file(fname, mode='rb') as f:
+                data = f.read()
+            assert data == b'abc'
+        finally:
+            os.remove(fname)
+
+    def test_iterator_over_text_lines(self, app_mode):
+        """File objects returned by open_file must support iteration over lines."""
+        fd, fname = tempfile.mkstemp(suffix='.txt')
+        os.close(fd)
+        try:
+            app.write_file(u"line1\nline2\n", fname, mode='w')
+            with app.open_file(fname, mode='r') as f:
+                lines = list(f)
+            assert lines == [u"line1\n", u"line2\n"]
+        finally:
+            os.remove(fname)
+
+    def test_seek_and_read(self, app_mode):
+        fd, fname = tempfile.mkstemp(suffix='.bin')
+        os.close(fd)
+        try:
+            app.write_file(b'abcdef', fname, mode='wb')
+            with app.open_file(fname, mode='rb') as f:
+                assert f.read(3) == b'abc'
+                f.seek(0)
+                assert f.read(1) == b'a'
+                assert f.read(2) == b'bc'
+        finally:
+            os.remove(fname)
+
+    @pytest.mark.skipif(sys.version_info[0] < 3, reason="Python 3 only")
+    def test_bytes_in_text_mode_raises_type_error(self, app_mode):
+        """Writing bytes to a text-mode file must raise TypeError in Python 3."""
+        fd, fname = tempfile.mkstemp(suffix='.txt')
+        os.close(fd)
+        try:
+            with pytest.raises(TypeError):
+                app.write_file(b'\x00\xff', fname, mode='w')
+        finally:
+            os.remove(fname)
+
+    @pytest.mark.skipif(sys.version_info[0] < 3, reason="Python 3 only")
+    def test_str_in_binary_mode_raises_type_error(self, app_mode):
+        """Writing str to a binary-mode file must raise TypeError in Python 3."""
+        fd, fname = tempfile.mkstemp(suffix='.bin')
+        os.close(fd)
+        try:
+            with pytest.raises(TypeError):
+                app.write_file(u"text", fname, mode='wb')
+        finally:
+            os.remove(fname)
+
+
+class TestAppWriteSelectedFile:
+    """Tests for app.write_selected_file() through the RPyC remote path.
+
+    MockClientUIBackend._selected_file stands in for the GUI file dialog:
+    setting it to a path before the call simulates the user picking that file,
+    leaving it None simulates the user cancelling the dialog.
     """
-    def test_api_form(self):
-        assert app.form is None
-        app.run_form('UserParams')
-        assert app.form is not None
-        assert app.form.name == 'UserParams'
 
-    def test_query_fields_api(self):
-        app.run_form('UserParams')
-        assert app.form.query_fields is not None
-        assert app.form.query_fields.row is not None
-        assert app.form.query_fields.row['min'].value() == 10
+    def test_write_and_read_text(self, rpyc_app):
+        fd, fname = tempfile.mkstemp(suffix='.txt')
+        os.close(fd)
+        try:
+            MockClientUIBackend._selected_file = fname
+            result = app.write_selected_file(u"Žluťoučký kůň\n", 'test.txt', mode='w')
+            assert result == fname
+            with app.open_file(fname, mode='r') as f:
+                assert f.read() == u"Žluťoučký kůň\n"
+        finally:
+            os.remove(fname)
 
-    def test_shared_params(self):
+    def test_write_and_read_binary(self, rpyc_app):
+        fd, fname = tempfile.mkstemp(suffix='.bin')
+        os.close(fd)
+        try:
+            MockClientUIBackend._selected_file = fname
+            result = app.write_selected_file(b'\x00\xff\xaa', 'test.bin', mode='wb')
+            assert result == fname
+            with app.open_file(fname, mode='rb') as f:
+                assert f.read() == b'\x00\xff\xaa'
+        finally:
+            os.remove(fname)
+
+    def test_cancelled_dialog_returns_none(self, rpyc_app):
+        """When the user cancels the dialog (select_file returns None), write_selected_file
+        must return None without raising."""
+        MockClientUIBackend._selected_file = None
+        result = app.write_selected_file(b'data', 'test.bin', mode='wb')
+        assert result is None
+
+    @pytest.mark.skipif(sys.version_info[0] < 3, reason="Python 3 only")
+    def test_str_in_binary_mode_raises(self, rpyc_app):
+        """Writing str to a binary-mode selected file must raise an exception in Python 3."""
+        fd, fname = tempfile.mkstemp(suffix='.bin')
+        os.close(fd)
+        try:
+            MockClientUIBackend._selected_file = fname
+            with pytest.raises(Exception):
+                app.write_selected_file(u"text", 'test.bin', mode='wb')
+        finally:
+            os.remove(fname)
+
+    def test_invalid_type_raises(self, rpyc_app):
+        """Writing a non-bytes, non-str value must raise an exception."""
+        fd, fname = tempfile.mkstemp(suffix='.bin')
+        os.close(fd)
+        try:
+            MockClientUIBackend._selected_file = fname
+            with pytest.raises(Exception):
+                app.write_selected_file(8, 'test.bin', mode='wb')
+        finally:
+            os.remove(fname)
+
+
+class TestAppDB:
+    """DB-dependent tests for app.param, pd.dbfunction and pytis.util.data_object.
+
+    These work without a wx application: BaseApplication is auto-created when
+    app.param is first accessed, and DB access does not need a display.
+    """
+
+    def test_shared_params(self, initconfig, initdb):
         assert app.param.user.name == 'Test User'
         assert app.param.user.number == 64
-        assert app.param.user.enabled == True
+        assert app.param.user.enabled is True
         with pytest.raises(AttributeError):
             app.param.user.xval
         with pytest.raises(AttributeError):
             app.param.user.xyz = 1
 
-    def test_shared_param_callbacks(self):
-        def callback():
-            names.append(app.param.user.name)
-        name = app.param.user.name
-        try:
-            names = []
-            app.param.user.add_callback('name', callback)
-            app.param.user.name = 'x'
-            assert app.param.user.name == 'x'
-            pf.app.wx_yield()  # Let the callbacks be called (randomly unreliable).
-            time.sleep(0.2)
-            app.param.user.name = 'y'
-            assert app.param.user.name == 'y'
-            pf.app.wx_yield()  # Let the callbacks be called (randomly unreliable).
-            time.sleep(0.2)
-            assert names == ['x', 'y']
-        finally:
-            app.param.user.name = name
-
-    def test_dbfunction(self):
+    def test_dbfunction(self, initconfig, initdb):
         assert pd.dbfunction(square, 5) == 25
         assert pd.dbfunction('square', 4) == 16
         assert pd.dbfunction('reverse', 'Hello World') == 'dlroW olleH'
 
-    def test_data_object_by_specification_name(self):
+    def test_data_object_by_specification_name(self, initconfig, initdb):
         for spec_name, key in (
                 ('UserParams', 'id'),
                 ('misc.Products', 'product_id'),
@@ -418,70 +627,22 @@ class TestApp(DBTest):
             assert isinstance(data, pd.DBData)
             assert [c.id() for c in data.key()] == [key]
 
-    def test_data_object_by_data_specification(self):
+    def test_data_object_by_data_specification(self, initconfig, initdb):
         import pytis.dbdefs.demo
         for data_spec, key in (
                 (user_params, 'id'),
-                (pytis.dbdefs.demo.Products, 'product_id'),  # SQLTable
-                (pytis.dbdefs.demo.Tree, 'id'),  # SQLView
+                (pytis.dbdefs.demo.Products, 'product_id'),
+                (pytis.dbdefs.demo.Tree, 'id'),
         ):
             data = pytis.util.data_object(data_spec)
             assert isinstance(data, pd.DBData)
             assert [c.id() for c in data.key()] == [key]
 
-    def test_data_object_columns(self):
+    def test_data_object_columns(self, initconfig, initdb):
         import pytis.dbdefs.demo
         data1 = pytis.util.data_object('misc.Tree')
         data2 = pytis.util.data_object(pytis.dbdefs.demo.Tree)
         for c1, c2 in zip(data1.columns(), data2.columns()):
-            # The column type in data1 should be a subtype of the matching column type
-            # in table/view specification.
             assert isinstance(c1.type(), type(c2.type()))
 
-    def test_write_and_read_file(self):
-        filename = '/tmp/test.txt'
-        for m, data in (('b', b'some bytes'),
-                        ('t', u'some text')):
-            app.write_file(data, filename, mode='w'+m)
-            with app.open_file(filename, mode='r'+m) as f:
-                assert f.name == filename
-                assert f.read() == data
 
-    def test_write_file_type_errors(self):
-        filename = '/tmp/test.txt'
-        if sys.version_info[0] > 2:
-            with pytest.raises(TypeError):
-                app.write_file(u'text', filename, mode='wb')
-            with pytest.raises(TypeError):
-                app.write_file(b'bytes', filename, mode='w')
-
-    @interactive
-    def test_write_selected_file(self):
-        # This is terrible, but we still need this to work with the
-        # invalid combinations of the arguments.
-        for data, mode, encoding in ((u'some text', 'w', 'utf-8'),
-                                     (b'some bytes', 'w', 'utf-8'),
-                                     (b'some bytes', 'wb', None),
-                                     (u'some text', 'wt', None)):
-            filename = app.write_selected_file(data, 'test.txt', mode=mode, encoding=encoding)
-            with app.open_file(filename, mode='r') as f:
-                assert f.read() == data
-
-    @interactive
-    def test_write_selected_file_type_errors(self):
-        if sys.version_info[0] > 2:
-            # Does not raise error in Python 2.
-            with pytest.raises(TypeError):
-                app.write_selected_file(u'text', 'text.txt', mode='wb')
-            with pytest.raises(TypeError):
-                app.write_selected_file(b'bytes', 'test.txt', mode='w')
-        with pytest.raises(TypeError):
-            app.write_selected_file(8, 'test.txt', mode='wb')
-
-
-def test_shared_params(initconfig, initdb):
-    # Shared params must work with the pytis.form.Application instance
-    # (tessted in TestApp above) as well as without it (with automatically
-    # created pytis.api.BaseApplication).
-    assert app.param.user.name == 'Test User'
-    assert app.param.user.number == 64
