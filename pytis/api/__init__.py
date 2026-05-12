@@ -54,4 +54,4 @@ from .api import (  # noqa: F401
     Application, Form, Field, QueryFields, StatusField,
 )
 
-app = ApplicationAPIProvider()
+app = ApplicationAPIProvider()  # type: Application
