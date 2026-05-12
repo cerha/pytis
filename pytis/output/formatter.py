@@ -44,6 +44,10 @@ from past.builtins import basestring
 
 import copy
 import re
+try:
+    from typing import Any
+except ImportError:
+    pass
 import io
 import lcg
 
@@ -693,7 +697,7 @@ class PrintSpecification(object):
         """
         self._parameters = dict(parameters)
 
-    def _parameter(self, name, default=None):
+    def _parameter(self, name, default=None):  # type: (...) -> Any
         if isinstance(name, (tuple, list)):
             name = '/'.join(name)
         return self._parameters.get(name, default)
