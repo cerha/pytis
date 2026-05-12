@@ -58,7 +58,7 @@ from pytis.util import (
 )
 
 try:
-    from typing import List, Optional, Tuple, Union
+    from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Union
 except ImportError:
     pass
 
@@ -324,8 +324,16 @@ class Button(object):
 
     """
 
-    def __init__(self, label=None, handler=None, enabled=None, action=None, width=None,
-                 tooltip=None, active_in_popup_form=True, active_in_readonly_form=False):
+    def __init__(self,
+                 label=None,  # type: Optional[str]
+                 handler=None,  # type: Optional[Callable[..., Any]]
+                 enabled=None,  # type: Optional[Union[bool, Callable[..., bool]]]
+                 action=None,  # type: Optional[str]
+                 width=None,  # type: Optional[int]
+                 tooltip=None,  # type: Optional[str]
+                 active_in_popup_form=True,  # type: bool
+                 active_in_readonly_form=False,  # type: bool
+                 ):
         """Initialize the instance.
 
         Arguments:
@@ -451,9 +459,20 @@ class Action(object):
 
     """
 
-    def __init__(self, id, title, handler=None, context=ActionContext.RECORD,
-                 secondary_context=None, enabled=True, visible=True, access_groups=None,
-                 descr=None, hotkey=None, icon=None, kwargs=None, form_content=None,
+    def __init__(self,
+                 id,  # type: str
+                 title,  # type: str
+                 handler=None,  # type: Optional[Callable[..., Any]]
+                 context=ActionContext.RECORD,  # type: str
+                 secondary_context=None,  # type: Optional[str]
+                 enabled=True,  # type: Union[bool, Callable[..., bool]]
+                 visible=True,  # type: Union[bool, Callable[..., bool]]
+                 access_groups=None,  # type: Optional[Sequence[str]]
+                 descr=None,  # type: Optional[str]
+                 hotkey=None,  # type: Optional[Union[str, Sequence[str]]]
+                 icon=None,  # type: Optional[str]
+                 kwargs=None,  # type: Optional[Dict[str, Any]]
+                 form_content=None,  # type: Optional[Callable[..., Any]]
                  **kwargs_):
         """Initialize the instance.
 
@@ -2246,10 +2265,22 @@ class Binding(object):
 
     """
 
-    def __init__(self, id, title, name=None, binding_column=None, condition=None,
-                 descr=None, single=False, enabled=True, arguments=None,
-                 prefill=None, search=None,
-                 content=None, content_type='lcg', uri=None):
+    def __init__(self,
+                 id,  # type: str
+                 title,  # type: str
+                 name=None,  # type: Optional[str]
+                 binding_column=None,  # type: Optional[str]
+                 condition=None,  # type: Optional[Callable[..., Any]]
+                 descr=None,  # type: Optional[str]
+                 single=False,  # type: bool
+                 enabled=True,  # type: Union[bool, Callable[..., bool]]
+                 arguments=None,  # type: Optional[Callable[..., Dict[str, Any]]]
+                 prefill=None,  # type: Optional[Callable[..., Dict[str, Any]]]
+                 search=None,  # type: Optional[Callable[..., Any]]
+                 content=None,  # type: Optional[Union[str, Callable[..., Any]]]
+                 content_type='lcg',  # type: str
+                 uri=None,  # type: Optional[str]
+                 ):
         """Initialize the instance.
 
         Arguments:
@@ -2862,8 +2893,16 @@ class Link(object):
 
     """
 
-    def __init__(self, name, column, type=FormType.BROWSE, binding=None, label=None,
-                 enabled=True, filter=None, arguments=None):
+    def __init__(self,
+                 name,  # type: str
+                 column,  # type: str
+                 type=FormType.BROWSE,  # type: str
+                 binding=None,  # type: Optional[str]
+                 label=None,  # type: Optional[str]
+                 enabled=True,  # type: Union[bool, Callable[..., bool]]
+                 filter=None,  # type: Optional[Callable[..., Any]]
+                 arguments=None,  # type: Optional[Callable[..., Dict[str, Any]]]
+                 ):
         """Initialize the instance.
 
         Arguments:
