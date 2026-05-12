@@ -33,6 +33,11 @@ from __future__ import print_function
 
 from past.builtins import basestring, long
 
+try:
+    from typing import Any, Callable, Optional, Sequence, Union
+except ImportError:
+    pass
+
 import copy
 import os
 import re
@@ -847,10 +852,16 @@ class LongTable(Table):
             """
             Table.Column.__init__(self, label, width, **kwargs)
 
-    def __init__(self, columns, row_generator, row_generator_init=None,
-                 separator_height=0, line_separator_height=0,
-                 separator_margin=0, line_separator_margin=0,
-                 compact=False):
+    def __init__(self,
+                 columns,  # type: Sequence[Table.Column]
+                 row_generator,  # type: Callable[[], Optional[Sequence[Any]]]
+                 row_generator_init=None,  # type: Optional[Callable[[], None]]
+                 separator_height=0,  # type: Union[int, float, Unit]
+                 line_separator_height=0,  # type: Union[int, float, Unit]
+                 separator_margin=0,  # type: Union[int, float, Unit]
+                 line_separator_margin=0,  # type: Union[int, float, Unit]
+                 compact=False,  # type: bool
+                 ):
         """Inicializuj instanci.
 
         Arguments:
