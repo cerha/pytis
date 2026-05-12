@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2025 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2026 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2017 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -526,7 +526,7 @@ class Data(object_2_5):
             raise ProgramError("Can't use `async_count` with `rows()`.")
         return self.Selection(self, self.select(condition=condition, **kwargs))
 
-    def select_aggregate(self, operation, condition=None, transaction=None):
+    def select_aggregate(self, operation, condition=None, transaction=None, arguments={}):
         """Return the result of an aggregate function.
 
         Performs a select whose value is the result of the aggregate function
@@ -542,6 +542,10 @@ class Data(object_2_5):
           condition: same as the argument of the same name in `select`
           transaction: transaction object encapsulating the database operation
             environment, or None (to use the default environment)
+          arguments (dict): dictionary of table function call arguments, with
+            function argument identifiers as keys and `Value` instances as
+            values.  Useful only when the table is actually a row returning
+            database function, otherwise ignored.
 
         Returns:
           A `Value` instance representing the requested aggregate function.
