@@ -22,6 +22,7 @@ from __future__ import print_function
 from __future__ import unicode_literals
 from __future__ import absolute_import
 
+import datetime
 import inspect
 import sys
 
@@ -31,6 +32,17 @@ import pytis.util
 
 from pytis.util import log, OPERATIONAL
 from pytis.presentation import Specification
+
+try:
+    from typing import (Any, Callable, Dict, IO, Iterator, List, Optional,  # noqa: F401
+                        Sequence, Set, Tuple, Union)
+except ImportError:
+    pass
+
+try:
+    from typing import TYPE_CHECKING, Literal, overload  # noqa: F401
+except ImportError:
+    TYPE_CHECKING = False
 
 
 def implements(api_class, incomplete=False):
@@ -157,9 +169,7 @@ class ApplicationAPIProvider(APIProvider):
         self._init(instance)
 
     def release(self):
-        """Stop providing the API implemented by the current application instance.
-
-        """
+        """Stop providing the API implemented by the current application instance."""
         self._instance = None
 
 
@@ -176,89 +186,102 @@ class API:
 class Form(API):
     """Public API representation of the current form."""
 
-    name = property()
-    """The specification name as a string.
+    @property
+    def name(self):  # type: () -> Optional[str]
+        """The specification name as a string.
 
-    Returns None if the form is not bound to any specification (web form).
+        Returns None if the form is not bound to any specification (web form).
 
-    """
+        """
 
-    title = property()
-    """The form title as a string."""
+    @property
+    def title(self):  # type: () -> str
+        """The form title as a string."""
 
-    field = property()
-    """Access to input fields through the attributes of this object.
+    @property
+    def field(self):  # type: () -> Any
+        """Access to input fields through the attributes of this object.
 
-    Has one attribute named by field id for each field present in the form. Each
-    field attribute represents a `pytis.api.Field` API.  Is None in forms which
-    have no input fields (such as browse forms).
+        Has one attribute named by field id for each field present in the
+        form.  Each field attribute represents a `pytis.api.Field` API.  Is
+        None in forms which have no input fields (such as browse forms).
 
-    May also be called passing the field id as a string.  Thus
-    `form.field.field_id` or `form.field("field_id")` should both give the same
-    result.
+        May also be called passing the field id as a string.  Thus
+        `form.field.field_id` or `form.field("field_id")` should both give
+        the same result.
 
-    """
+        """
 
-    condition = property()
-    """Current filtering condition as a `pytis.data.Operator` instance or None."""
+    @property
+    def condition(self):  # type: () -> Optional[pd.Operator]
+        """Current filtering condition as a `pytis.data.Operator` instance or None."""
 
-    arguments = property()
-    """Current arguments as a dictionary of `pytis.data.Value` instances or None.
+    @property
+    def arguments(self):  # type: () -> Optional[Dict[str, pd.Value]]
+        """Current arguments as a dictionary of `pytis.data.Value` instances or None."""
 
-    """
+    @property
+    def sorting(self):  # type: () -> Any
+        """Current sorting as in `pytis.data.Data.select` or None."""
 
-    sorting = property()
-    """Current sorting as in `pytis.data.Data.select` or None."""
+    @property
+    def profile(self):  # type: () -> Optional[pytis.presentation.Profile]
+        """Current form profile as `pytis.presentation.Profile` instance or None."""
 
-    profile = property()
-    """Current form profile as `pytis.presentation.Profile` instance or None.
+    @property
+    def query_fields(self):  # type: () -> Optional['QueryFields']
+        """The form's query fields panel API as `pytis.api.QueryFields` instance.
 
-    """
+        Returns None if the form has no query fields panel.
 
-    query_fields = property()
-    """The form's query fields panel API as `pytis.api.QueryFields` instance.
+        """
 
-    Returns None if the form has no query fields panel.
+    @property
+    def row(self):  # type: () -> Optional[pytis.presentation.PresentedRow]
+        """The current form row as `pytis.presentation.PresentedRow` instance.
 
-    """
-    row = property()
-    """The current form row as `pytis.presentation.PresentedRow` instance.
+        The current row is the currently active (focused) row of the form.  It
+        represents the currently displayed record or the focused row in a
+        multirow (tabular) form.  Returns None if the form currently has no
+        active row.
 
-    The current row is the currently active (focused) row of the form.  It
-    represents the currently displayed record or the focused row in a multirow
-    (tabular) form.  Returns None if the form currently has no active row.
+        """
 
-    """
-    selection = property()
-    """Iterator over all currently selected rows.
+    @property
+    def selection(self):  # type: () -> Iterator[pytis.presentation.PresentedRow]
+        """Iterator over all currently selected rows.
 
-    The iterator returns all rows present in the current selection as
-    `pytis.presentation.PresentedRow` instances in the order of their presence
-    in the form.
+        The iterator returns all rows present in the current selection as
+        `pytis.presentation.PresentedRow` instances in the order of their
+        presence in the form.
 
-    """
-    main_form = property()
-    """The main form of a dual form.
+        """
 
-    Returns None if the form is not dual form.
+    @property
+    def main_form(self):  # type: () -> Optional['Form']
+        """The main form of a dual form.
 
-    """
-    side_form = property()
-    """The current side form of a dual form.
+        Returns None if the form is not dual form.
 
-    Returns None if the form is not dual form.
+        """
 
-    """
+    @property
+    def side_form(self):  # type: () -> Optional['Form']
+        """The current side form of a dual form.
 
-    def refresh(self):
+        Returns None if the form is not dual form.
+
+        """
+
+    def refresh(self):  # type: () -> None
         """Refresh the form UI, typically reload data from DB if applicable."""
         pass
 
-    def clear_selection(self):
+    def clear_selection(self):  # type: () -> None
         """Unselect all rows that are currently selected (if any)."""
         pass
 
-    def select_row(self, position):
+    def select_row(self, position):  # type: (Any) -> None
         """Make given row the currently selected row of the form.
 
         Arguments:
@@ -272,7 +295,7 @@ class Form(API):
 
         """
 
-    def activate(self):
+    def activate(self):  # type: () -> bool
         """Make the form active.
 
         The application can have multiple open forms at once, but at any moment
@@ -292,7 +315,7 @@ class Form(API):
         """
         pass
 
-    def close(self, force=False):
+    def close(self, force=False):  # type: (bool) -> None
         """Close the form and destroy all its UI elements.
 
         If force is False, the user may be asked to confirm closing if there is
@@ -305,7 +328,6 @@ class Form(API):
         """
 
 
-
 class StatusField(API):
     """Public API representation of a status bar field.
 
@@ -314,7 +336,12 @@ class StatusField(API):
 
     """
 
-    def update(self, text=None, icon=None, tooltip=None):
+    def update(self,
+               text=None,  # type: Optional[str]
+               icon=None,  # type: Optional[str]
+               tooltip=None,  # type: Optional[Union[str, Callable[[], Optional[str]]]]
+               ):
+        # type: (...) -> None
         """Update the text and/or icon displayed in the field.
 
         Same as setting the corresponding field properties separately.
@@ -327,7 +354,7 @@ class StatusField(API):
         """
         pass
 
-    def refresh(self):
+    def refresh(self):  # type: () -> None
         """Call the field's refresh function manually.
 
         Makes extra call to the field's refresh function outside its regular
@@ -337,44 +364,48 @@ class StatusField(API):
         """
         pass
 
-    text = property()
-    """Get/set the current status field text as a string."""
+    @property
+    def text(self):  # type: () -> str
+        """Get/set the current status field text as a string."""
 
-    icon = property()
-    """Get/set the current status field icon as a string or None.
+    @property
+    def icon(self):  # type: () -> Optional[str]
+        """Get/set the current status field icon as a string or None.
 
-    The icon is determined by a string identifier accepted by
-    `pytis.form.get_icon`.  The position of the icon is determined by the field
-    specification (icon_position passed to `pytis.presentation.StatusField`
-    constructor).
+        The icon is determined by a string identifier accepted by
+        `pytis.form.get_icon`.  The position of the icon is determined by
+        the field specification (icon_position passed to
+        `pytis.presentation.StatusField` constructor).
 
-    """
+        """
 
-    tooltip = property()
-    """Get/set the current status field tooltip as a string or None.
+    @property
+    def tooltip(self):  # type: () -> Optional[Union[str, Callable[[], Optional[str]]]]
+        """Get/set the current status field tooltip as a string or None.
 
-    May also be a function with no arguments returning a string.  In this case
-    the function is called when the tooltip is really needed at the moment when
-    the user hovers above the field.  Note that the function is called only once
-    and its result is cached until the tooltip is set next time.  Note that
-    field label (defined by field specification) is displayed in the tooltip by
-    default as a heading above the actual tooltip content.
+        May also be a function with no arguments returning a string.  In this
+        case the function is called when the tooltip is really needed at the
+        moment when the user hovers above the field.  Note that the function is
+        called only once and its result is cached until the tooltip is set next
+        time.  Note that field label (defined by field specification) is
+        displayed in the tooltip by default as a heading above the actual
+        tooltip content.
 
-    """
+        """
 
 
 class Field(API):
     """Public API representation of a form input field."""
 
-    def refresh(self):
+    def refresh(self):  # type: () -> None
         """Refresh field UI, typically reload enumeration if applicable."""
         pass
 
-    def write(self, text):
+    def write(self, text):  # type: (str) -> None
         """Insert given text into the field in the current cursor position."""
         pass
 
-    def on_list_change(self, callback):
+    def on_list_change(self, callback):  # type: (Callable[[], None]) -> None
         """Add callback on change of the list of available values in a LIST field.
 
         Arguments:
@@ -390,8 +421,12 @@ class Field(API):
 class QueryFields(API):
     """Public API representation of the form's query fields panel."""
 
-    row = property()
-    """The query field values as `pytis.presentation.PresentedRow` instance."""
+    @property
+    def row(self):  # type: () -> pytis.presentation.PresentedRow
+        """The query field values as `pytis.presentation.PresentedRow`
+        instance.
+
+        """
 
 
 class Application(API):
@@ -400,71 +435,85 @@ class Application(API):
     Accessed through `pytis.api.app`.
 
     """
-    title = property()
-    """Get/set the main application frame title as a string."""
 
-    param = property()
-    """Access to shared parameters.
+    @property
+    def title(self):  # type: () -> str
+        """Get/set the main application frame title as a string."""
 
-    Shared parameters provide a simple way to share values between the database
-    and the application code.  Each `pytis.presentation.SharedParams` instance
-    defined in `Application.params` leads to creation of one attribute
-    `app.param.<name>`, where `<name>` corresponds to the name defined by the
-    `pytis.presentation.SharedParams` instance.  Shared parameter values can be
-    accessed as `app.param.<name>.<param>`, where `<param>` corresponds to the
-    name of the column present in the data object defined by the SharedParams
-    instance.  When read, the attributes return the internal Python value of the
-    column.  When assigned, they update the value in the database.
+    @property
+    def param(self):  # type: () -> Any
+        """Access to shared parameters.
 
-    """
+        Shared parameters provide a simple way to share values between
+        the database and the application code.  Each
+        `pytis.presentation.SharedParams` instance defined in
+        `Application.params` leads to creation of one attribute
+        `app.param.<name>`, where `<name>` corresponds to the name
+        defined by the `pytis.presentation.SharedParams` instance.
+        Shared parameter values can be accessed as
+        `app.param.<name>.<param>`, where `<param>` corresponds to
+        the name of the column present in the data object defined by
+        the SharedParams instance.  When read, the attributes return
+        the internal Python value of the column.  When assigned, they
+        update the value in the database.
 
-    form = property()
-    """The current form as `pytis.api.Form` instance or None.
+        """
 
-    Returns None if there is no open form in the application.  If the current
-    form is a dual form, returns its current subform.  If there is a modal form
-    (such as a popup edit form), returns the modal form.
+    @property
+    def form(self):  # type: () -> Optional['Form']
+        """The current form as `pytis.api.Form` instance or None.
 
-    """
+        Returns None if there is no open form in the application.  If the
+        current form is a dual form, returns its current subform.  If there
+        is a modal form (such as a popup edit form), returns the modal form.
 
-    forms = property()
-    """List of all currently opened forms as `pytis.api.Form` instances.
+        """
 
-    Returns the top level forms, so if there is a dual form, it is returned, not
-    its current subform (as in form).  The most recently used forms are ordered
-    first.  If there are any modal forms, they are returned at the beginning of
-    the list.
+    @property
+    def forms(self):  # type: () -> List['Form']
+        """List of all currently opened forms as `pytis.api.Form` instances.
 
-    """
+        Returns the top level forms, so if there is a dual form, it is
+        returned, not its current subform (as in form).  The most recently
+        used forms are ordered first.  If there are any modal forms, they
+        are returned at the beginning of the list.
 
-    main_form = property()
-    """The main form of the current dual form as `pytis.api.Form` instance or None.
+        """
 
-    Returns None if the current form is not dual form.
+    @property
+    def main_form(self):  # type: () -> Optional['Form']
+        """The main form of the current dual form as `pytis.api.Form`
+        instance or None.
 
-    """
-    side_form = property()
-    """The side form of the current dual form as `pytis.api.Form` instance or None.
+        Returns None if the current form is not dual form.
 
-    Returns None if the current form is not dual form.
+        """
 
-    """
+    @property
+    def side_form(self):  # type: () -> Optional['Form']
+        """The side form of the current dual form as `pytis.api.Form`
+        instance or None.
 
-    status = property()
-    """Access to status bar fields.
+        Returns None if the current form is not dual form.
 
-    The returned object has one attribute named by field id for each field
-    present in the status bar.  If the field id contains a hyphen, it is
-    replaced by an underscore in the attribute name.  Each field implements the
-    `pytis.api.StatusField` API.
+        """
 
-    May also be called passing the field id as a string.  Thus
-    `app.status.field_id` or `app.status("field_id")` should both give the same
-    result.
+    @property
+    def status(self):  # type: () -> Any
+        """Access to status bar fields.
 
-    """
+        The returned object has one attribute named by field id for each field
+        present in the status bar.  If the field id contains a hyphen, it is
+        replaced by an underscore in the attribute name.  Each field
+        implements the `pytis.api.StatusField` API.
 
-    def echo(self, message, kind='info'):
+        May also be called passing the field id as a string.  Thus
+        `app.status.field_id` or `app.status("field_id")` should both give
+        the same result.
+
+        """
+
+    def echo(self, message, kind='info'):  # type: (str, str) -> None
         """Display a non-interactive message to the user.
 
         Arguments:
@@ -477,6 +526,7 @@ class Application(API):
         pass
 
     def message(self, message=None, title=None, content=None):
+        # type: (Optional[str], Optional[str], Optional[Any]) -> None
         """Display given message in an interactive dialog.
 
         The user needs to confirm the dialog before continuing.
@@ -493,6 +543,7 @@ class Application(API):
         pass
 
     def warning(self, message=None, title=None, content=None):
+        # type: (Optional[str], Optional[str], Optional[Any]) -> None
         """Display warning in an interactive dialog.
 
         The user needs to confirm the dialog before continuing.
@@ -509,6 +560,7 @@ class Application(API):
         pass
 
     def error(self, message=None, title=None, content=None):
+        # type: (Optional[str], Optional[str], Optional[Any]) -> None
         """Display given error message in an interactive dialog.
 
         The user needs to confirm the dialog before continuing.
@@ -524,8 +576,15 @@ class Application(API):
         """
         pass
 
-    def question(self, message, answers=None, default=None, title=None, content=None,
-                 timeout=None):
+    def question(self,
+                 message,  # type: str
+                 answers=None,  # type: Optional[Sequence[str]]
+                 default=None,  # type: Optional[Union[bool, str]]
+                 title=None,  # type: Optional[str]
+                 content=None,  # type: Optional[Any]
+                 timeout=None,  # type: Optional[int]
+                 ):
+        # type: (...) -> Optional[Union[bool, str]]
         """Display given question in an interactive dialog.
 
         The user needs to answer by pressing one of the available buttons.
@@ -555,7 +614,7 @@ class Application(API):
         """
         pass
 
-    def delete_record_question(self, message=None):
+    def delete_record_question(self, message=None):  # type: (Optional[str]) -> bool
         """Display 'question()' dialog asking for record deletion.
 
         Returns True if the user confirms deletion or False otherwise.
@@ -563,9 +622,20 @@ class Application(API):
         """
         pass
 
-    def input_text(self, title, label, default=None, not_null=False, width=20, height=1,
-                   descr=None, noselect=False, compact=False,
-                   text_format=pytis.presentation.TextFormat.PLAIN, attachment_storage=None):
+    def input_text(self,
+                   title,  # type: str
+                   label,  # type: Optional[str]
+                   default=None,  # type: Optional[str]
+                   not_null=False,  # type: bool
+                   width=20,  # type: int
+                   height=1,  # type: int
+                   descr=None,  # type: Optional[str]
+                   noselect=False,  # type: bool
+                   compact=False,  # type: bool
+                   text_format=pytis.presentation.TextFormat.PLAIN,  # type: Any
+                   attachment_storage=None,  # type: Optional[Any]
+                   ):
+        # type: (...) -> Optional[str]
         """Display a form for entering a single textual value and return it.
 
         Arguments:
@@ -593,7 +663,15 @@ class Application(API):
         """
         pass
 
-    def input_date(self, title, label=None, default=None, not_null=True, descr=None, noselect=False):
+    def input_date(self,
+                   title,  # type: str
+                   label=None,  # type: Optional[str]
+                   default=None,  # type: Optional[datetime.date]
+                   not_null=True,  # type: bool
+                   descr=None,  # type: Optional[str]
+                   noselect=False,  # type: bool
+                   ):
+        # type: (...) -> Optional[datetime.date]
         """Display a form for entering a date and return this value.
 
         Arguments:
@@ -616,8 +694,19 @@ class Application(API):
         """
         pass
 
-    def input_number(self, title, label, default=None, not_null=True, width=14, precision=None,
-                     minimum=None, maximum=None, descr=None, noselect=False):
+    def input_number(self,
+                     title,  # type: str
+                     label,  # type: Optional[str]
+                     default=None,  # type: Optional[Union[int, float]]
+                     not_null=True,  # type: bool
+                     width=14,  # type: int
+                     precision=None,  # type: Optional[int]
+                     minimum=None,  # type: Optional[Union[int, float]]
+                     maximum=None,  # type: Optional[Union[int, float]]
+                     descr=None,  # type: Optional[str]
+                     noselect=False,  # type: bool
+                     ):
+        # type: (...) -> Optional[Union[int, float]]
         """Display a form for entering a single numeric value and return it.
 
         Arguments:
@@ -646,8 +735,19 @@ class Application(API):
         """
         pass
 
-    def input_form(self, title, fields, prefill=None, layout=None, check=None, noselect=False,
-                   inserted_data=None, focus_field=None, on_commit_record=None, transaction=None):
+    def input_form(self,
+                   title,  # type: str
+                   fields,  # type: Sequence[pytis.presentation.Field]
+                   prefill=None,  # type: Optional[Dict[str, Any]]
+                   layout=None,  # type: Optional[Any]
+                   check=None,  # type: Optional[Callable]
+                   noselect=False,  # type: bool
+                   inserted_data=None,  # type: Optional[Any]
+                   focus_field=None,  # type: Optional[Any]
+                   on_commit_record=None,  # type: Optional[Callable[..., None]]
+                   transaction=None,  # type: Optional[Any]
+                   ):
+        # type: (...) -> Optional[pytis.presentation.PresentedRow]
         """Display modal form to collect user input from user defined fields.
 
         Arguments:
@@ -690,8 +790,17 @@ class Application(API):
         """
         pass
 
-    def new_record(self, specification, prefill=None, inserted_data=None, multi_insert=True,
-                   copied_row=None, set_values=None, block_on_new_record=False, transaction=None):
+    def new_record(self,
+                   specification,  # type: Any
+                   prefill=None,  # type: Optional[Dict[str, Any]]
+                   inserted_data=None,  # type: Optional[Any]
+                   multi_insert=True,  # type: bool
+                   copied_row=None,  # type: Optional[Any]
+                   set_values=None,  # type: Optional[Dict[str, Any]]
+                   block_on_new_record=False,  # type: bool
+                   transaction=None,  # type: Optional[Any]
+                   ):
+        # type: (...) -> None
         """Insert a new record using a modal form.
 
         Runs `on_new_record` instead of the default insertion form if the
@@ -730,7 +839,7 @@ class Application(API):
         """
         pass
 
-    def show_record(self, specification, row):
+    def show_record(self, specification, row):  # type: (Any, Any) -> None
         """Show existing record details in a separate form.
 
         Opens the new form on the "stack" (inside the main application frame).
@@ -746,8 +855,15 @@ class Application(API):
         """
         pass
 
-    def edit_record(self, specification, row, set_values=None, layout=None,
-                    block_on_edit_record=False, transaction=None):
+    def edit_record(self,
+                    specification,  # type: Any
+                    row,  # type: Any
+                    set_values=None,  # type: Optional[Dict[str, Any]]
+                    layout=None,  # type: Optional[Any]
+                    block_on_edit_record=False,  # type: bool
+                    transaction=None,  # type: Optional[Any]
+                    ):
+        # type: (...) -> Optional[pytis.presentation.PresentedRow]
         """Edit an existing record in a modal form.
 
         Runs `on_edit_record` instead of the default edit form if the
@@ -784,6 +900,7 @@ class Application(API):
         pass
 
     def delete_record(self, specification, row, question=None, transaction=None):
+        # type: (Any, Any, Optional[str], Optional[Any]) -> bool
         """Delete an existing record after user's confirmation.
 
         Runs `on_delete_record` instead of the default deletion if the
@@ -807,9 +924,20 @@ class Application(API):
         """
         pass
 
-    def run_form(self, specification, select_row=None, multi=True, preview=False, sorting=None,
-                 filter=None, condition=None, arguments=None, profile=None, binding=None,
-                 transaction=None):
+    def run_form(self,
+                 specification,  # type: Any
+                 select_row=None,  # type: Optional[Any]
+                 multi=True,  # type: bool
+                 preview=False,  # type: bool
+                 sorting=None,  # type: Optional[Any]
+                 filter=None,  # type: Optional[pd.Operator]
+                 condition=None,  # type: Optional[pd.Operator]
+                 arguments=None,  # type: Optional[Dict[str, pd.Value]]
+                 profile=None,  # type: Optional[str]
+                 binding=None,  # type: Optional[str]
+                 transaction=None,  # type: Optional[Any]
+                 ):
+        # type: (...) -> None
         """Display given form in the main application frame.
 
         The form type is selected automatically.  If name contains '::' (the
@@ -857,8 +985,49 @@ class Application(API):
         """
         pass
 
-    def codebook(self, specification, select_row=0, columns=None, sorting=None, filter=None,
-                 condition=None, multirow=False, begin_search=None, transaction=None):
+    if TYPE_CHECKING:
+        @overload
+        def codebook(self,
+                     specification,  # type: Any
+                     select_row=0,  # type: Any
+                     columns=None,  # type: Optional[Sequence[str]]
+                     sorting=None,  # type: Optional[Any]
+                     filter=None,  # type: Optional[pd.Operator]
+                     condition=None,  # type: Optional[pd.Operator]
+                     multirow=False,  # type: Literal[False]
+                     begin_search=None,  # type: Optional[str]
+                     transaction=None,  # type: Optional[Any]
+                     ):
+            # type: (...) -> Optional[pd.Row]
+            pass
+
+        @overload
+        def codebook(self,
+                     specification,  # type: Any
+                     select_row=0,  # type: Any
+                     columns=None,  # type: Optional[Sequence[str]]
+                     sorting=None,  # type: Optional[Any]
+                     filter=None,  # type: Optional[pd.Operator]
+                     condition=None,  # type: Optional[pd.Operator]
+                     multirow=False,  # type: Literal[True]
+                     begin_search=None,  # type: Optional[str]
+                     transaction=None,  # type: Optional[Any]
+                     ):
+            # type: (...) -> Optional[Tuple[pd.Row, ...]]
+            pass
+
+    def codebook(self,
+                 specification,  # type: Any
+                 select_row=0,  # type: Any
+                 columns=None,  # type: Optional[Sequence[str]]
+                 sorting=None,  # type: Optional[Any]
+                 filter=None,  # type: Optional[pd.Operator]
+                 condition=None,  # type: Optional[pd.Operator]
+                 multirow=False,  # type: bool
+                 begin_search=None,  # type: Optional[str]
+                 transaction=None,  # type: Optional[Any]
+                 ):
+        # type: (...) -> Optional[Union[pd.Row, Tuple[pd.Row, ...]]]
         """Display a modal codebook selection form and return the selected row.
 
         Arguments:
@@ -890,7 +1059,7 @@ class Application(API):
 
         """
 
-    def web_view(self, title, content, name=None):
+    def web_view(self, title, content, name=None):  # type: (str, Any, Optional[str]) -> None
         """Show given content in a web browser inside the main application frame.
 
         The browser window behaves as any other form displayed using `run_form`.
@@ -907,9 +1076,22 @@ class Application(API):
         """
         pass
 
-    def run(self, function, args=(), kwargs={}, over=None, title=None, message=None,
-            progress=True, maximum=None, elapsed_time=False, estimated_time=False,
-            remaining_time=False, time_precision='seconds', can_abort=False):
+    def run(self,
+            function,  # type: Callable[..., Any]
+            args=(),  # type: Tuple[Any, ...]
+            kwargs={},  # type: Dict[str, Any]
+            over=None,  # type: Optional[Any]
+            title=None,  # type: Optional[str]
+            message=None,  # type: Optional[str]
+            progress=True,  # type: bool
+            maximum=None,  # type: Optional[int]
+            elapsed_time=False,  # type: bool
+            estimated_time=False,  # type: bool
+            remaining_time=False,  # type: bool
+            time_precision='seconds',  # type: str
+            can_abort=False,  # type: bool
+            ):
+        # type: (...) -> Any
         """Execute a long running operation showing a progress dialog.
 
         The dialog is displayed until the operation is finished and may inform
@@ -997,7 +1179,7 @@ class Application(API):
         """
         pass
 
-    def call(self, function, *args, **kwargs):
+    def call(self, function, *args, **kwargs):  # type: (Callable[..., Any], *Any, **Any) -> Any
         """Call given function with given arguments.
 
         This method is useful to create a `pytis.presentation.Command` instance
@@ -1017,6 +1199,7 @@ class Application(API):
         pass
 
     def run_procedure(self, spec_name, proc_name, *args, **kwargs):
+        # type: (str, str, *Any, **Any) -> Any
         """Run application defined procedure by name.
 
         All other arguments, including keyword arguments, are passed on to the
@@ -1044,6 +1227,7 @@ class Application(API):
         pass
 
     def launch_file(self, path=None, data=None, suffix=None, decrypt=False):
+        # type: (Optional[str], Optional[Union[bytes, IO[bytes]]], Optional[str], bool) -> None
         """Launch a viewer for given local file or data.
 
         The viewer will be launched on the client machine (remotely) if remote
@@ -1072,7 +1256,7 @@ class Application(API):
         """
         pass
 
-    def launch_url(self, url):
+    def launch_url(self, url):  # type: (str) -> None
         """Open given URL in a web browser.
 
         The browser will be launched on the client machine (remotely) if remote
@@ -1084,7 +1268,7 @@ class Application(API):
         """
         pass
 
-    def splitpath(self, path):
+    def splitpath(self, path):  # type: (str) -> Tuple[str, str]
         """Split the path obtained from `select_file` and similar methods.
 
         `select_file` returns a path name, but the caller doesn't know whether
@@ -1104,6 +1288,7 @@ class Application(API):
         pass
 
     def select_file(self, filename=None, filetypes=None, directory=None, context='default'):
+        # type: (Optional[str], Optional[Sequence[str]], Optional[str], str) -> Optional[str]
         """Return a filename selected by the user in a GUI dialog.
 
         Returns None if the user cancels the dialog.  If remote client
@@ -1129,6 +1314,7 @@ class Application(API):
         pass
 
     def select_files(self, directory=None, filetypes=None, context='default'):
+        # type: (Optional[str], Optional[Sequence[str]], str) -> Tuple[str, ...]
         """Return a tuple of filenames selected by the user in a GUI dialog.
 
         Returns empty tuple if the user cancels the dialog.  If remote client
@@ -1144,6 +1330,7 @@ class Application(API):
         pass
 
     def select_directory(self, directory=None, context='default'):
+        # type: (Optional[str], str) -> Optional[str]
         """Return a directory selected by the user in a GUI dialog.
 
         Returns None if the user cancels the dialog.  If remote client
@@ -1157,8 +1344,15 @@ class Application(API):
         """
         pass
 
-    def make_selected_file(self, filename, mode='w', encoding=None, filetypes=None,
-                           directory=None, context='default'):
+    def make_selected_file(self,
+                           filename,  # type: Optional[str]
+                           mode='w',  # type: str
+                           encoding=None,  # type: Optional[str]
+                           filetypes=None,  # type: Optional[Sequence[str]]
+                           directory=None,  # type: Optional[str]
+                           context='default',  # type: str
+                           ):
+        # type: (...) -> Optional[IO[Any]]
         """Return a write-only file like object of a user selected file.
 
         The file is selected by the user using a GUI dialog.  Returns None if
@@ -1177,8 +1371,15 @@ class Application(API):
         """
         pass
 
-    def write_selected_file(self, data, filename, mode='w', encoding=None, filetypes=None,
-                            context='default'):
+    def write_selected_file(self,
+                            data,  # type: Union[str, bytes]
+                            filename,  # type: Optional[str]
+                            mode='w',  # type: str
+                            encoding=None,  # type: Optional[str]
+                            filetypes=None,  # type: Optional[Sequence[str]]
+                            context='default',  # type: str
+                            ):
+        # type: (...) -> Optional[str]
         """Write data to a file selected by the user using a GUI dialog.
 
         Returns the file path if the file was created and written successfully
@@ -1197,8 +1398,15 @@ class Application(API):
         """
         pass
 
-    def open_selected_file(self, directory=None, mode='rb', encoding=None, encrypt=None,
-                           filetypes=None, context='default'):
+    def open_selected_file(self,
+                           directory=None,  # type: Optional[str]
+                           mode='rb',  # type: str
+                           encoding=None,  # type: Optional[str]
+                           encrypt=None,  # type: Optional[List[str]]
+                           filetypes=None,  # type: Optional[Sequence[str]]
+                           context='default',  # type: str
+                           ):
+        # type: (...) -> Optional[IO[Any]]
         """Return a read-only file like object of a user selected file.
 
         The file is selected by the user using a GUI dialog.  Returns None if
@@ -1227,6 +1435,7 @@ class Application(API):
         pass
 
     def open_file(self, filename, mode='r', encoding=None):
+        # type: (str, str, Optional[str]) -> Optional[IO[Any]]
         """Return a file like object for given file.
 
         If remote client connection exists, the returned file is opened in the
@@ -1247,7 +1456,7 @@ class Application(API):
         """
         pass
 
-    def write_file(self, data, filename, mode='w'):
+    def write_file(self, data, filename, mode='w'):  # type: (Union[str, bytes], str, str) -> None
         """Write given data to given file.
 
         If remote client connection exists, the file is created in the client's
@@ -1262,6 +1471,7 @@ class Application(API):
         pass
 
     def has_access(self, name, perm=pd.Permission.VIEW, column=None):
+        # type: (str, Any, Optional[str]) -> bool
         """Return true if the current user has given permission.
 
         Arguments:
@@ -1278,12 +1488,20 @@ class Application(API):
         """
         pass
 
-    def decrypted_areas(self):
+    def decrypted_areas(self):  # type: () -> Set[str]
         """Return set of names of encryption areas the user has access to."""
         pass
 
-    def printout(self, spec_name, template_id, row=None,
-                 parameters=None, output_file=None, language=None, form=None):
+    def printout(self,
+                 spec_name,  # type: str
+                 template_id,  # type: str
+                 row=None,  # type: Optional[pd.Row]
+                 parameters=None,  # type: Optional[Dict[str, Any]]
+                 output_file=None,  # type: Optional[IO[Any]]
+                 language=None,  # type: Optional[str]
+                 form=None,  # type: Optional['Form']
+                 ):
+        # type: (...) -> None
         """Print given template to PDF and display the result in a viewer.
 
         Arguments:
@@ -1302,11 +1520,11 @@ class Application(API):
         """
         pass
 
-    def refresh(self):
+    def refresh(self):  # type: () -> None
         """Refresh visible application components."""
         pass
 
-    def exit(self, force=False):
+    def exit(self, force=False):  # type: (bool) -> None
         """Exit the application.
 
         Arguments:
@@ -1352,7 +1570,7 @@ class BaseApplication(object):
         self._user_roles = ()
         super(BaseApplication, self).__init__()
 
-    def _init_access_rights(self):
+    def _init_access_rights(self):  # type: () -> None
         """Read application access rights from the database."""
         # Must be called very early after start of an application.
         self._access_rights_initialized = True
@@ -1408,7 +1626,7 @@ class BaseApplication(object):
         if pytis.config.debug:
             self._dump_rights()
 
-    def _dump_rights(self):
+    def _dump_rights(self):  # type: () -> None
         import pytis.extensions
         registered_shortnames = set()
         if self._access_rights not in (None, 'nonuser',):
@@ -1457,18 +1675,26 @@ class BaseApplication(object):
         output.write("--- END list of registered rights ---\n")
 
     @property
-    def api_param(self):
+    def api_param(self):  # type: () -> Any
         return self._param
 
-    def _output_formatter(self, template_id, **kwargs):
+    def _output_formatter(self, template_id, **kwargs):  # type: (str, **Any) -> Any
         import pytis.output
         output_resolver = pytis.output.OutputResolver(pytis.config.print_spec_dir,
                                                      pytis.config.resolver)
         return pytis.output.Formatter(pytis.config.resolver, (output_resolver,),
                                       template_id, **kwargs)
 
-    def api_printout(self, spec_name, template_id, row=None,
-                     parameters=None, output_file=None, language=None, form=None):
+    def api_printout(self,
+                     spec_name,  # type: str
+                     template_id,  # type: str
+                     row=None,  # type: Optional[pd.Row]
+                     parameters=None,  # type: Optional[Dict[str, Any]]
+                     output_file=None,  # type: Optional[IO[Any]]
+                     language=None,  # type: Optional[str]
+                     form=None,  # type: Optional[Any]
+                     ):
+        # type: (...) -> None
         import pytis.output
         if parameters is None:
             parameters = {}
@@ -1485,6 +1711,7 @@ class BaseApplication(object):
             formatter.cleanup()
 
     def api_has_access(self, name, perm=pd.Permission.VIEW, column=None):
+        # type: (str, Any, Optional[str]) -> bool
         if not self.action_has_access('form/' + name, perm=perm, column=column):
             return False
         try:
@@ -1509,6 +1736,7 @@ class BaseApplication(object):
         return self.action_has_access('form/' + name, perm=perm, column=column)
 
     def action_has_access(self, action, perm=pd.Permission.CALL, column=None):
+        # type: (str, Any, Optional[str]) -> bool
         """Return true iff action has perm permission.
 
         Arguments:
@@ -1541,7 +1769,7 @@ class BaseApplication(object):
                 result = perm in permissions
         return result
 
-    def api_echo(self, message, kind='info'):
+    def api_echo(self, message, kind='info'):  # type: (str, str) -> None
         print('{}: {}'.format(kind, message))
 
 
