@@ -50,7 +50,7 @@ from pytis.data import (
     Float, FullTextIndex, Inet, Integer, LTree, Macaddr, Number, Range,
     Uuid, JSON, JSONB, Serial, String, Time, TimeInterval, ival, sval,
     Type, Value, Operator, AND, OR, EQ, NE, GT, LT, FORWARD, BACKWARD,
-    ASCENDENT, DESCENDANT, REPEATABLE_READ
+    ASCENDENT, DESCENDANT, REPEATABLE_READ, Transaction,
 )
 import pytis.util
 from pytis.util import (
@@ -3711,7 +3711,7 @@ class DBPostgreSQLFunction(Function, DBDataPostgreSQL,
         return result
 
 
-class DBPostgreSQLTransaction(DBDataPostgreSQL):
+class DBPostgreSQLTransaction(Transaction, DBDataPostgreSQL):
     """User transaction.
 
     By creating an instance of this class new transaction is started.  You can

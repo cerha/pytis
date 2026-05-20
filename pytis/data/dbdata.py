@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2025 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2026 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2014 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -936,7 +936,40 @@ def dbfunction(fspec, *args, **kwargs):
 REPEATABLE_READ = 'repeatable read'
 """Repeatable read transaction isolation level."""
 
-def transaction(**kwargs):
+
+class Transaction(object):
+    """Abstract base class defining the public transaction API.
+
+    Use this class for type annotations instead of the concrete implementation
+    class.  The concrete implementation is ``pytis.data.DBTransactionDefault``,
+    obtainable via the ``pytis.data.transaction()`` factory function.
+
+    """
+
+    def commit(self):  # type: () -> None
+        """Commit the transaction."""
+        raise NotImplementedError
+
+    def rollback(self):  # type: () -> None
+        """Rollback the transaction."""
+        raise NotImplementedError
+
+    def set_point(self, point):  # type: (str) -> None
+        """Set a named savepoint within the transaction."""
+        raise NotImplementedError
+
+    def cut(self, point):  # type: (str) -> None
+        """Rollback the transaction to the given savepoint."""
+        raise NotImplementedError
+
+    def __enter__(self):  # type: () -> Transaction
+        return self
+
+    def __exit__(self, exc_type, exc, tb):  # type: (...) -> None
+        raise NotImplementedError
+
+
+def transaction(**kwargs):  # type: () -> Transaction
     """Return a new database transaction bound to the configured DB connection.
 
     Arguments:

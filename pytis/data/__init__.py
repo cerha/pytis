@@ -60,7 +60,7 @@ from .dbdata import (  # noqa: F401
     DBConnection, DBData, DBBinding, DBColumnBinding, DBException,
     DBSystemException, DBUserException, DBLoginException, DBInsertException,
     DBLockException, DBRetryException, NotWithinSelect, DBConnectionPool,
-    dbtable, dbfunction, transaction, REPEATABLE_READ
+    dbtable, dbfunction, transaction, REPEATABLE_READ, Transaction,
 )
 from .defaults import (  # noqa: F401
     DBDataDefault, DBCounterDefault, DBFunctionDefault, DBTransactionDefault,
