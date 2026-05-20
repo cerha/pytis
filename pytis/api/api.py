@@ -34,7 +34,7 @@ from pytis.util import log, OPERATIONAL
 from pytis.presentation import Specification
 
 try:
-    from typing import (Any, Callable, Dict, IO, Iterator, List, Optional,  # noqa: F401
+    from typing import (Any, Callable, Dict, IO, Iterator, List, Mapping, Optional,  # noqa: F401
                         Sequence, Set, Tuple, Union)
 except ImportError:
     pass
@@ -578,7 +578,7 @@ class Application(API):
 
     def question(self,
                  message,  # type: str
-                 answers=None,  # type: Optional[Sequence[str]]
+                 answers=None,  # type: Optional[Sequence[Union[str, Dict[str, Any]]]]
                  default=None,  # type: Optional[Union[bool, str]]
                  title=None,  # type: Optional[str]
                  content=None,  # type: Optional[Any]
@@ -738,9 +738,9 @@ class Application(API):
     def input_form(self,
                    title,  # type: str
                    fields,  # type: Sequence[pytis.presentation.Field]
-                   prefill=None,  # type: Optional[Dict[str, Any]]
+                   prefill=None,  # type: Optional[Mapping[str, Any]]
                    layout=None,  # type: Optional[Any]
-                   check=None,  # type: Optional[Callable]
+                   check=None,  # type: Optional[Union[Callable, Sequence[Callable]]]
                    noselect=False,  # type: bool
                    inserted_data=None,  # type: Optional[Any]
                    focus_field=None,  # type: Optional[Any]
@@ -792,15 +792,15 @@ class Application(API):
 
     def new_record(self,
                    specification,  # type: Any
-                   prefill=None,  # type: Optional[Dict[str, Any]]
+                   prefill=None,  # type: Optional[Mapping[str, Any]]
                    inserted_data=None,  # type: Optional[Any]
                    multi_insert=True,  # type: bool
                    copied_row=None,  # type: Optional[Any]
-                   set_values=None,  # type: Optional[Dict[str, Any]]
+                   set_values=None,  # type: Optional[Mapping[str, Any]]
                    block_on_new_record=False,  # type: bool
                    transaction=None,  # type: Optional[Any]
                    ):
-        # type: (...) -> None
+        # type: (...) -> Optional[pytis.presentation.PresentedRow]
         """Insert a new record using a modal form.
 
         Runs `on_new_record` instead of the default insertion form if the
@@ -858,7 +858,7 @@ class Application(API):
     def edit_record(self,
                     specification,  # type: Any
                     row,  # type: Any
-                    set_values=None,  # type: Optional[Dict[str, Any]]
+                    set_values=None,  # type: Optional[Mapping[str, Any]]
                     layout=None,  # type: Optional[Any]
                     block_on_edit_record=False,  # type: bool
                     transaction=None,  # type: Optional[Any]
@@ -932,7 +932,7 @@ class Application(API):
                  sorting=None,  # type: Optional[Any]
                  filter=None,  # type: Optional[pd.Operator]
                  condition=None,  # type: Optional[pd.Operator]
-                 arguments=None,  # type: Optional[Dict[str, pd.Value]]
+                 arguments=None,  # type: Optional[Mapping[str, pd.Value]]
                  profile=None,  # type: Optional[str]
                  binding=None,  # type: Optional[str]
                  transaction=None,  # type: Optional[Any]
@@ -1495,8 +1495,8 @@ class Application(API):
     def printout(self,
                  spec_name,  # type: str
                  template_id,  # type: str
-                 row=None,  # type: Optional[pd.Row]
-                 parameters=None,  # type: Optional[Dict[str, Any]]
+                 row=None,  # type: Optional[Union[pd.Row, pytis.presentation.PresentedRow]]
+                 parameters=None,  # type: Optional[Mapping[str, Any]]
                  output_file=None,  # type: Optional[IO[Any]]
                  language=None,  # type: Optional[str]
                  form=None,  # type: Optional['Form']
@@ -1688,8 +1688,8 @@ class BaseApplication(object):
     def api_printout(self,
                      spec_name,  # type: str
                      template_id,  # type: str
-                     row=None,  # type: Optional[pd.Row]
-                     parameters=None,  # type: Optional[Dict[str, Any]]
+                     row=None,  # type: Optional[Union[pd.Row, pytis.presentation.PresentedRow]]
+                     parameters=None,  # type: Optional[Mapping[str, Any]]
                      output_file=None,  # type: Optional[IO[Any]]
                      language=None,  # type: Optional[str]
                      form=None,  # type: Optional[Any]
