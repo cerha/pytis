@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2024 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2026 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2002-2013 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -125,19 +125,17 @@ class SimpleEmail(object):
 
     def create_headers(self):
         def header(value):
-            if ((sys.version_info[0] == 2 and isinstance(value, str) or
-                 sys.version_info[0] > 2 and isinstance(value, bytes))):
+            if isinstance(value, bytes):
                 charset = self.charset
-                if sys.version_info[0] == 2:
-                    value = unicode(value, charset)
-                else:
-                    value = str(value, charset)
+                value = value.decode(charset)
             else:
                 charset = 'utf-8'
             try:
-                return value.encode('ascii')
+                value.encode('ascii')
             except UnicodeEncodeError:
                 return Header(value.encode(charset), charset)
+            else:
+                return value
 
         self.msg['From'] = header(self.from_)
         self.msg['To'] = header(self._flatten_for_header(self.to))
