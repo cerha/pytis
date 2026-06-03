@@ -7,6 +7,13 @@ import sqlalchemy
 import pytis.data.gensqlalchemy as sql
 import pytis.data
 
+try:
+    from typing import Any, TYPE_CHECKING
+except ImportError:
+    TYPE_CHECKING = False
+if TYPE_CHECKING:
+    from pytis.dbdefs.plpython_stubs import plpy, TD, args  # noqa: F401
+
 default_access_rights = sql.SQLFlexibleValue('app_default_access_rights',
                                              environment='GSQL_DEFAULT_ACCESS_RIGHTS',
                                              default=(('all', 'pytis',),))
@@ -100,7 +107,8 @@ class Base_PyTriggerFunction(Base_PyFunction):
                 self._table_oid = TD["relid"]
                 self._args = TD["args"]
                 #
-                self._new = self._old = None
+                self._new = None  # type: Any
+                self._old = None  # type: Any
                 if self._event in ('insert', 'update'):
                     self._new = TD["new"]
                 if self._event in ('delete', 'update'):

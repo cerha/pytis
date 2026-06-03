@@ -6,6 +6,14 @@ from __future__ import print_function
 import sqlalchemy
 import pytis.data.gensqlalchemy as sql
 import pytis.data
+
+try:
+    from typing import TYPE_CHECKING
+except ImportError:
+    TYPE_CHECKING = False
+if TYPE_CHECKING:
+    from pytis.dbdefs.plpython_stubs import plpy, TD, args  # noqa: F401
+
 from pytis.dbdefs.db_pytis_base import (
     Base_LogSQLTable, Base_PyFunction, Base_PyTriggerFunction,
     XDeletes, XInserts, XUpdates, default_access_rights, pytis_schemas

@@ -24,6 +24,13 @@ import pytis.data
 import pytis.data.gensqlalchemy as sql
 from pytis.data.dbdefs import ival
 
+try:
+    from typing import TYPE_CHECKING
+except ImportError:
+    TYPE_CHECKING = False
+if TYPE_CHECKING:
+    from pytis.dbdefs.plpython_stubs import plpy, TD, args  # noqa: F401
+
 class Private(sql.SQLSchema):
     name = 'private'
     owner = 'postgres'

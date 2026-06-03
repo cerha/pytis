@@ -34,6 +34,13 @@ import pytis.dbdefs.db_pytis_cms
 
 from pytis.dbdefs.db_pytis_base import Base_PyFunction
 
+try:
+    from typing import TYPE_CHECKING
+except ImportError:
+    TYPE_CHECKING = False
+if TYPE_CHECKING:
+    from pytis.dbdefs.plpython_stubs import plpy, TD, args  # noqa: F401
+
 _ = translations('pytis-demo')
 
 

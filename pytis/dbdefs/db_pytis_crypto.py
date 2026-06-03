@@ -14,6 +14,13 @@ from pytis.dbdefs.db_pytis_common import XChanges
 from pytis.dbdefs.db_pytis_crypto_basic import PytisCryptPassword
 import pytis.util
 
+try:
+    from typing import TYPE_CHECKING
+except ImportError:
+    TYPE_CHECKING = False
+if TYPE_CHECKING:
+    from pytis.dbdefs.plpython_stubs import plpy, TD, args  # noqa: F401
+
 _ = pytis.util.translations('pytis-wx')
 
 crypto_select_rights = sql.SQLFlexibleValue('app_crypto_select_rights',
