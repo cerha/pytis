@@ -90,6 +90,11 @@ import types
 import pytis.data
 import pytis.util
 
+try:
+    from typing import Any, Dict, Union
+except ImportError:
+    pass
+
 unistr = type(u'')  # Python 2/3 transition hack.
 _SA_VERSION = int(sqlalchemy.__version__.split('.')[0])
 
@@ -773,8 +778,9 @@ class Column(pytis.data.ColumnSpec):
     """
 
     def __init__(self, name, type, label=None, doc=None, unique=None, check=None,
-                 default=None, references=None, primary_key=False, index=False, out=False,
-                 original_column=None, crypto_name=None):
+                 default=None, references=None, primary_key=False,
+                 index=False,  # type: Union[bool, Dict[str, str]]
+                 out=False, original_column=None, crypto_name=None):
         """Initialize the column specification.
 
         Arguments:
@@ -1119,7 +1125,7 @@ class SQLFlexibleValue(object):
     value can be retrieved using `value`.
 
     """
-    _values = {}
+    _values = {}  # type: dict[str, Any]
 
     def __init__(self, name, default=None, environment=None):
         """Initialize the value placeholder.
@@ -1141,6 +1147,7 @@ class SQLFlexibleValue(object):
         self._environment = environment
 
     def value(self, globals_=None):
+        # type: (...) -> Any
         """Return current object value.
 
         The value is retrieved as follows:
