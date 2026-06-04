@@ -384,7 +384,8 @@ class Configuration(object):
 
         def value(self):
             value = super(Configuration.FileOption, self).value()
-            if self._check_path and value and not os.path.exists(value):
+            if self._check_path and self._configuration._initialized \
+               and value and not os.path.exists(value):
                 print("Configuration option '{}' contains invalid path: {}"
                       .format(self.name(), value), file=sys.stderr)
                 self._check_path = False
@@ -403,7 +404,7 @@ class Configuration(object):
 
         def value(self):
             value = super(Configuration.PathOption, self).value()
-            if self._check_path:
+            if self._check_path and self._configuration._initialized:
                 for d in value:
                     if not os.path.exists(d):
                         print("Configuration option '{}' contains invalid path: {}"
@@ -1245,6 +1246,7 @@ class Configuration(object):
 
     def __init__(self):
         self.__dict__['_reading_configuration'] = False
+        self.__dict__['_initialized'] = False
         self._init_options()
 
     def add_command_line_options(self, command_line):
