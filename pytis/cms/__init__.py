@@ -70,10 +70,15 @@ needed to employ Pytis CMS in an existing Pytis Application are:
 
 from __future__ import print_function
 
-from .cms import (  # noqa: F401
-    Menu, MenuParents, Languages, Modules, Actions, GenericActions,
-    Users, Roles, SystemRoles, AllRoles, UserRoles, RoleUsers, Rights,
-    SessionLog, AccessLog, UserSessionLog, Themes
+# Imports use 'X as X' form (PEP 484) to mark names as explicitly re-exported
+# without maintaining a separate __all__ list.
+from .cms import (
+    Menu as Menu, MenuParents as MenuParents, Languages as Languages,
+    Modules as Modules, Actions as Actions, GenericActions as GenericActions,
+    Users as Users, Roles as Roles, SystemRoles as SystemRoles, AllRoles as AllRoles,
+    UserRoles as UserRoles, RoleUsers as RoleUsers, Rights as Rights,
+    SessionLog as SessionLog, AccessLog as AccessLog, UserSessionLog as UserSessionLog,
+    Themes as Themes,
 )
 
-from . import web  # noqa: F401
+from . import web

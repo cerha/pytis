@@ -20,7 +20,9 @@ from __future__ import print_function
 
 __version__ = "1.3.0.dev3"
 
-from . import util  # noqa: F401
-from . import data  # noqa: F401
+# Imports use 'X as X' form (PEP 484) to mark names as explicitly re-exported
+# without maintaining a separate __all__ list.
+from . import util as util
+from . import data as data
 
 config = util.Configuration()

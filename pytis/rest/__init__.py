@@ -15,5 +15,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from .rest import add_api_routes, api_key_dependency, ResourceSpec, ForeignKey, BindingTable
-from .db import Database
+# Imports use 'X as X' form (PEP 484) to mark names as explicitly re-exported
+# without maintaining a separate __all__ list.
+from .rest import (
+    add_api_routes as add_api_routes,
+    api_key_dependency as api_key_dependency,
+    ResourceSpec as ResourceSpec,
+    ForeignKey as ForeignKey,
+    BindingTable as BindingTable,
+)
+from .db import Database as Database

@@ -49,9 +49,13 @@ internals from applications to use this API.
 
 from __future__ import print_function
 
-from .api import (  # noqa: F401
-    implements, APIProvider, ApplicationAPIProvider, BaseApplication,
-    Application, Form, Field, QueryFields, StatusField,
+# Imports use 'X as X' form (PEP 484) to mark names as explicitly re-exported
+# without maintaining a separate __all__ list.
+from .api import (
+    implements as implements, APIProvider as APIProvider,
+    ApplicationAPIProvider as ApplicationAPIProvider, BaseApplication as BaseApplication,
+    Application as Application, Form as Form, Field as Field,
+    QueryFields as QueryFields, StatusField as StatusField,
 )
 
 app = ApplicationAPIProvider()  # type: Application

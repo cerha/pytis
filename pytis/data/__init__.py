@@ -33,39 +33,72 @@ module 'dbdata').
 """
 from __future__ import print_function
 
-from .types_ import (  # noqa: F401
-    Type, Number, Big, Large, Limited,
-    Range, Integer, IntegerRange, SmallInteger, LargeInteger, LargeIntegerRange,
-    Serial, LargeSerial, Float, DoublePrecision, Monetary, String, Name, PgName,
-    Password, RegexString, Color, Inet, Macaddr, Email, TreeOrderBase, TreeOrder,
-    FullTextIndex, DateTime, LocalDateTime, DateTimeRange, ISODateTime, Date,
-    DateRange, Time, LocalTime, TimeInterval, date_and_time, add_timedelta,
-    Boolean, Uuid, Binary, Image, LTree, Array, JSON, JSONB, Enumerator,
-    TransactionalEnumerator, FixedEnumerator, DataEnumerator, ValidationError,
-    Value, WMValue, sval, ival, fval, bval, dval, dtval, tval, wmval, binval,
+# Imports use 'X as X' form (PEP 484) to mark names as explicitly re-exported
+# without maintaining a separate __all__ list.
+from .types_ import (
+    Type as Type, Number as Number, Big as Big, Large as Large, Limited as Limited,
+    Range as Range, Integer as Integer, IntegerRange as IntegerRange,
+    SmallInteger as SmallInteger, LargeInteger as LargeInteger,
+    LargeIntegerRange as LargeIntegerRange,
+    Serial as Serial, LargeSerial as LargeSerial, Float as Float,
+    DoublePrecision as DoublePrecision, Monetary as Monetary,
+    String as String, Name as Name, PgName as PgName,
+    Password as Password, RegexString as RegexString, Color as Color,
+    Inet as Inet, Macaddr as Macaddr, Email as Email,
+    TreeOrderBase as TreeOrderBase, TreeOrder as TreeOrder,
+    FullTextIndex as FullTextIndex, DateTime as DateTime, LocalDateTime as LocalDateTime,
+    DateTimeRange as DateTimeRange, ISODateTime as ISODateTime, Date as Date,
+    DateRange as DateRange, Time as Time, LocalTime as LocalTime,
+    TimeInterval as TimeInterval, date_and_time as date_and_time,
+    add_timedelta as add_timedelta,
+    Boolean as Boolean, Uuid as Uuid, Binary as Binary, Image as Image,
+    LTree as LTree, Array as Array, JSON as JSON, JSONB as JSONB,
+    Enumerator as Enumerator,
+    TransactionalEnumerator as TransactionalEnumerator,
+    FixedEnumerator as FixedEnumerator, DataEnumerator as DataEnumerator,
+    ValidationError as ValidationError,
+    Value as Value, WMValue as WMValue, sval as sval, ival as ival, fval as fval,
+    bval as bval, dval as dval, dtval as dtval, tval as tval, wmval as wmval,
+    binval as binval,
 )
-from .data import (  # noqa: F401
-    FORWARD, BACKWARD, ASCENDENT, DESCENDANT,
-    Operator, Data, Counter, Function, MemData, ColumnSpec, Row, FetchBuffer,
-    DataFactory, EQ, NE, WM, NW, LT, LE, GT, GE, NOT, AND, OR, ANY_OF, IN, FT,
-    LTreeMatch, LTreeAncestor, LTreeDescendant, RangeContains, RangeContained,
-    RangeOverlap, FunctionCondition, OpFunction,
-    reversed_sorting, opposite_direction,
+from .data import (
+    FORWARD as FORWARD, BACKWARD as BACKWARD, ASCENDENT as ASCENDENT,
+    DESCENDANT as DESCENDANT,
+    Operator as Operator, Data as Data, Counter as Counter, Function as Function,
+    MemData as MemData, ColumnSpec as ColumnSpec, Row as Row, FetchBuffer as FetchBuffer,
+    DataFactory as DataFactory, EQ as EQ, NE as NE, WM as WM, NW as NW,
+    LT as LT, LE as LE, GT as GT, GE as GE, NOT as NOT, AND as AND, OR as OR,
+    ANY_OF as ANY_OF, IN as IN, FT as FT,
+    LTreeMatch as LTreeMatch, LTreeAncestor as LTreeAncestor,
+    LTreeDescendant as LTreeDescendant, RangeContains as RangeContains,
+    RangeContained as RangeContained,
+    RangeOverlap as RangeOverlap, FunctionCondition as FunctionCondition,
+    OpFunction as OpFunction,
+    reversed_sorting as reversed_sorting, opposite_direction as opposite_direction,
 )
-from .access import (  # noqa: F401
-    Permission, AccessRights, DBAccessRights, RestrictedData, RestrictedMemData,
-    DataAccessException, is_in_groups,
+from .access import (
+    Permission as Permission, AccessRights as AccessRights,
+    DBAccessRights as DBAccessRights, RestrictedData as RestrictedData,
+    RestrictedMemData as RestrictedMemData,
+    DataAccessException as DataAccessException, is_in_groups as is_in_groups,
 )
-from .dbdata import (  # noqa: F401
-    DBConnection, DBData, DBBinding, DBColumnBinding, DBException,
-    DBSystemException, DBUserException, DBLoginException, DBInsertException,
-    DBLockException, DBRetryException, NotWithinSelect, DBConnectionPool,
-    dbtable, dbfunction, transaction, REPEATABLE_READ, Transaction,
+from .dbdata import (
+    DBConnection as DBConnection, DBData as DBData, DBBinding as DBBinding,
+    DBColumnBinding as DBColumnBinding, DBException as DBException,
+    DBSystemException as DBSystemException, DBUserException as DBUserException,
+    DBLoginException as DBLoginException, DBInsertException as DBInsertException,
+    DBLockException as DBLockException, DBRetryException as DBRetryException,
+    NotWithinSelect as NotWithinSelect, DBConnectionPool as DBConnectionPool,
+    dbtable as dbtable, dbfunction as dbfunction, transaction as transaction,
+    REPEATABLE_READ as REPEATABLE_READ, Transaction as Transaction,
 )
-from .defaults import (  # noqa: F401
-    DBDataDefault, DBCounterDefault, DBFunctionDefault, DBTransactionDefault,
-    default_access_groups, reload_session_variables, reset_crypto_password,
+from .defaults import (
+    DBDataDefault as DBDataDefault, DBCounterDefault as DBCounterDefault,
+    DBFunctionDefault as DBFunctionDefault, DBTransactionDefault as DBTransactionDefault,
+    default_access_groups as default_access_groups,
+    reload_session_variables as reload_session_variables,
+    reset_crypto_password as reset_crypto_password,
 )
-from .deprecated import Oid  # noqa: F401
+from .deprecated import Oid as Oid
 
-from . import dbdefs  # noqa: F401
+from . import dbdefs

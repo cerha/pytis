@@ -27,76 +27,112 @@ module.
 
 from __future__ import print_function
 
-from .event import (  # noqa: F401
-    UserBreakException, top_level_exception, last_user_event, last_event_age,
-    wx_callback, unlock_callbacks, yield_, idle_blocked, block_idle,
-    standard_stop_check_function, interrupt_watcher, interrupt_init,
+# Imports use 'X as X' form (PEP 484) to mark names as explicitly re-exported
+# without maintaining a separate __all__ list.
+from .event import (
+    UserBreakException as UserBreakException,
+    top_level_exception as top_level_exception,
+    last_user_event as last_user_event, last_event_age as last_event_age,
+    wx_callback as wx_callback, unlock_callbacks as unlock_callbacks,
+    yield_ as yield_, idle_blocked as idle_blocked, block_idle as block_idle,
+    standard_stop_check_function as standard_stop_check_function,
+    interrupt_watcher as interrupt_watcher, interrupt_init as interrupt_init,
 )
 
-from .command import (  # noqa: F401
-    CommandHandler, UICommand,
+from .command import (
+    CommandHandler as CommandHandler, UICommand as UICommand,
 )
 
-from .screen import (  # noqa: F401
-    WxKey, Keymap, KeyHandler, CallbackHandler, ToolTipWindow, ToolTip,
-    StatusBar, InfoWindow, ProfileSelectorPopup, ProfileSelector,
-    TextHeadingSelector, FormStateToolbarControl, KeyboardSwitcher,
-    DualFormSwitcher, DualFormResplitter, LocationBar,
-    Browser, mupdfProcessor, FileViewerButtonPanel, FileViewer,
-    FileViewerFrame, make_in_operator, beep, microsleep, busy_cursor,
-    is_busy_cursor, modal, copy_to_clipboard, paste_from_clipboard,
-    hotkey_string, char2px, dlg2px,
-    acceskey_prefix, orientation2wx, make_fullname, uicommand_mitem,
-    get_icon,
+from .screen import (
+    WxKey as WxKey, Keymap as Keymap, KeyHandler as KeyHandler,
+    CallbackHandler as CallbackHandler, ToolTipWindow as ToolTipWindow,
+    ToolTip as ToolTip,
+    StatusBar as StatusBar, InfoWindow as InfoWindow,
+    ProfileSelectorPopup as ProfileSelectorPopup, ProfileSelector as ProfileSelector,
+    TextHeadingSelector as TextHeadingSelector,
+    FormStateToolbarControl as FormStateToolbarControl,
+    KeyboardSwitcher as KeyboardSwitcher,
+    DualFormSwitcher as DualFormSwitcher, DualFormResplitter as DualFormResplitter,
+    LocationBar as LocationBar,
+    Browser as Browser, mupdfProcessor as mupdfProcessor,
+    FileViewerButtonPanel as FileViewerButtonPanel, FileViewer as FileViewer,
+    FileViewerFrame as FileViewerFrame, make_in_operator as make_in_operator,
+    beep as beep, microsleep as microsleep, busy_cursor as busy_cursor,
+    is_busy_cursor as is_busy_cursor, modal as modal,
+    copy_to_clipboard as copy_to_clipboard, paste_from_clipboard as paste_from_clipboard,
+    hotkey_string as hotkey_string, char2px as char2px, dlg2px as dlg2px,
+    acceskey_prefix as acceskey_prefix, orientation2wx as orientation2wx,
+    make_fullname as make_fullname, uicommand_mitem as uicommand_mitem,
+    get_icon as get_icon,
 )
 
-from .dialog import (  # noqa: F401
-    Dialog, Message, Warning, Error, Question, ProgressDialog, Calendar, ColorSelector,
-    BugReport, CheckListDialog, AggregationSetupDialog, FileDialog, DirDialog,
+from .dialog import (
+    Dialog as Dialog, Message as Message, Warning as Warning, Error as Error,
+    Question as Question, ProgressDialog as ProgressDialog,
+    Calendar as Calendar, ColorSelector as ColorSelector,
+    BugReport as BugReport, CheckListDialog as CheckListDialog,
+    AggregationSetupDialog as AggregationSetupDialog,
+    FileDialog as FileDialog, DirDialog as DirDialog,
 )
 
-from .search import (  # noqa: F401
-    SFSColumn, SFSDialog, SortingDialog, SFDialog, SearchDialog,
-    FilterDialog, sfs_columns,
+from .search import (
+    SFSColumn as SFSColumn, SFSDialog as SFSDialog, SortingDialog as SortingDialog,
+    SFDialog as SFDialog, SearchDialog as SearchDialog,
+    FilterDialog as FilterDialog, sfs_columns as sfs_columns,
 )
 
-from .inputfield import InputField, TextField  # noqa: F401
+from .inputfield import InputField as InputField, TextField as TextField
 
-from .form import (  # noqa: F401
-    FormProfile, FormSettings, Form, InnerForm, Refreshable, PopupForm,
-    LookupForm, RecordForm, EditForm, PopupEditForm,
-    InputForm, QueryFieldsForm, ResizableInputForm,
-    PopupInsertForm, ShowForm, BrowsableShowForm,
-    ViewerForm, WebForm, FileViewerForm,
+from .form import (
+    FormProfile as FormProfile, FormSettings as FormSettings, Form as Form,
+    InnerForm as InnerForm, Refreshable as Refreshable, PopupForm as PopupForm,
+    LookupForm as LookupForm, RecordForm as RecordForm, EditForm as EditForm,
+    PopupEditForm as PopupEditForm,
+    InputForm as InputForm, QueryFieldsForm as QueryFieldsForm,
+    ResizableInputForm as ResizableInputForm,
+    PopupInsertForm as PopupInsertForm, ShowForm as ShowForm,
+    BrowsableShowForm as BrowsableShowForm,
+    ViewerForm as ViewerForm, WebForm as WebForm, FileViewerForm as FileViewerForm,
 )
 
-from .list import (  # noqa: F401
-    ListForm, FoldableForm, CodebookForm, SelectRowsForm, BrowseForm,
-    SideBrowseForm, AggregationForm,
+from .list import (
+    ListForm as ListForm, FoldableForm as FoldableForm, CodebookForm as CodebookForm,
+    SelectRowsForm as SelectRowsForm, BrowseForm as BrowseForm,
+    SideBrowseForm as SideBrowseForm, AggregationForm as AggregationForm,
 )
 
-from .dualform import (  # noqa: F401
-    DualForm, ImmediateSelectionDualForm, PostponedSelectionDualForm,
-    SideBrowseDualForm, BrowseDualForm, AggregationDualForm,
-    ShowDualForm, BrowseShowDualForm, DescriptiveDualForm, MultiForm,
-    MultiSideForm, MultiBrowseDualForm,
+from .dualform import (
+    DualForm as DualForm,
+    ImmediateSelectionDualForm as ImmediateSelectionDualForm,
+    PostponedSelectionDualForm as PostponedSelectionDualForm,
+    SideBrowseDualForm as SideBrowseDualForm, BrowseDualForm as BrowseDualForm,
+    AggregationDualForm as AggregationDualForm,
+    ShowDualForm as ShowDualForm, BrowseShowDualForm as BrowseShowDualForm,
+    DescriptiveDualForm as DescriptiveDualForm, MultiForm as MultiForm,
+    MultiSideForm as MultiSideForm, MultiBrowseDualForm as MultiBrowseDualForm,
 )
 
-from .application import (  # noqa: F401
-    Application, run_form, db_operation,
+from .application import (
+    Application as Application, run_form as run_form, db_operation as db_operation,
     # Backwards compatibility aliases.
-    MSeparator, Menu, MItem, CheckItem, RadioItem, close_forms,
-    recent_forms_menu, config_menu_items,
+    MSeparator as MSeparator, Menu as Menu, MItem as MItem,
+    CheckItem as CheckItem, RadioItem as RadioItem, close_forms as close_forms,
+    recent_forms_menu as recent_forms_menu, config_menu_items as config_menu_items,
 )
 
-from .defaults import (  # noqa: F401
-    DEFAULT_KEYMAP, COMMAND_ICONS, TOOLBAR_COMMANDS, FORM_MENU_COMMANDS, UICommands,
+from .defaults import (
+    DEFAULT_KEYMAP as DEFAULT_KEYMAP, COMMAND_ICONS as COMMAND_ICONS,
+    TOOLBAR_COMMANDS as TOOLBAR_COMMANDS, FORM_MENU_COMMANDS as FORM_MENU_COMMANDS,
+    UICommands as UICommands,
 )
 
-from .managers import (  # noqa: F401
-    UserSetttingsManager, ApplicationConfigManager,
-    FormSettingsManager, FormProfileManager,
-    FormProfileParamsManager, AggregatedViewsManager,
+from .managers import (
+    UserSetttingsManager as UserSetttingsManager,
+    ApplicationConfigManager as ApplicationConfigManager,
+    FormSettingsManager as FormSettingsManager,
+    FormProfileManager as FormProfileManager,
+    FormProfileParamsManager as FormProfileParamsManager,
+    AggregatedViewsManager as AggregatedViewsManager,
 )
 
 app = None
