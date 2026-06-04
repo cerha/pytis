@@ -2284,7 +2284,7 @@ class FoldableForm(ListForm):
                             redundant_level = None
                         else:
                             redundant_level = state_level - 1
-                        for key, key_state in new_state.subnodes().items():
+                        for key, key_state in list(new_state.subnodes().items()):
                             if not key_state.subnodes() and key_state.level() == redundant_level:
                                 del new_state.subnodes()[key]
                 else:
