@@ -54,9 +54,9 @@ from pytis.util import (
 from .types_ import DateTime, Number, Type, Value, WMValue
 
 try:
-    from typing import Iterable, List, Optional, Tuple, Union
+    from typing import Iterable, List, Optional, Tuple, Union, TYPE_CHECKING, overload
 except ImportError:
-    pass
+    TYPE_CHECKING = False
 
 _ = translations('pytis-data')
 
@@ -602,7 +602,7 @@ class Data(object_2_5):
                 pass
         return select_result, Row(aggregates)
 
-    def fetch(self, position):
+    def fetch(self, position):  # type: (...) -> Optional['Row']
         """Return data row from given position or next in given direction.
 
         Arguments:
@@ -632,7 +632,7 @@ class Data(object_2_5):
         """
         return None
 
-    def fetchone(self):
+    def fetchone(self):  # type: () -> Optional['Row']
         """Convenience alias for `fetch` (FORWARD)."""
         return self.fetch(FORWARD)
 
@@ -1717,7 +1717,15 @@ class Row(object):
         """Vrať počet sloupců v řádku."""
         return len(self._data)
 
-    def __getitem__(self, key):  # type: (Union[str, int, slice]) -> Union[Value, Row]
+    if TYPE_CHECKING:
+        @overload
+        def __getitem__(self, key):  # type: (Union[str, int]) -> Value
+            pass
+        @overload
+        def __getitem__(self, key):  # type: (slice) -> 'Row'
+            pass
+
+    def __getitem__(self, key):  # type: (Union[str, int, slice]) -> Union[Value, 'Row']
         """Return the value(s) of column(s) given by key.
 
         Arguments:
