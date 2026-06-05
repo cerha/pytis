@@ -57,6 +57,11 @@ from __future__ import print_function
 from past.builtins import basestring
 from future.utils import python_2_unicode_compatible
 
+try:
+    from typing import Any, Optional
+except ImportError:
+    pass
+
 import datetime
 import gc
 import _thread
@@ -257,6 +262,7 @@ class DBConnectionPool(object):
         return (c.database(), c.host(), c.port(), c.user(), c.password(), c.sslmode(), schemas,)
 
     def get(self, connection_spec):
+        # type: (...) -> Any
         pool = self._pool
         spec_id = self._connection_spec_id(connection_spec)
         with Locked(self._lock):
@@ -300,6 +306,7 @@ class DBConnectionPool(object):
         return c
 
     def put_back(self, connection_spec, connection):
+        # type: (...) -> None
         pool = self._pool
         spec_id = self._connection_spec_id(connection_spec)
         with Locked(self._lock):
@@ -314,6 +321,7 @@ class DBConnectionPool(object):
             log(DEBUG, 'Connection returned to pool:', connection)
 
     def flush(self, close):
+        # type: (...) -> None
         with Locked(self._lock):
             for connections in self._allocated_connections.values():
                 for c in connections.keys():
@@ -331,6 +339,7 @@ class DBConnectionPool(object):
             self._pool = {}
 
     def info(self):
+        # type: () -> list
         """Return list of current transaction commands of all known connections.
 
         It's useful when debugging idle transactions or connection leaks.
@@ -421,29 +430,36 @@ class DBConnection(object):
                      if option not in exclude and self.__dict__['_' + option] is not None])
 
     def user(self):
+        # type: () -> Optional[str]
         """Vrať databázového uživatele jako string nebo `None`."""
         return self._user
 
     def password(self):
+        # type: () -> Optional[str]
         """Vrať heslo databázového uživatele jako string nebo `None`."""
         return self._password
 
     def host(self):
+        # type: () -> Optional[str]
         """Vrať jméno databázového serveru jako string nebo `None`."""
         return self._host
 
     def port(self):
+        # type: () -> Optional[int]
         """Vrať jméno portu na serveru jako integer nebo `None`."""
         return self._port
 
     def database(self):
+        # type: () -> Optional[str]
         """Vrať jméno databáze jako string nebo `None`."""
         return self._database
 
     def sslmode(self):
+        # type: () -> Optional[str]
         return self._sslmode
 
     def schemas(self):
+        # type: () -> Optional[tuple]
         """Return schemas given in the constructor."""
         return self._schemas
 
@@ -461,6 +477,7 @@ class DBConnection(object):
         return hash_attr(self, ['_' + option for option in self._OPTIONS])
 
     def select(self, name):
+        # type: (...) -> DBConnection
         """Return the specification instance activated for given connection name.
 
         Available connection names are defined by the alternatives constructor
@@ -483,6 +500,7 @@ class DBConnection(object):
             return self.__class__(**options)
 
     def update_login_data(self, user, password):
+        # type: (...) -> None
         """Set given login parameters in the instance.
 
         Arguments:
@@ -503,6 +521,7 @@ class DBConnection(object):
             self._crypto_password = rsa_encrypt(self._db_key, password)
 
     def crypto_password(self):
+        # type: () -> Optional[str]
         """Return crypto password, string.
 
         This is typically the same as the login password, but it may be
@@ -512,6 +531,7 @@ class DBConnection(object):
         return self._crypto_password
 
     def set_crypto_password(self, password):
+        # type: (...) -> None
         """Set instance crypto password to password.
 
         Arguments:
@@ -521,10 +541,12 @@ class DBConnection(object):
         self._crypto_password = password
 
     def db_key(self):
+        # type: () -> Optional[str]
         """Return db communication key, string."""
         return self._db_key
 
     def set_db_key(self, db_key):
+        # type: (...) -> None
         """Set instance db key.
 
         Arguments:
@@ -559,6 +581,7 @@ class DBBinding(object):
         self._id = id
 
     def id(self):
+        # type: () -> str
         """Vrať identifikátor napojení zadaný v konstruktoru."""
         return self._id
 
@@ -659,34 +682,42 @@ class DBColumnBinding(DBBinding):
         return hash_attr(self, ('_table', '_column', '_related_to', '_type', '_is_hidden'))
 
     def table(self):
+        # type: () -> str
         """Vrať jméno napojené databázové tabulky jako string."""
         return self._table
 
     def column(self):
+        # type: () -> str
         """Vrať jméno napojeného sloupce jako string."""
         return self._column
 
     def related_to(self):
+        # type: () -> Optional[DBColumnBinding]
         """Vrať instanci `DBColumnBinding` napojeného sloupce nebo `None`."""
         return self._related_to
 
     def type(self):
+        # type: () -> Optional[Type]
         """Vrať instanci typu sloupce z konstruktoru nebo `None`."""
         return self._type
 
     def crypto_name(self):
+        # type: () -> Optional[str]
         """Return `crypto_name` value given in the constructor, `None` or string."""
         return self._crypto_name
 
     def encrypt_empty(self):
+        # type: () -> bool
         """Return `encrypt_empty` value given in the constructor, boolean."""
         return self._encrypt_empty
 
     def kwargs(self):
+        # type: () -> dict
         """Vrať slovník klíčových argumentů konstruktoru datového typu sloupce."""
         return self._kwargs
 
     def is_hidden(self):
+        # type: () -> bool
         """Vrať pravdu, právě když sloupec není přítomen v datové tabulce."""
         return self._is_hidden
 
@@ -729,10 +760,12 @@ class DBException(Exception):
         self._exception = exception
 
     def message(self):
+        # type: () -> str
         """Vrať lidsky čitelnou zprávu zadanou v konstruktoru, jako string."""
         return self._message
 
     def exception(self):
+        # type: () -> Optional[Exception]
         """Vrať databázovou výjimku zadanou v konstruktoru nebo `None`."""
         return self._exception
 
@@ -814,6 +847,7 @@ class NotWithinSelect(ProgramError):
 
 def dbtable(table, columns, connection_data=None, arguments=None, connection_name=None,
             sql_logger=None):
+    # type: (...) -> Data
     """Return `DBDataDefault` instance for a table with given columns.
 
     Arguments:
@@ -846,6 +880,7 @@ def dbtable(table, columns, connection_data=None, arguments=None, connection_nam
 
 
 def dbfunction(fspec, *args, **kwargs):
+    # type: (...) -> Any
     """Call database function and return the result as a Python value.
 
     If the database call fails, return None.
@@ -962,6 +997,10 @@ class Transaction(object):
         """Rollback the transaction to the given savepoint."""
         raise NotImplementedError
 
+    def close(self):  # type: () -> None
+        """Close the transaction."""
+        raise NotImplementedError
+
     def __enter__(self):  # type: () -> Transaction
         return self
 
@@ -969,7 +1008,7 @@ class Transaction(object):
         raise NotImplementedError
 
 
-def transaction(**kwargs):  # type: () -> Transaction
+def transaction(**kwargs):  # type: (**Any) -> Transaction
     """Return a new database transaction bound to the configured DB connection.
 
     Arguments:

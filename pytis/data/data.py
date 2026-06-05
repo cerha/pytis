@@ -54,7 +54,7 @@ from pytis.util import (
 from .types_ import DateTime, Number, Type, Value, WMValue
 
 try:
-    from typing import Iterable, List, Optional, Tuple, Union, TYPE_CHECKING, overload
+    from typing import Iterable, Iterator, List, Optional, Tuple, Union, TYPE_CHECKING, overload
 except ImportError:
     TYPE_CHECKING = False
 
@@ -378,6 +378,7 @@ class Data(object_2_5):
             self.after_init()
 
     def after_init(self):
+        # type: () -> None
         """Method called after all initializations.
 
         The purpose of this method is to allow instance completion after it is
@@ -387,14 +388,21 @@ class Data(object_2_5):
         pass
 
     def columns(self):
+        # type: () -> tuple
         """Return columns specification given to constructor."""
         return self._columns
 
     def condition(self):
+        # type: () -> Optional[Operator]
         """Return condition specification given to constructor."""
         return self._condition
 
     def find_column(self, id):
+        # TODO: annotate as -> Optional[ColumnSpec], but adding this causes cascade
+        # of reportOptionalMemberAccess errors in form/form.py, form/list.py,
+        # form/dualform.py etc. where find_column() result is used without None check.
+        # Fix: add None guards at all call sites in form code before adding this annotation.
+        # # type: (...) -> Optional[ColumnSpec]
         """Vrať `ColumnSpec` identifikovanou id.
 
         Pokud taková specifikace neexistuje, vrať `None`.
@@ -403,14 +411,22 @@ class Data(object_2_5):
         return find(id, self.columns(), key=ColumnSpec.id)
 
     def key(self):
+        # type: () -> tuple
         """Vrať klíčové sloupce zadané v konstruktoru, jako tuple."""
         return self._key
 
     def row_key(self, row):
+        # type: ('Row') -> tuple
         """Vrať hodnoty klíče z row jako tuple instancí `Value`."""
         return row.columns([c.id() for c in self.key()])
 
     def row(self, key, columns=None, transaction=None, arguments={}):
+        # TODO: annotate as -> Optional['Row'], but adding this causes cascade of
+        # reportIncompatibleMethodOverride errors in access.py, form.py, postgresql.py
+        # because RestrictedData.row(key, **kwargs) has positional param count mismatch
+        # with Data.row(key, columns, transaction, arguments). Fix: add full params to
+        # RestrictedData.row and other overrides before adding this annotation.
+        # # type: (...) -> Optional['Row']
         """Return row instance `Row` identified by key.
 
         If there is no such row, return `None`.
@@ -438,6 +454,7 @@ class Data(object_2_5):
 
     def select(self, condition=None, reuse=False, sort=(), columns=None, transaction=None,
                arguments={}, async_count=False, timeout_callback=None, limit=None):
+        # TODO: cannot annotate return type — see row() for explanation of override cascade issue.
         """Initialize selection of records from the data source.
 
         The method itself does not necessarily load any data, the selection is
@@ -485,6 +502,7 @@ class Data(object_2_5):
         return 0
 
     def select_map(self, function, transaction=None, **kwargs):
+        # type: (...) -> list
         """Apply function to all rows of the selection and return the results.
 
         Calls the `select` method with the given kwargs arguments, then applies
@@ -506,6 +524,7 @@ class Data(object_2_5):
         return [function(row) for row in self.rows(transaction=transaction, **kwargs)]
 
     def rows(self, condition=None, async_count=False, **kwargs):
+        # TODO: cannot annotate return type — see row() for explanation of override cascade issue.
         """Return an iterator over all rows of the selection with given arguments.
 
         Calls the `select` method with the given condition and kwargs arguments
@@ -527,6 +546,7 @@ class Data(object_2_5):
         return self.Selection(self, self.select(condition=condition, **kwargs))
 
     def select_aggregate(self, operation, condition=None, transaction=None, arguments={}):
+        # type: (...) -> Optional[Value]
         """Return the result of an aggregate function.
 
         Performs a select whose value is the result of the aggregate function
@@ -562,6 +582,7 @@ class Data(object_2_5):
 
     def select_and_aggregate(self, operation, condition=None, reuse=False, sort=(),
                              columns=None, transaction=None):
+        # type: (...) -> tuple
         """Combination of `select` and `select_aggregate` methods.
 
         The method returns a pair (SELECT_RESULT, AGGREGATE_RESULT) where:
@@ -637,6 +658,7 @@ class Data(object_2_5):
         return self.fetch(FORWARD)
 
     def last_row_number(self):
+        # type: () -> int
         """Vrať pořadí řádku posledně vráceného metodou `fetch`.
 
         Řádky jsou číslovány od 0.  Pokud v aktuálním selectu dosud nebyl žádný
@@ -646,6 +668,7 @@ class Data(object_2_5):
         return self._select_last_row_number
 
     def skip(self, count, direction=FORWARD):
+        # type: (int, str) -> int
         """Přeskoč count řádků ve směru direction.
 
         Arguments:
@@ -674,6 +697,7 @@ class Data(object_2_5):
         return count
 
     def rewind(self):
+        # type: () -> None
         """Vrať se před začátek dat aktuálního selectu.
 
         Metodu je možno použít pouze během otevřeného selectu (viz metody
@@ -684,6 +708,7 @@ class Data(object_2_5):
             pass
 
     def search(self, condition, direction=FORWARD, transaction=None, arguments={}):
+        # TODO: cannot annotate return type — see row() for explanation of override cascade issue.
         """Vyhledej nejbližší výskyt řádku splňujícího condition.
 
         Arguments:
@@ -727,6 +752,7 @@ class Data(object_2_5):
         return self.search(condition, direction=direction)
 
     def close(self):
+        # type: () -> None
         """Ukonči aktuální select.
 
         Tato metoda umožňuje explicitně uzavřít aktuální čtení dat pomocí
@@ -742,6 +768,7 @@ class Data(object_2_5):
         self._select_last_row_number = None
 
     def insert(self, row, after=None, before=None, transaction=None):
+        # TODO: cannot annotate return type — see row() for explanation of override cascade issue.
         """Vlož row do tabulky.
 
         Arguments:
@@ -786,7 +813,15 @@ class Data(object_2_5):
         """
         return None, False
 
+    def insert_many(self, rows, after=None, before=None, transaction=None):
+        """Insert multiple rows at once.  Subclasses may override for efficiency."""
+        results = []
+        for row in rows:
+            results.append(self.insert(row, after=after, before=before, transaction=transaction))
+        return results
+
     def update(self, key, row, transaction=None):
+        # TODO: cannot annotate return type — see row() for explanation of override cascade issue.
         """Nahradť řádek identifikovaný klíčem key řádkem row.
 
         Arguments:
@@ -830,6 +865,7 @@ class Data(object_2_5):
         return None, False
 
     def update_many(self, condition, row, transaction=None):
+        # TODO: cannot annotate return type — see row() for explanation of override cascade issue.
         """Update rows given by condition by data of given row.
 
         Arguments:
@@ -864,6 +900,7 @@ class Data(object_2_5):
         return 0
 
     def delete(self, key, transaction=None):
+        # TODO: cannot annotate return type — see row() for explanation of override cascade issue.
         """Smaž řádek identifikovaný key.
 
         Arguments:
@@ -881,6 +918,7 @@ class Data(object_2_5):
         return 0
 
     def delete_many(self, condition, transaction=None):
+        # TODO: cannot annotate return type — see row() for explanation of override cascade issue.
         """Smaž řádky identifikované condition.
 
         Arguments:
@@ -896,6 +934,7 @@ class Data(object_2_5):
         return 0
 
     def change_number(self):
+        # type: () -> int
         """Vrať počet dosud zaregistrovaných změn dat.
 
         Tento počet je větší nebo roven 0 a každá následující návratová hodnota
@@ -908,6 +947,7 @@ class Data(object_2_5):
         return self._change_number.current()
 
     def add_callback_on_change(self, function):
+        # type: (...) -> None
         """Zaregistruj function do seznamu modifikačních callbacků.
 
         Dojde-li k oznámení o modifikaci dat, může pak být function zavolána,
@@ -929,6 +969,7 @@ class Data(object_2_5):
         self._on_change_callbacks.append(function)
 
     def remove_callback_on_change(self, function):
+        # type: (...) -> None
         """Odstraň function ze seznamu modifikačních callbacků.
 
         Pokud function v seznamu modifikačních callbacků není, nedělej nic.
@@ -946,6 +987,7 @@ class Data(object_2_5):
 
     @classmethod
     def cacheable(class_):
+        # type: () -> bool
         """Return whether it is possible to cache instances of this class.
 
         This information is intended to be used in the `DataFactory` class.
@@ -1066,7 +1108,7 @@ class MemData(Data):
         else:
             return Row([(cid, row[cid]) for cid in columns])
 
-    def row(self, key, columns=None):
+    def row(self, key, columns=None, transaction=None, arguments={}):
         index = self._mem_find_index(key)
         if index is None:
             return None
@@ -1164,7 +1206,7 @@ class MemData(Data):
     def last_row_number(self):
         return self._mem_cursor
 
-    def insert(self, row, transaction=None):
+    def insert(self, row, after=None, before=None, transaction=None):
         """Vlož row do tabulky.
 
         Pro bližší popis viz nadtřída.
