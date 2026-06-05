@@ -3046,6 +3046,7 @@ class _SQLQuery(SQLObject):
 
     @classmethod
     def _exclude(cls, tabular, *columns_tables, **kwargs):
+        # type: (...) -> list
         """Return sequence of `tabular` columns with some exclusions.
 
         Arguments:
