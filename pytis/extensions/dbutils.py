@@ -22,6 +22,11 @@ from __future__ import print_function
 
 from past.builtins import basestring
 
+try:
+    from typing import Any
+except ImportError:
+    pass
+
 import pytis
 import pytis.util
 import pytis.data as pd
@@ -143,6 +148,7 @@ def dbupdate_many(spec, condition=None, update_row=None,
 
 
 def dbfunction(name, *args, **kwargs):
+    # type: (...) -> Any
     """Deprecated. Use `pytis.data.dbfunction` instead.
 
     Nová funkce `pytis.data.dbfunction` má oproti této původní funkci několik
