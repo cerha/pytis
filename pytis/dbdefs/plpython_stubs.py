@@ -29,6 +29,10 @@ if TYPE_CHECKING:
             # type: (int) -> Dict[str, Any]
             pass
 
+        def format(self):
+            # type: () -> str
+            pass
+
     class _Plpy(object):
         def execute(self, query, limit=0):
             # type: (str, int) -> _SPIResult
@@ -52,6 +56,26 @@ if TYPE_CHECKING:
 
         def log(self, msg):
             # type: (str) -> None
+            pass
+
+        def quote_nullable(self, val):
+            # type: (Any) -> str
+            pass
+
+        def quote_literal(self, val):
+            # type: (Any) -> str
+            pass
+
+        def quote_ident(self, val):
+            # type: (str) -> str
+            pass
+
+        def prepare(self, query, argtypes=None):
+            # type: (str, Any) -> Any
+            pass
+
+        def cursor(self, query, args=None):
+            # type: (str, Any) -> Any
             pass
 
     plpy = _Plpy()
