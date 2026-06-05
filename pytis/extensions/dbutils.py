@@ -23,7 +23,7 @@ from __future__ import print_function
 from past.builtins import basestring
 
 try:
-    from typing import Any
+    from typing import Any, Optional, Sequence, Tuple, Union
 except ImportError:
     pass
 
@@ -37,6 +37,7 @@ _ = translations('pytis-wx')
 
 
 def dbselect(spec, condition=None, sort=(), transaction=None, arguments={}):
+    # type: (Any, Optional[pd.Operator], Sequence, Optional[pd.Transaction], dict) -> list
     """Vrať řádky dané db tabulky jako sekvenci.
 
     Arguments:
@@ -64,6 +65,7 @@ def dbselect(spec, condition=None, sort=(), transaction=None, arguments={}):
 
 
 def dbinsert(spec, row, transaction=None):
+    # type: (Any, Union[pd.Row, tuple, list], Optional[pd.Transaction]) -> tuple
     """Provede insert do tabulky dané specifikací.
 
     Arguments:
@@ -97,6 +99,7 @@ def dbinsert(spec, row, transaction=None):
 
 
 def dbupdate(row, values=(), transaction=None):
+    # type: (Any, Sequence, Optional[pd.Transaction]) -> tuple
     """Provede update nad předaným řádkem.
 
     Arguments:
@@ -124,6 +127,7 @@ row_update = dbupdate
 
 def dbupdate_many(spec, condition=None, update_row=None,
                   transaction=None):
+    # type: (Any, Optional[pd.Operator], Optional[pd.Row], Optional[pd.Transaction]) -> int
     """Provede update nad tabulkou danou specifikací.
 
     Arguments:
@@ -194,6 +198,7 @@ def dbfunction(name, *args, **kwargs):
 
 
 def enum(name, **kwargs):
+    # type: (str, **Any) -> pd.DataEnumerator
     """Vytvoř instanci `DataEnumerator` nad danou specifikací.
 
     Takto vytvořený enumerátor lze použít jako argument `enumerator`
@@ -207,6 +212,7 @@ def enum(name, **kwargs):
 
 # Pozor, stejná metoda metoda je definována i v pd.access
 def is_in_groups(groups):
+    # type: (Union[str, tuple]) -> bool
     if isinstance(groups, basestring):
         groups = xtuple(groups)
 
@@ -220,6 +226,7 @@ def is_in_groups(groups):
 
 
 def safe_commit(transaction, msg=None):
+    # type: (pd.Transaction, Optional[str]) -> bool
     """Commit transaction and handle possible timeout errors.
 
     Arguments:
@@ -241,6 +248,7 @@ def safe_commit(transaction, msg=None):
 
 
 def safe_rollback(transaction, msg=None):
+    # type: (pd.Transaction, Optional[str]) -> bool
     """Rollback transaction and handle possible timeout errors.
 
     Arguments:
