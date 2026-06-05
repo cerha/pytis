@@ -91,9 +91,12 @@ import pytis.data
 import pytis.util
 
 try:
-    from typing import Any, Dict, Union
+    from typing import Any, Dict, Union, TYPE_CHECKING
 except ImportError:
-    pass
+    TYPE_CHECKING = False
+
+if TYPE_CHECKING:
+    from sqlalchemy.sql.expression import FromClause
 
 unistr = type(u'')  # Python 2/3 transition hack.
 _SA_VERSION = int(sqlalchemy.__version__.split('.')[0])
@@ -1483,6 +1486,7 @@ class TableLookup(object):
     """
 
     def __getattr__(self, specification):
+        # type: (str) -> FromClause
         return object_by_specification_name(specification)
 
 
@@ -1508,6 +1512,7 @@ class ColumnLookup(object):
     """
 
     def __getattr__(self, specification):
+        # type: (str) -> sqlalchemy.sql.base.ImmutableColumnCollection
         return object_by_specification_name(specification).c
 
 
