@@ -63,8 +63,8 @@ class PrettyTreeOrder(PrettyType):
 
     """
 
-    def _init(self, tree_column_id, **kwargs):
-        super(PrettyTreeOrder, self)._init(**kwargs)
+    def __init__(self, tree_column_id, **kwargs):
+        super(PrettyTreeOrder, self).__init__(**kwargs)
         self._tree_column_id = tree_column_id
 
     def _indentation(self, level, row, form):
@@ -114,8 +114,8 @@ class PrettyFoldable(PrettyTreeOrder):
     NON_FOLDABLE_MARK = u'⊙'
     """Folding indicator for an unfoldable node."""
 
-    def _init(self, tree_column_id, subcount_column_id=None, **kwargs):
-        super(PrettyFoldable, self)._init(tree_column_id, **kwargs)
+    def __init__(self, tree_column_id, subcount_column_id=None, **kwargs):
+        super(PrettyFoldable, self).__init__(tree_column_id=tree_column_id, **kwargs)
         self._tree_column_nsub_id = subcount_column_id
 
     def _indentation(self, level, row, form):

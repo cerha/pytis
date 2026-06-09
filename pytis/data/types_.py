@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2025 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2026 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2017 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -58,7 +58,7 @@ from pytis.util import (
 import pytis.util
 
 try:
-    from typing import Any, Optional, Union
+    from typing import Any, List, Optional, Sequence, Tuple, Union
 except ImportError:
     pass
 
@@ -81,6 +81,17 @@ else:
 
 
 class _MType(type):
+
+    def __new__(mcs, name, bases, namespace):
+        cls = super(_MType, mcs).__new__(mcs, name, bases, namespace)
+        if '__init__' in namespace:
+            # Automatically alias _init to __init__ so that application defined
+            # subclasses still using the legacy _init() hook can call
+            # super()._init(...) and reach the current __init__() through the MRO.
+            # TODO: remove once all application subclasses have been migrated
+            # to __init__().
+            cls._init = namespace['__init__']
+        return cls
 
     def __call__(self, *args, **kwargs):
         return self.make(*args, **kwargs)
@@ -146,7 +157,17 @@ class Type(with_metaclass(_MType, object)):
             else:
                 result = table[key] = class_.__new__(class_)
                 assert isinstance(result, class_)
-                result.__init__(*args, **kwargs)
+                # Support legacy application defined subclasses that still define
+                # _init() instead of __init__().  A class using the legacy pattern
+                # has _init in its __dict__ but not __init__.
+                # TODO: remove once all subclasses have been migrated (just call
+                # result.__init__ unconditionally).
+                if any('_init' in cls.__dict__ and '__init__' not in cls.__dict__
+                       for cls in class_.__mro__ if cls is not object):
+                    result._init(*args, **kwargs)
+                else:
+                    result.__init__(*args, **kwargs)
+                result._constructor_kwargs = kwargs
                 result._id = self.id_of_initargs(class_, args, kwargs)
                 result._init_args = (args, kwargs,)
             assert result is not None
@@ -183,32 +204,23 @@ class Type(with_metaclass(_MType, object)):
         """
         return Type._type_table
 
-    def __init__(self, **kwargs):
+    def __init__(self, not_null=False, unique=False, enumerator=None, constraints=()):
+        # type: (bool, bool, Optional[Enumerator], Union[list, tuple]) -> None
         """Initialize the instance.
 
-        See the class docstring for description of available arguments.  Don't
-        override the constructor in derived classes, unless you really know what
-        you are doing.  Normally you want to override the `_init` method in
-        derived classes to define specific type constructor arguments or default
-        values of inherited arguments.
-
-        The purpose of overriding `_init` instead of `__init__` is to be able to
-        save the dictionary of explicitly passed constructor arguments here.
-        This allows type cloning (see `clone`).
-
-        """
-        self._constructor_kwargs = kwargs
-        self._init(**kwargs)
-        super(Type, self).__init__()
-
-    def _init(self, not_null=False, enumerator=None, constraints=(), unique=False):
-        """Initialize the instance.
-
-        Defines constructor arguments and their default values.  You typically
-        want to override this method in derived classes to define type specific
-        constructor arguments or default values of inherited arguments as you
-        would normally do by overriding `__init__`, which has a special purpose
-        in this class.
+        Arguments:
+          not_null (bool): Flag saying the value must not be empty.  Empty value is
+            None or any other value mapped to None in `_SPECIAL_VALUES`.
+          unique (bool): Flag saying the value must be unique within its column in a
+            table.
+          enumerator (`Enumerator`): Enumerator specification or None. Enumerators
+            are used to implement referential integrity or static enumeration
+            checking.  See `Enumerator` class documentation for more information.
+          constraints: Sekvence validačních funkcí sloužících k realizaci
+            libovolných integritních omezení.  Každá z těchto funkcí je funkcí
+            jednoho argumentu, kterým je vnitřní hodnota typu.  Funkce pro tuto
+            hodnotu musí vrátit buď None, je-li hodnota správná, nebo chybovou
+            hlášku jako string v opačném případě.
 
         """
         assert isinstance(not_null, bool), not_null
@@ -228,6 +240,7 @@ class Type(with_metaclass(_MType, object)):
             def callback():
                 self._validation_cache.reset()
             enumerator.add_callback_on_change(callback)
+        super(Type, self).__init__()
 
     def __eq__(self, other):
         if not sameclass(self, other):
@@ -505,19 +518,25 @@ class Number(Type):
     Třída víceméně nic nového nedefinuje, je určena pouze k podědění všemi
     numerickými typy, aby tyto byly jakožto číselné snadno rozpoznatelné.
 
-    Arguments:
-      minimum: Minimal value; `None` denotes no limit.
-      maximum: Maximal value; `None` denotes no limit.
-
-    Other arguments are passed to the parent constructor.
-
     """
     _SPECIAL_VALUES = Type._SPECIAL_VALUES + ((None, ''),)
 
-    def _init(self, minimum=None, maximum=None, **kwargs):
+    def __init__(self, not_null=False, unique=False, enumerator=None, constraints=(),
+                 minimum=None, maximum=None):
+        # type: (bool, bool, Optional[Enumerator], Union[list, tuple], Any, Any) -> None
+        """Initialize the instance.
+
+        Arguments:
+          minimum: Minimal value; `None` denotes no limit.
+          maximum: Maximal value; `None` denotes no limit.
+
+        Other arguments are the same as in `Type`.
+
+        """
         self._minimum = minimum
         self._maximum = maximum
-        super(Number, self)._init(**kwargs)
+        super(Number, self).__init__(not_null=not_null, unique=unique,
+                                     enumerator=enumerator, constraints=constraints)
 
     def _comparison_key(self):
         return super(Number, self)._comparison_key() + (self._minimum, self._maximum)
@@ -573,14 +592,6 @@ class Limited(Type):
     Minimal and maximal length of a value of this type can be limited by passing
     the `minlen` and `maxlen` constructor arguments.
 
-    Arguments:
-      minlen (int): Minimal length of a value of this type as integer or `None`;
-        `None` denotes unlimited minimal length.
-      maxlen (int): Maximal length of a value of this type as integer or `None`;
-        `None` denotes unlimited maximal length.
-
-    Other arguments are passed to the parent constructor.
-
     """
 
     # Translators: User input validation error message.
@@ -588,10 +599,30 @@ class Limited(Type):
     # Translators: User input validation error message.
     _MSG_MAXLEN = _(u"Maximal size %(maxlen)s exceeded")
 
-    def _init(self, minlen=None, maxlen=None, **kwargs):
+    def __init__(self,
+                 not_null=False,  # type: bool
+                 unique=False,  # type: bool
+                 enumerator=None,  # type: Optional[Enumerator]
+                 constraints=(),  # type: Union[list, tuple]
+                 minlen=None,  # type: Optional[int]
+                 maxlen=None,  # type: Optional[int]
+    ):
+        # type: (...) -> None
+        """Initialize the instance.
+
+        Arguments:
+          minlen (int): Minimal length of a value of this type as integer or `None`;
+            `None` denotes unlimited minimal length.
+          maxlen (int): Maximal length of a value of this type as integer or `None`;
+            `None` denotes unlimited maximal length.
+
+        Other arguments are the same as in `Type`.
+
+        """
         self._minlen = minlen
         self._maxlen = maxlen
-        super(Limited, self)._init(**kwargs)
+        super(Limited, self).__init__(not_null=not_null, unique=unique,
+                                      enumerator=enumerator, constraints=constraints)
 
     def _comparison_key(self):
         return super(Limited, self)._comparison_key() + (self._minlen, self._maxlen)
@@ -643,6 +674,8 @@ class Range(Type):
     instance of empty strings on validation.
 
     """
+    # Note: Range has no __init__ of its own; MI subclasses (IntegerRange etc.)
+    # initialize Range-specific attributes directly.
     class Range(object):
 
         _type = None
@@ -699,8 +732,8 @@ class Range(Type):
 
     _NULL_RANGE_VALUE = ('', '')
 
-    def _init(self, lower_inc=True, upper_inc=False, **kwargs):
-        """Initialize the instance.
+    def _init_range(self, lower_inc=True, upper_inc=False):
+        """Initialize Range-specific attributes.
 
         Arguments:
           lower_inc (bool): Indicates whether the lower bound is inclusive.
@@ -715,7 +748,6 @@ class Range(Type):
             _default_lower_inc = lower_inc
             _default_upper_inc = upper_inc
         self.Range = InstanceRange
-        super(Range, self)._init(**kwargs)
 
     def _comparison_key(self):
         return super(Range, self)._comparison_key() + (self._lower_inc, self._upper_inc)
@@ -852,6 +884,23 @@ class Integer(Number):
 
 class IntegerRange(Range, Integer):
 
+    def __init__(self,
+                 not_null=False,  # type: bool
+                 unique=False,  # type: bool
+                 enumerator=None,  # type: Optional[Enumerator]
+                 constraints=(),  # type: Union[list, tuple]
+                 lower_inc=True,  # type: bool
+                 upper_inc=False,  # type: bool
+                 minimum=None,  # type: Optional[int]
+                 maximum=None,  # type: Optional[int]
+    ):
+        # type: (...) -> None
+        Type.__init__(self, not_null=not_null, unique=unique,
+                      enumerator=enumerator, constraints=constraints)
+        self._init_range(lower_inc=lower_inc, upper_inc=upper_inc)
+        self._minimum = minimum
+        self._maximum = maximum
+
     def sqlalchemy_type(self):
         import pytis.data.gensqlalchemy
         return pytis.data.gensqlalchemy.INT4RANGE()
@@ -884,6 +933,23 @@ class LargeInteger(Integer):
 
 class LargeIntegerRange(Range, Integer):
 
+    def __init__(self,
+                 not_null=False,  # type: bool
+                 unique=False,  # type: bool
+                 enumerator=None,  # type: Optional[Enumerator]
+                 constraints=(),  # type: Union[list, tuple]
+                 lower_inc=True,  # type: bool
+                 upper_inc=False,  # type: bool
+                 minimum=None,  # type: Optional[int]
+                 maximum=None,  # type: Optional[int]
+    ):
+        # type: (...) -> None
+        Type.__init__(self, not_null=not_null, unique=unique,
+                      enumerator=enumerator, constraints=constraints)
+        self._init_range(lower_inc=lower_inc, upper_inc=upper_inc)
+        self._minimum = minimum
+        self._maximum = maximum
+
     def sqlalchemy_type(self):
         import pytis.data.gensqlalchemy
         return pytis.data.gensqlalchemy.INT8RANGE()
@@ -912,8 +978,18 @@ class Serial(Integer):
 
     """
 
-    def _init(self, not_null=True, **kwargs):
-        super(Serial, self)._init(not_null=not_null, **kwargs)
+    def __init__(self,
+                 not_null=True,  # type: bool
+                 unique=False,  # type: bool
+                 enumerator=None,  # type: Optional[Enumerator]
+                 constraints=(),  # type: Union[list, tuple]
+                 minimum=None,  # type: Optional[int]
+                 maximum=None,  # type: Optional[int]
+    ):
+        # type: (...) -> None
+        super(Serial, self).__init__(not_null=not_null, unique=unique,
+                                     enumerator=enumerator, constraints=constraints,
+                                     minimum=minimum, maximum=maximum)
 
     def sqlalchemy_type(self):
         import pytis.data.gensqlalchemy
@@ -930,25 +1006,40 @@ class LargeSerial(Integer):
 class Float(Number):
     """Floating point number.
 
-    Arguments:
-      precision (int): Non-negative integer determining the number of digits
-        after the decimal point in the exported value, or None (no explicit
-        limit on the precision).
-      digits (int): Maximum number of digits, integer, or True (the number is
-        precise, with arbitrary number of digits after decimal point; this is
-        useful for database definitions of unqualified NUMERIC types), or None
-        (unspecified value).
-
-    Other keyword arguments are the same as in the superclass.
-
     """
     CEILING = decimal.ROUND_CEILING
     """Rounding constant for use in `validate`."""
     FLOOR = decimal.ROUND_FLOOR
     """Rounding constant for use in `validate`."""
 
-    def _init(self, precision=None, digits=None, **kwargs):
-        super(Float, self)._init(**kwargs)
+    def __init__(self,
+                 not_null=False,  # type: bool
+                 unique=False,  # type: bool
+                 enumerator=None,  # type: Optional[Enumerator]
+                 constraints=(),  # type: Union[list, tuple]
+                 minimum=None,  # type: Any
+                 maximum=None,  # type: Any
+                 precision=None,  # type: Optional[int]
+                 digits=None,  # type: Optional[int]
+    ):
+        # type: (...) -> None
+        """Initialize the instance.
+
+        Arguments:
+          precision (int): Non-negative integer determining the number of digits
+            after the decimal point in the exported value, or None (no explicit
+            limit on the precision).
+          digits (int): Maximum number of digits, integer, or True (the number is
+            precise, with arbitrary number of digits after decimal point; this is
+            useful for database definitions of unqualified NUMERIC types), or None
+            (unspecified value).
+
+        Other arguments are the same as in `Number`.
+
+        """
+        super(Float, self).__init__(not_null=not_null, unique=unique,
+                                    enumerator=enumerator, constraints=constraints,
+                                    minimum=minimum, maximum=maximum)
         assert precision is None or precision >= 0, ('Invalid precision', precision,)
         assert digits is None or digits is True or isinstance(digits, int), digits
         if precision is None:
@@ -1103,8 +1194,21 @@ class DoublePrecision(Float):
 
     """
 
-    def __init__(self, **kwargs):
-        super(DoublePrecision, self).__init__(**kwargs)
+    def __init__(self,
+                 not_null=False,  # type: bool
+                 unique=False,  # type: bool
+                 enumerator=None,  # type: Optional[Enumerator]
+                 constraints=(),  # type: Union[list, tuple]
+                 minimum=None,  # type: Any
+                 maximum=None,  # type: Any
+                 precision=None,  # type: Optional[int]
+                 digits=None,  # type: Optional[int]
+    ):
+        # type: (...) -> None
+        super(DoublePrecision, self).__init__(not_null=not_null, unique=unique,
+                                              enumerator=enumerator, constraints=constraints,
+                                              minimum=minimum, maximum=maximum,
+                                              precision=precision, digits=digits)
 
     def adjust_value(self, value):
         if value is not None and not isinstance(value, float):
@@ -1125,8 +1229,21 @@ class Monetary(Float):
 
     """
 
-    def _init(self, precision=2, **kwargs):
-        super(Monetary, self)._init(precision=precision, **kwargs)
+    def __init__(self,
+                 not_null=False,  # type: bool
+                 unique=False,  # type: bool
+                 enumerator=None,  # type: Optional[Enumerator]
+                 constraints=(),  # type: Union[list, tuple]
+                 minimum=None,  # type: Any
+                 maximum=None,  # type: Any
+                 precision=2,  # type: Optional[int]
+                 digits=None,  # type: Optional[int]
+    ):
+        # type: (...) -> None
+        super(Monetary, self).__init__(not_null=not_null, unique=unique,
+                                      enumerator=enumerator, constraints=constraints,
+                                      minimum=minimum, maximum=maximum,
+                                      precision=precision, digits=digits)
 
 
 class String(Limited):
@@ -1228,32 +1345,48 @@ class Password(String):
     to pass the same value twice (as the validated value and as the `verify`
     argument).
 
-    Arguments:
-      verify (bool): Flag indicating that user input should be verified by the
-        user interface by presenting two controls for entering the password.
-        Both inputs must match to pass validation.
-      strength: Specification of password strength checking.  If None, no
-        special checks are performed.  If True, default checking implemented in
-        the `_check_strength` method is performed.  If anything else, it must be
-        a function of a single argument, the password string, that returns
-        either None when the password is strong enough or an error message if
-        the password is weak.
-      md5 (bool): DEPRECATED; Use a virtual field for password entry and a
-        computer function to create a hash.  The built-in md5 hashing doesn't
-        use salt so cannot be considered secure.  Original meaning: boolean flag
-        indicating that the password is stored as a hexadecimal md5 hash. This
-        will lead to automatic conversion of user input to its md5 hash, so the
-        original password is no longer visible anywhere after successful
-        validation.  The conversion is only done when the `verify` argument is
-        passed to `validate`.  When `verify` is not used, the input string is
-        not considered to be user input, but an already hashed value (e.g. read
-        from data source).
-
-    Other arguments are passed to the parent constructor.
-
     """
-    def _init(self, md5=False, verify=True, strength=None, **kwargs):
-        super(Password, self)._init(**kwargs)
+    def __init__(self,
+                 not_null=False,  # type: bool
+                 unique=False,  # type: bool
+                 enumerator=None,  # type: Optional[Enumerator]
+                 constraints=(),  # type: Union[list, tuple]
+                 minlen=None,  # type: Optional[int]
+                 maxlen=None,  # type: Optional[int]
+                 md5=False,  # type: bool
+                 verify=True,  # type: bool
+                 strength=None,  # type: Any
+    ):
+        # type: (...) -> None
+        """Initialize the instance.
+
+        Arguments:
+          verify (bool): Flag indicating that user input should be verified by the
+            user interface by presenting two controls for entering the password.
+            Both inputs must match to pass validation.
+          strength: Specification of password strength checking.  If None, no
+            special checks are performed.  If True, default checking implemented in
+            the `_check_strength` method is performed.  If anything else, it must be
+            a function of a single argument, the password string, that returns
+            either None when the password is strong enough or an error message if
+            the password is weak.
+          md5 (bool): DEPRECATED; Use a virtual field for password entry and a
+            computer function to create a hash.  The built-in md5 hashing doesn't
+            use salt so cannot be considered secure.  Original meaning: boolean flag
+            indicating that the password is stored as a hexadecimal md5 hash. This
+            will lead to automatic conversion of user input to its md5 hash, so the
+            original password is no longer visible anywhere after successful
+            validation.  The conversion is only done when the `verify` argument is
+            passed to `validate`.  When `verify` is not used, the input string is
+            not considered to be user input, but an already hashed value (e.g. read
+            from data source).
+
+          Other arguments are the same as in `String`.
+
+        """
+        super(Password, self).__init__(not_null=not_null, unique=unique,
+                                       enumerator=enumerator, constraints=constraints,
+                                       minlen=minlen, maxlen=maxlen)
         assert isinstance(md5, bool)
         assert isinstance(verify, bool)
         self._md5 = md5
@@ -1321,8 +1454,19 @@ class RegexString(String):
     _MSG_INVALID_FORMAT = _(u"Invalid format")
     _REGEX = None
 
-    def _init(self, regex=None, **kwargs):
-        super(RegexString, self)._init(**kwargs)
+    def __init__(self,
+                 not_null=False,  # type: bool
+                 unique=False,  # type: bool
+                 enumerator=None,  # type: Optional[Enumerator]
+                 constraints=(),  # type: Union[list, tuple]
+                 minlen=None,  # type: Optional[int]
+                 maxlen=None,  # type: Optional[int]
+                 regex=None,  # type: Optional[str]
+    ):
+        # type: (...) -> None
+        super(RegexString, self).__init__(not_null=not_null, unique=unique,
+                                          enumerator=enumerator, constraints=constraints,
+                                          minlen=minlen, maxlen=maxlen)
         if regex is None:
             self._regex = self._REGEX
         else:
@@ -1436,16 +1580,32 @@ class FullTextIndex(String):
     the `pytis.data.FT` operator and to enable access to full text search result
     headlines.
 
-    Arguments:
-      columns (tuple): Tuple of column ids (strings); these columns will be
-        included for the purpose of generating full text search headlines when a
-        column of this type is included in the full text search.
-
     """
 
-    def _init(self, columns=(), **kwargs):
+    def __init__(self,
+                 not_null=False,  # type: bool
+                 unique=False,  # type: bool
+                 enumerator=None,  # type: Optional[Enumerator]
+                 constraints=(),  # type: Union[list, tuple]
+                 minlen=None,  # type: Optional[int]
+                 maxlen=None,  # type: Optional[int]
+                 columns=(),  # type: Union[list, tuple]
+    ):
+        # type: (...) -> None
+        """Initialize the instance.
+
+        Arguments:
+          columns (tuple): Tuple of column ids (strings); these columns will be
+            included for the purpose of generating full text search headlines when a
+            column of this type is included in the full text search.
+
+          Other arguments are the same as in `String`.
+
+        """
         assert isinstance(columns, (list, tuple)), ("Invalid argument type", columns,)
-        super(FullTextIndex, self)._init(**kwargs)
+        super(FullTextIndex, self).__init__(not_null=not_null, unique=unique,
+                                            enumerator=enumerator, constraints=constraints,
+                                            minlen=minlen, maxlen=maxlen)
         self._columns = columns
 
     def _comparison_key(self):
@@ -1521,18 +1681,6 @@ class _CommonDateTime(Type):
     All the derived classes use classes from Python `datetime` module to
     represent the date and/or time values.
 
-    Arguments:
-      format (str): Specification of both input and output format of date and/or
-        time in the form accepted by `time.strftime`.
-      mindate: Limit of acceptable date/time (lower bound).
-      maxdate: Limit of acceptable date/time (upper bound).
-      utc (bool): Specifies whether timestamp in the database is in UTC.
-      without_timezone (bool): If true then use WITHOUT TIMEZONE when declaring
-        the type in the database.  This is only to support legacy tables; all
-        new database objects should be created WITH TIMEZONE.
-      precision (int): Optional precision value p which specifies the number of
-        fractional digits retained in the seconds field, default 0.
-
     """
     _SPECIAL_VALUES = Type._SPECIAL_VALUES + ((None, ''),)
     _MSG_INVALID_DT_FORMAT = _(u"Invalid date or time format")
@@ -1540,19 +1688,46 @@ class _CommonDateTime(Type):
     UTC_TZINFO = _UTCTimezone()
     LOCAL_TZINFO = _LocalTimezone()
 
-    def _init(self, format, utc=True, without_timezone=False, precision=0, **kwargs):
-        assert format is True or isinstance(format, basestring), format
+    def __init__(self,
+                 not_null=False,  # type: bool
+                 unique=False,  # type: bool
+                 enumerator=None,  # type: Optional[Enumerator]
+                 constraints=(),  # type: Union[list, tuple]
+                 format=None,  # type: Optional[str]
+                 utc=True,  # type: bool
+                 without_timezone=False,  # type: bool
+                 precision=0,  # type: int
+    ):
+        # type: (...) -> None
+        """Initialize the instance.
+
+        Arguments:
+          format (str): Specification of both input and output format of date and/or
+            time in the form accepted by `time.strftime`.
+          utc (bool): Specifies whether timestamp in the database is in UTC.
+          without_timezone (bool): If true then use WITHOUT TIMEZONE when declaring
+            the type in the database.  This is only to support legacy tables; all
+            new database objects should be created WITH TIMEZONE.
+          precision (int): Optional precision value p which specifies the number of
+            fractional digits retained in the seconds field, default 0.
+
+          Other arguments are the same as in `Type`.
+
+        """
+        self._init_common_datetime(format, utc, without_timezone, precision)
+        super(_CommonDateTime, self).__init__(not_null=not_null, unique=unique,
+                                              enumerator=enumerator, constraints=constraints)
+
+    def _init_common_datetime(self, format, utc, without_timezone, precision):
+        # type: (Optional[str], bool, bool, int) -> None
+        assert format is None or format is True or isinstance(format, basestring), format
         assert isinstance(utc, bool), utc
         self._format = format
         self._utc = utc
-        if utc:
-            self._timezone = self.UTC_TZINFO
-        else:
-            self._timezone = self.LOCAL_TZINFO
+        self._timezone = self.UTC_TZINFO if utc else self.LOCAL_TZINFO
         self._check_matcher = {}
         self._without_timezone = without_timezone
         self._precision = precision
-        super(_CommonDateTime, self)._init(**kwargs)
 
     def _comparison_key(self):
         return super(_CommonDateTime, self)._comparison_key() + (self._format, self._utc,
@@ -1690,18 +1865,6 @@ class DateTime(_CommonDateTime):
     The date and time format is the same for both import and export and is
     determined by constructor arguments.
 
-    Arguments:
-      format (str): Specification of both input and output format of date and/or
-        time in the form accepted by `time.strftime`.  May be also None in which
-        case the configuration option `config.date_time_format` is used.  The
-        class defines `*_FORMAT` constants which may be used as a value of this
-        argument.
-      mindate (str): Lower limit of acceptable date/time.
-      maxdate (str): Upper limit of acceptable date/time.
-      precision (int): Optional precision value p which specifies the number of
-        fractional digits retained in the seconds field, default 0.
-      utc (bool): Specifies whether timestamp in database is in UTC.
-
     """
     DEFAULT_FORMAT = '%Y-%m-%d %H:%M:%S'
     """Default date and time format."""
@@ -1712,12 +1875,48 @@ class DateTime(_CommonDateTime):
 
     _ISO_TZ_MATCHER = re.compile('(?P<sign>[-+])(?P<hours>[0-9]+):(?P<minutes>[0-9]+)')
 
-    def _init(self, format=None, mindate=None, maxdate=None, utc=True, precision=0, **kwargs):
+    def __init__(self,
+                 not_null=False,  # type: bool
+                 unique=False,  # type: bool
+                 enumerator=None,  # type: Optional[Enumerator]
+                 constraints=(),  # type: Union[list, tuple]
+                 format=None,  # type: Optional[str]
+                 utc=True,  # type: bool
+                 without_timezone=False,  # type: bool
+                 precision=0,  # type: int
+                 mindate=None,  # type: Optional[str]
+                 maxdate=None,  # type: Optional[str]
+    ):
+        # type: (...) -> None
+        """Initialize the instance.
+
+        Arguments:
+          format (str): Specification of both input and output format of date and/or
+            time in the form accepted by `time.strftime`.  May be also None in which
+            case the configuration option `config.date_time_format` is used.  The
+            class defines `*_FORMAT` constants which may be used as a value of this
+            argument.
+          mindate (str): Lower limit of acceptable date/time.
+          maxdate (str): Upper limit of acceptable date/time.
+          precision (int): Optional precision value p which specifies the number of
+            fractional digits retained in the seconds field, default 0.
+          utc (bool): Specifies whether timestamp in database is in UTC.
+
+          Other arguments are the same as in `_CommonDateTime`.
+
+        """
         assert mindate is None or isinstance(mindate, basestring)
         assert maxdate is None or isinstance(maxdate, basestring)
         if format is None:
             format = pytis.config.date_time_format
-        super(DateTime, self)._init(format=format, utc=utc, precision=precision, **kwargs)
+        super(DateTime, self).__init__(not_null=not_null, unique=unique,
+                                       enumerator=enumerator, constraints=constraints,
+                                       format=format, utc=utc,
+                                       without_timezone=without_timezone, precision=precision)
+        self._init_datetime_bounds(mindate, maxdate)
+
+    def _init_datetime_bounds(self, mindate, maxdate):
+        # type: (Optional[str], Optional[str]) -> None
         if mindate:
             try:
                 self._mindate = datetime.datetime.strptime(mindate, self.DEFAULT_FORMAT)
@@ -1910,6 +2109,29 @@ class LocalDateTime(DateTime):
 
 class DateTimeRange(Range, DateTime):
 
+    def __init__(self,
+                 not_null=False,  # type: bool
+                 unique=False,  # type: bool
+                 enumerator=None,  # type: Optional[Enumerator]
+                 constraints=(),  # type: Union[list, tuple]
+                 format=None,  # type: Optional[str]
+                 utc=True,  # type: bool
+                 without_timezone=False,  # type: bool
+                 precision=0,  # type: int
+                 mindate=None,  # type: Optional[str]
+                 maxdate=None,  # type: Optional[str]
+                 lower_inc=True,  # type: bool
+                 upper_inc=False,  # type: bool
+    ):
+        # type: (...) -> None
+        if format is None:
+            format = pytis.config.date_time_format
+        Type.__init__(self, not_null=not_null, unique=unique,
+                      enumerator=enumerator, constraints=constraints)
+        self._init_range(lower_inc=lower_inc, upper_inc=upper_inc)
+        self._init_common_datetime(format, utc, without_timezone, precision)
+        self._init_datetime_bounds(mindate, maxdate)
+
     def sqlalchemy_type(self):
         import pytis.data.gensqlalchemy
         if self._utc:
@@ -1932,13 +2154,6 @@ class ISODateTime(DateTime):
 class Date(DateTime):
     """Date without a time.
 
-    Arguments:
-      format (str): Specification of both input and output format of date in the
-        form accepted by `time.strftime`.  May be also None in which case the
-        configuration option `pytis.config.date_format` is used.  The class
-        defines `*_FORMAT` constants which may be used as a value of this
-        argument.
-
     """
 
     DEFAULT_FORMAT = '%Y-%m-%d'
@@ -1948,10 +2163,38 @@ class Date(DateTime):
     CZECH_FORMAT = '%d.%m.%Y'
     """Czech accounting date format."""
 
-    def _init(self, format=None, **kwargs):
+    def __init__(self,
+                 not_null=False,  # type: bool
+                 unique=False,  # type: bool
+                 enumerator=None,  # type: Optional[Enumerator]
+                 constraints=(),  # type: Union[list, tuple]
+                 format=None,  # type: Optional[str]
+                 utc=False,  # type: bool
+                 without_timezone=False,  # type: bool
+                 precision=0,  # type: int
+                 mindate=None,  # type: Optional[str]
+                 maxdate=None,  # type: Optional[str]
+    ):
+        # type: (...) -> None
+        """Initialize the instance.
+
+        Arguments:
+          format (str): Specification of both input and output format of date in the
+            form accepted by `time.strftime`.  May be also None in which case the
+            configuration option `pytis.config.date_format` is used.  The class
+            defines `*_FORMAT` constants which may be used as a value of this
+            argument.
+
+          Other arguments are the same as in `DateTime`.
+
+        """
         if format is None:
             format = pytis.config.date_format
-        super(Date, self)._init(format=format, utc=False, **kwargs)
+        super(Date, self).__init__(not_null=not_null, unique=unique,
+                                   enumerator=enumerator, constraints=constraints,
+                                   format=format, utc=utc,
+                                   without_timezone=without_timezone, precision=precision,
+                                   mindate=mindate, maxdate=maxdate)
 
     def _validate(self, *args, **kwargs):
         value = super(Date, self)._validate(*args, **kwargs)
@@ -1976,6 +2219,29 @@ class Date(DateTime):
 
 
 class DateRange(Range, Date):
+
+    def __init__(self,
+                 not_null=False,  # type: bool
+                 unique=False,  # type: bool
+                 enumerator=None,  # type: Optional[Enumerator]
+                 constraints=(),  # type: Union[list, tuple]
+                 format=None,  # type: Optional[str]
+                 utc=False,  # type: bool
+                 without_timezone=False,  # type: bool
+                 precision=0,  # type: int
+                 mindate=None,  # type: Optional[str]
+                 maxdate=None,  # type: Optional[str]
+                 lower_inc=True,  # type: bool
+                 upper_inc=False,  # type: bool
+    ):
+        # type: (...) -> None
+        if format is None:
+            format = pytis.config.date_format
+        Type.__init__(self, not_null=not_null, unique=unique,
+                      enumerator=enumerator, constraints=constraints)
+        self._init_range(lower_inc=lower_inc, upper_inc=upper_inc)
+        self._init_common_datetime(format, utc, without_timezone, precision)
+        self._init_datetime_bounds(mindate, maxdate)
 
     def sqlalchemy_type(self):
         import pytis.data.gensqlalchemy
@@ -2021,10 +2287,23 @@ class Time(_CommonDateTime):
     SHORT_FORMAT = '%H:%M'
     """Time format without seconds."""
 
-    def _init(self, format=None, precision=0, **kwargs):
+    def __init__(self,
+                 not_null=False,  # type: bool
+                 unique=False,  # type: bool
+                 enumerator=None,  # type: Optional[Enumerator]
+                 constraints=(),  # type: Union[list, tuple]
+                 format=None,  # type: Optional[str]
+                 utc=True,  # type: bool
+                 without_timezone=False,  # type: bool
+                 precision=0,  # type: int
+    ):
+        # type: (...) -> None
         if format is None:
             format = pytis.config.time_format
-        super(Time, self)._init(format=format, precision=precision, **kwargs)
+        super(Time, self).__init__(not_null=not_null, unique=unique,
+                                   enumerator=enumerator, constraints=constraints,
+                                   format=format, utc=utc,
+                                   without_timezone=without_timezone, precision=precision)
 
     def _validate(self, *args, **kwargs):
         value = super(Time, self)._validate(*args, **kwargs)
@@ -2099,8 +2378,11 @@ class TimeInterval(Type):
 
     _SPECIAL_VALUES = Type._SPECIAL_VALUES + ((None, ''),)
 
-    def _init(self, format=None, **kwargs):
-        super(TimeInterval, self)._init(**kwargs)
+    def __init__(self, not_null=False, unique=False, enumerator=None, constraints=(),
+                 format=None):
+        # type: (bool, bool, Optional[Enumerator], Union[list, tuple], Optional[str]) -> None
+        super(TimeInterval, self).__init__(not_null=not_null, unique=unique,
+                                           enumerator=enumerator, constraints=constraints)
         self._format = format
         if format is None:
             self._matcher = self._MATCHER
@@ -2252,9 +2534,11 @@ class Boolean(Type):
 
     _SPECIAL_VALUES = ((True, 'T'), (False, 'F'), (None, ''))
 
-    def _init(self, not_null=True):
+    def __init__(self, not_null=True, unique=False, enumerator=None, constraints=()):
+        # type: (bool, bool, Optional[Enumerator], Union[list, tuple]) -> None
         e = FixedEnumerator((True, False))
-        super(Boolean, self)._init(enumerator=e, not_null=not_null)
+        super(Boolean, self).__init__(not_null=not_null, unique=unique,
+                                      enumerator=e, constraints=constraints)
 
     def _validate(self, obj, extended=False):
         if extended:
@@ -2294,9 +2578,12 @@ class Uuid(Type):
 
     _SPECIAL_VALUES = Type._SPECIAL_VALUES + ((None, ''),)
 
-    def _init(self, version=None, **kwargs):
+    def __init__(self, not_null=False, unique=False, enumerator=None, constraints=(),
+                 version=None):
+        # type: (bool, bool, Optional[Enumerator], Union[list, tuple], Optional[int]) -> None
+        super(Uuid, self).__init__(not_null=not_null, unique=unique,
+                                   enumerator=enumerator, constraints=constraints)
         self._version = version
-        super(Uuid, self)._init(**kwargs)
 
     def _validate(self, obj):
         if obj is None:
@@ -2411,9 +2698,19 @@ class Binary(Limited):
     # Temporary backwards compatibility alias.
     Buffer = Data
 
-    def _init(self, enumerator=None, **kwargs):
+    def __init__(self,
+                 not_null=False,  # type: bool
+                 unique=False,  # type: bool
+                 enumerator=None,  # type: Optional[Enumerator]
+                 constraints=(),  # type: Union[list, tuple]
+                 minlen=None,  # type: Optional[int]
+                 maxlen=None,  # type: Optional[int]
+    ):
+        # type: (...) -> None
         assert enumerator is None, ("Enumerators can not be used with binary data types")
-        super(Binary, self)._init(**kwargs)
+        super(Binary, self).__init__(not_null=not_null, unique=unique,
+                                     enumerator=enumerator, constraints=constraints,
+                                     minlen=minlen, maxlen=maxlen)
 
     def _validate(self, obj, filename=None, mime_type=None, **kwargs):
         try:
@@ -2494,8 +2791,21 @@ class Image(Binary, Big):
 
     Buffer = Data
 
-    def _init(self, minsize=(None, None), maxsize=(None, None),
-              formats=None, **kwargs):
+    def __init__(self,
+                 not_null=False,  # type: bool
+                 unique=False,  # type: bool
+                 enumerator=None,  # type: Optional[Enumerator]
+                 constraints=(),  # type: Union[list, tuple]
+                 minlen=None,  # type: Optional[int]
+                 maxlen=None,  # type: Optional[int]
+                 minsize=(None, None),  # type: Tuple
+                 maxsize=(None, None),  # type: Tuple
+                 formats=None,  # type: Optional[List[str]]
+    ):
+        # type: (...) -> None
+        super(Image, self).__init__(not_null=not_null, unique=unique,
+                                    enumerator=enumerator, constraints=constraints,
+                                    minlen=minlen, maxlen=maxlen)
         if __debug__:
             for size in minsize, maxsize:
                 assert (isinstance(size, (tuple, list)) and len(size) == 2 and
@@ -2511,7 +2821,6 @@ class Image(Binary, Big):
         self._minsize = tuple(minsize)
         self._maxsize = tuple(maxsize)
         self._formats = formats and tuple(formats)
-        super(Image, self)._init(**kwargs)
 
     def _comparison_key(self):
         return super(Image, self)._comparison_key() + (self._minsize, self._maxsize, self._formats)
@@ -2580,8 +2889,11 @@ class LTree(Type):
     _REGEX = re.compile(r'^\w+$', re.UNICODE)
     _SPECIAL_VALUES = Type._SPECIAL_VALUES + ((None, ''),)
 
-    def _init(self, text=False, **kwargs):
-        super(LTree, self)._init(**kwargs)
+    def __init__(self, not_null=False, unique=False, enumerator=None, constraints=(),
+                 text=False):
+        # type: (bool, bool, Optional[Enumerator], Union[list, tuple], bool) -> None
+        super(LTree, self).__init__(not_null=not_null, unique=unique,
+                                    enumerator=enumerator, constraints=constraints)
         self._text = text
 
     def _comparison_key(self):
@@ -2635,10 +2947,21 @@ class Array(Limited):
     """
     _SPECIAL_VALUES = Limited._SPECIAL_VALUES + ((None, ''),)
 
-    def _init(self, inner_type, **kwargs):
+    def __init__(self,
+                 not_null=False,  # type: bool
+                 unique=False,  # type: bool
+                 enumerator=None,  # type: Optional[Enumerator]
+                 constraints=(),  # type: Union[list, tuple]
+                 minlen=None,  # type: Optional[int]
+                 maxlen=None,  # type: Optional[int]
+                 inner_type=None,  # type: Optional[Type]
+    ):
+        # type: (...) -> None
         assert isinstance(inner_type, Type)
+        super(Array, self).__init__(not_null=not_null, unique=unique,
+                                    enumerator=enumerator, constraints=constraints,
+                                    minlen=minlen, maxlen=maxlen)
         self._inner_type = inner_type
-        super(Array, self)._init(**kwargs)
 
     def _comparison_key(self):
         return super(Array, self)._comparison_key() + (self._inner_type,)
@@ -2730,8 +3053,11 @@ class JSON(Type):
         return Type._make(class_, *args, **kwargs)
     _make = staticmethod(_make)
 
-    def _init(self, schema=None, **kwargs):
-        super(JSON, self)._init(**kwargs)
+    def __init__(self, not_null=False, unique=False, enumerator=None, constraints=(),
+                 schema=None):
+        # type: (bool, bool, Optional[Enumerator], Union[list, tuple], Optional[dict]) -> None
+        super(JSON, self).__init__(not_null=not_null, unique=unique,
+                                   enumerator=enumerator, constraints=constraints)
         if schema:
             import jsonschema
             if hasattr(jsonschema, 'Validator'):

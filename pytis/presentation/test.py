@@ -784,10 +784,10 @@ class TestPrettyTypes:
 
     class CustomFoldable(pp.PrettyFoldable, pd.String):
 
-        def _init(self, **kwargs):
-            super(TestPrettyTypes.CustomFoldable, self)._init(tree_column_id='tree_order',
-                                                              subcount_column_id='tree_nsub',
-                                                              **kwargs)
+        def __init__(self, **kwargs):
+            super(TestPrettyTypes.CustomFoldable, self).__init__(tree_column_id='tree_order',
+                                                                 subcount_column_id='tree_nsub',
+                                                                 **kwargs)
 
     def test_instance(self):
         t = TestPrettyTypes.CustomFoldable(maxlen=5)

@@ -26,8 +26,12 @@ from pytis.presentation import PrettyTreeOrder
 
 class Price(pytis.data.Float):
 
-    def _init(self, not_null=True, precision=2, **kwargs):
-        super(Price, self)._init(precision=precision, not_null=not_null, **kwargs)
+    def __init__(self, not_null=True, unique=False, enumerator=None, constraints=(),
+                 minimum=None, maximum=None, precision=2, digits=None):
+        super(Price, self).__init__(not_null=not_null, unique=unique,
+                                    enumerator=enumerator, constraints=constraints,
+                                    minimum=minimum, maximum=maximum,
+                                    precision=precision, digits=digits)
 
     def default_value(self):
         value, error = self.validate('0')
@@ -38,9 +42,11 @@ class Price(pytis.data.Float):
 
 class StringNotNull(pytis.data.String):
 
-    def _init(self, **kwargs):
-        kwargs['not_null'] = True
-        super(StringNotNull, self)._init(**kwargs)
+    def __init__(self, not_null=True, unique=False, enumerator=None, constraints=(),
+                 minlen=None, maxlen=None):
+        super(StringNotNull, self).__init__(not_null=not_null, unique=unique,
+                                            enumerator=enumerator, constraints=constraints,
+                                            minlen=minlen, maxlen=maxlen)
 
 
 class _TreeOrder(PrettyTreeOrder, pytis.data.String):
