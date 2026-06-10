@@ -49,6 +49,7 @@ import argparse
 import shutil
 import subprocess
 import tempfile
+import pytis.util
 
 import psycopg2
 import psycopg2.extras
@@ -57,6 +58,8 @@ import psycopg2.extensions
 
 META_PREFIX = '# META = '
 SYSTEM_SCHEMAS = set(('pg_catalog', 'information_schema', 'pg_toast'))
+
+cli = pytis.util.CLI(__doc__.splitlines()[0])
 
 
 def quote_ident(connection, *parts: str) -> str:
@@ -254,6 +257,27 @@ def sanitize(expr: str) -> str:
     )
 
 
+@cli.command("Create a searchable dump (JSON metadata + TSV data).", lambda argument: (
+    argument('--dbname', '-d', required=True, help="Database name"),
+    argument('--user', '-U', '-u', default=getpass.getuser(),
+             help="Database user (default: current system user)"),
+    argument('--password', '-W',
+             help="Database password (default: $PGPASSWORD)"),
+    argument('--host', '-h',
+             help="Database host (default: localhost)"),
+    argument('--port', '-p', type=int, default=5432,
+             help="Database port (default: 5432)"),
+    argument('--output', '-o', default='-',
+             help="Output file (default: stdout). Use '-' for stdout."),
+    argument('--include-schema', action='append', default=[],
+             help="Include only these schemas (repeatable)."),
+    argument('--exclude-schema', action='append', default=[],
+             help="Exclude these schemas (repeatable)."),
+    argument('--include-nontext', action='store_true',
+             help="Also dump non-text, non-binary columns for context."),
+    argument('--null', default="",
+             help="NULL representation in TSV (default: empty string)."),
+))
 def dump(args):
     with dbconnection(args) as connection, fopen(args.output, 'w') as output:
         qi = functools.partial(quote_ident, connection)
@@ -368,6 +392,27 @@ def prefilter_input(input_path, patterns, prefilter='grep', regex=False):
                 raise RuntimeError(f'{argv[0]} failed with exit status {status}')
 
 
+@cli.command("Search in a dump produced by the 'dump' command.", lambda argument: (
+    argument('patterns_file',
+             help=("File with search patterns, one per line. Empty lines "
+                   "and lines starting with # are ignored. Use ‘-’ for stdin.")),
+    argument('--input', '-i', default='-',
+             help="Dump file to search through (default: stdin)."),
+    argument('--output', '-o', default='-',
+             help="Output file (default: stdout). Use '-' for stdout."),
+    argument('--context', '-c', default=20, type=int,
+             help="Context characters before/after each match."),
+    argument('--regex', '-r', action='store_true',
+             help=("Treat search patterns as regular expressions "
+                   "(otherwise fixed substrings). Matches are "
+                   "case-insensitive.")),
+    argument('--prefilter', choices=('none', 'grep', 'rg'), default='none',
+             help=("Prefilter dumped rows using grep or ripgrep (rg) to speed up "
+                   "searching large dumps. Default: none. For correct Unicode "
+                   "matching, run under UTF-8 locale (e.g. LANG=en_US.UTF-8).")),
+    argument('--summary-only', action='store_true',
+             help="Print only per-pattern match counts (do not list individual hits)."),
+))
 def search(args):
     if args.input == '-' and args.patterns_file == '-':
         error("Patterns file and input dump cannot both be read from stdin ('-').")
@@ -425,66 +470,5 @@ def search(args):
                 print(f"  • {schema}.{table}.{col}, {key}: '{snippet}'", file=output_file)
 
 
-def main():
-    commands = (
-        (dump, "Create a searchable dump (JSON metadata + TSV data).", lambda argument: (
-            argument('--dbname', '-d', required=True, help="Database name"),
-            argument('--user', '-U', '-u', default=getpass.getuser(),
-                     help="Database user (default: current system user)"),
-            argument('--password', '-W',
-                     help="Database password (default: $PGPASSWORD)"),
-            argument('--host', '-h',
-                     help="Database host (default: localhost)"),
-            argument('--port', '-p', type=int, default=5432,
-                     help="Database port (default: 5432)"),
-            argument('--output', '-o', default='-',
-                     help="Output file (default: stdout). Use '-' for stdout."),
-            argument('--include-schema', action='append', default=[],
-                     help="Include only these schemas (repeatable)."),
-            argument('--exclude-schema', action='append', default=[],
-                     help="Exclude these schemas (repeatable)."),
-            argument('--include-nontext', action='store_true',
-                     help="Also dump non-text, non-binary columns for context."),
-            argument('--null', default="",
-                     help="NULL representation in TSV (default: empty string)."),
-        )),
-        (search, "Search in a dump produced by the 'dump' command.", lambda argument: (
-            argument('patterns_file',
-                     help=("File with search patterns, one per line. Empty lines "
-                           "and lines starting with # are ignored. Use ‘-’ for stdin.")),
-            argument('--input', '-i', default='-',
-                     help="Dump file to search through (default: stdin)."),
-            argument('--output', '-o', default='-',
-                     help="Output file (default: stdout). Use '-' for stdout."),
-	    argument('--context', '-c', default=20, type=int,
-                     help="Context characters before/after each match."),
-	    argument('--regex', '-r', action='store_true',
-                     help=("Treat search patterns as regular expressions "
-                           "(otherwise fixed substrings). Matches are "
-                           "case-insensitive.")),
-            argument('--prefilter', choices=('none', 'grep', 'rg'), default='none',
-                     help=("Prefilter dumped rows using grep or ripgrep (rg) to speed up "
-                           "searching large dumps. Default: none. For correct Unicode "
-                           "matching, run under UTF-8 locale (e.g. LANG=en_US.UTF-8).")),
-            argument('--summary-only', action='store_true',
-                     help="Print only per-pattern match counts (do not list individual hits)."),
-        )),
-    )
-    parser = argparse.ArgumentParser(
-        description="Dump searchable columns from PostgreSQL and search the dump.",
-        add_help=False,
-    )
-    parser.add_argument('--help', action='help', help='Show help and exit')
-    subparsers = parser.add_subparsers(dest='command_name')
-    subparsers.required = True
-    for command, help, arguments in commands:
-        p = subparsers.add_parser(command.__name__, help=help, add_help=False)
-        p.add_argument('--help', action='help', help="Show help and exit")
-        arguments(p.add_argument)
-        p.set_defaults(command=command)
-    args = parser.parse_args()
-    args.command(args)
-
-
 if __name__ == "__main__":
-    main()
+    cli.main()

@@ -25,7 +25,7 @@ from .util import (
     FileError as FileError, NotImplementedException as NotImplementedException,
     Counter as Counter, Popen as Popen,
     Attribute as Attribute, Structure as Structure, SizedIterator as SizedIterator,
-    DBParams as DBParams,
+    DBParams as DBParams, CLI as CLI,
     object_2_5 as object_2_5, identity as identity, is_ as is_, xor as xor,
     xtuple as xtuple, xlist as xlist,
     position as position, find as find, assoc as assoc, rassoc as rassoc,

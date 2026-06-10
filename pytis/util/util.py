@@ -38,6 +38,7 @@ from past.builtins import basestring
 from builtins import range
 from future.utils import python_2_unicode_compatible
 
+import argparse
 import base64
 import cgitb
 import copy
@@ -501,6 +502,109 @@ class DBParams(object):
 
         """
         self._on_change()
+
+
+class CLI(object):
+    """Declarative command-line interface with subcommands.
+
+    Wraps :mod:`argparse` to define a multi-command CLI in a declarative style.
+    Each command is a plain function decorated with :meth:`command`, with its
+    argument definitions passed inline as a lambda receiving ``add_argument``
+    as its sole argument.
+
+    Example::
+
+        cli = pytis.util.CLI(__doc__.splitlines()[0], lambda arg: (
+            arg('--verbose', '-v', action='store_true', help="Verbose output"),
+        ))
+
+        @cli.command("Frobnicate the widget.", lambda arg: (
+            arg('name', help="Widget name"),
+        ))
+        def frobnicate(args):
+            ...
+
+        if __name__ == '__main__':
+            cli.main()
+
+    """
+
+    def __init__(self, description, arguments=lambda arg: None, config=False):
+        """Initialize the CLI.
+
+        Arguments:
+
+          description -- Program description shown in the top-level --help output.
+
+          arguments -- Callable receiving the callable
+            ``argparse.ArgumentParser.add_argument`` as its sole argument, used
+            to define options common to all subcommands (global options).
+            Defaults to no global options.
+
+          config -- If true, a required global ``--config`` option is added
+            automatically and the named pytis configuration file is loaded
+            before the selected subcommand is invoked.
+
+        """
+        self._description = description
+        self._global_arguments = arguments
+        self._config = config
+        self._commands = []
+
+    def command(self, help='', arguments=lambda arg: None, name=None, config=False):
+        """Decorator to register a function as a CLI subcommand.
+
+        Arguments:
+          help -- Short description shown in the top-level command listing.
+          arguments -- Callable receiving ``parser.add_argument`` as its sole
+            argument, used to define the command's arguments and options.
+          name -- Subcommand name as used on the command line.  Defaults to
+            the decorated function's ``__name__`` with underscores replaced
+            by hyphens.
+          config -- If true, ``--config`` is required for this command (an
+            error is raised if not provided) and the named pytis configuration
+            file is loaded before the command is invoked.  The ``--config``
+            option is placed in the global (pre-subcommand) position, same as
+            when ``config=True`` is passed to :meth:`__init__`.
+
+        The decorated function receives the parsed :class:`argparse.Namespace`
+        as its sole argument.
+
+        """
+        def decorator(func):
+            self._commands.append((func, name or func.__name__.replace('_', '-'), help, arguments,
+                                   config))
+            return func
+        return decorator
+
+    def main(self, argv=None):
+        """Parse command-line arguments and invoke the selected subcommand.
+
+        Arguments:
+          argv -- List of argument strings to parse.  Defaults to
+            ``sys.argv[1:]`` when ``None``.  Useful for testing.
+
+        """
+        parser = argparse.ArgumentParser(description=self._description, add_help=False)
+        parser.add_argument('--help', action='help', help='Show help and exit')
+        if self._config or any(cmd[4] for cmd in self._commands):
+            parser.add_argument('--config', metavar='FILE', required=self._config,
+                                help='Pytis configuration file path')
+        self._global_arguments(parser.add_argument)
+        subparsers = parser.add_subparsers(dest='command_name')
+        subparsers.required = True
+        for func, name, help_text, arguments, command_config in self._commands:
+            p = subparsers.add_parser(name, help=help_text, add_help=False)
+            p.add_argument('--help', action='help', help='Show help and exit')
+            arguments(p.add_argument)
+            p.set_defaults(command=func, command_config=command_config)
+        args = parser.parse_args(argv)
+        if args.command_config and not args.config:
+            parser.error('--config is required for the {} command'.format(args.command_name))
+        if self._config or args.command_config:
+            import pytis
+            pytis.config.add_command_line_options(('pytis', '--config', args.config))
+        args.command(args)
 
 
 class object_2_5(object):
