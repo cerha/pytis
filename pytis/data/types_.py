@@ -72,6 +72,7 @@ except Exception as e:
     # Ignore import error and re-raise it only when sqlalchemy is actually used
     # in run-time.
     class Dummy(object):
+        """Fallback object substituting sqlalchemy when its import fails; raises the import error on any attribute access."""
 
         def __getattr__(self, name):
             raise e
@@ -81,6 +82,7 @@ else:
 
 
 class _MType(type):
+    """Metaclass for `Type` that routes constructor calls through `_TypeTable.get_instance`."""
 
     def __new__(mcs, name, bases, namespace):
         cls = super(_MType, mcs).__new__(mcs, name, bases, namespace)
@@ -122,8 +124,10 @@ class Type(with_metaclass(_MType, object)):
 
     """
     class _TypeTable(object):
+        """Cache mapping constructor argument combinations to shared type instances."""
 
         def __init__(self):
+            """Initialize the empty instance cache and id counters."""
             self._id_counter = Counter()
             self._init_args_to_id = {}
             self._id_to_init_args = {}
@@ -677,12 +681,27 @@ class Range(Type):
     # Note: Range has no __init__ of its own; MI subclasses (IntegerRange etc.)
     # initialize Range-specific attributes directly.
     class Range(object):
+        """Represents a range value with a lower and upper bound.
+
+        Used as the internal value representation for `Range`-based types.
+
+        """
 
         _type = None
         _default_lower_inc = True
         _default_upper_inc = False
 
         def __init__(self, lower, upper, lower_inc=None, upper_inc=None):
+            """
+            Arguments:
+              lower: Lower bound value.
+              upper: Upper bound value.
+              lower_inc (bool): Whether the lower bound is inclusive; defaults
+                to the type's `_default_lower_inc` class attribute.
+              upper_inc (bool): Whether the upper bound is inclusive; defaults
+                to the type's `_default_upper_inc` class attribute.
+
+            """
             self._lower = lower
             self._upper = upper
             if lower_inc is None:
@@ -883,6 +902,7 @@ class Integer(Number):
 
 
 class IntegerRange(Range, Integer):
+    """Range of integer values (PostgreSQL int4range)."""
 
     def __init__(self,
                  not_null=False,  # type: bool
@@ -895,6 +915,14 @@ class IntegerRange(Range, Integer):
                  maximum=None,  # type: Optional[int]
     ):
         # type: (...) -> None
+        """
+        Arguments:
+          lower_inc (bool): Whether the lower bound is inclusive.
+          upper_inc (bool): Whether the upper bound is inclusive.
+
+          Other arguments are the same as in `Integer`.
+
+        """
         Type.__init__(self, not_null=not_null, unique=unique,
                       enumerator=enumerator, constraints=constraints)
         self._init_range(lower_inc=lower_inc, upper_inc=upper_inc)
@@ -920,18 +948,21 @@ class IntegerRange(Range, Integer):
 
 
 class SmallInteger(Integer):
+    """Integer stored as a 2-byte signed integer in the database."""
 
     def sqlalchemy_type(self):
         return sqlalchemy.SmallInteger()
 
 
 class LargeInteger(Integer):
+    """Integer stored as an 8-byte signed integer in the database."""
 
     def sqlalchemy_type(self):
         return sqlalchemy.BigInteger()
 
 
 class LargeIntegerRange(Range, Integer):
+    """Range of large integer values (PostgreSQL int8range)."""
 
     def __init__(self,
                  not_null=False,  # type: bool
@@ -944,6 +975,14 @@ class LargeIntegerRange(Range, Integer):
                  maximum=None,  # type: Optional[int]
     ):
         # type: (...) -> None
+        """
+        Arguments:
+          lower_inc (bool): Whether the lower bound is inclusive.
+          upper_inc (bool): Whether the upper bound is inclusive.
+
+          Other arguments are the same as in `LargeInteger`.
+
+        """
         Type.__init__(self, not_null=not_null, unique=unique,
                       enumerator=enumerator, constraints=constraints)
         self._init_range(lower_inc=lower_inc, upper_inc=upper_inc)
@@ -987,6 +1026,11 @@ class Serial(Integer):
                  maximum=None,  # type: Optional[int]
     ):
         # type: (...) -> None
+        """Defaults `not_null` to True since auto-generated serials are never null.
+
+        Other arguments are the same as in `Integer`.
+
+        """
         super(Serial, self).__init__(not_null=not_null, unique=unique,
                                      enumerator=enumerator, constraints=constraints,
                                      minimum=minimum, maximum=maximum)
@@ -997,6 +1041,7 @@ class Serial(Integer):
 
 
 class LargeSerial(Integer):
+    """Large integer with auto-generated values (PostgreSQL bigserial)."""
 
     def sqlalchemy_type(self):
         import pytis.data.gensqlalchemy
@@ -1205,6 +1250,7 @@ class DoublePrecision(Float):
                  digits=None,  # type: Optional[int]
     ):
         # type: (...) -> None
+        """Other arguments are the same as in `Float`."""
         super(DoublePrecision, self).__init__(not_null=not_null, unique=unique,
                                               enumerator=enumerator, constraints=constraints,
                                               minimum=minimum, maximum=maximum,
@@ -1240,6 +1286,11 @@ class Monetary(Float):
                  digits=None,  # type: Optional[int]
     ):
         # type: (...) -> None
+        """Defaults `precision` to 2 for standard two-decimal monetary formatting.
+
+        Other arguments are the same as in `Float`.
+
+        """
         super(Monetary, self).__init__(not_null=not_null, unique=unique,
                                       enumerator=enumerator, constraints=constraints,
                                       minimum=minimum, maximum=maximum,
@@ -1449,6 +1500,13 @@ class Password(String):
 
 
 class RegexString(String):
+    """String type validated against a regular expression.
+
+    Subclasses may define a class-level `_REGEX` attribute with a compiled
+    regular expression; instances may also override it via the `regex` constructor
+    argument.
+
+    """
 
     # Translators: User input validation error message.
     _MSG_INVALID_FORMAT = _(u"Invalid format")
@@ -1464,6 +1522,14 @@ class RegexString(String):
                  regex=None,  # type: Optional[str]
     ):
         # type: (...) -> None
+        """
+        Arguments:
+          regex (str): A regular expression pattern the value must match, or None
+            to use the class-level `_REGEX` attribute.
+
+          Other arguments are the same as in `String`.
+
+        """
         super(RegexString, self).__init__(not_null=not_null, unique=unique,
                                           enumerator=enumerator, constraints=constraints,
                                           minlen=minlen, maxlen=maxlen)
@@ -1617,8 +1683,10 @@ class FullTextIndex(String):
 
 
 class _LocalTimezone(datetime.tzinfo):
+    """Implementation of `datetime.tzinfo` representing the local system timezone."""
 
     def __init__(self):
+        """Pre-compute the UTC offset and DST offset from the system timezone."""
         self._offset = datetime.timedelta(seconds=-time.timezone)
         if time.daylight:
             self._dst_offset = datetime.timedelta(seconds=-time.altzone)
@@ -1658,8 +1726,10 @@ class _LocalTimezone(datetime.tzinfo):
 
 
 class _UTCTimezone(datetime.tzinfo):
+    """Implementation of `datetime.tzinfo` representing UTC."""
 
     def __init__(self):
+        """Pre-compute the zero timedelta used for UTC offset."""
         self._zero_diff = datetime.timedelta(0)
 
     def __repr__(self):
@@ -2108,6 +2178,7 @@ class LocalDateTime(DateTime):
 
 
 class DateTimeRange(Range, DateTime):
+    """Range of date and time values (PostgreSQL tsrange/tstzrange)."""
 
     def __init__(self,
                  not_null=False,  # type: bool
@@ -2124,6 +2195,14 @@ class DateTimeRange(Range, DateTime):
                  upper_inc=False,  # type: bool
     ):
         # type: (...) -> None
+        """
+        Arguments:
+          lower_inc (bool): Whether the lower bound is inclusive.
+          upper_inc (bool): Whether the upper bound is inclusive.
+
+          Other arguments are the same as in `DateTime`.
+
+        """
         if format is None:
             format = pytis.config.date_time_format
         Type.__init__(self, not_null=not_null, unique=unique,
@@ -2219,6 +2298,7 @@ class Date(DateTime):
 
 
 class DateRange(Range, Date):
+    """Range of date values (PostgreSQL daterange)."""
 
     def __init__(self,
                  not_null=False,  # type: bool
@@ -2235,6 +2315,14 @@ class DateRange(Range, Date):
                  upper_inc=False,  # type: bool
     ):
         # type: (...) -> None
+        """
+        Arguments:
+          lower_inc (bool): Whether the lower bound is inclusive.
+          upper_inc (bool): Whether the upper bound is inclusive.
+
+          Other arguments are the same as in `Date`.
+
+        """
         if format is None:
             format = pytis.config.date_format
         Type.__init__(self, not_null=not_null, unique=unique,
@@ -2298,6 +2386,11 @@ class Time(_CommonDateTime):
                  precision=0,  # type: int
     ):
         # type: (...) -> None
+        """Defaults `format` to `pytis.config.time_format` when not given.
+
+        Other arguments are the same as in `_CommonDateTime`.
+
+        """
         if format is None:
             format = pytis.config.time_format
         super(Time, self).__init__(not_null=not_null, unique=unique,
@@ -2381,6 +2474,11 @@ class TimeInterval(Type):
     def __init__(self, not_null=False, unique=False, enumerator=None, constraints=(),
                  format=None):
         # type: (bool, bool, Optional[Enumerator], Union[list, tuple], Optional[str]) -> None
+        """Defaults `format` to None, which causes the default ISO interval format to be used.
+
+        Other arguments are the same as in `Type`.
+
+        """
         super(TimeInterval, self).__init__(not_null=not_null, unique=unique,
                                            enumerator=enumerator, constraints=constraints)
         self._format = format
@@ -2536,6 +2634,11 @@ class Boolean(Type):
 
     def __init__(self, not_null=True, unique=False, enumerator=None, constraints=()):
         # type: (bool, bool, Optional[Enumerator], Union[list, tuple]) -> None
+        """Installs a fixed enumerator with True and False as the only valid values.
+
+        Other arguments are the same as in `Type`.
+
+        """
         e = FixedEnumerator((True, False))
         super(Boolean, self).__init__(not_null=not_null, unique=unique,
                                       enumerator=e, constraints=constraints)
@@ -2581,6 +2684,7 @@ class Uuid(Type):
     def __init__(self, not_null=False, unique=False, enumerator=None, constraints=(),
                  version=None):
         # type: (bool, bool, Optional[Enumerator], Union[list, tuple], Optional[int]) -> None
+        """Other arguments and the `version` argument are documented in the `Uuid` class docstring."""
         super(Uuid, self).__init__(not_null=not_null, unique=unique,
                                    enumerator=enumerator, constraints=constraints)
         self._version = version
@@ -2707,6 +2811,7 @@ class Binary(Limited):
                  maxlen=None,  # type: Optional[int]
     ):
         # type: (...) -> None
+        """Other arguments are the same as in `Limited`. Enumerators are not supported."""
         assert enumerator is None, ("Enumerators can not be used with binary data types")
         super(Binary, self).__init__(not_null=not_null, unique=unique,
                                      enumerator=enumerator, constraints=constraints,
@@ -2775,6 +2880,7 @@ class Image(Binary, Big):
         """
 
         def __init__(self, *args, **kwargs):
+            """Calls `Binary.Data.__init__` and verifies the data represents a valid PIL image."""
             super(Image.Data, self).__init__(*args, **kwargs)
             import PIL.Image
             # The stream must stay open for the whole life of the Image object.
@@ -2803,6 +2909,7 @@ class Image(Binary, Big):
                  formats=None,  # type: Optional[List[str]]
     ):
         # type: (...) -> None
+        """Other arguments including `minsize`, `maxsize` and `formats` are documented in the `Image` class docstring."""
         super(Image, self).__init__(not_null=not_null, unique=unique,
                                     enumerator=enumerator, constraints=constraints,
                                     minlen=minlen, maxlen=maxlen)
@@ -2892,6 +2999,11 @@ class LTree(Type):
     def __init__(self, not_null=False, unique=False, enumerator=None, constraints=(),
                  text=False):
         # type: (bool, bool, Optional[Enumerator], Union[list, tuple], bool) -> None
+        """The `text` argument is documented in the `LTree` class docstring.
+
+        Other arguments are the same as in `Type`.
+
+        """
         super(LTree, self).__init__(not_null=not_null, unique=unique,
                                     enumerator=enumerator, constraints=constraints)
         self._text = text
@@ -2957,6 +3069,13 @@ class Array(Limited):
                  inner_type=None,  # type: Optional[Type]
     ):
         # type: (...) -> None
+        """
+        Arguments:
+          inner_type (Type): Mandatory. The pytis type of the array items.
+
+          Other arguments are the same as in `Limited`.
+
+        """
         assert isinstance(inner_type, Type)
         super(Array, self).__init__(not_null=not_null, unique=unique,
                                     enumerator=enumerator, constraints=constraints,
@@ -3015,10 +3134,19 @@ class Array(Limited):
 
 
 class JSON(Type):
+    """JSON value type.
+
+    Values are represented as Python dicts (`JSONObject`) or lists (`JSONArray`),
+    validated by parsing the JSON string and optionally checking against a JSON
+    Schema.
+
+    """
 
     _SPECIAL_VALUES = Type._SPECIAL_VALUES + ((None, ''),)
 
     class _hashabledict(dict):
+        """A dict subclass that is hashable, for use as a cache key."""
+
         def __key(self):
             def val(v):
                 if isinstance(v, dict):
@@ -3041,10 +3169,10 @@ class JSON(Type):
         pass
 
     class JSONArray(list, JSONValue):
-        pass
+        """Internal value type for JSON arrays (wraps list)."""
 
     class JSONObject(dict, JSONValue):
-        pass
+        """Internal value type for JSON objects (wraps dict)."""
 
     def _make(class_, *args, **kwargs):
         if kwargs.get('schema') is not None:
@@ -3056,6 +3184,14 @@ class JSON(Type):
     def __init__(self, not_null=False, unique=False, enumerator=None, constraints=(),
                  schema=None):
         # type: (bool, bool, Optional[Enumerator], Union[list, tuple], Optional[dict]) -> None
+        """
+        Arguments:
+          schema (dict): Optional JSON Schema dict. When given, validated values
+            must conform to the schema (requires the `jsonschema` package).
+
+          Other arguments are the same as in `Type`.
+
+        """
         super(JSON, self).__init__(not_null=not_null, unique=unique,
                                    enumerator=enumerator, constraints=constraints)
         if schema:
@@ -3125,6 +3261,7 @@ class JSON(Type):
 
 
 class JSONB(JSON):
+    """JSON type stored in the PostgreSQL JSONB binary format."""
 
     def sqlalchemy_type(self):
         import pytis.data.gensqlalchemy

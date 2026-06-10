@@ -28,6 +28,11 @@ class Price(pytis.data.Float):
 
     def __init__(self, not_null=True, unique=False, enumerator=None, constraints=(),
                  minimum=None, maximum=None, precision=2, digits=None):
+        """Defaults `not_null` to True and `precision` to 2.
+
+        Other arguments are the same as in `Float`.
+
+        """
         super(Price, self).__init__(not_null=not_null, unique=unique,
                                     enumerator=enumerator, constraints=constraints,
                                     minimum=minimum, maximum=maximum,
@@ -44,6 +49,11 @@ class StringNotNull(pytis.data.String):
 
     def __init__(self, not_null=True, unique=False, enumerator=None, constraints=(),
                  minlen=None, maxlen=None):
+        """Defaults `not_null` to True.
+
+        Other arguments are the same as in `String`.
+
+        """
         super(StringNotNull, self).__init__(not_null=not_null, unique=unique,
                                             enumerator=enumerator, constraints=constraints,
                                             minlen=minlen, maxlen=maxlen)

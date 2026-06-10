@@ -64,6 +64,12 @@ class PrettyTreeOrder(PrettyType):
     """
 
     def __init__(self, tree_column_id, **kwargs):
+        """
+        Arguments:
+          tree_column_id (str): Id of the column defining tree ordering.
+          **kwargs: Arguments forwarded to the data type constructor.
+
+        """
         super(PrettyTreeOrder, self).__init__(**kwargs)
         self._tree_column_id = tree_column_id
 
@@ -115,6 +121,14 @@ class PrettyFoldable(PrettyTreeOrder):
     """Folding indicator for an unfoldable node."""
 
     def __init__(self, tree_column_id, subcount_column_id=None, **kwargs):
+        """
+        Arguments:
+          tree_column_id (str): Id of the column defining tree ordering.
+          subcount_column_id (str): Id of the column providing the number of
+            subnodes; used to display proper folding indicators, or None.
+          **kwargs: Arguments forwarded to the data type constructor.
+
+        """
         super(PrettyFoldable, self).__init__(tree_column_id=tree_column_id, **kwargs)
         self._tree_column_nsub_id = subcount_column_id
 
