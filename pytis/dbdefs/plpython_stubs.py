@@ -19,40 +19,40 @@ if TYPE_CHECKING:
     class _SPIResult(object):
         def __iter__(self):
             # type: () -> Iterator[Dict[str, Any]]
-            ...
+            pass
 
         def __len__(self):
             # type: () -> int
-            ...
+            pass
 
         def __getitem__(self, index):
             # type: (int) -> Dict[str, Any]
-            ...
+            pass
 
     class _Plpy(object):
         def execute(self, query, limit=0):
             # type: (str, int) -> _SPIResult
-            ...
+            pass
 
         def error(self, msg):
             # type: (str) -> None
-            ...
+            pass
 
         def info(self, msg):
             # type: (str) -> None
-            ...
+            pass
 
         def warning(self, msg):
             # type: (str) -> None
-            ...
+            pass
 
         def debug(self, msg):
             # type: (str) -> None
-            ...
+            pass
 
         def log(self, msg):
             # type: (str) -> None
-            ...
+            pass
 
     plpy = _Plpy()
     TD = {}   # type: Dict[str, Any]
