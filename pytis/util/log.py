@@ -55,6 +55,11 @@ import time
 import pytis
 from .util import ProgramError, deepstr
 
+try:
+    from typing import Callable, IO, Optional
+except ImportError:
+    pass
+
 unistr = type(u'')  # Python 2/3 transition hack.
 
 OPERATIONAL = 'OPR'
@@ -83,6 +88,7 @@ class Logger(object):
     """
 
     def __init__(self):
+        # type: () -> None
         """Inicializuj logger."""
         self._host = socket.gethostname()
         self._database = pytis.config.dbname
@@ -201,6 +207,7 @@ class Logger(object):
         pass
 
     def log(self, kind, message, data=None):
+        # type: (str, str, object) -> None
         """Zaloguj message.
 
         Arguments:
@@ -232,6 +239,7 @@ class StreamLogger(Logger):
     """
 
     def __init__(self, stream):
+        # type: (IO[str]) -> None
         """Inicializuj logování.
 
         Arguments:
@@ -253,6 +261,7 @@ class SyslogLogger(Logger):
     _MAX_MESSAGE_LENGTH = 1020
 
     def __init__(self, facility=None):
+        # type: (Optional[int]) -> None
         super(SyslogLogger, self).__init__()
         self._facility = facility
 
@@ -307,6 +316,7 @@ class LoggingInterface(object):
         self._hooks = []
 
     def __call__(self, kind, message, data=None):
+        # type: (str, str, object) -> None
         """Zaloguj message.
 
         Pokud je __debug__ nepravda a kind je DEBUG, message není zalogováno.
@@ -330,6 +340,7 @@ class LoggingInterface(object):
             hook()
 
     def add_hook(self, hook):
+        # type: (Callable[[], None]) -> None
         """Přidej hook ke každému logování.
 
         Logovací hooky lze využít k opakovanému vykonání nějaké činnosti v

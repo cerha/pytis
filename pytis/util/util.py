@@ -64,7 +64,7 @@ except ImportError:
     ClassType = type  # ClassType is gone in Python 3.  Remove when dropping Python 2 support.
 
 try:
-    from typing import Optional
+    from typing import Callable, Iterable, List, Optional, Union
 except ImportError:
     pass
 
@@ -733,6 +733,7 @@ def rassoc(item, alist):
 
 
 def remove_duplicates(items):
+    # type: (Iterable) -> list
     """Return a list containing each item of 'items' just once."""
     return list(set(items))
 
@@ -770,6 +771,7 @@ def nreverse(list):
 
 
 def strxfrm(string):
+    # type: (str) -> str
     """Return a string transformation for locale aware sorting.
 
     Like, locale.strxfrm, but addresses some compatibility issues.
@@ -789,6 +791,7 @@ def strxfrm(string):
 
 
 def sameclass(o1, o2, strict=False):
+    # type: (object, object, bool) -> bool
     """Vrať pravdu, právě když 'o1' a 'o2' jsou instance téže třídy.
 
     Je-li argument 'strict' pravdivý, musí se rovnat třídy obou objektů 'o1' a
@@ -1124,6 +1127,7 @@ def mktempdir(prefix='pytis'):
 
 
 def format_byte_size(size):
+    # type: (Union[int, float]) -> str
     """Return a human readable string representing given int bytesize."""
     size = float(size)
     units = ('B', 'kB', 'MB', 'GB')
@@ -1148,6 +1152,7 @@ def camel_case_to_lower(string, separator='-'):
 
 
 def nextval(seq, connection_name=None):
+    # type: (str, Optional[str]) -> Callable[..., int]
     """Return a function generating next value from given DB sequence.
 
     The argument seq is the string name of a database sequence object.  The
@@ -1214,6 +1219,7 @@ def load_module(module_name):
 # TODO: kwargs -> **kwargs
 
 def data_object(spec, kwargs=None):
+    # type: (...) -> pytis.data.Data
     """Create a data object for given specification.
 
     Arguments:
@@ -1701,6 +1707,7 @@ def deepstr(obj):
 
 
 def format_traceback():
+    # type: () -> str
     """Vrať zformátovaný traceback aktuální výjimky, jako string."""
     import traceback
     einfo = __, einstance, tb = sys.exc_info()
@@ -1904,6 +1911,7 @@ def content(content, format=None, resources=()):
 
 
 def lcg_to_html(text, styles=('default.css',), resource_path=()):
+    # type: (str, tuple, tuple) -> str
     """Return given LCG structured text converted to HTML.
 
     Arguments:
@@ -1980,6 +1988,7 @@ _current_language = None
 
 
 def current_language():
+    # type: () -> str
     """Return current language code as string.
 
     If current language is not set, set it to the current environment language.
@@ -1987,6 +1996,7 @@ def current_language():
     """
     if _current_language is None:
         set_current_language(environment_language())
+    assert _current_language is not None
     return _current_language
 
 
@@ -2059,6 +2069,7 @@ def translation_status():
 _translation_path = None
 
 def translation_path():
+    # type: () -> List[str]
     """Return the current translation path as a list of strings.
 
     The list consists of the names of directories containing translations.  The
@@ -2144,6 +2155,7 @@ def translations(domain, origin='en'):
 
 
 def translate(text):
+    # type: (str) -> str
     """Return translation object for given text.
 
     This function is suitable for use as _ to mark translatable texts.  It is
