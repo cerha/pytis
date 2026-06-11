@@ -574,7 +574,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
                 check=check,
             )
             if result:
-                return rsa_encrypt(db_key, result['password'].value()).decode('ascii')
+                return rsa_encrypt(db_key, result['password'].value())
             else:
                 return None
 
@@ -602,7 +602,7 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
                     lambda r: ('password', _("Invalid password"))
                     if established_names and not pd.dbfunction(
                             PytisCryptoUnlockCurrentUserPasswords,
-                            rsa_encrypt(db_key, r['password'].value()).decode('ascii')
+                            rsa_encrypt(db_key, r['password'].value())
                     )
                     else None,),
             )

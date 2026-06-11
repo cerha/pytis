@@ -63,6 +63,11 @@ try:
 except ImportError:
     ClassType = type  # ClassType is gone in Python 3.  Remove when dropping Python 2 support.
 
+try:
+    from typing import Optional
+except ImportError:
+    pass
+
 
 # Classes
 
@@ -1163,28 +1168,27 @@ def nextval(seq, connection_name=None):
 
 
 def rsa_encrypt(key, text):
-    """Return text encrypted using RSA key and base64 encoded as bytes.
+    # type: (Optional[str], str) -> str
+    """Return text encrypted using RSA key and base64 encoded as an ASCII string.
 
-    If key is `None`, return `text`.
+    If key is `None`, return `text` unchanged.
 
     Arguments:
       key (str): Public key to use for encryption, or `None`.
-      text: Text to encrypt.
+      text (str): Text to encrypt.
 
     """
     if key:
-        if isinstance(text, unistr):
-            text = text.encode('utf-8')
         try:
             from Cryptodome.PublicKey import RSA
             from Cryptodome.Cipher import PKCS1_OAEP
-        except ImportError as e:
+        except ImportError:
             from Crypto.PublicKey import RSA
             from Crypto.Cipher import PKCS1_OAEP
         rsa_key = RSA.importKey(key)
         cipher = PKCS1_OAEP.new(rsa_key)
-        encrypted = cipher.encrypt(text)
-        return base64.b64encode(encrypted)
+        encrypted = cipher.encrypt(text.encode('utf-8'))
+        return base64.b64encode(encrypted).decode('ascii')
     else:
         return text
 
@@ -2213,6 +2217,8 @@ def run_as_script(function):
                 import getpass
                 login = pytis.config.dbuser
                 password = getpass.getpass("Enter database password for %s: " % login)
+                if sys.version_info[0] == 2:  # getpass returns bytes in Python 2
+                    password = password.decode(sys.stdin.encoding or 'utf-8')
                 pytis.config.dbconnection.update_login_data(user=login, password=password)
             else:
                 sys.stderr.write(e.message())

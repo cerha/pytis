@@ -500,12 +500,12 @@ class DBConnection(object):
             return self.__class__(**options)
 
     def update_login_data(self, user, password):
-        # type: (...) -> None
+        # type: (str, str) -> None
         """Set given login parameters in the instance.
 
         Arguments:
-          user: Database user as a string or `None`.
-          password: Database password as a string or `None`.
+          user: Database user as a string.
+          password: Database password as a string.
 
         """
         self._user = user

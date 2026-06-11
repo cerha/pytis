@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2019-2023, 2025 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2019-2026 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2010-2018 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -72,6 +72,8 @@ def run():
                 import getpass
                 login = pytis.config.dbuser
                 password = getpass.getpass("Enter database password for %s: " % login)
+                if sys.version_info[0] == 2:  # getpass returns bytes in Python 2
+                    password = password.decode(sys.stdin.encoding or 'utf-8')
                 pytis.config.dbconnection.update_login_data(user=login, password=password)
             else:
                 sys.stderr.write(e.message())
