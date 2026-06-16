@@ -59,6 +59,11 @@ from pytis.util import (
     Attribute, ProgramError, ResolverError, SimpleCache, Structure, find, log,
 )
 
+try:
+    from typing import Optional, Union
+except ImportError:
+    pass
+
 import pytis.remote
 
 from .event import UserBreakException, wx_callback
@@ -722,39 +727,79 @@ class ListForm(RecordForm, Refreshable):
         return result
 
     def selected_rows(self, fallback_to_current_row=False, raise_on_error=True):
+        # type: (bool, bool) -> Union[RecordForm.FixedSelection, RecordForm.LiveSelection]
+        """Return an iterator over the currently selected rows.
+
+        Arguments:
+          fallback_to_current_row: If `True` and no rows are selected,
+            the iterator will yield the single row at the current cursor
+            position.  If `False` (default) and no rows are selected, an
+            empty iterator is returned.
+          raise_on_error: If `True` (default), raise
+            `RecordForm.SelectionLimitExceeded` immediately when the
+            selection exceeds `Selection.MAX_ROWS` and only a subset of
+            rows is selected.  If `False`, return a `FixedSelection` that
+            displays the error and stops on the first `__next__` call.
+
+        Returns:
+          A `FixedSelection` for explicit selections within
+          `Selection.MAX_ROWS`, a `LiveSelection` when all rows are
+          selected and their count exceeds `Selection.MAX_ROWS`, or a
+          `FixedSelection` in error state when a subset exceeding
+          `Selection.MAX_ROWS` is selected and `raise_on_error` is `False`.
+
+        Raises:
+          `RecordForm.SelectionLimitExceeded`: When a subset of rows
+            exceeding `Selection.MAX_ROWS` is selected and `raise_on_error`
+            is `True`.
+
+        """
         # Freeze the selection first to ensure consistent results.
+        # Compute length from block boundaries without materializing row numbers.
         if hasattr(self._grid, 'GetSelectedRowBlocks'):
-            # This should work with wxPython 4.2, but maybe also with some wxPython 4.1.x...
+            # wxPython 4.2+ (may also work with some 4.1.x builds).
             ranges = [(b.GetTopRow(), b.GetBottomRow()) for b in self._grid.GetSelectedRowBlocks()]
-            # Avoid materializing row numbers before checking max length.
             row_numbers = None
             length = sum(bottom - top + 1 for top, bottom in ranges)
         else:
             # Legacy solution for wxPython 4.1.0 and older.  It can be slow
-            # (memory demanding) for the big  grids as indicated in the wx
-            # documentation, but no other option seems to work.
+            # (memory demanding) for big grids as noted in the wx documentation,
+            # but GetSelectionBlockTopLeft/BottomRight proved unreliable here.
+            ranges = None
             row_numbers = self._grid.GetSelectedRows()
             length = len(row_numbers)
         if length > self.Selection.MAX_ROWS:
-            error = self.SelectionLimitExceeded(
-                _("The limit for operation on selection is {limit} rows, "
-                  "but the current selection contains {length} rows."
+            total = self._table.number_of_rows()
+            if length == total:
+                # All rows are selected — stream via a live cursor so that
+                # rows deleted by other users after the selection was initiated
+                # are silently skipped rather than causing lookup failures.
+                return self.LiveSelection(self.data(init_select=True), self._row, length=length)
+            # Only a subset is selected and it exceeds the limit.  The user
+            # must narrow the filter so that the desired rows are the only
+            # ones shown, then select all and retry.
+            error = (
+                _("The selection contains {length} rows which exceeds the "
+                  "limit of {limit}.\n\n"
+                  "To process a large number of rows, adjust the filter so "
+                  "that only the\n"
+                  "desired rows are shown, select all rows, and retry the "
+                  "operation."
                   ).format(limit=self.Selection.MAX_ROWS, length=length))
             if raise_on_error:
-                raise error
+                raise self.SelectionLimitExceeded(error)
             # Don't raise the error now, but create the iterator that
             # displays the error message on the attempt to get the first
             # item and stops.  The user (typically the form.selection
             # API caller) can detect the problem in advance by checking
-            # "len(selection) > selection.MAX_ROWS" if they need to, but
-            # if they do not, the default behavior should be OK in most
-            # cases.
-            return self.Selection(None, self._row, error=error, length=length)
+            # "selection.error" if they need to, but if they do not, the
+            # default behavior should be OK in most cases.
+            return self.FixedSelection(None, self._row, error=error, length=length)
         if length == 0 and fallback_to_current_row:
             row_numbers = [self._table.current_row()]
         elif row_numbers is None:
             row_numbers = [n for top, bottom in ranges for n in range(top, bottom + 1)]
-        return self.Selection([self._table.data_row(n) for n in row_numbers], self._row)
+        return self.FixedSelection([self._table.data_row(n) for n in row_numbers], self._row)
 
     def _select_cell(self, row=None, col=None, invoke_callback=True):
         # Returns True if the event can be performed (see _on_select_cell).

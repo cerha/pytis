@@ -255,6 +255,40 @@ class Form(API):
         `pytis.presentation.PresentedRow` instances in the order of their
         presence in the form.
 
+        The returned object supports `len` (number of rows at selection time)
+        and exposes two additional attributes:
+
+        - `error`: `None` for a valid selection or an error message string
+          when the selection exceeds `MAX_ROWS` but only a subset of rows
+          is selected.  Iterating over an error selection displays the
+          error message and stops immediately.
+        - `MAX_ROWS`: maximum number of rows for a pre-fetched selection
+          (currently 5000).
+
+        When `len(selection) > selection.MAX_ROWS` and `selection.error` is
+        `None`, the selection is a **live selection** — all rows of the
+        current view are selected and iteration streams them via a live
+        database cursor using the current filter and sort settings.  If the
+        view changes during processing (e.g. other users add or delete
+        matching records), those changes are reflected in what gets processed.
+        The user is asked to confirm before iteration begins and may cancel.
+
+        Typical usage pattern:
+
+        ```python
+        selection = form.selection
+        if selection.error:
+            app.error(selection.error)
+            return
+        if len(selection) > selection.MAX_ROWS:
+            # Live selection — decide based on the nature of the operation.
+            if not operation_supports_live_selection():
+                app.error(_("This operation requires an explicit selection."))
+                return
+        for row in selection:
+            process(row)
+        ```
+
         """
 
     @property
