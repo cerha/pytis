@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pytis 0.1\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-06-16 21:58+0200\n"
+"POT-Creation-Date: 2026-06-19 00:28+0200\n"
 "PO-Revision-Date: 2011-12-29 14:58+0100\n"
 "Last-Translator: Pavel Vohnout <vohnout@officehouse.cz>\n"
 "Language-Team: Slovak <wiking@lists.freebsoft.org>\n"
@@ -70,7 +70,7 @@ msgstr "Chybný formát dátumu alebo času"
 msgid "Method not implemented"
 msgstr ""
 
-#: ../pytis/data/postgresql.py:3577
+#: ../pytis/data/postgresql.py:3583
 #, fuzzy
 msgid "Invalid database counter value"
 msgstr "Chybný dátum alebo čas"
@@ -281,7 +281,7 @@ msgstr ""
 msgid "unlimited"
 msgstr ""
 
-#: ../pytis/presentation/spec.py:5690
+#: ../pytis/presentation/spec.py:5666
 #, python-format
 msgid ""
 "You don't have priviledges to invoke the action '%s'.\n"
