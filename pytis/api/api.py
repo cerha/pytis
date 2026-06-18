@@ -251,42 +251,57 @@ class Form(API):
     def selection(self):  # type: () -> Iterator[pytis.presentation.PresentedRow]
         """Iterator over all currently selected rows.
 
-        The iterator returns all rows present in the current selection as
-        `pytis.presentation.PresentedRow` instances in the order of their
-        presence in the form.
+        Returns an iterator over `pytis.presentation.PresentedRow` instances
+        in the order of their appearance in the form.  If no rows are selected,
+        the iterator yields just the current row.
 
-        The returned object supports `len` (number of rows at selection time)
-        and exposes two additional attributes:
+        **Public API of the returned object:**
 
-        - `error`: `None` for a valid selection or an error message string
-          when the selection exceeds `MAX_ROWS` but only a subset of rows
-          is selected.  Iterating over an error selection displays the
-          error message and stops immediately.
-        - `MAX_ROWS`: maximum number of rows for a pre-fetched selection
-          (currently 5000).
+        - `len(selection)` — total number of rows in the selection at the time
+          it was created.
+        - `selection.processed` — number of rows successfully yielded so far.
+          Can be read during or after iteration.
+        - `selection.invalidated` — `True` if iteration was cut short by a
+          database connection loss (see below).
+        - `selection.form` — the `Form` instance of the originating form.
+          Useful when the selection is passed as an argument to an action
+          handler and the handler needs to access the form API.
 
-        When `len(selection) > selection.MAX_ROWS` and `selection.error` is
-        `None`, the selection is a **live selection** — all rows of the
-        current view are selected and iteration streams them via a live
-        database cursor using the current filter and sort settings.  If the
-        view changes during processing (e.g. other users add or delete
-        matching records), those changes are reflected in what gets processed.
-        The user is asked to confirm before iteration begins and may cancel.
+        **Cursor and snapshot stability:**
 
-        Typical usage pattern:
+        Rows are fetched lazily from the grid's existing server-side database
+        cursor, which is opened in a `REPEATABLE READ` transaction.  The
+        snapshot is fixed at the moment the grid was last refreshed: rows
+        deleted or modified by other transactions after that point remain
+        visible with their original values and do not affect row numbering.
+        Write operations performed inside the loop must use a separate data
+        object (obtained via `row.data` or `form.data`) to avoid closing the
+        grid cursor.
+
+        **Handling connection loss:**
+
+        The server closes idle transactions after a configurable timeout
+        (typically 15 minutes on production servers).  If the timeout fires
+        while iterating over a large selection, pytis transparently reopens
+        the connection — but with a new cursor and a fresh snapshot, making
+        the stored row positions invalid.  When this happens, iteration stops
+        immediately and an error message is displayed to the user.
+
+        After the loop, `selection.invalidated` indicates specifically that
+        iteration was cut short by a connection loss — as opposed to the
+        handler exiting early intentionally (e.g. the user aborting via a
+        dialog).  Use `selection.processed` to find out how many rows were
+        actually processed in either case:
 
         ```python
         selection = form.selection
-        if selection.error:
-            app.error(selection.error)
-            return
-        if len(selection) > selection.MAX_ROWS:
-            # Live selection — decide based on the nature of the operation.
-            if not operation_supports_live_selection():
-                app.error(_("This operation requires an explicit selection."))
-                return
         for row in selection:
-            process(row)
+            data = row.data()
+            data.update(row.key(), ...)
+        if selection.invalidated:
+            pass  # connection lost; consider rolling back the transaction
+        elif selection.processed != len(selection):
+            pass  # handler exited early (e.g. user cancelled via a dialog)
         ```
 
         """

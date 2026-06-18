@@ -1802,32 +1802,24 @@ class RecordForm(LookupForm):
 
 
     class Selection(object):
-        """Abstract base class for iterators over the current form selection.
+        """Iterator over a set of selected form rows.
 
-        Concrete subclasses are `FixedSelection` (pre-fetched rows, used when
-        the selection size is within `MAX_ROWS`) and `LiveSelection` (live
-        database cursor, used when all rows are selected but their count
-        exceeds `MAX_ROWS`).
+        Concrete subclasses (such as `ListForm.Selection`) implement row
+        retrieval via `_next_record`.  The base implementation is always empty
+        and serves as a stub for forms that do not support selection.
 
-        Both subclasses implement the iterator protocol and expose `__len__`
-        and the `form` property, making them interchangeable for action
-        handlers.
-
-        """
-
-        MAX_ROWS = 5000
-        """Maximum number of rows for pre-fetched selection.
-
-        Explicit selections up to this limit are materialized into a
-        `FixedSelection`.  Larger selections are only supported when all rows
-        are selected, in which case a `LiveSelection` is returned instead.
+        Write operations performed by an action handler must use a separate
+        data object (obtained via `PresentedRow.data` or `Form.data`) to avoid
+        closing the underlying cursor.
 
         """
 
-        def __init__(self, record, length):
-            # type: (PresentedRow, int) -> None
-            self._record = copy.copy(record)
+        def __init__(self, form, length):
+            # type: (RecordForm, int) -> None
+            self._form = form
             self._length = length
+            self._processed = 0
+            self._invalidated = False
 
         def __iter__(self):
             # type: () -> Iterator[PresentedRow]
@@ -1837,31 +1829,43 @@ class RecordForm(LookupForm):
             # type: () -> int
             return self._length
 
-        def _next_row(self):
-            # type: () -> Optional[pytis.data.Row]
-            raise NotImplementedError
-
         def __next__(self):
             # type: () -> PresentedRow
-            row = self._next_row()
-            if row is None:
-                raise StopIteration
-            self._record.set_row(row)
-            return copy.copy(self._record)
+            raise StopIteration
 
         next = __next__  # for Python 2
 
         @property
-        def error(self):
-            # type: () -> Optional[str]
-            """Return the selection error message or `None` if the selection is valid.
+        def processed(self):
+            # type: () -> int
+            """Number of rows successfully yielded so far."""
+            return self._processed
 
-            Returns an error message string when the selection exceeds
-            `MAX_ROWS` and only a subset of rows is selected.  Returns
-            `None` for normal `FixedSelection` and `LiveSelection`.
+        @property
+        def invalidated(self):
+            # type: () -> bool
+            """True if iteration was cut short by a database connection loss.
+
+            When the server closes an idle transaction (e.g. due to
+            `idle_in_transaction_session_timeout`), pytis transparently
+            reopens the connection but the original cursor is gone.  The
+            selection is then invalidated: iteration stops, an error is
+            displayed, and this property is set to `True`.
+
+            Handlers can use this to distinguish a system interruption from
+            an intentional early exit (e.g. user cancelling via a dialog):
+
+            ```python
+            for row in selection:
+                ...
+            if selection.invalidated:
+                # system error — cursor was lost
+            elif selection.processed != len(selection):
+                # handler exited early intentionally
+            ```
 
             """
-            return None
+            return self._invalidated
 
         @property
         def form(self):
@@ -1873,128 +1877,7 @@ class RecordForm(LookupForm):
             `pytis.presentation.ActionContext.SELECTION`).
 
             """
-            return self._record.form
-
-
-    class FixedSelection(Selection):
-        """Selection iterator over a pre-fetched list of data rows.
-
-        Used when the number of selected rows is within `Selection.MAX_ROWS`.
-        All rows are fetched from the data object upfront and stored in
-        memory for the duration of the iteration.
-
-        May represent an error-only selection if the selection size exceeds
-        `Selection.MAX_ROWS` and the selected rows are only a subset of the
-        current view.  In that case the first call to `__next__` displays an
-        error message and stops iteration immediately.
-
-        """
-
-        def __init__(self,
-                     rows,  # type: Optional[List[pytis.data.Row]]
-                     record,  # type: PresentedRow
-                     error=None,  # type: Optional[str]
-                     length=None  # type: Optional[int]
-                     ):
-            # type: (...) -> None
-            """Initialize the selection iterator.
-
-            Arguments:
-              rows: Pre-fetched data rows.  `None` when `error` is given.
-              record: Template instance used to produce the `PresentedRow`
-                instances returned by the iterator.
-              error: Error message string when the selection exceeds
-                `Selection.MAX_ROWS` and only a subset of rows is selected.
-                `rows` must be `None` and `length` must be provided in
-                this case.
-              length: Number of selected rows when `rows` is `None` and
-                `error` is given.
-
-            """
-            if error:
-                assert rows is None
-                assert length is not None
-                self._error = error
-            else:
-                assert length is None
-                self._error = None
-                self._rows = rows
-                self._pointer = -1
-                length = len(rows)
-            super(RecordForm.FixedSelection, self).__init__(record, length)
-
-        @property
-        def error(self):
-            # type: () -> Optional[str]
-            return self._error
-
-        def _next_row(self):
-            # type: () -> Optional[pytis.data.Row]
-            if self._error:
-                app.error(self._error + "\n" + _("Operation canceled."))
-                return None
-            self._pointer += 1
-            if self._pointer >= self._length:
-                return None
-            return self._rows[self._pointer]
-
-
-    class LiveSelection(Selection):
-        """Selection iterator over a live database cursor.
-
-        Used when all rows of the current view are selected but their count
-        exceeds `Selection.MAX_ROWS`.  Instead of pre-fetching rows, this
-        iterator opens a fresh database cursor with the current view condition
-        and streams rows on demand.
-
-        Because the cursor reflects the actual database state at iteration
-        time, rows deleted by other users after the selection was initiated
-        will not appear in the results.  The user is asked to confirm the
-        operation before the first row is yielded and may cancel it.
-
-        """
-
-        def __init__(self, data, record, length):
-            # type: (pytis.data.Data, PresentedRow, int) -> None
-            """Initialize the live selection iterator.
-
-            Arguments:
-              data: Fresh data object with the select already initialized
-                to the current view condition.
-              record: Template instance used to produce the `PresentedRow`
-                instances returned by the iterator.
-              length: Number of rows in the selection at the time it was
-                initiated (used for `__len__` and progress reporting).
-
-            """
-            self._data = data
-            self._started = False
-            super(RecordForm.LiveSelection, self).__init__(record, length)
-
-        def _next_row(self):
-            # type: () -> Optional[pytis.data.Row]
-            if not self._started:
-                self._started = True
-                if not app.question(_(
-                        "The selection contains {length} rows, exceeding the "
-                        "pre-load limit of {limit} rows.\n\n"
-                        "The operation will process rows matching the current "
-                        "filter and sort settings\n"
-                        "directly from the database. If the view changes during "
-                        "processing — for example\n"
-                        "because other users add or delete matching records — "
-                        "those changes will be\n"
-                        "reflected in what gets processed.\n\n"
-                        "Do you want to continue?").format(
-                            limit=self.MAX_ROWS,
-                            length=self._length)):
-                    return None
-            return self._data.fetchone()
-
-
-    class SelectionLimitExceeded(Exception):
-        """Exception raised by `selected_rows` when the selection is too big."""
-        pass
+            return self._form.provider()
 
 
     def _init_attributes(self, prefill=None, select_row=None, _new=False, **kwargs):
@@ -2270,12 +2153,11 @@ class RecordForm(LookupForm):
         else:
             return None
 
-    def _context_action_args(self, context, secondary_context=None, raise_on_error=True):
+    def _context_action_args(self, context, secondary_context=None):
         if context == ActionContext.RECORD:
             args = (self.current_row(),)
         elif context == ActionContext.SELECTION:
-            args = (self.selected_rows(fallback_to_current_row=True,
-                                       raise_on_error=raise_on_error),)
+            args = (self.selected_rows(fallback_to_current_row=True),)
         else:
             raise ProgramError("Unsupported action context:", context)
         if secondary_context is not None:
@@ -2285,8 +2167,7 @@ class RecordForm(LookupForm):
             elif secondary_context == ActionContext.RECORD:
                 args += (form.current_row(),)
             elif secondary_context == ActionContext.SELECTION:
-                args += (form.selected_rows(fallback_to_current_row=True,
-                                            raise_on_error=raise_on_error),)
+                args += (form.selected_rows(fallback_to_current_row=True),)
             else:
                 raise ProgramError("Unsupported action secondary context:", secondary_context)
         return args
@@ -2391,11 +2272,7 @@ class RecordForm(LookupForm):
     @Command.define
     def context_action(self, action):
         """Invoke a context menu action on the current form record."""
-        try:
-            args = self._context_action_args(action.context(), action.secondary_context())
-        except self.SelectionLimitExceeded as e:
-            app.error(unistr(e) + "\n" + _("Operation canceled."))
-            return True
+        args = self._context_action_args(action.context(), action.secondary_context())
         kwargs = action.kwargs()
         log(EVENT, 'Calling context action handler:', (args, kwargs))
         action.handler()(*args, **kwargs)
@@ -2434,8 +2311,7 @@ class RecordForm(LookupForm):
             return False
         enabled = action.enabled()
         if callable(enabled):
-            args = self._context_action_args(action.context(), action.secondary_context(),
-                                             raise_on_error=False)
+            args = self._context_action_args(action.context(), action.secondary_context())
             kwargs = action.kwargs()
             return enabled(*args, **kwargs)
         else:
@@ -2742,8 +2618,8 @@ class RecordForm(LookupForm):
         """
         return self._row
 
-    def selected_rows(self, fallback_to_current_row=False, raise_on_error=True):
-        # type: (bool, bool) -> Union[FixedSelection, LiveSelection]
+    def selected_rows(self, fallback_to_current_row=False):
+        # type: (bool) -> Selection
         """Return an iterator over all currently selected rows.
 
         The iterator returns all rows present in the current selection as
@@ -2752,20 +2628,12 @@ class RecordForm(LookupForm):
         Arguments:
           fallback_to_current_row: If `True` and there is no selection,
             return an iterator over the current row.
-          raise_on_error: If `True` and the selection size exceeds
-            `Selection.MAX_ROWS`, raise `SelectionLimitExceeded`.  If
-            `False`, return a `FixedSelection` instance that displays an
-            error and stops on the first `__next__` call.
 
         Returns:
-          A `FixedSelection` or `LiveSelection` over the selected rows.
-
-        Raises:
-          `SelectionLimitExceeded`: When the selection exceeds
-            `Selection.MAX_ROWS` and `raise_on_error` is `True`.
+          A `Selection` iterator over the selected rows.
 
         """
-        return self.FixedSelection([], self._row)
+        return self.Selection(self, 0)
 
     def clear_selection(self):
         """Completely clear the current selection of rows in the form."""
@@ -2818,7 +2686,7 @@ class RecordForm(LookupForm):
 
     @property
     def api_selection(self):
-        return self.selected_rows(raise_on_error=False)
+        return self.selected_rows()
 
     def api_clear_selection(self):
         self.clear_selection()

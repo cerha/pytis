@@ -767,6 +767,23 @@ class Data(object_2_5):
         """
         self._select_last_row_number = None
 
+    @property
+    def selection_id(self):
+        # type: () -> object
+        """Identifier of the current cursor selection.
+
+        Returns a value that changes each time a new cursor is opened via
+        `select`.  Two calls returning the same value guarantee that the
+        same cursor is still active.  Returns `None` when no cursor is
+        open or cursor identity tracking is not supported.
+
+        Only supported by subclasses that use server-side cursors in a
+        relational database (such as `DBDataPostgreSQL`).  The base
+        implementation always returns `None`.
+
+        """
+        return None
+
     def insert(self, row, after=None, before=None, transaction=None):
         # TODO: cannot annotate return type — see row() for explanation of override cascade issue.
         """Vlož row do tabulky.

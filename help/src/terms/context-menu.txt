@@ -70,27 +70,5 @@ myší běžným způsobem:
  * =Ctrl+A= označí všechny záznamy v aktuálním náhledu (tj. záznamy
    odpovídající aktivnímu filtru).
 
-
-==== Chování při provádění akce ====
-
-Způsob, jakým systém se záznamy výběru pracuje, závisí na počtu označených
-záznamů.
-
-*Malý výběr (do 5000 záznamů)* -- Záznamy jsou před spuštěním akce
-přednačteny z databáze a uloženy do paměti.  Akce tak pracuje vždy se
-stejnou sadou záznamů, i kdyby v průběhu zpracování jiný uživatel záznamy
-upravil nebo smazal.
-
-*Velký výběr — všechny záznamy (více než 5000 záznamů, vybrány všechny)* --
-Záznamy jsou zpracovávány přímo z databáze průběžně, tak jak akce postupuje.
-Systém nevytváří kopii v paměti.  Zpracovány budou záznamy odpovídající
-aktuálnímu filtru a řazení v okamžiku spuštění akce.  Pokud v průběhu
-zpracování jiní uživatelé záznamy přidají, upraví nebo smažou, mohou se tyto
-změny projevit ve výsledku operace.  Před zahájením akce je proto zobrazeno
-potvrzovací okno, kde lze pokračování zrušit.
-
-*Velký výběr — podmnožina (více než 5000 záznamů, vybrána pouze část)* --
-Takový výběr není podporován.  Systém zobrazí chybové hlášení a akci
-neprovede.  Pro zpracování velkého počtu záznamů je nutné upravit filtr tak,
-aby zobrazoval pouze požadované záznamy, poté označit všechny záznamy pomocí
-=Ctrl+A= a akci spustit znovu.
+ * Kontextové menu nad aktivním výberem umožňuje (kromě vyvolání akcí nad
+   výběrem) celý výběr zrušit, nebo přidat/odebrat jednotlivé řádky.

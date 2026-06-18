@@ -36,6 +36,7 @@ from builtins import range
 import copy
 import datetime
 import functools
+import itertools
 import io
 import tempfile
 import time
@@ -121,6 +122,70 @@ class ListForm(RecordForm, Refreshable):
                      (pytis.data.Data.AGG_MAX, _("Maximum"), 'agg-max', _("Max:")))
 
     DESCR = _("row form")
+
+    class Selection(RecordForm.Selection):
+        """Selection iterator for `ListForm`.
+
+        Fetches rows lazily from the underlying `GridTable` using a
+        server-side PostgreSQL `SCROLL CURSOR` opened in a `REPEATABLE READ`
+        transaction, so the snapshot is stable for the duration of the
+        iteration: rows deleted or modified by other transactions after the
+        cursor was opened are not visible and do not shift row numbering.
+
+        If the cursor ID changes during iteration (because the database
+        connection was lost and transparently restored with a new cursor
+        snapshot), the iteration stops and an error is reported to the user.
+
+        """
+
+        def __init__(self, form, data, grid, table, fallback_to_current_row=False):
+            # type: (pytis.form.Form, pytis.data.Data, wx.grid.Grid, GridTable, bool) -> None
+            """Initialize the selection iterator.
+
+            Arguments:
+              form: The `pytis.api.Form` instance of the originating form.
+              data: The data object used for cursor identity tracking.
+              grid: The wx grid widget used to query the current row selection.
+              table: The `GridTable` providing `record` for fetching rows by position.
+              fallback_to_current_row: If `True` and no rows are selected,
+                iterate over the single row at the current cursor position.
+
+            """
+            if hasattr(grid, 'GetSelectedRowBlocks'):
+                # wxPython 4.2+ (may also work with some 4.1.x builds).
+                ranges = [(b.GetTopRow(), b.GetBottomRow()) for b in grid.GetSelectedRowBlocks()]
+                self._rows = itertools.chain.from_iterable(
+                    range(top, bottom + 1) for top, bottom in ranges
+                )
+                length = sum(bottom - top + 1 for top, bottom in ranges)
+            else:
+                # Legacy solution for wxPython 4.1.0 and older.  It can be slow
+                # (memory demanding) for big grids as noted in the wx documentation,
+                # but GetSelectionBlockTopLeft/BottomRight proved unreliable here.
+                rows = grid.GetSelectedRows()
+                self._rows = iter(rows)
+                length = len(rows)
+            if length == 0 and fallback_to_current_row:
+                self._rows = iter([table.current_row()])
+                length = 1
+            super(ListForm.Selection, self).__init__(form, length)
+            self._table = table
+            self._data = data
+            self._cursor_id = data.selection_id
+
+        def __next__(self):
+            # type: () -> PresentedRow
+            record = self._table.record(next(self._rows))
+            if self._data.selection_id != self._cursor_id:
+                self._invalidated = True
+                app.error(_("Database connection was lost and restored during the\n"
+                            "operation. The row selection may no longer be valid.\n\n"
+                            "Aborting the operation."))
+                raise StopIteration
+            self._processed += 1
+            return record
+
+        next = __next__  # for Python 2
 
     def _full_init(self, *args, **kwargs):
         self._grid = None
@@ -726,8 +791,8 @@ class ListForm(RecordForm, Refreshable):
                 pass
         return result
 
-    def selected_rows(self, fallback_to_current_row=False, raise_on_error=True):
-        # type: (bool, bool) -> Union[RecordForm.FixedSelection, RecordForm.LiveSelection]
+    def selected_rows(self, fallback_to_current_row=False):
+        # type: (bool) -> RecordForm.Selection
         """Return an iterator over the currently selected rows.
 
         Arguments:
@@ -735,71 +800,12 @@ class ListForm(RecordForm, Refreshable):
             the iterator will yield the single row at the current cursor
             position.  If `False` (default) and no rows are selected, an
             empty iterator is returned.
-          raise_on_error: If `True` (default), raise
-            `RecordForm.SelectionLimitExceeded` immediately when the
-            selection exceeds `Selection.MAX_ROWS` and only a subset of
-            rows is selected.  If `False`, return a `FixedSelection` that
-            displays the error and stops on the first `__next__` call.
 
         Returns:
-          A `FixedSelection` for explicit selections within
-          `Selection.MAX_ROWS`, a `LiveSelection` when all rows are
-          selected and their count exceeds `Selection.MAX_ROWS`, or a
-          `FixedSelection` in error state when a subset exceeding
-          `Selection.MAX_ROWS` is selected and `raise_on_error` is `False`.
-
-        Raises:
-          `RecordForm.SelectionLimitExceeded`: When a subset of rows
-            exceeding `Selection.MAX_ROWS` is selected and `raise_on_error`
-            is `True`.
+          A `ListForm.Selection` iterator over the selected rows.
 
         """
-        # Freeze the selection first to ensure consistent results.
-        # Compute length from block boundaries without materializing row numbers.
-        if hasattr(self._grid, 'GetSelectedRowBlocks'):
-            # wxPython 4.2+ (may also work with some 4.1.x builds).
-            ranges = [(b.GetTopRow(), b.GetBottomRow()) for b in self._grid.GetSelectedRowBlocks()]
-            row_numbers = None
-            length = sum(bottom - top + 1 for top, bottom in ranges)
-        else:
-            # Legacy solution for wxPython 4.1.0 and older.  It can be slow
-            # (memory demanding) for big grids as noted in the wx documentation,
-            # but GetSelectionBlockTopLeft/BottomRight proved unreliable here.
-            ranges = None
-            row_numbers = self._grid.GetSelectedRows()
-            length = len(row_numbers)
-        if length > self.Selection.MAX_ROWS:
-            total = self._table.number_of_rows()
-            if length == total:
-                # All rows are selected — stream via a live cursor so that
-                # rows deleted by other users after the selection was initiated
-                # are silently skipped rather than causing lookup failures.
-                return self.LiveSelection(self.data(init_select=True), self._row, length=length)
-            # Only a subset is selected and it exceeds the limit.  The user
-            # must narrow the filter so that the desired rows are the only
-            # ones shown, then select all and retry.
-            error = (
-                _("The selection contains {length} rows which exceeds the "
-                  "limit of {limit}.\n\n"
-                  "To process a large number of rows, adjust the filter so "
-                  "that only the\n"
-                  "desired rows are shown, select all rows, and retry the "
-                  "operation."
-                  ).format(limit=self.Selection.MAX_ROWS, length=length))
-            if raise_on_error:
-                raise self.SelectionLimitExceeded(error)
-            # Don't raise the error now, but create the iterator that
-            # displays the error message on the attempt to get the first
-            # item and stops.  The user (typically the form.selection
-            # API caller) can detect the problem in advance by checking
-            # "selection.error" if they need to, but if they do not, the
-            # default behavior should be OK in most cases.
-            return self.FixedSelection(None, self._row, error=error, length=length)
-        if length == 0 and fallback_to_current_row:
-            row_numbers = [self._table.current_row()]
-        elif row_numbers is None:
-            row_numbers = [n for top, bottom in ranges for n in range(top, bottom + 1)]
-        return self.FixedSelection([self._table.data_row(n) for n in row_numbers], self._row)
+        return self.Selection(self, self._data, self._grid, self._table, fallback_to_current_row)
 
     def _select_cell(self, row=None, col=None, invoke_callback=True):
         # Returns True if the event can be performed (see _on_select_cell).
@@ -2788,14 +2794,9 @@ class SelectRowsForm(CodebookForm):
     """Row popup form returning a tuple of all selected rows."""
 
     def _on_activation(self, alternate=False):
-        try:
-            selection = self.selected_rows(fallback_to_current_row=True)
-        except self.SelectionLimitExceeded as e:
-            app.warning(unistr(e))
-        else:
-            # TODO: Avoid tuple conversion here (but check the apps before).
-            self._result = tuple(selection)
-            self.Parent.EndModal(1)
+        # TODO: Avoid tuple conversion here (but check the apps before).
+        self._result = tuple(self.selected_rows(fallback_to_current_row=True))
+        self.Parent.EndModal(1)
 
     def _context_menu(self):
         return self._selection_context_menu() + (
@@ -3091,11 +3092,7 @@ class BrowseForm(FoldableForm):
             spec = prints[0]
         if spec.handler():
             handler = spec.handler()
-            try:
-                args = self._context_action_args(spec.context())
-            except self.SelectionLimitExceeded as e:
-                app.warning(unistr(e))
-                return
+            args = self._context_action_args(spec.context())
             return handler(*args)
         else:
             app.printout(self._name, spec.name(),

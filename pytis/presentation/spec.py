@@ -431,45 +431,21 @@ class ActionContext(object):
     """Action is performed on the current selection (records selected in the UI).
 
     The action handler receives the selection as its first positional argument.
-    The selection is an iterable over `PresentedRow` instances in the order of
-    their appearance in the form.  If no selection is currently active, the
-    iterator yields just the current row.
+    The selection is the same object as `pytis.api.Form.selection` — see its
+    documentation for the full API description including cursor stability,
+    connection loss handling, and the `processed` attribute.
 
-    The selection object also exposes `len` (number of rows at selection time)
-    and `MAX_ROWS` (the pre-fetch limit, currently 5000).
-
-    **Normal selection** (`len(selection) <= selection.MAX_ROWS`): all selected
-    rows are pre-fetched and the handler iterates over them directly.
-
-    **Large selection** (`len(selection) > selection.MAX_ROWS`): all rows of
-    the current view are selected.  Iteration uses a live database cursor with
-    the current filter and sort settings — rows are read directly from the
-    database rather than from a pre-loaded snapshot.  If the view changes
-    during processing (e.g. other users add or delete matching records), those
-    changes are reflected in what gets processed.  The user is asked to confirm
-    before iteration begins and may cancel (raising `StopIteration` without
-    processing any rows).  To block live selection for operations that require
-    a stable, explicit set of rows, check the length before iterating:
+    The `enabled` and `visible` callables receive the same selection object.
 
     ```python
     def handler(selection):
-        if len(selection) > selection.MAX_ROWS:
-            app.error(_("Select specific rows for this operation."))
-            return
         for row in selection:
-            process(row)
-    ```
-
-    The `enabled` and `visible` callables receive the same selection object.
-    When a subset exceeding `MAX_ROWS` is selected, `selection.error` contains
-    the error message string (and `None` otherwise).  Use it to reflect
-    availability:
-
-    ```python
-    Action(...,
-        context=ActionContext.SELECTION,
-        enabled=lambda selection: not selection.error,
-    )
+            data = row.data()
+            data.update(row.key(), ...)
+        if selection.invalidated:
+            pass  # connection lost; consider rolling back the transaction
+        elif selection.processed != len(selection):
+            pass  # handler exited early (e.g. user cancelled via a dialog)
     ```
 
     """

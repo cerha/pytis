@@ -2770,6 +2770,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         else:
             self._key_binding = (key,)
         self._pg_select_transaction = None
+        self._pdbb_selection_number = ival(None)
         super(DBDataPostgreSQL, self).__init__(
             bindings=bindings, key=key, connection_data=connection_data,
             **kwargs)
@@ -3060,6 +3061,10 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
             self._pg_buffer.reset()
         return row_count
 
+    @property
+    def selection_id(self):
+        return self._pdbb_selection_number.value()
+
     def select_aggregate(self, operation, condition=None, transaction=None, arguments={}):
         return self._pg_select_aggregate(operation[0], (operation[1],),
                                          condition=condition, transaction=transaction,
@@ -3284,6 +3289,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         self._pg_select_transaction = None
         # Flush cached data
         self._pg_buffer.reset()
+        self._pdbb_selection_number = ival(None)
 
     def select_active(self):
         return self._pg_select_transaction is not None
