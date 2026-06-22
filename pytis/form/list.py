@@ -80,7 +80,7 @@ from .screen import (
 )
 from .search import sfs_columns
 from .application import Application, run_form
-from .grid import GridTable
+from .grid import GridTable, GridBatch
 
 
 _ = pytis.util.translations('pytis-wx')
@@ -211,6 +211,7 @@ class ListForm(RecordForm, Refreshable):
         self._fields = self._view.fields()
         self._selection_candidate = None
         self._selection_callback_candidate = None
+        self._selection_cursor_id = None
         self._selection_callback_tick = None
         self._in_select_cell = False
         self._last_reshuffle_request = self._reshuffle_request = 0
@@ -361,6 +362,7 @@ class ListForm(RecordForm, Refreshable):
         labels = g.GetGridColLabelWindow()
         corner = g.GetGridCornerLabelWindow()
         wx_callback(wx.grid.EVT_GRID_SELECT_CELL, g, self._on_select_cell)
+        wx_callback(wx.grid.EVT_GRID_RANGE_SELECT, g, self._on_range_select)
         wx_callback(wx.grid.EVT_GRID_COL_SIZE, g, self._on_label_drag_size)
         wx_callback(wx.grid.EVT_GRID_CELL_RIGHT_CLICK, g, self._on_right_click)
         wx_callback(wx.grid.EVT_GRID_CELL_LEFT_CLICK, g, self._on_left_click)
@@ -393,8 +395,7 @@ class ListForm(RecordForm, Refreshable):
         else:
             original_key = None
         # Adjust grid size.
-        g.BeginBatch()
-        try:
+        with self._grid_batch():
             if init_columns:
                 notify(wx.grid.GRIDTABLE_NOTIFY_COLS_DELETED, 0, g.GetNumberCols())
                 notify(wx.grid.GRIDTABLE_NOTIFY_COLS_INSERTED, 0, len(self._columns))
@@ -421,8 +422,6 @@ class ListForm(RecordForm, Refreshable):
             self._update_grid_length(g, row_count, original_row_number)
             if insert_column is not None or delete_column is not None or init_columns:
                 self._init_col_attr()
-        finally:
-            g.EndBatch()
         # Restore previous position.
         if retain_row and original_key is not None:
             if self._current_key() != original_key:
@@ -461,6 +460,9 @@ class ListForm(RecordForm, Refreshable):
         notify(wx.grid.GRIDTABLE_REQUEST_VIEW_GET_VALUES)
         if row_count != old_row_count:
             g.FitInside()
+
+    def _grid_batch(self):
+        return GridBatch(self._grid)
 
     def _notify_grid(self, message_id, *args):
         msg = wx.grid.GridTableMessage(self._table, message_id, *args)
@@ -790,6 +792,19 @@ class ListForm(RecordForm, Refreshable):
                 # instead of raising an error.
                 pass
         return result
+
+    @Command.define
+    def context_action(self, action):
+        if ((action.context() == ActionContext.SELECTION and
+             self._grid.IsSelection() and
+             self._data.selection_id != self._selection_cursor_id)):
+            app.warning(_("The data view was reloaded since the selection was made.\n"
+                          "Row positions may have shifted — the selection might no longer\n"
+                          "refer to the originally intended rows.\n\n"
+                          "Please verify the selection and try again."))
+            self._selection_cursor_id = self._data.selection_id
+            return True
+        return super(ListForm, self).context_action(action)
 
     def selected_rows(self, fallback_to_current_row=False):
         # type: (bool) -> RecordForm.Selection
@@ -1440,6 +1455,20 @@ class ListForm(RecordForm, Refreshable):
         self._grid.Refresh()
         self.context_menu(position=event.GetPosition())
 
+    def _on_range_select(self, event):
+        if self._grid.IsSelection():
+            current_id = self._data.selection_id
+            if self._selection_cursor_id is not None and current_id != self._selection_cursor_id:
+                wx.CallAfter(
+                    app.warning,
+                    _("The data view was refreshed since the selection was made.\n"
+                      "Please verify that the selection still contains the intended rows."),
+                )
+            self._selection_cursor_id = current_id
+        else:
+            self._selection_cursor_id = None
+        event.Skip()
+
     def _on_left_click(self, event):
         self._run_callback(self.CALL_USER_INTERACTION)
         if event.ShiftDown() or event.ControlDown():
@@ -1544,11 +1573,10 @@ class ListForm(RecordForm, Refreshable):
         available_width = size.width - g.GetRowLabelSize()
         flexible_columns = []
         flexible_width = 0
-        try:
-            # The batch here is important to prevent major slowdown in large
-            # tables, where SetColumn outside batch results in calling GetAttr
-            # for *all* table cells since wxPython 4.1.0.
-            g.BeginBatch()
+        # The batch here is important to prevent major slowdown in large
+        # tables, where SetColumn outside batch results in calling GetAttr
+        # for *all* table cells since wxPython 4.1.0.
+        with self._grid_batch():
             for i, column in enumerate(self._columns):
                 column_width = self._ideal_column_width(column)
                 if not column.fixed() and pytis.config.stretch_tables:
@@ -1567,8 +1595,6 @@ class ListForm(RecordForm, Refreshable):
                         column_width = int(column_width * coef)
                     g.SetColSize(i, column_width)
                     available_width -= column_width
-        finally:
-            g.EndBatch()
 
     def _on_size(self, event):
         size = event.GetSize()
@@ -1686,6 +1712,19 @@ class ListForm(RecordForm, Refreshable):
     def sort(self, col=None, direction=None, primary=False):
         if col is not None:
             col = self._columns[col].id()
+        if self._grid.IsSelection():
+            if app.question(
+                _("Changing the sort order will invalidate the current selection,\n"
+                  "because row positions shift after resorting.\n\n"
+                  "Do you want to sort and lose the selection, or keep the selection\n"
+                  "with the current sort order?"),
+                answers=(
+                    dict(value='sort', label=_("Sort and clear selection")),
+                    dict(value='cancel', label=_("Keep selection")),
+                ), default='cancel',
+            ) != 'sort':
+                return None
+            self._grid.ClearSelection()
         old_sorting = self._lf_sorting
         sorting = super(ListForm, self).sort(col=col, direction=direction, primary=primary)
         if sorting is not None and sorting != old_sorting:
@@ -2195,6 +2234,7 @@ class ListForm(RecordForm, Refreshable):
     def clear_selection(self):
         """Clear the current selection to contain no rows."""
         self._grid.ClearSelection()
+        self._selection_cursor_id = None
 
     def _can_clear_selection(self):
         return self._grid.IsSelection()
@@ -2208,7 +2248,10 @@ class ListForm(RecordForm, Refreshable):
 
     @Command.define
     def remove_row_from_selection(self):
-        self._grid.DeselectRow(self._grid.GetGridCursorRow())
+        # Defer repaint to avoid a wx 4.1.0 bug where GetAttr is called with
+        # invalid column positions during DeselectRow's internal repaint.
+        with self._grid_batch():
+            self._grid.DeselectRow(self._grid.GetGridCursorRow())
 
     def _can_remove_row_from_selection(self):
         return self._grid.IsInSelection(self._grid.GetGridCursorRow(), 0)

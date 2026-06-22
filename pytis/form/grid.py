@@ -43,6 +43,24 @@ from .screen import get_icon
 from .event import top_level_exception
 
 
+class GridBatch(object):
+    """Context manager deferring grid repaints until exit.
+
+    Wraps wx.grid.Grid.BeginBatch()/EndBatch() to prevent the grid from
+    processing paint events while changes are being made, ensuring GetAttr is
+    only called when the grid state is fully consistent.
+    """
+    def __init__(self, grid):
+        self._grid = grid
+
+    def __enter__(self):
+        self._grid.BeginBatch()
+        return self
+
+    def __exit__(self, *args):
+        self._grid.EndBatch()
+
+
 class DataTable(object):
     """Access a database table as a grid of numbered rows and columns.
 
