@@ -3237,23 +3237,24 @@ class SideBrowseForm(BrowseForm):
             self._lf_condition = self._selection_condition(row)
         elif self._xarguments is not None:
             self._lf_condition = None
-        self._refresh(interactive=True)
-        query_fields = self._view.query_fields()
-        if query_fields:
-            callback = query_fields.on_main_form_selection()
-            if callback:
-                callback(row, self._query_fields_row())
-        if self._side_search:
-            search = self._side_search(row)
-            if search is not None:
-                if isinstance(search, pytis.data.Value):
-                    search = pytis.data.EQ(self._data.key()[0].id(), search)
-                elif isinstance(search, dict):
-                    search = pytis.data.AND(*[pytis.data.EQ(k, v) for k, v in search.items()])
-                else:
-                    assert isinstance(search, pytis.data.Operator)
-                self._select_cell(0)
-                self._search(search, pytis.data.FORWARD, row_number=0, report_failure=False)
+        if self._full_init_finished:
+            self._refresh(interactive=True)
+            query_fields = self._view.query_fields()
+            if query_fields:
+                callback = query_fields.on_main_form_selection()
+                if callback:
+                    callback(row, self._query_fields_row())
+            if self._side_search:
+                search = self._side_search(row)
+                if search is not None:
+                    if isinstance(search, pytis.data.Value):
+                        search = pytis.data.EQ(self._data.key()[0].id(), search)
+                    elif isinstance(search, dict):
+                        search = pytis.data.AND(*[pytis.data.EQ(k, v) for k, v in search.items()])
+                    else:
+                        assert isinstance(search, pytis.data.Operator)
+                    self._select_cell(0)
+                    self._search(search, pytis.data.FORWARD, row_number=0, report_failure=False)
 
     def side_form_in_condition(self):
         """Return IN condition for filtering main form records by this side form.
