@@ -3875,6 +3875,12 @@ class DBPostgreSQLTransaction(Transaction, DBDataPostgreSQL):
         """
         self._pg_query(_Query('set transaction read only'), transaction=self)
 
+    def close(self):
+        """Close the transaction, rolling back if not yet committed or rolled back."""
+        if self._open:
+            self.rollback()
+        DBDataPostgreSQL.close(self)
+
     def open(self):
         """Return true iff the transaction is open and hasn't been closed yet."""
         return self._open

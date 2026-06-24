@@ -999,7 +999,7 @@ class Transaction(object):
 
     def close(self):  # type: () -> None
         """Close the transaction."""
-        raise NotImplementedError
+        pass
 
     def __enter__(self):  # type: () -> Transaction
         return self
