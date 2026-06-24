@@ -71,7 +71,10 @@ class TestListFormSelection:
     @pytest.fixture
     def selection(self):
         from pytis.form.list import ListForm
-        import unittest.mock as mock
+        try:
+            import unittest.mock as mock
+        except ImportError:
+            import mock
         block = mock.Mock(GetTopRow=mock.Mock(return_value=0),
                           GetBottomRow=mock.Mock(return_value=2))
         grid = mock.Mock(GetSelectedRowBlocks=mock.Mock(return_value=[block]))
@@ -79,8 +82,42 @@ class TestListFormSelection:
         table = mock.Mock(record=lambda n: n)
         return ListForm.Selection(form=None, data=data, grid=grid, table=table)
 
+    def test_len(self, selection):
+        assert len(selection) == 3
+
     def test_iterates_all_rows(self, selection):
         assert list(selection) == [0, 1, 2]
+
+    def test_processed_increments(self, selection):
+        assert selection.processed == 0
+        for n, row in enumerate(selection, 1):
+            assert selection.processed == n
+
+    def test_processed_resets_on_new_iteration(self, selection):
+        list(selection)
+        assert selection.processed == 3
+        list(selection)
+        assert selection.processed == 3
+
+    def test_not_invalidated_on_normal_iteration(self, selection):
+        list(selection)
+        assert not selection.invalidated
+
+    def test_invalidated_on_cursor_change(self, selection, monkeypatch):
+        # Simulate cursor ID changing mid-iteration (e.g. DB reconnect).
+        try:
+            import unittest.mock as mock
+        except ImportError:
+            import mock
+        import pytis.form.list as list_module
+        monkeypatch.setattr(list_module, 'app', mock.Mock())
+        it = iter(selection)
+        next(it)
+        selection._data.selection_id = 99  # cursor changed
+        with pytest.raises(StopIteration):
+            next(it)
+        assert selection.invalidated
+        assert selection.processed == 1
 
     def test_copy_does_not_exhaust_original(self, selection):
         # Regression: copy.copy() shared the iterator so the pre-scan consumed it.
