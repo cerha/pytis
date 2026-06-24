@@ -154,24 +154,33 @@ class ListForm(RecordForm, Refreshable):
             if hasattr(grid, 'GetSelectedRowBlocks'):
                 # wxPython 4.2+ (may also work with some 4.1.x builds).
                 ranges = [(b.GetTopRow(), b.GetBottomRow()) for b in grid.GetSelectedRowBlocks()]
-                self._rows = itertools.chain.from_iterable(
-                    range(top, bottom + 1) for top, bottom in ranges
-                )
                 length = sum(bottom - top + 1 for top, bottom in ranges)
             else:
                 # Legacy solution for wxPython 4.1.0 and older.  It can be slow
                 # (memory demanding) for big grids as noted in the wx documentation,
                 # but GetSelectionBlockTopLeft/BottomRight proved unreliable here.
-                rows = grid.GetSelectedRows()
-                self._rows = iter(rows)
-                length = len(rows)
+                ranges = None
+                row_list = grid.GetSelectedRows()
+                length = len(row_list)
             if length == 0 and fallback_to_current_row:
-                self._rows = iter([table.current_row()])
+                row_number = table.current_row()
+                ranges = [(row_number, row_number)]
                 length = 1
             super(ListForm.Selection, self).__init__(form, length)
             self._table = table
             self._data = data
             self._cursor_id = data.selection_id
+            self._ranges = ranges
+            if ranges is None:
+                self._row_list = row_list  # legacy path
+
+        def __iter__(self):
+            self._processed = 0
+            if self._ranges is not None:
+                self._rows = itertools.chain.from_iterable(range(t, b + 1) for t, b in self._ranges)
+            else:
+                self._rows = iter(self._row_list)  # legacy path
+            return self
 
         def __next__(self):
             # type: () -> PresentedRow
