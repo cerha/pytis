@@ -806,18 +806,43 @@ class Refreshable(object):
 
     """
     _block_refresh = 0
+    _block_own_refresh = False
 
-    @classmethod
-    @contextlib.contextmanager
-    def block_refresh(cls):
-        """Block performing any refresh within this context manager scope.
+    class _BlockRefreshDescriptor(object):
+        """Descriptor making block_refresh() behave differently on class vs. instance access.
 
-        Refresh is blocked globally for all existing forms.
+        Python descriptors intercept attribute lookup via __get__: when `obj is None`,
+        the attribute was accessed through the class; otherwise through an instance.
 
         """
-        Refreshable._block_refresh += 1
-        yield
-        Refreshable._block_refresh -= 1
+        def __get__(self, obj, objtype=None):
+            if obj is None:
+                @contextlib.contextmanager
+                def block():
+                    Refreshable._block_refresh += 1
+                    try:
+                        yield
+                    finally:
+                        Refreshable._block_refresh -= 1
+                return block
+            else:
+                @contextlib.contextmanager
+                def block():
+                    obj._block_own_refresh = True
+                    try:
+                        yield
+                    finally:
+                        obj._block_own_refresh = False
+                return block
+
+    block_refresh = _BlockRefreshDescriptor()
+    block_refresh.__doc__ = """Context manager blocking form refresh within its scope.
+
+        When called on the class (Refreshable.block_refresh()), blocks refresh globally
+        for all existing forms. When called on an instance (form.block_refresh()), blocks
+        refresh only for that particular form — other forms continue to refresh normally.
+
+        """
 
     def refresh(self, interactive=False):
         """Refresh form data from its data source.
@@ -830,6 +855,9 @@ class Refreshable(object):
           True iff the refresh has been performed.
 
         """
+        if self._block_own_refresh:
+            log(OPERATIONAL, "Refresh blocked for this form")
+            return
         level = Refreshable._block_refresh
         if level == 0:
             self._refresh(interactive=interactive)
@@ -2275,7 +2303,13 @@ class RecordForm(LookupForm):
         args = self._context_action_args(action.context(), action.secondary_context())
         kwargs = action.kwargs()
         log(EVENT, 'Calling context action handler:', (args, kwargs))
-        action.handler()(*args, **kwargs)
+        # Block own refresh during handler execution: displaying a form or
+        # performing a database write can trigger a refresh, which resets the
+        # data cursor (selection_id) and invalidates any row iterator the
+        # handler might be holding across the action's lifetime
+        # (see ListForm.Selecton).
+        with self.block_refresh():
+            action.handler()(*args, **kwargs)
         if action.context() == ActionContext.SELECTION:
             # Clear row selection to avoid problems when the context action modifies
             # selected rows and some of them disappear from the form because
