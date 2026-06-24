@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2025 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2026 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2017 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -2622,6 +2622,25 @@ class DBDataDefault(_DBTest):
         self.assertIsNone(d.row(row2['stat']), 'extra row')
         self.assertIsNotNone(d.row(row3['stat']), 'missing row')
 
+    def test_transaction_close_after_commit(self):
+        transaction = pd.DBTransactionDefault(connection_data=self._dconnection)
+        transaction.commit()
+        transaction.close()  # must not raise
+
+    def test_transaction_close_after_rollback(self):
+        transaction = pd.DBTransactionDefault(connection_data=self._dconnection)
+        transaction.rollback()
+        transaction.close()  # must not raise
+
+    def test_transaction_close_without_commit(self):
+        d = self.dstat
+        row = pd.Row((('stat', pd.String().validate('xx')[0]),
+                      ('nazev', pd.String().validate('Xaxa')[0])))
+        transaction = pd.DBTransactionDefault(connection_data=self._dconnection)
+        d.insert(row, transaction=transaction)
+        transaction.close()  # must roll back and not raise
+        assert d.row(row['stat']) is None, 'close() should have rolled back'
+
 
 class DBMultiData(object):  # (DBDataDefault): Temporarily disabled
     ROW1 = (2, datetime.datetime(2001, 1, 2, tzinfo=pd.DateTime.UTC_TZINFO), 1000.0,
@@ -3686,6 +3705,38 @@ class JSONDBTest(_DBBaseTest):
             assert self._get(id) == value
         self._insert(4, (True, False))
         assert self._get(4) == [True, False]
+
+
+class TestTransactionClose:
+    # Regression test: Transaction.close() raises NotImplementedError.
+    # DBPostgreSQLTransaction must provide its own close() so the MRO doesn't
+    # resolve to the abstract stub in Transaction (which comes before
+    # DBDataPostgreSQL in the MRO of DBPostgreSQLTransaction).
+
+    def test_close_is_overridden(self):
+        from pytis.data.postgresql import DBPostgreSQLTransaction
+        from pytis.data.dbdata import Transaction
+        assert 'close' in DBPostgreSQLTransaction.__dict__
+        assert DBPostgreSQLTransaction.__dict__['close'] is not Transaction.__dict__['close']
+
+    def test_close_does_not_raise_when_already_committed(self):
+        t = pytis.data.DBTransactionDefault.__new__(pytis.data.DBTransactionDefault)
+        t._open = False
+        t._pg_select_transaction = None
+        t._pg_buffer = mock.Mock()
+        t._pdbb_selection_number = mock.Mock()
+        t.close()  # must not raise
+
+    def test_close_rolls_back_when_open(self):
+        t = pytis.data.DBTransactionDefault.__new__(pytis.data.DBTransactionDefault)
+        t._open = True
+        t._ok_rollback_closed = False
+        t._pg_select_transaction = None
+        t._pg_buffer = mock.Mock()
+        t._pdbb_selection_number = mock.Mock()
+        t.rollback = mock.Mock(side_effect=lambda: setattr(t, '_open', False))
+        t.close()
+        t.rollback.assert_called_once_with()
 
 
 class TestTransactionContextManager:
