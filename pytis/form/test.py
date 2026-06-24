@@ -21,6 +21,7 @@ from __future__ import print_function
 from __future__ import division
 from builtins import range
 
+import copy
 import functools
 import io
 import os
@@ -63,6 +64,33 @@ Tests requiring a live wx application live in pytis/demo/test_app.py and
 are invoked via 'python -m pytis.run --run-tests'.
 
 """
+
+
+class TestListFormSelection:
+
+    @pytest.fixture
+    def selection(self):
+        from pytis.form.list import ListForm
+        import unittest.mock as mock
+        block = mock.Mock(GetTopRow=mock.Mock(return_value=0),
+                          GetBottomRow=mock.Mock(return_value=2))
+        grid = mock.Mock(GetSelectedRowBlocks=mock.Mock(return_value=[block]))
+        data = mock.Mock(selection_id=42)
+        table = mock.Mock(record=lambda n: n)
+        return ListForm.Selection(form=None, data=data, grid=grid, table=table)
+
+    def test_iterates_all_rows(self, selection):
+        assert list(selection) == [0, 1, 2]
+
+    def test_copy_does_not_exhaust_original(self, selection):
+        # Regression: copy.copy() shared the iterator so the pre-scan consumed it.
+        for row in copy.copy(selection):
+            break  # pre-scan, exits early
+        assert list(selection) == [0, 1, 2]
+
+    def test_each_for_loop_starts_fresh(self, selection):
+        assert list(selection) == [0, 1, 2]
+        assert list(selection) == [0, 1, 2]
 
 
 class TestDataTable(DBTest):
