@@ -1799,11 +1799,19 @@ def exception_info(einfo=None):
             '\n' + ' '.join(exception))
 
 
-def stack_info(depth=None):
-    """Vrať obsah zásobníku volání, jako string.
+def stack_info(depth=None, relative_paths=False):
+    """Vrať obsah zásobníku volání jako string.
 
-    String je zformátovaný podobně jako Pythonový traceback.  Poslední volání je
-    na konci.  Argument depth může omezit hloubku jen na určitý počet frames.
+    String je zformátovaný podobně jako Pythonový traceback, poslední volání je
+    na konci.
+
+    Argumenty:
+      depth: Pokud není None, omezí výstup na zadaný počet frames počítaných od
+        místa volání (tj. zachová kontext bezprostředně vedoucí k volání
+        stack_info(), zbytek zásobníku ořeže).
+      relative_paths: Pokud True, ořeže absolutní cestu na relativní vůči
+        kořenovému adresáři balíku (adresář v sys.path, ze kterého byl modul
+        načten).  Výstup je tak výrazně kratší a přehlednější.
 
     Funkce je typicky určena k ladění.
 
@@ -1811,10 +1819,20 @@ def stack_info(depth=None):
     stack = inspect.stack()[1:]
     if depth is not None:
         stack = stack[:depth]
-    stack.reverse()
-    return "\n".join(['  File "%s", line %d, in %s' % frame[1:4] +
+    if relative_paths:
+        base_paths = [base + '/' for base in sorted(sys.path, key=len, reverse=True) if base]
+    else:
+        base_paths = []
+
+    def fmt_path(path):
+        for prefix in base_paths:
+            if path.startswith(prefix):
+                return path[len(prefix):]
+        return path
+
+    return "\n".join(['  File "%s", line %d, in %s' % (fmt_path(frame[1]), frame[2], frame[3]) +
                       (frame[5] and ':\n    %s' % frame[5] or '')
-                      for frame in stack])
+                      for frame in reversed(stack)])
 
 
 def lcg_node(content, title=None, resource_path=(), resources=()):
