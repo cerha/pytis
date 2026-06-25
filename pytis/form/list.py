@@ -190,6 +190,8 @@ class ListForm(RecordForm, Refreshable):
                 # TODO: Replace this question with a hard error once all
                 # spurious cursor resets triggered by form refreshes during
                 # context actions are eliminated.
+                log(EVENT, 'Cursor change detected during row iteration:\n' +
+                    pytis.util.stack_info())
                 if not self._ignore_cursor_change and not app.question(
                         _("A data view refresh was detected during the operation.\n\n"
                           "This can happen due to a network outage or a long processing delay.\n"
