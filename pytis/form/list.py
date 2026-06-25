@@ -176,6 +176,7 @@ class ListForm(RecordForm, Refreshable):
 
         def __iter__(self):
             self._processed = 0
+            self._ignore_cursor_change = False
             if self._ranges is not None:
                 self._rows = itertools.chain.from_iterable(range(t, b + 1) for t, b in self._ranges)
             else:
@@ -186,11 +187,22 @@ class ListForm(RecordForm, Refreshable):
             # type: () -> PresentedRow
             record = self._table.record(next(self._rows))
             if self._data.selection_id != self._cursor_id:
-                self._invalidated = True
-                app.error(_("Database connection was lost and restored during the\n"
-                            "operation. The row selection may no longer be valid.\n\n"
-                            "Aborting the operation."))
-                raise StopIteration
+                # TODO: Replace this question with a hard error once all
+                # spurious cursor resets triggered by form refreshes during
+                # context actions are eliminated.
+                if not self._ignore_cursor_change and not app.question(
+                        _("A data view refresh was detected during the operation.\n\n"
+                          "This can happen due to a network outage or a long processing delay.\n"
+                          "In the worst case it means the data no longer corresponds to the\n"
+                          "originally selected rows — in that case it is safer to abort.\n\n"
+                          "If no such problems occurred, this is likely an unhandled situation\n"
+                          "in the application. Please report it to your IT department and\n"
+                          "continue.\n\n"
+                          "Continue with the operation?")):
+                    self._invalidated = True
+                    raise StopIteration
+                self._ignore_cursor_change = True
+                self._cursor_id = self._data.selection_id
             self._processed += 1
             return record
 
