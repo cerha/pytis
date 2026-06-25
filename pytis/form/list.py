@@ -187,23 +187,16 @@ class ListForm(RecordForm, Refreshable):
             # type: () -> PresentedRow
             record = self._table.record(next(self._rows))
             if self._data.selection_id != self._cursor_id:
-                # TODO: Replace this question with a hard error once all
-                # spurious cursor resets triggered by form refreshes during
-                # context actions are eliminated.
-                log(EVENT, 'Cursor change detected during row iteration:\n' +
-                    pytis.util.stack_info())
-                if not self._ignore_cursor_change and not app.question(
-                        _("A data view refresh was detected during the operation.\n\n"
-                          "This can happen due to a network outage or a long processing delay.\n"
-                          "In the worst case it means the data no longer corresponds to the\n"
-                          "originally selected rows — in that case it is safer to abort.\n\n"
-                          "If no such problems occurred, this is likely an unhandled situation\n"
-                          "in the application. Please report it to your IT department and\n"
-                          "continue.\n\n"
-                          "Continue with the operation?")):
-                    self._invalidated = True
-                    raise StopIteration
-                self._ignore_cursor_change = True
+                self._invalidated = True
+                # TODO: Uncomment iteration interruption with error message below
+                # once all spurious cursor resets triggered by form refreshes
+                # during context actions are eliminated.
+                #app.error(_("Database connection was lost and restored during the\n"
+                #            "operation. The row selection may no longer be valid.\n\n"
+                #            "Aborting the operation."))
+                #raise StopIteration
+                log(EVENT, 'Cursor change detected during iteration:\n' +
+                    pytis.util.stack_info(depth=16, relative_paths=True))
                 self._cursor_id = self._data.selection_id
             self._processed += 1
             return record
