@@ -3113,6 +3113,13 @@ class _SQLBaseView(_SQLReplaceable, _SQLQuery, _SQLTabular):
         return None
 
     primary_column = None
+    # Only matters for the SQLAlchemy ORM (session.add()); gsql DDL and
+    # pytis.data inserts ignore it.  SA defaults tables to True, which is wrong
+    # for rule-based views: inserting into one via the ORM would emit
+    # `INSERT ... RETURNING`, rejected by a plain DO INSTEAD rule.  So views
+    # force False here.  A view whose INSERT rule returns its columns (explicit
+    # RETURNING) may set True, so the ORM can read the server key back.
+    implicit_returning = False
 
     def __new__(cls, metadata, search_path):
         with local_search_path(search_path):
@@ -3124,7 +3131,8 @@ class _SQLBaseView(_SQLReplaceable, _SQLQuery, _SQLTabular):
                         c.primary_key = True
                         break
             args = (cls.name, metadata,) + columns
-            obj = sqlalchemy.Table.__new__(cls, *args, schema=search_path[0], implicit_returning=False)
+            obj = sqlalchemy.Table.__new__(cls, *args, schema=search_path[0],
+                                           implicit_returning=cls.implicit_returning)
             obj._search_path = search_path  # SA 2.0: _init() is not called
             return obj
 
