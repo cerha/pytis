@@ -100,6 +100,7 @@ if TYPE_CHECKING:
 
 unistr = type(u'')  # Python 2/3 transition hack.
 _SA_VERSION = int(sqlalchemy.__version__.split('.')[0])
+_SA_VERSION_INFO = tuple(int(p) for p in sqlalchemy.__version__.split('.')[:2])
 
 # SQLAlchemy extensions
 
@@ -513,11 +514,12 @@ def visit_rule(element, compiler, **kw):
     kind = 'ALSO' if instead_commands is None and also_commands else 'INSTEAD'
     commands = tuple(instead_commands or ()) + tuple(also_commands or ())
     if commands:
+        # Rule-body inserts suppress SA's implicit RETURNING at the source via
+        # .inline() (auto-generated inserts in on_insert(), and hand-written rules
+        # are expected to do the same on non-returning inserts).  An explicit
+        # .returning() is intentionally preserved, so an updatable view can return
+        # the inserted row (see _SQLBaseView.implicit_returning).
         sql_commands = [_make_sql_command(c) for c in commands]
-        if element.action.lower() == 'insert':
-            # Strip RETURNING clause — not valid in rule bodies and unnecessary for SQL output
-            # (SA 1.4 uses inline=True on rule inserts; SA 2.0 adds RETURNING by default)
-            sql_commands = [re.sub(r'\s+RETURNING\s+.*$', '', c) for c in sql_commands]
         if len(sql_commands) == 1:
             sql = sql_commands[0]
         else:
@@ -2208,7 +2210,16 @@ class _SQLTabular(with_metaclass(_PytisSchematicMetaclass, sqlalchemy.Table, SQL
         for tabular in self._rule_tables(self.insert_order):
             assignments = self._rule_assignments(tabular, self.no_insert_columns,
                                                  self.special_insert_columns)
-            c = tabular.insert().values(**assignments)
+            # Suppress SA's implicit RETURNING (invalid in a rule body); an explicit
+            # .returning() in a hand-written on_insert is kept.  SA >= 1.4 uses the
+            # generative Insert.inline(); SA < 1.4 (some not-yet-ported deployments)
+            # needs the inline=True constructor arg, removed in SA 2.0.  Drop the
+            # branch once every deployment runs SA >= 1.4.
+            if _SA_VERSION_INFO >= (1, 4):
+                insert = tabular.insert().inline()
+            else:
+                insert = tabular.insert(inline=True)
+            c = insert.values(**assignments)
             commands.append(c)
         return commands
 
