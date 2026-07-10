@@ -400,6 +400,21 @@ class PytisAccessor:
         """
         with pytis.data.gensqlalchemy.local_search_path(spec.default_search_path()):
             table = pytis.data.gensqlalchemy.object_by_class(spec)
+        # A gensqlalchemy view carries __visit_name__ == 'view', which SQLAlchemy's
+        # find_tables() -- used by the ORM mapper to determine which tables it may
+        # persist to -- does not recognise as a table.  Mapping the view object
+        # directly yields an empty Mapper._sorted_tables, so the unit of work emits
+        # no INSERT/UPDATE at all and flush() fails with "NULL identity key".  Map a
+        # plain persistable Table clone with the same name, schema and columns
+        # instead; DML through it reaches the view (and its INSTEAD rule) exactly as
+        # it would a real table, while SELECT still reads the same relation.
+        if table.__visit_name__ != 'table':
+            table = sa.Table(
+                table.name, sa.MetaData(),
+                *[c._copy() for c in table.columns],
+                schema=table.schema,
+                implicit_returning=table.implicit_returning,
+            )
         pk_columns = list(table.primary_key.columns)
         if len(pk_columns) != 1:
             raise ValueError(f'Expected single-column primary key, got {len(pk_columns)}')
