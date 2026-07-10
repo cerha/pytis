@@ -24,6 +24,7 @@ import sqlalchemy as sa
 import sqlalchemy.orm as orm
 import typing
 
+from pytis.util import log, ACTION
 from .db import (
     NonUniqueKeyError, PayloadError, ConstraintViolationError, DataConsistencyError,
     Operator, AND, EQ, IN, ASCENDENT, DESCENDANT, Sorting, Database, PytisAccessor,
@@ -1276,7 +1277,10 @@ class TopLevelResourceHandler(ResourceHandler):
         try:
             with self._db.session.begin() as session:
                 row = self._insert(session, payload)
-                return self._materialize(session, row)
+                result = self._materialize(session, row)
+                pk = getattr(row, self._accessor.primary_key.name, None)
+            log(ACTION, 'REST API create %s:' % self._spec.name, pk)
+            return result
         except ConstraintViolationError as e:
             raise fastapi.HTTPException(status_code=409, detail=e.detail) from e
         except PayloadError as e:
@@ -1295,7 +1299,9 @@ class TopLevelResourceHandler(ResourceHandler):
                 row = self._update(session, condition, payload)
                 if row is None:
                     raise fastapi.HTTPException(status_code=404, detail='Not found')
-                return self._materialize(session, row)
+                result = self._materialize(session, row)
+            log(ACTION, 'REST API update %s:' % self._spec.name, item_id)
+            return result
         except ConstraintViolationError as e:
             raise fastapi.HTTPException(status_code=409, detail=e.detail) from e
         except PayloadError as e:
@@ -1314,6 +1320,7 @@ class TopLevelResourceHandler(ResourceHandler):
                 ok = self._accessor.delete(session, condition)
                 if not ok:
                     raise fastapi.HTTPException(status_code=404, detail='Not found')
+            log(ACTION, 'REST API delete %s:' % self._spec.name, item_id)
         except ConstraintViolationError as e:
             raise fastapi.HTTPException(status_code=409, detail=e.detail) from e
         except (NonUniqueKeyError, DataConsistencyError) as e:
