@@ -43,6 +43,27 @@ exists = sqlalchemy.exists
 distinct = sqlalchemy.distinct
 
 
+class _RuleReference(object):
+    """Reference to NEW/OLD pseudo-relation columns in view rule bodies.
+
+    In a rule body (`on_insert`/`on_update`/`on_delete`) `NEW.column` yields
+    `literal_column('new.column')` -- a readable shorthand for the frequent
+    `literal_column('new.…')` idiom.  `NEW` and `OLD` are the only two instances.
+
+    """
+    def __init__(self, kind):
+        self._kind = kind
+
+    def __getattr__(self, name):
+        if name.startswith('__') and name.endswith('__'):
+            raise AttributeError(name)
+        return sqlalchemy.literal_column(self._kind + '.' + name)
+
+
+NEW = _RuleReference('new')
+OLD = _RuleReference('old')
+
+
 def dval(date):
     """Return literal date value.
 
