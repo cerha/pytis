@@ -879,6 +879,34 @@ def dbtable(table, columns, connection_data=None, arguments=None, connection_nam
     return data
 
 
+def create(spec, connection_data=None, connection_name=None):
+    # type: (Any, Optional['DBConnection'], Optional[str]) -> Data
+    """Return a `DBDataDefault` instance for a gensqlalchemy DB object specification.
+
+    A lightweight `pytis.data`-only counterpart of `pytis.util.data_object` for
+    the common case when the data specification is available directly as a
+    gensqlalchemy `SQLTable`/`SQLView` subclass.  No name resolution (which
+    belongs to the higher `pytis.util` layer) is needed, so this can be used
+    from within `pytis.data` and reads more naturally when a specification class
+    is at hand: ``pytis.data.create(dbdefs.SomeTable)``.
+
+    Arguments:
+      spec: gensqlalchemy database object specification -- a `SQLTable` or
+        `SQLView` subclass.
+      connection_data: Connection parameters or None (the default connection
+        `pytis.config.dbconnection` is used when None).
+      connection_name: Optional connection name string or None.
+
+    """
+    columns = [pytis.data.DBColumnBinding(c.id(), spec.name, c.id(),
+                                          type_=c.type(), crypto_name=c.crypto_name())
+               for c in spec.specification_fields()]
+    factory = pytis.data.DataFactory(pytis.data.DBDataDefault, columns, db_spec=spec,
+                                     key=columns[0])
+    return factory.create(connection_data=connection_data or pytis.config.dbconnection,
+                          connection_name=connection_name)
+
+
 def dbfunction(fspec, *args, **kwargs):
     # type: (...) -> Any
     """Call database function and return the result as a Python value.

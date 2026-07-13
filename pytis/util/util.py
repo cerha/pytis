@@ -1239,30 +1239,28 @@ def data_object(spec, kwargs=None):
     import pytis
     import pytis.data
     import pytis.data.gensqlalchemy
-    if isinstance(spec, basestring):
-        factory = pytis.config.resolver.get(spec, 'data_spec')
-    elif isinstance(spec, type) and issubclass(spec,(pytis.data.gensqlalchemy.SQLTable,
-                                                     pytis.data.gensqlalchemy.SQLView)):
-        columns = [pytis.data.DBColumnBinding(c.id(), spec.name, c.id(), type_=c.type(),
-                                              crypto_name=c.crypto_name())
-                   for c in spec.specification_fields()]
-        factory = pytis.data.DataFactory(pytis.data.DBDataDefault, columns,
-                                         db_spec=spec, key=columns[0])
-    else:
-        factory = spec
-    assert isinstance(factory, pytis.data.DataFactory), factory
-
     if kwargs is None:
         kwargs = {}
-    if issubclass(factory.class_(), pytis.data.DBData):
-        kwargs = dict(kwargs, connection_data=pytis.config.dbconnection)
+    if isinstance(spec, type) and issubclass(spec, (pytis.data.gensqlalchemy.SQLTable,
+                                                    pytis.data.gensqlalchemy.SQLView)):
+        # Building the data object from a db specification lives in pytis.data.
+        operation, args = pytis.data.create, (spec,)
+    else:
+        if isinstance(spec, basestring):
+            factory = pytis.config.resolver.get(spec, 'data_spec')
+        else:
+            factory = spec
+        assert isinstance(factory, pytis.data.DataFactory), factory
+        if issubclass(factory.class_(), pytis.data.DBData):
+            kwargs = dict(kwargs, connection_data=pytis.config.dbconnection)
+        operation, args = factory.create, ()
 
     try:
         import pytis.form
     except Exception:
-        return factory.create(**kwargs)
+        return operation(*args, **kwargs)
     else:
-        success, data = pytis.form.db_operation(factory.create, **kwargs)
+        success, data = pytis.form.db_operation(operation, *args, **kwargs)
         if success:
             return data
         else:

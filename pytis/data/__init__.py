@@ -89,7 +89,7 @@ from .dbdata import (
     DBLoginException as DBLoginException, DBInsertException as DBInsertException,
     DBLockException as DBLockException, DBRetryException as DBRetryException,
     NotWithinSelect as NotWithinSelect, DBConnectionPool as DBConnectionPool,
-    dbtable as dbtable, dbfunction as dbfunction, transaction as transaction,
+    dbtable as dbtable, dbfunction as dbfunction, create as create, transaction as transaction,
     REPEATABLE_READ as REPEATABLE_READ, Transaction as Transaction,
 )
 from .defaults import (
