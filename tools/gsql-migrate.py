@@ -13,6 +13,11 @@ The most important benefit is correct reordering of the tables/views passed to
 a single @drop or @create statement according to their dependencies (if they
 are defined correctly).
 
+Lines starting with '--#' are template-only comments -- '--#' keeps SQL-comment
+syntax so editors still highlight it (e.g. a note on how to regenerate the SQL);
+they are not emitted into the output.  Ordinary SQL comments ('--') are passed
+through into the generated SQL.
+
 """
 
 import argparse
@@ -114,7 +119,13 @@ def main():
 
     with template:
         for text in template:
-            if text.startswith('@create ') or text.startswith('@drop '):
+            if text.lstrip().startswith('--#'):
+                # Template-only comment ('--#' keeps SQL-comment syntax so editors
+                # still highlight it): documents the template itself (e.g. how to
+                # regenerate the SQL) and is not emitted.  Ordinary SQL comments
+                # ('--') are passed through.
+                continue
+            elif text.startswith('@create ') or text.startswith('@drop '):
                 while not text.strip().endswith(';'):
                     text += next(template)
                 macro, arguments = text.strip().rstrip(';').split(maxsplit=1)
