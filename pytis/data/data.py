@@ -54,7 +54,8 @@ from pytis.util import (
 from .types_ import DateTime, Number, Type, Value, WMValue
 
 try:
-    from typing import Iterable, Iterator, List, Optional, Tuple, Union, TYPE_CHECKING, overload
+    from typing import (Iterable, Iterator, List, Literal, Optional, Tuple, Union,
+                        TYPE_CHECKING, overload)
 except ImportError:
     TYPE_CHECKING = False
 
@@ -544,6 +545,67 @@ class Data(object_2_5):
         if async_count:
             raise ProgramError("Can't use `async_count` with `rows()`.")
         return self.Selection(self, self.select(condition=condition, **kwargs))
+
+    if TYPE_CHECKING:
+        @overload
+        def first_row(self, condition=None, required=False, **kwargs):
+            # type: (Optional[Operator], Literal[False], **Any) -> Optional['Row']
+            pass
+        @overload
+        def first_row(self, condition, required, **kwargs):
+            # type: (Optional[Operator], Literal[True], **Any) -> 'Row'
+            pass
+
+    def first_row(self, condition=None, required=False, **kwargs):
+        # type: (Optional[Operator], bool, **Any) -> Optional['Row']
+        """Return the first row of the selection (or None), closing the select.
+
+        A convenience wrapper around `rows` for the common case of reading a
+        single row without iterating and closing the selection manually.  Any
+        further matching rows are ignored.
+
+        Arguments:
+          condition (`Operator`): condition limiting the set of rows or None (as
+            in `select`).  May be passed as positional.
+          required (bool): if true, raise `ProgramError` when no row matches
+            instead of returning None.
+          kwargs: other arguments passed to `select` (e.g. `sort`, `transaction`).
+
+        """
+        with self.rows(condition=condition, **kwargs) as rows:
+            row = next(rows, None)
+        if row is None and required:
+            raise ProgramError("Condition matches no row", condition)
+        return row
+
+    if TYPE_CHECKING:
+        @overload
+        def unique_row(self, condition=None, required=False, **kwargs):
+            # type: (Optional[Operator], Literal[False], **Any) -> Optional['Row']
+            pass
+        @overload
+        def unique_row(self, condition, required, **kwargs):
+            # type: (Optional[Operator], Literal[True], **Any) -> 'Row'
+            pass
+
+    def unique_row(self, condition=None, required=False, **kwargs):
+        # type: (Optional[Operator], bool, **Any) -> Optional['Row']
+        """Return the only row of the selection or None; raise if there is more than one.
+
+        Asserts the selection contains at most one row: raises `ProgramError`
+        when more than one row matches.  Returns None for an empty result,
+        unless `required` is true, in which case an empty result raises
+        `ProgramError` too (i.e. exactly one matching row is required).
+        Arguments are the same as for `first_row`.
+
+        """
+        with self.rows(condition=condition, **kwargs) as rows:
+            if len(rows) > 1:
+                raise ProgramError("Condition matches more than one row", condition)
+            row = next(rows, None)
+        if row is None and required:
+            raise ProgramError("Condition matches no row", condition)
+        return row
 
     def select_aggregate(self, operation, condition=None, transaction=None, arguments={}):
         # type: (...) -> Optional[Value]
