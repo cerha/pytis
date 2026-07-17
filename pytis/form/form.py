@@ -262,7 +262,14 @@ class Form(wx.Panel, KeyHandler, CallbackHandler, CommandHandler):
         self._full_init_kwargs = dict(kwargs, resolver=resolver, name=name)
         self._restored = True
         if full_init:
-            self.full_init()
+            try:
+                self.full_init()
+            except Exception:
+                # Destroy the partially created wx.Panel to avoid leaving a
+                # visual remnant (an empty child window) in the parent when
+                # form initialization fails (e.g. on a database error).
+                self.Destroy()
+                raise
 
     def __str__(self):
         return '<%s for "%s">' % (self.__class__.__name__, self._name)
