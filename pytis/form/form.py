@@ -2988,6 +2988,9 @@ class EditForm(RecordForm, Refreshable):
         gap = dlg2px(parent, group.gap())
         border = dlg2px(parent, group.border())
         for i, item in enumerate(group.items()):
+            if callable(item):
+                # A layout item may be a function of the current record (see GroupSpec).
+                item = item(self._row)
             if isinstance(item, basestring):
                 if self._view.field(item).width() == 0:
                     continue
