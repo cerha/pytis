@@ -947,6 +947,13 @@ class StatusBar(object):
         # Implementation of Public API 'pytis.api.StatusField'.
 
         def api_update(self, text=None, icon=None, tooltip=None):
+            if not wx.IsMainThread():
+                # Status updates may be invoked from non-GUI threads, such as
+                # database notification callbacks (shared parameter change
+                # callbacks).  wx/GTK calls are only safe from the main thread,
+                # so marshal the update there to avoid a deadlock.
+                wx.CallAfter(self.api_update, text=text, icon=icon, tooltip=tooltip)
+                return
             self.api_text = text
             self.api_icon = icon
             self.api_tooltip = tooltip
