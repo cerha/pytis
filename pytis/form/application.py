@@ -2148,6 +2148,11 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
                     # Open a local PDF viewer for a PDF file if a specific PDF viewer is configured.
                     command = (pytis.config.postscript_viewer, path)
                     shell = False
+                elif sys.platform == 'darwin':
+                    # macOS has no mailcap; let Launch Services open the file in its
+                    # default application.
+                    command = ('open', path)
+                    shell = False
                 elif mime_type:
                     # Find the viewer through mailcap.
                     import mailcap
