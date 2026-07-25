@@ -10,7 +10,7 @@ update: translations resources assets
 resources: sync-resources javascript
 
 sync-resources:
-	git ls-files resources | rsync -av --delete --files-from=- ./ pytis/
+	git ls-files resources | rsync -a --info=name --delete --files-from=- ./ pytis/
 
 javascript: $(js_out)
 
@@ -19,7 +19,7 @@ pytis/resources/scripts/%.js: javascript/%.js
 	python3 -m rjsmin < $< > $@
 
 assets:
-	git ls-files icons help | rsync -av --delete --files-from=- ./ pytis/assets/
+	git ls-files icons help | rsync -a --info=name --delete --files-from=- ./ pytis/assets/
 
 translations:
 	make -C translations
