@@ -2110,7 +2110,7 @@ def translation_path():
                 print(e, file=sys.stderr)
             else:
                 directory = os.path.dirname(module.__file__)
-                _translation_path.append(os.path.join(directory, 'translations'))
+                _translation_path.append(os.path.join(directory, 'assets', 'translations'))
     return _translation_path
 
 

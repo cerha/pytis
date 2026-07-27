@@ -7,6 +7,4 @@
 /doc/html/
 /dist/
 /pytis/assets/
-/pytis/resources/
-/pytis/translations/
 /translations/*.pot

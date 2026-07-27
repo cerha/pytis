@@ -1,25 +1,22 @@
-.PHONY: all update resources sync-resources javascript assets translations extract doc test build install clean coverage
+.PHONY: all update assets sync-assets javascript translations extract doc test build install clean coverage
 
 js_src := $(wildcard javascript/*.js)
-js_out := $(js_src:javascript/%.js=pytis/resources/scripts/%.js)
+js_out := $(js_src:javascript/%.js=pytis/assets/resources/scripts/%.js)
 
 all: doc update
 
-update: translations resources assets
+update: translations assets
 
-resources: sync-resources javascript
+assets: sync-assets javascript
 
-sync-resources:
-	git ls-files resources | rsync -a --info=name --delete --files-from=- ./ pytis/
+sync-assets:
+	git ls-files resources icons help | rsync -a --info=name --delete --files-from=- ./ pytis/assets/
 
 javascript: $(js_out)
 
-pytis/resources/scripts/%.js: javascript/%.js
+pytis/assets/resources/scripts/%.js: javascript/%.js
 	mkdir -p $(@D)
 	python3 -m rjsmin < $< > $@
-
-assets:
-	git ls-files icons help | rsync -a --info=name --delete --files-from=- ./ pytis/assets/
 
 translations:
 	make -C translations
@@ -41,7 +38,7 @@ install:
 	flit install --symlink
 
 clean:
-	rm -rf dist pytis/resources doc/html
+	rm -rf dist pytis/assets doc/html
 	make -C translations clean
 
 coverage:

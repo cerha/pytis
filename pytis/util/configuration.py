@@ -570,7 +570,7 @@ class Configuration(object):
 
         def default(self):
             # Note: LCG 'resources' dir is added by LCG automatically.
-            path = [os.path.join(os.path.dirname(pytis.__file__), 'resources')]
+            path = [os.path.join(os.path.dirname(pytis.__file__), 'assets', 'resources')]
             if self._configuration.help_dir:
                 path.append(os.path.join(self._configuration.help_dir, 'img'))
             return path

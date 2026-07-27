@@ -5,8 +5,8 @@
 
 domains := pytis-data pytis-defs pytis-web pytis-wx pytis-demo
 web_domains := pytis-data pytis-web
-mo_dir := ../pytis/translations
-json_dir := ../pytis/resources/translations
+mo_dir := ../pytis/assets/translations
+json_dir := ../pytis/assets/resources/translations
 mo_files := $(foreach d, $(domains), $(patsubst $(d).%.po,\
                                       $(mo_dir)/%/LC_MESSAGES/$(d).mo,\
                                       $(wildcard $(d).*.po)))
