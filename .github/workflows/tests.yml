@@ -64,7 +64,9 @@ jobs:
           # /dev/stdin and we don't need the included requirements for Python 2
           # tests (-r requirements-rest-api-devel.txt).
           grep -v '^flit\|^-r ' requirements-devel.txt | pip install -r /dev/stdin
-          python3 -m pip install flit
+          # 'make update' below runs flit and the Makefile's rjsmin minification
+          # through python3, so both must be installed for the system python3.
+          python3 -m pip install flit rjsmin
           # Beware: 'make build' duplication here, but we need python3 to run flit.
           make update
           python3 -m flit build
