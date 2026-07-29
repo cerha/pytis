@@ -10,6 +10,7 @@ on:
 jobs:
 
   test-py27:
+    # TODO NOPY2: Remove this whole job.
     # The base system is Ubuntu, but the Python 2.7 image actually runs Debian 10 (Buster).
     runs-on: ubuntu-latest
 
@@ -58,15 +59,16 @@ jobs:
           pip install --upgrade 'pip<21' 'setuptools<45' 'wheel<0.34'
           pip install wxpython --only-binary=:all: --verbose \
               -f https://extras.wxpython.org/wxPython4/extras/linux/gtk3/debian-10/
-          # There's no flit in Pyton 2.7 so we install and use flit from Python 3.
-          # Also filter out '-r' include directives as pip resolves relative paths
-          # against the "directory" of stdin (/dev/) when reading from
-          # /dev/stdin and we don't need the included requirements for Python 2
-          # tests (-r requirements-rest-api-devel.txt).
-          grep -v '^flit\|^-r ' requirements-devel.txt | pip install -r /dev/stdin
+          # Neither pip nor Python 3 are recent enough here to read the
+          # dependency groups ('pip install --group'), so we pass them through
+          # the helper script.  Python 3.11 reads TOML by itself, older ones
+          # need tomli.
+          python3 -m pip install tomli
+          python3 tools/dependency-group.py test | pip install -r /dev/stdin
           # 'make update' below runs flit and the Makefile's rjsmin minification
-          # through python3, so both must be installed for the system python3.
-          python3 -m pip install flit rjsmin
+          # through python3, so the build group goes to the system python3.
+          # It is Python 3 only anyway (there's no flit for Python 2.7).
+          python3 tools/dependency-group.py build | python3 -m pip install -r /dev/stdin
           # Beware: 'make build' duplication here, but we need python3 to run flit.
           make update
           python3 -m flit build
@@ -138,9 +140,9 @@ jobs:
           pip install --upgrade pip
           pip install wxpython --only-binary=:all: --verbose \
               -f https://extras.wxpython.org/wxPython4/extras/linux/gtk3/ubuntu-24.04/
-          pip install -r requirements-devel.txt
+          pip install --group build --group test --group lint --group rest
           make build
-          pip install $(echo dist/pytis-*-any.whl)[wx]
+          pip install $(echo dist/pytis-*-any.whl)[wx,rest]
 
       - name: Setup database
         run: |
