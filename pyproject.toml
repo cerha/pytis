@@ -59,6 +59,9 @@ wx = [
 ]
 
 [dependency-groups]
+# Development dependencies, installed by 'pip install -e . --group dev' (or by
+# naming the particular groups, such as '--group build --group test').
+
 # Everything needed by 'make build' -- the tools generating the package data
 # (see the Makefile) and the build backend itself.  Python 3 only.
 build = ["babel", "pojson", "rjsmin", "flit"]
