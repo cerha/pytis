@@ -1929,7 +1929,7 @@ class BrowseForm(LayoutForm):
         return g.table((g.thead(g.tr(headings, cls='column-headings')),
                         foot,
                         g.tbody(rows)),
-                       border=1, cls=' '.join(cls))
+                       cls=' '.join(cls))
 
     def _export_summary(self, context, limit, first_record_offset, count_on_page):
         if not self._show_summary:
