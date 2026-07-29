@@ -1,11 +1,18 @@
-.PHONY: all update assets sync-assets javascript translations extract doc test build install clean coverage
+.PHONY: all update assets sync-assets clean-obsolete javascript translations extract doc test build install clean coverage
 
 js_src := $(wildcard javascript/*.js)
 js_out := $(js_src:javascript/%.js=pytis/assets/resources/scripts/%.js)
 
 all: doc update
 
-update: translations assets
+update: clean-obsolete translations assets
+
+# The generated data directories moved under 'assets'.  Working copies created
+# before that still contain them in their former locations, where they are no
+# longer ignored by git, so they break the sdist build.  This target may be
+# removed once all the working copies around are rebuilt.
+clean-obsolete:
+	rm -rf pytis/resources pytis/translations
 
 assets: sync-assets javascript
 
@@ -37,7 +44,7 @@ install:
 	# Only for development installs.  Use pip for production/user installs.
 	flit install --symlink
 
-clean:
+clean: clean-obsolete
 	rm -rf dist pytis/assets doc/html
 	make -C translations clean
 
