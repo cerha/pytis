@@ -34,6 +34,7 @@ import time
 import rpyc
 from rpyc.utils.server import ThreadedServer
 
+import pytis.api
 import pytis.form.application as _pfa
 import pytis.form.grid as grid
 import pytis.presentation as pp
@@ -224,6 +225,54 @@ class TestListFormCurrentRow:
         f.current_row.return_value = None
         method('_exit_incremental_search')(f, rollback=False)
         assert not f._run_callback.called
+
+
+class TestDualFormAPI:
+
+    @pytis.api.implements(pytis.api.Form, incomplete=True)
+    class Subform:
+        """Minimal stand in for a real form implementing the pytis.api.Form API."""
+
+        def __init__(self, name):
+            self._name = name
+
+        @property
+        def api_name(self):
+            return self._name
+
+    @pytest.fixture
+    def dual_form(self):
+        def make(main_form, side_form):
+            from pytis.form.dualform import DualForm
+            # Bypass wx initialization.  The API properties only need the
+            # main and side form instance attributes.  The public API provider
+            # is returned to access the form as the applications do.
+            form = DualForm.__new__(DualForm)
+            form._main_form = main_form
+            form._side_form = side_form
+            return form.provider()
+        return make
+
+    def test_main_form(self, dual_form):
+        form = dual_form(self.Subform('main'), self.Subform('side'))
+        assert isinstance(form.main_form, pytis.api.APIProvider)
+        assert form.main_form.name == 'main'
+
+    def test_side_form(self, dual_form):
+        form = dual_form(self.Subform('main'), self.Subform('side'))
+        assert isinstance(form.side_form, pytis.api.APIProvider)
+        assert form.side_form.name == 'side'
+
+    def test_multi_side_form_returns_the_active_subform(self, dual_form):
+        from pytis.form.dualform import MultiSideForm
+        side_form = MultiSideForm.__new__(MultiSideForm)
+        side_form.active_form = lambda: self.Subform('active tab')
+        assert dual_form(self.Subform('main'), side_form).side_form.name == 'active tab'
+
+    def test_missing_subforms(self, dual_form):
+        form = dual_form(None, None)
+        assert form.main_form is None
+        assert form.side_form is None
 
 
 class TestDataTable(DBTest):
