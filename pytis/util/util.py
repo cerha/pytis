@@ -434,8 +434,10 @@ class DBParams(object):
                 if success and updated_row:
                     self._row = updated_row
                 else:
-                    raise ProgramError("Failed updating DBParams {} row {}: {}".format(
-                        self._name, [v.value() for v in key], (updated_row, success)))
+                    raise ProgramError(
+                        "Failed updating DBParams {} row {} column {} to {!r}: {}".format(
+                            self._name, [v.value() for v in key], name, value,
+                            (updated_row, success)))
         else:
             raise AttributeError("'%s' object for '%s' has no attribute '%s'" %
                                  (self.__class__.__name__, self._name, name))
