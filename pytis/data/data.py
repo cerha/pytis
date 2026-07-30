@@ -1149,7 +1149,10 @@ class MemData(Data):
         for row in data:
             if isinstance(row, (tuple, list)):
                 row = Row([(c.id(), Value(c.type(), v)) for c, v in zip(self._columns, row)])
-            self.insert(row)
+            # Bypass insert() as the initial data are given by the application,
+            # not by the user, so they must not be subject to access rights
+            # (RestrictedMemData would silently discard them).
+            self._mem_insert(row)
 
     def _mem_find_index(self, key):
         if isinstance(key, (tuple, list)):
@@ -1162,6 +1165,13 @@ class MemData(Data):
                 return i
         else:
             return None
+
+    def _mem_insert(self, row):
+        new_row = self._mem_create_row(row)
+        if new_row is None:
+            return None, False
+        self._mem_data.append(new_row)
+        return new_row, True
 
     def _mem_create_row(self, row, index=None):
         try:
@@ -1295,11 +1305,7 @@ class MemData(Data):
 
         """
         assert isinstance(row, Row)
-        new_row = self._mem_create_row(row)
-        if new_row is None:
-            return None, False
-        self._mem_data.append(new_row)
-        return new_row, True
+        return self._mem_insert(row)
 
     def update(self, key, row, transaction=None):
         """Updatuj row v tabulce.
