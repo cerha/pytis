@@ -362,8 +362,16 @@ class RestrictedData(Data):
 
     def update(self, key, row, **kwargs):
         self._check_access_key()
-        row = self._access_filter_row(row, Permission.UPDATE)
-        resrow, result = super(RestrictedData, self).update(key, row, **kwargs)
+        filtered_row = self._access_filter_row(row, Permission.UPDATE)
+        if row and not filtered_row:
+            # All columns were removed by access rights filtering.  Without
+            # this check, the underlying data object would update no columns at
+            # all and report a plain failure giving no clue about the cause.
+            log(EVENT, 'Access violation attempt:',
+                (pytis.config.dbconnection.user(), Permission.UPDATE, tuple(row.keys())))
+            return _("Not permitted to update any of the given columns: %s",
+                     ', '.join(row.keys())), False
+        resrow, result = super(RestrictedData, self).update(key, filtered_row, **kwargs)
         return self._access_filter_row(resrow), result
 
     def update_many(self, condition, row, **kwargs):
