@@ -25,6 +25,8 @@ import pytest
 import re
 import unittest
 
+import pytis.data
+
 from . import util
 from . import caching
 
@@ -248,6 +250,85 @@ class Classes(unittest.TestCase):
         assert util.direct_public_members(self._C) == ()
         assert util.direct_public_members(self._D) == ()
         assert 'test_direct_public_members' in util.direct_public_members(self)
+
+
+class TestDBParams:
+
+    class FakeData(object):
+        """The minimal data object interface needed by DBParams."""
+
+        def __init__(self, return_row=True, success=True):
+            self._return_row = return_row
+            self._success = success
+            self.value = 'a'
+            self.selects = 0
+
+        def _current_row(self):
+            return pytis.data.Row((('id', pytis.data.ival(1)),
+                                   ('x', pytis.data.sval(self.value))))
+
+        def key(self):
+            return (pytis.data.ColumnSpec('id', pytis.data.Integer()),)
+
+        def add_callback_on_change(self, callback):
+            pass
+
+        def select(self, condition=None):
+            self.selects += 1
+
+        def fetchone(self):
+            return self._current_row()
+
+        def close(self):
+            pass
+
+        def update(self, key, row):
+            if not self._success:
+                return 'Row with given key does not exist', False
+            self.value = row['x'].value()
+            return (self._current_row() if self._return_row else None), True
+
+    @pytest.fixture
+    def params(self):
+        def make(**kwargs):
+            data = self.FakeData(**kwargs)
+
+            class Params(util.DBParams):
+                # Set up the data object directly to avoid the resolver and the
+                # database connection needed by the inherited __getattr__().
+                def __init__(self):
+                    super(Params, self).__init__('test')
+                    self._data = data
+                    self._select()
+            return Params(), data
+        return make
+
+    def test_update(self, params):
+        p, data = params()
+        p.x = 'b'
+        assert p.x == 'b'
+        assert data.value == 'b'
+        assert data.selects == 1  # Just the initial one from the constructor.
+
+    def test_update_without_resulting_row(self, params):
+        # (None, True) is a documented success -- the update was performed, but the
+        # resulting row could not be determined, so it must be read back explicitly.
+        p, data = params(return_row=False)
+        p.x = 'b'
+        assert data.value == 'b'
+        assert data.selects == 2
+        assert p.x == 'b'
+
+    def test_update_failure(self, params):
+        p, data = params(success=False)
+        with pytest.raises(util.ProgramError) as excinfo:
+            p.x = 'b'
+        # The message must name the parameter, the value and the reported cause.
+        # The value is repr'd, so it reads u'b' in Python 2 and 'b' in Python 3.
+        message = str(excinfo.value)
+        assert 'column x to ' in message
+        assert "'b': Row with given key does not exist" in message
+        assert p.x == 'a'
 
 
 class Caching(unittest.TestCase):
