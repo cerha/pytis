@@ -1094,6 +1094,32 @@ class TestRestrictedData(object):
         # An empty row was not emptied by access rights, so it is passed on.
         assert data('users').update(ival(1), pd.Row(())) == (None, False)
 
+    def test_insert_permitted(self, data):
+        row, success = data('admins').insert(pd.Row((('id', ival(2)), ('x', sval('b')))))
+        assert success
+        assert row['x'].value() == 'b'
+
+    def test_insert_denied(self, data, monkeypatch):
+        logged = []
+        monkeypatch.setattr(pytis.data.access, 'log', lambda *args: logged.append(args))
+        d = data('users')
+        assert d.insert(pd.Row((('id', ival(2)), ('x', sval('b'))))) == (None, False)
+        assert d.row(ival(2)) is None
+        # The failure gives no clue about its cause, so the cause must be logged.
+        assert logged[-1][:2] == (EVENT, 'Access violation attempt:')
+        user, permission, columns = logged[-1][2]
+        assert user == pytis.config.dbconnection.user()
+        assert permission == pd.Permission.INSERT
+        assert sorted(columns) == ['id', 'x']  # Row.keys() order is undefined.
+
+    def test_insert_empty_row(self, data, monkeypatch):
+        # An empty row was not emptied by access rights, so it is not logged as
+        # an access violation.
+        logged = []
+        monkeypatch.setattr(pytis.data.access, 'log', lambda *args: logged.append(args))
+        data('users').insert(pd.Row(()))
+        assert not logged
+
     def test_view_never_filtered(self, data):
         # VIEW is short circuited in _access_filter_row() regardless of rights.
         assert data('nobody').row(ival(1))['x'].value() == 'a'

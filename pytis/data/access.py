@@ -356,8 +356,16 @@ class RestrictedData(Data):
         return super(RestrictedData, self).search(condition, **kwargs)
 
     def insert(self, row, **kwargs):
-        row = self._access_filter_row(row, Permission.INSERT)
-        resrow, result = super(RestrictedData, self).insert(row, **kwargs)
+        filtered_row = self._access_filter_row(row, Permission.INSERT)
+        if row and not filtered_row:
+            # All columns were removed by access rights filtering.  Unlike in
+            # update(), the failure itself is left to the underlying data object,
+            # which reports it loudly enough (an empty row makes DBDataDefault
+            # raise), and many callers ignore the return value anyway.  Only the
+            # cause, which is not apparent from the failure, is recorded here.
+            log(EVENT, 'Access violation attempt:',
+                (pytis.config.dbconnection.user(), Permission.INSERT, tuple(row.keys())))
+        resrow, result = super(RestrictedData, self).insert(filtered_row, **kwargs)
         return self._access_filter_row(resrow), result
 
     def update(self, key, row, **kwargs):
