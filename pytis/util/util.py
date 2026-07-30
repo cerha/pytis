@@ -431,13 +431,19 @@ class DBParams(object):
             key = [self._row[c.id()] for c in self._data.key()]
             with Locked(self._lock):
                 updated_row, success = self._data.update(key, row)
-                if success and updated_row:
-                    self._row = updated_row
-                else:
+                if not success:
                     raise ProgramError(
                         "Failed updating DBParams {} row {} column {} to {!r}: {}".format(
                             self._name, [v.value() for v in key], name, value,
-                            (updated_row, success)))
+                            updated_row or 'no cause given'))
+                if updated_row:
+                    self._row = updated_row
+            if not updated_row:
+                # The update succeeded, but the data object was unable to determine
+                # the resulting row, so the cached row must be refreshed explicitly.
+                # Not within the 'Locked' block above as _select() acquires the same
+                # non-reentrant lock.
+                self._select()
         else:
             raise AttributeError("'%s' object for '%s' has no attribute '%s'" %
                                  (self.__class__.__name__, self._name, name))
