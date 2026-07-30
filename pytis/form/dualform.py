@@ -346,12 +346,16 @@ class DualForm(Form, Refreshable):
         return dict(form_bindings=self._main_form.bindings())
 
     @property
-    def api_main_form():
-        return self.main_form()
+    def api_main_form(self):
+        main_form = self.main_form()
+        return main_form.provider() if main_form else None
 
     @property
-    def api_side_form():
-        return self.side_form()
+    def api_side_form(self):
+        side_form = self.side_form()
+        if isinstance(side_form, MultiSideForm):
+            side_form = side_form.active_form()
+        return side_form.provider() if side_form else None
 
 
 class ImmediateSelectionDualForm(DualForm):
