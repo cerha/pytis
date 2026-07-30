@@ -1046,6 +1046,59 @@ class MemData(unittest.TestCase):
         self.assertEqual(rows[1]['b'].value(), 'Bill')
 
 
+class TestRestrictedData(object):
+
+    @pytest.fixture
+    def columns(self):
+        return (pd.ColumnSpec('id', pd.Integer()),
+                pd.ColumnSpec('x', pd.String()))
+
+    @pytest.fixture
+    def access_rights(self):
+        return pd.AccessRights(
+            (None, (['users'], pd.Permission.VIEW)),
+            (None, (['admins'], pd.Permission.ALL)))
+
+    @pytest.fixture
+    def data(self, columns, access_rights):
+        # The groups are given per instance to be able to test the same access
+        # rights for a permitted and an unpermitted user.
+        def make(*groups):
+            class Data(pd.RestrictedMemData):
+                def access_groups(self):
+                    return groups
+            return Data(columns, data=((1, 'a'),), access_rights=access_rights)
+        return make
+
+    def test_update_permitted(self, data):
+        d = data('admins')
+        row, success = d.update(ival(1), pd.Row((('id', ival(1)), ('x', sval('b')))))
+        assert success
+        assert row['x'].value() == 'b'
+
+    def test_update_denied(self, data):
+        d = data('users')
+        result, success = d.update(ival(1), pd.Row((('id', ival(1)), ('x', sval('b')))))
+        assert not success
+        # The reason must be reported as a string naming the refused columns,
+        # not as a bare None which is indistinguishable from an update of no rows.
+        assert isinstance(result, basestring)
+        assert 'x' in result
+        assert d.row(ival(1))['x'].value() == 'a'
+
+    def test_update_none_row(self, data):
+        # None is accepted by _access_filter_row(), so it must not raise here.
+        assert data('users').update(ival(1), None) == (None, False)
+
+    def test_update_empty_row(self, data):
+        # An empty row was not emptied by access rights, so it is passed on.
+        assert data('users').update(ival(1), pd.Row(())) == (None, False)
+
+    def test_view_never_filtered(self, data):
+        # VIEW is short circuited in _access_filter_row() regardless of rights.
+        assert data('nobody').row(ival(1))['x'].value() == 'a'
+
+
 class DataFactory(unittest.TestCase):
 
     def setUp(self):
