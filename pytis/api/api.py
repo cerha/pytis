@@ -193,10 +193,12 @@ class Form(API):
         Returns None if the form is not bound to any specification (web form).
 
         """
+        raise NotImplementedError
 
     @property
     def title(self):  # type: () -> str
         """The form title as a string."""
+        raise NotImplementedError
 
     @property
     def field(self):  # type: () -> Any
@@ -211,22 +213,27 @@ class Form(API):
         the same result.
 
         """
+        raise NotImplementedError
 
     @property
     def condition(self):  # type: () -> Optional[pd.Operator]
         """Current filtering condition as a `pytis.data.Operator` instance or None."""
+        raise NotImplementedError
 
     @property
     def arguments(self):  # type: () -> Optional[Dict[str, pd.Value]]
         """Current arguments as a dictionary of `pytis.data.Value` instances or None."""
+        raise NotImplementedError
 
     @property
     def sorting(self):  # type: () -> Any
         """Current sorting as in `pytis.data.Data.select` or None."""
+        raise NotImplementedError
 
     @property
     def profile(self):  # type: () -> Optional[pytis.presentation.Profile]
         """Current form profile as `pytis.presentation.Profile` instance or None."""
+        raise NotImplementedError
 
     @property
     def query_fields(self):  # type: () -> Optional['QueryFields']
@@ -235,6 +242,7 @@ class Form(API):
         Returns None if the form has no query fields panel.
 
         """
+        raise NotImplementedError
 
     @property
     def row(self):  # type: () -> Optional[pytis.presentation.PresentedRow]
@@ -246,6 +254,7 @@ class Form(API):
         active row.
 
         """
+        raise NotImplementedError
 
     @property
     def selection(self):  # type: () -> Iterator[pytis.presentation.PresentedRow]
@@ -305,6 +314,7 @@ class Form(API):
         ```
 
         """
+        raise NotImplementedError
 
     @property
     def main_form(self):  # type: () -> Optional['Form']
@@ -313,6 +323,7 @@ class Form(API):
         Returns None if the form is not dual form.
 
         """
+        raise NotImplementedError
 
     @property
     def side_form(self):  # type: () -> Optional['Form']
@@ -321,14 +332,15 @@ class Form(API):
         Returns None if the form is not dual form.
 
         """
+        raise NotImplementedError
 
     def refresh(self):  # type: () -> None
         """Refresh the form UI, typically reload data from DB if applicable."""
-        pass
+        raise NotImplementedError
 
     def clear_selection(self):  # type: () -> None
         """Unselect all rows that are currently selected (if any)."""
-        pass
+        raise NotImplementedError
 
     def select_row(self, position):  # type: (Any) -> None
         """Make given row the currently selected row of the form.
@@ -343,6 +355,7 @@ class Form(API):
             the row matching the value of the key columns(s).
 
         """
+        raise NotImplementedError
 
     def activate(self):  # type: () -> bool
         """Make the form active.
@@ -362,7 +375,7 @@ class Form(API):
           blocking its activation or if the form actually is modal).
 
         """
-        pass
+        raise NotImplementedError
 
     def close(self, force=False):  # type: (bool) -> None
         """Close the form and destroy all its UI elements.
@@ -375,6 +388,7 @@ class Form(API):
           force (bool): If True, close unconditionally without asking.
 
         """
+        raise NotImplementedError
 
 
 class StatusField(API):
@@ -401,7 +415,7 @@ class StatusField(API):
           tooltip (str): New tooltip text or None to leave unchanged.
 
         """
-        pass
+        raise NotImplementedError
 
     def refresh(self):  # type: () -> None
         """Call the field's refresh function manually.
@@ -411,11 +425,12 @@ class StatusField(API):
         fields with refresh interval set to zero (no periodic refresh).
 
         """
-        pass
+        raise NotImplementedError
 
     @property
     def text(self):  # type: () -> str
         """Get/set the current status field text as a string."""
+        raise NotImplementedError
 
     @property
     def icon(self):  # type: () -> Optional[str]
@@ -427,6 +442,7 @@ class StatusField(API):
         `pytis.presentation.StatusField` constructor).
 
         """
+        raise NotImplementedError
 
     @property
     def tooltip(self):  # type: () -> Optional[Union[str, Callable[[], Optional[str]]]]
@@ -441,6 +457,7 @@ class StatusField(API):
         tooltip content.
 
         """
+        raise NotImplementedError
 
 
 class Field(API):
@@ -448,11 +465,11 @@ class Field(API):
 
     def refresh(self):  # type: () -> None
         """Refresh field UI, typically reload enumeration if applicable."""
-        pass
+        raise NotImplementedError
 
     def write(self, text):  # type: (str) -> None
         """Insert given text into the field in the current cursor position."""
-        pass
+        raise NotImplementedError
 
     def on_list_change(self, callback):  # type: (Callable[[], None]) -> None
         """Add callback on change of the list of available values in a LIST field.
@@ -464,7 +481,7 @@ class Field(API):
           `Exception`: When called on a field which is not selection_type=LIST.
 
         """
-        pass
+        raise NotImplementedError
 
 
 class QueryFields(API):
@@ -476,6 +493,7 @@ class QueryFields(API):
         instance.
 
         """
+        raise NotImplementedError
 
 
 class Application(API):
@@ -488,6 +506,7 @@ class Application(API):
     @property
     def title(self):  # type: () -> str
         """Get/set the main application frame title as a string."""
+        raise NotImplementedError
 
     @property
     def param(self):  # type: () -> Any
@@ -507,6 +526,7 @@ class Application(API):
         update the value in the database.
 
         """
+        raise NotImplementedError
 
     @property
     def form(self):  # type: () -> Optional['Form']
@@ -517,6 +537,7 @@ class Application(API):
         is a modal form (such as a popup edit form), returns the modal form.
 
         """
+        raise NotImplementedError
 
     @property
     def forms(self):  # type: () -> List['Form']
@@ -528,6 +549,7 @@ class Application(API):
         are returned at the beginning of the list.
 
         """
+        raise NotImplementedError
 
     @property
     def main_form(self):  # type: () -> Optional['Form']
@@ -537,6 +559,7 @@ class Application(API):
         Returns None if the current form is not dual form.
 
         """
+        raise NotImplementedError
 
     @property
     def side_form(self):  # type: () -> Optional['Form']
@@ -546,6 +569,7 @@ class Application(API):
         Returns None if the current form is not dual form.
 
         """
+        raise NotImplementedError
 
     @property
     def status(self):  # type: () -> Any
@@ -561,6 +585,7 @@ class Application(API):
         the same result.
 
         """
+        raise NotImplementedError
 
     def echo(self, message, kind='info'):  # type: (str, str) -> None
         """Display a non-interactive message to the user.
@@ -572,7 +597,7 @@ class Application(API):
             sounds (beeping for 'warning' and 'error' etc.).
 
         """
-        pass
+        raise NotImplementedError
 
     def message(self, message=None, title=None, content=None):
         # type: (Optional[str], Optional[str], Optional[Any]) -> None
@@ -589,7 +614,7 @@ class Application(API):
             which is displayed as plain text.
 
         """
-        pass
+        raise NotImplementedError
 
     def warning(self, message=None, title=None, content=None):
         # type: (Optional[str], Optional[str], Optional[Any]) -> None
@@ -606,7 +631,7 @@ class Application(API):
             which is displayed as plain text.
 
         """
-        pass
+        raise NotImplementedError
 
     def error(self, message=None, title=None, content=None):
         # type: (Optional[str], Optional[str], Optional[Any]) -> None
@@ -623,7 +648,7 @@ class Application(API):
             which is displayed as plain text.
 
         """
-        pass
+        raise NotImplementedError
 
     def question(self,
                  message,  # type: str
@@ -661,7 +686,7 @@ class Application(API):
             answer.
 
         """
-        pass
+        raise NotImplementedError
 
     def delete_record_question(self, message=None):  # type: (Optional[str]) -> bool
         """Display 'question()' dialog asking for record deletion.
@@ -669,7 +694,7 @@ class Application(API):
         Returns True if the user confirms deletion or False otherwise.
 
         """
-        pass
+        raise NotImplementedError
 
     def input_text(self,
                    title,  # type: str
@@ -710,7 +735,7 @@ class Application(API):
           escaped or the value was empty (only possible when not_null is False).
 
         """
-        pass
+        raise NotImplementedError
 
     def input_date(self,
                    title,  # type: str
@@ -741,7 +766,7 @@ class Application(API):
           not_null is False).
 
         """
-        pass
+        raise NotImplementedError
 
     def input_number(self,
                      title,  # type: str
@@ -782,7 +807,7 @@ class Application(API):
           (only possible when not_null is False).
 
         """
-        pass
+        raise NotImplementedError
 
     def input_form(self,
                    title,  # type: str
@@ -837,7 +862,7 @@ class Application(API):
           or None if the user cancels the form.
 
         """
-        pass
+        raise NotImplementedError
 
     def new_record(self,
                    specification,  # type: Any
@@ -886,7 +911,7 @@ class Application(API):
           transaction: Transaction for DB operations.
 
         """
-        pass
+        raise NotImplementedError
 
     def show_record(self, specification, row):  # type: (Any, Any) -> None
         """Show existing record details in a separate form.
@@ -902,7 +927,7 @@ class Application(API):
             `pytis.data.Value` instance.
 
         """
-        pass
+        raise NotImplementedError
 
     def edit_record(self,
                     specification,  # type: Any
@@ -946,7 +971,7 @@ class Application(API):
           defined, returns whatever `on_edit_record` returned.
 
         """
-        pass
+        raise NotImplementedError
 
     def delete_record(self, specification, row, question=None, transaction=None):
         # type: (Any, Any, Optional[str], Optional[Any]) -> bool
@@ -971,7 +996,7 @@ class Application(API):
           didn't confirm deletion).
 
         """
-        pass
+        raise NotImplementedError
 
     def run_form(self,
                  specification,  # type: Any
@@ -1032,7 +1057,7 @@ class Application(API):
           transaction: Transaction for DB operations.
 
         """
-        pass
+        raise NotImplementedError
 
     if TYPE_CHECKING:
         @overload
@@ -1107,6 +1132,7 @@ class Application(API):
           when multirow is True.  Returns None when the user cancels the form.
 
         """
+        raise NotImplementedError
 
     def web_view(self, title, content, name=None):  # type: (str, Any, Optional[str]) -> None
         """Show given content in a web browser inside the main application frame.
@@ -1123,7 +1149,7 @@ class Application(API):
             within app.forms.
 
         """
-        pass
+        raise NotImplementedError
 
     def run(self,
             function,  # type: Callable[..., Any]
@@ -1226,7 +1252,7 @@ class Application(API):
             is written properly.
 
         """
-        pass
+        raise NotImplementedError
 
     def call(self, function, *args, **kwargs):  # type: (Callable[..., Any], *Any, **Any) -> Any
         """Call given function with given arguments.
@@ -1245,7 +1271,7 @@ class Application(API):
           The value returned by the function.
 
         """
-        pass
+        raise NotImplementedError
 
     def run_procedure(self, spec_name, proc_name, *args, **kwargs):
         # type: (str, str, *Any, **Any) -> Any
@@ -1273,7 +1299,7 @@ class Application(API):
           The value returned by the procedure.
 
         """
-        pass
+        raise NotImplementedError
 
     def launch_file(self, path=None, data=None, suffix=None, decrypt=False):
         # type: (Optional[str], Optional[Union[bytes, IO[bytes]]], Optional[str], bool) -> None
@@ -1303,7 +1329,7 @@ class Application(API):
             client's machine.
 
         """
-        pass
+        raise NotImplementedError
 
     def launch_url(self, url):  # type: (str) -> None
         """Open given URL in a web browser.
@@ -1315,7 +1341,7 @@ class Application(API):
         is run in the background in all cases.
 
         """
-        pass
+        raise NotImplementedError
 
     def splitpath(self, path):  # type: (str) -> Tuple[str, str]
         """Split the path obtained from `select_file` and similar methods.
@@ -1334,7 +1360,7 @@ class Application(API):
           A pair of strings (dirname, filename).
 
         """
-        pass
+        raise NotImplementedError
 
     def select_file(self, filename=None, filetypes=None, directory=None, context='default'):
         # type: (Optional[str], Optional[Sequence[str]], Optional[str], str) -> Optional[str]
@@ -1360,7 +1386,7 @@ class Application(API):
             recently used directory is stored separately.
 
         """
-        pass
+        raise NotImplementedError
 
     def select_files(self, directory=None, filetypes=None, context='default'):
         # type: (Optional[str], Optional[Sequence[str]], str) -> Tuple[str, ...]
@@ -1376,7 +1402,7 @@ class Application(API):
           context (str): See `select_file` - unused if directory is not None.
 
         """
-        pass
+        raise NotImplementedError
 
     def select_directory(self, directory=None, context='default'):
         # type: (Optional[str], str) -> Optional[str]
@@ -1391,7 +1417,7 @@ class Application(API):
           context (str): See `select_file`.
 
         """
-        pass
+        raise NotImplementedError
 
     def make_selected_file(self,
                            filename,  # type: Optional[str]
@@ -1418,7 +1444,7 @@ class Application(API):
           context (str): See `select_file`.
 
         """
-        pass
+        raise NotImplementedError
 
     def write_selected_file(self,
                             data,  # type: Union[str, bytes]
@@ -1445,7 +1471,7 @@ class Application(API):
           context (str): See `select_file`.
 
         """
-        pass
+        raise NotImplementedError
 
     def open_selected_file(self,
                            directory=None,  # type: Optional[str]
@@ -1481,7 +1507,7 @@ class Application(API):
           context (str): See `select_file`.
 
         """
-        pass
+        raise NotImplementedError
 
     def open_file(self, filename, mode='r', encoding=None):
         # type: (str, str, Optional[str]) -> Optional[IO[Any]]
@@ -1503,7 +1529,7 @@ class Application(API):
             'utf-8'.  Any text encoding supported by Python can be used.
 
         """
-        pass
+        raise NotImplementedError
 
     def write_file(self, data, filename, mode='w'):  # type: (Union[str, bytes], str, str) -> None
         """Write given data to given file.
@@ -1517,7 +1543,7 @@ class Application(API):
           mode (str): Mode for opening the file.
 
         """
-        pass
+        raise NotImplementedError
 
     def has_access(self, name, perm=pd.Permission.VIEW, column=None):
         # type: (str, Any, Optional[str]) -> bool
@@ -1535,11 +1561,11 @@ class Application(API):
           `pytis.util.ResolverError`: If given specification name cannot be found.
 
         """
-        pass
+        raise NotImplementedError
 
     def decrypted_areas(self):  # type: () -> Set[str]
         """Return set of names of encryption areas the user has access to."""
-        pass
+        raise NotImplementedError
 
     def printout(self,
                  spec_name,  # type: str
@@ -1567,11 +1593,11 @@ class Application(API):
           form: Current form as a `pytis.api.Form` instance or None.
 
         """
-        pass
+        raise NotImplementedError
 
     def refresh(self):  # type: () -> None
         """Refresh visible application components."""
-        pass
+        raise NotImplementedError
 
     def exit(self, force=False):  # type: (bool) -> None
         """Exit the application.
@@ -1582,7 +1608,7 @@ class Application(API):
             require user's attention.
 
         """
-        pass
+        raise NotImplementedError
 
 
 @implements(Application, incomplete=True)
