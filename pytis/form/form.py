@@ -99,7 +99,8 @@ class FormSettings(FormProfile):
 
 @pytis.api.implements(pytis.api.Form)
 @python_2_unicode_compatible
-class Form(wx.Panel, KeyHandler, CallbackHandler, CommandHandler):
+class Form(pytis.api.APIImplementation, wx.Panel, KeyHandler, CallbackHandler,
+           CommandHandler):
     """Common base class for all forms.
 
     Based on the specification name passed to the constructor, the form asks the
@@ -1845,7 +1846,7 @@ class LookupForm(InnerForm):
     @property
     def api_query_fields(self):
         @pytis.api.implements(pytis.api.QueryFields)
-        class QueryFields:
+        class QueryFields(pytis.api.APIImplementation):
             def __init__(self, row):
                 self._row = row
 

@@ -88,7 +88,7 @@ class _Completer(wx.TextCompleterSimple):
 
 @pytis.api.implements(pytis.api.Field)
 @python_2_unicode_compatible
-class InputField(KeyHandler, CommandHandler):
+class InputField(pytis.api.APIImplementation, KeyHandler, CommandHandler):
     """Abstract base class for input fields.
 
     Subclasses of this class implement input fields for particular field types

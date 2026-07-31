@@ -52,8 +52,8 @@ from __future__ import print_function
 # Imports use 'X as X' form (PEP 484) to mark names as explicitly re-exported
 # without maintaining a separate __all__ list.
 from .api import (
-    implements as implements, APIProvider as APIProvider,
-    ApplicationAPIProvider as ApplicationAPIProvider,
+    implements as implements, APIImplementation as APIImplementation,
+    APIProvider as APIProvider, ApplicationAPIProvider as ApplicationAPIProvider,
     Application as Application, Form as Form, Field as Field, Fields as Fields,
     QueryFields as QueryFields, StatusField as StatusField, StatusFields as StatusFields,
     Params as Params, Selection as Selection,

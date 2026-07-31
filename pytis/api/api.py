@@ -43,6 +43,11 @@ except ImportError:
     TYPE_CHECKING = False
 
 
+def _unbound(method):
+    """Return the underlying function of given method (Python 2 compatibility)."""
+    return getattr(method, '__func__', method)
+
+
 def _signature(func):
     """Return the signature of given function as a tuple (for comparison, str).
 
@@ -87,11 +92,6 @@ def implements(api_class, partial=None):
         definition, so such an error can not pass unnoticed.
 
     """
-    def provider(self):
-        if not hasattr(self, '_api_provider'):
-            self._api_provider = APIProvider(self)
-        return self._api_provider
-
     def wrapper(cls):
         attributes = [name for name in dir(api_class) if not name.startswith('_')]
         implemented = []
@@ -136,9 +136,44 @@ def implements(api_class, partial=None):
                 raise TypeError("{} does not implement '{}.{}'"
                                 .format(cls.__name__, api_class.__name__, name))
         cls._api_implemented = required
-        cls.provider = provider
+        provider = getattr(cls, 'provider', None)
+        if provider is None:
+            # Classes which don't derive from 'APIImplementation' (such as
+            # minimal API stand ins in tests) get the method added here.
+            cls.provider = APIImplementation.provider
+            cls._api_provider = APIImplementation._api_provider
+        elif _unbound(provider) is not _unbound(APIImplementation.provider):
+            raise TypeError("{} defines 'provider', which collides with the public API "
+                            "provider (derive it from pytis.api.APIImplementation)"
+                            .format(cls.__name__))
         return cls
     return wrapper
+
+
+class APIImplementation(object):
+    """Base class for classes implementing a Pytis API.
+
+    Classes implementing an API (marked by the `implements` decorator) should
+    derive from this class.  It only adds the public method `provider`, which is
+    the only supported way to pass the implemented API to the applications.
+
+    Implementing classes may declare a more specific return type of `provider`
+    (the API definition class they implement) for the benefit of type checkers.
+
+    """
+    _api_provider = None
+
+    # Note that this class deliberately defines no '__init__'.  It may appear
+    # anywhere in the MRO of the implementing class and the other base classes
+    # (such as 'wx.App') are often initialized through cooperative 'super'
+    # calls, which must pass through (see 'test_api_implementation_init').
+
+    def provider(self):
+        # type: () -> Any
+        """Return the public API of this instance as an `APIProvider` instance."""
+        if self._api_provider is None:
+            self._api_provider = APIProvider(self)
+        return self._api_provider
 
 
 class APIProvider(object):
@@ -148,9 +183,8 @@ class APIProvider(object):
     restricts access to its attributes to only those which belong to the public
     API.
 
-    Marking a class by the `implements` decorator adds a new public method
-    `provider` which returns a (cached) `APIProvider` instance for the
-    implementation class instance on which it is called.
+    Instances are created by the `provider` method of the implementing class
+    (see `APIImplementation`), which caches them.
 
     Access to anything which is not a member of the public API (or which the
     wrapped instance does not implement) raises `AttributeError`, as for any
@@ -1929,6 +1963,42 @@ def test_api_definition():
     with pytest.raises(AttributeError) as e:
         app.title = 'Title'
     assert str(e.value) == "'MyApp' does not implement public API member 'title'"
+
+
+def test_api_implementation_init():
+    """Verify that `APIImplementation` doesn't break cooperative initialization.
+
+    This mirrors `pytis.form.Application`, which derives from
+    `pytis.application.BaseApplication` (implementing a part of the API) and from
+    `wx.App`, which is initialized through the cooperative `super` call in
+    `BaseApplication.__init__`.  `APIImplementation` ends up between the two in
+    the MRO, so it must let the call pass through to `wx.App`.
+
+    """
+    initialized = []
+
+    class Base(object):
+        """Stands for a class such as 'wx.App'."""
+
+        def __init__(self):
+            initialized.append('Base')
+
+    @implements(Application, partial=('echo',))
+    class PartialImplementation(APIImplementation):
+        def __init__(self):
+            initialized.append('PartialImplementation')
+            super(PartialImplementation, self).__init__()
+
+        def api_echo(self, message, kind='info'):
+            pass
+
+    class FullImplementation(PartialImplementation, Base):
+        pass
+
+    assert [c.__name__ for c in FullImplementation.__mro__[:4]] == [
+        'FullImplementation', 'PartialImplementation', 'APIImplementation', 'Base']
+    FullImplementation()
+    assert initialized == ['PartialImplementation', 'Base']
 
 
 def test_api_definition_errors():

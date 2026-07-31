@@ -874,7 +874,7 @@ class StatusBar(object):
 
     """
     @pytis.api.implements(pytis.api.StatusField)
-    class Field(object):
+    class Field(pytis.api.APIImplementation):
         class _Timer(wx.Timer):
             def Notify(self):
                 self.Stop()

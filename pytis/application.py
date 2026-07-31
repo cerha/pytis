@@ -50,7 +50,7 @@ except ImportError:
 
 
 @pytis.api.implements(pytis.api.Application, partial=('echo', 'has_access', 'param', 'printout'))
-class BaseApplication(object):
+class BaseApplication(pytis.api.APIImplementation):
     """Base class for classes implementing the `Application` API.
 
     This class only implements the API members which work without a user
