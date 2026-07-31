@@ -526,7 +526,7 @@ def mark_products(product_id=None, mark=True):
 
     As demonstrated below, a limited set of Pytis API can also be used in such
     functions.  More exactly these are the API methods and properties defined by
-    `pytis.api.BaseApplication`.
+    `pytis.application.BaseApplication`.
 
     """
     assert isinstance(mark, bool)

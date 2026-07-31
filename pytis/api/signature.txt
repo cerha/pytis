@@ -57,9 +57,6 @@ ApplicationAPIProvider.__getattr__(name)
 ApplicationAPIProvider.__init__()
 ApplicationAPIProvider.init(instance)
 ApplicationAPIProvider.release()
-BaseApplication
-BaseApplication.__init__()
-BaseApplication.action_has_access(action, perm=pd.Permission.CALL, column=None)
 Field
 Field.on_list_change(callback)
 Field.refresh()

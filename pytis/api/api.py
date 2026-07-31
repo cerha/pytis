@@ -51,8 +51,8 @@ def implements(api_class, partial=None):
     methods and properties defined by the definition class.
 
     Some classes can only implement a part of the API.  Such as
-    `BaseApplication`, which implements the members of the `Application` API
-    available even when no user interface is running.  These classes must list
+    `pytis.application.BaseApplication`, which implements the members of the
+    `Application` API available even when no user interface is running.  These classes must list
     the implemented members in 'partial'.  The list is checked in both
     directions, so it always says exactly which members the applications can
     rely on when this particular class implements the API.
@@ -182,8 +182,8 @@ class ApplicationAPIProvider(APIProvider):
 
     Moreover we want to initialize a limited application in scripts where a real
     application does not actually run.  When app.param is accessed when `init`
-    has not been called (yet), a `BaseApplication` instance is created
-    automatically.
+    has not been called (yet), a `pytis.application.BaseApplication` instance
+    is created automatically.
 
     """
     def __init__(self):
@@ -202,8 +202,8 @@ class ApplicationAPIProvider(APIProvider):
             # application is running.  Initializing BaseApplication will
             # make the basic set of app methods (such as `app.param`,
             # app.has_access, ...) available on the 'app' object.
-            from .application import BaseApplication
-            BaseApplication()  # Will call app.init() automatically.
+            import pytis.application
+            pytis.application.BaseApplication()  # Calls app.init() automatically.
         return super(ApplicationAPIProvider, self).__getattr__(name)
 
     def init(self, instance):

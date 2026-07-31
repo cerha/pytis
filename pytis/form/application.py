@@ -46,6 +46,7 @@ import wx.html
 
 import pytis
 import pytis.api
+import pytis.application
 import pytis.data as pd
 import pytis.form
 import pytis.remote
@@ -81,7 +82,7 @@ unistr = type(u'')  # Python 2/3 transition hack.
 
 
 @pytis.api.implements(pytis.api.Application)
-class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler):
+class Application(pytis.application.BaseApplication, wx.App, KeyHandler, CommandHandler):
     """Pytis system application.
 
     Each Pytis application has exactly one main application window for the

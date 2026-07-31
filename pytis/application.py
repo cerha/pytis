@@ -18,15 +18,15 @@
 
 """Implementation of the Pytis application API available without a user interface.
 
-The public API which the Pytis applications rely on is defined by the sibling
-module `api`.  Its implementation belongs to the classes representing the
+The public API which the Pytis applications rely on is defined by the
+`pytis.api` module.  Its implementation belongs to the classes representing the
 particular user interface elements, such as `pytis.form.Application` for the wx
 user interface.
 
-`BaseApplication` defined here implements the part of the `Application` API which
-works without any user interface at all.  It is used directly in scripts (where
-`pytis.api.app` creates it automatically) and as a base class of the user
-interface application classes.
+`BaseApplication` defined here implements the part of the
+`pytis.api.Application` API which works without any user interface at all.  It
+is used directly in scripts (where `pytis.api.app` creates it automatically) and
+as a base class of the user interface application classes.
 
 """
 
@@ -36,14 +36,11 @@ from __future__ import absolute_import
 
 import sys
 
+import pytis.api
 import pytis.data as pd
 import pytis.util
 
 from pytis.presentation import Specification
-
-# Import from the sibling module rather than from the package, which is not
-# fully initialized yet when this module is imported from its init file.
-from .api import Application, implements
 from pytis.util import log, OPERATIONAL
 
 try:
@@ -52,7 +49,7 @@ except ImportError:
     pass
 
 
-@implements(Application, partial=('echo', 'has_access', 'param', 'printout'))
+@pytis.api.implements(pytis.api.Application, partial=('echo', 'has_access', 'param', 'printout'))
 class BaseApplication(object):
     """Base class for classes implementing the `Application` API.
 
