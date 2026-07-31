@@ -59,4 +59,8 @@ from .api import (
     Params as Params, Selection as Selection,
 )
 
+# The name bound by the future import above (the compiler directive itself is not
+# affected) would otherwise become a part of this module's public API.
+del print_function
+
 app = ApplicationAPIProvider()  # type: Application
