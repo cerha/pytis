@@ -63,6 +63,11 @@ def implements(api_class, partial=None):
         class.  The class must implement exactly these members (and no other).
         When None, the class must implement the complete API.
 
+    Raises:
+      `TypeError`: When the decorated class does not implement the API
+        correctly.  All the checks are performed at the time of the class
+        definition, so such an error can not pass unnoticed.
+
     """
     def provider(self):
         if not hasattr(self, '_api_provider'):
@@ -71,17 +76,17 @@ def implements(api_class, partial=None):
 
     def wrapper(cls):
         signature = inspect.signature if hasattr(inspect, 'signature') else inspect.getargspec
+        attributes = [name for name in dir(api_class) if not name.startswith('_')]
         implemented = []
         for name in dir(cls):
             if name.startswith('api_'):
                 implementation = getattr(cls, name)
                 name = name[4:]
+                if name not in attributes:
+                    raise TypeError("'{}' does not define public API member '{}'"
+                                    .format(api_class.__name__, name))
                 implemented.append(name)
-                try:
-                    definition = getattr(api_class, name)
-                except AttributeError:
-                    raise AttributeError("'{}' does not define public API member '{}'"
-                                         .format(api_class, name))
+                definition = getattr(api_class, name)
                 if callable(definition) and not callable(implementation):
                     raise TypeError("'{}.{}' is defined (but not implemented) as a method"
                                     .format(api_class.__name__, name))
@@ -91,15 +96,15 @@ def implements(api_class, partial=None):
                 elif isinstance(definition, property) and not isinstance(implementation, property):
                     raise TypeError("'{}.{}' is defined (but not implemented) as a property"
                                     .format(api_class.__name__, name))
-        cls._api_attributes = [name for name in dir(api_class) if not name.startswith('_')]
+        cls._api_attributes = attributes
         if partial is None:
-            required = cls._api_attributes
+            required = attributes
         else:
             required = list(partial)
             for name in required:
-                if name not in cls._api_attributes:
-                    raise AttributeError("'{}' does not define public API member '{}'"
-                                         .format(api_class, name))
+                if name not in attributes:
+                    raise TypeError("'{}' does not define public API member '{}'"
+                                    .format(api_class.__name__, name))
             for name in sorted(set(implemented) - set(required)):
                 raise TypeError("{} implements '{}.{}' which is not listed as partial"
                                 .format(cls.__name__, api_class.__name__, name))
@@ -123,6 +128,11 @@ class APIProvider(object):
     Marking a class by the `implements` decorator adds a new public method
     `provider` which returns a (cached) `APIProvider` instance for the
     implementation class instance on which it is called.
+
+    Access to anything which is not a member of the public API (or which the
+    wrapped instance does not implement) raises `AttributeError`, as for any
+    other Python attribute access.  Errors in the API implementation itself are
+    reported as `TypeError` by the `implements` decorator.
 
     """
     def __init__(self, instance=None):
@@ -1948,8 +1958,15 @@ def test_api_definition_errors():
                 pass
     assert str(e.value) == "UnimplementedMember does not implement 'Application.title'"
 
-    with pytest.raises(AttributeError) as e:
+    with pytest.raises(TypeError) as e:
         @implements(Application, partial=('nonsense',))
-        class UndefinedMember:
+        class UndefinedPartialMember:
             pass
-    assert str(e.value).endswith("does not define public API member 'nonsense'")
+    assert str(e.value) == "'Application' does not define public API member 'nonsense'"
+
+    with pytest.raises(TypeError) as e:
+        @implements(Application)
+        class UndefinedApiMember:
+            def api_nonsense(self):
+                pass
+    assert str(e.value) == "'Application' does not define public API member 'nonsense'"
