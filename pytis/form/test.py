@@ -35,7 +35,7 @@ import rpyc
 from rpyc.utils.server import ThreadedServer
 
 import pytis.api
-import pytis.form.application as _pfa
+import pytis.form as pf
 import pytis.form.grid as grid
 import pytis.presentation as pp
 import pytis.data as pd
@@ -559,15 +559,15 @@ class _TestApplication(object):
     call time.  This lets us exercise the real Application implementation
     without inheriting wx.App (which would need a display).
     """
-    _api_attributes = _pfa.Application._api_attributes
-    _api_implemented = _pfa.Application._api_implemented
-    _ExposedFileWrapper = _pfa.Application._ExposedFileWrapper
+    _api_attributes = pf.Application._api_attributes
+    _api_implemented = pf.Application._api_implemented
+    _ExposedFileWrapper = pf.Application._ExposedFileWrapper
 
     def __init__(self):
         self._recent_directories = {}
 
     def __getattr__(self, name):
-        method = getattr(_pfa.Application, name, None)
+        method = getattr(pf.Application, name, None)
         if callable(method):
             return functools.partial(getattr(method, '__func__', method), self)
         raise AttributeError(name)
@@ -870,5 +870,3 @@ class TestAppDB:
         data2 = pytis.util.data_object(pytis.dbdefs.demo.Tree)
         for c1, c2 in zip(data1.columns(), data2.columns()):
             assert isinstance(c1.type(), type(c2.type()))
-
-
