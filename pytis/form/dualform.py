@@ -739,6 +739,12 @@ class MultiForm(Form, Refreshable):
         event.Skip()
 
     def _init_subform(self, i):
+        # Return the subform at the given index, initializing it when necessary.
+        # Return None when the form is not usable, which typically means that
+        # its initialization is currently in progress (this method is often
+        # called from event handlers and events are processed during
+        # initialization) or that it failed.  All callers must be prepared to
+        # handle None to avoid operations on a partially initialized form.
         form = self._subform(i)
         if form and not form.initialization_started():
             busy = is_busy_cursor()
@@ -751,7 +757,7 @@ class MultiForm(Form, Refreshable):
                     # initialized here.  Don't ask me why; I suspect busy_cursor
                     # may invoke some event that causes form initialization, but
                     # who knows...
-                    return form
+                    return form if form.initialized() else None
                 form.full_init()
                 form._release_data()
                 for kind, function in self._form_callbacks_args:
@@ -767,7 +773,7 @@ class MultiForm(Form, Refreshable):
             finally:
                 if not busy:
                     busy_cursor(False)
-        return form
+        return form if form is not None and form.initialized() else None
 
     def _select_subform(self, i):
         self._old_notebook_selection = self._notebook.GetSelection()
@@ -800,10 +806,11 @@ class MultiForm(Form, Refreshable):
             finally:
                 self._block_on_page_change = False
             form = self._init_subform(selection)
-            row = self._last_selection
-            if row is not None:
-                form.on_selection(row)
-            form.focus()
+            if form is not None:
+                row = self._last_selection
+                if row is not None:
+                    form.on_selection(row)
+                form.focus()
             if old_selection != -1:
                 old_form = self._subform(old_selection)
                 if old_form and old_form is not form and old_form.initialized():
@@ -950,7 +957,8 @@ class MultiForm(Form, Refreshable):
             if i is not None and 0 <= i < self._notebook.PageCount:
                 form = self._init_subform(i)
                 self._select_subform(i)
-                form.restore()
+                if form is not None:
+                    form.restore()
         super(MultiForm, self).restore()
 
     def _focus(self):
