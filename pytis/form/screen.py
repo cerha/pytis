@@ -899,6 +899,11 @@ class StatusBar(object):
                 width += 22
             self._width = self._min_width = width
 
+        def provider(self):
+            # type: () -> pytis.api.StatusField
+            # TODO NOPY2: Remove this override, see 'pytis.api.APIImplementation'.
+            return super(StatusBar.Field, self).provider()
+
         def _on_click(self, event):
             handler = self._spec.on_click()
             if handler:

@@ -661,6 +661,11 @@ class Form(pytis.api.APIImplementation, wx.Panel, KeyHandler, CallbackHandler,
 
     # Implementation of Public API 'pytis.api.Form'.
 
+    def provider(self):
+        # type: () -> pytis.api.Form
+        # TODO NOPY2: Remove this override, see the note in 'pytis.api.APIImplementation'.
+        return super(Form, self).provider()
+
     @property
     def api_name(self):
         return self._name
@@ -1849,6 +1854,11 @@ class LookupForm(InnerForm):
         class QueryFields(pytis.api.APIImplementation):
             def __init__(self, row):
                 self._row = row
+
+            def provider(self):
+                # type: () -> pytis.api.QueryFields
+                # TODO NOPY2: Remove this override, see 'pytis.api.APIImplementation'.
+                return super(QueryFields, self).provider()
 
             @property
             def api_row(self):

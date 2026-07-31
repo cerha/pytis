@@ -155,8 +155,16 @@ class APIImplementation(object):
     derive from this class.  It only adds the public method `provider`, which is
     the only supported way to pass the implemented API to the applications.
 
-    Implementing classes may declare a more specific return type of `provider`
+    Implementing classes override `provider` just to declare its return type
     (the API definition class they implement) for the benefit of type checkers.
+
+    TODO NOPY2: Make this class generic instead and let the implementing classes
+    derive from `APIImplementation['pytis.api.Form']` (and so on), which declares
+    the return type of `provider` through the type variable, so that the
+    overrides can be removed.  This is not possible as long as Python 2 is
+    supported -- the subscript is evaluated at runtime, where Python 2 has no
+    `__class_getitem__`, and putting the base class behind `TYPE_CHECKING` would
+    make the method unavailable at runtime.
 
     """
     _api_provider = None

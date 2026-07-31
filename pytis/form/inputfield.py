@@ -709,6 +709,11 @@ class InputField(pytis.api.APIImplementation, KeyHandler, CommandHandler):
 
     # Implementation of Public API 'pytis.api.Field'.
 
+    def provider(self):
+        # type: () -> pytis.api.Field
+        # TODO NOPY2: Remove this override, see the note in 'pytis.api.APIImplementation'.
+        return super(InputField, self).provider()
+
     def api_refresh(self):
         pass
 

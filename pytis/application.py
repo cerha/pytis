@@ -90,6 +90,11 @@ class BaseApplication(pytis.api.APIImplementation):
         self._user_roles = ()
         super(BaseApplication, self).__init__()
 
+    def provider(self):
+        # type: () -> pytis.api.Application
+        # TODO NOPY2: Remove this override, see the note in 'pytis.api.APIImplementation'.
+        return super(BaseApplication, self).provider()
+
     def _init_access_rights(self):  # type: () -> None
         """Read application access rights from the database."""
         # Must be called very early after start of an application.
