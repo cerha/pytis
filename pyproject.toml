@@ -65,7 +65,10 @@ wx = [
 # Everything needed by 'make build' -- the tools generating the package data
 # (see the Makefile) and the build backend itself.  Python 3 only.
 build = ["babel", "pojson", "rjsmin", "flit"]
-test = ["pytest", "pytest-benchmark", "coverage", "coveralls", "mock", "jsonschema"]
+test = ["pytest", "pytest-benchmark", "coverage", "coveralls", "mock", "jsonschema",
+        # Used by 'tools/check-api.py' to inspect the published API.  Python 3 only,
+        # so 'test_api_signature' is skipped when not available.
+        "griffe; python_version >= '3.0'"]
 lint = ["autoflake", "autopep8; python_version >= '3.0'", "flake8", "pep8", "pyflakes"]
 # Running and testing the REST API framework.  Its runtime dependencies are
 # declared by the 'rest' extra above.

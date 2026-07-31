@@ -37,6 +37,12 @@ doc:
 test:
 	python -m pytest doc pytis -v
 
+# Check the published application API (pytis.api) against its recorded
+# signature.  With REV=<revision>, report the changes which break applications
+# against given Git revision instead.
+check-api:
+	tools/check-api.py $(if $(REV),--against $(REV))
+
 build: update
 	flit build
 

@@ -1968,6 +1968,28 @@ class BaseApplication(object):
         print('{}: {}'.format(kind, message))
 
 
+def test_api_signature():
+    """Verify that the published API matches the record in 'pytis/api/signature.txt'.
+
+    The record is maintained by 'tools/check-api.py' (which also explains why).
+    When this test fails, the printed diff says what changed.  If the change is
+    intended, update the record by 'tools/check-api.py --update' and include it
+    in the same commit.
+
+    """
+    import os
+    import subprocess
+    import pytest
+    pytest.importorskip('griffe')
+    script = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(
+        os.path.abspath(__file__)))), 'tools', 'check-api.py')
+    if not os.path.exists(script):
+        pytest.skip("'tools/check-api.py' is only available in a source checkout")
+    process = subprocess.run([sys.executable, script], stdout=subprocess.PIPE,
+                             stderr=subprocess.STDOUT)
+    assert process.returncode == 0, '\n' + process.stdout.decode('utf-8')
+
+
 def test_api_definition():
     import pytest
     import pytis.api
