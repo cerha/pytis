@@ -42,6 +42,12 @@ try:
 except ImportError:
     TYPE_CHECKING = False
 
+try:
+    from typing import TypeVar
+    _Class = TypeVar('_Class', bound=type)
+except ImportError:
+    pass
+
 
 def _signature(func):
     """Return the signature of given function as a tuple (for comparison, str).
@@ -62,6 +68,7 @@ def _signature(func):
 
 
 def implements(api_class, partial=None):
+    # type: (type, Optional[Sequence[str]]) -> Callable[[_Class], _Class]
     """Decorator for marking a class which implements a particular API.
 
     The argument is the API definition class.  Particular API definition classes
