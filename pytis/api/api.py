@@ -331,8 +331,13 @@ class Form(API):
         raise NotImplementedError
 
     @property
-    def sorting(self):  # type: () -> Any
-        """Current sorting as in `pytis.data.Data.select` or None."""
+    def sorting(self):  # type: () -> Optional[Sequence[Union[str, Tuple[str, str]]]]
+        """Current sorting as in `pytis.data.Data.select` or None.
+
+        Each item is either a column id or a pair (COLUMN_ID, DIRECTION), where
+        DIRECTION is `pytis.data.ASCENDENT` or `pytis.data.DESCENDANT`.
+
+        """
         raise NotImplementedError
 
     @property
