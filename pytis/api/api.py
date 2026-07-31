@@ -43,6 +43,24 @@ except ImportError:
     TYPE_CHECKING = False
 
 
+def _signature(func):
+    """Return the signature of given function as a tuple (for comparison, str).
+
+    Only the parameters belong to the contract -- their names, order, kinds and
+    default values.  Annotations are deliberately ignored, so that annotating an
+    implementation (or a definition) is not a change of the contract.
+
+    """
+    if hasattr(inspect, 'signature'):
+        signature = inspect.signature(func)
+        return ([(p.name, p.kind, p.default) for p in signature.parameters.values()],
+                str(signature))
+    else:
+        # Python 2 has no annotations, so the whole argument spec can be compared.
+        argspec = inspect.getargspec(func)
+        return (argspec, inspect.formatargspec(*argspec))
+
+
 def implements(api_class, partial=None):
     """Decorator for marking a class which implements a particular API.
 
@@ -75,7 +93,6 @@ def implements(api_class, partial=None):
         return self._api_provider
 
     def wrapper(cls):
-        signature = inspect.signature if hasattr(inspect, 'signature') else inspect.getargspec
         attributes = [name for name in dir(api_class) if not name.startswith('_')]
         implemented = []
         for name in dir(cls):
@@ -90,9 +107,15 @@ def implements(api_class, partial=None):
                 if callable(definition) and not callable(implementation):
                     raise TypeError("'{}.{}' is defined (but not implemented) as a method"
                                     .format(api_class.__name__, name))
-                elif callable(definition) and signature(implementation) != signature(definition):
-                    raise TypeError("Method signature does not match the definition of '{}.{}'"
-                                    .format(api_class.__name__, name))
+                elif callable(definition):
+                    defined, defined_repr = _signature(definition)
+                    provided, provided_repr = _signature(implementation)
+                    if provided != defined:
+                        raise TypeError(
+                            "Method signature does not match the definition of '{}.{}': "
+                            "{} instead of {}".format(api_class.__name__, name,
+                                                      provided_repr, defined_repr)
+                        )
                 elif isinstance(definition, property) and not isinstance(implementation, property):
                     raise TypeError("'{}.{}' is defined (but not implemented) as a property"
                                     .format(api_class.__name__, name))
@@ -1931,7 +1954,20 @@ def test_api_definition_errors():
         class InvalidMethodSignature:
             def api_echo(self, massage):
                 pass
-    assert str(e.value) == "Method signature does not match the definition of 'Application.echo'"
+    assert str(e.value) == ("Method signature does not match the definition of "
+                            "'Application.echo': (self, massage) instead of "
+                            "(self, message, kind='info')")
+
+    # Annotations don't belong to the contract, so they may be added freely.
+    def annotated_echo(self, message, kind='info'):
+        pass
+    annotated_echo.__annotations__ = {'message': str, 'kind': str, 'return': None}
+
+    @implements(Application, partial=('echo',))
+    class AnnotatedImplementation:
+        api_echo = annotated_echo
+
+    assert AnnotatedImplementation._api_implemented == ['echo']
 
     with pytest.raises(TypeError) as e:
         @implements(Application)
