@@ -1372,7 +1372,9 @@ class ProfileSelector(wx.ComboCtrl, CommandHandler):
         event.Skip()
         code = event.GetKeyCode()
         if code in (wx.WXK_ESCAPE, wx.WXK_TAB, wx.WXK_RETURN, wx.WXK_NUMPAD_ENTER):
-            pytis.form.app.current_form().focus()
+            form = pytis.form.app.current_form()
+            if form:
+                form.focus()
 
 
 class TextHeadingSelector(wx.Choice):
