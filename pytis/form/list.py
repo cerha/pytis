@@ -1523,10 +1523,13 @@ class ListForm(RecordForm, Refreshable):
     def list_position(self):
         # list_position() may be called on idle from application.py
         # _refresh_list_position() before the form is fully initialized.
-        # Note that BrowsableShowForm defines the same method, but
-        # The _list_position attribute is managed differently and
-        # there is no common base class that recognizes _list_position.
-        return getattr(self, '_list_position', None)
+        # Note that BrowsableShowForm defines the same method, but there is no
+        # common base class that recognizes _list_position and the attribute is
+        # managed differently there -- it is only assigned when the position is
+        # computed for the first time, so it may not exist even in a completely
+        # initialized form and must be accessed through getattr().  Here it is
+        # always initialized in _init_attributes().
+        return self._list_position if self.initialized() else None
 
     def _update_data_status(self):
         if self._reshuffle_request > self._last_reshuffle_request:
@@ -3268,7 +3271,7 @@ class SideBrowseForm(BrowseForm):
             self._lf_condition = self._selection_condition(row)
         elif self._xarguments is not None:
             self._lf_condition = None
-        if self._full_init_finished:
+        if self.initialized():
             self._refresh(interactive=True)
             query_fields = self._view.query_fields()
             if query_fields:
@@ -3295,7 +3298,7 @@ class SideBrowseForm(BrowseForm):
         form profile's filter.
 
         """
-        if not self.initialized():
+        if not self.initialization_started():
             self.full_init()
         bcol, sbcol = self._binding_column, self._side_binding_column
         if ((bcol is None or self._binding_condition is not None or

@@ -740,12 +740,12 @@ class MultiForm(Form, Refreshable):
 
     def _init_subform(self, i):
         form = self._subform(i)
-        if form and not form.initialized():
+        if form and not form.initialization_started():
             busy = is_busy_cursor()
             if not busy:
                 busy_cursor(True)
             try:
-                if form.initialized():
+                if form.initialization_started():
                     # This check is not redundant!  Even when the form is reported
                     # as uninitialized in the first call, it may already be
                     # initialized here.  Don't ask me why; I suspect busy_cursor
@@ -839,7 +839,9 @@ class MultiForm(Form, Refreshable):
             pass
         while nb.GetPageCount() > 0:
             form = nb.GetPage(0)
-            if form.initialized():
+            # Clean up also a form which failed to initialize (it may still
+            # hold a database connection).  Its _cleanup() handles that.
+            if form.initialization_started():
                 form.Reparent(self)
                 try:
                     nb.RemovePage(0)
@@ -912,7 +914,8 @@ class MultiForm(Form, Refreshable):
             super(MultiForm, self).set_callback(kind, function)
         self._form_callbacks_args.append((kind, function,))
         for form in self._subforms():
-            if hasattr(form, kind) and form.initialized():
+            # Forms initialized later get the callbacks in _init_subform().
+            if hasattr(form, kind) and form.initialization_started():
                 form.set_callback(kind, function)
 
     def active_form(self):

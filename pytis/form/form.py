@@ -514,21 +514,52 @@ class Form(wx.Panel, KeyHandler, CallbackHandler, CommandHandler):
         self._full_init_started = True
         kwargs = self._full_init_kwargs
         self._full_init_kwargs = None
-        self._full_init(**kwargs)
+        try:
+            self._full_init(**kwargs)
+        except Exception:
+            # The form remains partially initialized for the rest of its life
+            # (`initialized()' returns false), so log the cause explicitly.  It
+            # is otherwise hard to tell why the form silently does nothing.
+            log(OPERATIONAL, "Form initialization failed:", self)
+            raise
         self._full_init_finished = True
 
-    def initialized(self):
-        """Return true iff full form initialization was attempted.
+    def initialization_started(self):
+        """Return true iff full form initialization was already attempted.
 
-        If it wasn't, it is necessary to call `full_init` for this form to use
-        the form.
+        If it wasn't, it is necessary to call `full_init` before the form is
+        used.  Note that the initialization may still be in progress or it may
+        have failed, so a true result doesn't mean that the form may be used
+        (see `initialized`).
 
         """
         return self._full_init_started
 
+    def initialized(self):
+        """Return true iff the form is completely initialized and may be used.
+
+        Contrary to `initialization_started()`, which only tells that form
+        initialization was already attempted, this method returns true only
+        after the initialization successfully finished.  The distinction
+        matters, because the form may be only partially initialized even
+        though its initialization already started:
+
+          - The initialization is still in progress.  It involves database
+            operations during which wx events are processed, so form methods
+            may be invoked from event handlers before the form widgets and
+            attributes exist.
+          - The initialization failed (a database error, a specification
+            error, an interruption by the user, ...).  Such a form remains
+            partially initialized for the rest of its life.
+
+        Thus only forms for which this method returns true may be used.
+
+        """
+        return self._full_init_finished
+
     def command_enabled(self, command):
         # Prevent tracebacks on Update UI events in uninitialized side forms.
-        if not self._full_init_finished:
+        if not self.initialized():
             return False
         return super(Form, self).command_enabled(command)
 
@@ -4055,7 +4086,10 @@ class BrowsableShowForm(ShowForm):
         # list_position() may be called on idle from Application._refresh_list_position()
         # before the form is fully initialized. Note that ListForm defines the same
         # method, but the _list_position attribute is managed differently and there
-        # is no common base class that recognizes _list_position.
+        # is no common base class that recognizes _list_position.  Here the attribute
+        # is only assigned in _select_row() above and only when the current row and
+        # the total number of rows are known, so it may not exist even in a completely
+        # initialized form.  Thus getattr() rather than an initialized() check.
         return getattr(self, '_list_position', None)
 
 
