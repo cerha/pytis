@@ -230,7 +230,7 @@ class TestListFormCurrentRow:
 class TestDualFormAPI:
 
     @pytis.api.implements(pytis.api.Form, partial=('name',))
-    class Subform:
+    class Subform(pytis.api.APIImplementation):
         """Minimal stand in for a real form implementing the pytis.api.Form API."""
 
         def __init__(self, name):

@@ -43,11 +43,6 @@ except ImportError:
     TYPE_CHECKING = False
 
 
-def _unbound(method):
-    """Return the underlying function of given method (Python 2 compatibility)."""
-    return getattr(method, '__func__', method)
-
-
 def _signature(func):
     """Return the signature of given function as a tuple (for comparison, str).
 
@@ -71,7 +66,8 @@ def implements(api_class, partial=None):
 
     The argument is the API definition class.  Particular API definition classes
     are defined below.  The implementing class then must define all public
-    methods and properties defined by the definition class.
+    methods and properties defined by the definition class and derive from
+    `APIImplementation`.
 
     Some classes can only implement a part of the API.  Such as
     `pytis.application.BaseApplication`, which implements the members of the
@@ -136,15 +132,10 @@ def implements(api_class, partial=None):
                 raise TypeError("{} does not implement '{}.{}'"
                                 .format(cls.__name__, api_class.__name__, name))
         cls._api_implemented = required
-        provider = getattr(cls, 'provider', None)
-        if provider is None:
-            # Classes which don't derive from 'APIImplementation' (such as
-            # minimal API stand ins in tests) get the method added here.
-            cls.provider = APIImplementation.provider
-            cls._api_provider = APIImplementation._api_provider
-        elif _unbound(provider) is not _unbound(APIImplementation.provider):
-            raise TypeError("{} defines 'provider', which collides with the public API "
-                            "provider (derive it from pytis.api.APIImplementation)"
+        # Checked last -- an error in the API implementation itself is more
+        # interesting than a missing base class.
+        if not issubclass(cls, APIImplementation):
+            raise TypeError("{} does not derive from pytis.api.APIImplementation"
                             .format(cls.__name__))
         return cls
     return wrapper
@@ -153,7 +144,7 @@ def implements(api_class, partial=None):
 class APIImplementation(object):
     """Base class for classes implementing a Pytis API.
 
-    Classes implementing an API (marked by the `implements` decorator) should
+    Classes implementing an API (marked by the `implements` decorator) must
     derive from this class.  It only adds the public method `provider`, which is
     the only supported way to pass the implemented API to the applications.
 
@@ -1857,7 +1848,7 @@ def test_api_definition():
     import pytis.api
 
     @implements(pytis.api.Form)
-    class MyForm:
+    class MyForm(APIImplementation):
 
         @property
         def api_name(self):
@@ -1923,7 +1914,7 @@ def test_api_definition():
             pass
 
     @implements(pytis.api.Application, partial=('echo', 'form', 'param'))
-    class MyApp:
+    class MyApp(APIImplementation):
 
         non_api_attribute = 'non-API attribute'
 
@@ -2034,7 +2025,7 @@ def test_api_definition_errors():
     annotated_echo.__annotations__ = {'message': str, 'kind': str, 'return': None}
 
     @implements(Application, partial=('echo',))
-    class AnnotatedImplementation:
+    class AnnotatedImplementation(APIImplementation):
         api_echo = annotated_echo
 
     assert AnnotatedImplementation._api_implemented == ['echo']
@@ -2076,3 +2067,10 @@ def test_api_definition_errors():
             def api_nonsense(self):
                 pass
     assert str(e.value) == "'Application' does not define public API member 'nonsense'"
+
+    with pytest.raises(TypeError) as e:
+        @implements(Application, partial=('echo',))
+        class NotAnImplementation(object):
+            def api_echo(self, message, kind='info'):
+                pass
+    assert str(e.value) == "NotAnImplementation does not derive from pytis.api.APIImplementation"
