@@ -45,17 +45,25 @@ except ImportError:
     TYPE_CHECKING = False
 
 
-def implements(api_class, incomplete=False):
+def implements(api_class, partial=None):
     """Decorator for marking a class which implements a particular API.
 
     The argument is the API definition class.  Particular API definition classes
     are defined below.  The implementing class then must define all public
     methods and properties defined by the definition class.
 
+    Some classes can only implement a part of the API.  Such as
+    `BaseApplication`, which implements the members of the `Application` API
+    available even when no user interface is running.  These classes must list
+    the implemented members in 'partial'.  The list is checked in both
+    directions, so it always says exactly which members the applications can
+    rely on when this particular class implements the API.
+
     Arguments:
       api_class: The API definition class.
-      incomplete (bool): If True, incomplete implementations are allowed (not
-        all API members need to be implemented).
+      partial (sequence): Names of the API members implemented by the decorated
+        class.  The class must implement exactly these members (and no other).
+        When None, the class must implement the complete API.
 
     """
     def provider(self):
@@ -65,10 +73,12 @@ def implements(api_class, incomplete=False):
 
     def wrapper(cls):
         signature = inspect.signature if hasattr(inspect, 'signature') else inspect.getargspec
+        implemented = []
         for name in dir(cls):
             if name.startswith('api_'):
                 implementation = getattr(cls, name)
                 name = name[4:]
+                implemented.append(name)
                 try:
                     definition = getattr(api_class, name)
                 except AttributeError:
@@ -84,11 +94,22 @@ def implements(api_class, incomplete=False):
                     raise TypeError("'{}.{}' is defined (but not implemented) as a property"
                                     .format(api_class.__name__, name))
         cls._api_attributes = [name for name in dir(api_class) if not name.startswith('_')]
-        if not incomplete:
-            for name in cls._api_attributes:
-                if not hasattr(cls, 'api_' + name):
-                    raise TypeError("{} does not implement '{}.{}'"
-                                    .format(cls.__name__, api_class.__name__, name))
+        if partial is None:
+            required = cls._api_attributes
+        else:
+            required = list(partial)
+            for name in required:
+                if name not in cls._api_attributes:
+                    raise AttributeError("'{}' does not define public API member '{}'"
+                                         .format(api_class, name))
+            for name in sorted(set(implemented) - set(required)):
+                raise TypeError("{} implements '{}.{}' which is not listed as partial"
+                                .format(cls.__name__, api_class.__name__, name))
+        for name in required:
+            if not hasattr(cls, 'api_' + name):
+                raise TypeError("{} does not implement '{}.{}'"
+                                .format(cls.__name__, api_class.__name__, name))
+        cls._api_implemented = required
         cls.provider = provider
         return cls
     return wrapper
@@ -121,15 +142,24 @@ class APIProvider(object):
     def __repr__(self):
         return str(self)
 
-    def __getattr__(self, name):
-        if name not in self._instance._api_attributes:
+    def _api_member(self, name):
+        instance = self._instance
+        if name not in instance._api_attributes:
             raise AttributeError("'{}' object has no public API member '{}'"
-                                 .format(self._instance.__class__.__name__, name))
-        return getattr(self._instance, 'api_' + name)
+                                 .format(instance.__class__.__name__, name))
+        if name not in instance._api_implemented:
+            # Such as when 'app.form' is accessed in a script, where the API is
+            # implemented by 'BaseApplication' (which has no user interface).
+            raise AttributeError("'{}' does not implement public API member '{}'"
+                                 .format(instance.__class__.__name__, name))
+        return 'api_' + name
+
+    def __getattr__(self, name):
+        return getattr(self._instance, self._api_member(name))
 
     def __setattr__(self, name, value):
         if name != '_instance' and name in self._instance._api_attributes:
-            return setattr(self._instance, 'api_' + name, value)
+            return setattr(self._instance, self._api_member(name), value)
         else:
             return super(APIProvider, self).__setattr__(name, value)
 
@@ -152,15 +182,18 @@ class ApplicationAPIProvider(APIProvider):
         self._instance = None
 
     def __getattr__(self, name):
-        if self._instance is None and not name.startswith('__'):
+        if self._instance is None:
+            if name.startswith('__'):
+                # '__' prefixed attributes are ignored here because these
+                # may be examined during introspection, such as on pytest
+                # test collection.
+                raise AttributeError("The Pytis application API is not initialized yet "
+                                     "('{}' requested)".format(name))
             # Automatically handle application initialization for scripts:
             # Application attributes may be accessed here when no actual
             # application is running.  Initializing BaseApplication will
             # make the basic set of app methods (such as `app.param`,
             # app.has_access, ...) available on the 'app' object.
-            # '__' prefixed attributes are ignored here because these
-            # may be examined during introspection, such as on pytest
-            # test collection.
             BaseApplication()  # Will call app.init() automatically.
         return super(ApplicationAPIProvider, self).__getattr__(name)
 
@@ -1731,14 +1764,15 @@ class Application(API):
         raise NotImplementedError
 
 
-@implements(Application, incomplete=True)
+@implements(Application, partial=('echo', 'has_access', 'param', 'printout'))
 class BaseApplication(object):
     """Base class for classes implementing the `Application` API.
 
-    This class only implements a few basic API points, such as `app.param`,
-    `has_access` and `printout`.  It may be used as a base class for other
-    classes implementing the full `Application` API and its instance is
-    available as a fallback app instance in scripts.
+    This class only implements the API members which work without a user
+    interface -- they are listed in the `implements` decorator above and
+    accessing any other member of the API raises `AttributeError`.  It may be
+    used as a base class for other classes implementing the full `Application`
+    API and its instance is available as a fallback app instance in scripts.
 
     Without the fallback instance, it would simply not be possible to even load
     specifications through the resolver in scripts (when the wx app is not
@@ -1746,9 +1780,15 @@ class BaseApplication(object):
     specification construction methods.
 
     """
-    class _Param:  # Access items as attributes.
+    class _Param:
+        """Implementation of the `Params` API (access items as attributes)."""
+
         def __init__(self, items):
-            self.__dict__ = dict(items)
+            self.__dict__.update(items)
+
+        def __getattr__(self, name):
+            raise AttributeError("The application defines no shared parameters '{}'"
+                                 .format(name))
 
     def __init__(self):
         import pytis
@@ -2060,7 +2100,7 @@ def test_api_definition():
         def api_close(self, force=False):
             pass
 
-    @implements(pytis.api.Application, incomplete=True)
+    @implements(pytis.api.Application, partial=('echo', 'form', 'param'))
     class MyApp:
 
         non_api_attribute = 'non-API attribute'
@@ -2094,6 +2134,14 @@ def test_api_definition():
         app.non_api_attribute
     assert str(e.value) == "'MyApp' object has no public API member 'non_api_attribute'"
 
+    # 'status' belongs to the API, but this partial implementation doesn't have it.
+    with pytest.raises(AttributeError) as e:
+        app.status
+    assert str(e.value) == "'MyApp' does not implement public API member 'status'"
+    with pytest.raises(AttributeError) as e:
+        app.title = 'Title'
+    assert str(e.value) == "'MyApp' does not implement public API member 'title'"
+
 
 def test_api_definition_errors():
     import pytest
@@ -2125,3 +2173,28 @@ def test_api_definition_errors():
         class IncompleteApplication:
             pass
     assert str(e.value).startswith("IncompleteApplication does not implement 'Application.")
+
+    with pytest.raises(TypeError) as e:
+        @implements(Application, partial=('echo',))
+        class UnlistedMember:
+            def api_echo(self, message, kind='info'):
+                pass
+
+            @property
+            def api_title(self):
+                pass
+    assert str(e.value) == ("UnlistedMember implements 'Application.title' "
+                            "which is not listed as partial")
+
+    with pytest.raises(TypeError) as e:
+        @implements(Application, partial=('echo', 'title'))
+        class UnimplementedMember:
+            def api_echo(self, message, kind='info'):
+                pass
+    assert str(e.value) == "UnimplementedMember does not implement 'Application.title'"
+
+    with pytest.raises(AttributeError) as e:
+        @implements(Application, partial=('nonsense',))
+        class UndefinedMember:
+            pass
+    assert str(e.value).endswith("does not define public API member 'nonsense'")

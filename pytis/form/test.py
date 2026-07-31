@@ -229,7 +229,7 @@ class TestListFormCurrentRow:
 
 class TestDualFormAPI:
 
-    @pytis.api.implements(pytis.api.Form, incomplete=True)
+    @pytis.api.implements(pytis.api.Form, partial=('name',))
     class Subform:
         """Minimal stand in for a real form implementing the pytis.api.Form API."""
 
@@ -552,13 +552,15 @@ def initconfig(dbconnection):
 class _TestApplication(object):
     """Minimal stub exercising Application file I/O methods without wx.
 
-    Copies _api_attributes and _ExposedFileWrapper as class attributes so that
-    pytis.api.app.init() accepts the instance.  All other method lookups are
-    delegated to Application via __getattr__, which binds the method to this
-    instance at call time.  This lets us exercise the real Application
-    implementation without inheriting wx.App (which would need a display).
+    Copies the attributes set by the pytis.api.implements decorator and
+    _ExposedFileWrapper as class attributes so that pytis.api.app.init()
+    accepts the instance.  All other method lookups are delegated to
+    Application via __getattr__, which binds the method to this instance at
+    call time.  This lets us exercise the real Application implementation
+    without inheriting wx.App (which would need a display).
     """
     _api_attributes = _pfa.Application._api_attributes
+    _api_implemented = _pfa.Application._api_implemented
     _ExposedFileWrapper = _pfa.Application._ExposedFileWrapper
 
     def __init__(self):

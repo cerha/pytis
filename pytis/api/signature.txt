@@ -105,4 +105,4 @@ StatusFields
 StatusFields.__call__(name)
 StatusFields.__getattr__(name)
 app
-implements(api_class, incomplete=False)
+implements(api_class, partial=None)
