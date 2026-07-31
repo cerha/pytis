@@ -54,8 +54,9 @@ from __future__ import print_function
 from .api import (
     implements as implements, APIProvider as APIProvider,
     ApplicationAPIProvider as ApplicationAPIProvider, BaseApplication as BaseApplication,
-    Application as Application, Form as Form, Field as Field,
-    QueryFields as QueryFields, StatusField as StatusField,
+    Application as Application, Form as Form, Field as Field, Fields as Fields,
+    QueryFields as QueryFields, StatusField as StatusField, StatusFields as StatusFields,
+    Params as Params, Selection as Selection,
 )
 
 app = ApplicationAPIProvider()  # type: Application

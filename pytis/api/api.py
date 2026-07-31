@@ -201,7 +201,7 @@ class Form(API):
         raise NotImplementedError
 
     @property
-    def field(self):  # type: () -> Any
+    def field(self):  # type: () -> Optional['Fields']
         """Access to input fields through the attributes of this object.
 
         Has one attribute named by field id for each field present in the
@@ -257,7 +257,7 @@ class Form(API):
         raise NotImplementedError
 
     @property
-    def selection(self):  # type: () -> Iterator[pytis.presentation.PresentedRow]
+    def selection(self):  # type: () -> 'Selection'
         """Iterator over all currently selected rows.
 
         Returns an iterator over `pytis.presentation.PresentedRow` instances
@@ -391,6 +391,48 @@ class Form(API):
         raise NotImplementedError
 
 
+class Selection(API):
+    """Public API representation of a form's current row selection.
+
+    Returned by `pytis.api.Form.selection`.  Iterating over the instance
+    yields the selected rows.  See the documentation of
+    `pytis.api.Form.selection` for the semantics of the iteration.
+
+    """
+
+    def __iter__(self):  # type: () -> Iterator[pytis.presentation.PresentedRow]
+        """Iterate over the selected rows."""
+        raise NotImplementedError
+
+    def __len__(self):  # type: () -> int
+        """Total number of rows in the selection at the time it was created."""
+        raise NotImplementedError
+
+    @property
+    def processed(self):  # type: () -> int
+        """Number of rows successfully yielded so far.
+
+        Can be read during or after the iteration.
+
+        """
+        raise NotImplementedError
+
+    @property
+    def invalidated(self):  # type: () -> bool
+        """True if the iteration was cut short by a database connection loss."""
+        raise NotImplementedError
+
+    @property
+    def form(self):  # type: () -> 'Form'
+        """The `pytis.api.Form` instance of the originating form.
+
+        Useful when the selection is passed as an argument to an action
+        handler and the handler needs to access the form API.
+
+        """
+        raise NotImplementedError
+
+
 class StatusField(API):
     """Public API representation of a status bar field.
 
@@ -460,6 +502,37 @@ class StatusField(API):
         raise NotImplementedError
 
 
+class StatusFields(API):
+    """Public API representation of the application status bar fields.
+
+    Returned by `pytis.api.Application.status`.  Has one attribute named by
+    field id for each field present in the status bar.  Each attribute
+    represents a `pytis.api.StatusField` API.
+
+    """
+
+    def __getattr__(self, name):  # type: (str) -> 'StatusField'
+        """Return the status bar field of given id as `pytis.api.StatusField`.
+
+        Hyphens in field ids are replaced by underscores in attribute names.
+
+        Raises:
+          `AttributeError`: When the status bar has no such field.
+
+        """
+        raise NotImplementedError
+
+    def __call__(self, name):  # type: (str) -> 'StatusField'
+        """Return the status bar field of given id as `pytis.api.StatusField`.
+
+        Same as accessing the field as an attribute, but the field id is
+        passed as a string, so hyphens don't need to be replaced by
+        underscores.
+
+        """
+        raise NotImplementedError
+
+
 class Field(API):
     """Public API representation of a form input field."""
 
@@ -484,6 +557,34 @@ class Field(API):
         raise NotImplementedError
 
 
+class Fields(API):
+    """Public API representation of the form's input fields.
+
+    Returned by `pytis.api.Form.field`.  Has one attribute named by field id
+    for each field present in the form.  Each attribute represents a
+    `pytis.api.Field` API.
+
+    """
+
+    def __getattr__(self, name):  # type: (str) -> 'Field'
+        """Return the form field of given id as `pytis.api.Field`.
+
+        Raises:
+          `AttributeError`: When the form has no such field.
+
+        """
+        raise NotImplementedError
+
+    def __call__(self, name):  # type: (str) -> 'Field'
+        """Return the form field of given id as `pytis.api.Field`.
+
+        Same as accessing the field as an attribute, but the field id is
+        passed as a string.
+
+        """
+        raise NotImplementedError
+
+
 class QueryFields(API):
     """Public API representation of the form's query fields panel."""
 
@@ -491,6 +592,25 @@ class QueryFields(API):
     def row(self):  # type: () -> pytis.presentation.PresentedRow
         """The query field values as `pytis.presentation.PresentedRow`
         instance.
+
+        """
+        raise NotImplementedError
+
+
+class Params(API):
+    """Public API representation of the application shared parameters.
+
+    Returned by `pytis.api.Application.param`.  Has one attribute for each
+    `pytis.presentation.SharedParams` instance defined in
+    `Application.params`, named by the name defined by that instance.
+
+    """
+
+    def __getattr__(self, name):  # type: (str) -> pytis.util.DBParams
+        """Return the shared parameters of given name as `pytis.util.DBParams`.
+
+        Raises:
+          `AttributeError`: When no shared parameters of such name are defined.
 
         """
         raise NotImplementedError
@@ -509,7 +629,7 @@ class Application(API):
         raise NotImplementedError
 
     @property
-    def param(self):  # type: () -> Any
+    def param(self):  # type: () -> 'Params'
         """Access to shared parameters.
 
         Shared parameters provide a simple way to share values between
@@ -572,7 +692,7 @@ class Application(API):
         raise NotImplementedError
 
     @property
-    def status(self):  # type: () -> Any
+    def status(self):  # type: () -> 'StatusFields'
         """Access to status bar fields.
 
         The returned object has one attribute named by field id for each field
