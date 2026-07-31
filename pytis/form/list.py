@@ -2298,15 +2298,15 @@ class ListForm(RecordForm, Refreshable):
         event.Skip()
         return False
 
-    def focus(self):
-        super(ListForm, self).focus()
+    def _focus(self):
+        super(ListForm, self)._focus()
         self._update_list_position()
         self._update_data_status()
         self._grid.SetFocus()
         self._grid.Refresh()
 
-    def defocus(self):
-        super(ListForm, self).defocus()
+    def _defocus(self):
+        super(ListForm, self)._defocus()
         self._grid.Refresh()
 
 

@@ -282,7 +282,7 @@ class DualForm(Form, Refreshable):
         except Exception:
             pass
 
-    def focus(self):
+    def _focus(self):
         active = self._active_form
         if active:
             active.focus()
@@ -953,12 +953,12 @@ class MultiForm(Form, Refreshable):
                 form.restore()
         super(MultiForm, self).restore()
 
-    def focus(self):
+    def _focus(self):
         active = self.active_form()
         if active:
             active.focus()
 
-    def defocus(self):
+    def _defocus(self):
         active = self.active_form()
         if active:
             active.defocus()
@@ -986,11 +986,11 @@ class MultiSideForm(MultiForm):
         def binding(self):
             return self._binding
 
-        def focus(self):
+        def _focus(self):
             nb = self.Parent
             if nb.GetPageIndex(self) == nb.GetSelection():
                 # Only perform focus if the form is currently selected in the notebook.
-                super(MultiSideForm.TabbedForm, self).focus()
+                super(MultiSideForm.TabbedForm, self)._focus()
 
     class TabbedBrowseForm(TabbedForm, SideBrowseForm):
 

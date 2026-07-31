@@ -626,6 +626,18 @@ class Form(wx.Panel, KeyHandler, CallbackHandler, CommandHandler):
 
     def focus(self):
         """Focus this form."""
+        # Ignore focusing of a form which is not (yet) usable.  Focus requests
+        # may arrive from event handlers at any time, so see `initialized()'.
+        if self.initialized():
+            self._focus()
+
+    def _focus(self):
+        """Perform the actual form focusing.
+
+        Derived classes should override this method rather than `focus()` to
+        keep the guard against operations on partially initialized forms.
+
+        """
         if Form._focused_form:
             Form._focused_form.defocus()
         Form._focused_form = self
@@ -633,6 +645,16 @@ class Form(wx.Panel, KeyHandler, CallbackHandler, CommandHandler):
 
     def defocus(self):
         """Defocus this form."""
+        if self.initialized():
+            self._defocus()
+
+    def _defocus(self):
+        """Perform the actual form defocusing.
+
+        Derived classes should override this method rather than `defocus()` to
+        keep the guard against operations on partially initialized forms.
+
+        """
         if Form._focused_form is self:
             Form._focused_form = None
 
@@ -4144,8 +4166,8 @@ class WebForm(ViewerForm):
         else:
             self._browser.load_content(content)
 
-    def focus(self):
-        super(WebForm, self).focus()
+    def _focus(self):
+        super(WebForm, self)._focus()
         self._browser.SetFocus()
 
 
