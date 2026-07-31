@@ -164,10 +164,13 @@ class DualForm(Form, Refreshable):
         return other_form
 
     def _select_form(self, form, force=False):
-        form.focus()
-        if form is None or (form is self._active_form and not force):
+        if form is None:
             return
+        # Focus the form even when it is already the active one (the user may
+        # have interacted with it after the focus went elsewhere).
         form.focus()
+        if form is self._active_form and not force:
+            return
         self._active_form = form
 
     def title(self):
