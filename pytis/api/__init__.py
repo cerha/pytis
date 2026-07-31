@@ -53,11 +53,12 @@ from __future__ import print_function
 # without maintaining a separate __all__ list.
 from .api import (
     implements as implements, APIProvider as APIProvider,
-    ApplicationAPIProvider as ApplicationAPIProvider, BaseApplication as BaseApplication,
+    ApplicationAPIProvider as ApplicationAPIProvider,
     Application as Application, Form as Form, Field as Field, Fields as Fields,
     QueryFields as QueryFields, StatusField as StatusField, StatusFields as StatusFields,
     Params as Params, Selection as Selection,
 )
+from .application import BaseApplication as BaseApplication
 
 # The name bound by the future import above (the compiler directive itself is not
 # affected) would otherwise become a part of this module's public API.
