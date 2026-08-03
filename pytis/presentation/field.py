@@ -711,8 +711,8 @@ class PresentedRow(object):
           export (callable): Custom export function to use instead of
             `pytis.data.Value.export` (callable of one argument, the internal
             field value).
-          **kwargs: Keyword arguments passed to the
-          `pytis.data.Value.export` method of the field's Value instance.
+          kwargs (dict): Keyword arguments passed to the
+            `pytis.data.Value.export` method of the field's Value instance.
 
         """
         cache_key = (key, single, secure, pretty, export)
