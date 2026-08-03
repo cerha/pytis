@@ -920,7 +920,7 @@ class IntegerRange(Range, Integer):
           lower_inc (bool): Whether the lower bound is inclusive.
           upper_inc (bool): Whether the upper bound is inclusive.
 
-          Other arguments are the same as in `Integer`.
+        Other arguments are the same as in `Integer`.
 
         """
         Type.__init__(self, not_null=not_null, unique=unique,
@@ -980,7 +980,7 @@ class LargeIntegerRange(Range, Integer):
           lower_inc (bool): Whether the lower bound is inclusive.
           upper_inc (bool): Whether the upper bound is inclusive.
 
-          Other arguments are the same as in `LargeInteger`.
+        Other arguments are the same as in `LargeInteger`.
 
         """
         Type.__init__(self, not_null=not_null, unique=unique,
@@ -1432,7 +1432,7 @@ class Password(String):
             not considered to be user input, but an already hashed value (e.g. read
             from data source).
 
-          Other arguments are the same as in `String`.
+        Other arguments are the same as in `String`.
 
         """
         super(Password, self).__init__(not_null=not_null, unique=unique,
@@ -1527,7 +1527,7 @@ class RegexString(String):
           regex (str): A regular expression pattern the value must match, or None
             to use the class-level `_REGEX` attribute.
 
-          Other arguments are the same as in `String`.
+        Other arguments are the same as in `String`.
 
         """
         super(RegexString, self).__init__(not_null=not_null, unique=unique,
@@ -1665,7 +1665,7 @@ class FullTextIndex(String):
             included for the purpose of generating full text search headlines when a
             column of this type is included in the full text search.
 
-          Other arguments are the same as in `String`.
+        Other arguments are the same as in `String`.
 
         """
         assert isinstance(columns, (list, tuple)), ("Invalid argument type", columns,)
@@ -1781,7 +1781,7 @@ class _CommonDateTime(Type):
           precision (int): Optional precision value p which specifies the number of
             fractional digits retained in the seconds field, default 0.
 
-          Other arguments are the same as in `Type`.
+        Other arguments are the same as in `Type`.
 
         """
         self._init_common_datetime(format, utc, without_timezone, precision)
@@ -1972,7 +1972,7 @@ class DateTime(_CommonDateTime):
             fractional digits retained in the seconds field, default 0.
           utc (bool): Specifies whether timestamp in database is in UTC.
 
-          Other arguments are the same as in `_CommonDateTime`.
+        Other arguments are the same as in `_CommonDateTime`.
 
         """
         assert mindate is None or isinstance(mindate, basestring)
@@ -2200,7 +2200,7 @@ class DateTimeRange(Range, DateTime):
           lower_inc (bool): Whether the lower bound is inclusive.
           upper_inc (bool): Whether the upper bound is inclusive.
 
-          Other arguments are the same as in `DateTime`.
+        Other arguments are the same as in `DateTime`.
 
         """
         if format is None:
@@ -2264,7 +2264,7 @@ class Date(DateTime):
             defines `*_FORMAT` constants which may be used as a value of this
             argument.
 
-          Other arguments are the same as in `DateTime`.
+        Other arguments are the same as in `DateTime`.
 
         """
         if format is None:
@@ -2320,7 +2320,7 @@ class DateRange(Range, Date):
           lower_inc (bool): Whether the lower bound is inclusive.
           upper_inc (bool): Whether the upper bound is inclusive.
 
-          Other arguments are the same as in `Date`.
+        Other arguments are the same as in `Date`.
 
         """
         if format is None:
@@ -3073,7 +3073,7 @@ class Array(Limited):
         Arguments:
           inner_type (Type): Mandatory. The pytis type of the array items.
 
-          Other arguments are the same as in `Limited`.
+        Other arguments are the same as in `Limited`.
 
         """
         assert isinstance(inner_type, Type)
@@ -3189,7 +3189,7 @@ class JSON(Type):
           schema (dict): Optional JSON Schema dict. When given, validated values
             must conform to the schema (requires the `jsonschema` package).
 
-          Other arguments are the same as in `Type`.
+        Other arguments are the same as in `Type`.
 
         """
         super(JSON, self).__init__(not_null=not_null, unique=unique,
