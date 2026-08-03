@@ -555,6 +555,20 @@ class TestAppFileIO:
         finally:
             os.remove(fname)
 
+    def test_readlines(self, app_mode):
+        """File objects returned by open_file must support readlines()."""
+        fd, fname = tempfile.mkstemp(suffix='.txt')
+        os.close(fd)
+        try:
+            app.write_file(u"Žluťoučký\nkůň\n", fname, mode='w')
+            with app.open_file(fname, mode='r') as f:
+                assert f.readlines() == [u"Žluťoučký\n", u"kůň\n"]
+            with app.open_file(fname, mode='rb') as f:
+                assert f.readlines() == [u"Žluťoučký\n".encode('utf-8'),
+                                         u"kůň\n".encode('utf-8')]
+        finally:
+            os.remove(fname)
+
     def test_seek_and_read(self, app_mode):
         fd, fname = tempfile.mkstemp(suffix='.bin')
         os.close(fd)

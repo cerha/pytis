@@ -1658,7 +1658,8 @@ class Application(pytis.api.BaseApplication, wx.App, KeyHandler, CommandHandler)
             return self._decode(self._buffer.readline())
 
         def readlines(self):
-            return [self._decode(line) for line in self]
+            # Iteration goes through readline(), which already decodes the data.
+            return list(self)
 
         def write(self, data):
             if self._text_mode:
