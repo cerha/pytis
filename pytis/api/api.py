@@ -1493,9 +1493,9 @@ class Application(API):
 
         Arguments:
           function (callable): Callable to be called.
-          *args: Arguments to be passed to the function. **kwargs: Keyword
-          arguments to be passed to the function except for the keyword argument
-            'enabled'.
+          args (tuple): Arguments to be passed to the function.
+          kwargs (dict): Keyword arguments to be passed to the function except
+            for the keyword argument 'enabled'.
 
         Returns:
           The value returned by the function.
