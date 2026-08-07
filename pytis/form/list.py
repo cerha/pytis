@@ -855,7 +855,10 @@ class ListForm(RecordForm, Refreshable):
                 if row >= g.GetNumberRows():
                     row_count = self._table.number_of_rows(min_value=(row + 1))
                     if row < row_count:
-                        self._update_grid_length(g, row_count, current_row)
+                        # The batch is important to prevent scanning all table
+                        # cells, see the note in _resize_columns.
+                        with self._grid_batch():
+                            self._update_grid_length(g, row_count, current_row)
                 if row < 0 or row >= g.GetNumberRows():
                     row = 0
                 else:
@@ -1708,8 +1711,11 @@ class ListForm(RecordForm, Refreshable):
             width = self._ROW_LABEL_WIDTH
         else:
             width = 0
-        g.SetRowLabelSize(width)
-        g.FitInside()
+        # The batch is important to prevent scanning all table cells, see the
+        # note in _resize_columns.
+        with self._grid_batch():
+            g.SetRowLabelSize(width)
+            g.FitInside()
         self.refresh()
 
     @Command.define
@@ -1719,9 +1725,12 @@ class ListForm(RecordForm, Refreshable):
         col = g.GetGridCursorCol()
         newsize = g.GetColSize(col) + diff
         if newsize > 0:
-            g.SetColSize(col, newsize)
-            g.SetSize(g.GetSize())
-            g.Refresh()
+            # The batch is important to prevent scanning all table cells, see
+            # the note in _resize_columns.
+            with self._grid_batch():
+                g.SetColSize(col, newsize)
+                g.SetSize(g.GetSize())
+                g.Refresh()
             self._remember_column_width(col)
 
     @Command.define
@@ -2244,7 +2253,10 @@ class ListForm(RecordForm, Refreshable):
     @Command.define
     def select_all(self):
         """Extend the current selection to contain all rows."""
-        self._grid.SelectAll()
+        # The batch is important to prevent scanning all table cells, see the
+        # note in _resize_columns.
+        with self._grid_batch():
+            self._grid.SelectAll()
 
     @Command.define
     def clear_selection(self):
