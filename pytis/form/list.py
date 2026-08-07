@@ -163,9 +163,10 @@ class ListForm(RecordForm, Refreshable):
                 row_list = grid.GetSelectedRows()
                 length = len(row_list)
             if length == 0 and fallback_to_current_row:
-                row_number = table.current_row()
-                ranges = [(row_number, row_number)]
-                length = 1
+                row_number = grid.GetGridCursorRow()
+                if row_number >= 0:
+                    ranges = [(row_number, row_number)]
+                    length = 1
             super(ListForm.Selection, self).__init__(form, length)
             self._table = table
             self._data = data
@@ -774,9 +775,8 @@ class ListForm(RecordForm, Refreshable):
         self.Sizer.Layout()
         self._grid.SetFocus()
         if not rollback:
-            row = self._table.current_row()
-            if row is not None:
-                record = self._table.record(row)
+            record = self.current_row()
+            if record is not None:
                 self._run_callback(self.CALL_SELECTION, record)
 
     # Helper methods
@@ -1977,7 +1977,7 @@ class ListForm(RecordForm, Refreshable):
             self._popup_menu(menu, position=position)
 
     def _can_context_menu(self, position=None):
-        return self._grid.IsSelection() or self._table.current_row() is not None
+        return self._grid.IsSelection() or self._grid.GetGridCursorRow() >= 0
 
     def _popup_menu(self, items, position=None):
         pytis.form.app.popup_menu(self._grid, items, keymap=self._get_keymap(), position=position)

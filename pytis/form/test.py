@@ -122,6 +122,101 @@ class TestListFormSelection:
         assert list(selection) == [0, 1, 2]
         assert list(selection) == [0, 1, 2]
 
+    @pytest.fixture
+    def empty_selection(self):
+        # Nothing is selected in the grid, so 'fallback_to_current_row' applies.
+        # GridTable.data_position() deliberately returns another row than the
+        # grid cursor -- it holds the row of the last GridTable.record() call,
+        # which may be the row under the mouse pointer or the last painted row.
+        from pytis.form.list import ListForm
+        try:
+            import unittest.mock as mock
+        except ImportError:
+            import mock
+
+        def make(cursor_row):
+            grid = mock.Mock(GetSelectedRowBlocks=mock.Mock(return_value=[]),
+                             GetGridCursorRow=mock.Mock(return_value=cursor_row))
+            table = mock.Mock(record=lambda n: n,
+                              data_position=mock.Mock(return_value=17))
+            return ListForm.Selection(form=None, data=mock.Mock(selection_id=42),
+                                      grid=grid, table=table, fallback_to_current_row=True)
+        return make
+
+    def test_fallback_uses_the_grid_cursor(self, empty_selection):
+        # Regression: the row was taken from GridTable.data_position(), so the
+        # action was invoked on a different row than the one highlighted.
+        selection = empty_selection(5)
+        assert len(selection) == 1
+        assert list(selection) == [5]
+
+    def test_fallback_without_grid_cursor(self, empty_selection):
+        selection = empty_selection(-1)
+        assert len(selection) == 0
+        assert list(selection) == []
+
+
+class TestListFormCurrentRow:
+    """Tests of the places where the row the user works with is determined.
+
+    The methods are called unbound with a mock instance, so that no wx
+    application nor database is needed.  The mock table deliberately reports a
+    different data position than the grid cursor, which is the situation
+    arising whenever a tooltip was displayed for another row than the selected
+    one.
+
+    """
+
+    @pytest.fixture
+    def mock(self):
+        try:
+            import unittest.mock as mock
+        except ImportError:
+            import mock
+        return mock
+
+    @pytest.fixture
+    def form(self, mock):
+        from pytis.form.list import ListForm
+
+        def make(cursor_row, selection=False):
+            return mock.Mock(
+                _grid=mock.Mock(IsSelection=mock.Mock(return_value=selection),
+                                GetGridCursorRow=mock.Mock(return_value=cursor_row)),
+                _table=mock.Mock(data_position=mock.Mock(return_value=17)),
+                CALL_SELECTION=ListForm.CALL_SELECTION,
+            )
+        return make
+
+    def test_context_menu_enabled_on_grid_cursor(self, form):
+        from pytis.form.list import ListForm
+        assert ListForm._can_context_menu(form(5))
+
+    def test_context_menu_disabled_without_grid_cursor(self, form):
+        # Regression: enabled through the data pointer even with no cursor.
+        from pytis.form.list import ListForm
+        assert not ListForm._can_context_menu(form(-1))
+
+    def test_context_menu_enabled_on_selection(self, form):
+        from pytis.form.list import ListForm
+        assert ListForm._can_context_menu(form(-1, selection=True))
+
+    def test_incremental_search_reports_the_current_row(self, form, mock):
+        # Regression: the record was fetched for the data pointer position.
+        from pytis.form.list import ListForm
+        f = form(5)
+        f.current_row.return_value = 'RECORD'
+        ListForm._exit_incremental_search(f, rollback=False)
+        f._run_callback.assert_called_once_with(ListForm.CALL_SELECTION, 'RECORD')
+        assert not f._table.record.called
+
+    def test_incremental_search_without_current_row(self, form):
+        from pytis.form.list import ListForm
+        f = form(-1)
+        f.current_row.return_value = None
+        ListForm._exit_incremental_search(f, rollback=False)
+        assert not f._run_callback.called
+
 
 class TestDataTable(DBTest):
 
