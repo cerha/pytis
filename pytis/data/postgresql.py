@@ -3181,6 +3181,17 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
                         pass
                 self._pg_select_transaction = None
                 raise_(cls, e, tb)
+            if row_data:
+                # Each row carries its own absolute position within the select
+                # (the row_number() column added in _pdbb_command_select).
+                # Verify it matches the requested position, so that we never
+                # silently return rows from another position.  Such a mismatch
+                # is invisible to the caller and leads to operating on a
+                # different row than the one presented to the user.
+                number = int(row_data[0][-1])
+                if number != position + 1:
+                    raise ProgramError("Fetched row position mismatch",
+                                       'requested', position, 'received', number - 1)
             if isinstance(self._pg_number_of_rows, self._PgRowCounting):
                 self._pg_number_of_rows.restart()
         else:
