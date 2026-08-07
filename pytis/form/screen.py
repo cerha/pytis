@@ -1070,6 +1070,10 @@ class StatusBar(object):
     def _on_click(self, event):
         field = self._field_on_position(event.GetX())
         if field:
+            # Hide the tooltip (and prevent it from popping up again) as it would
+            # otherwise overlap whatever the click handler displays, such as a popup menu.
+            self._tooltip.DoHideNow()
+            self._last_tooltip_field = None
             field._on_click(event)
 
     def _on_motion(self, event):
