@@ -2132,7 +2132,7 @@ class FetchBuffer(object):
                 del buf[:overlap]
             cutoff = max(size - retain - overlap, 0)
             if cutoff:
-                del buf[:cutoff]
+                del buf[-cutoff:]
             buf[0:0] = items
             start = position
             pointer = -1

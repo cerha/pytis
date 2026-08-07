@@ -1292,6 +1292,19 @@ class TestFetchBuffer(object):
         assert buf.fetch(pd.FORWARD) == 'S'
         assert len(buf) == 20  # limit
 
+    def test_prepend_to_full_buffer(self, buf):
+        # Fill the buffer up to its limit by reading forward (the buffer then
+        # starts at position 2) and then prepend items in front of its start.
+        # The items cut off to respect the limit must be removed from the end,
+        # otherwise the buffer contents get shifted against their positions.
+        for position in (0, 11, 17):
+            buf.fetch(position)
+        assert len(buf) == 20  # limit
+        assert buf.fetch(1) == 'B'
+        assert len(buf) == 20  # limit
+        for position in range(0, 20):
+            assert buf.fetch(position) == chr(position + ord('A'))
+
 
 class _DBBaseTest(unittest.TestCase):
 
