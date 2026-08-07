@@ -2621,8 +2621,11 @@ class FoldableForm(ListForm):
         if row_number is None:
             unfolded_row_number = row_number
         else:
-            # self._table.current_row() returns None on the first row of a foldable tree table.
-            unfolded_row_number = self._table.current_row() or 0
+            # The data pointer was moved to 'row_number' by the rewind() call
+            # above, so unfolding the tree gives us its number in the unfolded
+            # table.  data_position() returns None on the first row of a
+            # foldable tree table.
+            unfolded_row_number = self._table.data_position() or 0
         try:
             result = super(FoldableForm, self)._search(condition, direction,
                                                        row_number=unfolded_row_number,

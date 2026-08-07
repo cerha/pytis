@@ -215,13 +215,20 @@ class DataTable(object):
         self._group_cache = {0: False}
         self._group_value_cache = {}
 
-    def current_row(self):
-        """Return the number of the current row of the table's data object.
+    def data_position(self):
+        """Return the row number the underlying data pointer is at.
+
+        This is the position of the last row retrieved by `record`, which is
+        not necessarily the row the user has selected in the form.  Rows are
+        painted, examined for grouping and queried for tooltips as the user
+        moves the mouse around, and each such access moves the data pointer.
+        To find out which row the user works with, ask the form (see
+        `ListForm.current_row`), never this method.
 
         Rows are numbered from 0.
 
         Returns:
-          The current row number as an int, or None if not known.
+          The row number as an int, or None if not known.
 
         """
         current = self._current_row
