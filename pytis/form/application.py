@@ -2067,6 +2067,9 @@ class Application(pytis.application.BaseApplication, wx.App, KeyHandler, Command
     def _can_api_run_procedure(self, spec_name, proc_name, *args, **kwargs):
         return self._public_spec(spec_name)
 
+    def api_popup_menu(self, items, position=None):
+        self.popup_menu(wx.Window.FindFocus() or self._frame, items, position=position)
+
     @Command.define
     def api_web_view(self, title, content, name=None):
         if callable(content):

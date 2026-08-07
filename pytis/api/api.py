@@ -1364,6 +1364,26 @@ class Application(API):
         """
         raise NotImplementedError
 
+    def popup_menu(self, items, position=None):
+        # type: (Any, Optional[Tuple[int, int]]) -> None
+        """Display a pop-up menu and invoke the command of the selected item.
+
+        The menu is displayed at the current mouse pointer position unless
+        `position` is given.  The method returns immediately after displaying
+        the menu -- the command of the item selected by the user is invoked
+        asynchronously.
+
+        Arguments:
+          items: Sequence of `pytis.presentation.MenuItem`,
+            `pytis.presentation.MenuSeparator` or `pytis.presentation.Menu`
+            instances.  Use `Command(app.call, function)` to invoke an
+            application defined function from a menu item.
+          position (tuple): Optional position of the menu as a tuple (x, y)
+            relative to the currently focused window.
+
+        """
+        pass
+
     def web_view(self, title, content, name=None):  # type: (str, Any, Optional[str]) -> None
         """Show given content in a web browser inside the main application frame.
 
