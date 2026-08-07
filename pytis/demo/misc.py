@@ -607,7 +607,7 @@ class LongTable(Specification):
     def actions(self):
         return (
             Action('process', _("Process selection"), self._process,
-                   context=pp.ActionContext.SELECTION),
+                   context=pp.ActionContext.SELECTION, hotkey='p'),
         )
 
     def _process(self, rows):
