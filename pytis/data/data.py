@@ -2055,7 +2055,7 @@ class FetchBuffer(object):
             items = (buf[0], '...', buf[pointer], '...', buf[-1])
         return '<FetchBuffer: limit=%d, size=%d, start=%d, pointer=%d%s>' % \
             (self._limit, len(buf), self._start, self._pointer,
-             ('\n' if items else '') + '\n'.join(items))
+             ('\n' if items else '') + '\n'.join(unistr(item) for item in items))
 
     def __len__(self):
         return len(self._buffer)
