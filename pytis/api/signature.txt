@@ -36,6 +36,7 @@ Application.new_record(specification, prefill=None, inserted_data=None, multi_in
 Application.open_file(filename, mode='r', encoding=None)
 Application.open_selected_file(directory=None, mode='rb', encoding=None, encrypt=None, filetypes=None, context='default')
 Application.param
+Application.popup_menu(items, position=None)
 Application.printout(spec_name, template_id, row=None, parameters=None, output_file=None, language=None, form=None)
 Application.question(message, answers=None, default=None, title=None, content=None, timeout=None)
 Application.refresh()
