@@ -613,7 +613,7 @@ class LongTable(Specification):
     def _process(self, rows):
         def process(update, row, n):
             update(message=_("Processing row {}: {}").format(n, row['value'].value()))
-        app.run(process, over=rows, show_time=True, can_abort=True)
+        app.run(process, over=rows, elapsed_time=True, can_abort=True)
 
 
 class SlowLongTable(LongTable):
