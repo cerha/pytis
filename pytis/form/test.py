@@ -172,8 +172,20 @@ class TestListFormCurrentRow:
         try:
             import unittest.mock as mock
         except ImportError:
-            import mock
+            import mock  # TODO NOPY2: remove
         return mock
+
+    @pytest.fixture
+    def method(self):
+        from pytis.form.list import ListForm
+
+        def get(name):
+            # TODO NOPY2: Return getattr(ListForm, name) directly.  Python 2
+            # unbound methods refuse anything but a ListForm instance as
+            # 'self', so the underlying function must be used there.
+            method = getattr(ListForm, name)
+            return getattr(method, '__func__', method)
+        return get
 
     @pytest.fixture
     def form(self, mock):
@@ -188,33 +200,29 @@ class TestListFormCurrentRow:
             )
         return make
 
-    def test_context_menu_enabled_on_grid_cursor(self, form):
-        from pytis.form.list import ListForm
-        assert ListForm._can_context_menu(form(5))
+    def test_context_menu_enabled_on_grid_cursor(self, form, method):
+        assert method('_can_context_menu')(form(5))
 
-    def test_context_menu_disabled_without_grid_cursor(self, form):
+    def test_context_menu_disabled_without_grid_cursor(self, form, method):
         # Regression: enabled through the data pointer even with no cursor.
-        from pytis.form.list import ListForm
-        assert not ListForm._can_context_menu(form(-1))
+        assert not method('_can_context_menu')(form(-1))
 
-    def test_context_menu_enabled_on_selection(self, form):
-        from pytis.form.list import ListForm
-        assert ListForm._can_context_menu(form(-1, selection=True))
+    def test_context_menu_enabled_on_selection(self, form, method):
+        assert method('_can_context_menu')(form(-1, selection=True))
 
-    def test_incremental_search_reports_the_current_row(self, form, mock):
+    def test_incremental_search_reports_the_current_row(self, form, method):
         # Regression: the record was fetched for the data pointer position.
         from pytis.form.list import ListForm
         f = form(5)
         f.current_row.return_value = 'RECORD'
-        ListForm._exit_incremental_search(f, rollback=False)
+        method('_exit_incremental_search')(f, rollback=False)
         f._run_callback.assert_called_once_with(ListForm.CALL_SELECTION, 'RECORD')
         assert not f._table.record.called
 
-    def test_incremental_search_without_current_row(self, form):
-        from pytis.form.list import ListForm
+    def test_incremental_search_without_current_row(self, form, method):
         f = form(-1)
         f.current_row.return_value = None
-        ListForm._exit_incremental_search(f, rollback=False)
+        method('_exit_incremental_search')(f, rollback=False)
         assert not f._run_callback.called
 
 
