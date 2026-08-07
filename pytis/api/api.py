@@ -2055,9 +2055,12 @@ def test_api_definition_errors():
         class InvalidMethodSignature:
             def api_echo(self, massage):
                 pass
+    # The repr of the default value differs between Python 2 and 3 (u'info' vs.
+    # 'info'), so we take the definition signature from the same source as the
+    # tested code.
     assert str(e.value) == ("Method signature does not match the definition of "
-                            "'Application.echo': (self, massage) instead of "
-                            "(self, message, kind='info')")
+                            "'Application.echo': (self, massage) instead of {}"
+                            .format(_signature(Application.echo)[1]))
 
     # Annotations don't belong to the contract, so they may be added freely.
     def annotated_echo(self, message, kind='info'):
