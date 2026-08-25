@@ -35,7 +35,6 @@ import sys
 import pytest
 
 from pytis.api import app
-from pytis.remote.test import interactive
 
 pytestmark = pytest.mark.skipif(
     not os.getenv('PYTIS_RUN_TESTS'),
@@ -60,7 +59,7 @@ class TestApp:
         assert app.form.query_fields.row['minimum'].value() == 0
         assert app.form.query_fields.row['maximum'].value() == 100
 
-    @interactive
+    @pytest.mark.interactive
     def test_write_selected_file(self):
         for data, write_mode, read_mode, encoding in (
                 (u'some text', 'w', 'r', 'utf-8'),
@@ -75,7 +74,7 @@ class TestApp:
             with app.open_file(filename, mode=read_mode) as f:
                 assert f.read() == data
 
-    @interactive
+    @pytest.mark.interactive
     def test_write_selected_file_type_errors(self):
         if sys.version_info[0] > 2:
             with pytest.raises(TypeError):
