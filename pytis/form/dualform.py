@@ -24,19 +24,17 @@ individual classes for details.
 """
 from __future__ import print_function
 
-from past.builtins import basestring
 from builtins import range
 
 import copy
 import fitz
 import io
-import re
 import wx
 import wx.aui
 
 import pytis.data
 from pytis.api import app
-from pytis.presentation import Orientation, Menu, MenuItem, Command
+from pytis.presentation import Orientation, Menu, MenuItem, Command, PdfContent
 from pytis.util import EVENT, log, translations, ProgramError
 
 from .event import wx_callback
@@ -1030,46 +1028,26 @@ class MultiSideForm(MultiForm):
     class TabbedContentForm(TabbedForm):
 
         def _init_attributes(self, binding, main_form, **kwargs):
-            self._binding_content = binding.content()
-            self._content_type = binding.content_type()
+            self._content_spec = binding.content()
+            self._main_form = main_form
             super(MultiSideForm.TabbedContentForm, self)._init_attributes(binding=binding, **kwargs)
-
-        def _get_content(self, row):
-            if isinstance(self._binding_content, basestring):
-                column = self._binding_content
-                value = row[column].value()
-                if value is None:
-                    main_form = pytis.form.app.top_window().main_form()
-                    data = main_form.data()
-                    row = data.row(row[data.key()[0].id()],
-                                   arguments=main_form._current_arguments())
-                    value = row[column].value()
-                content = value
-            else:
-                content = self._binding_content(row)
-            return content
 
     class TabbedWebForm(TabbedContentForm, WebForm):
 
         def on_selection(self, row):
-            content = self._get_content(row)
-            content_type = self._content_type
-            if content_type == 'uri':
-                restrict_navigation = re.sub(r'^(https?://[a-z0-9][a-z0-9\.-]*).*',
-                                             lambda m: m.group(1), content)
-                self._browser.load_uri(content, restrict_navigation=restrict_navigation)
-            elif ((content_type == 'html' or
-                   # Backwards compatibility hack for existing specifications
-                   # which don't define content_type='html' properly.
-                   (content_type == 'lcg' and isinstance(content, basestring)))):
-                self._browser.load_html(content)
-            elif content_type == 'lcg':
-                self._browser.load_content(content)
+            spec = self._content_spec
+            self.load(spec.content(row, arguments=self._main_form._current_arguments()),
+                      restrict_navigation=spec.restrict_navigation(),
+                      on_navigation=spec.on_navigation(),
+                      base_uri=spec.base_uri(),
+                      resource_provider=spec.resource_provider(),
+                      row=row)
 
     class TabbedFileViewerForm(TabbedContentForm, FileViewerForm):
 
         def on_selection(self, row):
-            content = self._get_content(row)
+            content = self._content_spec.content(
+                row, arguments=self._main_form._current_arguments())
             if content and not hasattr(content, 'read') and not isinstance(content, fitz.Document):
                 content = io.BytesIO(content)
             self.load_file(content)
@@ -1097,7 +1075,7 @@ class MultiSideForm(MultiForm):
             form_class = self.TabbedShowForm
         elif binding.name():
             form_class = self.TabbedBrowseForm
-        elif binding.content_type() == 'pdf':
+        elif isinstance(binding.content(), PdfContent):
             form_class = self.TabbedFileViewerForm
         else:
             form_class = self.TabbedWebForm

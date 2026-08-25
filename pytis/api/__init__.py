@@ -56,7 +56,7 @@ from .api import (
     APIProvider as APIProvider, ApplicationAPIProvider as ApplicationAPIProvider,
     Application as Application, Form as Form, Field as Field, Fields as Fields,
     QueryFields as QueryFields, StatusField as StatusField, StatusFields as StatusFields,
-    Params as Params, Selection as Selection,
+    Params as Params, Selection as Selection, Browser as Browser,
 )
 
 # The name bound by the future import above (the compiler directive itself is not

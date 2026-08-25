@@ -726,6 +726,64 @@ class Params(API):
         raise NotImplementedError
 
 
+class Browser(API):
+    """Public API representation of an embedded web browser.
+
+    Passed to the 'on_navigation' function of
+    'pytis.presentation.WebContent' to let it change the displayed document,
+    such as to present the result of the performed action.
+
+    """
+
+    def load_uri(self, uri, restrict_navigation=None, on_navigation=None):
+        # type: (str, Any, Optional[Callable[..., Any]]) -> None
+        """Load browser content from given URI.
+
+        Arguments:
+          uri (str): URI of the document to load.
+          restrict_navigation: Restriction of further navigation as described in
+            'pytis.presentation.WebContent'.  Note that
+            'pytis.presentation.SAME_ORIGIN' can not be used here -- pass an
+            explicit prefix or function.
+          on_navigation: Function of one argument (the URI) called before the
+            browser navigates to it.  The semantics of the returned value is the
+            same as in 'pytis.presentation.WebContent', except that the row and
+            the browser are not passed (the caller already has them).
+
+        """
+        raise NotImplementedError
+
+    def load_html(self, html, base_uri='', restrict_navigation=None, on_navigation=None,
+                  resource_provider=None):
+        # type: (str, str, Any, Optional[Callable[..., Any]], Any) -> None
+        """Load browser content from given HTML string.
+
+        Arguments:
+          html (str): HTML document to be loaded into the browser.
+          base_uri (str): Base URI of the document.
+          restrict_navigation: As in 'load_uri'.
+          on_navigation: As in 'load_uri'.
+          resource_provider: 'lcg.ResourceProvider' instance providing external
+            resources for the document (images, scripts, stylesheets).
+
+        """
+        raise NotImplementedError
+
+    def load_content(self, content, base_uri='', restrict_navigation=None, on_navigation=None):
+        # type: (Any, str, Any, Optional[Callable[..., Any]]) -> None
+        """Load browser content from given 'lcg.Content' instance.
+
+        Arguments:
+          content: 'lcg.ContentNode' or 'lcg.Content' instance to be exported
+            into HTML and displayed.
+          base_uri (str): Base URI of the document.
+          restrict_navigation: As in 'load_uri'.
+          on_navigation: As in 'load_uri'.
+
+        """
+        raise NotImplementedError
+
+
 class Application(API):
     """Public API representation of the currently running application.
 
@@ -1384,7 +1442,10 @@ class Application(API):
         """
         pass
 
-    def web_view(self, title, content, name=None):  # type: (str, Any, Optional[str]) -> None
+    def web_view(self, title, content, name=None,
+                 restrict_navigation=pytis.presentation.NO_NAVIGATION,
+                 on_navigation=None):
+        # type: (str, Any, Optional[str], Any, Optional[Callable[..., Any]]) -> None
         """Show given content in a web browser inside the main application frame.
 
         The browser window behaves as any other form displayed using `run_form`.
@@ -1392,11 +1453,30 @@ class Application(API):
         Arguments:
           title (str): Form title used to identify the window within the
             application (e.g. when switching windows).
-          content: The content to be displayed.  May be passed as an lcg.Content
-            instance or an HTML string.  If callable, it will be called without
-            arguments and the returned value is used instead.
+          content: The content to be displayed -- an URI, an HTML string or an
+            lcg.Content instance.  A string is recognized as an URI when it
+            starts with a scheme, such as 'https://'.  If callable, it will be
+            called without arguments and the returned value is used instead.
+            This is useful when the call is bound to a menu item, where the
+            arguments are evaluated when the menu is defined.
           name (str): Optional string name identifying the web browser form
             within app.forms.
+          restrict_navigation: Restriction of further navigation within the
+            browser.  May be an URI prefix (string), which only allows
+            navigation to URIs starting with given prefix, or a function of one
+            argument (the URI) returning True to allow the navigation and False
+            to prevent it.  None allows any navigation.
+            'pytis.presentation.SAME_ORIGIN' allows navigation within the origin
+            of the displayed URI (and requires the content to be an URI) -- it
+            is safer than writing the origin as a prefix, which would also match
+            other hosts having it as a prefix.  The default value
+            'pytis.presentation.NO_NAVIGATION' prevents navigation altogether,
+            which suits a document generated by the application itself.
+          on_navigation: Function called before the browser navigates to a URI.
+            It is called with two arguments -- the URI and the browser
+            (`pytis.api.Browser` instance) and its return value decides what
+            happens next, as described in
+            `pytis.presentation.WebContent.__init__`.
 
         """
         raise NotImplementedError

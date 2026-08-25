@@ -780,6 +780,70 @@ class TestPresentedRow:
             ), new=True)
 
 
+class TestViewerContent:
+
+    def test_conversion(self):
+        # The deprecated form of the specification is converted on the fly, so
+        # that the rest of the code only deals with 'ViewerContent' instances.
+        def binding(**kwargs):
+            return pp.Binding('x', 'X', **kwargs).content()
+        content = (lambda row: 'x')
+        assert isinstance(binding(content=content), pp.WebContent)
+        assert isinstance(binding(content=content, content_type='html'), pp.WebContent)
+        assert isinstance(binding(content=content, content_type='lcg'), pp.WebContent)
+        assert isinstance(binding(content=content, content_type='uri'), pp.WebContent)
+        assert isinstance(binding(content=content, content_type='pdf'), pp.PdfContent)
+        assert isinstance(binding(uri=content), pp.WebContent)
+        assert binding(content=content).content(row='x') == 'x'
+
+    def test_column_conversion(self):
+        # A string used to be the identifier of the main form column.
+        def binding(**kwargs):
+            return pp.Binding('x', 'X', **kwargs).content()
+        assert isinstance(binding(content='c'), pp.WebColumnContent)
+        assert isinstance(binding(content='c', content_type='uri'), pp.WebColumnContent)
+        assert isinstance(binding(content='c', content_type='pdf'), pp.PdfColumnContent)
+        assert binding(content='c', content_type='pdf').column() == 'c'
+
+    def test_content(self):
+        # The content may be a plain value or a function of the main form row.
+        assert pp.WebContent('https://x.org').content(None) == 'https://x.org'
+        assert pp.WebContent(lambda row: row).content('row') == 'row'
+
+    def test_deprecated_uri_content_type(self):
+        # The deprecated content type used to imply the same origin restriction,
+        # which now has to be stated explicitly.
+        content = (lambda row: 'https://x.org/a')
+        for kwargs in (dict(content=content, content_type='uri'), dict(uri=content)):
+            spec = pp.Binding('x', 'X', **kwargs).content()
+            assert isinstance(spec, pp.WebContent)
+            assert spec.restrict_navigation() == pp.SAME_ORIGIN
+        column = pp.Binding('x', 'X', content='c', content_type='uri').content()
+        assert isinstance(column, pp.WebColumnContent)
+        assert column.restrict_navigation() == pp.SAME_ORIGIN
+
+    def test_defaults(self):
+        content = (lambda row: 'x')
+        assert pp.WebContent(content).restrict_navigation() is None
+        assert pp.WebContent(content).on_navigation() is None
+        assert pp.WebContent(content).base_uri() == ''
+
+    def test_invalid_specification(self):
+        content = (lambda row: 'x')
+        with pytest.raises(AssertionError):
+            # 'content_type' has no meaning together with a 'ViewerContent' instance.
+            pp.Binding('x', 'X', content=pp.WebContent(content), content_type='uri')
+        with pytest.raises(AssertionError):
+            pp.Binding('x', 'X', content=content, content_type='nonsense')
+        with pytest.raises(AssertionError):
+            pp.Binding('x', 'X', name='Spec', binding_column='y',
+                       content=pp.WebContent(content))
+        with pytest.raises(AssertionError):
+            pp.WebContent(content, on_navigation='not callable')
+        with pytest.raises(AssertionError):
+            pp.PdfColumnContent(lambda row: b'x')
+
+
 class TestPrettyTypes:
 
     class CustomFoldable(pp.PrettyFoldable, pd.String):

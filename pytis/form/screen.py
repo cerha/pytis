@@ -1559,7 +1559,8 @@ class LocationBar(wx.TextCtrl):
         self._want_focus = 4
 
 
-class Browser(wx.Panel, CommandHandler, CallbackHandler, KeyHandler):
+@pytis.api.implements(pytis.api.Browser)
+class Browser(wx.Panel, CommandHandler, CallbackHandler, KeyHandler, pytis.api.APIImplementation):
     """Web Browser widget.
 
     The widget can be embedded into other wx widgets as an ordinary wx.Panel.
@@ -1682,7 +1683,9 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler, KeyHandler):
         wx.Panel.__init__(self, parent)
         CallbackHandler.__init__(self)
         self._reload = None
-        self._restricted_navigation_uri = None
+        self._restrict_navigation = None
+        self._on_navigation = None
+        self._loading = False
         self._guardian = guardian
         self._webview = webview = wx.html2.WebView.New(self)
         sizer = wx.BoxSizer(wx.VERTICAL)
@@ -1768,18 +1771,51 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler, KeyHandler):
                 event.Veto()
                 self._navigation_timeout = time.time() + 0.1
                 return
-        if ((self._restricted_navigation_uri is not None and
-             not uri.startswith(self._restricted_navigation_uri) and
-             not uri.startswith('about:'))):
+        if self._loading:
+            # Both 'restrict_navigation' and 'on_navigation' apply to further
+            # navigation, not to the document which we are loading ourselves.
+            # The very first event after 'load_uri'/'load_html' belongs to that
+            # load (a redirect which may follow is already further navigation).
+            # We can not compare the URI, because the browser may normalize it.
+            self._loading = False
+            allowed = True
+        else:
+            if self._on_navigation:
+                result = self._on_navigation(uri)
+                if result is not None and result is not True:
+                    event.Veto()
+                    if callable(result):
+                        # Perform the returned action only after the navigation
+                        # event is processed.  It may take long or open dialogs,
+                        # which must not happen while the browser decides about
+                        # the navigation (the same reason as in '_form_handler').
+                        wx.CallAfter(result)
+                    return
+            allowed = self._navigation_allowed(uri)
+        if not allowed:
             app.echo(_("External URL navigation denied: %s") % uri, kind='error')
-            log(OPERATIONAL, "Restricted to :", self._restricted_navigation_uri)
+            log(OPERATIONAL, "Restricted to :", self._restrict_navigation)
             event.Veto()
         elif uri != 'about:blank':
             self._reload = None
         event.Skip()
 
+    def _navigation_allowed(self, uri):
+        """Return true if navigation to 'uri' is allowed by 'restrict_navigation'."""
+        restrict = self._restrict_navigation
+        if restrict is None or uri.startswith('about:'):
+            return True
+        if callable(restrict):
+            return restrict(uri)
+        return uri.startswith(restrict)
+
     def _help_handler(self, uri, path):
         from pytis.help import help_page, HelpExporter
+        # The navigation policy belongs to the document it was set for, so the
+        # help document gets the default one (no restriction, no hook).  Keeping
+        # the previous policy would apply a restriction derived from a different
+        # document -- external links in help pages would stop working when help
+        # is displayed within a restricted form.
         self.load_content(help_page(uri), base_uri=uri, exporter_class=HelpExporter)
 
     def _form_handler(self, uri, path, **kwargs):
@@ -1854,22 +1890,51 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler, KeyHandler):
             self._webview.Reload(wx.html2.WEBVIEW_RELOAD_NO_CACHE)
 
     @Command.define
-    def load_uri(self, uri, restrict_navigation=None):
+    def load_uri(self, uri, restrict_navigation=None, on_navigation=None):
         """Load browser content from given URL.
 
         Arguments:
           uri: URI of the document to load.
-          restrict_navigation: URI prefix (string) to restrict further
-            navigation.  None means no restriction.  If a string is passed, the
-            user will not be able to navigate to URIs not matching given prefix.
+          restrict_navigation: Restriction of further navigation.  A URI prefix
+            (string) only allows navigation to URIs matching given prefix, a
+            function of one argument (the URI) allows the navigation when it
+            returns True and prevents it when it returns False.  None means no
+            restriction.  The restriction applies to the navigation which
+            follows, not to the document loaded by this method itself.
+          on_navigation: Function of one argument (the URI) called before the
+            browser navigates to it.  Returning True (or None) allows the
+            navigation, False prevents it and returning a function prevents it
+            and calls that function (with no arguments) afterwards.  The
+            function is called while the browser decides about the navigation,
+            so it must return promptly -- longer operations belong to the
+            returned function.  It is not called for the document loaded by this
+            method itself, only for the navigation which follows it.
 
         """
         self._resource_server.load_resources(None)
-        self._restricted_navigation_uri = restrict_navigation
+        self._restrict_navigation = restrict_navigation
+        self._on_navigation = on_navigation
+        self._loading = True
         self._webview.LoadURL(uri)
 
     def guardian(self):
         return self._guardian
+
+    # Public API accessed through 'pytis.api.Browser'.
+    # See 'pytis.api.Browser' for documentation.
+
+    def api_load_uri(self, uri, restrict_navigation=None, on_navigation=None):
+        self.load_uri(uri, restrict_navigation=restrict_navigation, on_navigation=on_navigation)
+
+    def api_load_html(self, html, base_uri='', restrict_navigation=None, on_navigation=None,
+                      resource_provider=None):
+        self.load_html(html, base_uri=base_uri, restrict_navigation=restrict_navigation,
+                       on_navigation=on_navigation, resource_provider=resource_provider)
+
+    def api_load_content(self, content, base_uri='', restrict_navigation=None,
+                         on_navigation=None):
+        self.load_content(content, base_uri=base_uri, restrict_navigation=restrict_navigation,
+                          on_navigation=on_navigation)
 
     def toolbar(self, parent):
         """Create browser toolbar and return it as a `wx.ToolBar` instance.
@@ -1899,7 +1964,8 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler, KeyHandler):
                       ctrl=(LocationBar, dict(size=(600, None), editable=False))),
         ))
 
-    def load_html(self, html, base_uri='', restrict_navigation=None, resource_provider=None):
+    def load_html(self, html, base_uri='', restrict_navigation=None, on_navigation=None,
+                  resource_provider=None):
         """Load browser content from given HTML string.
 
         Arguments:
@@ -1907,9 +1973,9 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler, KeyHandler):
           base_uri: Base URI of the document.  Relative URIs within the document
             are relative to this URI.  Browser policies may also restrict
             loading further resources according to this URI.
-          restrict_navigation: URI prefix (string) to restrict further
-            navigation.  None means no restriction.  If a string is passed, the
-            user will not be able to navigate to URIs not matching given prefix.
+          restrict_navigation: Restriction of further navigation as described in
+            `load_uri`.
+          on_navigation: Navigation hook as described in `load_uri`.
           resource_provider: `lcg.ResourceProvider` instance providing external
             resources for the loaded document (images, scripts, stylesheets).
             The HTML may refer to these resources and the browser will be able
@@ -1924,14 +1990,18 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler, KeyHandler):
         self._reload = lambda: self.load_html(html,
                                               base_uri=base_uri,
                                               restrict_navigation=restrict_navigation,
+                                              on_navigation=on_navigation,
                                               resource_provider=resource_provider)
         if sys.version_info[0] == 2 and isinstance(html, unistr):
             html = html.encode('utf-8')
         self._resource_server.load_resources(resource_provider)
-        self._restricted_navigation_uri = restrict_navigation
+        self._restrict_navigation = restrict_navigation
+        self._on_navigation = on_navigation
+        self._loading = True
         self._webview.SetPage(html, base_uri)
 
-    def load_content(self, content, base_uri='', exporter_class=None):
+    def load_content(self, content, base_uri='', exporter_class=None,
+                     restrict_navigation=None, on_navigation=None):
         """Load browser content from `lcg.ContentNode` instance.
 
         Arguments:
@@ -1946,6 +2016,9 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler, KeyHandler):
             exporting the node's contents into HTML.  You may pass another
             exporter class derived from the default one if you want to customize
             the export.
+          restrict_navigation: Restriction of further navigation as described in
+            `load_uri`.
+          on_navigation: Navigation hook as described in `load_uri`.
 
         """
         if isinstance(content, lcg.ContentNode):
@@ -1955,7 +2028,8 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler, KeyHandler):
         exporter = self._exporter(exporter_class or self.Exporter)
         context = exporter.context(node, pytis.util.environment_language())
         html = exporter.export(context)
-        self.load_html(html, base_uri=base_uri, resource_provider=node.resource_provider())
+        self.load_html(html, base_uri=base_uri, restrict_navigation=restrict_navigation,
+                       on_navigation=on_navigation, resource_provider=node.resource_provider())
 
 
 class mupdfProcessor(wx.lib.pdfviewer.viewer.mupdfProcessor):

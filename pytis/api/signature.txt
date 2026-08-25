@@ -52,7 +52,7 @@ Application.splitpath(path)
 Application.status
 Application.title
 Application.warning(message=None, title=None, content=None)
-Application.web_view(title, content, name=None)
+Application.web_view(title, content, name=None, restrict_navigation=pytis.presentation.NO_NAVIGATION, on_navigation=None)
 Application.write_file(data, filename, mode='w')
 Application.write_selected_file(data, filename, mode='w', encoding=None, filetypes=None, context='default')
 ApplicationAPIProvider
@@ -60,6 +60,10 @@ ApplicationAPIProvider.__getattr__(name)
 ApplicationAPIProvider.__init__()
 ApplicationAPIProvider.init(instance)
 ApplicationAPIProvider.release()
+Browser
+Browser.load_content(content, base_uri='', restrict_navigation=None, on_navigation=None)
+Browser.load_html(html, base_uri='', restrict_navigation=None, on_navigation=None, resource_provider=None)
+Browser.load_uri(uri, restrict_navigation=None, on_navigation=None)
 Field
 Field.on_list_change(callback)
 Field.refresh()

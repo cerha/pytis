@@ -1053,7 +1053,12 @@ class Application(pytis.application.BaseApplication, wx.App, KeyHandler, Command
                 if 'profile_id' in kwargs and kwargs['profile_id'] is not None:
                     form.apply_profile(kwargs['profile_id'])
                 if isinstance(form, pytis.form.WebForm) and 'content' in kwargs:
-                    form.load_content(kwargs['content'])
+                    form.load(
+                        kwargs['content'],
+                        restrict_navigation=kwargs.get('restrict_navigation',
+                                                       pytis.presentation.NO_NAVIGATION),
+                        on_navigation=kwargs.get('on_navigation'),
+                    )
                 return result
             if issubclass(form_class, pytis.form.PopupForm):
                 parent = self._modal_parent()
@@ -2071,10 +2076,15 @@ class Application(pytis.application.BaseApplication, wx.App, KeyHandler, Command
         self.popup_menu(wx.Window.FindFocus() or self._frame, items, position=position)
 
     @Command.define
-    def api_web_view(self, title, content, name=None):
+    def api_web_view(self, title, content, name=None,
+                     restrict_navigation=pytis.presentation.NO_NAVIGATION,
+                     on_navigation=None):
         if callable(content):
+            # The content is typically constructed by a function to avoid
+            # building it when the invoking menu item is defined.
             content = content()
-        run_form(pytis.form.WebForm, title=title, content=content, name=name)
+        run_form(pytis.form.WebForm, title=title, content=content, name=name,
+                 restrict_navigation=restrict_navigation, on_navigation=on_navigation)
 
     def api_run(self, function, args=(), kwargs={}, over=None, title=None, message=None,
                 progress=True, maximum=None, elapsed_time=False, estimated_time=False,

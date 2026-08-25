@@ -30,6 +30,7 @@ from __future__ import print_function
 
 from past.builtins import basestring
 from builtins import object
+from future import standard_library
 from future.utils import python_2_unicode_compatible
 
 import codecs
@@ -37,8 +38,10 @@ import contextlib
 import copy
 import functools
 import lcg
+import re
 import sys
 import time
+import urllib.parse
 import wx
 
 import pytis.api
@@ -52,7 +55,7 @@ from pytis.presentation import (
     ActionContext, Button, Computer, Editable, Field, FieldSet, GroupSpec,
     Orientation, PresentedRow, PrintAction, Profile, Specification,
     TabGroup, Text, TextFormat, ViewSpec, Menu, MenuItem, MenuSeparator,
-    Command, computer,
+    Command, computer, NO_NAVIGATION, SAME_ORIGIN,
 )
 from pytis.util import (
     ACTION, EVENT, OPERATIONAL, ProgramError, ResolverError, SizedIterator,
@@ -80,6 +83,9 @@ from .search import (
 )
 from .dialog import CheckListDialog
 from pytis.dbdefs.db_pytis_statistics import PytisLogForm
+
+# Needed for urllib.parse (urlparse in Python 2).
+standard_library.install_aliases()
 
 _ = pytis.util.translations('pytis-wx')
 
@@ -4159,6 +4165,16 @@ class WebForm(ViewerForm):
 
     """
     DESCR = _(u"document view")
+    # A scheme followed by a non blank character (RFC 3986 syntax).  The scheme
+    # alone would also match plain text, such as 'Note: ...' in an HTML string.
+    # Note that '//' can not be required -- 'help:pytis/intro' is an URI too.
+    _URI_MATCHER = re.compile(r'[a-z][a-z0-9+.-]*:[^\s]', re.IGNORECASE)
+
+    def _init_attributes(self, restrict_navigation=NO_NAVIGATION, on_navigation=None,
+                         **kwargs):
+        super(WebForm, self)._init_attributes(**kwargs)
+        self._restrict_navigation = restrict_navigation
+        self._on_navigation = on_navigation
 
     def _create_form_parts(self):
         self._browser = browser = Browser(self, guardian=self)
@@ -4166,16 +4182,87 @@ class WebForm(ViewerForm):
         self.Sizer.Add(browser, 1, wx.EXPAND)
         content = self._content
         if content is not None:
-            self.load_content(content)
+            self.load(content, restrict_navigation=self._restrict_navigation,
+                      on_navigation=self._on_navigation)
 
     def _refresh(self, interactive=False):
         self._browser.reload()
 
-    def load_content(self, content):
-        if isinstance(content, basestring):
-            self._browser.load_html(content, restrict_navigation='-')
+    def load(self, content, restrict_navigation=NO_NAVIGATION, on_navigation=None,
+             base_uri='', resource_provider=None, row=None):
+        """Display given content in the browser.
+
+        The single place which decides how a content value is displayed.  Used
+        for the main form defined by `pytis.api.Application.web_view` as well as
+        for the side forms defined by `pytis.presentation.WebContent`, which
+        only describe what to display (see `MultiSideForm.TabbedWebForm`).
+
+        Arguments:
+          content: The content to be displayed -- an URI, an HTML string or an
+            `lcg.Content` instance.  A string is recognized as an URI when it
+            starts with a scheme, such as `https://`, so an URI must always
+            include one.
+          restrict_navigation: Restriction of further navigation, as described
+            in `pytis.api.Application.web_view`.  `pytis.presentation.SAME_ORIGIN`
+            requires `content` to be an URI -- `ProgramError` is raised
+            otherwise, as there is no origin to restrict to.
+          on_navigation: Navigation hook, as described in
+            `pytis.api.Application.web_view`.
+          base_uri: Base URI of the document, as described in
+            `pytis.presentation.WebContent`.
+          resource_provider: Resource provider of the document, as described in
+            `pytis.presentation.WebContent`.
+          row: The main form `PresentedRow` instance when this form is used as a
+            side form, None otherwise.  Only decides whether it is passed to
+            `on_navigation`.
+
+        """
+        browser = self._browser.provider()
+        if on_navigation is None:
+            hook = None
+        elif row is not None:
+            def hook(uri):
+                return on_navigation(uri, browser, row=row)
         else:
-            self._browser.load_content(content)
+            def hook(uri):
+                return on_navigation(uri, browser)
+        is_uri = isinstance(content, basestring) and bool(self._URI_MATCHER.match(content))
+        if restrict_navigation == SAME_ORIGIN and not is_uri:
+            # Reported rather than ignored -- passing the value on would deny any
+            # navigation (no URI matches the prefix 'SAME_ORIGIN') with no hint why.
+            raise ProgramError("SAME_ORIGIN only applies to an URI, which must include "
+                               "a scheme (such as 'https://'):", content)
+        if is_uri:
+            if restrict_navigation == SAME_ORIGIN:
+                restrict_navigation = self._same_origin_restriction(content)
+            browser.load_uri(content, restrict_navigation=restrict_navigation,
+                             on_navigation=hook)
+        elif isinstance(content, basestring):
+            browser.load_html(content, base_uri=base_uri,
+                              restrict_navigation=restrict_navigation, on_navigation=hook,
+                              resource_provider=resource_provider)
+        else:
+            browser.load_content(content, base_uri=base_uri,
+                                 restrict_navigation=restrict_navigation, on_navigation=hook)
+
+    def _same_origin_restriction(self, uri):
+        """Return a `restrict_navigation` function allowing the origin of `uri` only.
+
+        The origin is the scheme and the authority (host and port) of the URI,
+        compared case insensitively.  Comparing the parsed values rather than
+        matching a prefix matters -- a prefix of 'https://example.com' would
+        also match the unrelated host 'https://example.com.attacker.net'.
+
+        """
+        origin = self._uri_origin(uri)
+
+        def same_origin(uri):
+            return self._uri_origin(uri) == origin
+        return same_origin
+
+    def _uri_origin(self, uri):
+        parsed = urllib.parse.urlsplit(uri)
+        return (parsed.scheme.lower(), parsed.netloc.lower())
 
     def _focus(self):
         super(WebForm, self)._focus()
