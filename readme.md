@@ -80,9 +80,17 @@ Once your virtual environment contains wxPython and the required libraries,
 install Pytis as follows:
 
 ```
-pip install babel flit
+pip install --group build
 make build
 pip install $(echo dist/pytis-*-any.whl)[wx]
+```
+
+The `build` dependency group contains all the tools needed by `make build`
+(see the `Makefile`).  Installing groups requires pip 25.1 or later.  With an
+older pip, use the helper script to expand the group:
+
+```
+python3 tools/dependency-group.py build | pip install -r /dev/stdin
 ```
 
 ## Documentation
