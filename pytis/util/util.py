@@ -2016,11 +2016,12 @@ def current_language():
     """Return current language code as string.
 
     If current language is not set, set it to the current environment language.
+    When the environment doesn't define any language, the language of the
+    original (untranslated) texts is used.
 
     """
     if _current_language is None:
-        set_current_language(environment_language())
-    assert _current_language is not None
+        set_current_language(environment_language(default='en'))
     return _current_language
 
 
