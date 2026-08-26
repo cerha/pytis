@@ -1540,23 +1540,12 @@ class LocationBar(wx.TextCtrl):
             self.Refresh()
         browser = command.handler
         browser.set_callback(browser.CALL_URI_CHANGED, self.SetValue)
-        self._want_focus = 0
 
     def _on_update_ui(self, event):
         event.Enable(self._command.enabled)
-        if self._want_focus:
-            self.SetFocus()
-            # Nasty hack - see set_focus for explanation.
-            self._want_focus -= 1
 
     def _on_enter(self, event):
         self._command.handler.load_uri(self.GetValue())
-
-    def set_focus(self):
-        # This is a total hack - calling SetFocus() is ignored at form startup, but
-        # calling it repeatedly in _on_update_ui seems to help finally.  Three times
-        # seems to work, so rather repeat it four times to be sure...
-        self._want_focus = 4
 
 
 @pytis.api.implements(pytis.api.Browser)

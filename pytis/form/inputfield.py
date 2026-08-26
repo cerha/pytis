@@ -669,8 +669,10 @@ class InputField(pytis.api.APIImplementation, KeyHandler, CommandHandler):
     def set_focus(self):
         """Make the field active for user input.
 
-        Passing initial=True will suppress showing completer popup which is not
-        desired when the field is initially autofocused on form creation.
+        The focus is not set immediately.  It is postponed to the next idle
+        event, because setting it directly doesn't work when the field is not
+        displayed yet, such as when focusing the initial field of a form which
+        is being created.
 
         """
         self._want_focus = True
