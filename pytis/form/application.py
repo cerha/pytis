@@ -170,6 +170,7 @@ class Application(pytis.application.BaseApplication, wx.App, KeyHandler, Command
         frame = self._frame = wx.Frame(None, -1, '', style=wx.DEFAULT_FRAME_STYLE)
         wx_callback(wx.EVT_CLOSE, frame, self._on_frame_close)
         wx_callback(wx.EVT_SIZE, frame, self._on_frame_size)
+        wx_callback(wx.EVT_ACTIVATE, frame, self._on_frame_activate)
         frame.SetSizer(wx.BoxSizer(wx.VERTICAL))
         frame.Sizer.Fit(frame)
         wx.ToolTip('').Enable(pytis.config.show_tooltips)
@@ -883,6 +884,37 @@ class Application(pytis.application.BaseApplication, wx.App, KeyHandler, Command
         if self._initialized:
             self._update_tab_titles(event.Size.width)
         event.Skip()
+
+    def _on_frame_activate(self, event):
+        # Focus requests performed while the main frame is inactive are not
+        # honored by the toolkit -- when the frame is activated, the focus goes
+        # to the notebook's tab control instead of the widget on which
+        # 'SetFocus()' was called.  This happens namely during application
+        # startup (the forms are opened before the frame gets activated), so
+        # the keyboard commands would not work in the active form until the
+        # user clicks into it.  Hence we need to focus the active form again
+        # when the frame becomes active.
+        if event.Active:
+            wx.CallAfter(self._focus_active_form)
+        event.Skip()
+
+    def _focus_active_form(self):
+        if self._in_cleanup:
+            # The windows may already be destroyed when invoked from CallAfter.
+            return
+        if self._modals:
+            # Modal windows are top level windows handling their focus themselves.
+            return
+        form = self._notebook.CurrentPage
+        if form is None:
+            # The panel is only there to catch keyboard events when no form is open.
+            self._panel.SetFocus()
+        else:
+            focused = wx.Window.FindFocus()
+            # Don't touch the focus when it is already inside the active form,
+            # such as when the frame was activated by clicking into a form field.
+            if focused is None or not (focused is form or form.IsDescendant(focused)):
+                form.focus()
 
     def _update_tab_titles(self, frame_width):
         notebook = self._notebook
