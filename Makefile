@@ -1,11 +1,18 @@
-.PHONY: all update assets sync-assets clean-obsolete javascript translations extract doc test build install clean coverage
+.PHONY: all update check-build-deps assets sync-assets clean-obsolete javascript translations extract doc test build install clean coverage
 
 js_src := $(wildcard javascript/*.js)
 js_out := $(js_src:javascript/%.js=pytis/assets/resources/scripts/%.js)
 
 all: doc update
 
-update: clean-obsolete translations assets
+update: check-build-deps clean-obsolete translations assets
+
+# Report the build tools missing in the current environment before they are
+# actually invoked by the targets below.  The tools are not installed here on
+# purpose -- 'make' must not modify the environment it runs in (and it can not
+# tell whether the right virtual environment is active).
+check-build-deps:
+	@tools/dependency-group.py --check build
 
 # The generated data directories moved under 'assets'.  Working copies created
 # before that still contain them in their former locations, where they are no
