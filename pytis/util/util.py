@@ -522,17 +522,16 @@ class CLI(object):
 
     Wraps :mod:`argparse` to define a multi-command CLI in a declarative style.
     Each command is a plain function decorated with :meth:`command`, with its
-    argument definitions passed inline as a lambda receiving ``add_argument``
-    as its sole argument.
+    argument definitions given as a tuple of :meth:`arg` calls.
 
     Example::
 
-        cli = pytis.util.CLI(__doc__.splitlines()[0], lambda arg: (
-            arg('--verbose', '-v', action='store_true', help="Verbose output"),
+        cli = pytis.util.CLI(__doc__.splitlines()[0], (
+            CLI.arg('--verbose', '-v', action='store_true', help="Verbose output"),
         ))
 
-        @cli.command("Frobnicate the widget.", lambda arg: (
-            arg('name', help="Widget name"),
+        @cli.command("Frobnicate the widget.", (
+            cli.arg('name', help="Widget name"),
         ))
         def frobnicate(args):
             ...
@@ -540,18 +539,42 @@ class CLI(object):
         if __name__ == '__main__':
             cli.main()
 
+    For backwards compatibility, ``arguments`` may also be a callable receiving
+    ``parser.add_argument`` as its sole argument (the original lambda style).
+
     """
 
-    def __init__(self, description, arguments=lambda arg: None, config=False):
+    @staticmethod
+    @functools.wraps(argparse.ArgumentParser.add_argument)
+    def arg(*args, **kwargs):
+        """Create an argument specification for use with :class:`CLI`.
+
+        Arguments and keyword arguments are identical to those of
+        :meth:`argparse.ArgumentParser.add_argument`.  Returns an opaque
+        specification object to be collected in a tuple and passed as the
+        ``arguments`` parameter of :meth:`__init__` or :meth:`command`.
+
+        """
+        return (args, kwargs)
+
+    @staticmethod
+    def _apply_arguments(arguments, add_argument):
+        if callable(arguments):
+            arguments(add_argument)
+        else:
+            for args, kwargs in arguments:
+                add_argument(*args, **kwargs)
+
+    def __init__(self, description, arguments=(), config=False):
         """Initialize the CLI.
 
         Arguments:
 
           description -- Program description shown in the top-level --help output.
 
-          arguments -- Callable receiving the callable
-            ``argparse.ArgumentParser.add_argument`` as its sole argument, used
-            to define options common to all subcommands (global options).
+          arguments -- Tuple of :meth:`arg` calls defining options common to
+            all subcommands (global options).  For backwards compatibility, a
+            callable receiving ``parser.add_argument`` is also accepted.
             Defaults to no global options.
 
           config -- If true, a required global ``--config`` option is added
@@ -564,13 +587,14 @@ class CLI(object):
         self._config = config
         self._commands = []
 
-    def command(self, help='', arguments=lambda arg: None, name=None, config=False):
+    def command(self, help='', arguments=(), name=None, config=False):
         """Decorator to register a function as a CLI subcommand.
 
         Arguments:
           help -- Short description shown in the top-level command listing.
-          arguments -- Callable receiving ``parser.add_argument`` as its sole
-            argument, used to define the command's arguments and options.
+          arguments -- Tuple of :meth:`arg` calls defining the command's
+            arguments and options.  For backwards compatibility, a callable
+            receiving ``parser.add_argument`` is also accepted.
           name -- Subcommand name as used on the command line.  Defaults to
             the decorated function's ``__name__`` with underscores replaced
             by hyphens.
@@ -603,13 +627,13 @@ class CLI(object):
         if self._config or any(cmd[4] for cmd in self._commands):
             parser.add_argument('--config', metavar='FILE', required=self._config,
                                 help='Pytis configuration file path')
-        self._global_arguments(parser.add_argument)
+        self._apply_arguments(self._global_arguments, parser.add_argument)
         subparsers = parser.add_subparsers(dest='command_name')
         subparsers.required = True
         for func, name, help_text, arguments, command_config in self._commands:
             p = subparsers.add_parser(name, help=help_text, add_help=False)
             p.add_argument('--help', action='help', help='Show help and exit')
-            arguments(p.add_argument)
+            self._apply_arguments(arguments, p.add_argument)
             p.set_defaults(command=func, command_config=command_config)
         args = parser.parse_args(argv)
         if args.command_config and not args.config:

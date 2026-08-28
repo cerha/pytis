@@ -257,26 +257,26 @@ def sanitize(expr: str) -> str:
     )
 
 
-@cli.command("Create a searchable dump (JSON metadata + TSV data).", lambda argument: (
-    argument('--dbname', '-d', required=True, help="Database name"),
-    argument('--user', '-U', '-u', default=getpass.getuser(),
-             help="Database user (default: current system user)"),
-    argument('--password', '-W',
-             help="Database password (default: $PGPASSWORD)"),
-    argument('--host', '-h',
-             help="Database host (default: localhost)"),
-    argument('--port', '-p', type=int, default=5432,
-             help="Database port (default: 5432)"),
-    argument('--output', '-o', default='-',
-             help="Output file (default: stdout). Use '-' for stdout."),
-    argument('--include-schema', action='append', default=[],
-             help="Include only these schemas (repeatable)."),
-    argument('--exclude-schema', action='append', default=[],
-             help="Exclude these schemas (repeatable)."),
-    argument('--include-nontext', action='store_true',
-             help="Also dump non-text, non-binary columns for context."),
-    argument('--null', default="",
-             help="NULL representation in TSV (default: empty string)."),
+@cli.command("Create a searchable dump (JSON metadata + TSV data).", (
+    cli.arg('--dbname', '-d', required=True, help="Database name"),
+    cli.arg('--user', '-U', '-u', default=getpass.getuser(),
+            help="Database user (default: current system user)"),
+    cli.arg('--password', '-W',
+            help="Database password (default: $PGPASSWORD)"),
+    cli.arg('--host', '-h',
+            help="Database host (default: localhost)"),
+    cli.arg('--port', '-p', type=int, default=5432,
+            help="Database port (default: 5432)"),
+    cli.arg('--output', '-o', default='-',
+            help="Output file (default: stdout). Use '-' for stdout."),
+    cli.arg('--include-schema', action='append', default=[],
+            help="Include only these schemas (repeatable)."),
+    cli.arg('--exclude-schema', action='append', default=[],
+            help="Exclude these schemas (repeatable)."),
+    cli.arg('--include-nontext', action='store_true',
+            help="Also dump non-text, non-binary columns for context."),
+    cli.arg('--null', default="",
+            help="NULL representation in TSV (default: empty string)."),
 ))
 def dump(args):
     with dbconnection(args) as connection, fopen(args.output, 'w') as output:
@@ -392,26 +392,26 @@ def prefilter_input(input_path, patterns, prefilter='grep', regex=False):
                 raise RuntimeError(f'{argv[0]} failed with exit status {status}')
 
 
-@cli.command("Search in a dump produced by the 'dump' command.", lambda argument: (
-    argument('patterns_file',
-             help=("File with search patterns, one per line. Empty lines "
-                   "and lines starting with # are ignored. Use ‘-’ for stdin.")),
-    argument('--input', '-i', default='-',
-             help="Dump file to search through (default: stdin)."),
-    argument('--output', '-o', default='-',
-             help="Output file (default: stdout). Use '-' for stdout."),
-    argument('--context', '-c', default=20, type=int,
-             help="Context characters before/after each match."),
-    argument('--regex', '-r', action='store_true',
-             help=("Treat search patterns as regular expressions "
-                   "(otherwise fixed substrings). Matches are "
-                   "case-insensitive.")),
-    argument('--prefilter', choices=('none', 'grep', 'rg'), default='none',
-             help=("Prefilter dumped rows using grep or ripgrep (rg) to speed up "
-                   "searching large dumps. Default: none. For correct Unicode "
-                   "matching, run under UTF-8 locale (e.g. LANG=en_US.UTF-8).")),
-    argument('--summary-only', action='store_true',
-             help="Print only per-pattern match counts (do not list individual hits)."),
+@cli.command("Search in a dump produced by the ‘dump’ command.", (
+    cli.arg(‘patterns_file’,
+            help=("File with search patterns, one per line. Empty lines "
+                  "and lines starting with # are ignored. Use ‘-’ for stdin.")),
+    cli.arg(‘--input’, ‘-i’, default=’-’,
+            help="Dump file to search through (default: stdin)."),
+    cli.arg(‘--output’, ‘-o’, default=’-’,
+            help="Output file (default: stdout). Use ‘-’ for stdout."),
+    cli.arg(‘--context’, ‘-c’, default=20, type=int,
+            help="Context characters before/after each match."),
+    cli.arg(‘--regex’, ‘-r’, action=’store_true’,
+            help=("Treat search patterns as regular expressions "
+                  "(otherwise fixed substrings). Matches are "
+                  "case-insensitive.")),
+    cli.arg(‘--prefilter’, choices=(‘none’, ‘grep’, ‘rg’), default=’none’,
+            help=("Prefilter dumped rows using grep or ripgrep (rg) to speed up "
+                  "searching large dumps. Default: none. For correct Unicode "
+                  "matching, run under UTF-8 locale (e.g. LANG=en_US.UTF-8).")),
+    cli.arg(‘--summary-only’, action=’store_true’,
+            help="Print only per-pattern match counts (do not list individual hits)."),
 ))
 def search(args):
     if args.input == '-' and args.patterns_file == '-':
