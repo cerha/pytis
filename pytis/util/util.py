@@ -547,6 +547,9 @@ class CLI(object):
     @staticmethod
     @functools.wraps(argparse.ArgumentParser.add_argument)
     def arg(*args, **kwargs):
+        # Full type annotations are in util.pyi — keyword-only parameters after
+        # *args require Python 3 syntax incompatible with this module.
+        # TODO NOPY2: Define type annotations directly in method signatures.
         """Create an argument specification for use with :class:`CLI`.
 
         Arguments and keyword arguments are identical to those of
