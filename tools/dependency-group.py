@@ -51,7 +51,15 @@ def requirements(groups, name, seen=None):
 
 def missing(requirements):
     """Return the distribution names of given requirements which are not installed."""
-    import importlib.metadata
+    try:
+        import importlib.metadata as metadata
+    except ImportError:
+        try:
+            import importlib_metadata as metadata  # Python < 3.8
+        except ImportError:
+            # Without the metadata API we can not tell.  Reporting nothing just
+            # leaves the caller with the original error of the missing tool.
+            return []
     result = []
     for requirement in requirements:
         specification, _, marker = requirement.partition(';')
@@ -59,8 +67,8 @@ def missing(requirements):
             continue
         name = re.split(r'[\[<>=!~ (]', specification, 1)[0].strip()
         try:
-            importlib.metadata.distribution(name)
-        except importlib.metadata.PackageNotFoundError:
+            metadata.distribution(name)
+        except metadata.PackageNotFoundError:
             result.append(name)
     return result
 
