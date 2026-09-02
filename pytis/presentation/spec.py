@@ -2443,12 +2443,16 @@ class ColumnContent(object):
     def content(self, row, arguments=None):
         column = self._content
         value = row[column].value()
-        if value is None:
-            # 'pytis.data.Big' column values are not included in the form row,
-            # so they must be read from the database separately.
+        if value is None and isinstance(row.type(column), pytis.data.Big):
+            # 'pytis.data.Big' column values are not included in the list form
+            # select (see 'pytis.form.ListForm._select_columns'), so they must
+            # be read from the database separately.  Only the column itself is
+            # read -- the other values are already present in the form row.
             data = row.data()
-            complete_row = data.row(row[data.key()[0].id()], arguments=arguments)
-            value = complete_row[column].value()
+            key_columns = [c.id() for c in data.key()]
+            columns = key_columns if column in key_columns else key_columns + [column]
+            value = data.row(row[key_columns[0]], columns=columns,
+                             arguments=arguments)[column].value()
         return value
 
 

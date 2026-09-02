@@ -836,6 +836,36 @@ class TestViewerContent:
         assert pp.XMLContent(lambda row: '<a/>', style='colorful').style() == 'colorful'
         assert isinstance(pp.XMLColumnContent('c'), pp.WebContent)
 
+    def test_column_content_big_value(self):
+        # 'pytis.data.Big' column values are not present in the form row, so
+        # they are read from the database, but only the column itself is read.
+        class BigString(pd.String, pd.Big):
+            pass
+
+        class Specification(pp.Specification):
+            data_cls = pd.MemData
+            fields = (pp.Field('id', type=pd.Integer(not_null=True)),
+                      pp.Field('x', type=pd.String()),
+                      pp.Field('data', type=BigString()))
+        data = Specification().data_spec().create()
+        row = pp.PresentedRow(Specification.fields, data,
+                              pd.Row((('id', pd.Value(data.find_column('id').type(), 1)),
+                                      ('x', pd.sval(None)))))
+        data.insert(pd.Row([(c.id(), pd.Value(c.type(), {'id': 1, 'data': '<a/>'}.get(c.id())))
+                            for c in data.columns()]))
+        columns = []
+        data_row = data.row
+
+        def recording_row(key, **kwargs):
+            columns.append(kwargs['columns'])
+            return data_row(key, **kwargs)
+        data.row = recording_row
+        assert pp.WebColumnContent('data').content(row) == '<a/>'
+        assert columns == [['id', 'data']]
+        # An empty value of a non-Big column is not read from the database again.
+        assert pp.WebColumnContent('x').content(row) is None
+        assert columns == [['id', 'data']]
+
     def test_invalid_specification(self):
         content = (lambda row: 'x')
         with pytest.raises(AssertionError):
