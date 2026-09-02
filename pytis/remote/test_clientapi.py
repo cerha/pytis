@@ -53,6 +53,7 @@ import io
 import json
 import os
 import pytest
+import sys
 
 from pytis.remote import clientapi
 from pytis.remote.client import FileProxy, ServiceClient
@@ -225,6 +226,7 @@ class TestFileWrapper:
         wrapper.exposed_close()
         assert g.read_bytes() == b'written'
 
+    @pytest.mark.skipif(sys.version_info[0] < 3, reason="Python 3 only")
     def test_write_coerces_netref(self, tmp_path):
         # Binary data may arrive from pytis as an RPyC netref of a bytes
         # subclass (pytis.data.Binary.Data), which the underlying file object
