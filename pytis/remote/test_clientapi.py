@@ -204,6 +204,40 @@ class TestFileWrapper:
         assert wrapper.name == str(f)
         wrapper.close()
 
+    def test_exposed_aliases(self, tmp_path):
+        # Pytis2Go clients older than 2.3.0 pass the instance to RPyC as is,
+        # which only permits attribute access to 'exposed_' prefixed names.
+        f = tmp_path / 'exposed.bin'
+        f.write_bytes(b'x\ny\n')
+        wrapper = clientapi.FileWrapper(str(f), mode='rb')
+        assert wrapper.exposed_name == str(f)
+        assert 'b' in wrapper.exposed_mode
+        assert wrapper.exposed_readline() == b'x\n'
+        assert wrapper.exposed_readlines() == [b'y\n']
+        wrapper.exposed_seek(0)
+        assert wrapper.exposed_read() == b'x\ny\n'
+        assert wrapper.exposed_fileno() > 0
+        wrapper.exposed_close()
+        g = tmp_path / 'exposed-w.bin'
+        wrapper = clientapi.FileWrapper(str(g), mode='wb')
+        wrapper.exposed_write(b'written')
+        wrapper.exposed_flush()
+        wrapper.exposed_close()
+        assert g.read_bytes() == b'written'
+
+    def test_write_coerces_netref(self, tmp_path):
+        # Binary data may arrive from pytis as an RPyC netref of a bytes
+        # subclass (pytis.data.Binary.Data), which the underlying file object
+        # refuses to write.  Slicing the netref yields real bytes.
+        class NetRef(object):
+            def __getitem__(self, index):
+                return b'data'[index]
+        f = tmp_path / 'netref.bin'
+        wrapper = clientapi.FileWrapper(str(f), mode='wb')
+        wrapper.write(NetRef())
+        wrapper.close()
+        assert f.read_bytes() == b'data'
+
 
 # ---------------------------------------------------------------------------
 # PytisClientAPIService — protocol-neutral API with mock UIBackend

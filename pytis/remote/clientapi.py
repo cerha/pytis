@@ -915,9 +915,13 @@ class FileWrapper(object):
       operate on the registered instance through the handle.
 
     Both paths preserve the same semantics of the underlying file object
-    (including GPG encryption/decryption hooks — see `__init__`).  The
-    RPyC-specific NetRef-to-bytes coercion lives in the dynamically built
-    `ExposedFileWrapper` only; the JSON side never sees a NetRef.
+    (including GPG encryption/decryption hooks — see `__init__`).
+
+    For Pytis2Go clients older than 2.3.0, which know nothing about
+    `_wrap_for_rpyc` and push-extend their service by this class as is, the
+    class also carries `exposed_*` aliases of its public methods (see the end
+    of the class definition).  Without them RPyC would deny any attribute
+    access on the returned netref.
 
     """
 
@@ -1014,6 +1018,13 @@ class FileWrapper(object):
             data = data[:]
         elif self._encoding is not None and self._decrypted is None:
             data = data.encode(self._encoding)
+        if (sys.version_info[0] > 2
+                and (isinstance(self._f, io.BytesIO) or 'b' in getattr(self._f, 'mode', ''))
+                and not isinstance(data, (bytes, bytearray, memoryview))):
+            # Although pytis.data.Binary.Data is derived from bytes, over RPyC it
+            # may arrive as a netref and file.write() complains:
+            # "a bytes-like object is required, not 'pytis.data.types_.Data'".
+            data = data[:]
         self._f.write(data)
 
     def seek(self, *args, **kwargs):
@@ -1035,6 +1046,27 @@ class FileWrapper(object):
                 self._decrypted.write(decrypted)
                 self._decrypted.close()
         self._f.close()
+
+    # RPyC compatibility aliases for older Pytis2Go clients (before 2.3.0),
+    # which extend their service by this module as is, without wrapping the
+    # returned FileWrapper instances into an RPyC exposed object (see
+    # `_wrap_for_rpyc` in pytis2go's service.py).  RPyC's default configuration
+    # (allow_public_attrs=False, allow_exposed_attrs=True) only permits access
+    # to attributes prefixed by 'exposed_', so a bare FileWrapper netref would
+    # raise AttributeError("cannot access 'name'") on the first attribute
+    # access on the pytis side.  Newer clients forward exposed_<x> lookups to
+    # <x> on the wrapped instance, so the aliases are harmless (unused) there.
+    # The JSON protocol ignores them altogether.
+    exposed_name = name
+    exposed_mode = mode
+    exposed_read = read
+    exposed_readline = readline
+    exposed_readlines = readlines
+    exposed_write = write
+    exposed_seek = seek
+    exposed_flush = flush
+    exposed_fileno = fileno
+    exposed_close = close
 
 
 class PytisClientAPIService(object):
