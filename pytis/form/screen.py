@@ -2092,15 +2092,12 @@ class mupdfProcessor(wx.lib.pdfviewer.viewer.mupdfProcessor):
         return bound.width, bound.height
 
     def RenderPage(self, gc, pageno, scale=1.0):
-        # The change in PyMuPDF=1.14.17 ("Changed methods Page.getPixmap,
-        # Document.getPagePixmap to now use alpha=False as default"),
-        # broke the rendering method of the page in wx.lib.pdfviewer.
-        # So we have to override also this method and specify the keyword
-        # argument "alpha" explicitly.
-        #
-        # The change in PyMuPDF>=1.15.0 made also previous fix
-        # unusable. Now it is necessary to make another fix:
-        # (see https://github.com/wxWidgets/Phoenix/issues/1350)
+        # The rendering method of 'wx.lib.pdfviewer' is overriden because it
+        # always builds the bitmap from RGBA samples, while PyMuPDF returns
+        # the pixmap without the alpha channel since 1.14.17 ("Changed methods
+        # Page.getPixmap, Document.getPagePixmap to now use alpha=False as
+        # default").  The bitmap is created according to the pixmap at hand
+        # here (see https://github.com/wxWidgets/Phoenix/issues/1350).
         """Render the set of page drawings into gc for specified page """
         page = self.pdfdoc.load_page(pageno)
         if self.pymupdf_obsolete:
@@ -2108,11 +2105,10 @@ class mupdfProcessor(wx.lib.pdfviewer.viewer.mupdfProcessor):
         matrix = pymupdf.Matrix(scale, scale)
         try:
             pix = page.get_pixmap(matrix=matrix)   # MUST be keyword arg(s)
-            if [int(v) for v in pymupdf.version[1].split('.')] >= [1,15,0]:
-                # See https://github.com/wxWidgets/Phoenix/issues/1350
-                bmp = wx.Bitmap.FromBuffer(pix.width, pix.height, pix.samples)
-            else:
+            if pix.alpha:
                 bmp = wx.Bitmap.FromBufferRGBA(pix.width, pix.height, pix.samples)
+            else:
+                bmp = wx.Bitmap.FromBuffer(pix.width, pix.height, pix.samples)
             gc.DrawBitmap(bmp, 0, 0, pix.width, pix.height)
             self.zoom_error = False
         except (RuntimeError, MemoryError):
