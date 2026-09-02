@@ -2395,6 +2395,34 @@ class PdfContent(ViewerContent):
     """
 
 
+class XMLContent(WebContent):
+    """XML document to be displayed in an embedded browser.
+
+    The content is an XML document as a string or 'bytes'.  The form converts
+    it into HTML with syntax highlighting (see 'pytis.util.xml_to_html'), so it
+    is displayed in the browser in a human readable form.
+
+    """
+
+    def __init__(self, content, style='pastie', **kwargs):
+        """Initialize the instance.
+
+        Arguments:
+          content: XML document as a string or 'bytes' (or a function returning
+            it), as described in the parent class.  'bytes' are decoded using
+            the encoding declared in the document (UTF-8 when not declared).
+          style (str): Name of the syntax highlighting style, as described in
+            'pytis.util.xml_to_html'.
+          kwargs: Other arguments as accepted by the parent class.
+
+        """
+        super(XMLContent, self).__init__(content, **kwargs)
+        self._style = style
+
+    def style(self):
+        return self._style
+
+
 class ColumnContent(object):
     """Mixin for content specifications reading the content from a main form column.
 
@@ -2426,6 +2454,10 @@ class ColumnContent(object):
 
 class WebColumnContent(ColumnContent, WebContent):
     """Web document read from a main form column, see 'ColumnContent'."""
+
+
+class XMLColumnContent(ColumnContent, XMLContent):
+    """XML document read from a main form column, see 'ColumnContent'."""
 
 
 class PdfColumnContent(ColumnContent, PdfContent):
@@ -2529,9 +2561,9 @@ class Binding(object):
             form, but an embedded "viewer" of that content.  In this case the
             arguments name, binding_column, condition, arguments and prefill
             make no sense and must be None.  The particular `ViewerContent`
-            subclass (`WebContent`, `PdfContent` or their `ColumnContent`
-            variants) determines the kind of the content and the way it is
-            displayed.  A function or a column identifier may also be
+            subclass (`WebContent`, `XMLContent`, `PdfContent` or their
+            `ColumnContent` variants) determines the kind of the content and the
+            way it is displayed.  A function or a column identifier may also be
             passed directly together with `content_type` below, but this form is
             deprecated.
           content_type (str): Deprecated.  Only applies when `content` is not a

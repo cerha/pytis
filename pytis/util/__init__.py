@@ -47,6 +47,7 @@ from .util import (
     deepstr as deepstr, format_traceback as format_traceback,
     exception_info as exception_info, stack_info as stack_info, lcg_node as lcg_node,
     parse_lcg_text as parse_lcg_text, lcg_to_html as lcg_to_html,
+    xml_to_html as xml_to_html,
     content as content, html_diff as html_diff, current_language as current_language,
     set_current_language as set_current_language,
     environment_language as environment_language,

@@ -828,6 +828,14 @@ class TestViewerContent:
         assert pp.WebContent(content).on_navigation() is None
         assert pp.WebContent(content).base_uri() == ''
 
+    def test_xml_content(self):
+        # 'XMLContent' only marks the content as XML.  The conversion to HTML
+        # is performed by the form (see 'pytis.util.xml_to_html').
+        assert pp.XMLContent(lambda row: '<a/>').content(None) == '<a/>'
+        assert pp.XMLContent(lambda row: '<a/>').style() == 'pastie'
+        assert pp.XMLContent(lambda row: '<a/>', style='colorful').style() == 'colorful'
+        assert isinstance(pp.XMLColumnContent('c'), pp.WebContent)
+
     def test_invalid_specification(self):
         content = (lambda row: 'x')
         with pytest.raises(AssertionError):

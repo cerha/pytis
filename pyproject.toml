@@ -42,6 +42,8 @@ wx = [
     "lcg-framework[all]",
     "pillow>=2.7.0",
     "pycryptodome",
+    # Used for XML syntax highlighting (see 'pytis.util.xml_to_html').
+    "pygments",
     "pymupdf==1.14.20; python_version == '2.7'",
     "pymupdf; python_version >= '3.0'",
     # If building pygobject fails, installing system libraries libcairo-dev and

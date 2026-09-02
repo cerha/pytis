@@ -56,6 +56,7 @@ import time
 import tempfile
 import _thread
 import platform
+import xml.sax.saxutils
 
 unistr = type(u'')  # Python 2/3 transition hack.
 try:
@@ -1995,6 +1996,37 @@ def lcg_to_html(text, styles=('default.css',), resource_path=()):
     if sys.version_info[0] == 2:
         html = html.encode('utf-8')
     return html
+
+
+def xml_to_html(text, style='pastie'):
+    # type: (Union[str, bytes], str) -> str
+    """Return given XML document converted to HTML with syntax highlighting.
+
+    Arguments:
+      text: The XML document as a string or 'bytes'.  'bytes' are decoded using
+        the encoding declared in the document (UTF-8 when not declared).
+      style (str): Name of the 'pygments' style used for syntax highlighting.
+        Irrelevant when 'pygments' is not installed.
+
+    Returns:
+      A string containing a complete HTML document.  The syntax highlighting
+      requires the 'pygments' library.  When it is not installed, the document
+      is only returned as a preformatted text.
+
+    """
+    if isinstance(text, bytes):
+        match = re.match(br'\s*<\?xml[^>]*\sencoding=["\']([^"\']+)["\']', text)
+        text = text.decode(match.group(1).decode('ascii') if match else 'utf-8')
+    try:
+        import pygments
+        import pygments.lexers
+        import pygments.formatters
+    except ImportError:
+        from pytis.util import log, OPERATIONAL
+        log(OPERATIONAL, "Pygments not installed: Displaying XML without highlighting.")
+        return '<pre>' + xml.sax.saxutils.escape(text) + '</pre>'
+    return pygments.highlight(text, pygments.lexers.get_lexer_by_name('xml', stripall=True),
+                              pygments.formatters.HtmlFormatter(full=True, style=style))
 
 
 def html_diff(text1, text2, name1, name2, wrapcolumn=80, context=True, numlines=3):

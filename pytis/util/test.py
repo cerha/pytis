@@ -416,6 +416,19 @@ class TestResolver:
         assert p3.public is True
 
 
+def test_xml_to_html():
+    xml = '<?xml version="1.0" encoding="UTF-8"?>\n<a x="1">bla</a>\n'
+    html = util.xml_to_html(xml)
+    # The XML markup is escaped and wrapped in an HTML document.
+    assert html.startswith('<')
+    assert 'bla' in html
+    assert '<a x="1">' not in html
+    # 'bytes' are decoded according to the encoding declared in the document.
+    xml = ('<?xml version="1.0" encoding="iso-8859-2"?>\n'
+           '<a>\u017elu\u0165ou\u010dk\xfd</a>\n')
+    assert util.xml_to_html(xml.encode('iso-8859-2')) == util.xml_to_html(xml)
+
+
 def test_compose_mail():
     from .util import _compose_mail, Attachment
 

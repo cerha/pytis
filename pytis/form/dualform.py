@@ -34,8 +34,10 @@ import wx.aui
 
 import pytis.data
 from pytis.api import app
-from pytis.presentation import Orientation, Menu, MenuItem, Command, PdfContent
-from pytis.util import EVENT, log, translations, ProgramError
+from pytis.presentation import (
+    Orientation, Menu, MenuItem, Command, PdfContent, XMLContent,
+)
+from pytis.util import EVENT, log, translations, xml_to_html, ProgramError
 
 from .event import wx_callback
 from .form import (
@@ -1036,7 +1038,10 @@ class MultiSideForm(MultiForm):
 
         def on_selection(self, row):
             spec = self._content_spec
-            self.load(spec.content(row, arguments=self._main_form._current_arguments()),
+            content = spec.content(row, arguments=self._main_form._current_arguments())
+            if content and isinstance(spec, XMLContent):
+                content = xml_to_html(content, style=spec.style())
+            self.load(content,
                       restrict_navigation=spec.restrict_navigation(),
                       on_navigation=spec.on_navigation(),
                       base_uri=spec.base_uri(),
