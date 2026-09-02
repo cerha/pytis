@@ -1024,6 +1024,7 @@ class FileWrapper(object):
             # Although pytis.data.Binary.Data is derived from bytes, over RPyC it
             # may arrive as a netref and file.write() complains:
             # "a bytes-like object is required, not 'pytis.data.types_.Data'".
+            # See the TODO at the bottom of the class definition for more info.
             data = data[:]
         self._f.write(data)
 
@@ -1057,6 +1058,10 @@ class FileWrapper(object):
     # access on the pytis side.  Newer clients forward exposed_<x> lookups to
     # <x> on the wrapped instance, so the aliases are harmless (unused) there.
     # The JSON protocol ignores them altogether.
+    #
+    # TODO: Remove the aliases (and the netref coercion in `write` above) once
+    # no client older than Pytis2Go 2.3.0 connects anymore.  Grep 'established
+    # with version' in application server logs for active client versions.
     exposed_name = name
     exposed_mode = mode
     exposed_read = read
