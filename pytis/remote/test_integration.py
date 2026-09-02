@@ -119,21 +119,18 @@ def remote_service(request):
         pytest.skip("JSON transport requires rpc-json branch to be merged")
 
     port = _find_free_port()
-    server = ThreadedServer(
-        _TestRPyCService,
-        port=port,
-        protocol_config={'allow_all_attrs': True, 'allow_public_attrs': True},
-    )
+    # Beware: Use RPyC's default protocol configuration on both ends, the same
+    # as Pytis2Go's service and pytis' connect() do.  Permitting access to all
+    # attributes here would hide the fact that RPyC only allows access to
+    # 'exposed_' prefixed attributes of the objects passed over the wire.
+    server = ThreadedServer(_TestRPyCService, port=port)
     t = threading.Thread(target=server.start)
     t.daemon = True
     t.start()
     time.sleep(0.1)  # Let the server start accepting connections.
 
     old_connection = RPCInfo.connection
-    RPCInfo.connection = rpyc.connect(
-        'localhost', port,
-        config={'allow_all_attrs': True, 'allow_public_attrs': True},
-    )
+    RPCInfo.connection = rpyc.connect('localhost', port)
     yield request.param
 
     RPCInfo.connection.close()
