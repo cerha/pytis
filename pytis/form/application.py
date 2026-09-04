@@ -1961,7 +1961,7 @@ class Application(pytis.application.BaseApplication, wx.App, KeyHandler, Command
             data = pytis.util.data_object(name)
             if not isinstance(row, pd.Row):
                 key = row
-                row = data.row(row, transaction=transaction)
+                row = data.row(key, transaction=transaction) if key is not None else None
                 if not row:
                     log(OPERATIONAL, "Invalid row reference:", key)
                     app.error(_("Record not found"))
@@ -2000,7 +2000,12 @@ class Application(pytis.application.BaseApplication, wx.App, KeyHandler, Command
         data = pytis.util.data_object(name)
         if not isinstance(row, PresentedRow):
             if not isinstance(row, pd.Row):
-                row = data.row(row, transaction=transaction)
+                key = row
+                row = data.row(key, transaction=transaction) if key is not None else None
+                if not row:
+                    log(OPERATIONAL, "Invalid row reference:", key)
+                    app.error(_("Record not found"))
+                    return False
             row = PresentedRow(view.fields(), data, row, transaction=transaction)
         on_delete_record = view.on_delete_record()
         ask = True

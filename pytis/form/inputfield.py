@@ -1870,6 +1870,18 @@ class ListField(GenericCodebookField, CallbackHandler):
     def _can_show_selected(self):
         return self._selected_item is not None
 
+    def _selected_value(self):
+        return self._list_data[self._selected_item]
+
+    def _selected_row(self):
+        # Retrieve the codebook row corresponding to the currently selected list item.
+        # We must pass the runtime filter and arguments, because the enumerator may
+        # not be able to retrieve the row without them.
+        return self._type.enumerator().row(self._selected_value().value(),
+                                           transaction=self._row.transaction(),
+                                           condition=self._row.runtime_filter(self._id),
+                                           arguments=self._codebook_arguments())
+
     @Command.define
     def edit_selected(self):
         prefill_function = self.spec().codebook_update_prefill()
@@ -1877,9 +1889,8 @@ class ListField(GenericCodebookField, CallbackHandler):
             set_values = prefill_function(self._row)
         else:
             set_values = None
-        transaction = self._row.transaction()
-        row = self._type.enumerator().row(self._row[self._id].value(), transaction=transaction)
-        app.edit_record(self._cb_name, row, set_values=set_values, transaction=transaction)
+        app.edit_record(self._cb_name, self._selected_row(), set_values=set_values,
+                        transaction=self._row.transaction())
         self._reload_enumeration()
         self._run_callback(self.CALL_LIST_CHANGE, self._row)
         self.set_focus()
@@ -1889,12 +1900,10 @@ class ListField(GenericCodebookField, CallbackHandler):
 
     @Command.define
     def delete_selected(self):
-        transaction = self._row.transaction()
-        row = self._type.enumerator().row(self._row[self._id].value(), transaction=transaction)
-        app.delete_record(self._cb_name, row,
+        app.delete_record(self._cb_name, self._selected_row(),
                           question=_("Really remove the item %s from the codebook permanently?",
-                                     self._row[self._id].export()),
-                          transaction=transaction)
+                                     self._selected_value().export()),
+                          transaction=self._row.transaction())
         self._reload_enumeration()
         self._run_callback(self.CALL_LIST_CHANGE, self._row)
         self.set_focus()
