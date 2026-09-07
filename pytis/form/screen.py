@@ -1675,7 +1675,7 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler, KeyHandler, pytis.api.A
         self._restrict_navigation = None
         self._on_navigation = None
         self._loading = False
-        self._local_content = False
+        self._requested_uri = None
         self._guardian = guardian
         self._webview = webview = wx.html2.WebView.New(self)
         sizer = wx.BoxSizer(wx.VERTICAL)
@@ -1738,6 +1738,13 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler, KeyHandler, pytis.api.A
 
     def _on_navigating(self, event):
         uri = event.GetURL()
+        if uri == 'about:blank':
+            # The initial empty document of a newly created browser.  It is not
+            # navigation, so it must not consume the '_loading' exemption below
+            # (the event may be fired after the application starts loading its
+            # own document, which would then be treated as further navigation).
+            event.Skip()
+            return
         if uri.startswith('#'):
             script = ("var x = document.getElementById('%s'); "
                       "if (x) { x.scrollIntoView() };") % uri[1:]
@@ -1756,17 +1763,15 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler, KeyHandler, pytis.api.A
             # browser (which we need in form: and call: handlers).
             scheme, path, kwargs = self._parse_uri(uri)
             if scheme in self._custom_scheme_handlers:
-                if self._local_content or self._loading:
+                if self._custom_scheme_allowed(uri):
                     handler = self._custom_scheme_handlers[scheme]
                     handler(uri, path, **kwargs)
                     self._navigation_timeout = time.time() + 0.1
                 else:
                     # These schemes don't navigate -- they run application
-                    # actions (open a form, call a procedure).  They are only
-                    # honored in documents produced by the application itself
-                    # ('_local_content') and in the URI which the application
-                    # passed to 'load_uri' ('_loading'); a page loaded from a
-                    # remote URI must not reach into the application this way.
+                    # actions (open a form, call a procedure) -- so a page
+                    # loaded from a remote URI must not reach into the
+                    # application through them.
                     app.echo(_("Application URI denied in remote content: %s") % uri,
                              kind='error')
                     log(OPERATIONAL, "Custom scheme denied in remote content:", uri)
@@ -1800,6 +1805,20 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler, KeyHandler, pytis.api.A
         elif uri != 'about:blank':
             self._reload = None
         event.Skip()
+
+    def _custom_scheme_allowed(self, target_uri):
+        """Return true if the custom URI schemes may be honored for 'target_uri'.
+
+        'target_uri' is the target of the navigation which is about to happen.
+        The custom schemes run application actions instead of navigating, so
+        they are only honored when the navigation was initiated by the
+        application: either from a document which the application produced
+        itself ('_requested_uri' is None), or when 'target_uri' is the URI
+        which the application itself passed to 'load_uri' (this is how the help
+        browser loads 'help:' URIs).
+
+        """
+        return self._requested_uri is None or target_uri == self._requested_uri
 
     def _navigation_allowed(self, uri):
         """Return true if navigation to 'uri' is allowed by 'restrict_navigation'."""
@@ -1916,12 +1935,7 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler, KeyHandler, pytis.api.A
         self._restrict_navigation = restrict_navigation
         self._on_navigation = on_navigation
         self._loading = True
-        # The loaded document comes from elsewhere, so the custom URI schemes
-        # (which run application actions) are not honored within it -- see
-        # '_on_navigating'.  Note that 'uri' itself may use them (the help
-        # browser loads 'help:' URIs this way).  It comes from the application,
-        # not from the document, so it passes through the '_loading' exemption.
-        self._local_content = False
+        self._requested_uri = uri
         self._webview.LoadURL(uri)
 
     def guardian(self):
@@ -2005,7 +2019,7 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler, KeyHandler, pytis.api.A
         self._restrict_navigation = restrict_navigation
         self._on_navigation = on_navigation
         self._loading = True
-        self._local_content = True
+        self._requested_uri = None
         self._webview.SetPage(html, base_uri)
 
     def load_content(self, content, base_uri='', exporter_class=None,
