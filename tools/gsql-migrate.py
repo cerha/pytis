@@ -73,7 +73,8 @@ def find_module_path(module, start):
         directory = parent
 
 def gsql(module, pythonpath, names, names_only=False):
-    args = ['--pretty=1', '--no-deps', '--limit=^({})$'.format('|'.join(names))]
+    args = ['--pretty=1', '--no-deps', '--plpython3',
+            '--limit=^({})$'.format('|'.join(names))]
     if names_only:
         args += ['--names']
     output = subprocess.check_output(['gsql'] + args + [module], encoding='utf-8',
