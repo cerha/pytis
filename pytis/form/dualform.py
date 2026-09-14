@@ -1267,6 +1267,14 @@ class MultiBrowseDualForm(BrowseDualForm):
         def _print_form_kwargs(self):
             return dict(form_bindings=self.bindings())
 
+        def _refresh(self, interactive=False):
+            result = BrowseForm._refresh(self, interactive=interactive)
+            # The reload may have changed the current row (e.g. the previously
+            # selected row no longer matches the current data), so update the
+            # side form selection accordingly -- just as apply_filter() does.
+            self._update_selection()
+            return result
+
         def _update_selection(self):
             row = self.current_row()
             if row is None:
