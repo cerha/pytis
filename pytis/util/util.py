@@ -625,6 +625,12 @@ class CLI(object):
           argv -- List of argument strings to parse.  Defaults to
             ``sys.argv[1:]`` when ``None``.  Useful for testing.
 
+        Returns the value returned by the subcommand, so that commands may
+        signal failure by an exit code::
+
+            if __name__ == '__main__':
+                sys.exit(cli.main())
+
         """
         parser = argparse.ArgumentParser(description=self._description, add_help=False)
         parser.add_argument('--help', action='help', help='Show help and exit')
@@ -645,7 +651,7 @@ class CLI(object):
         if self._config or args.command_config:
             import pytis
             pytis.config.add_command_line_options(('pytis', '--config', args.config))
-        args.command(args)
+        return args.command(args)
 
 
 class object_2_5(object):
