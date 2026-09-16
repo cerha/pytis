@@ -3986,7 +3986,7 @@ class QueryFieldsForm(_VirtualEditForm):
             if self._on_apply:
                 self._on_apply(row)
             if refresh_form:
-                self._refresh_form_data(row)
+                self._refresh_form_data(row, autoapply=self._autoapply)
             self._unapplied_query_field_changes = False
 
     def _update_last_refresh(self, initial=False):

@@ -562,9 +562,14 @@ class ListForm(RecordForm, Refreshable):
         else:
             self._query_fields_form = None
 
-    def _on_query_fields_refresh(self, row):
+    def _on_query_fields_refresh(self, row, autoapply=False):
         self.refresh(interactive=True, reload_query_fields=False)
-        self._grid.SetFocus()
+        if not autoapply:
+            # In the autoapply mode (see QueryFields.autoapply()) we get here after
+            # each query field change, so the user is typing in a query field and
+            # moving the focus would interrupt the editing.  Otherwise the refresh
+            # was invoked explicitly and moving the focus to the grid is desirable.
+            self._grid.SetFocus()
 
     def refresh(self, reload_query_fields=True, **kwargs):
         query_fields = self._view.query_fields()
