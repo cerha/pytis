@@ -928,8 +928,11 @@ def dbfunction(fspec, *args, **kwargs):
       **kwargs: Function call keyword arguments; must match the argument names
         defined in function specification.  Note, that arguments are not
         optional.  You must always pass all arguments defined by function
-        specification.  Special keyword argument `transaction` is a database
-        transaction as a `DBTransactionDefault` instance.
+        specification.  Special keyword arguments are `transaction` (a database
+        transaction as a `DBTransactionDefault` instance), `connection_data`
+        (connection parameters or None for the default connection
+        `pytis.config.dbconnection`) and `connection_name` (connection name
+        string or None).
 
     Returns:
       The Python value of the function call result or a sequence of
@@ -964,7 +967,10 @@ def dbfunction(fspec, *args, **kwargs):
             raise TypeError("Unsupported value type", type(value))
     # TODO PY3: define keyword arguments in function definition.
     transaction = kwargs.pop('transaction', None)
-    function = pytis.data.DBFunctionDefault(fspec, pytis.config.dbconnection)
+    connection_data = kwargs.pop('connection_data', None)
+    connection_name = kwargs.pop('connection_name', None)
+    function = pytis.data.DBFunctionDefault(fspec, connection_data or pytis.config.dbconnection,
+                                            connection_name=connection_name)
     if isinstance(fspec, basestring):
         assert not kwargs
         arguments = [('arg{}'.format(i + 1), argument(value)) for i, value in enumerate(args)]
