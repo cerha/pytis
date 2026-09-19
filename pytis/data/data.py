@@ -298,10 +298,13 @@ class Data(object_2_5):
 
     class Selection:
         """Iterator over `select` rows."""
-        def __init__(self, data, count):
+        def __init__(self, data, count, limit=None):
             assert isinstance(count, int)
+            assert limit is None or isinstance(limit, int) and limit >= 0, limit
             self._data = data
             self._count = count
+            self._limit = limit
+            self._fetched = 0
             self._closed = False
 
         def _close(self):
@@ -317,8 +320,12 @@ class Data(object_2_5):
             return self
 
         def __next__(self):
-            row = self._data.fetchone()
+            if self._limit is None or self._fetched < self._limit:
+                row = self._data.fetchone()
+            else:
+                row = None
             if row is not None:
+                self._fetched += 1
                 return row
             else:
                 self._close()
@@ -524,7 +531,7 @@ class Data(object_2_5):
         """
         return [function(row) for row in self.rows(transaction=transaction, **kwargs)]
 
-    def rows(self, condition=None, async_count=False, **kwargs):
+    def rows(self, condition=None, limit=None, offset=None, async_count=False, **kwargs):
         # TODO: cannot annotate return type — see row() for explanation of override cascade issue.
         """Return an iterator over all rows of the selection with given arguments.
 
@@ -534,7 +541,17 @@ class Data(object_2_5):
         Arguments:
           condition (`Operator`): condition limiting the set of resulting rows
             or None (as in `select`).  May be passed as positional.
+          limit (int): maximum number of rows returned by the iterator, or None
+            for all of them
+          offset (int): number of leading rows to skip, or None to start at the
+            first row
           kwargs: other arguments passed to `select`.
+
+        The `limit` and `offset` arguments only restrict the iteration, so the
+        iterator's `len` remains the total number of rows matching the
+        condition.  Pass `limit` to `select` directly (and iterate the data
+        object yourself) when the limit is to be applied by the database and
+        the total number of matching rows is not needed.
 
         The caller should either make sure to exhaust the returned iterator or
         enclose the call in a `with` statement in order to ensure the select is
@@ -544,7 +561,10 @@ class Data(object_2_5):
         """
         if async_count:
             raise ProgramError("Can't use `async_count` with `rows()`.")
-        return self.Selection(self, self.select(condition=condition, **kwargs))
+        selection = self.Selection(self, self.select(condition=condition, **kwargs), limit=limit)
+        if offset:
+            self.skip(offset)
+        return selection
 
     if TYPE_CHECKING:
         @overload
