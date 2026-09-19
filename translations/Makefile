@@ -20,6 +20,11 @@ extract: $(wildcard *.po) $(pot_files) $(mo_files) $(json_files)
 
 ifeq ($(MAKECMDGOALS),extract)
 
+# Babel's default keywords include 'gettext', which would extract the domain
+# name from JavaScript 'lcg.gettext(domain)' calls as a translatable string, so
+# we define the recognized keywords explicitly.
+keywords := --no-default-keywords -k _ -k N_ -k ngettext:1,2 -k pgettext:1c,2
+
 pytis-data.pot: $(foreach dir, data presentation, $(shell find ../pytis/$(dir) -name "*.py"))
 pytis-defs.pot: $(foreach dir, defs cms, $(shell find ../pytis/$(dir) -name "*.py"))
 pytis-web.pot:  $(shell find ../pytis/web -name "*.py") \
@@ -28,7 +33,7 @@ pytis-wx.pot:   $(foreach dir, form util extensions output help remote, \
 	   	  $(shell find ../pytis/$(dir) -name "*.py"))
 pytis-demo.pot: $(shell find ../pytis/demo -name "*.py")
 $(pot_files):
-	pybabel extract -F babel.cfg --add-comments=Translators: -s $(sort $(dir $^)) -o $@
+	pybabel extract -F babel.cfg --add-comments=Translators: $(keywords) -s $(sort $(dir $^)) -o $@
 
 $(wildcard pytis-data.*.po): pytis-data.%.po: pytis-data.pot
 $(wildcard pytis-defs.*.po): pytis-defs.%.po: pytis-defs.pot
