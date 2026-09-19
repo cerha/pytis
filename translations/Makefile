@@ -61,9 +61,12 @@ $(mo_dir)/%/LC_MESSAGES/pytis-demo.mo: pytis-demo.%.po
 	@mkdir -p $(dir $@)
 	msgfmt -v $< -o $@
 
+# The JSON catalogs only contain the messages which actually appear
+# in the JavaScript sources.
 $(json_dir)/%.po.json: %.po
 	@mkdir -p $(dir $@)
-	pojson $< > $@
+	msggrep -N '../javascript/*' $< > $@.po
+	pojson $@.po > $@ && rm $@.po
 
 clean:
 	rm -rf *.pot $(mo_dir)
