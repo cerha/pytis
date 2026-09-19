@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 0.1\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-06-25 13:11+0200\n"
+"POT-Creation-Date: 2026-09-19 23:58+0200\n"
 "PO-Revision-Date: 2011-12-29 14:56+0100\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Hungarian <wiking@lists.freebsoft.org>\n"
@@ -16,7 +16,12 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
-#: ../pytis/data/access.py:414
+#: ../pytis/data/access.py:381
+#, python-format
+msgid "Not permitted to update any of the given columns: %s"
+msgstr ""
+
+#: ../pytis/data/access.py:430
 msgid "Access denied"
 msgstr ""
 
@@ -69,7 +74,7 @@ msgstr ""
 msgid "Method not implemented"
 msgstr ""
 
-#: ../pytis/data/postgresql.py:3588
+#: ../pytis/data/postgresql.py:3597
 msgid "Invalid database counter value"
 msgstr ""
 
@@ -267,7 +272,7 @@ msgstr ""
 msgid "unlimited"
 msgstr ""
 
-#: ../pytis/presentation/spec.py:5666
+#: ../pytis/presentation/spec.py:5883
 #, python-format
 msgid ""
 "You don't have priviledges to invoke the action '%s'.\n"
