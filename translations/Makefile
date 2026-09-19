@@ -3,6 +3,12 @@
 # don't have separate .cfg file for each domain, so we define the source file
 # dependencies directly in the Makefile using find.
 
+# Don't leave a truncated output file behind when a recipe fails.  The shell
+# redirections used below create the target before the command which should
+# produce its contents even runs, so a failure would result in an empty file
+# which make would consider up to date on the next run.
+.DELETE_ON_ERROR:
+
 domains := pytis-data pytis-defs pytis-web pytis-wx pytis-demo
 web_domains := pytis-data pytis-web
 mo_dir := ../pytis/assets/translations
