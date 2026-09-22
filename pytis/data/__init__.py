@@ -44,7 +44,7 @@ from .types_ import (
     DoublePrecision as DoublePrecision, Monetary as Monetary,
     String as String, Name as Name, PgName as PgName,
     Password as Password, RegexString as RegexString, Color as Color,
-    Inet as Inet, Macaddr as Macaddr, Email as Email,
+    Inet as Inet, Macaddr as Macaddr, Email as Email, Iban as Iban,
     TreeOrderBase as TreeOrderBase, TreeOrder as TreeOrder,
     FullTextIndex as FullTextIndex, DateTime as DateTime, LocalDateTime as LocalDateTime,
     DateTimeRange as DateTimeRange, ISODateTime as ISODateTime, Date as Date,

@@ -1620,6 +1620,174 @@ class Email(String):
         return Value(self, unistr(obj))
 
 
+class Iban(String):
+    """IBAN -- International Bank Account Number.
+
+    The value is stored internally (in `Value`) as a compact string without
+    spaces, in upper case, e.g. 'CZ6508000000192000145399'. On export
+    (`_export`) it is displayed formatted in groups of four characters, e.g.
+    'CZ65 0800 0000 1920 0014 5399'.
+
+    """
+    # Translators: User input validation error message.
+    _MSG_INVALID = _(u"Invalid IBAN")
+    # Translators: User input validation error message.
+    _MSG_CHECKSUM = _(u"Invalid IBAN checksum")
+
+    _MATCHER = re.compile(r'^[A-Z]{2}[0-9]{2}[A-Z0-9]{1,30}$')
+
+    # IBAN lengths per country (ISO 13616 / SWIFT IBAN Registry, as of
+    # December 2024). Includes all countries with an IBAN officially
+    # registered with SWIFT.
+    _COUNTRY_LENGTH = {
+        'AD': 24,  # Andorra
+        'AE': 23,  # United Arab Emirates
+        'AL': 28,  # Albania
+        'AT': 20,  # Austria
+        'AZ': 28,  # Azerbaijan
+        'BA': 20,  # Bosnia and Herzegovina
+        'BE': 16,  # Belgium
+        'BG': 22,  # Bulgaria
+        'BH': 22,  # Bahrain
+        'BI': 27,  # Burundi
+        'BR': 29,  # Brazil
+        'BY': 28,  # Belarus
+        'CH': 21,  # Switzerland
+        'CR': 22,  # Costa Rica
+        'CY': 28,  # Cyprus
+        'CZ': 24,  # Czech Republic
+        'DE': 22,  # Germany
+        'DJ': 27,  # Djibouti
+        'DK': 18,  # Denmark
+        'DO': 28,  # Dominican Republic
+        'EE': 20,  # Estonia
+        'EG': 29,  # Egypt
+        'ES': 24,  # Spain
+        'FI': 18,  # Finland
+        'FK': 18,  # Falkland Islands
+        'FO': 18,  # Faroe Islands
+        'FR': 27,  # France (also French overseas territories)
+        'GB': 22,  # United Kingdom
+        'GE': 22,  # Georgia
+        'GI': 23,  # Gibraltar
+        'GL': 18,  # Greenland
+        'GR': 27,  # Greece
+        'GT': 28,  # Guatemala
+        'HN': 28,  # Honduras
+        'HR': 21,  # Croatia
+        'HU': 28,  # Hungary
+        'IE': 22,  # Ireland
+        'IL': 23,  # Israel
+        'IQ': 23,  # Iraq
+        'IS': 26,  # Iceland
+        'IT': 27,  # Italy
+        'JO': 30,  # Jordan
+        'KW': 30,  # Kuwait
+        'KZ': 20,  # Kazakhstan
+        'LB': 28,  # Lebanon
+        'LC': 32,  # Saint Lucia
+        'LI': 21,  # Liechtenstein
+        'LT': 20,  # Lithuania
+        'LU': 20,  # Luxembourg
+        'LV': 21,  # Latvia
+        'LY': 25,  # Libya
+        'MC': 27,  # Monaco
+        'MD': 24,  # Moldova
+        'ME': 22,  # Montenegro
+        'MK': 19,  # North Macedonia
+        'MN': 20,  # Mongolia
+        'MR': 27,  # Mauritania
+        'MT': 31,  # Malta
+        'MU': 30,  # Mauritius
+        'NI': 28,  # Nicaragua
+        'NL': 18,  # Netherlands
+        'NO': 15,  # Norway
+        'OM': 23,  # Oman
+        'PK': 24,  # Pakistan
+        'PL': 28,  # Poland
+        'PS': 29,  # Palestinian territories
+        'PT': 25,  # Portugal
+        'QA': 29,  # Qatar
+        'RO': 24,  # Romania
+        'RS': 22,  # Serbia
+        'RU': 33,  # Russia
+        'SA': 24,  # Saudi Arabia
+        'SC': 31,  # Seychelles
+        'SD': 18,  # Sudan
+        'SE': 24,  # Sweden
+        'SI': 19,  # Slovenia
+        'SK': 24,  # Slovakia
+        'SM': 27,  # San Marino
+        'SO': 23,  # Somalia
+        'ST': 25,  # São Tomé and Príncipe
+        'SV': 28,  # El Salvador
+        'TL': 23,  # East Timor
+        'TN': 24,  # Tunisia
+        'TR': 26,  # Turkey
+        'UA': 29,  # Ukraine
+        'VA': 22,  # Vatican City
+        'VG': 24,  # Virgin Islands, British
+        'XK': 20,  # Kosovo
+        'YE': 30,  # Yemen
+    }
+
+    def __init__(self, not_null=False, unique=False, enumerator=None,
+                 constraints=(), maxlen=34):
+        """Initialize the instance.
+
+        Arguments are the same as in `String`, except `minlen`/`maxlen` are
+        not accepted -- the length is determined and checked based on the
+        country code embedded in the IBAN.
+
+        """
+        super(Iban, self).__init__(not_null=not_null, unique=unique,
+                                   enumerator=enumerator, constraints=constraints,
+                                   maxlen=maxlen)
+
+    def _normalize(self, obj):
+        """Return obj without spaces, in upper case."""
+        return unistr(obj).replace(' ', '').replace('\u202f', '').upper()
+
+    def _checksum_ok(self, compact):
+        """Verify the IBAN checksum using the mod-97 algorithm."""
+        rearranged = compact[4:] + compact[:4]
+        digits = ''.join(
+            str(int(c, 36)) if c.isalpha() else c
+            for c in rearranged
+        )
+        return int(digits) % 97 == 1
+
+    def _validate(self, obj):
+        """Return a `Value` instance with obj converted to a compact IBAN.
+
+        Checks the format (two-letter country code, two check digits,
+        alphanumeric characters), the length for the given country code
+        (if known), and the checksum (mod 97).
+
+        """
+        assert isinstance(obj, basestring), ('Not a string', obj)
+        compact = self._normalize(obj)
+        if not self._MATCHER.match(compact):
+            raise ValidationError(self._MSG_INVALID)
+        expected_length = self._COUNTRY_LENGTH.get(compact[:2])
+        if expected_length is not None and len(compact) != expected_length:
+            raise ValidationError(self._MSG_INVALID)
+        if not self._checksum_ok(compact):
+            raise ValidationError(self._MSG_CHECKSUM)
+        return Value(self, compact)
+
+    def _export(self, value):
+        assert isinstance(value, basestring), ('Value not a string', value)
+        return ' '.join(value[i:i + 4] for i in range(0, len(value), 4))
+
+    def adjust_value(self, value):
+        if value is None:
+            return None
+        if not isinstance(value, basestring):
+            raise TypeError("Value not a string", value)
+        return self._normalize(value)
+
+
 class TreeOrderBase(Type):
     """Literal numeric value denoting the level of the item within the tree structure.
 
