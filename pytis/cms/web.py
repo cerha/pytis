@@ -806,7 +806,7 @@ class HttpAttachmentStorageBackend(wiking.Module, wiking.RequestHandler):
             else:
                 data = req.param('data')
                 if data:
-                    if req.param('authorized_readonly') is not False:
+                    if req.vars.attachment_storage_readonly:
                         raise wiking.AuthorizationError()
                     return self._insert(req, storage, data.filename(), data.file())
                 else:
@@ -821,7 +821,7 @@ class HttpAttachmentStorageBackend(wiking.Module, wiking.RequestHandler):
             elif action == 'info':
                 return self._info(req, storage, filename)
             elif action == 'update':
-                if req.param('authorized_readonly') is not False:
+                if req.vars.attachment_storage_readonly:
                     raise wiking.AuthorizationError()
                 return self._update(req, storage, filename)
             else:
@@ -838,7 +838,7 @@ class HttpAttachmentStorageBackend(wiking.Module, wiking.RequestHandler):
             row = data.fetchone()
             data.close()
             if row and row['key'].value() == key:
-                req.set_param('authorized_readonly', row['readonly'].value())
+                req.vars.attachment_storage_readonly = row['readonly'].value()
                 return
         raise wiking.AuthorizationError()
 
