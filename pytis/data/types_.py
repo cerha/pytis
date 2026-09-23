@@ -1745,8 +1745,8 @@ class Iban(String):
                                    maxlen=maxlen)
 
     def _normalize(self, obj):
-        """Return obj without spaces, in upper case."""
-        return unistr(obj).replace(' ', '').replace('\u202f', '').upper()
+        """Return obj without any whitespace, in upper case."""
+        return ''.join(unistr(obj).split()).upper()
 
     def _checksum_ok(self, compact):
         """Verify the IBAN checksum using the mod-97 algorithm."""
