@@ -148,7 +148,7 @@ class Menu(RestrictedPytisModule):
     def _handle(self, req, action, **kwargs):
         # HACK: We need to store the current resolved menu item somewhere.
         # Wiking support for resolution tracking would be a clean solution.
-        req.cms_current_menu_record = kwargs.get('record')
+        req.vars.cms_current_menu_record = kwargs.get('record')
         return super(Menu, self)._handle(req, action, **kwargs)
 
     def _pytis_redirect_origin(self, req):
@@ -167,10 +167,10 @@ class Menu(RestrictedPytisModule):
         return module
 
     def permitted_roles(self, req, module, action=None, record=None, **kwargs):
-        # wiking.debug("...", module.name(), action, hasattr(req, 'cms_current_menu_record'))
-        if hasattr(req, 'cms_current_menu_record'):
+        # wiking.debug("...", module.name(), action, hasattr(req.vars, 'cms_current_menu_record'))
+        if hasattr(req.vars, 'cms_current_menu_record'):
             rights = wiking.module.Rights
-            menu_record = req.cms_current_menu_record
+            menu_record = req.vars.cms_current_menu_record
             menu_item_id = menu_record['menu_item_id'].value()
             if module is self and action == 'view' and record is not None \
                     and record['menu_item_id'].value() == menu_item_id:
