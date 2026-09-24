@@ -897,6 +897,32 @@ class TestHttpRoutes:
                                      'ON pytis_rest_test_items'))
                 conn.execute(sa.text('DROP FUNCTION pytis_rest_test_decide'))
 
+    def test_a_trigger_error_carries_no_empty_constraint_fields(self, client, engine):
+        # A constraint the database itself raises names itself; one a trigger
+        # raises has no name and no column, and empty keys say nothing.
+        with engine.begin() as conn:
+            conn.execute(sa.text("""
+                CREATE OR REPLACE FUNCTION pytis_rest_test_check() RETURNS trigger AS $$
+                BEGIN
+                    RAISE EXCEPTION 'Not allowed.'
+                        USING ERRCODE = '23514',
+                              DETAIL = json_build_object('code', 'refused')::text;
+                END; $$ LANGUAGE plpgsql"""))
+            conn.execute(sa.text('CREATE TRIGGER pytis_rest_test_check BEFORE INSERT '
+                                 'ON pytis_rest_test_items FOR EACH ROW '
+                                 'EXECUTE FUNCTION pytis_rest_test_check()'))
+        try:
+            r = client.post('/items', json={'code': 'ANY'})
+            assert r.status_code == 409
+            assert r.json()['detail'] == {
+                'error': 'check violation', 'code': 'refused', 'message': 'Not allowed.',
+            }
+        finally:
+            with engine.begin() as conn:
+                conn.execute(sa.text('DROP TRIGGER pytis_rest_test_check '
+                                     'ON pytis_rest_test_items'))
+                conn.execute(sa.text('DROP FUNCTION pytis_rest_test_check'))
+
     def test_the_error_codes_are_in_the_schema(self, client):
         paths = client.get('/openapi.json').json()['paths']
         assert set(paths['/items']['post']['responses']) >= {'409', '422'}

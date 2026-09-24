@@ -188,11 +188,17 @@ class ConstraintViolationError(RuntimeError):
     def __init__(self, e: sa.exc.IntegrityError):
         super().__init__(str(e))
         diag = getattr(e.orig, "diag", None)
-        self._detail = dict(
-            error=self._ERROR_MAP.get(getattr(e.orig, "pgcode", None), "integrity_error"),
-            constraint=getattr(diag, "constraint_name", None) if diag else None,
-            column=getattr(diag, "column_name", None) if diag else None,
-        )
+        # A constraint raised by the database names itself, whereas one a
+        # trigger raised deliberately has no name and no column: the keys are
+        # left out rather than sent empty, so the body holds only what it knows.
+        self._detail = {
+            key: value for key, value in (
+                ('error', self._ERROR_MAP.get(getattr(e.orig, "pgcode", None),
+                                              "integrity_error")),
+                ('constraint', getattr(diag, "constraint_name", None) if diag else None),
+                ('column', getattr(diag, "column_name", None) if diag else None),
+            ) if value is not None
+        }
         # A trigger that raised this deliberately says more than the constraint
         # name does; what it put in DETAIL belongs in the response (see _error).
         supplied = _error(e)
