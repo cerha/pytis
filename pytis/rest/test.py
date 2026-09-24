@@ -70,7 +70,8 @@ from pytis.rest.db import (  # noqa: E402
     PayloadError, NonUniqueKeyError, ConstraintViolationError,
 )
 from pytis.rest.rest import (  # noqa: E402
-    ResourceSpec, ForeignKey, Header, Body, Raw, Derived, Default, _Request,
+    ResourceSpec, ForeignKey, Header, Body, Raw, Derived, Default, Status,
+    _Request, _answer,
     TopLevelResourceHandler,
     add_api_routes,
 )
@@ -186,6 +187,21 @@ _RAW_SPEC = ResourceSpec(
     },
 )
 
+#: The database decides what happened, so the answer follows 'status'.
+_STATUS_SPEC = ResourceSpec(
+    name='status-items',
+    table=PytisRestTestItem,
+    key=('code',),
+    create_status=Status(
+        decide=lambda record: 200 if record['status'] == 'seen' else 201,
+        descriptions={201: 'The item is new.', 200: 'The item was already known.'},
+    ),
+    update_status=Status(
+        decide=lambda record: 200 if record['status'] == 'seen' else 201,
+        descriptions={201: 'The item is new.', 200: 'The item was already known.'},
+    ),
+)
+
 _ALL_OPS = dict(get=True, list=True, create=True, update=True, delete=True)
 
 # ---------------------------------------------------------------------------
@@ -280,6 +296,7 @@ def client(db):
     add_api_routes(router, db, _CATEGORY_SPEC, operations=_ALL_OPS)
     add_api_routes(router, db, _SOURCED_SPEC, operations=_ALL_OPS)
     add_api_routes(router, db, _RAW_SPEC, operations=_ALL_OPS)
+    add_api_routes(router, db, _STATUS_SPEC, operations=_ALL_OPS)
     app.include_router(router)
     with TestClient(app) as c:
         yield c
@@ -749,6 +766,42 @@ class TestHttpRoutes:
         # Whatever arrives is the value, including what no parser would accept.
         r = client.post('/raw-items', content=b'\x00not json')
         assert r.status_code == 201
+
+    def test_create_answers_by_what_the_database_decided(self, client):
+        # The column says the row is new, so the answer is the plain 201...
+        r = client.post('/status-items', json={'code': 'A', 'status': 'new'})
+        assert r.status_code == 201
+        # ...and when it says otherwise, the answer follows it, even though a
+        # row was written either way.
+        r = client.post('/status-items', json={'code': 'B', 'status': 'seen'})
+        assert r.status_code == 200
+        assert r.json()['code'] == 'B'
+        # An unmapped value keeps the default.
+        assert client.post(
+            '/status-items', json={'code': 'C', 'status': 'other'}).status_code == 201
+
+    def test_update_answers_the_same_way(self, client):
+        client.post('/status-items', json={'code': 'A', 'status': 'new'})
+        r = client.patch('/status-items/A', json={'status': 'seen'})
+        assert r.status_code == 200
+        assert client.patch('/status-items/A', json={'status': 'new'}).status_code == 201
+
+    def test_an_undeclared_status_is_a_server_error(self, client):
+        # The schema would otherwise lie about what the endpoint answers.
+        with pytest.raises(fastapi.HTTPException) as e:
+            _answer(Status(decide=lambda record: 418, descriptions={200: ''}),
+                    'items', {}, fastapi.Response())
+        assert e.value.status_code == 500
+        assert '418' in e.value.detail
+
+    def test_the_declared_status_codes_are_in_the_schema(self, client):
+        paths = client.get('/openapi.json').json()['paths']
+        post = paths['/status-items']['post']
+        assert set(post['responses']) >= {'200', '201'}
+        assert post['responses']['200']['description'] == 'The item was already known.'
+        assert post['responses']['201']['description'] == 'The item is new.'
+        patch = paths['/status-items/{code}']['patch']
+        assert set(patch['responses']) >= {'200', '201'}
 
     def test_list_empty(self, client):
         r = client.get('/items')

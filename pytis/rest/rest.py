@@ -173,6 +173,31 @@ class Default:
 
 
 @dataclasses.dataclass(frozen=True, slots=True)
+class Status:
+    """Which status code a write answers, decided by the record it wrote.
+
+    A POST otherwise always answers 201 and a PATCH 200, which say the record
+    was created, resp. changed.  Where the database decides what actually
+    happened with what arrived, the answer has to follow it: the same document
+    sent twice, or a newer version of one already held, is not a creation even
+    though a row was written.
+
+    `decide` is called with the record as written, including columns left out
+    of responses, and returns the code to answer with.  `descriptions` declares
+    the codes it may return, so the OpenAPI schema says what the endpoint
+    answers and why; a code missing from it is a mistake in the spec and the
+    request fails with 500 rather than quietly contradicting the schema.
+
+    """
+    decide: typing.Callable[[dict], int] = datafield(
+        doc='Callable(record) returning the status code to answer with.',
+    )
+    descriptions: dict = datafield(
+        doc='{status code: description}; the codes `decide` may return.',
+    )
+
+
+@dataclasses.dataclass(frozen=True, slots=True)
 class _Request:
     """The parts of a request that a write takes its values from.
 
@@ -405,6 +430,14 @@ class ResourceSpec:
         default=(),
         doc='Column names left out of responses, though they may still be written.',
     )
+    create_status: Status | None = datafield(
+        default=None,
+        doc='What a successful insert answers; plain 201 when not given.',
+    )
+    update_status: Status | None = datafield(
+        default=None,
+        doc='What a successful update answers; plain 200 when not given.',
+    )
 
     sources: dict[str, Source | tuple[Source, ...]] | None = datafield(
         default=None,
@@ -470,6 +503,35 @@ _VALID_OPERATIONS = frozenset({'get', 'list', 'create', 'update', 'delete'})
 #   callable           — enabled; callable auto-wrapped in fastapi.Depends
 #   list of callables  — enabled; each callable auto-wrapped in fastapi.Depends
 OperationAuth = bool | typing.Callable | list[typing.Callable]
+
+
+def _responses(status: Status | None, model: type) -> dict | None:
+    """Return the OpenAPI responses declared by `status`, or None."""
+    if status is None:
+        return None
+    return {code: {'description': description, 'model': model}
+            for code, description in status.descriptions.items()}
+
+
+def _answer(status: Status | None, name: str, record: dict,
+            response: fastapi.Response) -> dict:
+    """Answer with the status code the written record calls for.
+
+    A code the spec did not declare would make the schema lie about the
+    endpoint, which is worth failing over: it is a mistake in the spec, not in
+    the request, so it surfaces as a server error.
+
+    """
+    if status is not None:
+        code = status.decide(record)
+        if code not in status.descriptions:
+            raise fastapi.HTTPException(
+                status_code=fastapi.status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f'Status {code} of {name!r} is not among the declared ones: '
+                       f'{", ".join(str(c) for c in sorted(status.descriptions))}.',
+            )
+        response.status_code = code
+    return record
 
 
 async def _read_body(request: fastapi.Request, limit: int | None) -> bytes:
@@ -618,17 +680,20 @@ def add_api_routes(router: fastapi.APIRouter, db: Database, spec: ResourceSpec,
 
     # POST
     if (d := _deps('create')) is not None:
+        status = spec.create_status
         if handler.raw is not None:
             # The body belongs to one column as it arrived, so there is no model
             # to parse it into.  Reading it is async, while the handler is not
             # (see Database.create), hence the threadpool: the event loop must
             # not wait for the database.
-            async def create_one(request: fastapi.Request, **params):
+            async def create_one(request: fastapi.Request, response: fastapi.Response,
+                                 **params):
                 raw = await _read_body(request, handler.raw_limit)
-                return await fastapi.concurrency.run_in_threadpool(
-                    handler.create_one, request_of(None, params, raw))
+                return _answer(status, spec.name, await fastapi.concurrency.run_in_threadpool(
+                    handler.create_one, request_of(None, params, raw)), response)
 
-            annotate(create_one, request=fastapi.Request, **header_params())
+            annotate(create_one, request=fastapi.Request, response=fastapi.Response,
+                     **header_params())
             # FastAPI documents a body only when it parses one, so the schema
             # has to say by hand that the endpoint takes one and of any type.
             openapi_extra = {'requestBody': {
@@ -637,10 +702,13 @@ def add_api_routes(router: fastapi.APIRouter, db: Database, spec: ResourceSpec,
                 'content': {'*/*': {'schema': {'type': 'string', 'format': 'binary'}}},
             }}
         else:
-            def create_one(payload, **params):  # **params receives the header values.
-                return handler.create_one(request_of(payload, params))
+            def create_one(payload, response: fastapi.Response, **params):
+                # **params receives the header values.
+                return _answer(status, spec.name,
+                               handler.create_one(request_of(payload, params)), response)
 
-            annotate(create_one, payload=handler.model('create'), **header_params())
+            annotate(create_one, payload=handler.model('create'),
+                     response=fastapi.Response, **header_params())
             openapi_extra = None
         router.add_api_route(
             prefix,
@@ -653,15 +721,20 @@ def add_api_routes(router: fastapi.APIRouter, db: Database, spec: ResourceSpec,
             description='Inserts a new record.',
             dependencies=d,
             openapi_extra=openapi_extra,
+            responses=_responses(status, out_model),
         )
 
     # PATCH
     if (d := _deps('update')) is not None:
-        def update_one(payload, **kwargs):  # **kwargs = path key and header values.
-            return handler.update_one(kwargs[key.name], request_of(payload, kwargs))
+        def update_one(payload, response: fastapi.Response, **kwargs):
+            # **kwargs = path key and header values.
+            return _answer(spec.update_status, spec.name,
+                           handler.update_one(kwargs[key.name], request_of(payload, kwargs)),
+                           response)
 
         annotate(update_one, **dict({key.name: key.annotation,
-                                     'payload': handler.model('patch')}, **header_params()))
+                                     'payload': handler.model('patch'),
+                                     'response': fastapi.Response}, **header_params()))
         router.add_api_route(
             prefix + '/{' + key.name + '}',
             update_one,
@@ -671,6 +744,7 @@ def add_api_routes(router: fastapi.APIRouter, db: Database, spec: ResourceSpec,
             summary='Patch',
             description='Partially updates a record. Only provided fields are updated.',
             dependencies=d,
+            responses=_responses(spec.update_status, out_model),
         )
 
     # DELETE

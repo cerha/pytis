@@ -24,6 +24,7 @@ from .rest import (
     ForeignKey as ForeignKey,
     BindingTable as BindingTable,
     Header as Header,
+    Status as Status,
     Body as Body,
     Raw as Raw,
     Derived as Derived,
