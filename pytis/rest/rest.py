@@ -431,7 +431,10 @@ def add_api_routes(router: fastapi.APIRouter, db: Database, spec: ResourceSpec,
     # POST
     if (d := _deps('create')) is not None:
         def create_one(payload):
-            return handler.create_one(payload.model_dump())
+            # exclude_unset as in PATCH: what the client did not send is absent
+            # from the payload, so a missing value means the same thing in both
+            # operations.  What reaches the database is the same either way.
+            return handler.create_one(payload.model_dump(exclude_unset=True))
 
         annotate(create_one, payload=handler.model('create'))
         router.add_api_route(
@@ -733,6 +736,12 @@ class ResourceHandler:
         optional; PK never present. - 'nested' model: for nested writes;
         includes API key columns and excludes DB PK if it is not part of the API
         key.
+
+        Both write models are dumped with `exclude_unset=True`, so a field the
+        client did not send is absent from the payload rather than present as
+        None.  The insert is unaffected (the ORM skips a None value on a column
+        with a default anyway); what it buys is that a payload means the same
+        thing in both write operations.
 
         Models are created per handler instance and not globally cached. In the
         current architecture each ResourceSpec is typically registered once

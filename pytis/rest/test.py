@@ -110,6 +110,9 @@ class PytisRestTestItem(gsql.SQLTable):
         gsql.Column('code', pd.String(not_null=True), unique=True),
         gsql.Column('label', pd.String()),
         gsql.Column('score', pd.Integer()),
+        # Sloupec s výchozí hodnotou: ukazuje, co se stane s polem, které klient
+        # nepošle, proti poli poslanému jako null.
+        gsql.Column('status', pd.String(), default='new'),
         gsql.Column('category_id', pd.Integer(),
                    references=gsql.r.PytisRestTestCategory),
     )
@@ -536,6 +539,14 @@ class TestHttpRoutes:
         r = client.post('/items', json={'code': 'NEW', 'label': 'New Item'})
         assert r.status_code == 201
         assert r.json()['code'] == 'NEW'
+
+    def test_create_applies_the_database_default(self, client):
+        # A column with a default keeps it whether the client omits the field or
+        # sends it as null: the ORM leaves a None value out of the insert when
+        # the column has a default, so a default cannot be overridden by null.
+        assert client.post('/items', json={'code': 'OMITTED'}).json()['status'] == 'new'
+        assert client.post('/items', json={'code': 'NULLED', 'status': None}
+                           ).json()['status'] == 'new'
 
     def test_create_and_list(self, client):
         client.post('/items', json={'code': 'A', 'label': 'Alpha'})
