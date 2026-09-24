@@ -393,6 +393,12 @@ class TestPytisAccessor:
     def accessor(self):
         return PytisAccessor.create(PytisRestTestItem)
 
+    def test_insert_rejects_a_value_the_database_refuses(self, accessor, session):
+        # A value of the wrong shape fails in the database (SQL class 22), not
+        # in a constraint; the client needs 422, not 500.
+        with pytest.raises(PayloadError):
+            accessor.insert(session, code='BAD_SCORE', score='not a number')
+
     def test_insert_returns_entity(self, accessor, session):
         row = accessor.insert(session, code='ALPHA')
         assert row.code == 'ALPHA'

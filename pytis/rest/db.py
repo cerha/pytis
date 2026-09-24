@@ -109,6 +109,17 @@ class Database:
         self._engine.dispose()
 
 
+def _message(e: sa.exc.DatabaseError) -> str:
+    """Return the database error message without SQLAlchemy's statement dump.
+
+    A trigger raising an exception (for example a value the database refuses)
+    says why in its message, and that reason is what the client needs.  The
+    statement and its parameters belong to the log, not to the response.
+
+    """
+    return str(getattr(e.orig, 'diag', None) and e.orig.diag.message_primary or e.orig).strip()
+
+
 class NonUniqueKeyError(RuntimeError):
     """Raised when a key expected to be unique matches multiple rows."""
 
@@ -566,8 +577,9 @@ class PytisAccessor:
           Newly created ORM entity instance.
 
         Raises:
-          `PayloadError`: If unknown columns are provided. ConstraintViolationError:
-          On database constraint violation.
+          `PayloadError`: If unknown columns are provided or the database refuses
+          a value (SQL class 22, typically raised by a trigger).
+          ConstraintViolationError: On database constraint violation.
 
         """
         unknown = set(values) - self._column_names
@@ -583,6 +595,8 @@ class PytisAccessor:
             session.flush()
         except sa.exc.IntegrityError as e:
             raise ConstraintViolationError(e) from e
+        except sa.exc.DataError as e:
+            raise PayloadError(_message(e)) from e
         return obj
 
     def update(self, session: orm.Session, condition: Operator, **values):
@@ -616,6 +630,8 @@ class PytisAccessor:
             session.flush()
         except sa.exc.IntegrityError as e:
             raise ConstraintViolationError(e) from e
+        except sa.exc.DataError as e:
+            raise PayloadError(_message(e)) from e
         return obj
 
     def delete(self, session: orm.Session, condition: Operator) -> bool:
@@ -642,6 +658,8 @@ class PytisAccessor:
             session.flush()
         except sa.exc.IntegrityError as e:
             raise ConstraintViolationError(e) from e
+        except sa.exc.DataError as e:
+            raise PayloadError(_message(e)) from e
         return True
 
     def delete_instance(self, session: orm.Session, obj: typing.Any) -> None:
