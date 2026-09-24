@@ -871,6 +871,32 @@ class TestHttpRoutes:
                                      'ON pytis_rest_test_items'))
                 conn.execute(sa.text('DROP FUNCTION pytis_rest_test_refuse'))
 
+    def test_what_the_database_decided_reaches_the_answer(self, client, engine):
+        # A write returns only the primary key, so what a trigger decided about
+        # it has to be read back; without that the column is null in the
+        # response and the status it should decide never happens.
+        with engine.begin() as conn:
+            conn.execute(sa.text("""
+                CREATE OR REPLACE FUNCTION pytis_rest_test_decide() RETURNS trigger AS $$
+                BEGIN
+                    new.status := 'seen';
+                    RETURN new;
+                END; $$ LANGUAGE plpgsql"""))
+            conn.execute(sa.text('CREATE TRIGGER pytis_rest_test_decide BEFORE INSERT '
+                                 'ON pytis_rest_test_items FOR EACH ROW '
+                                 'EXECUTE FUNCTION pytis_rest_test_decide()'))
+        try:
+            # 'status' is not sent, so only the trigger can have set it.
+            r = client.post('/status-items', json={'code': 'DECIDED'})
+            assert r.json()['status'] == 'seen'
+            # And the status code follows it, which is the whole point.
+            assert r.status_code == 200
+        finally:
+            with engine.begin() as conn:
+                conn.execute(sa.text('DROP TRIGGER pytis_rest_test_decide '
+                                     'ON pytis_rest_test_items'))
+                conn.execute(sa.text('DROP FUNCTION pytis_rest_test_decide'))
+
     def test_the_error_codes_are_in_the_schema(self, client):
         paths = client.get('/openapi.json').json()['paths']
         assert set(paths['/items']['post']['responses']) >= {'409', '422'}

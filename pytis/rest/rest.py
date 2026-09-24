@@ -1272,6 +1272,21 @@ class ResourceHandler:
             model = self._models[kind] = self._model(kind)
         return model
 
+    def _read_back(self, session: orm.Session, row: typing.Any) -> None:
+        """Load the columns the database had the last word on.
+
+        A write returns only the primary key, so a column the payload did not
+        supply is still unset on the row afterwards and would be serialized as
+        null: a default filled in by the database, or anything a trigger decided
+        about the write, which is exactly what `Status.decide` needs to see.
+        SQLAlchemy knows which attributes those are, so a write that supplied
+        everything costs no query at all.
+
+        """
+        unloaded = sa.inspect(row).unloaded & {c.name for c in self._accessor.columns}
+        if unloaded:
+            session.refresh(row, attribute_names=unloaded)
+
     def _materialize(self, session: orm.Session, row: typing.Any) -> dict[str, typing.Any]:
         """Serialize row with nested relations in spec order."""
         data = {c.name: getattr(row, c.name) for c in self._accessor.columns}
@@ -1804,6 +1819,7 @@ class TopLevelResourceHandler(ResourceHandler):
             payload = self._apply_sources(request, 'create')
             with self._db.session.begin() as session:
                 row = self._insert(session, payload)
+                self._read_back(session, row)
                 result = self._materialize(session, row)
                 pk = getattr(row, self._accessor.primary_key.name, None)
             log(ACTION, 'REST API create %s:' % self._spec.name, pk)
@@ -1827,6 +1843,7 @@ class TopLevelResourceHandler(ResourceHandler):
                                    self._apply_sources(request, 'update'))
                 if row is None:
                     raise fastapi.HTTPException(status_code=404, detail='Not found')
+                self._read_back(session, row)
                 result = self._materialize(session, row)
             log(ACTION, 'REST API update %s:' % self._spec.name, item_id)
             return result
