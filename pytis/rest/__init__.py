@@ -20,6 +20,7 @@
 from .rest import (
     add_api_routes as add_api_routes,
     api_key_dependency as api_key_dependency,
+    require_identity as require_identity,
     ResourceSpec as ResourceSpec,
     ForeignKey as ForeignKey,
     BindingTable as BindingTable,

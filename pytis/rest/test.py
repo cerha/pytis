@@ -73,7 +73,7 @@ from pytis.rest.rest import (  # noqa: E402
     ResourceSpec, ForeignKey, Header, Body, Raw, Identity, Derived, Default, Status,
     _Request, _answer,
     TopLevelResourceHandler,
-    add_api_routes, api_key_dependency,
+    add_api_routes, api_key_dependency, require_identity,
 )
 
 
@@ -210,6 +210,13 @@ _IDENTIFIED_SPEC = ResourceSpec(
     sources={'label': Identity()},
 )
 
+#: Same table again, with reading reserved for one sender (see secured_client).
+_RESERVED_SPEC = ResourceSpec(
+    name='reserved-items',
+    table=PytisRestTestItem,
+    key=('code',),
+)
+
 _ALL_OPS = dict(get=True, list=True, create=True, update=True, delete=True)
 
 #: What the secured client accepts.  Held in a dict rather than in a plain
@@ -322,6 +329,9 @@ def secured_client(db):
         dependencies=[api_key_dependency(lambda: _CONFIG['api_key'])],
     )
     add_api_routes(router, db, _IDENTIFIED_SPEC, operations=_ALL_OPS)
+    # Reading is reserved for one of the two senders, writing is open to both.
+    add_api_routes(router, db, _RESERVED_SPEC, operations=dict(
+        _ALL_OPS, get=require_identity('hub'), list=require_identity('hub')))
     app.include_router(router)
     with TestClient(app) as c:
         yield c
@@ -895,6 +905,18 @@ class TestHttpRoutes:
                                 json={'code': 'IMPOSTOR', 'label': 'hub'},
                                 headers={'X-API-Key': 'other-key'})
         assert r.status_code == 422
+
+    def test_an_operation_can_be_reserved_for_named_senders(self, secured_client):
+        # Both keys authenticate, but only one is let in to read: 403, because
+        # this caller did say who it is and that is not enough.
+        assert secured_client.get(
+            '/reserved-items', headers={'X-API-Key': 'hub-key'}).status_code == 200
+        r = secured_client.get('/reserved-items', headers={'X-API-Key': 'other-key'})
+        assert r.status_code == 403
+        # An operation left open stays open to either of them.
+        assert secured_client.post(
+            '/reserved-items', json={'code': 'EITHER'},
+            headers={'X-API-Key': 'other-key'}).status_code == 201
 
     def test_a_key_without_a_name_is_a_misconfiguration(self, secured_client, monkeypatch):
         # A bare key would authenticate without saying who, leaving nothing to

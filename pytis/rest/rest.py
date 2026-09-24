@@ -97,6 +97,32 @@ def api_key_dependency(
     return fastapi.Depends(verify)
 
 
+def require_identity(*names: str) -> typing.Callable:
+    """Return a dependency reserving an operation for the named senders.
+
+    The names are those of the configured API keys (see `api_key_dependency`),
+    so an operation is open only to the senders that have business with it and
+    a key that leaks does not open everything the API has:
+
+    ```
+    add_api_routes(router, db, accounts, operations={'list': require_identity('reporting')})
+    ```
+
+    A request that authenticated under another name is refused with 403: it did
+    say who it is, and that is not enough.  One that did not authenticate at all
+    is refused by the authentication dependency before it gets here, and where
+    there is none, this refuses everything rather than letting everything past.
+
+    """
+    def verify(request: fastapi.Request) -> None:
+        if getattr(request.state, 'identity', None) not in names:
+            raise fastapi.HTTPException(
+                status_code=fastapi.status.HTTP_403_FORBIDDEN,
+                detail='This key does not have access to this operation.',
+            )
+    return verify
+
+
 def datafield(*, default=dataclasses.MISSING, doc: str | None = None):
     """Create a dataclass field with optional documentation metadata.
 
