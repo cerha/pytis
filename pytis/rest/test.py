@@ -48,6 +48,7 @@ database is unreachable.
 
 """
 
+import hashlib
 import os
 import pytest
 import sqlalchemy as sa
@@ -69,7 +70,7 @@ from pytis.rest.db import (  # noqa: E402
     PayloadError, NonUniqueKeyError, ConstraintViolationError,
 )
 from pytis.rest.rest import (  # noqa: E402
-    ResourceSpec, ForeignKey, Header, Derived, Default,
+    ResourceSpec, ForeignKey, Header, Body, Raw, Derived, Default, _Request,
     TopLevelResourceHandler,
     add_api_routes,
 )
@@ -113,6 +114,8 @@ class PytisRestTestItem(gsql.SQLTable):
         # Sloupec s výchozí hodnotou: ukazuje, co se stane s polem, které klient
         # nepošle, proti poli poslanému jako null.
         gsql.Column('status', pd.String(), default='new'),
+        # Binární sloupec: syrové tělo požadavku přichází jako bajty.
+        gsql.Column('content', pd.Binary()),
         gsql.Column('category_id', pd.Integer(),
                    references=gsql.r.PytisRestTestCategory),
     )
@@ -156,6 +159,30 @@ _SOURCED_SPEC = ResourceSpec(
         'score': Header('X-Score', type=int),
         'label': (Header('X-Label'), Derived(_derive_label)),
         'status': Default('sourced'),
+    },
+)
+
+def _derive_code(payload, operation):
+    """Return a code derived from the raw body, so the raw value is visible here."""
+    raw = payload.get('content')
+    return {'code': hashlib.sha256(raw).hexdigest()[:8]} if raw else {}
+
+
+#: The body is one column as it arrived, so every other column says where it
+#: comes from; 'status' says "from nowhere" and is left to the database.
+_RAW_SPEC = ResourceSpec(
+    name='raw-items',
+    table=PytisRestTestItem,
+    key=('code',),
+    # The body is not worth repeating in the response.
+    unreturned=('content',),
+    sources={
+        'content': Raw(limit=64),
+        'code': Derived(_derive_code),
+        'score': Header('X-Score', type=int),
+        'label': (),
+        'status': (),
+        'category_id': (),
     },
 )
 
@@ -252,6 +279,7 @@ def client(db):
     add_api_routes(router, db, _ITEM_SPEC, operations=_ALL_OPS)
     add_api_routes(router, db, _CATEGORY_SPEC, operations=_ALL_OPS)
     add_api_routes(router, db, _SOURCED_SPEC, operations=_ALL_OPS)
+    add_api_routes(router, db, _RAW_SPEC, operations=_ALL_OPS)
     app.include_router(router)
     with TestClient(app) as c:
         yield c
@@ -417,6 +445,10 @@ class TestValueSources:
     def handler(self):
         return TopLevelResourceHandler(_SOURCED_SPEC, MagicMock(spec=Database))
 
+    @pytest.fixture(scope='class')
+    def raw_handler(self):
+        return TopLevelResourceHandler(_RAW_SPEC, MagicMock(spec=Database))
+
     def test_a_header_sourced_column_is_not_in_the_body(self, handler):
         # 'score' comes from X-Score and 'label' from X-Label before anything
         # else, so the body has no place for either.
@@ -426,42 +458,114 @@ class TestValueSources:
             # Reading is unaffected.
             assert name in handler.model('out').model_fields
 
-    def test_a_column_with_a_source_is_never_required(self):
+    def test_only_a_source_other_than_the_body_makes_a_column_optional(self):
         # 'code' is NOT NULL without a default, so the client must send it...
         plain = TopLevelResourceHandler(_ITEM_SPEC, MagicMock(spec=Database))
         assert plain.model('create').model_fields['code'].is_required()
-        # ...unless a source can fill it in.
+        # ...and saying out loud that it comes from the body changes nothing.
+        spelt = TopLevelResourceHandler(
+            ResourceSpec(name='x', table=PytisRestTestItem, key=('code',),
+                         sources={'code': Body()}),
+            MagicMock(spec=Database),
+        )
+        assert spelt.model('create').model_fields['code'].is_required()
+        # A source other than the body takes the column out of the body
+        # altogether, so the question of requiring it there does not arise.
         sourced = TopLevelResourceHandler(
             ResourceSpec(name='x', table=PytisRestTestItem, key=('code',),
                          sources={'code': Derived(_derive_label)}),
             MagicMock(spec=Database),
         )
-        assert not sourced.model('create').model_fields['code'].is_required()
+        assert 'code' not in sourced.model('create').model_fields
+
+    def test_a_column_with_an_empty_chain_is_readable_but_not_writable(self):
+        handler = TopLevelResourceHandler(
+            ResourceSpec(name='x', table=PytisRestTestItem, key=('code',),
+                         sources={'status': ()}),
+            MagicMock(spec=Database),
+        )
+        assert 'status' not in handler.model('create').model_fields
+        assert 'status' not in handler.model('patch').model_fields
+        assert 'status' in handler.model('out').model_fields
+        # Nothing fills it either, so the database decides.
+        assert handler._apply_sources(_Request({'code': 'A'}, {}), 'create') == {'code': 'A'}
 
     def test_sources_are_tried_in_order(self, handler):
         # The header wins over the provider; the provider only fills in what is
         # left, and a default applies to an insert.
-        assert handler._apply_sources({'code': 'A', 'label': 'sent'}, 'create') == {
+        assert handler._apply_sources(
+            _Request({'code': 'A'}, {'label': 'sent'}), 'create') == {
             'code': 'A', 'label': 'sent', 'status': 'sourced',
         }
-        assert handler._apply_sources({'code': 'A'}, 'create') == {
+        assert handler._apply_sources(_Request({'code': 'A'}, {}), 'create') == {
             'code': 'A', 'label': 'a', 'status': 'sourced',
         }
 
+    def test_the_body_wins_only_where_it_is_declared_first(self):
+        # The same two sources either way round, so only the order decides.
+        def handler_for(*sources):
+            return TopLevelResourceHandler(
+                ResourceSpec(name='x', table=PytisRestTestItem, key=('code',),
+                             sources={'label': sources}),
+                MagicMock(spec=Database),
+            )
+        request = _Request({'label': 'body'}, {'label': 'header'})
+        assert handler_for(Header('X-Label'), Body())._apply_sources(
+            request, 'create')['label'] == 'header'
+        assert handler_for(Body(), Header('X-Label'))._apply_sources(
+            request, 'create')['label'] == 'body'
+
     def test_a_default_does_not_apply_to_an_update(self, handler):
         # A value absent from a partial payload means "do not change it".
-        assert handler._apply_sources({'label': 'x'}, 'update') == {'label': 'x'}
+        assert handler._apply_sources(_Request({}, {'label': 'x'}), 'update') == {'label': 'x'}
 
     def test_a_provider_decides_what_an_update_changes(self, handler):
         # Nothing to derive from, so the provider returns nothing.
-        assert handler._apply_sources({'score': 3}, 'update') == {'score': 3}
+        assert handler._apply_sources(_Request({}, {'score': 3}), 'update') == {'score': 3}
         # The value it derives from is changing, so the derived one changes too.
-        assert handler._apply_sources({'code': 'B'}, 'update') == {'code': 'B', 'label': 'b'}
+        assert handler._apply_sources(_Request({'code': 'B'}, {}), 'update') == {
+            'code': 'B', 'label': 'b',
+        }
+
+    def test_raw_refuses_to_share_the_body(self):
+        # 'label' takes the whole body, so 'code' cannot be read from it, and
+        # neither can the columns that say nothing and would be by default.
+        with pytest.raises(ValueError) as e:
+            TopLevelResourceHandler(
+                ResourceSpec(name='x', table=PytisRestTestItem, key=('code',),
+                             sources={'content': Raw(), 'code': Body()}),
+                MagicMock(spec=Database),
+            )
+        assert 'code' in str(e.value) and 'score' in str(e.value)
+
+    def test_raw_cannot_be_one_source_among_several(self):
+        with pytest.raises(ValueError) as e:
+            TopLevelResourceHandler(
+                ResourceSpec(name='x', table=PytisRestTestItem, key=('code',),
+                             sources={'content': (Raw(), Default('x'))}),
+                MagicMock(spec=Database),
+            )
+        assert 'whole value or nothing' in str(e.value)
+
+    def test_the_raw_body_is_not_a_field_of_anything(self, raw_handler):
+        assert raw_handler.raw == 'content'
+        assert raw_handler.model('create').model_fields == {}
+        # ...and 'unreturned' keeps it out of the response as well.
+        assert 'content' not in raw_handler.model('out').model_fields
+        assert 'label' in raw_handler.model('out').model_fields
+
+    def test_the_raw_body_reaches_the_values_and_the_providers(self, raw_handler):
+        assert raw_handler._apply_sources(
+            _Request({}, {'score': 7}, raw=b'hello'), 'create') == {
+            'content': b'hello',
+            'code': hashlib.sha256(b'hello').hexdigest()[:8],
+            'score': 7,
+        }
 
     def test_a_rejecting_provider_is_reported_as_422(self):
         handler = TopLevelResourceHandler(_SOURCED_SPEC, MagicMock(spec=Database))
         with pytest.raises(fastapi.HTTPException) as e:
-            handler.create_one({'code': 'BAD'})
+            handler.create_one(_Request({'code': 'BAD'}, {}))
         assert e.value.status_code == 422
 
 
@@ -615,6 +719,36 @@ class TestHttpRoutes:
         with engine.begin() as conn:
             conn.execute(sa.text('TRUNCATE pytis_rest_test_items CASCADE'))
             conn.execute(sa.text('TRUNCATE pytis_rest_test_categories CASCADE'))
+
+    def test_create_takes_the_whole_body_as_one_value(self, client):
+        # The sender posts the document as it is, with no envelope and any
+        # content type, and it is stored byte for byte.
+        document = '<Doc>ěščř</Doc>'.encode('utf-8')
+        r = client.post('/raw-items', content=document,
+                        headers={'Content-Type': 'application/xml', 'X-Score': '7'})
+        assert r.status_code == 201
+        assert r.json()['score'] == 7
+        # 'code' was derived from the raw body, so the provider saw it.
+        assert r.json()['code'] == hashlib.sha256(document).hexdigest()[:8]
+        # 'status' declares an empty chain, so the database default applied.
+        assert r.json()['status'] == 'new'
+        # The body itself is not returned, though it was written.
+        assert 'content' not in client.get(
+            '/raw-items/' + hashlib.sha256(document).hexdigest()[:8]).json()
+
+    def test_create_refuses_a_body_over_the_limit(self, client):
+        # Declared length is checked before anything is read...
+        r = client.post('/raw-items', content=b'x' * 65)
+        assert r.status_code == 413
+        # ...and so is what actually arrives, when the client declares nothing.
+        r = client.post('/raw-items', content=iter([b'x' * 40, b'x' * 40]))
+        assert r.status_code == 413
+        assert client.post('/raw-items', content=b'x' * 64).status_code == 201
+
+    def test_create_rejects_nothing_about_the_body(self, client):
+        # Whatever arrives is the value, including what no parser would accept.
+        r = client.post('/raw-items', content=b'\x00not json')
+        assert r.status_code == 201
 
     def test_list_empty(self, client):
         r = client.get('/items')

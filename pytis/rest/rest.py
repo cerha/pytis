@@ -17,6 +17,7 @@
 
 import dataclasses
 import fastapi
+import fastapi.concurrency
 import fastapi.security
 import inspect
 import pydantic
@@ -104,6 +105,40 @@ class Header:
 
 
 @dataclasses.dataclass(frozen=True, slots=True)
+class Body:
+    """Value taken from the field of the same name in the request body.
+
+    This is what a column with no declared sources gets, so it only needs
+    writing when the body is one source among several, as in "the header if
+    the client sent one, otherwise the body".  Declaring it keeps the order
+    explicit; the sources are always tried in the order they are written.
+
+    """
+
+
+@dataclasses.dataclass(frozen=True, slots=True)
+class Raw:
+    """Value taken from the whole request body, unparsed.
+
+    The endpoint then accepts any content type and stores what arrived, byte
+    for byte, which is what a gateway for uploading documents wants: the
+    sender is not made to wrap the document in an envelope, and a fingerprint
+    taken of the value is a fingerprint of the original.
+
+    It follows that no field can be read from the body any more, so `Raw` may
+    not be combined with `Body` anywhere in the resource, not even with the
+    `Body` a column gets by declaring nothing.  Such a resource therefore
+    declares a source for every column it writes; a column the API never sets
+    (the database or a trigger does) declares an empty source chain.
+
+    """
+    limit: int | None = datafield(
+        default=None,
+        doc='Maximum body size in bytes; a larger one is refused with 413.',
+    )
+
+
+@dataclasses.dataclass(frozen=True, slots=True)
 class Derived:
     """Value computed from the values already known.
 
@@ -137,8 +172,24 @@ class Default:
     value: typing.Any = datafield(doc='The value to insert.')
 
 
+@dataclasses.dataclass(frozen=True, slots=True)
+class _Request:
+    """The parts of a request that a write takes its values from.
+
+    Kept apart rather than merged into one dict so that the order of a column's
+    sources decides which of them wins.
+
+    """
+    body: dict = datafield(doc='Values of the request body fields.')
+    headers: dict = datafield(doc='Values of the declared headers, by column.')
+    raw: bytes | None = datafield(default=None, doc='The unparsed request body.')
+
+
 #: What a column's value may come from, in the order the sources are tried.
-Source = Header | Derived | Default
+#: A column with no sources at all behaves as if it declared `Body()`.  An
+#: empty chain is the opposite: the value comes from nowhere, so the column is
+#: readable but never written through the API.
+Source = Body | Raw | Header | Derived | Default
 
 
 @dataclasses.dataclass(frozen=True, slots=True)
@@ -348,7 +399,11 @@ class ResourceSpec:
 
     exclude: tuple[str, ...] = datafield(
         default=(),
-        doc='Column names to exclude from the API.',
+        doc='Column names to exclude from the API, neither written nor returned.',
+    )
+    unreturned: tuple[str, ...] = datafield(
+        default=(),
+        doc='Column names left out of responses, though they may still be written.',
     )
 
     sources: dict[str, Source | tuple[Source, ...]] | None = datafield(
@@ -417,6 +472,34 @@ _VALID_OPERATIONS = frozenset({'get', 'list', 'create', 'update', 'delete'})
 OperationAuth = bool | typing.Callable | list[typing.Callable]
 
 
+async def _read_body(request: fastapi.Request, limit: int | None) -> bytes:
+    """Return the request body, refusing one over `limit` bytes with 413.
+
+    Read in chunks rather than at once, so an oversized body is refused while
+    it arrives instead of after it has been held in memory.  `Content-Length`
+    is checked first when the client sends one, which refuses the usual case
+    before reading anything at all.
+
+    """
+    if limit is None:
+        return await request.body()
+    too_large = fastapi.HTTPException(
+        status_code=fastapi.status.HTTP_413_CONTENT_TOO_LARGE,
+        detail=f'Request body larger than {limit} bytes.',
+    )
+    declared = request.headers.get('content-length')
+    if declared is not None and declared.isdigit() and int(declared) > limit:
+        raise too_large
+    chunks: list[bytes] = []
+    size = 0
+    async for chunk in request.stream():
+        size += len(chunk)
+        if size > limit:
+            raise too_large
+        chunks.append(chunk)
+    return b''.join(chunks)
+
+
 def add_api_routes(router: fastapi.APIRouter, db: Database, spec: ResourceSpec,
                    operations: dict[str, OperationAuth]) -> None:
     """Register CRUD-ish REST endpoints for a `ResourceSpec`.
@@ -478,12 +561,15 @@ def add_api_routes(router: fastapi.APIRouter, db: Database, spec: ResourceSpec,
             for column, header in handler.headers.items()
         }
 
-    def with_headers(payload, params: dict) -> dict:
-        """Return the payload values extended with the headers the client sent."""
-        values = payload.model_dump(exclude_unset=True)
-        values.update((column, params[column]) for column in handler.headers
-                      if params.get(column) is not None)
-        return values
+    def request_of(payload, params: dict, raw: bytes | None = None) -> _Request:
+        """Return the parts of the request a write takes its values from."""
+        # exclude_unset as in PATCH: what the client did not send is absent from
+        # the body, so a missing value means the same thing in both operations.
+        return _Request(
+            body=payload.model_dump(exclude_unset=True) if payload is not None else {},
+            headers={column: params.get(column) for column in handler.headers},
+            raw=raw,
+        )
 
     prefix = '/' + spec.name
     tags = [spec.tag or spec.name]
@@ -532,13 +618,30 @@ def add_api_routes(router: fastapi.APIRouter, db: Database, spec: ResourceSpec,
 
     # POST
     if (d := _deps('create')) is not None:
-        def create_one(payload, **params):  # **params receives the header values.
-            # exclude_unset as in PATCH: what the client did not send is absent
-            # from the payload, so a missing value means the same thing in both
-            # operations.  What reaches the database is the same either way.
-            return handler.create_one(with_headers(payload, params))
+        if handler.raw is not None:
+            # The body belongs to one column as it arrived, so there is no model
+            # to parse it into.  Reading it is async, while the handler is not
+            # (see Database.create), hence the threadpool: the event loop must
+            # not wait for the database.
+            async def create_one(request: fastapi.Request, **params):
+                raw = await _read_body(request, handler.raw_limit)
+                return await fastapi.concurrency.run_in_threadpool(
+                    handler.create_one, request_of(None, params, raw))
 
-        annotate(create_one, payload=handler.model('create'), **header_params())
+            annotate(create_one, request=fastapi.Request, **header_params())
+            # FastAPI documents a body only when it parses one, so the schema
+            # has to say by hand that the endpoint takes one and of any type.
+            openapi_extra = {'requestBody': {
+                'required': True,
+                'description': f'The whole body becomes {handler.raw!r}.',
+                'content': {'*/*': {'schema': {'type': 'string', 'format': 'binary'}}},
+            }}
+        else:
+            def create_one(payload, **params):  # **params receives the header values.
+                return handler.create_one(request_of(payload, params))
+
+            annotate(create_one, payload=handler.model('create'), **header_params())
+            openapi_extra = None
         router.add_api_route(
             prefix,
             create_one,
@@ -549,12 +652,13 @@ def add_api_routes(router: fastapi.APIRouter, db: Database, spec: ResourceSpec,
             summary='Create',
             description='Inserts a new record.',
             dependencies=d,
+            openapi_extra=openapi_extra,
         )
 
     # PATCH
     if (d := _deps('update')) is not None:
         def update_one(payload, **kwargs):  # **kwargs = path key and header values.
-            return handler.update_one(kwargs[key.name], with_headers(payload, kwargs))
+            return handler.update_one(kwargs[key.name], request_of(payload, kwargs))
 
         annotate(update_one, **dict({key.name: key.annotation,
                                      'payload': handler.model('patch')}, **header_params()))
@@ -655,6 +759,9 @@ class ResourceHandler:
         for name in spec.exclude:
             if name not in col_names:
                 raise ValueError(f"Unknown column in ResourceSpec.exclude: {name!r}")
+        for name in spec.unreturned:
+            if name not in col_names:
+                raise ValueError(f"Unknown column in ResourceSpec.unreturned: {name!r}")
         # Sources normalised to {column: (source, ...)}; consulted by _model()
         # (what the body model contains) and by _apply_sources() (what a write
         # takes from where).
@@ -668,31 +775,99 @@ class ResourceHandler:
             for name, sources in self._sources.items()
         }
         self._headers = {name: hdr for name, hdr in self._headers.items() if hdr}
+        self._raw_limit: int | None = None
+        self._raw: str | None = self._init_raw()
+
+    def _init_raw(self) -> str | None:
+        """Return the column taking the whole request body, or None, and check it.
+
+        `Raw` claims the body as a whole, so nothing else may be read from it.
+        The check names the offending columns, including the ones that declare
+        nothing and would take their value from the body by default.  The
+        primary key is exempt: it is managed separately (see `_model`).
+
+        """
+        raw = [name for name, sources in self._sources.items()
+               if any(isinstance(src, Raw) for src in sources)]
+        if not raw:
+            return None
+        if len(raw) > 1:
+            raise ValueError("Several columns take the raw request body: "
+                             f"{', '.join(sorted(raw))}.")
+        name = raw[0]
+        self._raw_limit = self._sources[name][0].limit
+        if len(self._sources[name]) > 1:
+            raise ValueError(f"Column {name!r} combines Raw() with other sources; "
+                             "the raw body is the whole value or nothing.")
+        # Columns that would be read from the body: an explicit Body() anywhere,
+        # or nothing declared at all (which means the same thing).
+        body = sorted(
+            column.name for column in self._accessor.columns
+            if column.name not in self._exclude and column.name != name
+            and column.name != self._accessor.primary_key.name
+            and any(isinstance(src, Body) for src in self._sources.get(column.name, (Body(),)))
+        )
+        if body:
+            raise ValueError(
+                f"Column {name!r} takes the raw request body, so no field can be read "
+                f"from it, but these columns are: {', '.join(body)}.  Declare where each "
+                "of them comes from, or an empty source chain for the ones the API never "
+                "sets."
+            )
+        return name
 
     @property
     def headers(self) -> dict[str, Header]:
         """Return {column: Header} for columns whose value comes from a header."""
         return self._headers
 
-    def _apply_sources(self, payload: dict[str, typing.Any],
-                       operation: str) -> dict[str, typing.Any]:
-        """Return the payload with values the client did not send taken from sources.
+    @property
+    def raw(self) -> str | None:
+        """Return the column whose value is the whole request body, or None."""
+        return self._raw
 
-        Sources are tried in the declared order and the first value wins, so a
-        `Derived` provider runs only when the sources before it gave nothing.
-        A provider declared for several columns runs once and its dict serves
-        them all.
+    @property
+    def raw_limit(self) -> int | None:
+        """Return the maximum size of the raw request body, or None if unlimited."""
+        return self._raw_limit
+
+    def _from_body(self, name: str) -> bool:
+        """Return whether the column is read from a field of the request body."""
+        return any(isinstance(src, Body) for src in self._sources.get(name, (Body(),)))
+
+    def _filled(self, name: str) -> bool:
+        """Return whether some source other than the body can supply the value."""
+        return any(not isinstance(src, Body) for src in self._sources.get(name, ()))
+
+    def _apply_sources(self, request: '_Request', operation: str) -> dict[str, typing.Any]:
+        """Return the values to write, each taken from the first source that has one.
+
+        The sources are exhaustive and ordered: a column takes its value from
+        the first of them that yields one, and a column that declares none
+        takes it from the body field of its name.  The parts of the request are
+        kept apart, so "the header, otherwise the body" means what it says
+        whichever way round it is written.
+
+        A `Derived` provider sees the values known so far, runs only when the
+        sources before it gave nothing, and runs once even when it is declared
+        for several columns.
 
         """
-        values = dict(payload)
+        values = dict(request.body)
+        if self._raw is not None:
+            values[self._raw] = request.raw
+        values.update((name, value) for name, value in request.headers.items()
+                      if value is not None)
         derived: dict[int, dict] = {}
-        for name, sources in self._sources.items():
-            if values.get(name) is not None:
-                continue
-            for source in sources:
-                if isinstance(source, Header):
-                    # The header value is put in by the route closure.
-                    continue
+        for name in self._sources:
+            value = None
+            for source in self._sources[name]:
+                if isinstance(source, Body):
+                    value = request.body.get(name)
+                elif isinstance(source, Raw):
+                    value = request.raw
+                elif isinstance(source, Header):
+                    value = request.headers.get(name)
                 elif isinstance(source, Derived):
                     if id(source) not in derived:
                         derived[id(source)] = source.provider(values, operation) or {}
@@ -702,8 +877,11 @@ class ResourceHandler:
                 else:
                     raise ValueError(f"Unknown source for {name!r}: {source!r}")
                 if value is not None:
-                    values[name] = value
                     break
+            if value is not None:
+                values[name] = value
+            else:
+                values.pop(name, None)
         return values
 
     def _check_exclude_for_inserts(self) -> None:
@@ -841,11 +1019,11 @@ class ResourceHandler:
                 required = True
             elif kind == 'create':
                 # Required if NOT NULL and no default (server-side or client-side).
-                # A column with a source is never required: the sources fill in
-                # what the client leaves out.
+                # A column some source other than the body can fill is never
+                # required: the sources provide what the client leaves out.
                 has_default = (col.server_default is not None) or (col.default is not None)
                 required = ((not col.nullable) and (not has_default)
-                            and col.name not in self._sources)
+                            and not self._filled(col.name))
             else:  # kind in ('patch', 'nested'):
                 # All fields optional on update (only provided fields are applied).
                 required = False
@@ -864,10 +1042,16 @@ class ResourceHandler:
         # key is immutable), or on 'create' when the DB generates it.
         if pk_internal or kind == 'patch' or (kind == 'create' and pk_db_generated):
             exclude.add(pk.name)
-        if kind != 'out':
-            # A column taken from a header has one place to come from, so it is
-            # not part of the body; sending it there is a forbidden extra field.
-            exclude.update(self._headers)
+        if kind == 'out':
+            # Written but never read back: a value the client sent or the API
+            # derived, which repeating in the response would only cost traffic.
+            exclude.update(self._spec.unreturned)
+        else:
+            # The sources are exhaustive: a column that does not name the body
+            # among them is not part of it, so sending it there is a forbidden
+            # extra field.  That covers headers, derived and default values, the
+            # raw body and the empty chain of a column the API never sets.
+            exclude.update(name for name in self._sources if not self._from_body(name))
 
         config = (pydantic.ConfigDict(from_attributes=True) if kind == 'out'
                   else pydantic.ConfigDict(extra='forbid'))
@@ -1441,10 +1625,10 @@ class TopLevelResourceHandler(ResourceHandler):
         except (NonUniqueKeyError, DataConsistencyError) as e:
             raise fastapi.HTTPException(status_code=500, detail=str(e)) from e
 
-    def create_one(self, payload: dict[str, typing.Any]):
+    def create_one(self, request: '_Request'):
         """Insert a new record and return it."""
         try:
-            payload = self._apply_sources(payload, 'create')
+            payload = self._apply_sources(request, 'create')
             with self._db.session.begin() as session:
                 row = self._insert(session, payload)
                 result = self._materialize(session, row)
@@ -1458,7 +1642,7 @@ class TopLevelResourceHandler(ResourceHandler):
         except (NonUniqueKeyError, DataConsistencyError) as e:
             raise fastapi.HTTPException(status_code=500, detail=str(e)) from e
 
-    def update_one(self, item_id: typing.Any, payload: dict[str, typing.Any]):
+    def update_one(self, item_id: typing.Any, request: '_Request'):
         """Partially update a record and return it (or None if not found)."""
         try:
             with self._db.session.begin() as session:
@@ -1467,7 +1651,7 @@ class TopLevelResourceHandler(ResourceHandler):
                 except ValueError as e:
                     raise fastapi.HTTPException(status_code=422, detail=str(e))
                 row = self._update(session, condition,
-                                   self._apply_sources(payload, 'update'))
+                                   self._apply_sources(request, 'update'))
                 if row is None:
                     raise fastapi.HTTPException(status_code=404, detail='Not found')
                 result = self._materialize(session, row)
