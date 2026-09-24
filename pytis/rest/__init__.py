@@ -27,6 +27,7 @@ from .rest import (
     Status as Status,
     Body as Body,
     Raw as Raw,
+    Identity as Identity,
     Derived as Derived,
     Default as Default,
 )

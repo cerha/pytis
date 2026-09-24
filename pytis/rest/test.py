@@ -70,10 +70,10 @@ from pytis.rest.db import (  # noqa: E402
     PayloadError, NonUniqueKeyError, ConstraintViolationError,
 )
 from pytis.rest.rest import (  # noqa: E402
-    ResourceSpec, ForeignKey, Header, Body, Raw, Derived, Default, Status,
+    ResourceSpec, ForeignKey, Header, Body, Raw, Identity, Derived, Default, Status,
     _Request, _answer,
     TopLevelResourceHandler,
-    add_api_routes,
+    add_api_routes, api_key_dependency,
 )
 
 
@@ -202,7 +202,19 @@ _STATUS_SPEC = ResourceSpec(
     ),
 )
 
+#: The record says who wrote it, on the authority of the key it arrived with.
+_IDENTIFIED_SPEC = ResourceSpec(
+    name='identified-items',
+    table=PytisRestTestItem,
+    key=('code',),
+    sources={'label': Identity()},
+)
+
 _ALL_OPS = dict(get=True, list=True, create=True, update=True, delete=True)
+
+#: What the secured client accepts.  Held in a dict rather than in a plain
+#: global so that a test can monkeypatch it.
+_CONFIG = {'api_key': {'hub': 'hub-key', 'other': 'other-key'}}
 
 # ---------------------------------------------------------------------------
 # Database / session fixtures
@@ -297,6 +309,19 @@ def client(db):
     add_api_routes(router, db, _SOURCED_SPEC, operations=_ALL_OPS)
     add_api_routes(router, db, _RAW_SPEC, operations=_ALL_OPS)
     add_api_routes(router, db, _STATUS_SPEC, operations=_ALL_OPS)
+    app.include_router(router)
+    with TestClient(app) as c:
+        yield c
+
+
+@pytest.fixture(scope='session')
+def secured_client(db):
+    """FastAPI TestClient whose routes require an API key."""
+    app = fastapi.FastAPI()
+    router = fastapi.APIRouter(
+        dependencies=[api_key_dependency(lambda: _CONFIG['api_key'])],
+    )
+    add_api_routes(router, db, _IDENTIFIED_SPEC, operations=_ALL_OPS)
     app.include_router(router)
     with TestClient(app) as c:
         yield c
@@ -843,6 +868,41 @@ class TestHttpRoutes:
         # Only an endpoint that limits the body can answer 413.
         assert '413' in paths['/raw-items']['post']['responses']
         assert '413' not in paths['/items']['post']['responses']
+
+    def test_an_unauthenticated_request_is_refused_as_such(self, secured_client):
+        # 401, not 403: the caller has not said who it is, so the answer has to
+        # ask, which is what the WWW-Authenticate header does.
+        r = secured_client.get('/identified-items')
+        assert r.status_code == 401
+        assert r.headers['WWW-Authenticate'] == 'ApiKey'
+        assert secured_client.get(
+            '/identified-items', headers={'X-API-Key': 'wrong'}).status_code == 401
+        assert secured_client.get(
+            '/identified-items', headers={'X-API-Key': 'hub-key'}).status_code == 200
+
+    def test_the_record_says_which_key_wrote_it(self, secured_client):
+        r = secured_client.post('/identified-items', json={'code': 'FROM-HUB'},
+                                headers={'X-API-Key': 'hub-key'})
+        assert r.status_code == 201
+        assert r.json()['label'] == 'hub'
+        # Another key, another name.
+        r = secured_client.post('/identified-items', json={'code': 'FROM-OTHER'},
+                                headers={'X-API-Key': 'other-key'})
+        assert r.json()['label'] == 'other'
+        # And the sender has no say in it: the column is not a body field, so
+        # claiming to be someone else does not even get as far as being ignored.
+        r = secured_client.post('/identified-items',
+                                json={'code': 'IMPOSTOR', 'label': 'hub'},
+                                headers={'X-API-Key': 'other-key'})
+        assert r.status_code == 422
+
+    def test_a_key_without_a_name_is_a_misconfiguration(self, secured_client, monkeypatch):
+        # A bare key would authenticate without saying who, leaving nothing to
+        # record and nothing to authorise against, so it is refused as the
+        # server's fault rather than quietly accepted.
+        monkeypatch.setitem(_CONFIG, 'api_key', 'plain-key')
+        assert secured_client.get(
+            '/identified-items', headers={'X-API-Key': 'plain-key'}).status_code == 500
 
     def test_list_empty(self, client):
         r = client.get('/items')

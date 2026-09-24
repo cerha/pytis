@@ -21,6 +21,7 @@ import fastapi.concurrency
 import fastapi.security
 import inspect
 import pydantic
+import secrets
 import sqlalchemy as sa
 import sqlalchemy.orm as orm
 import typing
@@ -32,14 +33,19 @@ from .db import (
     SQLTable, SQLTabular,
 )
 
-_api_key_header = fastapi.security.APIKeyHeader(name='X-API-Key', auto_error=True)
+# auto_error=False so that a missing header is refused here together with a
+# wrong one; FastAPI would answer it 403, which says the caller is known and
+# not allowed, when in fact it has not said who it is.
+_api_key_header = fastapi.security.APIKeyHeader(name='X-API-Key', auto_error=False)
 
 
-def api_key_dependency(get_key: typing.Callable[[], str | None]) -> fastapi.params.Depends:
+def api_key_dependency(
+    get_keys: typing.Callable[[], dict[str, str] | None],
+) -> fastapi.params.Depends:
     """Return a FastAPI dependency that validates the X-API-Key request header.
 
-    `get_key` is called on every request to retrieve the expected key, so the
-    value can change without restarting the process:
+    `get_keys` is called on every request to retrieve the accepted keys, so they
+    can change without restarting the process:
 
     ```
     router = fastapi.APIRouter(
@@ -47,26 +53,47 @@ def api_key_dependency(get_key: typing.Callable[[], str | None]) -> fastapi.para
     )
     ```
 
+    The keys are a dict of names to keys, one key per sender and never one key
+    for all of them: a sender's key can then be revoked without disturbing the
+    others, and the name of the key a request came with becomes its identity
+    (see `Identity`), so a record can say who wrote it and an endpoint can be
+    reserved for the senders that have business with it.
+
     Arguments:
-      get_key: Zero-argument callable returning the expected API key string, or
-        `None` / empty string when not configured.
+      get_keys: Zero-argument callable returning {name: key}, or `None` / empty
+        when no key is configured.
 
     Returns:
       A `fastapi.Depends` instance ready for use in `dependencies=`.
 
     """
-    def verify(api_key: str = fastapi.Security(_api_key_header)) -> None:
-        expected = get_key()
-        if not expected:
+    def verify(request: fastapi.Request,
+               api_key: str | None = fastapi.Security(_api_key_header)) -> None:
+        keys = get_keys()
+        if not keys:
             raise fastapi.HTTPException(
                 status_code=fastapi.status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail='API key not configured on server.',
             )
-        if api_key != expected:
+        if not isinstance(keys, dict):
+            # A bare key would authenticate without saying who, which leaves
+            # nothing to record and nothing to authorise against.
             raise fastapi.HTTPException(
-                status_code=fastapi.status.HTTP_403_FORBIDDEN,
-                detail='Invalid API key.',
+                status_code=fastapi.status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail='API keys must be configured as a dict of names to keys.',
             )
+        for name, key in keys.items():
+            # Compared in constant time: a plain `==` returns the sooner the
+            # earlier the keys differ, which tells an attacker how much of a
+            # guess was right.
+            if api_key is not None and secrets.compare_digest(api_key, key):
+                request.state.identity = name
+                return
+        raise fastapi.HTTPException(
+            status_code=fastapi.status.HTTP_401_UNAUTHORIZED,
+            detail='Missing or invalid API key.',
+            headers={'WWW-Authenticate': 'ApiKey'},
+        )
     return fastapi.Depends(verify)
 
 
@@ -162,6 +189,22 @@ class Derived:
 
 
 @dataclasses.dataclass(frozen=True, slots=True)
+class Identity:
+    """Value taken from the name the request authenticated under.
+
+    An authentication dependency records that name in `request.state.identity`;
+    `api_key_dependency` records the name of the key the request came with.  A
+    column declaring this source therefore says who wrote the record, and says
+    it on the authority of that key, not of a value the sender chose to put in
+    it.
+
+    There is no value to take when the endpoint requires no authentication, and
+    the next source in the chain provides one instead.
+
+    """
+
+
+@dataclasses.dataclass(frozen=True, slots=True)
 class Default:
     """Value used on insert when no other source provides one.
 
@@ -208,13 +251,15 @@ class _Request:
     body: dict = datafield(doc='Values of the request body fields.')
     headers: dict = datafield(doc='Values of the declared headers, by column.')
     raw: bytes | None = datafield(default=None, doc='The unparsed request body.')
+    identity: str | None = datafield(
+        default=None, doc='Name the request authenticated under, if any.')
 
 
 #: What a column's value may come from, in the order the sources are tried.
 #: A column with no sources at all behaves as if it declared `Body()`.  An
 #: empty chain is the opposite: the value comes from nowhere, so the column is
 #: readable but never written through the API.
-Source = Body | Raw | Header | Derived | Default
+Source = Body | Raw | Header | Identity | Derived | Default
 
 
 @dataclasses.dataclass(frozen=True, slots=True)
@@ -641,7 +686,8 @@ def add_api_routes(router: fastapi.APIRouter, db: Database, spec: ResourceSpec,
             for column, header in handler.headers.items()
         }
 
-    def request_of(payload, params: dict, raw: bytes | None = None) -> _Request:
+    def request_of(request: fastapi.Request, payload, params: dict,
+                   raw: bytes | None = None) -> _Request:
         """Return the parts of the request a write takes its values from."""
         # exclude_unset as in PATCH: what the client did not send is absent from
         # the body, so a missing value means the same thing in both operations.
@@ -649,6 +695,7 @@ def add_api_routes(router: fastapi.APIRouter, db: Database, spec: ResourceSpec,
             body=payload.model_dump(exclude_unset=True) if payload is not None else {},
             headers={column: params.get(column) for column in handler.headers},
             raw=raw,
+            identity=getattr(request.state, 'identity', None),
         )
 
     prefix = '/' + spec.name
@@ -708,7 +755,7 @@ def add_api_routes(router: fastapi.APIRouter, db: Database, spec: ResourceSpec,
                                  **params):
                 raw = await _read_body(request, handler.raw_limit)
                 return _answer(status, spec.name, await fastapi.concurrency.run_in_threadpool(
-                    handler.create_one, request_of(None, params, raw)), response)
+                    handler.create_one, request_of(request, None, params, raw)), response)
 
             annotate(create_one, request=fastapi.Request, response=fastapi.Response,
                      **header_params())
@@ -720,12 +767,14 @@ def add_api_routes(router: fastapi.APIRouter, db: Database, spec: ResourceSpec,
                 'content': {'*/*': {'schema': {'type': 'string', 'format': 'binary'}}},
             }}
         else:
-            def create_one(payload, response: fastapi.Response, **params):
+            def create_one(payload, request: fastapi.Request, response: fastapi.Response,
+                           **params):
                 # **params receives the header values.
                 return _answer(status, spec.name,
-                               handler.create_one(request_of(payload, params)), response)
+                               handler.create_one(request_of(request, payload, params)),
+                               response)
 
-            annotate(create_one, payload=handler.model('create'),
+            annotate(create_one, payload=handler.model('create'), request=fastapi.Request,
                      response=fastapi.Response, **header_params())
             openapi_extra = None
         router.add_api_route(
@@ -745,14 +794,17 @@ def add_api_routes(router: fastapi.APIRouter, db: Database, spec: ResourceSpec,
 
     # PATCH
     if (d := _deps('update')) is not None:
-        def update_one(payload, response: fastapi.Response, **kwargs):
+        def update_one(payload, request: fastapi.Request, response: fastapi.Response,
+                       **kwargs):
             # **kwargs = path key and header values.
             return _answer(spec.update_status, spec.name,
-                           handler.update_one(kwargs[key.name], request_of(payload, kwargs)),
+                           handler.update_one(kwargs[key.name],
+                                              request_of(request, payload, kwargs)),
                            response)
 
         annotate(update_one, **dict({key.name: key.annotation,
                                      'payload': handler.model('patch'),
+                                     'request': fastapi.Request,
                                      'response': fastapi.Response}, **header_params()))
         router.add_api_route(
             prefix + '/{' + key.name + '}',
@@ -961,6 +1013,8 @@ class ResourceHandler:
                     value = request.raw
                 elif isinstance(source, Header):
                     value = request.headers.get(name)
+                elif isinstance(source, Identity):
+                    value = request.identity
                 elif isinstance(source, Derived):
                     if id(source) not in derived:
                         derived[id(source)] = source.provider(values, operation) or {}

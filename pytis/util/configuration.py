@@ -1232,12 +1232,14 @@ class Configuration(object):
         u"""Barva záhlaví tabulky při zapnutém filtrování."""
         _DEFAULT = '#82c882'
 
-    class _Option_api_key(StringOption):
-        """Key for the RESP API framework authentication.
+    class _Option_api_key(Option):
+        """Keys for the REST API framework authentication.
 
-        This configuration variable may be used for setting an API
-        authentication key/token.  See pytis.rest.api_key_dependency() for more
-        info.
+        This configuration variable holds the accepted API authentication
+        keys/tokens as a dict of {name: key}: one key per sender and never one
+        key for all of them, so that a sender's key can be revoked without
+        disturbing the others and the name of the key a request came with says
+        who sent it.  See pytis.rest.api_key_dependency() for more info.
 
         """
         _DEFAULT = None
