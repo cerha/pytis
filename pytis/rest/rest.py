@@ -90,6 +90,58 @@ def datafield(*, default=dataclasses.MISSING, doc: str | None = None):
 
 
 @dataclasses.dataclass(frozen=True, slots=True)
+class Header:
+    """Value taken from a request header instead of the request body.
+
+    The column is removed from the body model and declared as a header
+    parameter of the endpoint, so it appears in the OpenAPI schema and FastAPI
+    validates it.  A header the client does not send yields no value, leaving
+    the next source in the chain to provide one.
+
+    """
+    name: str = datafield(doc='Header name, e.g. "X-Correlation-ID".')
+    type: type = datafield(default=str, doc='Value type; FastAPI converts to it.')
+
+
+@dataclasses.dataclass(frozen=True, slots=True)
+class Derived:
+    """Value computed from the values already known.
+
+    `provider` is called with the payload and the operation ('create' or
+    'update') and returns a dict of values.  The columns it is declared for
+    take theirs from that dict; a column missing from it has no value from
+    this source.
+
+    One provider typically yields several values at once (an account, a
+    currency and a period read from one document), so the same `Derived`
+    instance is declared for each of those columns and is called once per
+    request.  Raising `PayloadError` rejects the request with 422.
+
+    The provider must not touch the database; resolving values against stored
+    data belongs to the write itself.
+
+    """
+    provider: typing.Callable[[dict, str], dict] = datafield(
+        doc='Callable(payload, operation) returning a dict of values.',
+    )
+
+
+@dataclasses.dataclass(frozen=True, slots=True)
+class Default:
+    """Value used on insert when no other source provides one.
+
+    Update leaves the column alone, because a value absent from a partial
+    payload means "do not change it", not "reset it".
+
+    """
+    value: typing.Any = datafield(doc='The value to insert.')
+
+
+#: What a column's value may come from, in the order the sources are tried.
+Source = Header | Derived | Default
+
+
+@dataclasses.dataclass(frozen=True, slots=True)
 class ForeignKey:
     """Describe a simple foreign-key relation between parent and child table.
 
@@ -231,6 +283,22 @@ class ResourceSpec:
     In both cases the client does not manipulate internal FK values or binding-
     table rows directly unless explicitly exposed.
 
+    **Value sources**
+
+    By default every value written comes from the request body.  `sources` says
+    where a column takes its value from instead, as a single source or a chain
+    tried in order until one yields a value:
+
+        sources={
+            'correlation_id': Header('X-Correlation-ID'),
+            'revision': (Header('X-Revision'), Derived(read_revision), Default(1)),
+        }
+
+    A column sourced from a header is not part of the body model, because the
+    value then has exactly one place to come from.  A column sourced otherwise
+    stays in the body and is never required there: what the client sends wins
+    and the sources only fill in what it left out.
+
     **Key semantics**
 
     The API-level key (`key`) is distinct from the internal primary key:
@@ -283,6 +351,15 @@ class ResourceSpec:
         doc='Column names to exclude from the API.',
     )
 
+    sources: dict[str, Source | tuple[Source, ...]] | None = datafield(
+        default=None,
+        doc=(
+            'Where a column takes its value from when it is not in the request body: '
+            'a source, or a chain of sources tried in order. '
+            'Columns not listed here come from the body only.'
+        ),
+    )
+
     tag: str | None = datafield(
         default=None,
         doc='Swagger/OpenAPI tag for grouping endpoints. Defaults to the resource name.',
@@ -303,22 +380,30 @@ def annotate(fn: typing.Callable[..., typing.Any], **params: typing.Any) -> None
     """Set endpoint annotations and signature for FastAPI/OpenAPI introspection.
 
     Pass desired public parameters as keyword arguments in their intended order.
+    A parameter that needs a default (a header or a query parameter, whose
+    FastAPI declaration *is* the default) is passed as an (annotation, default)
+    pair.
 
-    Example: `annotate(fn, iban=str, payload=PatchModel)`.
+    Example: `annotate(fn, iban=str, payload=PatchModel,
+                       revision=(int | None, fastapi.Header(None, alias='X-Revision')))`.
 
     This sets `fn.__annotations__` for those names and `fn.__signature__` with
     POSITIONAL_OR_KEYWORD parameters in that order.
 
     """
+    annotations = {name: (value[0] if isinstance(value, tuple) else value)
+                   for name, value in params.items()}
+    defaults = {name: value[1] for name, value in params.items() if isinstance(value, tuple)}
     fn.__annotations__ = dict(getattr(fn, '__annotations__', {}) or {})
-    fn.__annotations__.update(params)
+    fn.__annotations__.update(annotations)
     fn.__signature__ = inspect.Signature(parameters=[
         inspect.Parameter(
             name,
             inspect.Parameter.POSITIONAL_OR_KEYWORD,
             annotation=annotation,
+            **({'default': defaults[name]} if name in defaults else {}),
         )
-        for name, annotation in params.items()
+        for name, annotation in annotations.items()
     ])
 
 
@@ -383,6 +468,23 @@ def add_api_routes(router: fastapi.APIRouter, db: Database, spec: ResourceSpec,
             return [fastapi.Depends(f) for f in auth]
 
     handler = TopLevelResourceHandler(spec, db)
+
+    def header_params() -> dict:
+        """Return annotate() entries for the columns taken from request headers."""
+        return {
+            column: (typing.Optional[header.type],
+                     fastapi.Header(None, alias=header.name,
+                                    description=f'Value of {column!r}.'))
+            for column, header in handler.headers.items()
+        }
+
+    def with_headers(payload, params: dict) -> dict:
+        """Return the payload values extended with the headers the client sent."""
+        values = payload.model_dump(exclude_unset=True)
+        values.update((column, params[column]) for column in handler.headers
+                      if params.get(column) is not None)
+        return values
+
     prefix = '/' + spec.name
     tags = [spec.tag or spec.name]
     out_model = handler.model('out')
@@ -430,13 +532,13 @@ def add_api_routes(router: fastapi.APIRouter, db: Database, spec: ResourceSpec,
 
     # POST
     if (d := _deps('create')) is not None:
-        def create_one(payload):
+        def create_one(payload, **params):  # **params receives the header values.
             # exclude_unset as in PATCH: what the client did not send is absent
             # from the payload, so a missing value means the same thing in both
             # operations.  What reaches the database is the same either way.
-            return handler.create_one(payload.model_dump(exclude_unset=True))
+            return handler.create_one(with_headers(payload, params))
 
-        annotate(create_one, payload=handler.model('create'))
+        annotate(create_one, payload=handler.model('create'), **header_params())
         router.add_api_route(
             prefix,
             create_one,
@@ -451,10 +553,11 @@ def add_api_routes(router: fastapi.APIRouter, db: Database, spec: ResourceSpec,
 
     # PATCH
     if (d := _deps('update')) is not None:
-        def update_one(payload, **kwargs):  # **kwargs = dynamic path key; see docstring.
-            return handler.update_one(kwargs[key.name], payload.model_dump(exclude_unset=True))
+        def update_one(payload, **kwargs):  # **kwargs = path key and header values.
+            return handler.update_one(kwargs[key.name], with_headers(payload, kwargs))
 
-        annotate(update_one, **{key.name: key.annotation, 'payload': handler.model('patch')})
+        annotate(update_one, **dict({key.name: key.annotation,
+                                     'payload': handler.model('patch')}, **header_params()))
         router.add_api_route(
             prefix + '/{' + key.name + '}',
             update_one,
@@ -552,6 +655,56 @@ class ResourceHandler:
         for name in spec.exclude:
             if name not in col_names:
                 raise ValueError(f"Unknown column in ResourceSpec.exclude: {name!r}")
+        # Sources normalised to {column: (source, ...)}; consulted by _model()
+        # (what the body model contains) and by _apply_sources() (what a write
+        # takes from where).
+        self._sources: dict[str, tuple] = {}
+        for name, sources in (spec.sources or {}).items():
+            if name not in col_names:
+                raise ValueError(f"Unknown column in ResourceSpec.sources: {name!r}")
+            self._sources[name] = sources if isinstance(sources, tuple) else (sources,)
+        self._headers: dict[str, Header] = {
+            name: next((src for src in sources if isinstance(src, Header)), None)
+            for name, sources in self._sources.items()
+        }
+        self._headers = {name: hdr for name, hdr in self._headers.items() if hdr}
+
+    @property
+    def headers(self) -> dict[str, Header]:
+        """Return {column: Header} for columns whose value comes from a header."""
+        return self._headers
+
+    def _apply_sources(self, payload: dict[str, typing.Any],
+                       operation: str) -> dict[str, typing.Any]:
+        """Return the payload with values the client did not send taken from sources.
+
+        Sources are tried in the declared order and the first value wins, so a
+        `Derived` provider runs only when the sources before it gave nothing.
+        A provider declared for several columns runs once and its dict serves
+        them all.
+
+        """
+        values = dict(payload)
+        derived: dict[int, dict] = {}
+        for name, sources in self._sources.items():
+            if values.get(name) is not None:
+                continue
+            for source in sources:
+                if isinstance(source, Header):
+                    # The header value is put in by the route closure.
+                    continue
+                elif isinstance(source, Derived):
+                    if id(source) not in derived:
+                        derived[id(source)] = source.provider(values, operation) or {}
+                    value = derived[id(source)].get(name)
+                elif isinstance(source, Default):
+                    value = source.value if operation == 'create' else None
+                else:
+                    raise ValueError(f"Unknown source for {name!r}: {source!r}")
+                if value is not None:
+                    values[name] = value
+                    break
+        return values
 
     def _check_exclude_for_inserts(self) -> None:
         """Raise `ValueError` if any explicitly excluded column would prevent INSERT."""
@@ -688,8 +841,11 @@ class ResourceHandler:
                 required = True
             elif kind == 'create':
                 # Required if NOT NULL and no default (server-side or client-side).
+                # A column with a source is never required: the sources fill in
+                # what the client leaves out.
                 has_default = (col.server_default is not None) or (col.default is not None)
-                required = (not col.nullable) and (not has_default)
+                required = ((not col.nullable) and (not has_default)
+                            and col.name not in self._sources)
             else:  # kind in ('patch', 'nested'):
                 # All fields optional on update (only provided fields are applied).
                 required = False
@@ -708,6 +864,10 @@ class ResourceHandler:
         # key is immutable), or on 'create' when the DB generates it.
         if pk_internal or kind == 'patch' or (kind == 'create' and pk_db_generated):
             exclude.add(pk.name)
+        if kind != 'out':
+            # A column taken from a header has one place to come from, so it is
+            # not part of the body; sending it there is a forbidden extra field.
+            exclude.update(self._headers)
 
         config = (pydantic.ConfigDict(from_attributes=True) if kind == 'out'
                   else pydantic.ConfigDict(extra='forbid'))
@@ -1284,6 +1444,7 @@ class TopLevelResourceHandler(ResourceHandler):
     def create_one(self, payload: dict[str, typing.Any]):
         """Insert a new record and return it."""
         try:
+            payload = self._apply_sources(payload, 'create')
             with self._db.session.begin() as session:
                 row = self._insert(session, payload)
                 result = self._materialize(session, row)
@@ -1305,7 +1466,8 @@ class TopLevelResourceHandler(ResourceHandler):
                     condition = self._key.condition(item_id)
                 except ValueError as e:
                     raise fastapi.HTTPException(status_code=422, detail=str(e))
-                row = self._update(session, condition, payload)
+                row = self._update(session, condition,
+                                   self._apply_sources(payload, 'update'))
                 if row is None:
                     raise fastapi.HTTPException(status_code=404, detail='Not found')
                 result = self._materialize(session, row)

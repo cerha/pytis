@@ -69,7 +69,7 @@ from pytis.rest.db import (  # noqa: E402
     PayloadError, NonUniqueKeyError, ConstraintViolationError,
 )
 from pytis.rest.rest import (  # noqa: E402
-    ResourceSpec, ForeignKey,
+    ResourceSpec, ForeignKey, Header, Derived, Default,
     TopLevelResourceHandler,
     add_api_routes,
 )
@@ -133,6 +133,30 @@ _ITEM_SPEC = ResourceSpec(
 _CATEGORY_SPEC = ResourceSpec(
     name='categories',
     table=PytisRestTestCategory,
+)
+
+def _derive_label(payload, operation):
+    """Provider: derive 'label' from 'code' and refuse one code."""
+    if payload.get('code') == 'BAD':
+        raise PayloadError("Code 'BAD' is not accepted")
+    if 'code' not in payload:
+        # Nothing to derive from: an update that does not touch 'code'.
+        return {}
+    return {'label': payload['code'].lower()}
+
+
+# Same table as _ITEM_SPEC under another name, with every kind of source:
+# 'score' from a header, 'label' derived from another value, 'status' a default
+# overriding the one in the database.
+_SOURCED_SPEC = ResourceSpec(
+    name='sourced-items',
+    table=PytisRestTestItem,
+    key=('code',),
+    sources={
+        'score': Header('X-Score', type=int),
+        'label': (Header('X-Label'), Derived(_derive_label)),
+        'status': Default('sourced'),
+    },
 )
 
 _ALL_OPS = dict(get=True, list=True, create=True, update=True, delete=True)
@@ -227,6 +251,7 @@ def client(db):
     router = fastapi.APIRouter()
     add_api_routes(router, db, _ITEM_SPEC, operations=_ALL_OPS)
     add_api_routes(router, db, _CATEGORY_SPEC, operations=_ALL_OPS)
+    add_api_routes(router, db, _SOURCED_SPEC, operations=_ALL_OPS)
     app.include_router(router)
     with TestClient(app) as c:
         yield c
@@ -377,6 +402,67 @@ class TestResourceHandlerModel:
     def test_key_property(self, handler):
         assert handler.key.name == 'code'
         assert handler.key.type is str
+
+
+class TestValueSources:
+    """Test ResourceSpec.sources where no database is needed.
+
+    What the models contain is pure computation, and a rejected payload never
+    reaches the insert, so a mock Database suffices.  What actually gets written
+    is covered by the HTTP tests.
+
+    """
+
+    @pytest.fixture(scope='class')
+    def handler(self):
+        return TopLevelResourceHandler(_SOURCED_SPEC, MagicMock(spec=Database))
+
+    def test_a_header_sourced_column_is_not_in_the_body(self, handler):
+        # 'score' comes from X-Score and 'label' from X-Label before anything
+        # else, so the body has no place for either.
+        for name in ('score', 'label'):
+            assert name not in handler.model('create').model_fields
+            assert name not in handler.model('patch').model_fields
+            # Reading is unaffected.
+            assert name in handler.model('out').model_fields
+
+    def test_a_column_with_a_source_is_never_required(self):
+        # 'code' is NOT NULL without a default, so the client must send it...
+        plain = TopLevelResourceHandler(_ITEM_SPEC, MagicMock(spec=Database))
+        assert plain.model('create').model_fields['code'].is_required()
+        # ...unless a source can fill it in.
+        sourced = TopLevelResourceHandler(
+            ResourceSpec(name='x', table=PytisRestTestItem, key=('code',),
+                         sources={'code': Derived(_derive_label)}),
+            MagicMock(spec=Database),
+        )
+        assert not sourced.model('create').model_fields['code'].is_required()
+
+    def test_sources_are_tried_in_order(self, handler):
+        # The header wins over the provider; the provider only fills in what is
+        # left, and a default applies to an insert.
+        assert handler._apply_sources({'code': 'A', 'label': 'sent'}, 'create') == {
+            'code': 'A', 'label': 'sent', 'status': 'sourced',
+        }
+        assert handler._apply_sources({'code': 'A'}, 'create') == {
+            'code': 'A', 'label': 'a', 'status': 'sourced',
+        }
+
+    def test_a_default_does_not_apply_to_an_update(self, handler):
+        # A value absent from a partial payload means "do not change it".
+        assert handler._apply_sources({'label': 'x'}, 'update') == {'label': 'x'}
+
+    def test_a_provider_decides_what_an_update_changes(self, handler):
+        # Nothing to derive from, so the provider returns nothing.
+        assert handler._apply_sources({'score': 3}, 'update') == {'score': 3}
+        # The value it derives from is changing, so the derived one changes too.
+        assert handler._apply_sources({'code': 'B'}, 'update') == {'code': 'B', 'label': 'b'}
+
+    def test_a_rejecting_provider_is_reported_as_422(self):
+        handler = TopLevelResourceHandler(_SOURCED_SPEC, MagicMock(spec=Database))
+        with pytest.raises(fastapi.HTTPException) as e:
+            handler.create_one({'code': 'BAD'})
+        assert e.value.status_code == 422
 
 
 # ---------------------------------------------------------------------------
@@ -593,6 +679,43 @@ class TestHttpRoutes:
     def test_delete_not_found_returns_404(self, client):
         r = client.delete('/items/GHOST')
         assert r.status_code == 404
+
+    def test_header_source_fills_the_column(self, client):
+        r = client.post('/sourced-items', json={'code': 'HDR'}, headers={'X-Score': '42'})
+        assert r.status_code == 201
+        assert r.json()['score'] == 42
+
+    def test_header_source_is_declared_in_the_schema(self, client):
+        parameters = client.get('/openapi.json').json()['paths']['/sourced-items']['post'][
+            'parameters']
+        assert {p['name'] for p in parameters} == {'X-Score', 'X-Label'}
+        assert all(p['in'] == 'header' and not p['required'] for p in parameters)
+
+    def test_header_source_cannot_be_sent_in_the_body(self, client):
+        r = client.post('/sourced-items', json={'code': 'INBODY', 'score': 42})
+        assert r.status_code == 422
+
+    def test_sources_are_tried_in_the_declared_order(self, client):
+        # Header first, then the provider, then whatever the database has.
+        sent = client.post('/sourced-items', json={'code': 'FIRST'},
+                           headers={'X-Label': 'from header'}).json()
+        assert sent['label'] == 'from header'
+        derived = client.post('/sourced-items', json={'code': 'SECOND'}).json()
+        assert derived['label'] == 'second'
+
+    def test_default_source_beats_the_database_default(self, client):
+        assert client.post('/sourced-items', json={'code': 'DEF'}).json()['status'] == 'sourced'
+        assert client.post('/items', json={'code': 'DB'}).json()['status'] == 'new'
+
+    def test_a_rejected_value_never_reaches_the_database(self, client):
+        assert client.post('/sourced-items', json={'code': 'BAD'}).status_code == 422
+        assert client.get('/items/BAD').status_code == 404
+
+    def test_update_takes_a_header_too(self, client):
+        client.post('/sourced-items', json={'code': 'PATCHED'})
+        r = client.patch('/sourced-items/PATCHED', json={}, headers={'X-Score': '7'})
+        assert r.status_code == 200
+        assert r.json()['score'] == 7
 
     def test_list_pagination(self, client):
         for i in range(6):

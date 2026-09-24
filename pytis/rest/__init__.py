@@ -23,5 +23,11 @@ from .rest import (
     ResourceSpec as ResourceSpec,
     ForeignKey as ForeignKey,
     BindingTable as BindingTable,
+    Header as Header,
+    Derived as Derived,
+    Default as Default,
 )
-from .db import Database as Database
+from .db import (
+    Database as Database,
+    PayloadError as PayloadError,
+)
