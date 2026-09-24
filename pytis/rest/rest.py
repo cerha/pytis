@@ -505,12 +505,30 @@ _VALID_OPERATIONS = frozenset({'get', 'list', 'create', 'update', 'delete'})
 OperationAuth = bool | typing.Callable | list[typing.Callable]
 
 
-def _responses(status: Status | None, model: type) -> dict | None:
-    """Return the OpenAPI responses declared by `status`, or None."""
-    if status is None:
-        return None
-    return {code: {'description': description, 'model': model}
-            for code, description in status.descriptions.items()}
+#: What the framework itself may answer besides the success codes, so that the
+#: schema names them instead of leaving the sender to discover them.  The body
+#: is the error structure the database supplied, or its message (see
+#: `pytis.rest.db._error`).
+_ERRORS = {
+    404: 'No such record.',
+    409: 'The write conflicts with the stored state.',
+    413: 'The request body is larger than the endpoint accepts.',
+    422: 'The request cannot be carried out as sent.',
+}
+
+
+def _error_responses(*codes: int) -> dict:
+    """Return OpenAPI responses for the error codes an operation may answer."""
+    return {code: {'description': _ERRORS[code]} for code in codes}
+
+
+def _responses(status: Status | None, model: type, *codes: int) -> dict:
+    """Return the OpenAPI responses of an operation: its errors and its statuses."""
+    responses = _error_responses(*codes)
+    if status is not None:
+        responses.update((code, {'description': description, 'model': model})
+                         for code, description in status.descriptions.items())
+    return responses
 
 
 def _answer(status: Status | None, name: str, record: dict,
@@ -721,7 +739,8 @@ def add_api_routes(router: fastapi.APIRouter, db: Database, spec: ResourceSpec,
             description='Inserts a new record.',
             dependencies=d,
             openapi_extra=openapi_extra,
-            responses=_responses(status, out_model),
+            responses=_responses(status, out_model, 409, 422,
+                                 *((413,) if handler.raw_limit else ())),
         )
 
     # PATCH
@@ -744,7 +763,7 @@ def add_api_routes(router: fastapi.APIRouter, db: Database, spec: ResourceSpec,
             summary='Patch',
             description='Partially updates a record. Only provided fields are updated.',
             dependencies=d,
-            responses=_responses(spec.update_status, out_model),
+            responses=_responses(spec.update_status, out_model, 404, 409, 422),
         )
 
     # DELETE
@@ -1678,7 +1697,7 @@ class TopLevelResourceHandler(ResourceHandler):
                     raise fastapi.HTTPException(status_code=404, detail="Not found")
                 return self._materialize(session, row)
         except PayloadError as e:
-            raise fastapi.HTTPException(status_code=422, detail=str(e)) from e
+            raise fastapi.HTTPException(status_code=422, detail=e.detail) from e
         except (NonUniqueKeyError, DataConsistencyError) as e:
             raise fastapi.HTTPException(status_code=500, detail=str(e)) from e
 
@@ -1712,7 +1731,7 @@ class TopLevelResourceHandler(ResourceHandler):
         except ConstraintViolationError as e:
             raise fastapi.HTTPException(status_code=409, detail=e.detail) from e
         except PayloadError as e:
-            raise fastapi.HTTPException(status_code=422, detail=str(e)) from e
+            raise fastapi.HTTPException(status_code=422, detail=e.detail) from e
         except (NonUniqueKeyError, DataConsistencyError) as e:
             raise fastapi.HTTPException(status_code=500, detail=str(e)) from e
 
@@ -1734,7 +1753,7 @@ class TopLevelResourceHandler(ResourceHandler):
         except ConstraintViolationError as e:
             raise fastapi.HTTPException(status_code=409, detail=e.detail) from e
         except PayloadError as e:
-            raise fastapi.HTTPException(status_code=422, detail=str(e)) from e
+            raise fastapi.HTTPException(status_code=422, detail=e.detail) from e
         except (NonUniqueKeyError, DataConsistencyError) as e:
             raise fastapi.HTTPException(status_code=500, detail=str(e)) from e
 

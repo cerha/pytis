@@ -803,6 +803,47 @@ class TestHttpRoutes:
         patch = paths['/status-items/{code}']['patch']
         assert set(patch['responses']) >= {'200', '201'}
 
+    def test_a_structured_error_reaches_the_client(self, client, engine):
+        # A trigger that puts JSON in DETAIL decides what the sender is told,
+        # so the sender does not have to match on the message text.
+        with engine.begin() as conn:
+            conn.execute(sa.text("""
+                CREATE OR REPLACE FUNCTION pytis_rest_test_refuse() RETURNS trigger AS $$
+                BEGIN
+                    IF new.code = 'NOPE' THEN
+                        RAISE EXCEPTION 'The code % is not allowed here.', new.code
+                            USING ERRCODE = '22023',
+                                  DETAIL = json_build_object('code', 'forbidden_code',
+                                                             'sent', new.code)::text;
+                    END IF;
+                    RETURN new;
+                END; $$ LANGUAGE plpgsql"""))
+            conn.execute(sa.text('CREATE TRIGGER pytis_rest_test_refuse BEFORE INSERT '
+                                 'ON pytis_rest_test_items FOR EACH ROW '
+                                 'EXECUTE FUNCTION pytis_rest_test_refuse()'))
+        try:
+            r = client.post('/items', json={'code': 'NOPE'})
+            assert r.status_code == 422
+            assert r.json()['detail'] == {
+                'code': 'forbidden_code', 'sent': 'NOPE',
+                'message': 'The code NOPE is not allowed here.',
+            }
+            # Without such a structure the message alone comes back, as before.
+            assert client.post('/items', json={'code': 'FINE'}).status_code == 201
+        finally:
+            with engine.begin() as conn:
+                conn.execute(sa.text('DROP TRIGGER pytis_rest_test_refuse '
+                                     'ON pytis_rest_test_items'))
+                conn.execute(sa.text('DROP FUNCTION pytis_rest_test_refuse'))
+
+    def test_the_error_codes_are_in_the_schema(self, client):
+        paths = client.get('/openapi.json').json()['paths']
+        assert set(paths['/items']['post']['responses']) >= {'409', '422'}
+        assert set(paths['/items/{code}']['patch']['responses']) >= {'404', '409', '422'}
+        # Only an endpoint that limits the body can answer 413.
+        assert '413' in paths['/raw-items']['post']['responses']
+        assert '413' not in paths['/items']['post']['responses']
+
     def test_list_empty(self, client):
         r = client.get('/items')
         assert r.status_code == 200

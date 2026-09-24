@@ -19,6 +19,7 @@ import contextlib
 import dataclasses
 import functools
 import threading
+import json
 import sqlalchemy as sa
 import sqlalchemy.orm as orm
 import pytis.data.gensqlalchemy
@@ -120,11 +121,50 @@ def _message(e: sa.exc.DatabaseError) -> str:
     return str(getattr(e.orig, 'diag', None) and e.orig.diag.message_primary or e.orig).strip()
 
 
+def _error(e: sa.exc.DatabaseError) -> str | dict:
+    """Return the database error as a message, or as the structure it carries.
+
+    A message is for a person reading it, which is not enough for the sender:
+    it has to decide what to do without matching on prose that may be reworded
+    or translated.  A trigger therefore may put a JSON object in the error's
+    DETAIL field, and it becomes the body of the response, with the message
+    under 'message':
+
+        RAISE EXCEPTION 'Revision % is lower than ...', new.revision
+            USING ERRCODE = '23514',
+                  DETAIL = '{"code": "revision_superseded", "revision": 3}';
+
+    Anything else in DETAIL is left alone; it is meant for a person too, and
+    only the message comes back.
+
+    """
+    detail = getattr(getattr(e.orig, 'diag', None), 'message_detail', None)
+    if detail:
+        try:
+            parsed = json.loads(detail)
+        except ValueError:
+            parsed = None
+        if isinstance(parsed, dict):
+            return dict(parsed, message=_message(e))
+    return _message(e)
+
+
 class NonUniqueKeyError(RuntimeError):
     """Raised when a key expected to be unique matches multiple rows."""
 
 class PayloadError(ValueError):
-    """Invalid payload for insert/update (unknown columns, invalid shape)."""
+    """Invalid payload for insert/update (unknown columns, invalid shape).
+
+    Carries either a message or the structure the database supplied with it
+    (see `_error`), and `detail` is what goes into the response either way.
+
+    """
+
+    @property
+    def detail(self) -> str | dict:
+        """Return the structure to answer with, or the message when there is none."""
+        argument = self.args[0] if self.args else None
+        return argument if isinstance(argument, dict) else str(self)
 
 class DataConsistencyError(RuntimeError):
     """Raised when stored relational data references a non-existent row.
@@ -153,6 +193,10 @@ class ConstraintViolationError(RuntimeError):
             constraint=getattr(diag, "constraint_name", None) if diag else None,
             column=getattr(diag, "column_name", None) if diag else None,
         )
+        # A trigger that raised this deliberately says more than the constraint
+        # name does; what it put in DETAIL belongs in the response (see _error).
+        supplied = _error(e)
+        self._detail.update(supplied if isinstance(supplied, dict) else {'message': supplied})
 
     @property
     def detail(self) -> dict:
@@ -596,7 +640,7 @@ class PytisAccessor:
         except sa.exc.IntegrityError as e:
             raise ConstraintViolationError(e) from e
         except sa.exc.DataError as e:
-            raise PayloadError(_message(e)) from e
+            raise PayloadError(_error(e)) from e
         return obj
 
     def update(self, session: orm.Session, condition: Operator, **values):
@@ -631,7 +675,7 @@ class PytisAccessor:
         except sa.exc.IntegrityError as e:
             raise ConstraintViolationError(e) from e
         except sa.exc.DataError as e:
-            raise PayloadError(_message(e)) from e
+            raise PayloadError(_error(e)) from e
         return obj
 
     def delete(self, session: orm.Session, condition: Operator) -> bool:
@@ -659,7 +703,7 @@ class PytisAccessor:
         except sa.exc.IntegrityError as e:
             raise ConstraintViolationError(e) from e
         except sa.exc.DataError as e:
-            raise PayloadError(_message(e)) from e
+            raise PayloadError(_error(e)) from e
         return True
 
     def delete_instance(self, session: orm.Session, obj: typing.Any) -> None:
