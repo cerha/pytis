@@ -94,7 +94,8 @@ class Form(lcg.Content):
 
     The function `uri_provider` must accept three positional arguments:
 
-      record: the `PresentedRow` instance
+      record: the `PresentedRow` instance or None (only for `UriType.RECORD`
+        to request the URI of the form itself)
       kind: one of `UriType` constants.  It is used for distinction of the
         purpose, for which the uri is used (eg. for a field link, image src,
         action link etc.).
@@ -167,7 +168,7 @@ class Form(lcg.Content):
 
     def _export_actions(self, context, record):
         g = context.generator()
-        uri = self._uri_provider(record, UriType.LINK, None)
+        uri = self._uri_provider(record, UriType.RECORD, None)
         buttons = [
             g.form([g.hidden(name, value is True and 'true' or value) for name, value in
                     [('action', action.id()),
@@ -622,7 +623,7 @@ class _SubmittableForm(Form):
         g = context.generator()
         return [g.form((super()._export_form(context) + self._export_submit(context)),
                        action=self._uri_provider(None if self._row.new() else self._row,
-                                                 UriType.LINK, None),
+                                                 UriType.RECORD, None),
                        method=self._HTTP_METHOD, enctype=self._enctype)]
 
     def _export_submit(self, context):
@@ -1821,7 +1822,7 @@ class BrowseForm(LayoutForm):
         return 'pytis.' + self.__class__.__name__
 
     def _javascript_args(self, context):
-        uri = self._uri_provider(None, UriType.LINK, None)
+        uri = self._uri_provider(None, UriType.RECORD, None)
         return (self._form_id, self._name, uri, self._inline_editable)
 
     def _export_javascript(self, context):
@@ -1968,7 +1969,7 @@ class BrowseForm(LayoutForm):
             sorting_column, direction = self._user_sorting
             params += [('sort', sorting_column), ('dir', self._SORTING_DIRECTIONS[direction])]
         # TODO: Unquote the uri returned by _uri_provider here!
-        uri = self._uri_provider(None, UriType.LINK, None)
+        uri = self._uri_provider(None, UriType.RECORD, None)
         result = []
         data = self._row.data()
         for level in range(len(self._index_search_string) + 1):
@@ -2140,7 +2141,7 @@ class BrowseForm(LayoutForm):
         # to submit asynchronous requests, such as row expansion etc.
         return g.form(
             content,
-            action=self._uri_provider(None, UriType.LINK, None), method='GET',
+            action=self._uri_provider(None, UriType.RECORD, None), method='GET',
             cls=('list-form-controls' +
                  (' bottom' if bottom else ' top') +
                  (' empty' if empty else '')),

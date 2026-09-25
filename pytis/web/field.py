@@ -44,6 +44,17 @@ class UriType:
     be either a string or unicode or a `Link` instance.
 
     """
+    RECORD = 'RECORD'
+    """URI of the record itself or the URI of the form when the record is None.
+
+    Used as the target of form submission, action buttons and asynchronous
+    requests of the form.  Unlike `LINK` (with no target), which may be
+    customized by the application to link a record elsewhere (such as to a
+    related record in another module), this URI must always lead to the
+    record (or the form) itself.  The target of the URI provider request is
+    always None for this kind.
+
+    """
     ACTION = 'ACTION'
     """Link to a pytis record's action.
 
