@@ -99,7 +99,7 @@ pytis.BrowseForm = class extends pytis.Form {
         if (url && this._ajax_container.length != 0) {
             this._async_load = true
             let parameters = {};
-            let query = new URLSearchParams(window.location.search.replace(/;/g, '&'))
+            let query = new URLSearchParams(window.location.search)
             if (query.get('form_name') === form_name) {
                 parameters = Object.fromEntries(query)
             }
@@ -319,7 +319,7 @@ pytis.BrowseForm = class extends pytis.Form {
                 })
         }
         panel.find('.index-search-controls a').on('click', event => {
-            let params = (new URL(event.target.href.replace(/;/g, '&'))).searchParams
+            let params = (new URL(event.target.href)).searchParams
             this._reload_form_data(form, {index_search: params.get('index_search')})
             return false
         })
@@ -430,7 +430,7 @@ pytis.BrowseForm = class extends pytis.Form {
 
     _on_popup_menu_inline_action(element, action, url) {
         if (action === 'update' || action === 'copy' || action === 'delete') {
-            let u = new URL(url.replace(/;/g, '&'), window.location)
+            let u = new URL(url, window.location)
             let form = $(`<form action="${u.pathname}" method="GET">`)
             let parameters = Object.fromEntries(u.searchParams)
             let target = (action === 'copy' ? 'after' : 'replace')
