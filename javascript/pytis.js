@@ -117,6 +117,19 @@ pytis.BrowseForm = class extends pytis.Form {
             this._bind_search_controls(this.element.find('.list-form-controls:eq(1)'))
             this._bind_table_headings(this.element.find('table.data-table thead'))
             this._bind_table_body(this.element.find('table.data-table tbody'))
+            if (self.location.hash === '#found-record') {
+                this._focus_found_record()
+            }
+        }
+    }
+
+    _focus_found_record() {
+        // Move the focus to the found record, so that screen reader users
+        // continue reading from there.  Browsers only scroll to the anchor
+        // target, but don't focus it unless it is focusable.
+        let found = this.element.find('#found-record')
+        if (found.length) {
+            found.attr('tabindex', '-1').focus()
         }
     }
 
@@ -266,6 +279,7 @@ pytis.BrowseForm = class extends pytis.Form {
             }
             if (container.find('#found-record').length) {
                 window.location.hash = '#found-record'
+                this._focus_found_record()
             }
         }, (xhr) => {
             let div = $('<div class="form-load-error">').text(
