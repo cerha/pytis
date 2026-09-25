@@ -2957,7 +2957,10 @@ class Binary(Limited):
 
         def buffer(self):
             """Deprecated! The instance itself is a bytes instance now."""
-            return buffer(self)
+            # TODO NOPY2: Return self unconditionally.
+            if sys.version_info[0] == 2:
+                return buffer(self)
+            return self
 
         def filename(self):
             """Return the suggested filename as passed to the constructor."""
