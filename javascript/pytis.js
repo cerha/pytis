@@ -1006,8 +1006,20 @@ pytis.DateTimeField = class extends pytis.Field {
 
     constructor(form_id, field_id, id, state, active, required, locale) {
         super(form_id, field_id, id, state, active, required)
+        let button_id = field_id + '-calendar-invocation'
+        let labelledby = button_id
+        let label = $('label[for="' + field_id + '"]')
+        if (label.length) {
+            // Include the field label to distinguish buttons of multiple date fields.
+            if (!label.attr('id')) {
+                label.attr('id', field_id + '-label')
+            }
+            labelledby += ' ' + label.attr('id')
+        }
         this._button = $('<button type="button" class="selection-invocation calendar-invocation">')
             .text('...')
+            .attr({'id': button_id, 'title': pytis._("Choose Date"),
+                   'aria-label': pytis._("Choose Date"), 'aria-labelledby': labelledby})
             .prop('disabled', this.element.prop('disabled'))
             .on('click', this._on_button.bind(this))
             .insertAfter(this.element)
