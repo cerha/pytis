@@ -437,6 +437,35 @@
     line-height: 2.1em;
 }
 
+@media only screen and (max-width: 767px) {
+    /* Display the field labels above the fields on narrow screens. */
+    .pytis-form fieldset {
+        min-width: 0;
+    }
+    .pytis-form table.vertical-group,
+    .pytis-form table.horizontal-group,
+    .pytis-form table.vertical-group > tbody,
+    .pytis-form table.horizontal-group > tbody,
+    .pytis-form table.vertical-group > tbody > tr,
+    .pytis-form table.horizontal-group > tbody > tr,
+    .pytis-form table.vertical-group > tbody > tr > td,
+    .pytis-form table.horizontal-group > tbody > tr > td {
+        display: block;
+    }
+    .pytis-form table.horizontal-group > tbody > tr > td {
+        padding-right: 0;
+    }
+    .pytis-form td.ctrl {
+        text-align: left;
+    }
+    .pytis-form td.label,
+    .pytis-form.edit-form td.label {
+        text-align: left;
+        line-height: 1.4em;
+        padding-top: 0.4em;
+    }
+}
+
 .pytis-form.show-form a.print-field-link {
     float: right;
     display: block;
