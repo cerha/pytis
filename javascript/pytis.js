@@ -117,6 +117,7 @@ pytis.BrowseForm = class extends pytis.Form {
             this._bind_search_controls(this.element.find('.list-form-controls:eq(1)'))
             this._bind_table_headings(this.element.find('table.data-table thead'))
             this._bind_table_body(this.element.find('table.data-table tbody'))
+            this._init_stacked_table_layout(this.element.find('table.data-table'))
             if (self.location.hash === '#found-record') {
                 this._focus_found_record()
             }
@@ -274,6 +275,7 @@ pytis.BrowseForm = class extends pytis.Form {
             this._bind_controls(container.find('.list-form-controls:eq(1)'))
             this._bind_table_headings(container.find('table.data-table thead'))
             this._bind_table_body(container.find('table.data-table tbody'))
+            this._init_stacked_table_layout(container.find('table.data-table'))
             for (let callback of this._on_load_callbacks) {
                 callback(this.element)
             }
@@ -358,6 +360,94 @@ pytis.BrowseForm = class extends pytis.Form {
                 }
             })
         }
+    }
+
+    _init_stacked_table_layout(table) {
+        // Allow displaying the table rows as stacked cards on narrow screens.
+        // The column headings are not displayed in this layout, so the cells
+        // are labeled by them (see the CSS).  The first cell of each row is
+        // displayed as the card title.
+        if (table.length === 0) {
+            return
+        }
+        let labels = table.find('thead tr.column-headings').first().children('th')
+            .map((i, th) => $(th).text().trim()).get()
+        table.find('tbody tr.data-row').each((i, tr) => {
+            let cells = $(tr).children('td')
+            let title = cells.not('.expansion-ctrl').first().addClass('row-title')
+            cells.each((j, td) => {
+                if (labels[j] && td === title[0]) {
+                    title.data('label', labels[j])
+                } else if (labels[j]) {
+                    // The colon must be a part of the same generated content
+                    // string, otherwise VoiceOver reads it with the value.
+                    $(td).attr('data-label', labels[j] + ':')
+                }
+            })
+        })
+        this._table_layout_width = null
+        this._update_table_layout()
+        if (!this._table_layout_observer) {
+            this._table_layout_observer = new ResizeObserver(() => this._update_table_layout())
+            this._table_layout_observer.observe(this.element[0])
+        }
+    }
+
+    _update_table_layout() {
+        // Stack the table rows only when the table doesn't fit the form width.
+        let width = this.element[0].clientWidth
+        let table = this.element.find('table.data-table')
+        if (table.length && width !== this._table_layout_width) {
+            this._table_layout_width = width
+            this._set_table_stacked(table, false)
+            this._set_table_stacked(table, table[0].offsetWidth > width)
+        }
+    }
+
+    _set_table_stacked(table, stacked) {
+        // The stacked table is presented to assistive technologies as a list
+        // of records with the title cells as headings to allow navigation
+        // between them.  The title cell has no visible label (see the CSS),
+        // so the label is its description and tooltip, which don't obstruct
+        // the title when the users move through the records.  A real heading
+        // element is used, as VoiceOver announces the 'aria-level' attribute
+        // of an element with the role 'heading' also as its nesting level.
+        table.toggleClass('stacked', stacked)
+        let groups = table.children('thead, tbody, tfoot')
+        let rows = groups.children('tr')
+        let elements = groups.add(rows).add(rows.children('th, td'))
+        let titles = rows.children('td.row-title')
+        if (stacked) {
+            let level = Math.min(this._heading_level(table[0]) + 1, 6)
+            table.attr('role', 'list')
+            elements.attr('role', 'none')
+            rows.filter('.data-row').attr('role', 'listitem')
+            titles.each((i, td) => {
+                let label = $(td).data('label')
+                let heading = $(`<h${level} class="row-title-heading">`)
+                $(td).wrapInner(heading)
+                if (label) {
+                    $(td).children('.row-title-heading').attr('aria-description', label)
+                    $(td).not('[title]').attr('title', label).addClass('stacked-tooltip')
+                }
+            })
+        } else {
+            table.removeAttr('role')
+            elements.removeAttr('role')
+            titles.children('.row-title-heading').contents().unwrap()
+            titles.filter('.stacked-tooltip').removeAttr('title').removeClass('stacked-tooltip')
+        }
+    }
+
+    _heading_level(element) {
+        // Return the level of the last heading preceding given element.
+        let level = 1
+        $('h1, h2, h3, h4, h5, h6').not('.row-title-heading').each((i, h) => {
+            if (h.compareDocumentPosition(element) & Node.DOCUMENT_POSITION_FOLLOWING) {
+                level = Number(h.tagName[1])
+            }
+        })
+        return level
     }
 
     _reload_form_data(form, parameters) {

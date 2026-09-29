@@ -292,6 +292,49 @@
     text-align: right;
 }
 
+/* Rows stacked as cards when the table doesn't fit the available width (the
+   class 'stacked' is set by JavaScript, which also marks the title cells).
+   The column headings are not displayed and the cells are labeled by them
+   instead. */
+.pytis-form.browse-form table.data-table.stacked,
+.pytis-form.browse-form table.data-table.stacked > tbody,
+.pytis-form.browse-form table.data-table.stacked > tfoot,
+.pytis-form.browse-form table.data-table.stacked tr,
+.pytis-form.browse-form table.data-table.stacked tr > td,
+.pytis-form.browse-form table.data-table.stacked tr.group-heading > th {
+    display: block;
+}
+.pytis-form.browse-form table.data-table.stacked > thead {
+    display: none;
+}
+.pytis-form.browse-form table.data-table.stacked tr.data-row {
+    padding: 0.4em 0;
+}
+.pytis-form.browse-form table.data-table.stacked tr.data-row > td {
+    padding: 0.1em 0.5em;
+    text-align: left;
+}
+.pytis-form.browse-form table.data-table.stacked tr.data-row > td.row-title {
+    font-weight: bold;
+}
+.pytis-form.browse-form table.data-table.stacked tr.data-row > td.row-title > .row-title-heading {
+    /* Don't apply the page's heading styles. */
+    font: inherit;
+    color: inherit;
+    background: none;
+    border: none;
+    margin: 0;
+    padding: 0;
+}
+.pytis-form.browse-form table.data-table.stacked tr.data-row > td:empty,
+.pytis-form.browse-form table.data-table.stacked tr.data-row > td:has(> .field:empty) {
+    display: none;
+}
+.pytis-form.browse-form table.data-table.stacked tr.data-row > td[data-label]::before {
+    content: attr(data-label);
+    margin-right: 0.25em;
+}
+
 .list-form-controls {
     margin: 0.8em 0;
     padding: 0;
