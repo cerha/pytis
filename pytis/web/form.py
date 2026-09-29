@@ -2332,7 +2332,6 @@ class ListView(BrowseForm):
             self._export_row = super_._export_row
             self._wrap_exported_rows = super_._wrap_exported_rows
             self._export_group_heading = super_._export_group_heading
-            self.export = super_.export
         else:
             self._meta = [(self._field(id), id in list_layout.meta_labels())
                           for id in list_layout.meta()]
