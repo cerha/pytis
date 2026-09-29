@@ -18,6 +18,7 @@
 
 from __future__ import print_function
 import lcg
+import re
 import pytis.data as pd
 import pytis.util
 
@@ -752,6 +753,7 @@ class HtmlField(MultilineField):
 
 class DateTimeField(TextField):
     _JS_CLASS = 'pytis.DateTimeField'
+    _WHITESPACE_AFTER_PUNCTUATION = re.compile(r'(?<=[^\w\s])\s+')
 
     def datetime_format(self, locale_data):
         if hasattr(self.type, 'exact') and not self.type.exact():  # for wiking.DateTime
@@ -760,9 +762,22 @@ class DateTimeField(TextField):
             time_format = locale_data.exact_time_format
         return locale_data.date_format + ' ' + time_format
 
+    def input_format(self, locale_data):
+        """Return the format for parsing the user input normalized by 'normalize_input()'."""
+        return self.normalize_input(self.datetime_format(locale_data))
+
+    def normalize_input(self, string):
+        """Return the user input 'string' without whitespace following punctuation.
+
+        The locale formats may contain such whitespace (such as the Czech date
+        format '%d. %m. %Y'), but the users may omit it on input.
+
+        """
+        return self._WHITESPACE_AFTER_PUNCTUATION.sub('', string)
+
     def _maxlen(self):
         # TODO: Respect date format!
-        return 19
+        return 21
 
     def _javascript_constructor_args(self, context, form_id, layout_fields):
         locale_data = context.locale_data()
@@ -776,8 +791,12 @@ class DateTimeField(TextField):
         ),)
 
     def _validate(self, value, locale_data, **kwargs):
+        if isinstance(value, tuple):
+            value = tuple(v and self.normalize_input(v) for v in value)
+        elif value:
+            value = self.normalize_input(value)
         return super()._validate(value, locale_data,
-                                 format=self.datetime_format(locale_data), **kwargs)
+                                 format=self.input_format(locale_data), **kwargs)
 
 
 class DateField(DateTimeField):
@@ -787,7 +806,7 @@ class DateField(DateTimeField):
 
     def _maxlen(self):
         # TODO: Respect date format!
-        return 10
+        return 12
 
 
 class RangeField(Field):

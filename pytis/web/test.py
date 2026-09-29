@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2025 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2026 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2016 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -53,13 +53,13 @@ tests = (
     (pp.Field('multiline', type=pd.String(), height=4),
      ('xxx\nxxx', 'xxx\nxxx')),
     (pp.Field('date', type=pd.Date()),
-     (datetime.date(2016, 8, 30), '30.08.2016')),
+     (datetime.date(2016, 8, 30), '30.\xa008.\xa02016')),
     (pp.Field('datetime', type=pd.DateTime()),
-     (datetime.datetime(2016, 8, 30, 12, 40, tzinfo=Timezone()), '30.08.2016 12:40:00')),
+     (datetime.datetime(2016, 8, 30, 12, 40, tzinfo=Timezone()), '30.\xa008.\xa02016 12:40:00')),
     (pp.Field('daterange', type=pd.DateRange()),
      (pd.DateRange().adjust_value((datetime.date(1975, 8, 30),
                                    datetime.date(2016, 8, 30))),
-      ('30.08.1975', '30.08.2016'))),
+      ('30.\xa008.\xa01975', '30.\xa008.\xa02016'))),
     (pp.Field('boolean', type=pd.Boolean()),
      (True, 'T'),
      (False, 'F')),
@@ -120,6 +120,18 @@ def test_validation(row, field, context, value, exported):
     req = Request(params={field.id: exported})
     assert field.validate(req, context.locale_data()) is None
     assert row[field.id].value() == value
+
+
+def test_date_input_without_spaces():
+    # The Czech date format contains spaces, but they may be omitted on input.
+    fspec = pp.Field('date', type=pd.Date())
+    columns = [pd.ColumnSpec(fspec.id(), fspec.type())]
+    row = pp.PresentedRow((fspec,), pd.Data(columns, columns[0]), None, new=True)
+    field = pw.Field.create(row, fspec, None, None)
+    locale_data = export_context('cs').locale_data()
+    for string in ('30.8.2016', '30.08.2016', '30. 08.2016'):
+        assert field.validate(Request(params={'date': string}), locale_data) is None
+        assert row['date'].value() == datetime.date(2016, 8, 30)
 
 
 @field_test

@@ -1522,7 +1522,8 @@ class BrowseForm(LayoutForm):
                     if isinstance(t, pd.String):
                         return pd.WM(field.id, pd.WMValue(field.type, '*' + string + '*'))
                     if isinstance(field, DateTimeField):
-                        kwargs = dict(format=field.datetime_format(locale_data))
+                        string = field.normalize_input(string)
+                        kwargs = dict(format=field.input_format(locale_data))
                     else:
                         kwargs = dict()
                     value, error = t.validate(string, strict=False, **kwargs)
