@@ -325,6 +325,12 @@ pytis.BrowseForm = class extends pytis.Form {
             this._reload_form_data(form, {index_search: params.get('index_search')})
             return false
         })
+        panel.find('.dropdown-selection a').on('click', event => {
+            // The links contain the complete state of the controls.
+            let params = (new URL(event.target.href)).searchParams
+            this._load_form_data(Object.fromEntries(params))
+            return false
+        })
         this._bind_search_controls(panel)
     }
 

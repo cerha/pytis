@@ -2019,16 +2019,7 @@ class BrowseForm(LayoutForm):
             return ()
         g = context.generator()
         field = self._field(self._sorting[0][0])
-        params = [('form_name', self._name)]
-        if self._query_fields_form:
-            row = self._query_fields_form.row()
-            params += [(key, row[key].export()) for key in row.keys()]
-        # TODO: Excluding the 'submit' argument is actually a hack, since it is
-        # defined in Wiking and should be transparent for the form.
-        params += [(k, v) for k, v in self._hidden if k != 'submit']
-        if self._user_sorting:
-            sorting_column, direction = self._user_sorting
-            params += [('sort', sorting_column), ('dir', self._SORTING_DIRECTIONS[direction])]
+        params = list(self._control_params().items())
         uri = self._uri_provider(None, UriType.RECORD, None)
         sections = []
         for search_string, values in levels:
@@ -2080,6 +2071,38 @@ class BrowseForm(LayoutForm):
             return lcg.HtmlContent(lambda context, element: exported)
         return lcg.Dropdown(html(label), html(content), **kwargs).export(context)
 
+    def _control_params(self):
+        """Return the request parameters representing the current form state as a dict."""
+        params = {'form_name': self._name}
+        if self._query_fields_form:
+            row = self._query_fields_form.row()
+            params.update((key, row[key].export()) for key in row.keys())
+        # TODO: Excluding the 'submit' argument is actually a hack, since it is
+        # defined in Wiking and should be transparent for the form.
+        params.update((k, v) for k, v in self._hidden if k != 'submit')
+        if self._user_sorting:
+            sorting_column, direction = self._user_sorting
+            params.update(sort=sorting_column, dir=self._SORTING_DIRECTIONS[direction])
+        return params
+
+    def _control_uri(self, context, **kwargs):
+        """Return the form URI for given changes of the current controls state.
+
+        The current text search is preserved, but not the index search, which
+        would take precedence over the offset.
+
+        """
+        params = self._control_params()
+        params['list-form-controls-submitted'] = '1'
+        if self._text_search_string:
+            params['query'] = self._text_search_string
+        if self._limit is not None:
+            params['limit'] = self._limit
+        params.update(kwargs)
+        uri = self._uri_provider(None, UriType.RECORD, None)
+        return context.generator().uri(uri, *[(k, v if v is None else str(v))
+                                              for k, v in params.items()])
+
     def _export_message(self, context):
         if self._message:
             msg = self._message(self)
@@ -2126,22 +2149,32 @@ class BrowseForm(LayoutForm):
             controls = ()
             index_search_controls = self._export_index_search_controls(context,
                                                                        index_search_levels)
+            offset = self._offset
+            # The current values are passed on the other form submissions.
+            content.extend((g.hidden('offset', str(offset)), g.hidden('limit', str(limit))))
+            limit_controls = g.span(lcg.DropdownSelection(
+                # Keep the current first record on the displayed page.
+                [(str(i), self._control_uri(context, limit=i, offset=offset - offset % i),
+                  i == limit) for i in limits],
+                label=_("Records per page") + ':',
+                cls='limit-selection',
+            ).export(context), cls='limit')
+            offset_controls = g.span(lcg.DropdownSelection(
+                [(str(i + 1), self._control_uri(context, offset=i * limit), i == page)
+                 for i in range(pages)],
+                # Translators: Paging controls allow navigation in long lists which are
+                # split into several pages.  The user can select a specific page or
+                # browse forward/backwards.
+                label=_("Page") + ':',
+                cls='offset-selection',
+                # Translators: Displayed after the current page number, '%d' is replaced
+                # by the total number of pages.
+                suffix=_("of %d", pages),
+            ).export(context), cls='offset')
             if pages > 1:
-                # Translators: Paging controls allow navigation in long lists which are split into
-                # several pages.  The user can select a specific page or browse forward/backwards.
                 controls += (
-                    g.span(cls="offset", content=(
-                        g.label(_("Page") + ':', ids.offset),
-                        g.select(name='offset', id=ids.offset,
-                                 title=(_("Page") + ' ' + _("(Use ALT+arrow down to select)")),
-                                 onchange='this.form.submit(); return true',
-                                 content=[g.option(str(i + 1), value=i * limit,
-                                                   selected=(i == page))
-                                          for i in range(pages)]),
-                        g.span(str(page + 1), cls='current-page'),
-                        g.span(' / ', cls='separator'),
-                        g.span(str(pages), cls='total-pages'),
-                    )),
+                    offset_controls,
+                    limit_controls,
                     g.span(cls="buttons", content=(
                         g.button(g.span('', cls='icon') + g.span(_("Previous"), cls='label'),
                                  title=_("Go to previous page"),
@@ -2158,22 +2191,10 @@ class BrowseForm(LayoutForm):
                         if self._allow_search_field else '',
                     )),
                 )
-            controls += (
-                g.span((g.label(_("Records per page") + ':', ids.limit),
-                        g.select(name='limit', id=ids.limit,
-                                 title=(_("Records per page") + ' ' +
-                                        _("(Use ALT+arrow down to select)")),
-                                 onchange='this.form.submit(); return true',
-                                 content=[g.option(str(i), value=i, selected=(i == limit))
-                                          for i in limits])),
-                       cls='limit'),
-                g.noscript(g.button(g.span('', cls='icon') + g.span(_("Go"), cls='label'),
-                                    type='submit', cls='goto-page')),
-            )
-            if pages == 1:
+            else:
                 # All records fit on one page, so there are no paging buttons to
                 # place the index search controls among.
-                controls += index_search_controls
+                controls += (limit_controls, *index_search_controls)
             content.append(g.div(controls,
                                  cls='paging-controls' + (' one-page' if pages == 1 else '')))
         if self._allow_search_field and not bottom:

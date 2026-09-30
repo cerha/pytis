@@ -348,9 +348,10 @@
 .pytis-form .paging-controls {
     padding: 0.2em;
 }
-/* The index search dropdown ('lcg.Dropdown' widget) displays the links in
-   rows wrapped at the maximal width. */
-.list-form-controls .index-search-controls.expanded > .dropdown-panel {
+/* The index search and page selection dropdowns ('lcg.Dropdown' widgets)
+   display the links in rows wrapped at the maximal width. */
+.list-form-controls .index-search-controls.expanded > .dropdown-panel,
+.list-form-controls .offset-selection .dropdown-widget.expanded > .dropdown-panel {
     max-width: min(32em, calc(100vw - 2em));
     padding: 4px 0.4em;
 }
@@ -375,6 +376,27 @@
 .list-form-controls .index-search-controls .level > .label {
     font-weight: bold;
 }
+/* Selection of a value by links ('lcg.DropdownSelection'). */
+.list-form-controls .dropdown-selection > .label,
+.list-form-controls .dropdown-selection > .suffix,
+.list-form-controls .dropdown-selection .dropdown-toggle {
+    vertical-align: middle;
+}
+.list-form-controls .dropdown-selection .dropdown-widget.expanded a {
+    display: block;
+}
+/* The page numbers are displayed in a grid. */
+.list-form-controls .offset-selection .dropdown-widget.expanded > .dropdown-panel {
+    max-height: 60vh;
+    overflow-y: auto;
+}
+.list-form-controls .offset-selection .dropdown-widget.expanded a {
+    display: inline-block;
+    min-width: 2.2em;
+    box-sizing: border-box;
+    text-align: center;
+    padding: 0.1em;
+}
 .list-form-controls .offset,
 .list-form-controls .buttons,
 .list-form-controls .limit {
@@ -383,26 +405,21 @@
     vertical-align: middle;
 }
 .list-form-controls .offset,
+.list-form-controls .limit,
 .list-form-controls .buttons {
     margin-right: 1em;
 }
 .list-form-controls .buttons button {
     margin-right: .3em;
 }
-.list-form-controls .current-page,
-.list-form-controls .total-pages {
-    font-weight: bold;
-}
 .list-form-controls .query button {
     margin-right: 0;
 }
-.list-form-controls .current-page { display: none; }
 
 @media only screen and (max-width: 700px) {
 .list-form-controls .offset,
+.list-form-controls .limit,
 .list-form-controls .buttons { margin-right: 0.5em; }
-.list-form-controls.top .offset select { display: none; }
-.list-form-controls.top .current-page { display: inline; }
 .list-form-controls.top .limit { display: none; }
 }
 
