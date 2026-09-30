@@ -613,6 +613,9 @@
 .pytis-form button.selection-invocation {
     margin-left: 2px;
 }
+.pytis-form .calendar-field {
+    white-space: nowrap;
+}
 
 @media screen {
     /* Avoid inline-block in print as it triggers Firefox bug which causes

@@ -784,6 +784,10 @@ class DateTimeField(TextField):
         # TODO: Respect date format!
         return 21
 
+    def _editor(self, context, **kwargs):
+        # The wrapper keeps the calendar button (added by JavaScript) next to the field.
+        return context.generator().span(super()._editor(context, **kwargs), cls='calendar-field')
+
     def _javascript_constructor_args(self, context, form_id, layout_fields):
         locale_data = context.locale_data()
         return super()._javascript_constructor_args(context, form_id, layout_fields) + (dict(
