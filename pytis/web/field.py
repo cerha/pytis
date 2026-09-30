@@ -55,6 +55,11 @@ class UriType:
     record (or the form) itself.  The target of the URI provider request is
     always None for this kind.
 
+    The URI of a record is used as is, so it must be encoded.  The URI of the
+    form (when the record is None) is also used as the base URI to which the
+    form appends its request parameters by `lcg.HtmlGenerator.uri()`, which
+    encodes it, so it must not be encoded.
+
     """
     ACTION = 'ACTION'
     """Link to a pytis record's action.

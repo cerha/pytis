@@ -1909,11 +1909,16 @@ class BrowseForm(LayoutForm):
                 self._wrap_exported_rows(context, exported_rows, page, pages),
                 self._export_summary(context, limit, first_record_offset, count_on_page),
             ), cls='body')
+        if not self._embed and limit is not None and row_count > max(self._limits[0], 100):
+            # Retrieved once for both the top and bottom controls.
+            index_search_levels = self._retrieve_index_search_levels(context)
+        else:
+            index_search_levels = ()
         return [x for x in
                 (self._export_message(context),
-                 self._export_controls(context, page, pages),
+                 self._export_controls(context, page, pages, index_search_levels),
                  body,
-                 self._export_controls(context, page, pages, bottom=True))
+                 self._export_controls(context, page, pages, index_search_levels, bottom=True))
                 if x]
 
     def _wrap_exported_rows(self, context, rows, page, pages):
@@ -1954,24 +1959,17 @@ class BrowseForm(LayoutForm):
         value = pd.Value(pd.String(), search_string + "*")
         return pytis.data.WM(self._data_sorting[0][0], value, ignore_case=False)
 
-    def _export_index_search_controls(self, context):
-        g = context.generator()
+    def _retrieve_index_search_levels(self, context):
+        """Return the index search levels as a list of pairs (PREFIX, VALUES).
+
+        PREFIX is the current index search string prefix for which the level
+        offers VALUES (longer prefixes to skip to) or None for the top level.
+
+        """
         field = self._field(self._sorting[0][0])
         if not isinstance(field.type, pd.String) or field.type.enumerator():
-            return ()
-        params = [('form_name', self._name)]
-        if self._query_fields_form:
-            row = self._query_fields_form.row()
-            params += [(key, row[key].export()) for key in row.keys()]
-        # TODO: Excluding the 'submit' argument is actually a hack, since it is
-        # defined in Wiking and should be transparent for the form.
-        params += [(k, v) for k, v in self._hidden if k != 'submit']
-        if self._user_sorting:
-            sorting_column, direction = self._user_sorting
-            params += [('sort', sorting_column), ('dir', self._SORTING_DIRECTIONS[direction])]
-        # TODO: Unquote the uri returned by _uri_provider here!
-        uri = self._uri_provider(None, UriType.RECORD, None)
-        result = []
+            return []
+        levels = []
         data = self._row.data()
         for level in range(len(self._index_search_string) + 1):
             if level:
@@ -2001,6 +1999,39 @@ class BrowseForm(LayoutForm):
                           if v.value() is not None]
             if len(values) < 3 or len(values) > 100:
                 break
+            levels.append((search_string, values))
+        return levels
+
+    def _export_index_search_controls(self, context, levels):
+        """Return the index search controls as a sequence of content.
+
+        'levels' is the result of '_retrieve_index_search_levels()'.
+
+        The controls consist of a button and a dropdown panel with index
+        search links grouped into sections by levels.  The panel is collapsed
+        by JavaScript so that its links don't need to be passed through when
+        navigating the page and don't occupy the space on narrow screens.  The
+        controls are placed among the paging buttons, so they consist of
+        inline elements only.
+
+        """
+        if not levels:
+            return ()
+        g = context.generator()
+        field = self._field(self._sorting[0][0])
+        params = [('form_name', self._name)]
+        if self._query_fields_form:
+            row = self._query_fields_form.row()
+            params += [(key, row[key].export()) for key in row.keys()]
+        # TODO: Excluding the 'submit' argument is actually a hack, since it is
+        # defined in Wiking and should be transparent for the form.
+        params += [(k, v) for k, v in self._hidden if k != 'submit']
+        if self._user_sorting:
+            sorting_column, direction = self._user_sorting
+            params += [('sort', sorting_column), ('dir', self._SORTING_DIRECTIONS[direction])]
+        uri = self._uri_provider(None, UriType.RECORD, None)
+        sections = []
+        for search_string, values in levels:
             if search_string:
                 # Translators: This is a label preceding index search controls.
                 # These controls allow the user to move in a long
@@ -2024,8 +2055,30 @@ class BrowseForm(LayoutForm):
                          # Translators: Index search controls link tooltip.
                          title=_('Skip to the first record beginning with "%s"', v))
                      for v in values]
-            result.append(g.div(label + ' ' + lcg.concat(links, separator=' ')))
-        return (g.div(result, cls='index-search-controls'),)
+            label_id = context.unique_id()
+            sections.append(g.span((g.span(label, id=label_id, cls='label'), ' ',
+                                    lcg.concat(links, separator=' ')),
+                                   role='group', aria_labelledby=label_id, cls='level'))
+        return (self._export_dropdown(
+            context,
+            (
+                # Short visual label (with narrow no-break spaces around the arrow).
+                g.span('A\u202f\u21fe\u202fZ', cls='symbol', aria_hidden='true'),
+                # Translators: Label of a button displaying the index search
+                # controls (see above) in a dropdown.  The label is only
+                # presented by assistive technologies and as a tooltip.
+                g.span(_("Alphabetical index"), cls='label'),
+            ),
+            sections,
+            cls='index-search-controls',
+            title=_("Alphabetical index"),
+        ),)
+
+    def _export_dropdown(self, context, label, content, **kwargs):
+        """Return the exported 'lcg.Dropdown' for given already exported label and content."""
+        def html(exported):
+            return lcg.HtmlContent(lambda context, element: exported)
+        return lcg.Dropdown(html(label), html(content), **kwargs).export(context)
 
     def _export_message(self, context):
         if self._message:
@@ -2045,7 +2098,7 @@ class BrowseForm(LayoutForm):
         else:
             return None
 
-    def _export_controls(self, context, page, pages, bottom=False):
+    def _export_controls(self, context, page, pages, index_search_levels, bottom=False):
         if self._embed:
             return None
         g = context.generator()
@@ -2071,14 +2124,8 @@ class BrowseForm(LayoutForm):
         if limit is not None and count > limits[0]:
             empty = False
             controls = ()
-            if count > 100:
-                if not bottom:
-                    index_search_controls = self._export_index_search_controls(context)
-                    self._index_search_controls = index_search_controls
-                else:
-                    index_search_controls = self._index_search_controls
-                if index_search_controls:
-                    controls += index_search_controls
+            index_search_controls = self._export_index_search_controls(context,
+                                                                       index_search_levels)
             if pages > 1:
                 # Translators: Paging controls allow navigation in long lists which are split into
                 # several pages.  The user can select a specific page or browse forward/backwards.
@@ -2104,6 +2151,7 @@ class BrowseForm(LayoutForm):
                                  title=_("Go to next page"),
                                  name='next', value='1', disabled=(page + 1) * limit >= count,
                                  type='submit', cls='next-page'),
+                        *index_search_controls,
                         g.button(g.span('', cls='icon') + g.span(_("Search"), cls='label'),
                                  type='submit', cls='search',
                                  style=show_search_field and 'display:none' or None)
@@ -2122,6 +2170,10 @@ class BrowseForm(LayoutForm):
                 g.noscript(g.button(g.span('', cls='icon') + g.span(_("Go"), cls='label'),
                                     type='submit', cls='goto-page')),
             )
+            if pages == 1:
+                # All records fit on one page, so there are no paging buttons to
+                # place the index search controls among.
+                controls += index_search_controls
             content.append(g.div(controls,
                                  cls='paging-controls' + (' one-page' if pages == 1 else '')))
         if self._allow_search_field and not bottom:

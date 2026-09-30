@@ -348,8 +348,32 @@
 .pytis-form .paging-controls {
     padding: 0.2em;
 }
-.list-form-controls .index-search-controls {
-    margin-bottom: 0.2em;
+/* The index search dropdown ('lcg.Dropdown' widget) displays the links in
+   rows wrapped at the maximal width. */
+.list-form-controls .index-search-controls.expanded > .dropdown-panel {
+    max-width: min(32em, calc(100vw - 2em));
+    padding: 4px 0.4em;
+}
+.list-form-controls .index-search-controls.expanded a {
+    padding: 0.1em 0.15em;
+}
+.list-form-controls .index-search-controls .dropdown-toggle .label {
+    /* Only for assistive technologies (the button displays a symbol). */
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+}
+.list-form-controls .index-search-controls .level {
+    display: block;
+}
+.list-form-controls .index-search-controls .level + .level {
+    margin-top: 0.3em;
+}
+.list-form-controls .index-search-controls .level > .label {
+    font-weight: bold;
 }
 .list-form-controls .offset,
 .list-form-controls .buttons,
@@ -375,7 +399,8 @@
 .list-form-controls .current-page { display: none; }
 
 @media only screen and (max-width: 700px) {
-.list-form-controls .index-search-controls { display: none; }
+.list-form-controls .offset,
+.list-form-controls .buttons { margin-right: 0.5em; }
 .list-form-controls.top .offset select { display: none; }
 .list-form-controls.top .current-page { display: inline; }
 .list-form-controls.top .limit { display: none; }
