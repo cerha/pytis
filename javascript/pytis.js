@@ -308,18 +308,10 @@ pytis.BrowseForm = class extends pytis.Form {
             this._reload_form_data(form, {[b.name]: b.value})
             return false
         })
-        let apply_button = panel.find('button.apply-filters')
-        apply_button.on('click', event => {
+        panel.find('button.apply-filters').on('click', event => {
             this._reload_form_data(form, {})
             return false
         })
-        if (apply_button.length === 0) {
-            panel.find('select, checkbox, radio')
-                .on('change', event => {
-                    this._reload_form_data(form, {})
-                    return false
-                })
-        }
         panel.find('.index-search-controls a').on('click', event => {
             let params = (new URL(event.target.href)).searchParams
             this._reload_form_data(form, {index_search: params.get('index_search')})

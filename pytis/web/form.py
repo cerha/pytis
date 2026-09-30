@@ -1039,7 +1039,20 @@ class QueryFieldsForm(VirtualForm):
     _SAVED_EMPTY_VALUE = '-'
 
     def __init__(self, req, uri_provider, resolver, name, query_fields, profiles,
-                 immediate_filters=True, async_load=False):
+                 selection_uri):
+        """Initialize the form.
+
+        Arguments:
+          selection_uri: function returning the URI of the browse form for
+            selecting given query field values.  Called with the export
+            context and the field values as keyword arguments.  Used when the
+            fields don't require submission (see `export_controls()`).
+
+        The other arguments are the same as for the parent class or as the
+        corresponding `BrowseForm` arguments.
+
+        """
+        self._selection_uri = selection_uri
         if query_fields:
             spec_kwargs = dict(query_fields.view_spec_kwargs())
             fields = list(spec_kwargs.pop('fields'))
@@ -1068,10 +1081,7 @@ class QueryFieldsForm(VirtualForm):
                          dict(fields=fields, layout=layout, **spec_kwargs),
                          name=name)
         row = self._row
-        self._immediate_filters = (immediate_filters and
-                                   all(row.type(f).enumerator() is not None
-                                       for f in self._field_order()))
-        self._async_load = async_load
+        self._requires_submit = any(row.type(f).enumerator() is None for f in self._field_order())
         if req.param('list-form-controls-submitted'):
             self.validate(req)
         if not self.is_ajax_request(req):
@@ -1107,25 +1117,52 @@ class QueryFieldsForm(VirtualForm):
         # Translators: Button for manual filter invocation.
         submit_button = g.button(g.span('', cls='icon') + g.span(_("Change filters"), cls='label'),
                                  type='submit', cls='apply-filters')
-        if self._immediate_filters:
-            # Hide the submit button, but leave it in place for non-Javascript browsers.
-            submit_button = g.noscript(submit_button)
         return [g.div(submit_button, cls='submit-buttons')]
-
-    def _export_javascript(self, context):
-        script = super()._export_javascript(context)
-        if self._immediate_filters and not self._async_load:
-            # When the form is loaded asynchronously, the change handlers are assigned
-            # in pytis.js (bind_controls)!
-            g = context.generator()
-            script = g.concat(script, g.noescape(
-                "$('#%s').find('select, checkbox, radio')"
-                ".on('change', e => $(e.target).closest('form').submit())" % self._form_id
-            ))
-        return script
 
     def fields(self):
         return [self._fields[f] for f in self._field_order()]
+
+    def _choices(self, field):
+        # Return the choices of an enumerated field as a list of (value, display)
+        # pairs.  The values are exported, so the null value is an empty string.
+        choices = [(field.type.export(value), display) for value, display
+                   in self._row.enumerate(field.id, export=localizable_export)]
+        if not field.type.not_null():
+            choices.insert(0, ('', field.spec.null_display() or '-'))
+        return choices
+
+    def export_controls(self, context, bottom=False):
+        """Return the content of the browse form controls for the query fields.
+
+        When some of the fields is not a selection (has no enumerator), such as
+        a date, the fields must be submitted together, so the top controls
+        contain the whole form with ordinary select boxes and a submit button.
+        Otherwise the top controls contain a dropdown with links for each field,
+        so that each field is applied immediately on selection.  The current
+        values are passed as hidden fields on the other submissions of the
+        controls (such as paging), so the bottom controls only contain the
+        hidden fields.
+
+        Arguments:
+          bottom: True for the controls displayed below the browse form.
+
+        Returns a list of exported content.
+
+        """
+        if not bottom and self._requires_submit:
+            content = [self.export(context)]
+        else:
+            content = [f.hidden(context) for f in self.fields()]
+            if not bottom:
+                content.append(context.generator().div([
+                    lcg.DropdownSelection(
+                        [(display, self._selection_uri(context, **{f.id: value}),
+                          value == self._row[f.id].export())
+                         for value, display in self._choices(f)],
+                        label=f.label + ':', cls='query-field',
+                    ).export(context) for f in self.fields()
+                ], cls='query-fields-controls'))
+        return content
 
 
 class InlineEditForm(EditForm):
@@ -1178,7 +1215,7 @@ class BrowseForm(LayoutForm):
                  limits=(25, 50, 100, 200, 500), limit=50, offset=0, search=None,
                  allow_text_search=None, text_search_condition=None, permanent_text_search=False,
                  filter=None, profiles=None, query_fields=None,
-                 condition_provider=None, argument_provider=None, immediate_filters=True,
+                 condition_provider=None, argument_provider=None,
                  top_actions=False, bottom_actions=True, row_actions=False, async_load=False,
                  cell_editable=None, expand_row=None, async_row_expansion=False,
                  on_update_row=None, inline_editable=False, embed=False, show_summary=True,
@@ -1298,11 +1335,6 @@ class BrowseForm(LayoutForm):
             condition_provider.
           argument_provider: overrides the form specification attribute
             argument_provider.
-          immediate_filters: when True, filters and profiles apply immediately
-            after their selection in the corresponding selector; when False,
-            there is a separate button for filter application. When query_fields
-            are present, filters must always be applied using a button, so this
-            argument is ignored in this case.
           top_actions: boolean flag to control the presence of the global action
             buttons above the form.
           bottom_actions: boolean flag to control the presence of the global
@@ -1406,8 +1438,7 @@ class BrowseForm(LayoutForm):
             self._query_fields_form = form = QueryFieldsForm(req, self._uri_provider,
                                                              self._row.resolver(), self._name,
                                                              query_fields, profiles,
-                                                             immediate_filters=immediate_filters,
-                                                             async_load=async_load)
+                                                             selection_uri=self._control_uri)
             query_fields_row = form.row()
         else:
             self._query_fields_form = None
@@ -2138,10 +2169,8 @@ class BrowseForm(LayoutForm):
         if self._query_fields_form:
             # TODO: Hide when there are no records and no active filtering conditions?
             #       and (count or [v for v in self._filter_ids.values() if v is not None])
-            if bottom:
-                content.extend([f.hidden(context) for f in self._query_fields_form.fields()])
-            else:
-                content.append(self._query_fields_form.export(context))
+            content.extend(self._query_fields_form.export_controls(context, bottom=bottom))
+            if not bottom:
                 empty = False
         count, limit, limits = self._row_count, self._limit, self._limits
         if limit is not None and count > limits[0]:

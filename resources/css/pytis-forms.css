@@ -377,6 +377,13 @@
     font-weight: bold;
 }
 /* Selection of a value by links ('lcg.DropdownSelection'). */
+.list-form-controls .query-fields-controls {
+    margin-bottom: 0.6em;
+}
+.list-form-controls .query-fields-controls .dropdown-selection {
+    display: inline-block;
+    margin: 0 0.5em 0.3em 0;
+}
 .list-form-controls .dropdown-selection > .label,
 .list-form-controls .dropdown-selection > .suffix,
 .list-form-controls .dropdown-selection .dropdown-toggle {
