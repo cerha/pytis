@@ -342,6 +342,8 @@
 .pytis-form.browse-form table.data-table.stacked tr.data-row > td {
     padding: 0.1em 0.5em;
     text-align: left;
+    /* Break long words (such as URLs), which would overflow the card. */
+    overflow-wrap: anywhere;
 }
 .pytis-form.browse-form table.data-table.stacked tr.data-row > td.row-title {
     font-weight: bold;
