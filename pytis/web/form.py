@@ -2184,8 +2184,13 @@ class BrowseForm(LayoutForm):
                 label=_("Records per page") + ':',
                 cls='limit-selection',
             ).export(context), cls='limit')
+            # Without JavaScript, the page numbers are displayed directly, so only the
+            # first, the last, the neighbors of the current page and the round page
+            # numbers are displayed in long lists (the others are secondary).
+            step = 10 ** max(1, len(str(pages)) - 2)
             offset_controls = g.span(lcg.DropdownSelection(
-                [(str(i + 1), self._control_uri(context, offset=i * limit), i == page)
+                [(str(i + 1), self._control_uri(context, offset=i * limit), i == page,
+                  pages > 30 and 0 < i < pages - 1 and abs(i - page) > 3 and (i + 1) % step != 0)
                  for i in range(pages)],
                 # Translators: Paging controls allow navigation in long lists which are
                 # split into several pages.  The user can select a specific page or
