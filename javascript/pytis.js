@@ -393,12 +393,17 @@ pytis.BrowseForm = class extends pytis.Form {
 
     _update_table_layout() {
         // Stack the table rows only when the table doesn't fit the form width.
+        // The stacking may be disabled by the CSS custom property
+        // '--pytis-table-stacking: none' (such as on wide screens, where the
+        // table is rather scrolled horizontally).
         let width = this.element[0].clientWidth
         let table = this.element.find('table.data-table')
         if (table.length && width !== this._table_layout_width) {
+            let style = getComputedStyle(this.element[0])
+            let enabled = style.getPropertyValue('--pytis-table-stacking').trim() !== 'none'
             this._table_layout_width = width
             this._set_table_stacked(table, false)
-            this._set_table_stacked(table, table[0].offsetWidth > width)
+            this._set_table_stacked(table, enabled && table[0].offsetWidth > width)
         }
     }
 
