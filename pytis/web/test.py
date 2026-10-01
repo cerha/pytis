@@ -138,4 +138,7 @@ def test_hidden(row, field, context, value, exported):
         '<input name="{}" type="hidden" value={}/>'.format(field.id, saxutils.quoteattr(v))
         for v in pytis.util.xtuple(exported)
     )
-    assert result == expected
+    # TODO: Compare exactly once the LCG version separating the parts of Czech
+    # dates by no-break spaces is released and required.  The older versions
+    # format the dates without them.
+    assert result.replace('\xa0', '') == expected.replace('\xa0', '')
