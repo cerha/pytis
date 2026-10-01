@@ -248,6 +248,8 @@ class Form(lcg.Content):
         result = g.div(self._export_form(context), cls=cls, id=form_id)
         if javascript:
             result += g.script(javascript)
+        # The generic icons used by the form buttons are defined there.
+        context.resource('lcg-widgets.css')
         context.resource('pytis-forms.css')
         return result
 
@@ -284,14 +286,9 @@ class FieldForm(Form):
                     uri = self._uri_provider(self._row, UriType.PRINT, field.id)
                     if uri:
                         g = context.generator()
-                        img = context.resource('print-field.png')
-                        if img:
-                            label = g.img(src=context.uri(img), alt=_("Print"))
-                        else:
-                            label = _("Print")
-                        formatted = g.a(label, href=uri,
+                        formatted = g.a(g.span('', cls='icon print-icon'), href=uri,
                                         title=_("Export the contents of this field into PDF"),
-                                        cls='print-field-link') + formatted
+                                        aria_label=_("Print"), cls='print-field-link') + formatted
                 wrap = context.generator().div
             else:
                 wrap = context.generator().span
@@ -635,15 +632,17 @@ class _SubmittableForm(Form):
             hidden.append(('__invoked_from', invoked_from))
         content = [g.hidden(name, value) for name, value in hidden]
         for item in self._submit_buttons:
-            name, label, icon = item if len(item) == 3 else tuple(item) + ('default-submit-icon',)
+            name, label, icon = item if len(item) == 3 else tuple(item) + ('ok-icon',)
             content.append(g.button(g.span('', cls='icon ' + icon) + g.span(label, cls='label'),
                                     name=name, value='1' if name else None,
                                     type='submit', title=_("Submit the form"), cls='submit'))
         if self._show_cancel_button:
-            content.append(g.button(g.span('', cls='icon') + g.span(_("Cancel"), cls='label'),
+            content.append(g.button(g.span('', cls='icon remove-icon') +
+                                    g.span(_("Cancel"), cls='label'),
                                     type='submit', name='_cancel', value='1', cls='cancel'))
         if self._show_reset_button:
-            content.append(g.button(g.span('', cls='icon') + g.span(_("Reset"), cls='label'),
+            content.append(g.button(g.span('', cls='icon undo-icon') +
+                                    g.span(_("Reset"), cls='label'),
                                     type='reset', title=_("Undo all changes"), cls='reset'))
         return [g.div(content, cls='submit-buttons')]
 
@@ -1111,7 +1110,8 @@ class QueryFieldsForm(VirtualForm):
     def _export_submit(self, context):
         g = context.generator()
         # Translators: Button for manual filter invocation.
-        submit_button = g.button(g.span('', cls='icon') + g.span(_("Change filters"), cls='label'),
+        submit_button = g.button(g.span('', cls='icon refresh-icon') +
+                                 g.span(_("Change filters"), cls='label'),
                                  type='submit', cls='apply-filters')
         return [g.div(submit_button, cls='submit-buttons')]
 
@@ -2206,16 +2206,19 @@ class BrowseForm(LayoutForm):
                     offset_controls,
                     limit_controls,
                     g.span(cls="buttons", content=(
-                        g.button(g.span('', cls='icon') + g.span(_("Previous"), cls='label'),
+                        g.button(g.span('', cls='icon arrow-left-icon') +
+                                 g.span(_("Previous"), cls='label'),
                                  title=_("Go to previous page"),
                                  name='prev', value='1', disabled=(page == 0),
                                  type='submit', cls='prev-page'),
-                        g.button(g.span(_("Next"), cls='label') + g.span('', cls='icon'),
+                        g.button(g.span(_("Next"), cls='label') +
+                                 g.span('', cls='icon arrow-right-icon'),
                                  title=_("Go to next page"),
                                  name='next', value='1', disabled=(page + 1) * limit >= count,
                                  type='submit', cls='next-page'),
                         *index_search_controls,
-                        g.button(g.span('', cls='icon') + g.span(_("Search"), cls='label'),
+                        g.button(g.span('', cls='icon search-icon') +
+                                 g.span(_("Search"), cls='label'),
                                  type='submit', cls='search',
                                  style=show_search_field and 'display:none' or None)
                         if self._allow_search_field else '',
@@ -2235,9 +2238,9 @@ class BrowseForm(LayoutForm):
                         name='query', id=ids.search, cls='text-search-field'),
                 g.hidden('show-search-field', '1' if show_search_field else ''),
                 # Translators: Search button label.
-                g.button(g.span('', cls='icon') + g.span(_("Search"), cls='label'),
+                g.button(g.span('', cls='icon search-icon') + g.span(_("Search"), cls='label'),
                          type='submit', cls='search'),
-                g.button(g.span('', cls='icon') + g.span(_("Cancel"), cls='label'),
+                g.button(g.span('', cls='icon remove-icon') + g.span(_("Cancel"), cls='label'),
                          type='submit', cls='cancel-search'),
             )))
         # We need to include the form even if it does not contain any
@@ -2707,10 +2710,9 @@ class EditableBrowseForm(BrowseForm):
         result = super()._export_cell(context, row, n, field, editable=editable)
         if field.id == self._column_fields[0].id:
             g = context.generator()
-            icon = context.resource('delete-record.png')
-            result = (g.a(g.img(src=context.uri(icon), alt=_("Remove this row")),
-                          href='javascript:void(0)',
-                          title=_("Remove this row"), cls='remove-row') +
+            result = (g.a(g.span('', cls='icon remove-icon'),
+                          href='javascript:void(0)', title=_("Remove this row"),
+                          aria_label=_("Remove this row"), cls='remove-row') +
                       result)
         return result
 

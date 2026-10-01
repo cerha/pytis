@@ -147,18 +147,40 @@
 * html .pytis-form .horizontal-group fieldset.group { margin: 0 0 1em 0; }
 * html .pytis-form fieldset.group legend { color: #000; position: absolute; top: -0.6em; left: 0.2em; }
 
+.pytis-form .ajax-loading,
+.pytis-form .form-load-error {
+    padding: 6px 8px;
+}
 .pytis-form .ajax-loading {
     color: #aaa;
-    padding: 6px 0 6px 30px;
-    background-image: url(ajax-loading.gif);
-    background-position: 8px center;
-    background-repeat: no-repeat;
 }
-.pytis-form .form-load-error {
-    padding: 6px 0 6px 36px;
-    background-image: url(error.png);
-    background-position: 8px center;
-    background-repeat: no-repeat;
+.pytis-form .ajax-loading::before,
+.pytis-form .form-load-error::before {
+    /* The LCG loading and error icons (see lcg-widgets.css). */
+    content: "";
+    display: inline-block;
+    width: 1.15em;
+    height: 1.15em;
+    vertical-align: -.2em;
+    margin-right: .5em;
+    background-color: currentColor;
+    -webkit-mask: var(--lcg-loading-icon) center / contain no-repeat;
+    mask: var(--lcg-loading-icon) center / contain no-repeat;
+    animation: lcg-spin 1s linear infinite;
+}
+.pytis-form .form-load-error::before {
+    width: 1.25em;
+    height: 1.25em;
+    vertical-align: -.25em;
+    background-color: #d02020;
+    -webkit-mask-image: var(--lcg-error-icon);
+    mask-image: var(--lcg-error-icon);
+    animation: none;
+}
+@media (prefers-reduced-motion: reduce) {
+    .pytis-form .ajax-loading::before {
+        animation-duration: 3s;
+    }
 }
 .pytis-form .form-load-traceback {
     padding: 4px;
@@ -212,16 +234,19 @@
     display: inline-block;
     float: right;
     padding: 3px 2px;
-    width: 9px;
+    width: 10px;
     height: 7px;
-    background-position: right center;
-    background-repeat: no-repeat;
+    background-color: currentColor;
+    -webkit-mask: center / 12px 12px no-repeat content-box;
+    mask: center / 12px 12px no-repeat content-box;
 }
 .pytis-form.browse-form table.data-table tr.column-headings th span.sort-direction-asc {
-    background-image: url(sort-asc.png);
+    -webkit-mask-image: var(--lcg-triangle-down-icon);
+    mask-image: var(--lcg-triangle-down-icon);
 }
 .pytis-form.browse-form table.data-table tr.column-headings th span.sort-direction-desc {
-    background-image: url(sort-desc.png);
+    -webkit-mask-image: var(--lcg-triangle-up-icon);
+    mask-image: var(--lcg-triangle-up-icon);
 }
 
 .pytis-form.browse-form table.data-table.expansible-rows td.expansion-ctrl {
@@ -242,12 +267,14 @@
     left: 0;
     top: 0;
     text-indent: -9999px;
-    background-image: url(row-collapsed.png);
-    background-position: 1px center;
-    background-repeat: no-repeat;
+    overflow: hidden;
+    background-color: currentColor;
+    -webkit-mask: var(--lcg-triangle-right-icon) 1px center / 12px 12px no-repeat;
+    mask: var(--lcg-triangle-right-icon) 1px center / 12px 12px no-repeat;
 }
 .pytis-form.browse-form table.data-table.expansible-rows tr.expanded a.expand-row {
-    background-image: url(row-expanded.png);
+    -webkit-mask-image: var(--lcg-triangle-down-icon);
+    mask-image: var(--lcg-triangle-down-icon);
 }
 .pytis-form.browse-form table.data-table tr.row-expansion a.collapse-row {
     position: absolute;
@@ -422,10 +449,20 @@
 .list-form-controls .query button {
     margin-right: 0;
 }
+/* The paging buttons use the generic LCG arrow icons, which have some space
+   around the chevrons already. */
+.list-form-controls button.prev-page .icon {
+    margin: 0 0 0 -.25em;
+}
+.list-form-controls button.next-page .icon {
+    margin: 0 -.25em 0 0;
+}
 @media only screen and (max-width: 767px) {
     /* Only the icons are displayed, the labels remain for assistive technologies. */
     .list-form-controls button.prev-page .label,
-    .list-form-controls button.next-page .label {
+    .list-form-controls button.next-page .label,
+    .list-form-controls button.search .label,
+    .list-form-controls button.cancel-search .label {
         position: absolute;
         width: 1px;
         height: 1px;
@@ -434,8 +471,28 @@
         white-space: nowrap;
     }
     .list-form-controls button.prev-page .icon,
-    .list-form-controls button.next-page .icon {
+    .list-form-controls button.next-page .icon,
+    .list-form-controls button.search .icon,
+    .list-form-controls button.cancel-search .icon {
         margin: 0;
+    }
+    /* The search field shrinks to keep the search buttons on the same line. */
+    .list-form-controls .query {
+        display: flex;
+        align-items: center;
+    }
+    .list-form-controls .query > * {
+        flex: none;
+    }
+    .list-form-controls .query > input.text-search-field {
+        flex: 1 1 auto;
+        width: auto;
+        min-width: 0;
+    }
+}
+@media print {
+    .list-form-controls .paging-controls {
+        display: none;
     }
 }
 
@@ -577,6 +634,7 @@
 .pytis-form.show-form a.print-field-link {
     float: right;
     display: block;
+    font-size: 1.5em;
 }
 
 .pytis-form .group span.color-display {
@@ -678,12 +736,8 @@
     margin: 0;
 }
 
-.pytis-form.browse-form a.remove-row img {
-    position: relative;
-    top: 2px;
-    left: 0;
-    padding-left: 2px;
-    padding-right: 3px;
+.pytis-form.browse-form a.remove-row .icon {
+    margin: 0 3px 0 2px;
 }
 .pytis-form.browse-form td.editable-cell .errors {
     border-width: 1px;

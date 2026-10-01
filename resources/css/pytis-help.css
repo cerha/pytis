@@ -46,13 +46,6 @@ h5,h6,h7,h8,h9 { font-size: 1.1em; }
 .table-of-contents {
     clear: none;
 }
-.foldable-tree-widget button.toggle-menu-expansion,
-.foldable-tree-widget li .icon,
-.popup-menu-ctrl-widget .popup-arrow,
-.popup-menu-widget a.close-menu,
-.collapsible-pane-widget .collapsible-pane-heading .icon {
-    background-image: lcg-icons.png;
-}
 .foldable-tree-widget li .icon {
     position: relative;
     top: 2px;
