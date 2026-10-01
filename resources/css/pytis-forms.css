@@ -422,6 +422,22 @@
 .list-form-controls .query button {
     margin-right: 0;
 }
+@media only screen and (max-width: 767px) {
+    /* Only the icons are displayed, the labels remain for assistive technologies. */
+    .list-form-controls button.prev-page .label,
+    .list-form-controls button.next-page .label {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip: rect(0 0 0 0);
+        white-space: nowrap;
+    }
+    .list-form-controls button.prev-page .icon,
+    .list-form-controls button.next-page .icon {
+        margin: 0;
+    }
+}
 
 @media only screen and (max-width: 700px) {
 .list-form-controls .offset,
