@@ -605,12 +605,21 @@
     /* To display labels vertically centered with form controls. */
     line-height: 2.1em;
 }
+.pytis-form fieldset {
+    /* Don't grow with the content beyond the available width. */
+    min-width: 0;
+}
+.pytis-form td.ctrl > :is(input:not([type=checkbox], [type=radio]), textarea, select):not(.fullsize) {
+    /* Let the fields shrink when the form doesn't fit the available width.
+       The percentage width makes them shrinkable in the table layout, while
+       'max-content' keeps their natural size given by 'size' or 'cols'. */
+    width: 100%;
+    max-width: max-content;
+    box-sizing: border-box;
+}
 
 @media only screen and (max-width: 767px) {
     /* Display the field labels above the fields on narrow screens. */
-    .pytis-form fieldset {
-        min-width: 0;
-    }
     .pytis-form table.vertical-group,
     .pytis-form table.horizontal-group,
     .pytis-form table.vertical-group > tbody,
