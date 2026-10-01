@@ -22,7 +22,6 @@ from __future__ import print_function
 import datetime
 import lcg
 import pytest
-import sys
 
 
 import pytis.data as pd
@@ -112,7 +111,7 @@ def field_test(f):
         row, field, context, values = field_params
         for value, exported in values:
             f(row, field, context, value, exported)
-    return pytest.mark.skipif(sys.version_info[0] == 2, reason="Not testing on Python 2")(x)
+    return x
 
 
 @field_test

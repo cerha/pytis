@@ -3,11 +3,15 @@ import sys
 
 import pytest
 
-# pytis.rest requires Python 3 (type-union syntax, dataclasses with slots, …).
-# Exclude it from collection entirely when running under Python 2 so that
-# pytest does not choke on syntax errors before any test starts.
+# TODO NOPY2: Remove the exclusion together with Python 2 support.
+# pytis.rest and pytis.web require Python 3 (only the wx application and the
+# code it shares with the web, such as pytis.data, pytis.presentation and
+# pytis.util, remain Python 2 compatible).  Exclude them from collection
+# entirely when running under Python 2 so that pytest does not choke on syntax
+# errors before any test starts.  The same modules are excluded from the
+# Python 2 syntax check in .github/workflows/tests.yml.
 if sys.version_info[0] < 3:
-    collect_ignore_glob = ['pytis/rest/*', 'pytis/extensions/dump.py']
+    collect_ignore_glob = ['pytis/rest/*', 'pytis/web/*', 'pytis/extensions/dump.py']
 
 
 def pytest_addoption(parser):

@@ -86,6 +86,13 @@ jobs:
           psql -h "$PGHOST" -U "$PGUSER" -d "$PYTIS_DBNAME" -v ON_ERROR_STOP=1 \
             -c "create role demo;"
 
+      - name: Check Python 2 syntax
+        # The test run doesn't import all modules, so check the syntax of the
+        # code which must remain Python 2 compatible separately.  The excluded
+        # modules are Python 3 only (keep in sync with conftest.py).
+        run: |
+          python -m compileall -q -x 'pytis/(web|rest|cms)/|pytis/extensions/dump\.py|pytis/demo/(cms|demoweb)\.py' pytis
+
       - name: Run tests
         run: make test
 
