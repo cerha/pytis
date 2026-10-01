@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 # Copyright (C) 2018-2026 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2006-2017 OUI Technology Ltd.
 #
@@ -32,8 +30,6 @@ All the content generation is done using the LCG framework.  See
 http://www.freebsoft.org/lcg.
 
 """
-
-from __future__ import print_function
 
 import lcg
 import copy

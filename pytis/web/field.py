@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 # Copyright (C) 2018-2026 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2006-2017 OUI Technology Ltd.
 #
@@ -16,7 +14,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from __future__ import print_function
 import lcg
 import re
 import pytis.data as pd
@@ -822,7 +819,7 @@ class RangeField(Field):
 
     def _editor(self, context, value, id, **kwargs):
         g = context.generator()
-        return lcg.concat([super(RangeField, self)._editor(context, value=v, id=id_, **kwargs)
+        return lcg.concat([super()._editor(context, value=v, id=id_, **kwargs)
                            for v, id_ in zip(value or ('', ''), (id, id + '-upper'))],
                            separator=g.span('–', cls='range-field-separator'))
 
@@ -858,7 +855,7 @@ class CheckboxField(Field):
 
     def _format(self, context):
         # Translators: Boolean value display.  Should be Yes/No in the meaning True/False.
-        return self._row.display(self.id) or self._row[self.id].value() and _(u"Yes") or _(u"No")
+        return self._row.display(self.id) or self._row[self.id].value() and _("Yes") or _("No")
 
     def _editor(self, context, **kwargs):
         return context.generator().checkbox(value='T', checked=self._value().value(), **kwargs)
@@ -907,9 +904,9 @@ class FileField(Field):
             elif isinstance(self.type, pd.Image):
                 # Translators: The label "image"/"file" is used in textual representation of binary
                 # data values, usually as a link to download the actual binary file.
-                return _(u"image")
+                return _("image")
             else:
-                return _(u"file")
+                return _("file")
         else:
             return ""
 
@@ -935,11 +932,11 @@ class FileField(Field):
             if size and size.isdigit():
                 size = int(size)
                 if self.type.minlen() is not None and size < self.type.minlen():
-                    error = _(u"Minimal size %(minlen)s not satisfied",
+                    error = _("Minimal size %(minlen)s not satisfied",
                               minlen=pytis.util.format_byte_size(self.type.minlen()))
                     return pd.ValidationError(error)
                 if self.type.maxlen() is not None and size > self.type.maxlen():
-                    error = _(u"Maximal size %(maxlen)s exceeded",
+                    error = _("Maximal size %(maxlen)s exceeded",
                               maxlen=pytis.util.format_byte_size(self.type.maxlen()))
                     return pd.ValidationError(error)
                 return None
@@ -947,7 +944,6 @@ class FileField(Field):
 
     def hidden(self, context):
         raise NotImplementedError()
-
 
 
 class EnumerationField(Field):
@@ -959,7 +955,7 @@ class EnumerationField(Field):
         if isinstance(self.type, pd.Boolean):
             # Boolean fields may be also rendered as radio, etc. when
             # selection_type is defined.
-            value = self._row[fid].value() and _(u"Yes") or _(u"No")
+            value = self._row[fid].value() and _("Yes") or _("No")
         else:
             value = localizable_export(self._value())
         if self._showform:

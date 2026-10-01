@@ -1,6 +1,4 @@
-# -*- coding: utf-8 -*-
-
-# Copyright (C) 2018-2024 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2026 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2007-2017 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -21,7 +19,6 @@
 This module implements web-based dialogs.
 
 """
-from __future__ import print_function
 
 import lcg
 import pytis.util
@@ -51,7 +48,7 @@ class Dialog(lcg.Content):
             hidden += [('action', self._action)]
         # Translators: Default edit form submit button label.
         content += tuple([g.hidden(k, v) for k, v in hidden] +
-                         [g.button(g.span(_(u"Submit")), type='submit')])
+                         [g.button(g.span(_("Submit")), type='submit')])
         return g.form(content, action=self._handler, cls="dialog", method="POST") + "\n"
 
 
