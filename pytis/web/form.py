@@ -1787,11 +1787,12 @@ class BrowseForm(LayoutForm):
 
         def sorting_indicator(field):
             sorting = pytis.util.find(field.id, self._sorting, key=lambda x: x[0])
-            # Don't indicate default sorting.  It works only when the default
-            # sorting is ascending and on only single column.  In all other
-            # cases the asc-desc-default sorting cycle principle produces
-            # unintended and confusing results.
-            if sorting and self._sorting != self._view.sorting():
+            # Always indicate explicit user sorting, but indicate default
+            # sorting only when it is ascending and on only single column.
+            # In all other cases the asc-desc-default sorting cycle principle
+            # produces unintended and confusing results.
+            if sorting and (self._user_sorting or
+                            (len(self._sorting) == 1 and sorting[1] == pytis.data.ASCENDENT)):
                 return g.span('', cls='sort-indicator sort-direction-%s sort-position-%d' %
                               (self._SORTING_DIRECTIONS[sorting[1]],
                                self._sorting.index(sorting) + 1))
