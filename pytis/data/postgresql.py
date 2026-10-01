@@ -482,10 +482,17 @@ class PostgreSQLAccessor(object_2_5):
             if not db_key:
                 t, a = _Query.next_arg(sval('pytis'))
                 query = _Query("select pytis_crypto_db_key(%s)" % (t,), a)
+                self._postgresql_query(connection, _Query("savepoint __pytis_init_db_key"), False)
                 try:
                     result = self._postgresql_query(connection, query, False)
                     db_key = result[0].result().fetchone()[0]
                 except DBUserException:
+                    # The function is typically missing in databases not using
+                    # pytis crypto.  Without the rollback the connection would
+                    # remain in an aborted transaction and the first query
+                    # performed through it would fail.
+                    self._postgresql_query(connection, _Query("rollback to __pytis_init_db_key"),
+                                           False)
                     return
                 if not db_key:
                     # Remember there is no db key to avoid querying
