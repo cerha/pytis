@@ -193,10 +193,12 @@
 .pytis-form.browse-form > .ajax-container > .body {
     margin-top: .3em;
 }
+.pytis-form.browse-form .data-table-wrapper {
+    overflow-x: auto;
+}
 .pytis-form.browse-form table.data-table {
     border-collapse: collapse;
     border: none;
-    overflow-x: scroll;
 }
 .pytis-form.browse-form table.data-table thead {
     display: table-header-group;
@@ -697,6 +699,8 @@
     .pytis-form.browse-form > .ajax-container > .body,
     .pytis-form.browse-form > .body {
 	display: inline-block;
+	/* Let the table wrapper scroll the table, which doesn't fit. */
+	max-width: 100%;
     }
     .pytis-form.browse-form .summary {
 	background-color: #eee;

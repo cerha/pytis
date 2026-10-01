@@ -1961,10 +1961,13 @@ class BrowseForm(LayoutForm):
         cls = ['data-table']
         if self._expand_row:
             cls.append('expansible-rows')
-        return g.table((g.thead(g.tr(headings, cls='column-headings')),
-                        foot,
-                        g.tbody(rows)),
-                       cls=' '.join(cls))
+        # The wrapper allows scrolling the table horizontally when it doesn't
+        # fit the available width and is not stacked (see pytis.js).
+        return g.div(g.table((g.thead(g.tr(headings, cls='column-headings')),
+                              foot,
+                              g.tbody(rows)),
+                             cls=' '.join(cls)),
+                     cls='data-table-wrapper')
 
     def _export_summary(self, context, limit, first_record_offset, count_on_page):
         if not self._show_summary:
