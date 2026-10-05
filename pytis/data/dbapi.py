@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2024 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2026 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2015 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -148,6 +148,8 @@ class _DBAPIAccessor(PostgreSQLAccessor):
                 arg = c(lower, upper, bounds=bounds)
             elif isinstance(arg, JSON.JSONValue):
                 arg = psycopg2.extras.Json(arg)
+            elif isinstance(arg, list):
+                arg = [transform_arg(a) for a in arg]
             return arg
         if isinstance(query, basestring):
             query_args = {}
