@@ -44,7 +44,8 @@ import psycopg2.extras
 
 import pytis
 from pytis.util import log, translations, Locked, DEBUG, OPERATIONAL
-from pytis.data import AccessRights, Permission, Range, JSON, RestrictedData
+from pytis.data import (AccessRights, Permission, Range, IntegerRange, LargeIntegerRange, JSON,
+                        RestrictedData)
 from .dbdata import (DBConnection, DBException, DBInsertException, DBLockException,
                      DBLoginException, DBRetryException, DBSystemException, DBUserException)
 from .postgresql import (DBDataPostgreSQL, DBPostgreSQLCounter, DBPostgreSQLFunction,
@@ -58,6 +59,31 @@ unistr = type(u'')  # Python 2/3 transition hack.
 
 # In order to pass uuid objeect, it is necessary to call register_uuid
 psycopg2.extras.register_uuid()
+
+
+# psycopg2 passes 'NumericRange' instances as untyped string literals, which
+# are not recognized as ranges within arrays, so integer ranges within arrays
+# are passed through constructor functions of the corresponding range types.
+# Standalone ranges remain untyped to let the database determine their type.
+class _Int4Range(psycopg2.extras.NumericRange):
+    pass
+
+
+class _Int8Range(psycopg2.extras.NumericRange):
+    pass
+
+
+class _Int4RangeAdapter(psycopg2.extras.RangeAdapter):
+    name = 'int4range'
+
+
+class _Int8RangeAdapter(psycopg2.extras.RangeAdapter):
+    name = 'int8range'
+
+
+psycopg2.extensions.register_adapter(_Int4Range, _Int4RangeAdapter)
+psycopg2.extensions.register_adapter(_Int8Range, _Int8RangeAdapter)
+
 
 class _DBAPIAccessor(PostgreSQLAccessor):
 
@@ -128,13 +154,19 @@ class _DBAPIAccessor(PostgreSQLAccessor):
     def _postgresql_query(self, connection, query, outside_transaction, _retry=True):
         result = None
 
-        def transform_arg(arg):
+        def transform_arg(arg, array_item=False):
             if isinstance(arg, Range.Range):
                 lower = arg.lower()
                 upper = arg.upper()
                 test_value = upper if lower is None else lower
                 if isinstance(test_value, (int, long, float)):
-                    c = psycopg2.extras.NumericRange
+                    range_type = arg.type()
+                    if array_item and isinstance(range_type, IntegerRange):
+                        c = _Int4Range
+                    elif array_item and isinstance(range_type, LargeIntegerRange):
+                        c = _Int8Range
+                    else:
+                        c = psycopg2.extras.NumericRange
                 elif isinstance(test_value, datetime.datetime):
                     if test_value.tzinfo is None:
                         c = psycopg2.extras.DateTimeRange
@@ -149,7 +181,7 @@ class _DBAPIAccessor(PostgreSQLAccessor):
             elif isinstance(arg, JSON.JSONValue):
                 arg = psycopg2.extras.Json(arg)
             elif isinstance(arg, list):
-                arg = [transform_arg(a) for a in arg]
+                arg = [transform_arg(a, array_item=True) for a in arg]
             return arg
         if isinstance(query, basestring):
             query_args = {}

@@ -723,6 +723,10 @@ class Range(Type):
         def upper_inc(self):
             return self._upper_inc
 
+        def type(self):
+            """Return the range type instance or None if the range is not bound to a type."""
+            return self._type
+
         def __eq__(self, other):
             if not sameclass(self, other):
                 return NotImplemented

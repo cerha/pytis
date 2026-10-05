@@ -3468,8 +3468,9 @@ class DBFunction(_DBBaseTest):
                       "foo8() returns numeric(3,2) as 'select 3.14'",
                       "foo9() returns float as 'select 3.14::float'",
                       "foo10(bytea) returns int as 'select length($1)'",
-                      ("foo11(daterange[], int[]) returns text as "
-                       "$$ select $1::text || ':' || $2::text $$"),
+                      ("foo11(daterange[], int4range[], int8range[]) returns text as "
+                       "$$ select $1::text || ':' || $2::text || ':' || $3::text $$"),
+                      "foo12(int8range) returns text as 'select $1::text'",
                       "only_digits(text) returns bool as 'select ($1 ~ \'\'^[0-9]+$\'\')'"
                       ):
                 self._sql_command("create function %s language sql " % q)
@@ -3488,7 +3489,8 @@ class DBFunction(_DBBaseTest):
                   "foo8()",
                   "foo9()",
                   "foo10(bytea)",
-                  "foo11(daterange[], int[])",
+                  "foo11(daterange[], int4range[], int8range[])",
+                  "foo12(int8range)",
                   "only_digits(text)",
                   ):
             try:
@@ -3578,16 +3580,22 @@ class DBFunction(_DBBaseTest):
 
     def test_array(self):
         pytis.config.dbconnection = self._dconnection
-        range_array = pd.Array(inner_type=pd.DateRange())
-        int_array = pd.Array(inner_type=pd.Integer())
-        r = pd.DateRange.Range
+        date_ranges = pd.Array(inner_type=pd.DateRange())
+        int_ranges = pd.Array(inner_type=pd.IntegerRange())
+        large_int_ranges = pd.Array(inner_type=pd.LargeIntegerRange())
         d = datetime.date
-        assert pd.dbfunction('foo11', pd.Value(range_array, [r(d(2026, 1, 1), d(2026, 2, 1)),
-                                                             r(d(2026, 3, 1), d(2026, 4, 1))]),
-                             pd.Value(int_array, [1, 2])) == \
-            '{"[2026-01-01,2026-02-01)","[2026-03-01,2026-04-01)"}:{1,2}'
-        assert pd.dbfunction('foo11', pd.Value(range_array, []),
-                             pd.Value(int_array, [])) == '{}:{}'
+        assert pd.dbfunction(
+            'foo11',
+            pd.Value(date_ranges, [(d(2026, 1, 1), d(2026, 2, 1)), (d(2026, 3, 1), None)]),
+            pd.Value(int_ranges, [(1, 5), (10, 20)]),
+            pd.Value(large_int_ranges, [(None, 2**40)]),
+        ) == ('{"[2026-01-01,2026-02-01)","[2026-03-01,)"}:'
+              '{"[1,5)","[10,20)"}:'
+              '{"(,1099511627776)"}')
+        assert pd.dbfunction('foo11', pd.Value(date_ranges, []), pd.Value(int_ranges, []),
+                             pd.Value(large_int_ranges, [])) == '{}:{}:{}'
+        # Standalone ranges are untyped, so the database converts them as needed.
+        assert pd.dbfunction('foo12', pd.Value(pd.IntegerRange(), (1, 5))) == '[1,5)'
 
     def test_dbfunction_direct(self):
         pytis.config.dbconnection = self._dconnection
