@@ -3468,6 +3468,8 @@ class DBFunction(_DBBaseTest):
                       "foo8() returns numeric(3,2) as 'select 3.14'",
                       "foo9() returns float as 'select 3.14::float'",
                       "foo10(bytea) returns int as 'select length($1)'",
+                      ("foo11(daterange[], int[]) returns text as "
+                       "$$ select $1::text || ':' || $2::text $$"),
                       "only_digits(text) returns bool as 'select ($1 ~ \'\'^[0-9]+$\'\')'"
                       ):
                 self._sql_command("create function %s language sql " % q)
@@ -3486,6 +3488,7 @@ class DBFunction(_DBBaseTest):
                   "foo8()",
                   "foo9()",
                   "foo10(bytea)",
+                  "foo11(daterange[], int[])",
                   "only_digits(text)",
                   ):
             try:
@@ -3572,6 +3575,19 @@ class DBFunction(_DBBaseTest):
                                                          bytes(bytearray(range(255))))),)))
         assert len(result) == 1
         assert result[0][0].value() == 255
+
+    def test_array(self):
+        pytis.config.dbconnection = self._dconnection
+        range_array = pd.Array(inner_type=pd.DateRange())
+        int_array = pd.Array(inner_type=pd.Integer())
+        r = pd.DateRange.Range
+        d = datetime.date
+        assert pd.dbfunction('foo11', pd.Value(range_array, [r(d(2026, 1, 1), d(2026, 2, 1)),
+                                                             r(d(2026, 3, 1), d(2026, 4, 1))]),
+                             pd.Value(int_array, [1, 2])) == \
+            '{"[2026-01-01,2026-02-01)","[2026-03-01,2026-04-01)"}:{1,2}'
+        assert pd.dbfunction('foo11', pd.Value(range_array, []),
+                             pd.Value(int_array, [])) == '{}:{}'
 
     def test_dbfunction_direct(self):
         pytis.config.dbconnection = self._dconnection
