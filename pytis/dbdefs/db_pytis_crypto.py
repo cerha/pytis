@@ -68,8 +68,7 @@ class EvPytisUserCryptoKeys(sql.SQLView):
     @classmethod
     def query(cls):
         keys = sql.t.EPytisCryptoKeys.alias('keys')
-        return sqlalchemy.select(*(
-            cls._exclude(keys, 'username', 'key'))).select_from(
+        return sql.select(keys, exclude=(keys.c.username, keys.c.key)).select_from(
             keys
         ).where(
             keys.c.username == sqlalchemy.text('current_user')

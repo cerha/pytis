@@ -433,9 +433,11 @@ class VChanges(sql.SQLView):
     def query(cls):
         changes = sql.t.TChanges.alias('changes')
         detail = sql.t.TChangesDetail.alias('detail')
-        return sqlalchemy.select(*(
-            cls._exclude(changes) +
-            cls._exclude(detail, 'id'))).select_from(
+        return sql.select(
+            changes,
+            detail,
+            exclude=(detail.c.id,),
+        ).select_from(
             changes
             .outerjoin(detail, changes.c.id == detail.c.id)
         )

@@ -39,8 +39,7 @@ class EvPytisGlobalOutputTemplates(sql.SQLView):
     @classmethod
     def query(cls):
         templates = sql.t.EPytisOutputTemplates.alias('templates')
-        return sqlalchemy.select(*(
-            cls._exclude(templates))).select_from(
+        return sql.select(templates).select_from(
             templates
         ).where(
             templates.c.username.is_(None)
@@ -61,8 +60,7 @@ class EvPytisUserOutputTemplates(sql.SQLView):
     def query(cls):
         templates = sql.t.EPytisOutputTemplates.alias('templates')
         templates2 = sql.t.EPytisOutputTemplates.alias('templates2')
-        return sqlalchemy.select(*(
-            cls._exclude(templates))).select_from(
+        return sql.select(templates).select_from(
             templates
         ).where(
             or_(

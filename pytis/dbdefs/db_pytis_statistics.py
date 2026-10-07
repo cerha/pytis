@@ -3,7 +3,6 @@
 from __future__ import unicode_literals
 from __future__ import print_function
 
-import sqlalchemy
 import pytis.data.gensqlalchemy as sql
 import pytis.data
 from pytis.data.dbdefs import func, between
@@ -99,12 +98,14 @@ class EvPytisFormSummary(sql.SQLView):
     @classmethod
     def query(cls):
         log = sql.t.EPytisFormLog.alias('log')
-        return sqlalchemy.select(*(
-            cls._exclude(log, 'id', 'login', 't_start', 't_show') +
-            [sql.gL("count(distinct login)").label('n_users'),
-             sql.gL("count(t_start)").label('n_open'),
-             sql.gL("extract('epoch' from avg(t_show-t_start))").label('avg_start'),
-             sql.gL("max(t_start)").label('last_used')])).select_from(
+        return sql.select(
+            log,
+            sql.gL("count(distinct login)").label('n_users'),
+            sql.gL("count(t_start)").label('n_open'),
+            sql.gL("extract('epoch' from avg(t_show-t_start))").label('avg_start'),
+            sql.gL("max(t_start)").label('last_used'),
+            exclude=(log.c.id, log.c.login, log.c.t_start, log.c.t_show),
+        ).select_from(
             log
         ).group_by('form', 'class', 'info')
 
@@ -119,12 +120,14 @@ class EvPytisFormShortSummary(sql.SQLView):
     @classmethod
     def query(cls):
         log = sql.t.EPytisFormLog.alias('log')
-        return sqlalchemy.select(*(
-            cls._exclude(log, 'id', 'login', 't_start', 't_show', 'info') +
-            [sql.gL("count(distinct login)").label('n_users'),
-             sql.gL("count(t_start)").label('n_open'),
-             sql.gL("extract('epoch' from avg(t_show-t_start))").label('avg_start'),
-             sql.gL("max(t_start)").label('last_used')])).select_from(
+        return sql.select(
+            log,
+            sql.gL("count(distinct login)").label('n_users'),
+            sql.gL("count(t_start)").label('n_open'),
+            sql.gL("extract('epoch' from avg(t_show-t_start))").label('avg_start'),
+            sql.gL("max(t_start)").label('last_used'),
+            exclude=(log.c.id, log.c.login, log.c.t_start, log.c.t_show, log.c.info),
+        ).select_from(
             log
         ).group_by('form', 'class')
 
@@ -139,10 +142,12 @@ class EvPytisFormUsers(sql.SQLView):
     @classmethod
     def query(cls):
         log = sql.t.EPytisFormLog.alias('log')
-        return sqlalchemy.select(*(
-            cls._exclude(log, 'id', 't_start', 't_show') +
-            [sql.gL("count(t_start)").label('n_open'),
-             sql.gL("max(t_start)").label('last_used')])).select_from(
+        return sql.select(
+            log,
+            sql.gL("count(t_start)").label('n_open'),
+            sql.gL("max(t_start)").label('last_used'),
+            exclude=(log.c.id, log.c.t_start, log.c.t_show),
+        ).select_from(
             log
         ).group_by('form', 'class', 'info', 'login')
 
@@ -157,11 +162,13 @@ class EvPytisFormUsersNoinfo(sql.SQLView):
     @classmethod
     def query(cls):
         log = sql.t.EPytisFormLog.alias('log')
-        return sqlalchemy.select(*(
-            cls._exclude(log, 'id', 'info', 't_start', 't_show') +
-            [sql.gL("count(t_start)").label('n_open'),
-             sql.gL("max(t_start)").label('last_used'),
-             sql.gL("'form/'||form").label('shortname')])).select_from(
+        return sql.select(
+            log,
+            sql.gL("count(t_start)").label('n_open'),
+            sql.gL("max(t_start)").label('last_used'),
+            sql.gL("'form/'||form").label('shortname'),
+            exclude=(log.c.id, log.c.info, log.c.t_start, log.c.t_show),
+        ).select_from(
             log
         ).where(
             between(log.c.t_start,
@@ -180,8 +187,10 @@ class EvPytisFormUserList(sql.SQLView):
     @classmethod
     def query(cls):
         log = sql.t.EPytisFormLog.alias('log')
-        return sqlalchemy.select(*(
-            cls._exclude(log, 'id', 'form', 'class', 'info', 't_start', 't_show'))).select_from(
+        return sql.select(
+            log,
+            exclude=(log.c.id, log.c.form, log.c['class'], log.c.info, log.c.t_start, log.c.t_show),
+        ).select_from(
             log
         ).group_by('login')
 

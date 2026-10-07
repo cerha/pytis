@@ -85,21 +85,23 @@ class EvPytisFormProfiles(sql.SQLView):
     def query(cls):
         profile = sql.t.EPytisFormProfileBase.alias('profile')
         params = sql.t.EPytisFormProfileParams.alias('params')
-        return sqlalchemy.select(*(
-            cls._exclude(profile, 'id', 'username', 'spec_name', 'profile_id', 'errors') +
-            cls._exclude(params, 'id', 'errors') +
-            [
-             (stype(profile.c.id) + "'.'" + stype(params.c.id)).label('id'),
-             ("'form/'" + params.c.form_name + "'/'" + profile.c.spec_name +
-              "'//'").label('fullname'),
-             sqlalchemy.case(
-                 *[(sqlalchemy.and_(profile.c.errors.is_not(None),
-                                  params.c.errors.is_not(None),
-                                  ), profile.c.errors + "'\\n'" + params.c.errors)
-                  ],
-                 else_=(sqlalchemy.func.coalesce(profile.c.errors, params.c.errors))
-             ).label('errors')
-            ])).select_from(
+        return sql.select(
+            profile,
+            params,
+            (stype(profile.c.id) + "'.'" + stype(params.c.id)).label('id'),
+            ("'form/'" + params.c.form_name + "'/'" + profile.c.spec_name +
+             "'//'").label('fullname'),
+            sqlalchemy.case(
+                *[(sqlalchemy.and_(profile.c.errors.is_not(None),
+                                 params.c.errors.is_not(None),
+                                 ), profile.c.errors + "'\\n'" + params.c.errors)
+                 ],
+                else_=(sqlalchemy.func.coalesce(profile.c.errors, params.c.errors))
+            ).label('errors'),
+            exclude=(profile.c.id, profile.c.username, profile.c.spec_name, profile.c.profile_id,
+                     profile.c.errors,
+                     params.c.id, params.c.errors),
+        ).select_from(
             profile.join(
                 params, and_(
                     profile.c.username == params.c.username,

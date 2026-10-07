@@ -3,7 +3,6 @@
 from __future__ import unicode_literals
 from __future__ import print_function
 
-import sqlalchemy
 import pytis.data.gensqlalchemy as sql
 from pytis.data.dbdefs import ival, sval
 from pytis.util import translations
@@ -402,10 +401,11 @@ class Slowlongtable(sql.SQLView):
     @classmethod
     def query(cls):
         longtable = sql.t.Longtable.alias('long')
-        return sqlalchemy.select(*(tuple(longtable.c) + (
+        return sql.select(
+            longtable,
             (sval('x') + longtable.c.value).label('xvalue'),
             (ival(64) * longtable.c.id).label('id64'),
-        ))).select_from(
+        ).select_from(
             longtable
         )
 
@@ -590,10 +590,11 @@ class Tree(sql.SQLView):
     @classmethod
     def query(cls):
         main = sql.t.XTree.alias('main')
-        return sqlalchemy.select(*(
-            cls._exclude(main) +
-            [main.c.id.label('tid'),
-             ival("(select count(*)-1 from _tree where id <@ main.id)").label('id_nsub')])).select_from(
+        return sql.select(
+            main,
+            main.c.id.label('tid'),
+            ival("(select count(*)-1 from _tree where id <@ main.id)").label('id_nsub'),
+        ).select_from(
             main
         )
 

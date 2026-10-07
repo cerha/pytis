@@ -111,36 +111,38 @@ class EvPytisHelp(sql.SQLView):
 
     @classmethod
     def query(cls):
+        columns = ('help_id', 'menuid', 'fullname', 'title', 'description', 'menu_help',
+                   'spec_name', 'spec_description', 'spec_help', 'page_id', 'parent', 'ord',
+                   'content', 'position', 'position_nsub', 'changed', 'removed')
+
         def select_1():
             m = sql.t.EPytisMenu.alias('m')
             a_ = sql.t.CPytisMenuActions.alias('a')
             mh = sql.t.EPytisHelpMenu.alias('mh')
             sh = sql.t.EPytisHelpSpec.alias('sh')
-            return sqlalchemy.select(*(
-                sql.reorder_columns(
-                    [sql.gL("'menu/'||m.menuid").label('help_id'),
-                     m.c.menuid.label('menuid'),
-                     m.c.fullname.label('fullname'),
-                     m.c.title.label('title'),
-                     m.c.help.label('description'),
-                     mh.c.content.label('menu_help'),
-                     a_.c.spec_name.label('spec_name'),
-                     sh.c.description.label('spec_description'),
-                     sh.c.help.label('spec_help'),
-                     sql.gL("null::int").label('page_id'),
-                     sql.gL("null::int").label('parent'),
-                     sql.gL("null").label('ord'),
-                     sql.gL("null").label('content'),
-                     sql.gL("text2ltree('999999')||subpath(m.position, 1)").label('position'),
-                     sql.gL("(select count(*)-1 from e_pytis_menu where position <@ m.position)")
-                     .label('position_nsub'),
-                     sql.gL("coalesce(mh.changed, false) or coalesce(sh.changed, false)")
-                     .label('changed'),
-                     sql.gL("coalesce(mh.removed, false) or coalesce(sh.removed, false)")
-                     .label('removed')],
-                    ['help_id', 'menuid', 'fullname', 'title', 'description', 'menu_help',
-                     'spec_name', 'spec_description', 'spec_help', 'page_id', 'parent', 'ord',
-                     'content', 'position', 'position_nsub', 'changed', 'removed']))).select_from(
+            return sql.select(
+                sql.gL("'menu/'||m.menuid").label('help_id'),
+                m.c.menuid.label('menuid'),
+                m.c.fullname.label('fullname'),
+                m.c.title.label('title'),
+                m.c.help.label('description'),
+                mh.c.content.label('menu_help'),
+                a_.c.spec_name.label('spec_name'),
+                sh.c.description.label('spec_description'),
+                sh.c.help.label('spec_help'),
+                sql.gL("null::int").label('page_id'),
+                sql.gL("null::int").label('parent'),
+                sql.gL("null").label('ord'),
+                sql.gL("null").label('content'),
+                sql.gL("text2ltree('999999')||subpath(m.position, 1)").label('position'),
+                sql.gL("(select count(*)-1 from e_pytis_menu where position <@ m.position)")
+                    .label('position_nsub'),
+                sql.gL("coalesce(mh.changed, false) or coalesce(sh.changed, false)")
+                    .label('changed'),
+                sql.gL("coalesce(mh.removed, false) or coalesce(sh.removed, false)")
+                    .label('removed'),
+                order=columns,
+            ).select_from(
                 m
                 .join(a_, a_.c.fullname == m.c.fullname)
                 .outerjoin(mh, mh.c.fullname == a_.c.fullname)
@@ -153,51 +155,47 @@ class EvPytisHelp(sql.SQLView):
             series = sqlalchemy.select("*").select_from(
                 sqlalchemy.text("generate_series(0, 0)")
             ).alias('series')
-            return sqlalchemy.select(*(
-                sql.reorder_columns(
-                    [sql.gL("'menu/'").label('help_id'),
-                     sql.gL("null").label('menuid'),
-                     sql.gL("null").label('fullname'),
-                     sql.gL("'Aplikační menu '").label('title'),
-                     sql.gL("null").label('description'),
-                     sql.gL("null").label('menu_help'),
-                     sql.gL("null").label('spec_name'),
-                     sql.gL("null").label('spec_description'),
-                     sql.gL("null").label('spec_help'),
-                     sql.gL("null::int").label('page_id'),
-                     sql.gL("null::int").label('parent'),
-                     sql.gL("null::int").label('ord'),
-                     sql.gL("null").label('content'),
-                     sql.gL("text2ltree('999999')").label('position'),
-                     sql.gL("(select count(*) from e_pytis_menu)").label('position_nsub'),
-                     sql.gL("false").label('changed'),
-                     sql.gL("false").label('removed')],
-                    ['help_id', 'menuid', 'fullname', 'title', 'description', 'menu_help',
-                     'spec_name', 'spec_description', 'spec_help', 'page_id', 'parent', 'ord',
-                     'content', 'position', 'position_nsub', 'changed', 'removed']))).select_from(
+            return sql.select(
+                sql.gL("'menu/'").label('help_id'),
+                sql.gL("null").label('menuid'),
+                sql.gL("null").label('fullname'),
+                sql.gL("'Aplikační menu '").label('title'),
+                sql.gL("null").label('description'),
+                sql.gL("null").label('menu_help'),
+                sql.gL("null").label('spec_name'),
+                sql.gL("null").label('spec_description'),
+                sql.gL("null").label('spec_help'),
+                sql.gL("null::int").label('page_id'),
+                sql.gL("null::int").label('parent'),
+                sql.gL("null::int").label('ord'),
+                sql.gL("null").label('content'),
+                sql.gL("text2ltree('999999')").label('position'),
+                sql.gL("(select count(*) from e_pytis_menu)").label('position_nsub'),
+                sql.gL("false").label('changed'),
+                sql.gL("false").label('removed'),
+                order=columns,
+            ).select_from(
                 series
             )
         set_1 = sqlalchemy.union(select_1(), select_2())
 
         def select_3():
             p = sql.t.EPytisHelpPages.alias('p')
-            return sqlalchemy.select(*(
-                sql.reorder_columns(
-                    cls._exclude(p) +
-                    [sql.gL("'page/'||page_id").label('help_id'),
-                     sql.gL("null").label('menuid'),
-                     sql.gL("null").label('fullname'),
-                     sql.gL("null").label('menu_help'),
-                     sql.gL("null").label('spec_name'),
-                     sql.gL("null").label('spec_description'),
-                     sql.gL("null").label('spec_help'),
-                     sql.gL("(select count(*)-1 from e_pytis_help_pages "
-                            "where position <@ p.position)").label('position_nsub'),
-                     sql.gL("false").label('changed'),
-                     sql.gL("false").label('removed')],
-                    ['help_id', 'menuid', 'fullname', 'title', 'description', 'menu_help',
-                     'spec_name', 'spec_description', 'spec_help', 'page_id', 'parent', 'ord',
-                     'content', 'position', 'position_nsub', 'changed', 'removed']))).select_from(
+            return sql.select(
+                p,
+                sql.gL("'page/'||page_id").label('help_id'),
+                sql.gL("null").label('menuid'),
+                sql.gL("null").label('fullname'),
+                sql.gL("null").label('menu_help'),
+                sql.gL("null").label('spec_name'),
+                sql.gL("null").label('spec_description'),
+                sql.gL("null").label('spec_help'),
+                sql.gL("(select count(*)-1 from e_pytis_help_pages "
+                       "where position <@ p.position)").label('position_nsub'),
+                sql.gL("false").label('changed'),
+                sql.gL("false").label('removed'),
+                order=columns,
+            ).select_from(
                 p
             )
         return sqlalchemy.union(set_1, select_3())
@@ -261,14 +259,7 @@ class EvPytisUserHelp(sql.SQLView):
                 sqlalchemy.Column('menuid', sqlalchemy.Integer()),
             ).alias('u')
             h = sql.t.EvPytisHelp.alias('h')
-            return sqlalchemy.select(*(
-                sql.reorder_columns(
-                    cls._exclude(h),
-                    ['help_id', 'menuid', 'fullname', 'title', 'description',
-                     'menu_help', 'spec_name', 'spec_description', 'spec_help',
-                     'page_id', 'parent', 'ord', 'content', 'position',
-                     'position_nsub', 'changed', 'removed']
-                ))).select_from(
+            return sql.select(h).select_from(
                 h
                 .join(
                         u, h.c.menuid == u.c.menuid
@@ -277,12 +268,7 @@ class EvPytisUserHelp(sql.SQLView):
 
         def select_2():
             h = sql.t.EvPytisHelp.alias('h')
-            return sqlalchemy.select(*(
-                sql.reorder_columns(cls._exclude(h),
-                                    ['help_id', 'menuid', 'fullname', 'title', 'description',
-                                     'menu_help', 'spec_name', 'spec_description', 'spec_help',
-                                     'page_id', 'parent', 'ord', 'content', 'position',
-                                     'position_nsub', 'changed', 'removed']))).select_from(
+            return sql.select(h).select_from(
                 h
             ).where(
                 h.c.menuid.is_(None)
