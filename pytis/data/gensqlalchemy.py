@@ -1607,8 +1607,82 @@ class Arguments(object):
 a = Arguments
 
 
+def select(*columns, exclude=(), rename=None, order=None):
+    """Return `sqlalchemy.select()` of given columns.
+
+    This is an extended version of `sqlalchemy.select()` for convenient
+    definition of view queries.  The positional arguments may be:
+
+      - Tables (or their aliases) -- expanded to all their columns except
+        for inherited columns.
+      - Sequences of columns -- expanded to their items.
+      - Anything else (columns, labeled expressions etc.) is passed to
+        `sqlalchemy.select()` as is.
+
+    The keyword argument `exclude` is a sequence of column objects to be
+    left out from the columns given by the positional arguments.  Note that
+    the columns must be taken from the same table aliases as passed in
+    positional arguments.  An exception is raised when an excluded column
+    is not present among the selected columns.
+
+    The keyword argument `rename` is a dictionary mapping column objects to
+    new column names (strings).  The given columns are labeled by the new
+    names, but they keep their position among the selected columns (as
+    opposed to adding a labeled column explicitly, which would require
+    excluding the original column and would change the column order).
+    The same rules as for `exclude` apply to the dictionary keys.
+
+    The keyword argument `order` is a sequence of column names (strings)
+    determining the order of the resulting columns.  It must contain
+    exactly the names of all selected columns (after applying `exclude`
+    and `rename`).  This is useful in union selects where all parts must
+    have the same column order.
+
+    Example:
+
+        return sql.select(
+            a,
+            b,
+            c.c.name.label('c_name'),
+            exclude=(b.c.id, b.c.note),
+            rename={a.c.name: 'a_name'},
+        ).select_from(...)
+
+    """
+    selected = []
+    for x in columns:
+        if isinstance(x, sqlalchemy.sql.FromClause):
+            t = x.element if isinstance(x, sqlalchemy.sql.expression.Alias) else x
+            inherited = {c.name for c in t.c
+                         if isinstance(c, sqlalchemy.Column) and c.info.get('inherited')}
+            selected.extend(c for c in x.c if c.name not in inherited)
+        elif isinstance(x, (tuple, list)):
+            selected.extend(x)
+        else:
+            selected.append(x)
+    selected_ids = {id(c) for c in selected}
+    for arg, value in (('exclude', exclude), ('rename', rename or ())):
+        missing = [str(c) for c in value if id(c) not in selected_ids]
+        if missing:
+            raise SQLException("Columns in '%s' not selected" % arg, missing)
+    excluded = {id(c) for c in exclude}
+    labels = {id(c): name for c, name in (rename or {}).items()}
+    selected = [c.label(labels[id(c)]) if id(c) in labels else c
+                for c in selected if id(c) not in excluded]
+    if order is not None:
+        by_name = {c.name: c for c in selected}
+        if (len(by_name) != len(selected) or len(order) != len(selected)
+                or set(by_name) != set(order)):
+            raise SQLException("Column order doesn't match selected columns",
+                               [c.name for c in selected], order)
+        selected = [by_name[name] for name in order]
+    return sqlalchemy.select(*selected)
+
+
 def reorder_columns(columns, column_ordering):
     """Return `columns` in `column_ordering` order.
+
+    Deprecated.  Use the `order` argument of `select()` instead.
 
     This function is useful in union selects when you need to combine different
     tables with different column ordering.
@@ -3060,6 +3134,8 @@ class _SQLQuery(SQLObject):
         # type: (...) -> list
         """Return sequence of `tabular` columns with some exclusions.
 
+        Deprecated.  Use the `exclude` argument of `select()` instead.
+
         Arguments:
           tabular: `SQLTable` instance providing the initial sequence of
             columns.
@@ -3159,6 +3235,7 @@ class _SQLBaseView(_SQLReplaceable, _SQLQuery, _SQLTabular):
 
     @classmethod
     def _alias(cls, columns, **aliases):
+        """Deprecated.  Use the `rename` argument of `select()` instead."""
         raliases = dict([(v, k,) for k, v in aliases.items()])
         aliased = []
         columns = [c for c in columns]
@@ -3176,6 +3253,7 @@ class _SQLBaseView(_SQLReplaceable, _SQLQuery, _SQLTabular):
 
     @classmethod
     def _reorder(cls, tabular_1, tabular_2):
+        """Deprecated.  Use the `order` argument of `select()` instead."""
         def columns(t):
             if isinstance(t, _SQLTabular):
                 columns = t.c
