@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2025 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2025-2026 Tomáš Cerha <t.cerha@gmail.com>
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -288,7 +288,9 @@ class FileProxy:
 
     @property
     def name(self):
-        return self._client.request('file_name', handle=self._handle)
+        # Use the path received on open rather than asking the client, as the
+        # name must remain available after close (as for ordinary files).
+        return self._path
 
     @property
     def mode(self):

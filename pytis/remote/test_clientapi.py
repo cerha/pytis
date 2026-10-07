@@ -530,8 +530,9 @@ class TestFileProxy:
 
     def test_name_property(self):
         fp, mock = self._make(path='/tmp/named.bin')
-        mock.set_result('file_name', '/tmp/named.bin')
+        fp.close()
         assert fp.name == '/tmp/named.bin'
+        assert not any(a == 'file_name' for a, _ in mock.calls)
 
     def test_mode_property(self):
         fp, mock = self._make(mode='rb')
