@@ -305,6 +305,9 @@ class ApplicationState(State):
 
     """
 
+    help_frame_size = State.Param('help_frame_size', [], cls=list, item_cls=list)
+    """Geometry of the help browser frame in the same form as 'frame_size'."""
+
     startup_forms = State.Param('saved_startup_forms', [], cls=list, item_cls=list)
     """Forms to be reopened on the next application startup.
 

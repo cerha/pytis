@@ -250,15 +250,7 @@ class Application(pytis.application.BaseApplication, wx.App, KeyHandler, Command
         # Initialize the toolbar.
         self._toolbar = wx_toolbar(frame, pytis.form.TOOLBAR_COMMANDS)
         # Set the main application frame size and position.
-        frame_sizes = self._state.frame_size
-        current_display_size = list(wx.DisplaySize())
-        for display_size, position, size in frame_sizes:
-            if display_size == current_display_size:
-                frame.SetSize(size)
-                frame.SetPosition(position)
-                break
-        else:
-            frame.SetSize((1000, 800))
+        self._restore_frame_size(self._state.frame_size, frame, (1000, 800))
         # Finish and show the frame.
         self.SetTopWindow(frame)
         if not self._headless:
@@ -710,6 +702,37 @@ class Application(pytis.application.BaseApplication, wx.App, KeyHandler, Command
         name = pytis.config.application_name.lower()
         return str(re.sub("[^a-zA-Z0-9-]", safe_char, unistr(name)))
 
+    def _restore_frame_size(self, frame_sizes, frame, default_size):
+        """Set the geometry of 'frame' to the one remembered for the current display size.
+
+        Arguments:
+          frame_sizes (list): Remembered geometries, see `ApplicationState.frame_size`.
+          frame (wx.Frame): The frame to set up.
+          default_size (tuple): Size to use when no geometry is remembered for
+            the current display size.
+
+        """
+        for display_size, position, size in frame_sizes:
+            if display_size == list(wx.DisplaySize()):
+                frame.SetSize(size)
+                frame.SetPosition(position)
+                break
+        else:
+            frame.SetSize(default_size)
+
+    def _saved_frame_sizes(self, frame_sizes, frame):
+        """Return 'frame_sizes' with the geometry of 'frame' remembered for the current display.
+
+        Replaces the geometry remembered for the current display size and
+        forgets the least recently used one (see `ApplicationState.frame_size`).
+
+        """
+        frame_sizes = [[display_size, position, size]
+                       for display_size, position, size in frame_sizes
+                       if display_size != list(wx.DisplaySize())]
+        frame_sizes.append([list(wx.DisplaySize()), list(frame.Position), list(frame.Size)])
+        return frame_sizes[-8:]
+
     def _cleanup(self, force=False):
         # Ignore all kinds of exceptions in order to be able to exit the
         # application even in quite seriously broken state.
@@ -726,20 +749,18 @@ class Application(pytis.application.BaseApplication, wx.App, KeyHandler, Command
                 if not isinstance(f, (pytis.form.AggregationForm,
                                       pytis.form.AggregationDualForm))
             ]
-            # Replace the geometry remembered for the current display size and
-            # forget the least recently used one (see ApplicationState.frame_size).
-            frame_sizes = [[display_size, position, size]
-                           for display_size, position, size in self._state.frame_size
-                           if display_size != list(wx.DisplaySize())]
-            frame_sizes.append([list(wx.DisplaySize()), list(self._frame.Position),
-                                list(self._frame.Size)])
-            self._state.frame_size = frame_sizes[-8:]
+            self._state.frame_size = self._saved_frame_sizes(self._state.frame_size, self._frame)
             active_form = self._notebook.CurrentPage
             if active_form:
                 active_form_state = [active_form.__class__.__name__, active_form.name()]
             else:
                 active_form_state = None
             self._state.active_form = active_form_state
+            if self._help_browser is not None:
+                # Last, so that a failure to read the geometry of the help browser
+                # frame doesn't skip the state updates above.
+                self._state.help_frame_size = self._saved_frame_sizes(
+                    self._state.help_frame_size, self._help_browser.GetParent())
         except Exception as e:
             safelog(str(e))
         try:
@@ -907,6 +928,13 @@ class Application(pytis.application.BaseApplication, wx.App, KeyHandler, Command
             self._panel.SetFocus()
         else:
             self._update_tab_titles(self._frame.Size.x)
+
+    def _on_help_browser_close(self, event):
+        # Remember the geometry now -- the frame may no longer be readable
+        # when the application exits.
+        self._state.help_frame_size = self._saved_frame_sizes(self._state.help_frame_size,
+                                                              event.EventObject)
+        event.Skip()
 
     def on_key_down(self, event, dont_skip=False):
         # Surprisingly, wxWidgets crashes in various situations when this
@@ -1148,10 +1176,11 @@ class Application(pytis.application.BaseApplication, wx.App, KeyHandler, Command
             sizer.Add(browser.toolbar(frame), proportion=0, flag=wx.EXPAND)
             sizer.Add(browser, proportion=1, flag=wx.EXPAND)
             frame.SetSizer(sizer)
-            frame.SetSize((800, 600))
+            self._restore_frame_size(self._state.help_frame_size, frame, (800, 600))
             frame.SendSizeEvent()
             frame.SetTitle(_("Help"))
             browser.set_callback(browser.CALL_TITLE_CHANGED, frame.SetTitle)
+            wx_callback(wx.EVT_CLOSE, frame, self._on_help_browser_close)
         browser.GetParent().Raise()
         browser.load_uri('help:' + topic)
 
