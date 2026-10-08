@@ -135,7 +135,6 @@ class Application(pytis.application.BaseApplication, wx.App, KeyHandler, Command
         self._headless = headless
         self._menubar_forms = {}
         self._log_login = True
-        self._recent_directories = {}
         self._remote_connection_last_available = None
         self._remote_connection_info = None
         self._menu_by_id = {}
@@ -236,17 +235,15 @@ class Application(pytis.application.BaseApplication, wx.App, KeyHandler, Command
         self._state = pytis.form.ApplicationState(self._application_config_manager, saved_state)
         # Read in access rights.
         self._init_access_rights()
-        # Init the recent forms list.
-        self._recent_forms = []
+        # Forget the recent forms which are no longer available.
+        recent_forms = []
         for title, form_name, spec_name in self._state.recent_forms:
             form_class = getattr(pytis.form, form_name, None)
             if issubclass(form_class, pytis.form.Form) and self._is_valid_spec(spec_name):
-                self._recent_forms.append([title, form_name, spec_name])
+                recent_forms.append([title, form_name, spec_name])
             else:
                 log(OPERATIONAL, "Ignoring recent form:", (title, form_name, spec_name))
-        self._state.recent_forms = list(self._recent_forms)
-        # Init the recent directories memory.
-        self._recent_directories.update(self._state.recent_directories)
+        self._state.recent_forms = recent_forms
         # Initialize the menubar.
         if not self._init_menubar():
             return False
@@ -683,7 +680,7 @@ class Application(pytis.application.BaseApplication, wx.App, KeyHandler, Command
             for item in menu.GetMenuItems():
                 menu.Remove(item.GetId())
                 item.Destroy()
-            for i, (title, form_name, spec_name) in enumerate(self._recent_forms):
+            for i, (title, form_name, spec_name) in enumerate(self._state.recent_forms):
                 self._append_menu_item(self._frame, menu, MenuItem(
                     acceskey_prefix(i) + title,
                     help=_("Open the form (%s)", form_name + '/' + spec_name),
@@ -729,8 +726,6 @@ class Application(pytis.application.BaseApplication, wx.App, KeyHandler, Command
                 if not isinstance(f, (pytis.form.AggregationForm,
                                       pytis.form.AggregationDualForm))
             ]
-            self._state.recent_forms = list(self._recent_forms)
-            self._state.recent_directories = self._recent_directories
             # Replace the geometry remembered for the current display size and
             # forget the least recently used one (see ApplicationState.frame_size).
             frame_sizes = [[display_size, position, size]
@@ -1002,11 +997,11 @@ class Application(pytis.application.BaseApplication, wx.App, KeyHandler, Command
 
     @Command.define
     def clear_recent_forms(self):
-        self._recent_forms[:] = []
+        self._state.recent_forms = []
         self._update_recent_forms_menu()
 
     def _can_clear_recent_forms(self):
-        return len(self._recent_forms) > 0
+        return len(self._state.recent_forms) > 0
 
     @Command.define
     def refresh(self, interactive=True):
@@ -1105,13 +1100,8 @@ class Application(pytis.application.BaseApplication, wx.App, KeyHandler, Command
                     app.echo(None)
                     if not isinstance(form, pytis.form.WebForm):
                         item = [self._form_menu_item_title(form), form_class.__name__, name]
-                        try:
-                            self._recent_forms.remove(item)
-                        except ValueError:
-                            pass
-                        self._recent_forms.insert(0, item)
-                        if len(self._recent_forms) > 10:
-                            self._recent_forms[10:] = []
+                        recent_forms = [x for x in self._state.recent_forms if x != item]
+                        self._state.recent_forms = ([item] + recent_forms)[:10]
                         self._update_recent_forms_menu()
         except UserBreakException:
             pass
@@ -1533,15 +1523,18 @@ class Application(pytis.application.BaseApplication, wx.App, KeyHandler, Command
 
     def _get_recent_directory(self, cmode, context):
         if cmode and context:
-            directory = self._recent_directories.get(':'.join((cmode, context)))
+            recent_directories = self._state.recent_directories
+            directory = recent_directories.get(':'.join((cmode, context)))
             if directory is None:
-                directory = self._recent_directories.get(':'.join((cmode, 'default')))
+                directory = recent_directories.get(':'.join((cmode, 'default')))
         else:
             directory = None
         return directory
 
     def _set_recent_directory(self, cmode, context, directory):
-        self._recent_directories[':'.join((cmode, context))] = directory
+        recent_directories = dict(self._state.recent_directories)
+        recent_directories[':'.join((cmode, context))] = directory
+        self._state.recent_directories = recent_directories
 
     class _ExposedFileWrapper(object):
         """Wrapper over wrapper to hide deficiencies of legacy `pytis.remote.ExposedFileWrapper`.

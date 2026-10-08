@@ -564,7 +564,7 @@ class _TestApplication(object):
     _ExposedFileWrapper = pf.Application._ExposedFileWrapper
 
     def __init__(self):
-        self._recent_directories = {}
+        self._state = pf.ApplicationState(None, {})
 
     def __getattr__(self, name):
         method = getattr(pf.Application, name, None)
