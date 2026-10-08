@@ -140,7 +140,7 @@ def main():
 
     if args.output:
         with open(args.output, 'wt', encoding='utf-8') as outfile:
-            outfile.write(output)
+            outfile.write(output.rstrip('\n') + '\n')
     else:
         print(output)
 
