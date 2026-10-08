@@ -45,6 +45,8 @@ def parse_options():
                       help="create all objects in that schema")
     parser.add_option("--names", action="store_true", dest="names_only",
                       help="print only kinds and names of the database objects")
+    parser.add_option("--comments", action="store_true", dest="comments_only",
+                      help="print only the commands setting the comments of the objects")
     parser.add_option("--pretty", action="store", type="int", dest="pretty", default=0,
                       help="more visually pleasant and possibly less correct output")
     parser.add_option("--source", action="store_true", dest="source",
@@ -109,7 +111,9 @@ def run():
     pytis.data.gensqlalchemy.gsql_module(module, regexp=options.regexp,
                                          no_deps=options.no_deps,
                                          views=options.views, functions=options.functions,
-                                         names_only=options.names_only, pretty=options.pretty,
+                                         names_only=options.names_only,
+                                         comments_only=options.comments_only,
+                                         pretty=options.pretty,
                                          schema=options.schema, source=options.source,
                                          upgrade=options.upgrade, plpython3=options.plpython3,
                                          debug=options.debug, limit_module=options.limit_module,

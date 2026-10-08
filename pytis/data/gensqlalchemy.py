@@ -1767,6 +1767,17 @@ class SQLObject(object):
     def pytis_create(self):
         self.create(_engine, checkfirst=False)
 
+    def pytis_comments(self):
+        """Emit the commands setting the comments of the object.
+
+        Unlike `pytis_create()`, this doesn't recreate the object.  Comments
+        are otherwise only set on creation, so a migration altering an
+        existing table has no other way to bring its documentation up to
+        date.  Objects which have no comments of their own do nothing.
+
+        """
+        pass
+
     def pytis_drop(self):
         self.drop(_engine)
 
@@ -2166,11 +2177,22 @@ class _SQLTabular(with_metaclass(_PytisSchematicMetaclass, sqlalchemy.Table, SQL
     def pytis_dependencies(self):
         return self._extra_dependencies
 
-    def _create_comments(self):
+    def _comment_ddl(self):
+        """Return the DDL elements setting the comments of the object.
+
+        Subclasses add the elements for their parts, such as table columns.
+
+        """
         doc = self.__doc__
-        if doc:
-            sqlalchemy.event.listen(self, 'after_create',
-                                    _ObjectComment(self, self._DB_OBJECT, doc))
+        return [_ObjectComment(self, self._DB_OBJECT, doc)] if doc else []
+
+    def _create_comments(self):
+        for ddl in self._comment_ddl():
+            sqlalchemy.event.listen(self, 'after_create', ddl)
+
+    def pytis_comments(self):
+        for ddl in self._comment_ddl():
+            _engine.execute(ddl)
 
     def _alter_owner_command(self):
         return ('ALTER %s "%s"."%s" OWNER TO "%s"' %
@@ -2822,12 +2844,9 @@ class SQLTable(_SQLIndexable, _SQLTabular):
         command = 'ALTER TABLE "%s"."%s" %s' % (self.schema, self.name, alteration,)
         sqlalchemy.event.listen(self, 'after_create', sqlalchemy.DDL(command))
 
-    def _create_comments(self):
-        super(SQLTable, self)._create_comments()
-        for c in self.fields:
-            doc = c.doc()
-            if doc:
-                sqlalchemy.event.listen(self, 'after_create', _ColumnComment(self, c))
+    def _comment_ddl(self):
+        return (super(SQLTable, self)._comment_ddl()
+                + [_ColumnComment(self, c) for c in self.fields if c.doc()])
 
     def _create_parameters(self):
         if self.tablespace:
@@ -4147,9 +4166,10 @@ class SQLTrigger(with_metaclass(_PytisTriggerMetaclass, SQLEventHandler)):
             return super(SQLTrigger, self).__call__(*arguments)
         return object_by_class(self.body)(*arguments)
 
-    def _create_comments(self):
-        if self.table is not None:
-            super(SQLTrigger, self)._create_comments()
+    def _comment_ddl(self):
+        if self.table is None:
+            return []
+        return super(SQLTrigger, self)._comment_ddl()
 
 
 class SQLRaw(with_metaclass(_PytisSchematicMetaclass, sqlalchemy.schema.DDLElement,
@@ -4340,7 +4360,8 @@ def _encoded_output(output):
     return output
 
 
-def _gsql_process(loader, regexp, no_deps, views, functions, names_only, pretty, schema, source,
+def _gsql_process(loader, regexp, no_deps, views, functions, names_only, comments_only,
+                  pretty, schema, source,
                   config_file, upgrade, plpython3, debug, module_name, limit_class, compat=False):
     global _output
     if upgrade:
@@ -4375,11 +4396,12 @@ def _gsql_process(loader, regexp, no_deps, views, functions, names_only, pretty,
         upgrade_metadata.pytis_changed = set()
     else:
         upgrade_metadata = None
-    _gsql_process_1(loader, regexp, no_deps, views, functions, names_only, source,
-                    upgrade_metadata, module_name, limit_class)
+    _gsql_process_1(loader, regexp, no_deps, views, functions, names_only, comments_only,
+                    source, upgrade_metadata, module_name, limit_class)
 
 
-def _gsql_process_1(loader, regexp, no_deps, views, functions, names_only, source,
+def _gsql_process_1(loader, regexp, no_deps, views, functions, names_only, comments_only,
+                    source,
                     upgrade_metadata, module_name, limit_class):
     def callback(cls):
         # Callback called when a new DB specification class is created (during its
@@ -4516,6 +4538,8 @@ def _gsql_process_1(loader, regexp, no_deps, views, functions, names_only, sourc
         if matching(o):
             if names_only:
                 output_name(o)
+            elif comments_only:
+                o.pytis_comments()
             elif upgrade_metadata is not None:
                 o.pytis_upgrade(upgrade_metadata)
             else:
@@ -4524,6 +4548,8 @@ def _gsql_process_1(loader, regexp, no_deps, views, functions, names_only, sourc
         if matching(sequence):
             if names_only:
                 output_name(sequence)
+            elif comments_only:
+                sequence.pytis_comments()
             elif upgrade_metadata is not None:
                 sequence.pytis_upgrade(upgrade_metadata)
             else:
@@ -4533,6 +4559,8 @@ def _gsql_process_1(loader, regexp, no_deps, views, functions, names_only, sourc
         if matching(table):
             if names_only:
                 output_name(table)
+            elif comments_only:
+                table.pytis_comments()
             elif upgrade_metadata is not None:
                 table.pytis_upgrade(upgrade_metadata)
             else:
@@ -4635,8 +4663,9 @@ def _gsql_process_1(loader, regexp, no_deps, views, functions, names_only, sourc
 
 
 def gsql_file(file_name, regexp=None, no_deps=False, views=False, functions=False,
-              names_only=False, pretty=0, schema=None, source=False, config_file=None,
-              upgrade=False, plpython3=False, debug=False, limit_class=None, compat=False):
+              names_only=False, comments_only=False, pretty=0, schema=None, source=False,
+              config_file=None, upgrade=False, plpython3=False, debug=False, limit_class=None,
+              compat=False):
     """Generate SQL code from given specification file.
 
     Arguments:
@@ -4650,6 +4679,10 @@ def gsql_file(file_name, regexp=None, no_deps=False, views=False, functions=Fals
       functions: Iff true, output just functions; boolean.
       names_only: Iff true, output only kinds and names of the database objects;
         boolean.
+      comments_only: Iff true, output only the commands setting the comments of
+        the matching objects, without creating them; boolean.  Useful in
+        migrations, where the documentation of an altered table would
+        otherwise stay at its state from the table creation.
       pretty: Pretty output level; non-negative integer.
       schema: If not None then create all objects in that schema; string.
       source: Iff true, print source files and lines.
@@ -4672,12 +4705,13 @@ def gsql_file(file_name, regexp=None, no_deps=False, views=False, functions=Fals
     def loader(file_name=file_name):
         with open(file_name, 'rb') as f:
             exec(compile(f.read(), file_name, 'exec'), copy.copy(globals()))
-    _gsql_process(loader, regexp, no_deps, views, functions, names_only, pretty, schema, source,
+    _gsql_process(loader, regexp, no_deps, views, functions, names_only, comments_only,
+                  pretty, schema, source,
                   config_file, upgrade, plpython3, debug, None, limit_class, compat=compat)
 
 
 def gsql_module(module_name, regexp=None, no_deps=False, views=False, functions=False,
-                names_only=False, pretty=0, schema=None, source=False,
+                names_only=False, comments_only=False, pretty=0, schema=None, source=False,
                 config_file=None, upgrade=False, plpython3=False, debug=False,
                 limit_module=False, limit_class=None, compat=False):
     """Generate SQL code from given specification module.
@@ -4693,6 +4727,10 @@ def gsql_module(module_name, regexp=None, no_deps=False, views=False, functions=
       functions: Iff true, output just functions; boolean.
       names_only: Iff true, output only kinds and names of the database objects;
         boolean.
+      comments_only: Iff true, output only the commands setting the comments of
+        the matching objects, without creating them; boolean.  Useful in
+        migrations, where the documentation of an altered table would
+        otherwise stay at its state from the table creation.
       pretty: Pretty output level; non-negative integer.
       schema: If not None then create all objects in that schema; string.
       source: Iff true, print source files and lines.
@@ -4724,7 +4762,8 @@ def gsql_module(module_name, regexp=None, no_deps=False, views=False, functions=
             for filename in os.listdir(os.path.dirname(module.__file__)):
                 if filename.endswith('.py'):
                     pytis.util.load_module(module_name + '.' + filename[:-3])
-    _gsql_process(loader, regexp, no_deps, views, functions, names_only, pretty, schema, source,
+    _gsql_process(loader, regexp, no_deps, views, functions, names_only, comments_only,
+                  pretty, schema, source,
                   config_file, upgrade, plpython3, debug, (module_name if limit_module else None),
                   limit_class, compat=compat)
 
