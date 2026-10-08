@@ -1607,7 +1607,9 @@ class Arguments(object):
 a = Arguments
 
 
-def select(*columns, exclude=(), rename=None, order=None):
+def select(*columns, **kwargs):
+    # TODO NOPY2: Use keyword-only arguments in the signature:
+    # def select(*columns, exclude=(), rename=None, order=None):
     """Return `sqlalchemy.select()` of given columns.
 
     This is an extended version of `sqlalchemy.select()` for convenient
@@ -1649,6 +1651,11 @@ def select(*columns, exclude=(), rename=None, order=None):
         ).select_from(...)
 
     """
+    exclude = kwargs.pop('exclude', ())
+    rename = kwargs.pop('rename', None)
+    order = kwargs.pop('order', None)
+    if kwargs:
+        raise TypeError("Unexpected keyword arguments: %s" % ', '.join(kwargs))
     selected = []
     for x in columns:
         if isinstance(x, sqlalchemy.sql.FromClause):
