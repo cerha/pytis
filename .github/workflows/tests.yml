@@ -54,11 +54,46 @@ jobs:
           sed -i '/\(cs_CZ\|en_US\).UTF-8/s/^# \+//g' /etc/locale.gen
           locale-gen
 
+      - name: Cache pip downloads
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: pip-py27-${{ hashFiles('pyproject.toml') }}
+          restore-keys: pip-py27-
+
+      - name: Restore wxPython wheel
+        id: wx-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: ~/wheels
+          # The wheel is only downloaded when the cache is empty, so a newer
+          # wxPython release is not picked up automatically.  Change the key
+          # to force a new download.
+          key: wxpython-debian-10-py27-v1
+
+      - name: Download wxPython wheel
+        if: steps.wx-cache.outputs.cache-hit != 'true'
+        # The wheels for Linux are not on PyPI and the wxPython server is not
+        # always available, so we download the wheel once and cache it.
+        run: |
+          pip install --upgrade 'pip<21'
+          pip download wxpython --only-binary=:all: --no-deps -d ~/wheels \
+              --timeout 60 --retries 10 \
+              -f https://extras.wxpython.org/wxPython4/extras/linux/gtk3/debian-10/
+
+      - name: Save wxPython wheel
+        if: steps.wx-cache.outputs.cache-hit != 'true'
+        # Save right after the download (not at the end of the job as
+        # actions/cache does) so that the wheel is cached even if tests fail.
+        uses: actions/cache/save@v4
+        with:
+          path: ~/wheels
+          key: ${{ steps.wx-cache.outputs.cache-primary-key }}
+
       - name: Install Python dependencies
         run: |
           pip install --upgrade 'pip<21' 'setuptools<45' 'wheel<0.34'
-          pip install wxpython --only-binary=:all: --verbose \
-              -f https://extras.wxpython.org/wxPython4/extras/linux/gtk3/debian-10/
+          pip install ~/wheels/*.whl
           # Neither pip nor Python 3 are recent enough here to read the
           # dependency groups ('pip install --group'), so we pass them through
           # the helper script.  Python 3.11 reads TOML by itself, older ones
@@ -132,6 +167,8 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
+          cache: pip
+          cache-dependency-path: pyproject.toml
 
       - name: Install system dependencies
         run: |
@@ -142,11 +179,32 @@ jobs:
           sudo sed -i '/\(cs_CZ\|en_US\).UTF-8/s/^# \+//g' /etc/locale.gen
           sudo locale-gen
 
+      - name: Restore wxPython wheel
+        id: wx-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: ~/wheels
+          # See the same steps in the 'test-py27' job.
+          key: wxpython-ubuntu-24.04-py${{ matrix.python-version }}-v1
+
+      - name: Download wxPython wheel
+        if: steps.wx-cache.outputs.cache-hit != 'true'
+        run: |
+          pip download wxpython --only-binary=:all: --no-deps -d ~/wheels \
+              --timeout 60 --retries 10 \
+              -f https://extras.wxpython.org/wxPython4/extras/linux/gtk3/ubuntu-24.04/
+
+      - name: Save wxPython wheel
+        if: steps.wx-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: ~/wheels
+          key: ${{ steps.wx-cache.outputs.cache-primary-key }}
+
       - name: Install Python dependencies
         run: |
           pip install --upgrade pip
-          pip install wxpython --only-binary=:all: --verbose \
-              -f https://extras.wxpython.org/wxPython4/extras/linux/gtk3/ubuntu-24.04/
+          pip install ~/wheels/*.whl
           pip install --group build --group test --group lint --group rest
           make build
           pip install $(echo dist/pytis-*-any.whl)[wx,rest]
