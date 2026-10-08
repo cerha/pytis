@@ -870,3 +870,74 @@ class TestAppDB:
         data2 = pytis.util.data_object(pytis.dbdefs.demo.Tree)
         for c1, c2 in zip(data1.columns(), data2.columns()):
             assert isinstance(c1.type(), type(c2.type()))
+
+
+class TestApplicationState:
+    """Tests of the persistent application state (no database needed)."""
+
+    class _Manager:
+        """Mock of 'ApplicationConfigManager' keeping the values in memory."""
+
+        def __init__(self):
+            self.options = None
+
+        def save(self, options):
+            self.options = options
+
+    @pytest.fixture
+    def manager(self):
+        return self._Manager()
+
+    @pytest.fixture
+    def state(self, manager):
+        return pf.ApplicationState(manager, {})
+
+    def test_declared_defaults(self, state):
+        assert state.recent_forms == []
+        assert state.recent_directories == {}
+        assert state.frame_size == []
+        assert state.startup_forms == []
+        assert state.active_form is None
+
+    def test_mutable_defaults_are_not_shared(self, state):
+        state.recent_forms.append('x')
+        assert state.recent_forms == []
+
+    def test_stored_values(self, manager):
+        state = pf.ApplicationState(manager, {'recent_directories': {'default': '/tmp'}})
+        assert state.recent_directories == {'default': '/tmp'}
+
+    def test_invalid_stored_value_falls_back_to_the_default(self, manager):
+        state = pf.ApplicationState(manager, {'recent_directories': ['/tmp']})
+        assert state.recent_directories == {}
+
+    def test_invalid_stored_item_falls_back_to_the_default(self, manager):
+        state = pf.ApplicationState(manager, {'recent_forms': [['title', 'x', 'y'], 'invalid']})
+        assert state.recent_forms == []
+
+    def test_assignment_is_saved(self, manager, state):
+        state.frame_size = [[[1920, 1080], [0, 0], [1000, 800]]]
+        state.save()
+        assert manager.options == {'frame_size': [[[1920, 1080], [0, 0], [1000, 800]]]}
+
+    def test_explicit_storage_key(self, manager):
+        state = pf.ApplicationState(manager, {'saved_startup_forms': [['BrowseForm', 'misc.X']]})
+        assert state.startup_forms == [['BrowseForm', 'misc.X']]
+        state.startup_forms = [['BrowseForm', 'misc.Y']]
+        state.save()
+        assert manager.options == {'saved_startup_forms': [['BrowseForm', 'misc.Y']]}
+
+    def test_undeclared_values_are_preserved(self, manager):
+        # Configuration options are stored in the same place as the state and
+        # must survive saving the state (they would be lost silently).
+        state = pf.ApplicationState(manager, {'show_tooltips': False})
+        state.recent_forms = [['Title', 'BrowseForm', 'misc.X']]
+        state.save()
+        assert manager.options == {'show_tooltips': False,
+                                   'recent_forms': [['Title', 'BrowseForm', 'misc.X']]}
+
+    def test_undeclared_values_are_accessible(self, state):
+        state.set_value('show_tooltips', False)
+        assert state.value('show_tooltips') is False
+        assert state.value('unknown', 'default') == 'default'
+        assert sorted(state.keys()) == ['show_tooltips']

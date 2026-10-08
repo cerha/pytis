@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2025 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2026 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2011-2017 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -34,6 +34,12 @@ Most of the settings are stored as JSON objects, but the API works with
 pytis classes, such as `pytis.presentation.Profile`.  Conversion to/from
 these classes is done internally by the manager.
 
+Settings which the application reads and writes as a fixed set of named
+values are additionally wrapped by `State` subclasses.  They present the
+stored values as declared instance attributes, so that the individual
+parameters, their types and default values are defined at one place rather
+than repeated at each usage.
+
 Settings are always identified by the current user (the `username` argument
 of the manager's constructor) and additionally by other selectors such as
 specification name (`spec_name`) and/or form name (`form_name`).  Where
@@ -47,6 +53,7 @@ from __future__ import print_function
 
 from past.builtins import basestring
 
+import copy
 import json
 import sys
 import pytis.data
@@ -143,6 +150,171 @@ class ApplicationConfigManager(UserSetttingsManager):
         """
         assert isinstance(options, dict)
         self._save(dict(options=options), transaction=transaction)
+
+
+class State(object):
+    """Base class of persistent state stored through a user settings manager.
+
+    The individual state parameters are declared as class attributes of `State`
+    subclasses using `Param` instances and accessed as ordinary instance
+    attributes.  Reading an attribute returns the previously stored value (or
+    the declared default when it was not stored yet or when the stored value
+    doesn't match the declared type) and assigning to it changes the value to
+    be stored.
+
+    Note that the stored value only changes on assignment.  In place
+    modifications of mutable values, such as 'state.recent_directories[x] = y',
+    are not noticed, so always assign a new value.
+
+    Values stored under keys which are not declared as parameters (such as the
+    configuration options stored together with the application state, or values
+    written by a different version of the application) are left intact and
+    saved back as they were.
+
+    """
+
+    class Param(object):
+        """Declaration of one persistent state parameter.
+
+        Instances are assigned to class attributes of `State` subclasses.
+
+        Arguments:
+          key (str): Key to store the value under.  It is a part of the stored
+            data format, so it must not change once the application is in use
+            (which is why it is given explicitly rather than derived from the
+            name of the class attribute).
+          default: Value to be returned when the parameter was not stored yet
+            or when the stored value doesn't match 'cls'/'item_cls'.
+          cls: Python class or a tuple of classes.  The stored value is ignored
+            (and 'default' returned) when it is not an instance of 'cls'.
+          item_cls: Python class or a tuple of classes.  The stored value is
+            ignored when any of its items is not an instance of 'item_cls'.
+
+        """
+        _UNDEFINED = object()
+
+        def __init__(self, key, default=None, cls=None, item_cls=None):
+            self._key = key
+            self._default = default
+            self._cls = cls
+            self._item_cls = item_cls
+
+        def _valid(self, value):
+            if self._cls is not None and not isinstance(value, self._cls):
+                return False
+            if self._item_cls is not None:
+                for item in value:
+                    if not isinstance(item, self._item_cls):
+                        return False
+            return True
+
+        def __get__(self, instance, owner=None):
+            if instance is None:
+                return self
+            value = instance.value(self._key, self._UNDEFINED)
+            if value is self._UNDEFINED:
+                return copy.copy(self._default)
+            if not self._valid(value):
+                log(OPERATIONAL, "Invalid saved application attribute value:", self._key)
+                return copy.copy(self._default)
+            return value
+
+        def __set__(self, instance, value):
+            instance.set_value(self._key, value)
+
+    def __init__(self, manager, values):
+        """Arguments:
+
+          manager: `UserSetttingsManager` instance used to store the values.
+          values (dict): Previously stored values as returned by the manager.
+
+        """
+        self._manager = manager
+        self._values = values
+
+    def value(self, key, default=None):
+        """Return the stored value of 'key', including undeclared keys."""
+        return self._values.get(key, default)
+
+    def set_value(self, key, value):
+        """Set the stored value of 'key', including undeclared keys."""
+        self._values[key] = value
+
+    def keys(self):
+        """Return the keys of all stored values as a sequence of strings."""
+        return self._values.keys()
+
+    def save(self):
+        """Store the current values through the manager."""
+        self._manager.save(self._values)
+
+
+class ApplicationState(State):
+    """Persistent state of the application stored in the user configuration.
+
+    The state is stored through `ApplicationConfigManager` together with the
+    user's configuration options, which the application passes in as undeclared
+    values.
+
+    """
+    recent_forms = State.Param('recent_forms', [], cls=list, item_cls=list)
+    """Forms to be offered in the "Recently opened forms" menu.
+
+    A list of [title, form_name, spec_name] lists, where 'form_name' is the
+    name of the form class within 'pytis.form' and 'spec_name' is the name of
+    its specification.  The most recently opened form comes first and at most
+    10 forms are kept.  Forms whose specification no longer exists are dropped
+    on startup.
+
+    """
+
+    recent_directories = State.Param('recent_directories', {}, cls=dict)
+    """Directories to be offered in file selection dialogs.
+
+    A dictionary of directory paths keyed by '<client mode>:<context>', where
+    the client mode is 'local' or 'remote' (the same path may not exist on both
+    the local and the remote file system) and the context is the caller defined
+    selector of the memory described in 'pytis.api.Application.select_file()'
+    (the directory of the last selected file is remembered separately for each
+    of them).
+
+    """
+
+    frame_size = State.Param('frame_size', [], cls=list, item_cls=list)
+    """Geometry of the main application frame.
+
+    A list of [display_size, position, size] lists, one for each display size.
+    The user may run the application from different systems with different
+    screen sizes/resolutions/configurations, so the saved geometry is only
+    restored when 'display_size' matches the current 'wx.DisplaySize()'.  The
+    geometry is remembered for up to 8 most recently used display sizes, the
+    most recently used coming last.
+
+    """
+
+    startup_forms = State.Param('saved_startup_forms', [], cls=list, item_cls=list)
+    """Forms to be reopened on the next application startup.
+
+    A list of [form_name, spec_name] lists of the forms open on the last exit,
+    where 'form_name' is the name of the form class within 'pytis.form'.  Only
+    the forms available through the application menu are actually reopened and
+    the user may choose not to open them at all.
+
+    The storage key differs from the attribute name to avoid a conflict with
+    'config.startup_forms', which defines the forms to be opened on every
+    startup regardless of the previous run.
+
+    """
+
+    active_form = State.Param('active_form', None, cls=(list, type(None)))
+    """The form to be activated after reopening the forms on startup.
+
+    A [form_name, spec_name] list identifying the form active on the last exit
+    (see 'startup_forms' for the meaning of the names) or None when no form was
+    open.  The last opened form is activated when it is not found among the
+    reopened forms.
+
+    """
 
 
 class FormSettingsManager(UserSetttingsManager):

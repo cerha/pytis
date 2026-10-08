@@ -129,6 +129,8 @@ from .defaults import (
 from .managers import (
     UserSetttingsManager as UserSetttingsManager,
     ApplicationConfigManager as ApplicationConfigManager,
+    State as State,
+    ApplicationState as ApplicationState,
     FormSettingsManager as FormSettingsManager,
     FormProfileManager as FormProfileManager,
     FormProfileParamsManager as FormProfileParamsManager,

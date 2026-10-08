@@ -99,11 +99,6 @@ class Application(pytis.application.BaseApplication, wx.App, KeyHandler, Command
     and calling its `run` method.
 
     """
-    _STATE_RECENT_FORMS = 'recent_forms'
-    _STATE_STARTUP_FORMS = 'saved_startup_forms'  # Avoid name conflict with config.startup_forms!
-    _STATE_RECENT_DIRECTORIES = 'recent_directories'
-    _STATE_FRAME_SIZE = 'frame_size'
-    _STATE_ACTIVE_FORM = 'active_form'
 
     class _StatusFieldAccess(object):
         def __init__(self, fields):
@@ -221,7 +216,6 @@ class Application(pytis.application.BaseApplication, wx.App, KeyHandler, Command
         self._initial_config = [
             (o, copy.copy(getattr(pytis.config, o)))
             for o in configurable_options + ('initial_keyboard_layout',)]
-        self._saved_state = {}
         # Initialize all needed user settings managers.
         self._application_config_manager = pytis.form.ApplicationConfigManager()
         self._form_settings_manager = pytis.form.FormSettingsManager()
@@ -231,34 +225,35 @@ class Application(pytis.application.BaseApplication, wx.App, KeyHandler, Command
         from pytis.defs.logging import UserActionLog
         self._user_action_logger = UserActionLog.Logger(pytis.config.dbconnection,
                                                         pytis.config.dbuser)
-        # Read the stored configuration.
+        # Read the stored configuration.  Options known to pytis.config are
+        # applied to it, the remaining values belong to the application state.
+        saved_state = {}
         for option, value in self._application_config_manager.load().items():
             if hasattr(pytis.config, option):
                 setattr(pytis.config, option, value)
             else:
-                self._saved_state[option] = value
+                saved_state[option] = value
+        self._state = pytis.form.ApplicationState(self._application_config_manager, saved_state)
         # Read in access rights.
         self._init_access_rights()
         # Init the recent forms list.
-        recent_forms = self._get_state_param(self._STATE_RECENT_FORMS, [], list, list)
         self._recent_forms = []
-        for title, form_name, spec_name in recent_forms:
+        for title, form_name, spec_name in self._state.recent_forms:
             form_class = getattr(pytis.form, form_name, None)
             if issubclass(form_class, pytis.form.Form) and self._is_valid_spec(spec_name):
                 self._recent_forms.append((title, form_name, spec_name))
             else:
                 log(OPERATIONAL, "Ignoring recent form:", (title, form_name, spec_name))
-        self._set_state_param(self._STATE_RECENT_FORMS, list(self._recent_forms))
+        self._state.recent_forms = list(self._recent_forms)
         # Init the recent directories memory.
-        recent_directories = self._get_state_param(self._STATE_RECENT_DIRECTORIES, {}, dict)
-        self._recent_directories.update(recent_directories)
+        self._recent_directories.update(self._state.recent_directories)
         # Initialize the menubar.
         if not self._init_menubar():
             return False
         # Initialize the toolbar.
         self._toolbar = wx_toolbar(frame, pytis.form.TOOLBAR_COMMANDS)
         # Set the main application frame size and position.
-        frame_sizes = self._get_state_param(self._STATE_FRAME_SIZE, [], list, list)
+        frame_sizes = self._state.frame_size
         current_display_size = list(wx.DisplaySize())
         for display_size, position, size in frame_sizes:
             if display_size == current_display_size:
@@ -331,7 +326,7 @@ class Application(pytis.application.BaseApplication, wx.App, KeyHandler, Command
         # Add the forms saved on last exit to startup forms.
         saved_forms = []
         menu_names = pytis.extensions.get_menu_defs()
-        for cls, name in self._get_state_param(self._STATE_STARTUP_FORMS, [], list, list):
+        for cls, name in self._state.startup_forms:
             # TODO: This probably remained after legacy support for configuration
             # saved in pickled objects. Now with JSON, we will always get a string.
             if isinstance(cls, basestring):
@@ -370,7 +365,7 @@ class Application(pytis.application.BaseApplication, wx.App, KeyHandler, Command
         app.run(run_startup_form, over=startup_forms, title=_("Opening saved forms"))
         # Activate the saved active form from the last run.
         initially_active_form_index = self._notebook.PageCount - 1
-        last_active_form = self._get_state_param(self._STATE_ACTIVE_FORM, None, (list, type(None)))
+        last_active_form = self._state.active_form
         if last_active_form:
             for i, f in enumerate(self._forms()):
                 if [f.__class__.__name__, f.name()] == last_active_form:
@@ -718,28 +713,6 @@ class Application(pytis.application.BaseApplication, wx.App, KeyHandler, Command
         name = pytis.config.application_name.lower()
         return str(re.sub("[^a-zA-Z0-9-]", safe_char, unistr(name)))
 
-    def _get_state_param(self, name, default=None, cls=None, item_cls=None):
-        try:
-            param = self._saved_state[name]
-        except KeyError:
-            return default
-        if cls is not None and not isinstance(param, cls):
-            log(OPERATIONAL, "Invalid saved application attribute value:", name)
-            return default
-        if item_cls is not None:
-            for item in param:
-                if not isinstance(item, item_cls):
-                    log(OPERATIONAL, "Invalid saved application attribute value:", name)
-                    return default
-        return param
-
-    def _set_state_param(self, name, value):
-        self._saved_state[name] = value
-
-    def _unset_state_param(self, name):
-        if name in self._saved_state:
-            del self._saved_state[name]
-
     def _cleanup(self, force=False):
         # Ignore all kinds of exceptions in order to be able to exit the
         # application even in quite seriously broken state.
@@ -750,31 +723,28 @@ class Application(pytis.application.BaseApplication, wx.App, KeyHandler, Command
                 print(msg, args)
         safelog('Application exit called:', (pytis.config.dbschemas,))
         try:
-            self._set_state_param(self._STATE_STARTUP_FORMS, [
+            self._state.startup_forms = [
                 (f.__class__.__name__, f.name())
                 for f in self._forms()
                 if not isinstance(f, (pytis.form.AggregationForm,
                                       pytis.form.AggregationDualForm))
-            ])
-            self._set_state_param(self._STATE_RECENT_FORMS, list(self._recent_forms))
-            self._set_state_param(self._STATE_RECENT_DIRECTORIES, self._recent_directories)
-            # The user may start the application from different systems with different
-            # screen sizes/resolutions/configurations, so we only use the saved size
-            # and position for the matching display size.  We remember the size and
-            # position for up to 8 most recently used display sizes.
+            ]
+            self._state.recent_forms = list(self._recent_forms)
+            self._state.recent_directories = self._recent_directories
+            # Replace the geometry remembered for the current display size and
+            # forget the least recently used one (see ApplicationState.frame_size).
             frame_sizes = [[display_size, position, size]
-                           for display_size, position, size
-                           in self._get_state_param(self._STATE_FRAME_SIZE, [], list, list)
+                           for display_size, position, size in self._state.frame_size
                            if display_size != list(wx.DisplaySize())]
             frame_sizes.append([list(wx.DisplaySize()), list(self._frame.Position),
                                 list(self._frame.Size)])
-            self._set_state_param(self._STATE_FRAME_SIZE, frame_sizes[-8:])
+            self._state.frame_size = frame_sizes[-8:]
             active_form = self._notebook.CurrentPage
             if active_form:
                 active_form_state = [active_form.__class__.__name__, active_form.name()]
             else:
                 active_form_state = None
-            self._set_state_param(self._STATE_ACTIVE_FORM, active_form_state)
+            self._state.active_form = active_form_state
         except Exception as e:
             safelog(str(e))
         try:
@@ -788,13 +758,12 @@ class Application(pytis.application.BaseApplication, wx.App, KeyHandler, Command
         except Exception as e:
             safelog(str(e))
         try:
-            options = self._saved_state
             for option, initial_value in self._initial_config:
                 current_value = getattr(pytis.config, option)
                 if current_value != initial_value:
-                    options[option] = current_value
-            self._application_config_manager.save(options)
-            log(OPERATIONAL, "Configuration saved: %s" % ', '.join(options.keys()))
+                    self._state.set_value(option, current_value)
+            self._state.save()
+            log(OPERATIONAL, "Configuration saved: %s" % ', '.join(self._state.keys()))
         except Exception as e:
             safelog("Saving changed configuration failed:", str(e))
         try:
