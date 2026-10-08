@@ -241,7 +241,7 @@ class Application(pytis.application.BaseApplication, wx.App, KeyHandler, Command
         for title, form_name, spec_name in self._state.recent_forms:
             form_class = getattr(pytis.form, form_name, None)
             if issubclass(form_class, pytis.form.Form) and self._is_valid_spec(spec_name):
-                self._recent_forms.append((title, form_name, spec_name))
+                self._recent_forms.append([title, form_name, spec_name])
             else:
                 log(OPERATIONAL, "Ignoring recent form:", (title, form_name, spec_name))
         self._state.recent_forms = list(self._recent_forms)
@@ -724,7 +724,7 @@ class Application(pytis.application.BaseApplication, wx.App, KeyHandler, Command
         safelog('Application exit called:', (pytis.config.dbschemas,))
         try:
             self._state.startup_forms = [
-                (f.__class__.__name__, f.name())
+                [f.__class__.__name__, f.name()]
                 for f in self._forms()
                 if not isinstance(f, (pytis.form.AggregationForm,
                                       pytis.form.AggregationDualForm))
@@ -1104,7 +1104,7 @@ class Application(pytis.application.BaseApplication, wx.App, KeyHandler, Command
                     wx_callback(wx.EVT_CLOSE, form, self._on_form_close)
                     app.echo(None)
                     if not isinstance(form, pytis.form.WebForm):
-                        item = (self._form_menu_item_title(form), form_class.__name__, name)
+                        item = [self._form_menu_item_title(form), form_class.__name__, name]
                         try:
                             self._recent_forms.remove(item)
                         except ValueError:

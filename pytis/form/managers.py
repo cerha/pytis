@@ -166,6 +166,12 @@ class State(object):
     modifications of mutable values, such as 'state.recent_directories[x] = y',
     are not noticed, so always assign a new value.
 
+    The declared types are checked in both directions, but the result differs.
+    An invalid stored value is ignored, because it may come from an older
+    version of the application, while assigning an invalid value is an error of
+    the calling code, so it raises 'AssertionError' rather than being stored
+    and causing trouble on the next startup.
+
     Values stored under keys which are not declared as parameters (such as the
     configuration options stored together with the application state, or values
     written by a different version of the application) are left intact and
@@ -186,9 +192,14 @@ class State(object):
           default: Value to be returned when the parameter was not stored yet
             or when the stored value doesn't match 'cls'/'item_cls'.
           cls: Python class or a tuple of classes.  The stored value is ignored
-            (and 'default' returned) when it is not an instance of 'cls'.
-          item_cls: Python class or a tuple of classes.  The stored value is
-            ignored when any of its items is not an instance of 'item_cls'.
+            (and 'default' returned) when it is not an instance of 'cls' and
+            assigning such a value raises 'AssertionError'.
+          item_cls: Python class or a tuple of classes.  Restricts the items of
+            the value in the same way as 'cls' restricts the value itself.
+
+        The values are stored as JSON, so sequences are declared (and must be
+        assigned) as lists.  A tuple would be read back as a list after the next
+        startup, which is why assigning one is refused.
 
         """
         _UNDEFINED = object()
@@ -220,6 +231,8 @@ class State(object):
             return value
 
         def __set__(self, instance, value):
+            assert self._valid(value), \
+                "Invalid value of state parameter '%s': %r" % (self._key, value)
             instance.set_value(self._key, value)
 
     def __init__(self, manager, values):

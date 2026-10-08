@@ -920,6 +920,15 @@ class TestApplicationState:
         state.save()
         assert manager.options == {'frame_size': [[[1920, 1080], [0, 0], [1000, 800]]]}
 
+    def test_invalid_assigned_value_raises(self, state):
+        with pytest.raises(AssertionError):
+            state.recent_directories = ['/tmp']
+
+    def test_invalid_assigned_item_raises(self, state):
+        # Tuples are refused because they would be read back as lists.
+        with pytest.raises(AssertionError):
+            state.recent_forms = [('Title', 'BrowseForm', 'misc.X')]
+
     def test_explicit_storage_key(self, manager):
         state = pf.ApplicationState(manager, {'saved_startup_forms': [['BrowseForm', 'misc.X']]})
         assert state.startup_forms == [['BrowseForm', 'misc.X']]
