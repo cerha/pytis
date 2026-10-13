@@ -144,6 +144,7 @@ class Application(pytis.application.BaseApplication, wx.App, KeyHandler, Command
         self._previously_active_tab_index = None
         self._initialized = False
         self._in_cleanup = False
+        self._restoring_forms = False
         self.keymap = Keymap()
         super(Application, self).__init__()
 
@@ -351,7 +352,11 @@ class Application(pytis.application.BaseApplication, wx.App, KeyHandler, Command
                 run_form(cls, name, activate=False)
             except Exception as e:
                 log(OPERATIONAL, "Unable to init startup form:", (cls, name, e))
-        app.run(run_startup_form, over=startup_forms, title=_("Opening saved forms"))
+        self._restoring_forms = True
+        try:
+            app.run(run_startup_form, over=startup_forms, title=_("Opening saved forms"))
+        finally:
+            self._restoring_forms = False
         # Activate the saved active form from the last run.
         initially_active_form_index = self._notebook.PageCount - 1
         last_active_form = self._state.active_form
@@ -362,6 +367,10 @@ class Application(pytis.application.BaseApplication, wx.App, KeyHandler, Command
                     break
         if initially_active_form_index >= 0:
             self._notebook.SetSelection(initially_active_form_index)
+        # Only now, when the active form is restored too, the state may be saved.
+        # Saving it earlier would overwrite the saved active form by the one
+        # selected automatically when the first tab was added.
+        self._save_state()
 
         # Caching menu availability must come after calling Application.init()
         # (here self._specification.init()) to allow the application defined
@@ -733,6 +742,44 @@ class Application(pytis.application.BaseApplication, wx.App, KeyHandler, Command
         frame_sizes.append([list(wx.DisplaySize()), list(frame.Position), list(frame.Size)])
         return frame_sizes[-8:]
 
+    def _update_state(self):
+        """Update the state parameters derived from the current state of the user interface."""
+        self._state.startup_forms = [
+            [f.__class__.__name__, f.name()]
+            for f in self._forms()
+            if not isinstance(f, (pytis.form.AggregationForm, pytis.form.AggregationDualForm))
+        ]
+        active_form = self._notebook.CurrentPage
+        if active_form:
+            self._state.active_form = [active_form.__class__.__name__, active_form.name()]
+        else:
+            self._state.active_form = None
+        self._state.frame_size = self._saved_frame_sizes(self._state.frame_size, self._frame)
+        if self._help_browser is not None:
+            # Last, so that a failure to read the geometry of the help browser
+            # frame doesn't skip the updates above.
+            self._state.help_frame_size = self._saved_frame_sizes(
+                self._state.help_frame_size, self._help_browser.GetParent())
+
+    def _save_state(self):
+        """Store the application state, so that it survives an unclean exit.
+
+        Called when the set of open forms changes.  The whole state is stored at
+        once, so the other parameters, such as the recently opened forms or the
+        main frame geometry, are saved as well (as up to date as the last call).
+
+        """
+        if self._in_cleanup or self._restoring_forms:
+            # The state is saved by _cleanup() at the end and the forms restored
+            # on startup must not be saved one by one (an unclean exit during
+            # the restoration would truncate the list of the forms to restore).
+            return
+        try:
+            self._update_state()
+            self._state.save()
+        except Exception as e:
+            log(OPERATIONAL, "Saving the application state failed:", str(e))
+
     def _cleanup(self, force=False):
         # Ignore all kinds of exceptions in order to be able to exit the
         # application even in quite seriously broken state.
@@ -743,24 +790,7 @@ class Application(pytis.application.BaseApplication, wx.App, KeyHandler, Command
                 print(msg, args)
         safelog('Application exit called:', (pytis.config.dbschemas,))
         try:
-            self._state.startup_forms = [
-                [f.__class__.__name__, f.name()]
-                for f in self._forms()
-                if not isinstance(f, (pytis.form.AggregationForm,
-                                      pytis.form.AggregationDualForm))
-            ]
-            self._state.frame_size = self._saved_frame_sizes(self._state.frame_size, self._frame)
-            active_form = self._notebook.CurrentPage
-            if active_form:
-                active_form_state = [active_form.__class__.__name__, active_form.name()]
-            else:
-                active_form_state = None
-            self._state.active_form = active_form_state
-            if self._help_browser is not None:
-                # Last, so that a failure to read the geometry of the help browser
-                # frame doesn't skip the state updates above.
-                self._state.help_frame_size = self._saved_frame_sizes(
-                    self._state.help_frame_size, self._help_browser.GetParent())
+            self._update_state()
         except Exception as e:
             safelog(str(e))
         try:
@@ -928,6 +958,7 @@ class Application(pytis.application.BaseApplication, wx.App, KeyHandler, Command
             self._panel.SetFocus()
         else:
             self._update_tab_titles(self._frame.Size.x)
+        self._save_state()
 
     def _on_help_browser_close(self, event):
         # Remember the geometry now -- the frame may no longer be readable
@@ -1131,6 +1162,7 @@ class Application(pytis.application.BaseApplication, wx.App, KeyHandler, Command
                         recent_forms = [x for x in self._state.recent_forms if x != item]
                         self._state.recent_forms = ([item] + recent_forms)[:10]
                         self._update_recent_forms_menu()
+                    self._save_state()
         except UserBreakException:
             pass
         except SystemExit:
