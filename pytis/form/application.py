@@ -366,7 +366,8 @@ class Application(pytis.application.BaseApplication, wx.App, KeyHandler, Command
                     initially_active_form_index = i
                     break
         if initially_active_form_index >= 0:
-            self._notebook.SetSelection(initially_active_form_index)
+            # Not just SetSelection() -- the form also needs to be shown and focused.
+            self._activate_tab(initially_active_form_index)
         # Only now, when the active form is restored too, the state may be saved.
         # Saving it earlier would overwrite the saved active form by the one
         # selected automatically when the first tab was added.
