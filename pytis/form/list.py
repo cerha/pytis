@@ -550,13 +550,13 @@ class ListForm(RecordForm, Refreshable):
             panel.SetSizer(sizer)
             sizer.Fit(panel)
             panel.SetAutoLayout(1)
-            position = self._saved_settings.get('query-fields-position', 'up')
+            position = self._settings.query_fields_position
             if position == 'up':
                 i = self.Sizer.GetChildren().index(self.Sizer.GetItem(self._grid))
                 self.Sizer.Insert(i, panel, 0, wx.EXPAND)
             else:
                 self.Sizer.Add(panel, 0, wx.EXPAND)
-            if self._saved_settings.get('query-fields-minimized', False):
+            if self._settings.query_fields_minimized:
                 self._toggle_query_fields_minimization()
             self._update_query_fields_panel_button_bitmaps()
         else:
@@ -611,12 +611,12 @@ class ListForm(RecordForm, Refreshable):
         self._update_query_fields_panel_button_bitmaps()
         position = ('up' if sizer.GetItem(panel).Position.y < sizer.GetItem(self._grid).Position.y
                     else 'down')
-        self._saved_settings.set('query-fields-position', position)
+        self._settings.query_fields_position = position
 
     def _on_minimize_query_fields(self, event):
         self._toggle_query_fields_minimization()
         self._update_query_fields_panel_button_bitmaps()
-        self._saved_settings.set('query-fields-minimized', self._query_fields_minimized())
+        self._settings.query_fields_minimized = self._query_fields_minimized()
 
     def _query_fields_minimized(self):
         return not self._query_fields_form.IsShown()
@@ -3384,11 +3384,10 @@ class AggregationForm(BrowseForm):
     def _current_arguments(self):
         return self._af_aggregation_arguments
 
-    def _saved_settings_accessor(self):
+    def _settings_spec_name(self):
         # We need to have unique names for different column configurations
         # because profiles for one configuration may not be valid in the other.
-        spec_name = self._name + '/' + ':'.join(self._select_columns())
-        return self._SavedSettingsAccessor(spec_name, self._form_name(), self._view, self._data)
+        return self._name + '/' + ':'.join(self._select_columns())
 
     def _can_aggregated_view(self, aggregated_view_id):
         return False

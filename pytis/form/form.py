@@ -141,12 +141,12 @@ class Form(pytis.api.APIImplementation, wx.Panel, KeyHandler, CallbackHandler,
         """Exception signalling errors during form initialization."""
         pass
 
-    class _SavedSettingsAccessor(object):
-        """Form-specific access to global form settings/profile managers.
+    class _SavedProfilesAccessor(object):
+        """Form-specific access to the global form profile manager.
 
-        Wraps access to global form settings/profile manager instances to
-        simplify calls for a particular form instance.  All manager methods can
-        be called on this instance without the initial arguments identifying the
+        Wraps access to the global form profile manager instance to simplify
+        calls for a particular form instance.  All manager methods can be
+        called on this instance without the initial arguments identifying the
         form; these are prepended automatically.
 
         """
@@ -155,14 +155,6 @@ class Form(pytis.api.APIImplementation, wx.Panel, KeyHandler, CallbackHandler,
             self._form_name = form_name
             self._view_spec = view_spec
             self._data = data
-
-        def get(self, option, default=None):
-            return pytis.form.app.form_settings_manager.get(
-                self._spec_name, self._form_name, option, default=default)
-
-        def set(self, option, value):
-            return pytis.form.app.form_settings_manager.set(
-                self._spec_name, self._form_name, option, value)
 
         def load_profiles(self, default_profile):
             return pytis.form.app.form_profile_manager.load_profiles(
@@ -284,8 +276,13 @@ class Form(pytis.api.APIImplementation, wx.Panel, KeyHandler, CallbackHandler,
     def __repr__(self):
         return str(self)
 
-    def _saved_settings_accessor(self):
-        return self._SavedSettingsAccessor(self._name, self._form_name(), self._view, self._data)
+    def _settings_spec_name(self):
+        """Return the specification name identifying the stored settings and profiles."""
+        return self._name
+
+    def _form_settings_state(self, spec_name):
+        """Return the `pytis.form.FormState` instance holding the settings of this form."""
+        return pytis.form.app.form_settings_manager.state(spec_name, self._form_name())
 
     def _full_init(self, resolver, name, guardian=None, transaction=None, **kwargs):
         import pytis.extensions
@@ -302,7 +299,10 @@ class Form(pytis.api.APIImplementation, wx.Panel, KeyHandler, CallbackHandler,
         except (ResolverError, ProgramError):
             log(OPERATIONAL, 'Form initialization error', format_traceback())
             raise self.InitError()
-        self._saved_settings = self._saved_settings_accessor()
+        spec_name = self._settings_spec_name()
+        self._settings = self._form_settings_state(spec_name)
+        self._saved_profiles = self._SavedProfilesAccessor(spec_name, self._form_name(),
+                                                           self._view, self._data)
         self._transaction = transaction or self._default_transaction()
         self._init_attributes(**kwargs)
         self._result = None
@@ -1081,7 +1081,7 @@ class LookupForm(InnerForm):
         # arguments.  Note, that the default profile is not necessarily the
         # initially selected profile.
         self._default_profile = Profile('__default_profile__', _(u"Default profile"))
-        self._profiles = self._saved_settings.load_profiles(self._default_profile)
+        self._profiles = self._saved_profiles.load_profiles(self._default_profile)
         if filter or sorting or columns or grouping:
             assert profile_id is None
             # When profile parameters were passed to the constructor, create an
@@ -1097,7 +1097,7 @@ class LookupForm(InnerForm):
             if profile_id:
                 assert profile_id in [p.id() for p in self._profiles], profile_id
             else:
-                profile_id = (self._saved_settings.get('initial_profile') or
+                profile_id = (self._settings.initial_profile or
                               self._view.profiles().default())
             if profile_id:
                 initial_profile = (find(profile_id, self._profiles, key=lambda p: p.id()) or
@@ -1497,7 +1497,7 @@ class LookupForm(InnerForm):
                     profile = find(profile.id(), self._view.profiles().unnest(),
                                    key=lambda p: p.id())
                 self._profiles[index] = profile
-            self._saved_settings.drop_profile(profile.id())
+            self._saved_profiles.drop_profile(profile.id())
 
     @Command.define
     def apply_profile(self, profile_id):
@@ -1531,7 +1531,7 @@ class LookupForm(InnerForm):
         profile_id = pytis.form.app.form_profile_manager.new_user_profile_id(self._profiles)
         profile = self._create_profile(profile_id, title)
         self._profiles.append(profile)
-        self._saved_settings.save_profile(profile)
+        self._saved_profiles.save_profile(profile)
         self._current_profile = profile
         app.echo(_(u"Profile saved as '%s'.") % title)
         self.focus()
@@ -1544,7 +1544,7 @@ class LookupForm(InnerForm):
         index = self._profiles.index(self._current_profile)
         profile = self._create_profile(self._current_profile.id(), title)
         self._current_profile = self._profiles[index] = profile
-        self._saved_settings.save_profile(self._current_profile)
+        self._saved_profiles.save_profile(self._current_profile)
         app.echo(_(u"Profile saved as '%s'.") % title)
         self.focus()
 
@@ -1558,7 +1558,7 @@ class LookupForm(InnerForm):
         index = self._profiles.index(current)
         profile = self._create_profile(current.id(), current.title())
         self._profiles[index] = profile
-        self._saved_settings.save_profile(profile)
+        self._saved_profiles.save_profile(profile)
         self._current_profile = profile
 
     def _can_update_profile(self):
@@ -1568,7 +1568,7 @@ class LookupForm(InnerForm):
     @Command.define
     def delete_profile(self):
         """Delete the current saved profile (only for user profiles)."""
-        self._saved_settings.drop_profile(self._current_profile.id())
+        self._saved_profiles.drop_profile(self._current_profile.id())
         self._profiles.remove(self._current_profile)
         self._apply_profile(self.initial_profile())
 
@@ -1598,7 +1598,7 @@ class LookupForm(InnerForm):
             profile = self._initial_profile
         else:
             profile = find(profile_id, self._view.profiles().unnest(), key=lambda p: p.id())
-        self._saved_settings.drop_profile(profile_id)
+        self._saved_profiles.drop_profile(profile_id)
         self._profiles[index] = profile
         self._apply_profile(profile)
 
@@ -1608,10 +1608,10 @@ class LookupForm(InnerForm):
     @Command.define
     def set_initial_profile(self):
         """Use the current profile as the initial profile on next form startup."""
-        self._saved_settings.set('initial_profile', self._current_profile.id())
+        self._settings.initial_profile = self._current_profile.id()
 
     def _can_set_initial_profile(self):
-        return self._current_profile.id() not in (self._saved_settings.get('initial_profile'),
+        return self._current_profile.id() not in (self._settings.initial_profile,
                                                   '__constructor_profile__')
 
     @Command.define
@@ -1624,7 +1624,7 @@ class LookupForm(InnerForm):
         )
         if result:
             selected_profiles = [p for (checked, p) in zip(result, user_profiles) if checked]
-            data = self._saved_settings.export_profiles(selected_profiles)
+            data = self._saved_profiles.export_profiles(selected_profiles)
             filename = self._name.replace('.', '-') + '-profiles.json'
             app.write_selected_file(data.encode('ascii'), filename, mode='wb')
 
@@ -1637,7 +1637,7 @@ class LookupForm(InnerForm):
         if f:
             with f:
                 data = f.read()
-            error, profiles = self._saved_settings.import_profiles(data)
+            error, profiles = self._saved_profiles.import_profiles(data)
             if error:
                 app.error(error)
             else:
@@ -1653,7 +1653,7 @@ class LookupForm(InnerForm):
                 if result:
                     for checked, profile in zip(result, profiles):
                         if checked:
-                            self._saved_settings.save_profile(profile)
+                            self._saved_profiles.save_profile(profile)
                             self._profiles.append(profile)
 
     @Command.define
@@ -1782,7 +1782,7 @@ class LookupForm(InnerForm):
             title = _(u"Unnamed profile")
             profile = find(title, self._profiles, key=lambda p: p.title())
             if profile:
-                self._saved_settings.drop_profile(profile.id())
+                self._saved_profiles.drop_profile(profile.id())
                 self._profiles.remove(profile)
             self.save_new_profile(title)
         log(EVENT, "%s filter application in %.3f seconds" %
@@ -1833,7 +1833,7 @@ class LookupForm(InnerForm):
         return self._current_profile
 
     def initial_profile(self):
-        profile_id = self._saved_settings.get('initial_profile') or self._view.profiles().default()
+        profile_id = self._settings.initial_profile or self._view.profiles().default()
         return find(profile_id, self._profiles, key=lambda p: p.id()) or self._profiles[0]
 
     # Implementation of Public API 'pytis.api.Form'.
@@ -3761,14 +3761,13 @@ class _VirtualEditForm(EditForm):
         initial selection.
 
     """
-    class _SavedSettingsAccessor(Form._SavedSettingsAccessor):
-        """Virtual forms don't store any settings, so override the necessary methods by noops."""
-        def get(self, option, default=None):
-            return default
-        def set(self, option, value):
-            pass
+    class _SavedProfilesAccessor(Form._SavedProfilesAccessor):
+        """Virtual forms don't store any profiles, so override the necessary methods by noops."""
         def load_profiles(self, default_profile):
             return [default_profile]
+
+    def _form_settings_state(self, spec_name):
+        return pytis.form.VirtualFormState()
 
     def _full_init(self, resolver, name, guardian=None, transaction=None,
                    prefill=None, avoid_initial_selection=False,

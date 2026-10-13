@@ -822,6 +822,63 @@ class TestAppWriteSelectedFile:
             os.remove(fname)
 
 
+class TestFormState:
+    """Tests of the persistent form settings (stored in the database)."""
+
+    _SPEC_NAME = 'misc.Products'
+
+    @pytest.fixture
+    def manager(self, initconfig, initdb):
+        return pf.FormSettingsManager(username='test')
+
+    @pytest.fixture
+    def form_name(self, request):
+        # Use a separate database row for each test.
+        return 'pytis.form.' + request.node.name
+
+    @pytest.fixture
+    def state(self, manager, form_name):
+        return manager.state(self._SPEC_NAME, form_name)
+
+    def stored(self, form_name):
+        """Return the settings as stored in the database, bypassing the cached state."""
+        return pf.FormSettingsManager(username='test').load(self._SPEC_NAME, form_name)
+
+    def test_declared_defaults(self, state):
+        assert state.query_fields_position == 'up'
+        assert state.query_fields_minimized is False
+        assert state.binding_order == []
+        assert state.sash_position is None
+
+    def test_settings_are_stored_immediately(self, state, form_name):
+        state.sash_position = 240
+        assert self.stored(form_name) == {'sash_position': 240}
+
+    def test_storage_keys(self, state, form_name):
+        state.query_fields_position = 'left'
+        assert self.stored(form_name) == {'query-fields-position': 'left'}
+
+    def test_forms_of_the_same_name_share_the_state(self, manager, form_name):
+        assert (manager.state(self._SPEC_NAME, form_name) is
+                manager.state(self._SPEC_NAME, form_name))
+        assert (manager.state(self._SPEC_NAME, form_name) is not
+                manager.state(self._SPEC_NAME, form_name + '2'))
+
+    def test_saving_merges_with_the_stored_settings(self, state, form_name):
+        # Simulate another instance of the application changing another option.
+        pf.FormSettingsManager(username='test').save(self._SPEC_NAME, form_name,
+                                                     {'binding': 'products'})
+        state.sash_position = 240
+        assert self.stored(form_name) == {'binding': 'products', 'sash_position': 240}
+        assert state.binding == 'products'
+
+    def test_virtual_form_settings_are_not_stored(self, manager, form_name):
+        state = pf.VirtualFormState()
+        state.sash_position = 240
+        assert state.sash_position == 240
+        assert self.stored(form_name) == {}
+
+
 class TestAppDB:
     """DB-dependent tests for app.param, pd.dbfunction and pytis.util.data_object.
 

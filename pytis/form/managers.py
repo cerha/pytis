@@ -336,60 +336,142 @@ class ApplicationState(State):
 class FormSettingsManager(UserSetttingsManager):
     """Accessor of database storage of form settings other than profiles.
 
-    Form settings are those form properties which don't depend on the current
-    profile.  They don't change when a profile is changed (for example dualform
-    sash position doesn't depend on the current profile).
-
-    Form settings are simple pairs of string option and a value of some
-    primitive Python data type, such as int, str or bool.  Different form types
-    may store different settings (with different names).  The manager internally
-    keeps a dictionary of settings for each form and the methods `get` and `set`
-    may be used to retrieve/write individual options.
+    The settings of each form are stored as a dictionary of options in one
+    database row.  The methods `load` and `save` work with these dictionaries,
+    but the application normally uses the `FormState` instances returned by
+    `state()`, which present the individual options as declared attributes.
 
     """
     _TABLE = 'e_pytis_form_settings'
     _COLUMNS = ('id', 'username', 'spec_name', 'form_name', 'settings')
 
-    def _settings(self, spec_name, form_name, transaction=None):
+    def __init__(self, username=None):
+        super(FormSettingsManager, self).__init__(username=username)
+        self._states = {}
+
+    def load(self, spec_name, form_name, transaction=None):
+        """Return previously stored settings of given form as a dictionary of options.
+
+        Arguments:
+          spec_name (str): Specification name.
+          form_name (str): String uniquely identifying the form type.
+          transaction: Existing DB transaction or None.
+
+        """
         row = self._row(spec_name=spec_name, form_name=form_name, transaction=transaction)
         if row:
             return row['settings'].value()
         else:
             return {}
 
-    def set(self, spec_name, form_name, option, value, transaction=None):
-        """Save value of user specific form configuration option.
+    def save(self, spec_name, form_name, settings, transaction=None):
+        """Store given settings (dict instance) of given form.
 
         Arguments:
           spec_name (str): Specification name.
           form_name (str): String uniquely identifying the form type.
-          option (str): Option name.
-          value: Option value as an instance of any Python primitive data type.
+          settings (dict): Settings to store.
           transaction: Existing DB transaction or None.
 
         """
-        settings = self._settings(spec_name, form_name, transaction=transaction)
-        settings[option] = value
+        assert isinstance(settings, dict)
         self._save(dict(settings=settings), spec_name=spec_name, form_name=form_name,
                    transaction=transaction)
 
-    def get(self, spec_name, form_name, option, default=None, transaction=None):
-        """Return previously saved user specific form configuration option.
+    def state(self, spec_name, form_name):
+        """Return the `FormState` instance of given form.
 
-        Arguments:
-          spec_name (str): Specification name.
-          form_name (str): String uniquely identifying the form type.
-          option (str): Option name.
-          default: Default value to use if the option was not previously set for
-            given form.
-          transaction: Existing DB transaction or None.
-
-        Returns:
-          The previously saved option value or `default`.
+        The same instance is returned for all forms sharing given 'spec_name'
+        and 'form_name', so that they all see the same settings (they are
+        stored in one database row).
 
         """
-        settings = self._settings(spec_name, form_name, transaction=transaction)
-        return settings.get(option, default)
+        key = (spec_name, form_name)
+        try:
+            state = self._states[key]
+        except KeyError:
+            state = self._states[key] = FormState(self, self.load(spec_name, form_name),
+                                                  spec_name, form_name)
+        return state
+
+
+class FormState(State):
+    """Persistent settings of one form stored through `FormSettingsManager`.
+
+    Form settings are those form properties which don't depend on the current
+    profile (for example the dualform sash position doesn't depend on the
+    current profile).  Different form types use different settings -- they are
+    all declared here, but each form only uses those which apply to it.
+
+    Unlike `ApplicationState`, the settings are stored immediately on each
+    change, because forms are closed independently of the application exit.
+
+    """
+    initial_profile = State.Param('initial_profile', None, cls=(basestring, type(None)))
+    """Identifier of the profile to be used when the form is opened."""
+
+    sash_position = State.Param('sash_position', None, cls=(int, type(None)))
+    """Position of the splitter between the main form and the side form in pixels."""
+
+    sash_orientation = State.Param('sash_orientation', None, cls=(basestring, type(None)))
+    """Orientation of the splitter as one of `pytis.presentation.Orientation` constants."""
+
+    binding = State.Param('binding', None, cls=(basestring, type(None)))
+    """Identifier of the side form binding selected when the form was last used."""
+
+    binding_order = State.Param('binding_order', [], cls=list, item_cls=basestring)
+    """Identifiers of the side form bindings in the order defined by the user."""
+
+    hidden_bindings = State.Param('hidden_bindings', [], cls=list, item_cls=basestring)
+    """Identifiers of the side form bindings hidden by the user."""
+
+    query_fields_position = State.Param('query-fields-position', 'up', cls=basestring)
+    """Location of the query fields panel, 'up', 'down', 'left' or 'right'."""
+
+    query_fields_minimized = State.Param('query-fields-minimized', False, cls=bool)
+    """True when the query fields panel is minimized."""
+
+    def __init__(self, manager, values, spec_name, form_name):
+        """Arguments:
+
+          manager: `FormSettingsManager` instance used to store the values.
+          values (dict): Previously stored settings as returned by the manager.
+          spec_name (str): Specification name identifying the form.
+          form_name (str): String uniquely identifying the form type.
+
+        """
+        super(FormState, self).__init__(manager, values)
+        self._spec_name = spec_name
+        self._form_name = form_name
+
+    def set_value(self, key, value):
+        super(FormState, self).set_value(key, value)
+        self.save()
+
+    def save(self):
+        # Merge with the stored settings instead of overwriting them.  Another
+        # instance of the application run by the same user may have changed
+        # other options since this state was loaded.
+        values = self._manager.load(self._spec_name, self._form_name)
+        values.update(self._values)
+        self._values = values
+        self._manager.save(self._spec_name, self._form_name, values)
+
+
+class VirtualFormState(FormState):
+    """Settings of forms which have no specification to store the settings for.
+
+    Virtual forms are created from constructor arguments rather than from a
+    specification, so there is nothing to store their settings for.  They start
+    with the declared default values and their settings only live as long as
+    the form itself.
+
+    """
+    def __init__(self):
+        super(VirtualFormState, self).__init__(None, {}, None, None)
+
+    def save(self):
+        pass
 
 
 class FormProfileParamsManager(UserSetttingsManager):

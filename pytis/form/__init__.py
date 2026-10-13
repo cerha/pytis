@@ -132,6 +132,8 @@ from .managers import (
     State as State,
     ApplicationState as ApplicationState,
     FormSettingsManager as FormSettingsManager,
+    FormState as FormState,
+    VirtualFormState as VirtualFormState,
     FormProfileManager as FormProfileManager,
     FormProfileParamsManager as FormProfileParamsManager,
     AggregatedViewsManager as AggregatedViewsManager,
