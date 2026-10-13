@@ -135,6 +135,8 @@ from .managers import (
     FormState as FormState,
     VirtualFormState as VirtualFormState,
     FormProfileManager as FormProfileManager,
+    FormProfileAccessor as FormProfileAccessor,
+    VirtualFormProfileAccessor as VirtualFormProfileAccessor,
     FormProfileParamsManager as FormProfileParamsManager,
     AggregatedViewsManager as AggregatedViewsManager,
 )

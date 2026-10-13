@@ -40,6 +40,10 @@ stored values as declared instance attributes, so that the individual
 parameters, their types and default values are defined at one place rather
 than repeated at each usage.
 
+The profiles of one particular form are accessed through a
+`FormProfileAccessor` instance returned by `FormProfileManager.accessor()`,
+which prepends the arguments identifying the form to the manager calls.
+
 Settings are always identified by the current user (the `username` argument
 of the manager's constructor) and additionally by other selectors such as
 specification name (`spec_name`) and/or form name (`form_name`).  Where
@@ -961,6 +965,84 @@ class FormProfileManager(UserSetttingsManager):
     def new_user_profile_id(self, profiles):
         """Generate a new unique user profile id based on given list of existing profiles."""
         return self._new_user_profile_id([profile.id() for profile in profiles])
+
+    def accessor(self, spec_name, form_name, view_spec, data):
+        """Return a `FormProfileAccessor` instance of given form.
+
+        A new instance is returned on each call (unlike
+        `FormSettingsManager.state()`, which returns a shared instance).  The
+        accessor is bound to the view specification and the data object of one
+        particular form and the form closes its data object when it is closed.
+
+        Arguments:
+          spec_name (str): Specification name identifying the form.
+          form_name (str): String uniquely identifying the form type.
+          view_spec: `pytis.presentation.ViewSpec` instance of the form.
+          data: Data object of the form.
+
+        """
+        return FormProfileAccessor(self, spec_name, form_name, view_spec, data)
+
+
+class FormProfileAccessor(object):
+    """Form specific access to `FormProfileManager`.
+
+    Wraps the manager instance to simplify the calls for one particular form.
+    The manager methods can be called on this instance without the initial
+    arguments identifying the form; these are prepended automatically.
+
+    """
+    def __init__(self, manager, spec_name, form_name, view_spec, data):
+        """Arguments:
+
+          manager: `FormProfileManager` instance to wrap.
+          spec_name (str): Specification name identifying the form.
+          form_name (str): String uniquely identifying the form type.
+          view_spec: `pytis.presentation.ViewSpec` instance of the form.
+          data: Data object of the form.
+
+        """
+        self._manager = manager
+        self._spec_name = spec_name
+        self._form_name = form_name
+        self._view_spec = view_spec
+        self._data = data
+
+    def load_profiles(self, default_profile):
+        return self._manager.load_profiles(self._spec_name, self._form_name, self._view_spec,
+                                           self._data, default_profile)
+
+    def save_profile(self, profile):
+        return self._manager.save_profile(self._spec_name, self._form_name, profile)
+
+    def drop_profile(self, profile_id):
+        return self._manager.drop_profile(self._spec_name, self._form_name, profile_id)
+
+    def export_profiles(self, selected_profiles):
+        return self._manager.export_profiles(self._spec_name, self._form_name, selected_profiles)
+
+    def import_profiles(self, data):
+        return self._manager.import_profiles(self._spec_name, self._form_name, self._view_spec,
+                                             self._data, data)
+
+    def new_user_profile_id(self, profiles):
+        return self._manager.new_user_profile_id(profiles)
+
+
+class VirtualFormProfileAccessor(FormProfileAccessor):
+    """Profiles of forms which have no specification to store the profiles for.
+
+    Virtual forms are created from constructor arguments rather than from a
+    specification, so there is nothing to store their profiles for.  Only
+    loading needs to be handled -- the forms which use them don't offer the
+    profile management user interface.
+
+    """
+    def __init__(self):
+        super(VirtualFormProfileAccessor, self).__init__(None, None, None, None, None)
+
+    def load_profiles(self, default_profile):
+        return [default_profile]
 
 
 class AggregatedViewsManager(UserSetttingsManager):

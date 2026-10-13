@@ -141,41 +141,6 @@ class Form(pytis.api.APIImplementation, wx.Panel, KeyHandler, CallbackHandler,
         """Exception signalling errors during form initialization."""
         pass
 
-    class _SavedProfilesAccessor(object):
-        """Form-specific access to the global form profile manager.
-
-        Wraps access to the global form profile manager instance to simplify
-        calls for a particular form instance.  All manager methods can be
-        called on this instance without the initial arguments identifying the
-        form; these are prepended automatically.
-
-        """
-        def __init__(self, spec_name, form_name, view_spec, data):
-            self._spec_name = spec_name
-            self._form_name = form_name
-            self._view_spec = view_spec
-            self._data = data
-
-        def load_profiles(self, default_profile):
-            return pytis.form.app.form_profile_manager.load_profiles(
-                self._spec_name, self._form_name, self._view_spec, self._data, default_profile)
-
-        def save_profile(self, profile):
-            return pytis.form.app.form_profile_manager.save_profile(
-                self._spec_name, self._form_name, profile)
-
-        def drop_profile(self, profile_id):
-            return pytis.form.app.form_profile_manager.drop_profile(
-                self._spec_name, self._form_name, profile_id)
-
-        def export_profiles(self, selected_profiles):
-            return pytis.form.app.form_profile_manager.export_profiles(
-                self._spec_name, self._form_name, selected_profiles)
-
-        def import_profiles(self, data):
-            return pytis.form.app.form_profile_manager.import_profiles(
-                self._spec_name, self._form_name, self._view_spec, self._data, data)
-
     @classmethod
     def command_handler_instance(cls):
         return pytis.form.app.current_form(inner=False)
@@ -284,6 +249,11 @@ class Form(pytis.api.APIImplementation, wx.Panel, KeyHandler, CallbackHandler,
         """Return the `pytis.form.FormState` instance holding the settings of this form."""
         return pytis.form.app.form_settings_manager.state(spec_name, self._form_name())
 
+    def _form_profiles_accessor(self, spec_name):
+        """Return the `pytis.form.FormProfileAccessor` instance of this form."""
+        return pytis.form.app.form_profile_manager.accessor(spec_name, self._form_name(),
+                                                            self._view, self._data)
+
     def _full_init(self, resolver, name, guardian=None, transaction=None, **kwargs):
         import pytis.extensions
         start_time = pytis.data.DateTime.now(without_timezone=True)
@@ -301,8 +271,7 @@ class Form(pytis.api.APIImplementation, wx.Panel, KeyHandler, CallbackHandler,
             raise self.InitError()
         spec_name = self._settings_spec_name()
         self._settings = self._form_settings_state(spec_name)
-        self._saved_profiles = self._SavedProfilesAccessor(spec_name, self._form_name(),
-                                                           self._view, self._data)
+        self._saved_profiles = self._form_profiles_accessor(spec_name)
         self._transaction = transaction or self._default_transaction()
         self._init_attributes(**kwargs)
         self._result = None
@@ -1528,7 +1497,7 @@ class LookupForm(InnerForm):
         if title in [profile.title() for profile in self._profiles]:
             app.echo(_(u"Profile of this name already exists."), kind='error')
             return
-        profile_id = pytis.form.app.form_profile_manager.new_user_profile_id(self._profiles)
+        profile_id = self._saved_profiles.new_user_profile_id(self._profiles)
         profile = self._create_profile(profile_id, title)
         self._profiles.append(profile)
         self._saved_profiles.save_profile(profile)
@@ -3761,13 +3730,11 @@ class _VirtualEditForm(EditForm):
         initial selection.
 
     """
-    class _SavedProfilesAccessor(Form._SavedProfilesAccessor):
-        """Virtual forms don't store any profiles, so override the necessary methods by noops."""
-        def load_profiles(self, default_profile):
-            return [default_profile]
-
     def _form_settings_state(self, spec_name):
         return pytis.form.VirtualFormState()
+
+    def _form_profiles_accessor(self, spec_name):
+        return pytis.form.VirtualFormProfileAccessor()
 
     def _full_init(self, resolver, name, guardian=None, transaction=None,
                    prefill=None, avoid_initial_selection=False,
