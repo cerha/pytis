@@ -366,8 +366,11 @@ class Application(pytis.application.BaseApplication, wx.App, KeyHandler, Command
                     initially_active_form_index = i
                     break
         if initially_active_form_index >= 0:
-            # Not just SetSelection() -- the form also needs to be shown and focused.
-            self._activate_tab(initially_active_form_index)
+            try:
+                # Not just SetSelection() -- the form also needs to be shown and focused.
+                self._activate_tab(initially_active_form_index)
+            except Exception as e:
+                log(OPERATIONAL, "Unable to activate the restored form:", e)
         # Only now, when the active form is restored too, the state may be saved.
         # Saving it earlier would overwrite the saved active form by the one
         # selected automatically when the first tab was added.
