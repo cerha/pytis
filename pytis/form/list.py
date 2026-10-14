@@ -3228,6 +3228,15 @@ class SideBrowseForm(BrowseForm):
             return self._data.UNKNOWN_ARGUMENTS
         return dict(self._selection_arguments, **(arguments or {}))
 
+    def _initial_select_row(self):
+        # Suppress the initial select_row() call in side forms.  The 'select_row'
+        # argument is never used here and the row is positioned by on_selection()
+        # (including the binding search).  The form is not filtered and its data
+        # may be released before on_selection() is called, so the initial
+        # select_row() would needlessly restore the select, and when called after
+        # on_selection(), it would reset the position found by the binding search.
+        pass
+
     def _get_aggregation_result(self, key):
         if self._main_form_row is None:
             # Avoid calling select_aggregate with invalid function arguments
