@@ -2924,7 +2924,12 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
             row_number = self._pg_buffer.position()
         # TODO: This log() should temporarily help to investigate unexpected cursor resetting.
         # Remove when the problem is solved.
-        log(EVENT, 'Restoring select:\n' + pytis.util.stack_info(depth=15, relative_paths=True))
+        log(EVENT, 'Restoring select on %s (condition: %s, arguments: %s):\n%s' % (
+            self._key_binding[0].table(),
+            self._pg_last_select_condition,
+            self._pg_last_select_arguments,
+            pytis.util.stack_info(depth=15, relative_paths=True),
+        ))
         self.select(condition=self._pg_last_select_condition,
                     sort=self._pg_last_select_sorting,
                     columns=self._pg_last_select_columns,
