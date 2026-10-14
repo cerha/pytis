@@ -826,9 +826,15 @@ class Application(pytis.application.BaseApplication, wx.App, KeyHandler, Command
     def _activate_tab(self, index):
         notebook = self._notebook
         old_index = notebook.Selection
-        notebook.SetSelection(index)
-        # Calling SetSelection does not trigger _on_page_change()...
-        self._switch_tabs(old_index, index)
+        if index == old_index:
+            # The tab is already selected (the first tab is selected automatically
+            # when added), so _switch_tabs() would do nothing, but the form still
+            # needs to be focused.
+            notebook.GetPage(index).focus()
+        else:
+            notebook.SetSelection(index)
+            # Calling SetSelection does not trigger _on_page_change()...
+            self._switch_tabs(old_index, index)
 
     def _switch_tabs(self, old_index, new_index):
         notebook = self._notebook
