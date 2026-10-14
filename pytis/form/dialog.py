@@ -40,7 +40,7 @@ import pytis.form
 import pytis.util
 
 from pytis.api import app
-from pytis.presentation import TextFormat, Command
+from pytis.presentation import TextFormat, Command, CheckListItem
 from pytis.util import ProgramError, send_mail, public_attr_values
 
 from .command import CommandHandler
@@ -916,6 +916,10 @@ class CheckListDialog(Message):
     of the items.  The question is passed as `message` (`content` is allowed too
     as in `Message`).
 
+    When `columns` are given, the items are displayed as a table with one column
+    per column label.  Without `columns`, the items are displayed as a plain
+    list of labels.
+
     The result returned by the `run` method is a sequence of boolean values, one
     for each item of `items` passed to the constructor.  The value is True for
     items which were checked and False for unchecked items.
@@ -924,33 +928,122 @@ class CheckListDialog(Message):
     _STYLE = GenericDialog._STYLE | wx.RESIZE_BORDER
     _BUTTONS = (GenericDialog.BUTTON_OK, GenericDialog.BUTTON_CANCEL)
 
-    def __init__(self, parent, columns=(), items=(), title=_("Select"), message=None, **kwargs):
+    def __init__(self, parent, columns=(), items=(), title=_("Select"), message=None,
+                 icon=Message.ICON_QUESTION, **kwargs):
         """Initialize the dialog.
 
         Arguments:
-          items: A sequence of checkable items.  Each item is a pair of (bool,
-            unicode).  The bool value indicates the initial checkbox state for
-            this item.  The unicode value is the textual label for the item.
+          columns: Sequence of column labels (strings).  When empty, the items
+            are displayed as a plain list rather than a table.
+          items: A sequence of checkable items.  Each item may be a
+            `pytis.presentation.CheckListItem` instance, a string (the item
+            label, initially unchecked) or a sequence, where the first value is
+            a boolean indicating the initial checkbox state and the following
+            values are the displayed item values.  The number of displayed
+            values must match the number of `columns` (just one value when
+            `columns` are empty).
 
         """
-        super(CheckListDialog, self).__init__(parent, title=title, message=message, **kwargs)
+        super(CheckListDialog, self).__init__(parent, title=title, message=message,
+                                              icon=icon, **kwargs)
         assert isinstance(columns, (list, tuple))
         assert isinstance(items, (list, tuple))
         self._columns = columns
-        self._items = items
+        self._items = [self._check_list_item(item) for item in items]
+        self._reverting_check = False
+
+    def _check_list_item(self, item):
+        if isinstance(item, basestring):
+            item = CheckListItem(item)
+        elif not isinstance(item, CheckListItem):
+            item = CheckListItem(*item[1:], checked=item[0])
+        assert len(item.values) == max(len(self._columns), 1), (item.values, self._columns)
+        return item
 
     def _create_main_content(self, sizer):
         super(CheckListDialog, self)._create_main_content(sizer)
-        self._checklist = checklist = wx.CheckListBox(
-            self._dialog,
-            choices=[label for state, label in self._items],
-        )
-        checklist.SetCheckedItems([i for i, (state, label) in enumerate(self._items) if state])
+        if self._columns:
+            self._checklist = checklist = self._create_check_list_ctrl()
+        else:
+            self._checklist = checklist = self._create_check_list_box()
         sizer.Add(checklist, 1, wx.EXPAND | wx.ALL, 5)
+
+    def _create_check_list_ctrl(self):
+        checklist = wx.ListCtrl(self._dialog, style=wx.LC_REPORT)
+        checklist.EnableCheckBoxes()
+        for i, label in enumerate(self._columns):
+            checklist.InsertColumn(i, label)
+        grayed = wx.SystemSettings.GetColour(wx.SYS_COLOUR_GRAYTEXT)
+        for i, item in enumerate(self._items):
+            checklist.InsertItem(i, unistr(item.values[0]))
+            for j, value in enumerate(item.values[1:]):
+                checklist.SetItem(i, j + 1, unistr(value))
+            checklist.CheckItem(i, item.checked)
+            if not item.enabled:
+                checklist.SetItemTextColour(i, grayed)
+        for i in range(len(self._columns)):
+            # Autosizing to the contents ignores the header label, so use the greater
+            # of the two widths to make sure that neither is truncated.
+            checklist.SetColumnWidth(i, wx.LIST_AUTOSIZE)
+            width = checklist.GetColumnWidth(i)
+            checklist.SetColumnWidth(i, wx.LIST_AUTOSIZE_USEHEADER)
+            if checklist.GetColumnWidth(i) < width:
+                checklist.SetColumnWidth(i, width)
+        checklist.SetMinSize(self._check_list_ctrl_size(checklist))
+        # Bind the callbacks after the initial setup to avoid reverting the initial states.
+        wx_callback(wx.EVT_LIST_ITEM_CHECKED, checklist, self._on_list_item_check)
+        wx_callback(wx.EVT_LIST_ITEM_UNCHECKED, checklist, self._on_list_item_check)
+        return checklist
+
+    def _check_list_ctrl_size(self, checklist):
+        # Return the size needed to display all items and columns without scrolling,
+        # limited to a reasonable maximum for long lists and wide columns.
+        if self._items:
+            rect = checklist.GetItemRect(0)
+            # The top of the first item is just below the column headers.
+            height = rect.y + rect.height * len(self._items)
+        else:
+            height = 80
+        width = sum(checklist.GetColumnWidth(i) for i in range(len(self._columns)))
+        # Add a few pixels for the control borders.
+        height, width = height + 4, width + 4
+        if height > 400:
+            height = 400
+            width += wx.SystemSettings.GetMetric(wx.SYS_VSCROLL_X)
+        return (min(width, 800), height)
+
+    def _create_check_list_box(self):
+        checklist = wx.CheckListBox(
+            self._dialog,
+            choices=[unistr(item.values[0]) for item in self._items],
+        )
+        checklist.SetCheckedItems([i for i, item in enumerate(self._items) if item.checked])
+        wx_callback(wx.EVT_CHECKLISTBOX, checklist, self._on_list_box_check)
+        return checklist
+
+    def _revert_check(self, check, i):
+        # The check events are sent after the state is already changed and can not
+        # be vetoed, so we revert the state back to the state of a disabled item.
+        if not self._items[i].enabled and not self._reverting_check:
+            self._reverting_check = True
+            try:
+                check(i, self._items[i].checked)
+            finally:
+                self._reverting_check = False
+
+    def _on_list_item_check(self, event):
+        self._revert_check(self._checklist.CheckItem, event.GetIndex())
+
+    def _on_list_box_check(self, event):
+        self._revert_check(self._checklist.Check, event.GetSelection())
 
     def _customize_result(self, wxid):
         if self._button(wxid) == self.BUTTON_OK:
-            return [self._checklist.IsChecked(i) for i in range(len(self._items))]
+            if self._columns:
+                is_checked = self._checklist.IsItemChecked
+            else:
+                is_checked = self._checklist.IsChecked
+            return [is_checked(i) for i in range(len(self._items))]
         else:
             return None
 

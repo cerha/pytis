@@ -984,6 +984,42 @@ class Application(API):
         """
         raise NotImplementedError
 
+    def checklist(self,
+                  message,  # type: str
+                  items,  # type: Sequence[Any]
+                  columns=(),  # type: Sequence[str]
+                  title=None,  # type: Optional[str]
+                  ):
+        # type: (...) -> Optional[List[bool]]
+        """Let the user check the items to be processed in a dialog.
+
+        The dialog displays the given message with a list of items and a
+        checkbox for each of the items.  The user checks the items to be
+        processed and confirms or cancels the dialog.
+
+        Returns a sequence of boolean values, one for each item of `items`, in
+        the same order.  The value is True for items which were checked and
+        False for unchecked items.  Returns None when the dialog is canceled.
+
+        Arguments:
+          message (str): The question to be displayed above the list of items.
+          items: A sequence of checkable items.  Each item may be a pair
+            (checked, label), where `checked` is a boolean indicating the
+            initial checkbox state and `label` is the displayed item label.
+            When `columns` are given, the item is a sequence of the initial
+            checkbox state followed by one value per column.  Items which can
+            not be checked by the user must be passed as
+            `pytis.presentation.CheckListItem` instances with `enabled` set to
+            False.
+          columns: Sequence of column labels (strings).  When given, the items
+            are displayed as a table with one column per label.  Each item then
+            must have as many values as there are columns.  When empty, the
+            items are displayed as a plain list of labels.
+          title (str): Dialog window title.
+
+        """
+        raise NotImplementedError
+
     def input_text(self,
                    title,  # type: str
                    label,  # type: Optional[str]

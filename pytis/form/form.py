@@ -81,7 +81,6 @@ from .application import (
 from .search import (
     SearchDialog, FilterDialog, SortingDialog,
 )
-from .dialog import CheckListDialog
 from pytis.dbdefs.db_pytis_statistics import PytisLogForm
 
 # Needed for urllib.parse (urlparse in Python 2).
@@ -1586,9 +1585,8 @@ class LookupForm(InnerForm):
     @Command.define
     def export_profiles(self):
         user_profiles = [p for p in self._profiles if self._is_user_defined_profile(p)]
-        result = pytis.form.app.run_dialog(
-            CheckListDialog, title=_("Export profiles"),
-            message=_("Select the profiles to be exported:"),
+        result = app.checklist(
+            _("Select the profiles to be exported:"), title=_("Export profiles"),
             items=[(True, p.title()) for p in user_profiles],
         )
         if result:
@@ -1611,9 +1609,8 @@ class LookupForm(InnerForm):
                 app.error(error)
             else:
                 titles = [p.title() for p in self._profiles if self._is_user_defined_profile(p)]
-                result = pytis.form.app.run_dialog(
-                    CheckListDialog, title=_("Import profiles"),
-                    message=_("Select the profiles to be imported:"),
+                result = app.checklist(
+                    _("Select the profiles to be imported:"), title=_("Import profiles"),
                     items=[(p.title() not in titles,
                             p.title() + ((' ' + _("(duplicate title)"))
                                          if p.title() in titles else ''))

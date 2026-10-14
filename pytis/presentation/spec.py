@@ -5770,6 +5770,52 @@ class MenuSeparator(object):
     pass
 
 
+class CheckListItem(object):
+    """Checkable item of the dialog displayed by 'pytis.api.app.checklist()'.
+
+    The item consists of one or more values displayed in the dialog (one value
+    per dialog column), the initial state of its checkbox and the information
+    whether the user is allowed to change this state.
+
+    """
+
+    def __init__(self, *values, **kwargs):
+        """Initialize the instance.
+
+        Arguments:
+          values: Displayed values of the item as positional arguments.  The
+            number of values must match the number of columns of the dialog
+            (just one value when the dialog has no columns).  The values are
+            converted to strings for display.
+          checked (bool): Initial state of the item's checkbox.
+          enabled (bool): If False, the item is displayed, but the user is not
+            able to change the state of its checkbox.  Use for items which can
+            not be processed, but should still be visible, typically together
+            with another column describing the reason.
+
+        """
+        checked = kwargs.pop('checked', False)
+        enabled = kwargs.pop('enabled', True)
+        assert isinstance(checked, bool), checked
+        assert isinstance(enabled, bool), enabled
+        assert not kwargs, ("Extra initialization arguments", tuple(kwargs.keys()))
+        self._values = values
+        self._checked = checked
+        self._enabled = enabled
+
+    @property
+    def values(self):
+        return self._values
+
+    @property
+    def checked(self):
+        return self._checked
+
+    @property
+    def enabled(self):
+        return self._enabled
+
+
 class Application(SpecificationBase):
     """Specification of a Pytis application.
 

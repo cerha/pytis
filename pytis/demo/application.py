@@ -31,7 +31,8 @@ import pytis.presentation
 import pytis.util
 
 from pytis.api import app
-from pytis.presentation import Command, Menu, MenuItem, MenuSeparator, StatusField, TextFormat
+from pytis.presentation import (Command, CheckListItem, Menu, MenuItem, MenuSeparator,
+                                StatusField, TextFormat)
 from pytis.util import log, OPERATIONAL, public_attr_values
 _ = pytis.util.translations('pytis-demo')
 
@@ -243,14 +244,24 @@ class Application(pytis.presentation.Application):
                            dict(label= _("Cancel"), icon='cancel',
                                 descr=_("Get back to the current item.")),
                        )),
+                button(_("Check list"), app.checklist,
+                       _("Select the items to be processed:"),
+                       items=((True, _("Checked item")),
+                              (False, _("Unchecked item")),
+                              (False, _("Another unchecked item")))),
+                button(_("Check list with columns"), app.checklist,
+                       _("Select the statements to be imported:"),
+                       title=_("Import statements"),
+                       columns=(_("File"), _("Period"), _("Items"), _("Note")),
+                       items=(CheckListItem('statement-1.xml', '2026-08', 18, '', checked=True),
+                              CheckListItem('statement-2.xml', '2026-09', 24,
+                                            _("Already imported")),
+                              CheckListItem('statement-3.txt', '', '',
+                                            _("Unknown format"), enabled=False))),
             )),
             FieldSet(_("Internal dialogs"), (
                 run_dialog_button(dialog.Calendar, date=datetime.date.today()),
                 run_dialog_button(dialog.ColorSelector, color='#ff0000'),
-                run_dialog_button(dialog.CheckListDialog,
-                                  items=((True, _("Checked item")),
-                                         (False, _("Unchecked item")),
-                                         (False, _("Another unchecked item")))),
                 run_dialog_button(dialog.BugReport, einfo=einfo),
                 run_dialog_button(
                     dialog.AggregationSetupDialog,

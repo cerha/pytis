@@ -335,13 +335,11 @@ class Application(pytis.application.BaseApplication, wx.App, KeyHandler, Command
                 log(OPERATIONAL, "Ignoring saved startup form:", (cls, name))
         if saved_forms and not self._headless:
             if not pytis.config.autostart_saved_forms:
-                checked = self.run_dialog(
-                    dialog.CheckListDialog,
+                checked = app.checklist(
+                    _("Restore these forms saved on last exit?"),
                     title=_("Restore forms"),
-                    message=_("Restore these forms saved on last exit?"),
                     items=[(True, '%s (%s)' % (self._spec_title(name), f.descr()))
                            for f, name in saved_forms],
-                    icon=dialog.CheckListDialog.ICON_QUESTION,
                 )
                 saved_forms = [x for x, ch in zip(saved_forms, checked or []) if ch]
             startup_forms[:0] = saved_forms
@@ -1873,6 +1871,10 @@ class Application(pytis.application.BaseApplication, wx.App, KeyHandler, Command
                      timeout=None):
         return self.run_dialog(dialog.Question, message, title=title or _("Question"),
                                answers=answers, default=default, timeout=timeout, content=content)
+
+    def api_checklist(self, message, items, columns=(), title=None):
+        return self.run_dialog(dialog.CheckListDialog, message=message, items=items,
+                               columns=columns, title=title or _("Select"))
 
     def api_delete_record_question(self, message=None):
         log(EVENT, 'Record deletion dialog')

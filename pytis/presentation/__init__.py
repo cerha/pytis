@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2025 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2026 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2002-2017 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -55,7 +55,7 @@ from .spec import (
     HttpAttachmentStorage as HttpAttachmentStorage,
     DbAttachmentStorage as DbAttachmentStorage,
     SharedParams as SharedParams, Menu as Menu, MenuItem as MenuItem,
-    MenuSeparator as MenuSeparator, Command as Command,
+    MenuSeparator as MenuSeparator, CheckListItem as CheckListItem, Command as Command,
     CommandHandler as CommandHandler,
     CommandHandlerMetaClass as CommandHandlerMetaClass, StatusField as StatusField,
     SpecificationBase as SpecificationBase, Application as Application,

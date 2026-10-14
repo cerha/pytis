@@ -68,7 +68,7 @@ except ImportError:
 import pytis.remote
 
 from .event import UserBreakException, wx_callback
-from .dialog import AggregationSetupDialog, CheckListDialog
+from .dialog import AggregationSetupDialog
 from .form import (
     BrowsableShowForm, Form, LookupForm, PopupEditForm, PopupForm,
     QueryFieldsForm, RecordForm, Refreshable, ShowForm,
@@ -1698,10 +1698,9 @@ class ListForm(RecordForm, Refreshable):
     @Command.define
     def toggle_columns(self):
         columns = self._available_columns()
-        result = pytis.form.app.run_dialog(
-            CheckListDialog, title=_("Displayed columns"),
-            message=_("Select the columns to be displayed:"),
-            items=[(c in self._columns, c.column_label()) for c in columns]
+        result = app.checklist(
+            _("Select the columns to be displayed:"), title=_("Displayed columns"),
+            items=[(c in self._columns, c.column_label()) for c in columns],
         )
         if result:
             for i, (c, checked) in enumerate(zip(columns, result)):

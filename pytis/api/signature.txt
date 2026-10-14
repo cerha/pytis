@@ -12,6 +12,7 @@ APIProvider.__setattr__(name, value)
 APIProvider.__str__()
 Application
 Application.call(function, *args, **kwargs)
+Application.checklist(message, items, columns=(), title=None)
 Application.codebook(specification, select_row=0, columns=None, sorting=None, filter=None, condition=None, multirow=False, begin_search=None, transaction=None)
 Application.decrypted_areas()
 Application.delete_record(specification, row, question=None, transaction=None)
