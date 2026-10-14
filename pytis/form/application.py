@@ -186,6 +186,7 @@ class Application(pytis.application.BaseApplication, wx.App, KeyHandler, Command
         nb.TabCtrlHeight = 36
         frame.Sizer.Add(nb, 1, wx.EXPAND)
         wx_callback(wx.aui.EVT_AUINOTEBOOK_PAGE_CHANGED, nb, self._on_page_change)
+        wx_callback(wx.EVT_CHILD_FOCUS, nb, self._on_notebook_child_focus)
         wx_callback(wx.aui.EVT_AUINOTEBOOK_TAB_RIGHT_DOWN, nb, self._on_tab_mouse_right)
         # This panel is solely for catching keyboard events (it can't be done
         # with the frame or the notebook).
@@ -920,6 +921,19 @@ class Application(pytis.application.BaseApplication, wx.App, KeyHandler, Command
         # user clicks into it.  Hence we need to focus the active form again
         # when the frame becomes active.
         if event.Active:
+            wx.CallAfter(self._focus_active_form)
+        event.Skip()
+
+    def _on_notebook_child_focus(self, event):
+        # Clicking a tab moves the focus to the notebook's tab control, where
+        # the keyboard commands of the form don't work and the arrow keys
+        # switch the tabs instead.  The application is controlled from the
+        # forms (and the tabs can be switched by their own commands), so give
+        # the focus back to the active form.  Only the tab control of the main
+        # notebook is handled -- the event also propagates here from the forms
+        # and their nested notebooks.
+        window = event.Window
+        if isinstance(window, wx.aui.AuiTabCtrl) and window.Parent is self._notebook:
             wx.CallAfter(self._focus_active_form)
         event.Skip()
 
