@@ -2046,7 +2046,12 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler, KeyHandler, pytis.api.A
         if isinstance(content, lcg.ContentNode):
             node = content
         else:
-            node = lcg.ContentNode('content', content=content, title='')
+            # The node needs a resource provider for the exporter to be able to allocate
+            # the stylesheets declared by 'Exporter._STYLES'.  Without it, the content
+            # would be displayed using the browser's built in styles only.
+            node = lcg.ContentNode('content', content=content, title='',
+                                   resource_provider=lcg.ResourceProvider(
+                                       dirs=pytis.util.resource_dirs()))
         exporter = self._exporter(exporter_class or self.Exporter)
         context = exporter.context(node, pytis.util.environment_language())
         html = exporter.export(context)

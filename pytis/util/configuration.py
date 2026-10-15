@@ -556,24 +556,17 @@ class Configuration(object):
                     for d in (os.path.join(os.path.dirname(pytis.__file__), 'assets'), os.getcwd())]
 
     class _Option_resource_path(PathOption):
-        """Sequence of directory names containing browser resources.
+        """Sequence of application specific directories containing browser resources.
 
-        The sequence should contain a full path at least to the 'resources'
-        subdirectories found in the root of Pytis and LCG packages (these
-        resources such as images and CSS are needed by the Pytis help system).
-        Additionally it may contain application specific resource directories if
-        application refers to its own resources within the contents displayed
-        through the built in browser.
+        Resources, such as images, style sheets or scripts referred from the
+        contents displayed through the built in browser, are searched in these
+        directories first.  Pytis and LCG built-in resource directories are
+        searched automatically after them (see 'pytis.util.resource_dirs()'),
+        so they don't need to be listed here.  Files in application directories
+        may thus also override built-in resources of the same name.
 
         """
         _ENVIRONMENT = ('PYTIS_RESOURCE_PATH',)
-
-        def default(self):
-            # Note: LCG 'resources' dir is added by LCG automatically.
-            path = [os.path.join(os.path.dirname(pytis.__file__), 'assets', 'resources')]
-            if self._configuration.help_dir:
-                path.append(os.path.join(self._configuration.help_dir, 'img'))
-            return path
 
     class _Option_print_spec_dir(FileOption):
         u"""Adresář obsahující specifikace tiskových sestav.

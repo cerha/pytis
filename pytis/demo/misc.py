@@ -22,7 +22,6 @@ from __future__ import print_function
 
 import datetime
 import io
-import os
 
 import pytis.data
 import pytis.data as pd
@@ -416,7 +415,6 @@ class Products(Specification):
                 if record['notes'].value() else lcg.Content(),
             ),
             title=record['product'].value(),
-            resource_path=((os.path.join(os.path.dirname(pytis.__file__), 'resources')),),
             resources=('pytis-demo-product.css',),
         )
 

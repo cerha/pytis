@@ -1875,16 +1875,33 @@ def stack_info(depth=None, relative_paths=False):
                       for frame in reversed(stack)])
 
 
+def resource_dirs():
+    """Return the list of directories where browser resources are searched.
+
+    The list contains the application specific directories from the
+    configuration option 'resource_path' followed by Pytis built-in resource
+    directories.  The LCG built-in resource directory is not included as it is
+    added automatically by 'lcg.ResourceProvider'.
+
+    """
+    import pytis
+    dirs = list(pytis.config.resource_path)
+    dirs.append(os.path.join(os.path.dirname(pytis.__file__), 'assets', 'resources'))
+    if pytis.config.help_dir:
+        dirs.append(os.path.join(pytis.config.help_dir, 'img'))
+    return dirs
+
+
 def lcg_node(content, title=None, resource_path=(), resources=()):
     """Return lcg.ContentNode for given content with given resources.
 
     Arguments:
       content: lcg.Content instance or a sequence of such instances.
-      resource_path (tuple): Sequence of filesystem directory names where
-        resource files referred from the document (images, style sheets,
-        scripts) are searched.  The LCG's resource directory is appended
-        automatically.  The arrangement of files in resource directories must
-        follow the standard expected by lcg.ResourceProvider.
+      resource_path (tuple): Sequence of additional filesystem directory names
+        where resource files referred from the document (images, style sheets,
+        scripts) are searched.  The directories returned by `resource_dirs()`
+        are appended automatically.  The arrangement of files in resource
+        directories must follow the standard expected by lcg.ResourceProvider.
       resources (list): List of lcg.Resource instances or string resource file
         names.  The lcg.Resource instances will be passed to the resource
         provider as statically defined resources.  The string names will be
@@ -1895,9 +1912,8 @@ def lcg_node(content, title=None, resource_path=(), resources=()):
 
     """
     import lcg
-    import os
     resource_provider = lcg.ResourceProvider(
-        dirs=list(resource_path),
+        dirs=list(resource_path) + resource_dirs(),
         resources=[r for r in resources if isinstance(r, lcg.Resource)],
     )
     for r in resources:
@@ -1975,13 +1991,13 @@ def lcg_to_html(text, styles=('default.css',), resource_path=()):
     Arguments:
       text (str): The source text in LCG structured text format.
       styles (tuple): Sequence of style sheet file names to be embedded as
-        inline styles in the final document.  These files must be located in
-        resource directories specified by resource_path.
-      resource_path (tuple): Sequence of filesystem directory names where
-        resource files (style sheets) are searched.  The LCG's resource
-        directory is appended automatically.  The arrangement of files in
-        resource directories must follow the standard expected by
-        lcg.ResourceProvider.
+        inline styles in the final document.  These files are searched in
+        resource directories as described below.
+      resource_path (tuple): Sequence of additional filesystem directory names
+        where resource files (style sheets) are searched.  The directories
+        returned by `resource_dirs()` are appended automatically.  The
+        arrangement of files in resource directories must follow the standard
+        expected by lcg.ResourceProvider.
 
     Returns:
       The exported HTML as UTF-8 encoded string.

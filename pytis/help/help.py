@@ -315,7 +315,7 @@ class HelpGenerator(object):
         pass
 
     def __init__(self):
-        self._resource_provider = lcg.ResourceProvider(dirs=pytis.config.resource_path)
+        self._resource_provider = lcg.ResourceProvider(dirs=pytis.util.resource_dirs())
         self._root_node = None
 
     def _application_help_nodes(self):
