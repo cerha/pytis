@@ -1879,13 +1879,23 @@ def resource_dirs():
     """Return the list of directories where browser resources are searched.
 
     The list contains the application specific directories from the
-    configuration option 'resource_path' followed by Pytis built-in resource
-    directories.  The LCG built-in resource directory is not included as it is
-    added automatically by 'lcg.ResourceProvider'.
+    configuration option 'resource_path' and from the method 'resource_path()'
+    of the application specification ('pytis.presentation.Application')
+    followed by Pytis built-in resource directories.  The LCG built-in resource
+    directory is not included as it is added automatically by
+    'lcg.ResourceProvider'.
 
     """
     import pytis
+    from .resolver import ResolverError
     dirs = list(pytis.config.resource_path)
+    try:
+        application = pytis.config.resolver.specification('Application')
+    except ResolverError:
+        # The application doesn't define its specification.
+        pass
+    else:
+        dirs.extend(application.resource_path())
     dirs.append(os.path.join(os.path.dirname(pytis.__file__), 'assets', 'resources'))
     if pytis.config.help_dir:
         dirs.append(os.path.join(pytis.config.help_dir, 'img'))

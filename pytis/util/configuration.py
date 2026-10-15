@@ -563,7 +563,9 @@ class Configuration(object):
         directories first.  Pytis and LCG built-in resource directories are
         searched automatically after them (see 'pytis.util.resource_dirs()'),
         so they don't need to be listed here.  Files in application directories
-        may thus also override built-in resources of the same name.
+        may thus also override built-in resources of the same name.  The
+        application may also define its resource directories in its
+        specification (see 'pytis.presentation.Application.resource_path()').
 
         """
         _ENVIRONMENT = ('PYTIS_RESOURCE_PATH',)

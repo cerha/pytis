@@ -5883,6 +5883,18 @@ class Application(SpecificationBase):
         """
         return ()
 
+    def resource_path(self):
+        """Return a sequence of application specific resource directory names.
+
+        Resources, such as style sheets or images referred from the contents
+        displayed through the built in browser, are searched in these
+        directories.  They are searched after the directories given by the
+        configuration option 'resource_path' and before Pytis and LCG built-in
+        resource directories (see `pytis.util.resource_dirs()`).
+
+        """
+        return ()
+
     def menu(self):
         """Return the application's main menu as a sequence of `Menu` instances."""
         return ()
