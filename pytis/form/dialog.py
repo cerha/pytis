@@ -934,6 +934,8 @@ class CheckListDialog(Message):
     _BUTTONS = (GenericDialog.BUTTON_OK, GenericDialog.BUTTON_CANCEL)
     _MAX_COLUMN_WIDTH = 240
     """Maximal width of a table column in pixels."""
+    _MAX_SIZE = (1066, 400)
+    """Maximal size of the table in pixels; larger contents are scrolled."""
     _CELL_MARGIN = 10
     """Space taken by cell borders in pixels (used to detect truncated values)."""
 
@@ -1043,10 +1045,11 @@ class CheckListDialog(Message):
         width = sum(checklist.GetColumnWidth(i) for i in range(len(self._columns)))
         # Add a few pixels for the control borders.
         height, width = height + 4, width + 4
-        if height > 400:
-            height = 400
+        max_width, max_height = self._MAX_SIZE
+        if height > max_height:
+            height = max_height
             width += wx.SystemSettings.GetMetric(wx.SYS_VSCROLL_X)
-        return (min(width, 800), height)
+        return (min(width, max_width), height)
 
     def _create_check_list_box(self):
         checklist = wx.CheckListBox(
