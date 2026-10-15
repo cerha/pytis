@@ -920,6 +920,11 @@ class CheckListDialog(Message):
     per column label.  Without `columns`, the items are displayed as a plain
     list of labels.
 
+    Table columns are sized to their contents, but never wider than
+    `_MAX_COLUMN_WIDTH`.  A value which does not fit is truncated in the
+    display and shown in full in a tooltip, so that a single long value (such
+    as an error message) doesn't push the remaining columns out of sight.
+
     The result returned by the `run` method is a sequence of boolean values, one
     for each item of `items` passed to the constructor.  The value is True for
     items which were checked and False for unchecked items.
@@ -927,6 +932,10 @@ class CheckListDialog(Message):
     """
     _STYLE = GenericDialog._STYLE | wx.RESIZE_BORDER
     _BUTTONS = (GenericDialog.BUTTON_OK, GenericDialog.BUTTON_CANCEL)
+    _MAX_COLUMN_WIDTH = 240
+    """Maximal width of a table column in pixels."""
+    _CELL_MARGIN = 10
+    """Space taken by cell borders in pixels (used to detect truncated values)."""
 
     def __init__(self, parent, columns=(), items=(), title=_("Select"), message=None,
                  icon=Message.ICON_QUESTION, **kwargs):
@@ -951,6 +960,7 @@ class CheckListDialog(Message):
         self._columns = columns
         self._items = [self._check_list_item(item) for item in items]
         self._reverting_check = False
+        self._tooltip = None
 
     def _check_list_item(self, item):
         if isinstance(item, basestring):
@@ -968,6 +978,11 @@ class CheckListDialog(Message):
             self._checklist = checklist = self._create_check_list_box()
         sizer.Add(checklist, 1, wx.EXPAND | wx.ALL, 5)
 
+    def _cell_label(self, value):
+        # A multi line value would break the row, so only its first line is displayed.
+        # The whole value remains available in the tooltip.
+        return unistr(value).split('\n')[0]
+
     def _create_check_list_ctrl(self):
         checklist = wx.ListCtrl(self._dialog, style=wx.LC_REPORT)
         checklist.EnableCheckBoxes()
@@ -975,9 +990,9 @@ class CheckListDialog(Message):
             checklist.InsertColumn(i, label)
         grayed = wx.SystemSettings.GetColour(wx.SYS_COLOUR_GRAYTEXT)
         for i, item in enumerate(self._items):
-            checklist.InsertItem(i, unistr(item.values[0]))
+            checklist.InsertItem(i, self._cell_label(item.values[0]))
             for j, value in enumerate(item.values[1:]):
-                checklist.SetItem(i, j + 1, unistr(value))
+                checklist.SetItem(i, j + 1, self._cell_label(value))
             checklist.CheckItem(i, item.checked)
             if not item.enabled:
                 checklist.SetItemTextColour(i, grayed)
@@ -989,11 +1004,32 @@ class CheckListDialog(Message):
             checklist.SetColumnWidth(i, wx.LIST_AUTOSIZE_USEHEADER)
             if checklist.GetColumnWidth(i) < width:
                 checklist.SetColumnWidth(i, width)
+            if checklist.GetColumnWidth(i) > self._MAX_COLUMN_WIDTH:
+                checklist.SetColumnWidth(i, self._MAX_COLUMN_WIDTH)
         checklist.SetMinSize(self._check_list_ctrl_size(checklist))
         # Bind the callbacks after the initial setup to avoid reverting the initial states.
         wx_callback(wx.EVT_LIST_ITEM_CHECKED, checklist, self._on_list_item_check)
         wx_callback(wx.EVT_LIST_ITEM_UNCHECKED, checklist, self._on_list_item_check)
+        wx_callback(wx.EVT_MOTION, checklist, self._on_list_motion)
         return checklist
+
+    def _on_list_motion(self, event):
+        event.Skip()
+        checklist = self._checklist
+        row, flags, column = checklist.HitTestSubItem(event.Position)
+        tooltip = None
+        if row >= 0 and column >= 0:
+            value = self._items[row].values[column]
+            width = checklist.GetTextExtent(self._cell_label(value)).width + self._CELL_MARGIN
+            if width > checklist.GetColumnWidth(column):
+                tooltip = unistr(value)
+        if tooltip != self._tooltip:
+            # Setting the tooltip on every motion event would make it blink.
+            self._tooltip = tooltip
+            if tooltip is None:
+                checklist.UnsetToolTip()
+            else:
+                checklist.SetToolTip(tooltip)
 
     def _check_list_ctrl_size(self, checklist):
         # Return the size needed to display all items and columns without scrolling,
