@@ -2229,6 +2229,8 @@ class RecordForm(LookupForm):
             args = (self.current_row(),)
         elif context == ActionContext.SELECTION:
             args = (self.selected_rows(fallback_to_current_row=True),)
+        elif context == ActionContext.GLOBAL:
+            args = (self.provider(),)
         else:
             raise ProgramError("Unsupported action context:", context)
         if secondary_context is not None:

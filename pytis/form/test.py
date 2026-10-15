@@ -192,11 +192,12 @@ class TestListFormCurrentRow:
     def form(self, mock):
         from pytis.form.list import ListForm
 
-        def make(cursor_row, selection=False):
+        def make(cursor_row, selection=False, global_menu=()):
             return mock.Mock(
                 _grid=mock.Mock(IsSelection=mock.Mock(return_value=selection),
                                 GetGridCursorRow=mock.Mock(return_value=cursor_row)),
                 _table=mock.Mock(data_position=mock.Mock(return_value=17)),
+                _global_context_menu=mock.Mock(return_value=global_menu),
                 CALL_SELECTION=ListForm.CALL_SELECTION,
             )
         return make
@@ -210,6 +211,9 @@ class TestListFormCurrentRow:
 
     def test_context_menu_enabled_on_selection(self, form, method):
         assert method('_can_context_menu')(form(-1, selection=True))
+
+    def test_context_menu_enabled_with_global_actions(self, form, method):
+        assert method('_can_context_menu')(form(-1, global_menu=('ITEM',)))
 
     def test_incremental_search_reports_the_current_row(self, form, method):
         # Regression: the record was fetched for the data pointer position.

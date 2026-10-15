@@ -384,6 +384,7 @@ class ListForm(RecordForm, Refreshable):
         wx_callback(wx.grid.EVT_GRID_CELL_RIGHT_CLICK, g, self._on_right_click)
         wx_callback(wx.grid.EVT_GRID_CELL_LEFT_CLICK, g, self._on_left_click)
         wx_callback(wx.EVT_MOTION, g.GetGridWindow(), self._on_mouse_move)
+        wx_callback(wx.EVT_RIGHT_DOWN, g.GetGridWindow(), self._on_grid_window_right_down)
         wx_callback(wx.EVT_MOUSEWHEEL, g, self._on_wheel)
         wx_callback(wx.EVT_IDLE, g, self._on_idle)
         wx_callback(wx.EVT_KEY_DOWN, g, self.on_key_down)
@@ -644,6 +645,20 @@ class ListForm(RecordForm, Refreshable):
 
         Derived classes should override this method if they want to display a
         context menu.
+
+        Returns:
+          A sequence of `MenuItem` instances.
+
+        """
+        return ()
+
+    def _global_context_menu(self):
+        """Return the specification of the context popup menu outside grid cells.
+
+        This menu is displayed when the user invokes the context menu in the
+        grid area not covered by any cell (such as in an empty form), so it
+        must not contain items related to the current row.  Derived classes
+        may override this method to provide such items.
 
         Returns:
           A sequence of `MenuItem` instances.
@@ -1477,7 +1492,19 @@ class ListForm(RecordForm, Refreshable):
         row, col = event.GetRow(), event.GetCol()
         self._select_cell(row, col)
         self._grid.Refresh()
-        self.context_menu(position=event.GetPosition())
+        self._show_context_menu(position=event.GetPosition())
+
+    def _on_grid_window_right_down(self, event):
+        # Clicks outside grid cells (such as in an empty form) are ignored by
+        # wx.Grid (no EVT_GRID_CELL_RIGHT_CLICK is emitted), so we handle them here.
+        g = self._grid
+        pos = g.CalcUnscrolledPosition(event.GetPosition())
+        if g.YToRow(pos.y) != -1 and g.XToCol(pos.x) != -1:
+            event.Skip()
+        else:
+            self._run_callback(self.CALL_USER_INTERACTION)
+            position = g.ScreenToClient(event.GetEventObject().ClientToScreen(event.GetPosition()))
+            self._show_context_menu(position=position, global_menu=True)
 
     def _on_range_select(self, event):
         if self._grid.IsSelection():
@@ -1970,21 +1997,30 @@ class ListForm(RecordForm, Refreshable):
     def _can_filter_contained(self, name, *args, **kwargs):
         return app.has_access(name) and self._current_profile.id() != '__constructor_profile__'
 
-    @Command.define
-    def context_menu(self, position=None):
-        menu = self._context_menu()
-        if menu:
-            if position is None:
-                g = self._grid
+    def _show_context_menu(self, position=None, global_menu=False):
+        g = self._grid
+        if not global_menu and (g.IsSelection() or g.GetGridCursorRow() >= 0):
+            menu = self._context_menu()
+            if menu and position is None:
                 row, col = self._current_cell()
                 rect = g.CellToRect(row, col)
                 pos = (rect.GetX() + rect.GetWidth() // 3,
                        rect.GetY() + rect.GetHeight() // 2 + g.GetColLabelSize())
-                position = self._grid.CalcScrolledPosition(pos)
+                position = g.CalcScrolledPosition(pos)
+        else:
+            menu = self._global_context_menu()
+            if menu and position is None:
+                position = (g.GetRowLabelSize(), g.GetColLabelSize())
+        if menu:
             self._popup_menu(menu, position=position)
 
+    @Command.define
+    def context_menu(self, position=None):
+        self._show_context_menu(position=position)
+
     def _can_context_menu(self, position=None):
-        return self._grid.IsSelection() or self._grid.GetGridCursorRow() >= 0
+        g = self._grid
+        return g.IsSelection() or g.GetGridCursorRow() >= 0 or bool(self._global_context_menu())
 
     def _popup_menu(self, items, position=None):
         pytis.form.app.popup_menu(self._grid, items, keymap=self._get_keymap(), position=position)
@@ -3107,12 +3143,18 @@ class BrowseForm(FoldableForm):
                                          binding=binding, not_in=not_in))
                 for name, column_id, field, title, binding in linkspec]
 
+    def _global_context_menu(self):
+        return tuple(self._action_mitems(self._view.actions(), context=ActionContext.GLOBAL))
+
     def _context_menu(self):
         if self._grid.IsSelection():
             menu = self._selection_context_menu()
             actions = self._action_mitems(self._view.actions(), context=ActionContext.SELECTION)
             if actions:
                 menu += (MenuSeparator(),) + tuple(actions)
+            global_menu = self._global_context_menu()
+            if global_menu:
+                menu += (MenuSeparator(),) + global_menu
         else:
             menu = self._context_menu_static_part
             row = self.current_row()

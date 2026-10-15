@@ -455,7 +455,14 @@ class ActionContext(object):
     Global actions don't operate on particular records, they either don't
     operate on records at all or they operate on all records or they implement
     their own method of selecting the record(s) for the operation (e.g. pop-up a
-    dialog).  The handler will receive no positional argument.
+    dialog).
+
+    In wx forms, the action handler receives the form as a `pytis.api.Form`
+    instance as its first positional argument.  The `enabled` callable
+    receives the same form object.
+
+    In web forms, the `enabled` and `visible` callables receive the current
+    request as their first positional argument.
 
     """
     # TODO: There could be another value here to define universal actions that
