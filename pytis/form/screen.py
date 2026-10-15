@@ -1663,9 +1663,16 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler, KeyHandler, pytis.api.A
 
         def __init__(self, *args, **kwargs):
             self._resource_base_uri = kwargs.pop('resource_base_uri')
-            kwargs['styles'] = (self._STYLESHEETS if self._STYLESHEETS is not None
-                                else pytis.config.stylesheets)
+            self._default_stylesheets = kwargs['styles'] = (
+                self._STYLESHEETS if self._STYLESHEETS is not None else pytis.config.stylesheets
+            )
             super(Browser.Exporter, self).__init__(*args, **kwargs)
+
+        def _stylesheets(self, context):
+            # Put the default styles first so that the style sheets assigned
+            # to the content may override them.
+            return sorted(super(Browser.Exporter, self)._stylesheets(context),
+                          key=lambda s: s.filename() not in self._default_stylesheets)
 
         def _uri_resource(self, context, resource):
             return resource.uri() or self._resource_base_uri + resource.filename()
@@ -2032,7 +2039,10 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler, KeyHandler, pytis.api.A
           content: `lcg.ContentNode` instance representing the document to be
             loaded into the browser.  The node content will be exported into
             HTML and displayed.  Can also be `lcg.Content` which will be
-            automatically wrapped by untitled `lcg.ContentNode`.
+            automatically wrapped by untitled `lcg.ContentNode`.  In this case,
+            style sheets assigned to the content (through the `resources`
+            argument of `lcg.Content`) are used in addition to the default
+            styles (configuration option `stylesheets`).
           base_uri: Base URI of the document.  Relative URIs within the document
             are relative to this URI.  Browser policies may also restrict
             loading further resources according to this URI.
@@ -2050,10 +2060,18 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler, KeyHandler, pytis.api.A
         else:
             # The node needs a resource provider for the exporter to be able to allocate
             # the exporter's style sheets.  Without it, the content would be displayed
-            # using the browser's built in styles only.
+            # using the browser's built in styles only.  Resources assigned to the
+            # content are passed to the provider so that the style sheets among them
+            # are used too.  Those not bound to any data (such as
+            # lcg.Stylesheet('xy.css')) are located in resource directories first.
+            dirs = pytis.util.resource_dirs()
+            finder = lcg.ResourceProvider(dirs=dirs)
+            resources = [r if r.src_file() or r.content() or r.uri()
+                         else finder.resource(r.filename())
+                         for r in content.resources()]
             node = lcg.ContentNode('content', content=content, title='',
                                    resource_provider=lcg.ResourceProvider(
-                                       dirs=pytis.util.resource_dirs()))
+                                       dirs=dirs, resources=[r for r in resources if r]))
         exporter = self._exporter(exporter_class or self.Exporter)
         context = exporter.context(node, pytis.util.environment_language())
         html = exporter.export(context)
@@ -2806,9 +2824,10 @@ def wx_text_view(parent, content, format=None, width=None, height=None, resource
         set to fit the text height (number of lines with maximum of 20
         characters) when `format` is `TextFormat.PLAIN` or 30 characters for
         other formats.
-      resources: Sequence of statically defined `lcg.Resource` instances
-        representing external files (such as images) used within the content.
-        Only applicable when `format` is `TextFormat.LCG`.
+      resources: Sequence of `lcg.Resource` instances representing external
+        files (such as images or style sheets) used within the content, as
+        described in `pytis.util.content()`.  Only applicable when `format` is
+        `TextFormat.LCG`.
 
     """
     import wx

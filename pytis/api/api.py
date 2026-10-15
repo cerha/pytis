@@ -775,7 +775,9 @@ class Browser(API):
 
         Arguments:
           content: 'lcg.ContentNode' or 'lcg.Content' instance to be exported
-            into HTML and displayed.
+            into HTML and displayed.  Style sheets assigned to 'lcg.Content'
+            (through its 'resources' argument) are used in addition to the
+            default styles (configuration option 'stylesheets').
           base_uri (str): Base URI of the document.
           restrict_navigation: As in 'load_uri'.
           on_navigation: As in 'load_uri'.

@@ -1955,14 +1955,20 @@ def content(content, format=None, resources=()):
         Parser.  This argument is irrelevant if content is not given as a
         string.  If None, the default format is TextFormat.LCG.
       resources (list): List of lcg.Resource instances or string resource file
-        names.  The lcg.Resource instances will be passed to the resource
-        provider as statically defined resources.  The string names will be
-        allocated through the resource provider (searched within resource_path).
+        names assigned to the content.  File names are converted to
+        lcg.Resource instances of the matching type (such as
+        lcg.Stylesheet('xy.css') for 'xy.css').  Resources not bound to any
+        data are located in resource directories when the content is displayed
+        in the browser (see 'resource_dirs()').
 
-    The content is returned as an 'lcg.ContentNode' instance.
+    The content is returned as an 'lcg.Content' instance.
 
     """
     import lcg
+    # TODO: Consider supporting resource file names directly in 'lcg.Content'
+    # to get rid of the inconsistency between 'lcg.Content' and this function.
+    resources = [lcg.Resource.subclass(r)(r) if isinstance(r, basestring) else r
+                 for r in resources]
     if isinstance(content, basestring):
         from pytis.presentation import TextFormat
         if format is None or format == TextFormat.LCG:
