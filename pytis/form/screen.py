@@ -1658,11 +1658,13 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler, KeyHandler, pytis.api.A
 
     class Exporter(lcg.StyledHtmlExporter, lcg.HtmlExporter):
 
-        _STYLES = ('default.css',)
+        _STYLESHEETS = None
+        """Style sheet file names or None to use the configuration option 'stylesheets'."""
 
         def __init__(self, *args, **kwargs):
             self._resource_base_uri = kwargs.pop('resource_base_uri')
-            kwargs['styles'] = self._STYLES
+            kwargs['styles'] = (self._STYLESHEETS if self._STYLESHEETS is not None
+                                else pytis.config.stylesheets)
             super(Browser.Exporter, self).__init__(*args, **kwargs)
 
         def _uri_resource(self, context, resource):
@@ -2047,8 +2049,8 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler, KeyHandler, pytis.api.A
             node = content
         else:
             # The node needs a resource provider for the exporter to be able to allocate
-            # the stylesheets declared by 'Exporter._STYLES'.  Without it, the content
-            # would be displayed using the browser's built in styles only.
+            # the exporter's style sheets.  Without it, the content would be displayed
+            # using the browser's built in styles only.
             node = lcg.ContentNode('content', content=content, title='',
                                    resource_provider=lcg.ResourceProvider(
                                        dirs=pytis.util.resource_dirs()))

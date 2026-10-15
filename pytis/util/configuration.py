@@ -568,6 +568,19 @@ class Configuration(object):
         """
         _ENVIRONMENT = ('PYTIS_RESOURCE_PATH',)
 
+    class _Option_stylesheets(Option):
+        """Sequence of style sheet file names used for contents displayed in the browser.
+
+        The style sheets apply to all LCG contents displayed within the
+        application through the built in browser, such as dialog contents or web
+        forms (except for the help system, which uses its own styles).  The
+        files are searched in resource directories (see 'resource_path').  The
+        application may replace the default style sheet or add its own after it.
+
+        """
+        _DEFAULT = ('default.css',)
+        _DEFAULT_STRING = "('default.css',)"
+
     class _Option_print_spec_dir(FileOption):
         u"""Adresář obsahující specifikace tiskových sestav.
 

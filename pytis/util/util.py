@@ -1984,15 +1984,16 @@ def content(content, format=None, resources=()):
     return content
 
 
-def lcg_to_html(text, styles=('default.css',), resource_path=()):
-    # type: (str, tuple, tuple) -> str
+def lcg_to_html(text, styles=None, resource_path=()):
+    # type: (str, Optional[tuple], tuple) -> str
     """Return given LCG structured text converted to HTML.
 
     Arguments:
       text (str): The source text in LCG structured text format.
       styles (tuple): Sequence of style sheet file names to be embedded as
         inline styles in the final document.  These files are searched in
-        resource directories as described below.
+        resource directories as described below.  If None, the configuration
+        option 'stylesheets' is used.
       resource_path (tuple): Sequence of additional filesystem directory names
         where resource files (style sheets) are searched.  The directories
         returned by `resource_dirs()` are appended automatically.  The
@@ -2011,6 +2012,9 @@ def lcg_to_html(text, styles=('default.css',), resource_path=()):
             return super(Exporter, self)._head(context) + \
                 [g.meta(http_equiv='Content-Type', content='text/html; charset=utf-8')]
 
+    if styles is None:
+        import pytis
+        styles = pytis.config.stylesheets
     node = parse_lcg_text(text, resource_path=resource_path, resources=styles)
     exporter = Exporter(inlinestyles=True)
     context = exporter.context(node, None)
