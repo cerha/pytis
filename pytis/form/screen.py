@@ -1659,12 +1659,13 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler, KeyHandler, pytis.api.A
     class Exporter(lcg.StyledHtmlExporter, lcg.HtmlExporter):
 
         _STYLESHEETS = None
-        """Style sheet file names or None to use the configuration option 'stylesheets'."""
+        """Style sheet file names or None to use 'pytis.util.default_stylesheets()'."""
 
         def __init__(self, *args, **kwargs):
             self._resource_base_uri = kwargs.pop('resource_base_uri')
             self._default_stylesheets = kwargs['styles'] = (
-                self._STYLESHEETS if self._STYLESHEETS is not None else pytis.config.stylesheets
+                self._STYLESHEETS if self._STYLESHEETS is not None
+                else pytis.util.default_stylesheets()
             )
             super(Browser.Exporter, self).__init__(*args, **kwargs)
 

@@ -1875,6 +1875,16 @@ def stack_info(depth=None, relative_paths=False):
                       for frame in reversed(stack)])
 
 
+def _application_specification():
+    """Return the application specification instance or None if not defined."""
+    import pytis
+    from .resolver import ResolverError
+    try:
+        return pytis.config.resolver.specification('Application')
+    except ResolverError:
+        return None
+
+
 def resource_dirs():
     """Return the list of directories where browser resources are searched.
 
@@ -1887,19 +1897,30 @@ def resource_dirs():
 
     """
     import pytis
-    from .resolver import ResolverError
     dirs = list(pytis.config.resource_path)
-    try:
-        application = pytis.config.resolver.specification('Application')
-    except ResolverError:
-        # The application doesn't define its specification.
-        pass
-    else:
+    application = _application_specification()
+    if application:
         dirs.extend(application.resource_path())
     dirs.append(os.path.join(os.path.dirname(pytis.__file__), 'assets', 'resources'))
     if pytis.config.help_dir:
         dirs.append(os.path.join(pytis.config.help_dir, 'img'))
     return dirs
+
+
+def default_stylesheets():
+    """Return the list of style sheet file names used for contents displayed in the browser.
+
+    The list contains the style sheets from the configuration option
+    'stylesheets' followed by those returned by the method 'stylesheets()' of
+    the application specification ('pytis.presentation.Application').
+
+    """
+    import pytis
+    stylesheets = list(pytis.config.stylesheets)
+    application = _application_specification()
+    if application:
+        stylesheets.extend(application.stylesheets())
+    return stylesheets
 
 
 def lcg_node(content, title=None, resource_path=(), resources=()):
@@ -2008,8 +2029,8 @@ def lcg_to_html(text, styles=None, resource_path=()):
       text (str): The source text in LCG structured text format.
       styles (tuple): Sequence of style sheet file names to be embedded as
         inline styles in the final document.  These files are searched in
-        resource directories as described below.  If None, the configuration
-        option 'stylesheets' is used.
+        resource directories as described below.  If None, the styles returned
+        by `default_stylesheets()` are used.
       resource_path (tuple): Sequence of additional filesystem directory names
         where resource files (style sheets) are searched.  The directories
         returned by `resource_dirs()` are appended automatically.  The
@@ -2029,8 +2050,7 @@ def lcg_to_html(text, styles=None, resource_path=()):
                 [g.meta(http_equiv='Content-Type', content='text/html; charset=utf-8')]
 
     if styles is None:
-        import pytis
-        styles = pytis.config.stylesheets
+        styles = default_stylesheets()
     node = parse_lcg_text(text, resource_path=resource_path, resources=styles)
     exporter = Exporter(inlinestyles=True)
     context = exporter.context(node, None)

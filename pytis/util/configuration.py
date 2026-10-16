@@ -578,6 +578,8 @@ class Configuration(object):
         forms (except for the help system, which uses its own styles).  The
         files are searched in resource directories (see 'resource_path').  The
         application may replace the default style sheet or add its own after it.
+        Style sheets defined by the application specification (see
+        'pytis.presentation.Application.stylesheets()') are added after these.
 
         """
         _DEFAULT = ('default.css',)

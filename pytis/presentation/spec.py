@@ -5895,6 +5895,18 @@ class Application(SpecificationBase):
         """
         return ()
 
+    def stylesheets(self):
+        """Return a sequence of application specific style sheet file names.
+
+        These style sheets are used for contents displayed through the built in
+        browser in addition to (after) the style sheets given by the
+        configuration option 'stylesheets' (see
+        `pytis.util.default_stylesheets()`).  The files are searched in
+        resource directories (see `resource_path()`).
+
+        """
+        return ()
+
     def menu(self):
         """Return the application's main menu as a sequence of `Menu` instances."""
         return ()
