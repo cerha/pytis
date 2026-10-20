@@ -2964,9 +2964,13 @@ class BrowseForm(FoldableForm):
                          command=Command(ListForm.view_field_pdf, field_id=f.id()),
                          help=_("Open PDF preview of field contents.")),
             )
-        action_items = self._action_mitems(self._view.actions())
+        action_items = self._action_mitems(self._view.actions(),
+                                           (ActionContext.RECORD, ActionContext.SELECTION))
         if action_items:
             menu += (MenuSeparator(),) + tuple(action_items)
+        global_menu = self._global_context_menu()
+        if global_menu:
+            menu += (MenuSeparator(),) + global_menu
         self._context_menu_static_part = menu
 
         # The dynamic part of the menu is created based on the links.
@@ -3048,21 +3052,21 @@ class BrowseForm(FoldableForm):
                 (prefix + pytis.output.P_KEY): self._current_key(),
                 (prefix + pytis.output.P_DATA): copy.copy(self._data)}
 
-    def _action_mitems(self, spec, context=None):
+    def _action_mitems(self, spec, contexts):
         items = []
         for x in spec:
             if isinstance(x, Action):
-                if context and x.context() != context:
+                if x.context() not in contexts:
                     continue
                 items.append(MenuItem(x.title(raw=True),
                                       command=Command(self.context_action, action=x),
                                       help=x.descr()))
             elif isinstance(x, ActionGroup):
-                group_actions = self._action_mitems(x.items(), context=context)
+                group_actions = self._action_mitems(x.items(), contexts)
                 if group_actions:
                     items.append(Menu(x.title(), group_actions))
             elif isinstance(x, (tuple, list)):
-                separated_items = self._action_mitems(x, context=context)
+                separated_items = self._action_mitems(x, contexts)
                 if items and separated_items:
                     items.append(MenuSeparator())
                 items.extend(separated_items)
@@ -3144,12 +3148,12 @@ class BrowseForm(FoldableForm):
                 for name, column_id, field, title, binding in linkspec]
 
     def _global_context_menu(self):
-        return tuple(self._action_mitems(self._view.actions(), context=ActionContext.GLOBAL))
+        return tuple(self._action_mitems(self._view.actions(), (ActionContext.GLOBAL,)))
 
     def _context_menu(self):
         if self._grid.IsSelection():
             menu = self._selection_context_menu()
-            actions = self._action_mitems(self._view.actions(), context=ActionContext.SELECTION)
+            actions = self._action_mitems(self._view.actions(), (ActionContext.SELECTION,))
             if actions:
                 menu += (MenuSeparator(),) + tuple(actions)
             global_menu = self._global_context_menu()
