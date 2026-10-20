@@ -93,6 +93,11 @@ older pip, use the helper script to expand the group:
 python3 tools/dependency-group.py build | pip install -r /dev/stdin
 ```
 
+## Changes
+
+User visible changes of each version are summarized in
+[changelog.md](changelog.md).
+
 ## Documentation
 
 The Pytis codebase is well documented, but currently lacks a complete guide or
