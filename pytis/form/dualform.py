@@ -761,7 +761,12 @@ class MultiForm(Form, Refreshable):
                     # may invoke some event that causes form initialization, but
                     # who knows...
                     return form if form.initialized() else None
-                form.full_init()
+                try:
+                    form.full_init()
+                except Form.InitError:
+                    # The cause (typically a database error) was already reported
+                    # to the user.  The form remains uninitialized and its tab empty.
+                    return None
                 form._release_data()
                 for kind, function in self._form_callbacks_args:
                     if hasattr(form, kind):
@@ -1186,7 +1191,12 @@ class MultiSideForm(MultiForm):
             # page at a given position using nb.InsertPage() failed, as the page
             # indexes seemed to change unreliably.
             form = self._create_subform(nb, binding)
-            form.full_init()
+            try:
+                form.full_init()
+            except Form.InitError:
+                # The cause was already reported to the user, don't add the tab.
+                form.Destroy()
+                return
             nb.AddPage(form, binding.title(), select=True)
             form.show()
             row = self._last_selection

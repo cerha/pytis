@@ -4,6 +4,13 @@ All notable user visible changes to Pytis.  The entries are brief, see the
 documentation of the linked code for details.  The rules for maintaining this
 file are described in [doc/standards/changelog.md](doc/standards/changelog.md).
 
+## 1.3.1.dev1 (unreleased)
+
+### Wx application
+- Fixed a traceback after a database error during initialization of a side
+  form in a [`MultiSideForm`](pytis/form/dualform.py).  The error is only
+  reported to the user and the side form tab remains empty.
+
 ## 1.3.0 (2026-10-21)
 
 ### Wx application
