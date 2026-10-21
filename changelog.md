@@ -10,6 +10,8 @@ file are described in [doc/standards/changelog.md](doc/standards/changelog.md).
 - Fixed a traceback after a database error during initialization of a side
   form in a [`MultiSideForm`](pytis/form/dualform.py).  The error is only
   reported to the user and the side form tab remains empty.
+- Fixed dialogs not responding to mouse clicks when opened by a mouse click,
+  such as a database error dialog after switching a side form tab.
 
 ## 1.3.0 (2026-10-21)
 

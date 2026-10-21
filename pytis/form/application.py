@@ -1309,6 +1309,12 @@ class Application(pytis.application.BaseApplication, wx.App, KeyHandler, Command
             args, kwargs = (), {}
         else:
             dialog = dialog_or_class_
+        # A modal dialog opened from a mouse event handler (such as a notebook
+        # tab click) would not receive mouse events while the mouse is captured.
+        window = wx.Window.GetCapture()
+        while window:
+            window.ReleaseMouse()
+            window = wx.Window.GetCapture()
         self._modals.append(dialog)
         try:
             unlock_callbacks()
