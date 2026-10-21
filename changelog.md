@@ -12,6 +12,7 @@ file are described in [doc/standards/changelog.md](doc/standards/changelog.md).
   reported to the user and the side form tab remains empty.
 - Fixed dialogs not responding to mouse clicks when opened by a mouse click,
   such as a database error dialog after switching a side form tab.
+- Fixed a traceback on a key press in a side form whose initialization failed.
 
 ## 1.3.0 (2026-10-21)
 

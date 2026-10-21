@@ -2330,7 +2330,7 @@ class ListForm(RecordForm, Refreshable):
     # Public methods
 
     def on_key_down(self, event, dont_skip=True):
-        if self._search_panel is None:
+        if self.initialized() and self._search_panel is None:
             # Running this callback in dual-form would lead to focus loss on Shift, Ctrl etc.
             self._run_callback(self.CALL_USER_INTERACTION)
         if KeyHandler.on_key_down(self, event, dont_skip=dont_skip):
