@@ -105,7 +105,12 @@ class UserSetttingsManager(object):
         return row
 
     def _rows(self, transaction=None, **kwargs):
-        return self._data.rows(condition=self._condition(**kwargs), transaction=transaction)
+        # Fetch all rows before returning them.  The callers may perform other
+        # operations with the same data object while processing the rows (such
+        # as loading a profile referenced by a filter of another profile),
+        # which would otherwise close the select and silently end the
+        # iteration.
+        return list(self._data.rows(condition=self._condition(**kwargs), transaction=transaction))
 
     def _save(self, values, transaction=None, **key):
         row = self._row(transaction=transaction, **key)

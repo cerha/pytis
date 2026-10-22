@@ -883,6 +883,52 @@ class TestFormState:
         assert self.stored(form_name) == {}
 
 
+class TestFormProfiles:
+    """Tests of the persistent form profiles (stored in the database)."""
+
+    _SPEC_NAME = 'misc.Products'
+
+    @pytest.fixture
+    def manager(self, initconfig, initdb, request, monkeypatch):
+        try:
+            import unittest.mock as mock
+        except ImportError:
+            import mock
+        # Use a separate user for each test to keep their profiles apart.
+        manager = pf.FormProfileManager(username=request.node.name)
+        # Filters referring to user defined profiles are resolved through the
+        # application's profile manager (see 'make_in_operator()').
+        monkeypatch.setattr(pf, 'app', mock.Mock(form_profile_manager=manager))
+        return manager
+
+    @pytest.fixture
+    def accessor(self, manager):
+        return manager.accessor(self._SPEC_NAME, 'pytis.form.BrowseForm',
+                                pytis.config.resolver.get(self._SPEC_NAME, 'view_spec'),
+                                pytis.util.data_object(self._SPEC_NAME))
+
+    def user_profiles(self, accessor):
+        default_profile = pp.Profile('__default_profile__', 'Default')
+        return [p for p in accessor.load_profiles(default_profile)
+                if p.id().startswith(pf.FormProfileManager.USER_PROFILE_PREFIX)]
+
+    def test_profile_referring_to_another_profile(self, accessor):
+        accessor.save_profile(pp.Profile('_user_profile_1', 'Cheap',
+                                         filter=pd.LT('price', pd.fval(10.0))))
+        accessor.save_profile(pp.Profile('_user_profile_2', 'Not cheap', filter=pd.NOT(
+            pf.make_in_operator('product_id', self._SPEC_NAME, 'product_id', '_user_profile_1'),
+        )))
+        accessor.save_profile(pp.Profile('_user_profile_3', 'Many',
+                                         filter=pd.GT('count', pd.ival(100))))
+        profiles = self.user_profiles(accessor)
+        assert [(p.id(), p.title(), p.errors()) for p in profiles] == [
+            ('_user_profile_1', 'Cheap', ()),
+            ('_user_profile_2', 'Not cheap', ()),
+            ('_user_profile_3', 'Many', ()),
+        ]
+        assert accessor.new_user_profile_id(profiles) == '_user_profile_4'
+
+
 class TestAppDB:
     """DB-dependent tests for app.param, pd.dbfunction and pytis.util.data_object.
 
