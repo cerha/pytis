@@ -18,6 +18,11 @@ file are described in [doc/standards/changelog.md](doc/standards/changelog.md).
   missing ones ([`FormProfileManager`](pytis/form/managers.py)).
 - A failure to update stored user settings, such as form profiles, is now
   reported instead of being silently ignored.
+- Fixed new user profiles overwriting each other when saved in several
+  application instances at the same time.  The identifiers of new profiles
+  are now derived from their database key, so identifiers of deleted profiles
+  are not reused by new ones
+  ([`FormProfileManager.insert_profile()`](pytis/form/managers.py)).
 
 ## 1.3.0 (2026-10-21)
 

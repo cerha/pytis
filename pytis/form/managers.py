@@ -60,6 +60,7 @@ from past.builtins import basestring
 import copy
 import json
 import sys
+import uuid
 import pytis.data
 import pytis.form
 import pytis.presentation
@@ -759,6 +760,60 @@ class FormProfileManager(UserSetttingsManager):
             # Only save user specific form parameters for system profiles.
             save_params(transaction)
 
+    def insert_profile(self, spec_name, form_name, title, transaction=None, **kwargs):
+        """Save a new user defined profile and return it.
+
+        Arguments:
+          spec_name (str): Specification name identifying the form.
+          form_name (str): Form name identifying the form.
+          title (str): Title of the new profile.
+          transaction: Existing DB transaction if the operation should be
+            performed as a part of it.  If None, a local transaction will be
+            created.
+          **kwargs: Other `pytis.presentation.Profile` constructor arguments,
+            such as 'filter' or 'sorting'.
+
+        Returns:
+          The saved profile as a `pytis.presentation.Profile` instance with a
+          newly assigned identifier.
+
+        The identifier is derived from the database key of the stored row, so
+        it is unique and never reused, even after the profile is deleted (user
+        profiles are referred to by their identifiers from other profiles'
+        filters and from form settings) and regardless of other application
+        instances saving profiles of the same form at the same time.
+
+        """
+        # The considered alternatives were deriving the identifier from the
+        # profiles currently loaded in the form (the original solution, which
+        # reuses identifiers of deleted profiles and makes concurrently saved
+        # profiles overwrite each other), taking the number from the key
+        # column's sequence by 'nextval' before the insert (two numbers taken
+        # for each row and the identifier not matching the key), filling the
+        # column from the key by a database trigger or removing the column and
+        # using the key directly (both require a database migration, the
+        # latter also of all stored references to the existing profiles).
+        # Here the row is inserted under a temporary identifier, which is
+        # replaced within the same transaction.
+        profiles = []
+
+        def save(transaction):
+            temporary_id = '__new_profile__' + uuid.uuid4().hex
+            row, success = self._data.insert(
+                pytis.data.Row(self._values(spec_name=spec_name, profile_id=temporary_id,
+                                            title=title)),
+                transaction=transaction,
+            )
+            if not success:
+                raise pytis.data.DBException(row)
+            profile = Profile(self.USER_PROFILE_PREFIX + str(row['id'].value()), title, **kwargs)
+            self._save(dict(profile_id=profile.id()), spec_name=spec_name,
+                       profile_id=temporary_id, transaction=transaction)
+            self.save_profile(spec_name, form_name, profile, transaction=transaction)
+            profiles.append(profile)
+        self._in_transaction(transaction, save)
+        return profiles[0]
+
     def load_profiles(self, spec_name, form_name, view_spec, data_object, default_profile,
                       transaction=None, rename_columns={}, delete_columns=()):
         """Return list of form profiles including previously saved user customizations.
@@ -862,8 +917,9 @@ class FormProfileManager(UserSetttingsManager):
         Returns:
           A pair (error, profiles) where error is a string describing the
           problem if `json_string` cannot be deserialized or None if
-          deserialization succeeds, and profiles is a sequence of
-          `pytis.presentation.Profile` instances when error is None.
+          deserialization succeeds, and profiles is a sequence of dictionaries
+          of `insert_profile()` keyword arguments ('title' and the other
+          profile parameters) when error is None.
 
         """
         try:
@@ -886,7 +942,6 @@ class FormProfileManager(UserSetttingsManager):
             return _("Profiles incompatible with the current form."), None
         if not data['profiles']:
             return _("Empty profiles list."), None
-        profile_ids = [r['profile_id'].value() for r in self._rows(spec_name=spec_name)]
         profiles = []
         for item in data['profiles']:
             params = item['params']
@@ -894,8 +949,7 @@ class FormProfileManager(UserSetttingsManager):
             errors += self._validate_params(view_spec, params)
             if errors:
                 return (item['title'] + ':' + ''.join('\n{}: {}'.format(*e) for e in errors)), None
-            profile_id = self._new_user_profile_id(profile_ids + [p.id() for p in profiles])
-            profiles.append(Profile(profile_id, item['title'], filter=unpacked_filter, **params))
+            profiles.append(dict(params, title=item['title'], filter=unpacked_filter))
         return None, profiles
 
     def load_filter(self, spec_name, data_object, profile_id, transaction=None):
@@ -960,17 +1014,6 @@ class FormProfileManager(UserSetttingsManager):
         """Return a sequence of distinct form names for which profiles were saved."""
         return self._params_manager.list_form_names(spec_name, transaction=transaction)
 
-    def _new_user_profile_id(self, profile_ids):
-        prefix = self.USER_PROFILE_PREFIX
-        user_profile_numbers = [int(profile_id[len(prefix):]) for profile_id in profile_ids
-                                if (profile_id.startswith(prefix) and
-                                    profile_id[len(prefix):].isdigit())]
-        return prefix + str(max(user_profile_numbers + [0]) + 1)
-
-    def new_user_profile_id(self, profiles):
-        """Generate a new unique user profile id based on given list of existing profiles."""
-        return self._new_user_profile_id([profile.id() for profile in profiles])
-
     def accessor(self, spec_name, form_name, view_spec, data):
         """Return a `FormProfileAccessor` instance of given form.
 
@@ -1020,6 +1063,9 @@ class FormProfileAccessor(object):
     def save_profile(self, profile):
         return self._manager.save_profile(self._spec_name, self._form_name, profile)
 
+    def insert_profile(self, title, **kwargs):
+        return self._manager.insert_profile(self._spec_name, self._form_name, title, **kwargs)
+
     def drop_profile(self, profile_id):
         return self._manager.drop_profile(self._spec_name, self._form_name, profile_id)
 
@@ -1029,9 +1075,6 @@ class FormProfileAccessor(object):
     def import_profiles(self, data):
         return self._manager.import_profiles(self._spec_name, self._form_name, self._view_spec,
                                              self._data, data)
-
-    def new_user_profile_id(self, profiles):
-        return self._manager.new_user_profile_id(profiles)
 
 
 class VirtualFormProfileAccessor(FormProfileAccessor):

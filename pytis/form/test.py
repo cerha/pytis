@@ -903,6 +903,9 @@ class TestFormProfiles:
 
     @pytest.fixture
     def accessor(self, manager):
+        return self._accessor(manager)
+
+    def _accessor(self, manager):
         return manager.accessor(self._SPEC_NAME, 'pytis.form.BrowseForm',
                                 pytis.config.resolver.get(self._SPEC_NAME, 'view_spec'),
                                 pytis.util.data_object(self._SPEC_NAME))
@@ -913,23 +916,55 @@ class TestFormProfiles:
                 if p.id().startswith(pf.FormProfileManager.USER_PROFILE_PREFIX)]
 
     def test_profile_referring_to_another_profile(self, accessor):
-        accessor.save_profile(pp.Profile('_user_profile_1', 'Cheap',
-                                         filter=pd.LT('price', pd.fval(10.0))))
-        accessor.save_profile(pp.Profile('_user_profile_2', 'Not cheap', filter=pd.NOT(
-            pf.make_in_operator('product_id', self._SPEC_NAME, 'product_id', '_user_profile_1'),
-        )))
-        accessor.save_profile(pp.Profile('_user_profile_3', 'Many',
-                                         filter=pd.GT('count', pd.ival(100))))
-        profiles = self.user_profiles(accessor)
-        assert [(p.id(), p.title(), p.errors()) for p in profiles] == [
-            ('_user_profile_1', 'Cheap', ()),
-            ('_user_profile_2', 'Not cheap', ()),
-            ('_user_profile_3', 'Many', ()),
+        cheap = accessor.insert_profile('Cheap', filter=pd.LT('price', pd.fval(10.0)))
+        not_cheap = accessor.insert_profile('Not cheap', filter=pd.NOT(
+            pf.make_in_operator('product_id', self._SPEC_NAME, 'product_id', cheap.id()),
+        ))
+        many = accessor.insert_profile('Many', filter=pd.GT('count', pd.ival(100)))
+        assert [(p.id(), p.title(), p.errors()) for p in self.user_profiles(accessor)] == [
+            (cheap.id(), 'Cheap', ()),
+            (not_cheap.id(), 'Not cheap', ()),
+            (many.id(), 'Many', ()),
         ]
-        assert accessor.new_user_profile_id(profiles) == '_user_profile_4'
+
+    def test_new_profile_identifier_matches_the_row_key(self, accessor, execute, request):
+        profile = accessor.insert_profile('Cheap', sorting=(('price', pd.ASCENDENT),))
+        (key,), = execute("select id from e_pytis_form_profile_base "
+                          "where username = '%s'" % request.node.name)
+        assert profile.id() == pf.FormProfileManager.USER_PROFILE_PREFIX + str(key)
+        loaded, = self.user_profiles(accessor)
+        assert loaded.id() == profile.id()
+        assert loaded.sorting() == (('price', pd.ASCENDENT),)
+
+    def test_identifier_not_reused_after_deletion(self, accessor):
+        accessor.insert_profile('Cheap')
+        many = accessor.insert_profile('Many')
+        accessor.drop_profile(many.id())
+        assert accessor.insert_profile('Many again').id() != many.id()
+
+    def test_concurrently_saved_profiles(self, accessor, request):
+        # Another application instance of the same user with the same form open.
+        other = self._accessor(pf.FormProfileManager(username=request.node.name))
+        accessor.insert_profile('Cheap')
+        other.insert_profile('Many')
+        assert [p.title() for p in self.user_profiles(accessor)] == ['Cheap', 'Many']
+
+    def test_imported_profiles(self, accessor):
+        cheap = accessor.insert_profile('Cheap', filter=pd.LT('price', pd.fval(10.0)),
+                                          columns=('product', 'price'))
+        error, imported = accessor.import_profiles(accessor.export_profiles([cheap]))
+        assert error is None
+        copy = accessor.insert_profile(**imported[0])
+        assert copy.id() != cheap.id()
+        loaded = self.user_profiles(accessor)
+        assert [(p.title(), p.columns()) for p in loaded] == [
+            ('Cheap', ('product', 'price')),
+            ('Cheap', ('product', 'price')),
+        ]
+        assert loaded[0].filter() == loaded[1].filter()
 
     def test_failed_update_raises(self, accessor, execute):
-        accessor.save_profile(pp.Profile('_user_profile_1', 'Cheap'))
+        profile = accessor.insert_profile('Cheap')
         # Make the update affect no rows.
         execute('create function skip_row() returns trigger language plpgsql '
                 'as $$ begin return null; end $$')
@@ -937,7 +972,7 @@ class TestFormProfiles:
                 'for each row execute procedure skip_row()')
         try:
             with pytest.raises(pd.DBException):
-                accessor.save_profile(pp.Profile('_user_profile_1', 'Very cheap'))
+                accessor.save_profile(pp.Profile(profile.id(), 'Very cheap'))
         finally:
             execute('drop function skip_row() cascade')
         assert [p.title() for p in self.user_profiles(accessor)] == ['Cheap']

@@ -1496,10 +1496,8 @@ class LookupForm(InnerForm):
         if title in [profile.title() for profile in self._profiles]:
             app.echo(_(u"Profile of this name already exists."), kind='error')
             return
-        profile_id = self._saved_profiles.new_user_profile_id(self._profiles)
-        profile = self._create_profile(profile_id, title)
+        profile = self._saved_profiles.insert_profile(title, **self._profile_parameters_to_save())
         self._profiles.append(profile)
-        self._saved_profiles.save_profile(profile)
         self._current_profile = profile
         app.echo(_(u"Profile saved as '%s'.") % title)
         self.focus()
@@ -1611,16 +1609,15 @@ class LookupForm(InnerForm):
                 titles = [p.title() for p in self._profiles if self._is_user_defined_profile(p)]
                 result = app.checklist(
                     _("Select the profiles to be imported:"), title=_("Import profiles"),
-                    items=[(p.title() not in titles,
-                            p.title() + ((' ' + _("(duplicate title)"))
-                                         if p.title() in titles else ''))
-                           for p in profiles],
+                    items=[(kwargs['title'] not in titles,
+                            kwargs['title'] + ((' ' + _("(duplicate title)"))
+                                               if kwargs['title'] in titles else ''))
+                           for kwargs in profiles],
                 )
                 if result:
-                    for checked, profile in zip(result, profiles):
+                    for checked, kwargs in zip(result, profiles):
                         if checked:
-                            self._saved_profiles.save_profile(profile)
-                            self._profiles.append(profile)
+                            self._profiles.append(self._saved_profiles.insert_profile(**kwargs))
 
     @Command.define
     def select_filter(self):
