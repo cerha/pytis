@@ -117,12 +117,12 @@ class UserSetttingsManager(object):
         if row:
             for k, v in self._values(**values):
                 row[k] = v
-            self._data.update(row['id'], row, transaction=transaction)
+            result, success = self._data.update(row['id'], row, transaction=transaction)
         else:
             row = pytis.data.Row(self._values(**key) + self._values(**values))
             result, success = self._data.insert(row, transaction=transaction)
-            if not success:
-                raise pytis.data.DBException(result)
+        if not success:
+            raise pytis.data.DBException(result)
 
     def _drop(self, transaction=None, **key):
         row = self._row(transaction=transaction, **key)

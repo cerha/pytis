@@ -928,6 +928,20 @@ class TestFormProfiles:
         ]
         assert accessor.new_user_profile_id(profiles) == '_user_profile_4'
 
+    def test_failed_update_raises(self, accessor, execute):
+        accessor.save_profile(pp.Profile('_user_profile_1', 'Cheap'))
+        # Make the update affect no rows.
+        execute('create function skip_row() returns trigger language plpgsql '
+                'as $$ begin return null; end $$')
+        execute('create trigger skip_update before update on e_pytis_form_profile_base '
+                'for each row execute procedure skip_row()')
+        try:
+            with pytest.raises(pd.DBException):
+                accessor.save_profile(pp.Profile('_user_profile_1', 'Very cheap'))
+        finally:
+            execute('drop function skip_row() cascade')
+        assert [p.title() for p in self.user_profiles(accessor)] == ['Cheap']
+
 
 class TestAppDB:
     """DB-dependent tests for app.param, pd.dbfunction and pytis.util.data_object.

@@ -16,6 +16,8 @@ file are described in [doc/standards/changelog.md](doc/standards/changelog.md).
 - Fixed user profiles missing in a form whose user profiles filter by another
   user profile.  New profiles saved in such a form were lost or overwrote the
   missing ones ([`FormProfileManager`](pytis/form/managers.py)).
+- A failure to update stored user settings, such as form profiles, is now
+  reported instead of being silently ignored.
 
 ## 1.3.0 (2026-10-21)
 
