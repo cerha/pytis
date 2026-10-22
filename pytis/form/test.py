@@ -939,7 +939,7 @@ class TestFormProfiles:
     def test_identifier_not_reused_after_deletion(self, accessor):
         accessor.insert_profile('Cheap')
         many = accessor.insert_profile('Many')
-        accessor.drop_profile(many.id())
+        accessor.delete_profile(many.id())
         assert accessor.insert_profile('Many again').id() != many.id()
 
     def test_concurrently_saved_profiles(self, accessor, request):
@@ -972,7 +972,7 @@ class TestFormProfiles:
                 'for each row execute procedure skip_row()')
         try:
             with pytest.raises(pd.DBException):
-                accessor.save_profile(pp.Profile(profile.id(), 'Very cheap'))
+                accessor.update_profile(pp.Profile(profile.id(), 'Very cheap'))
         finally:
             execute('drop function skip_row() cascade')
         assert [p.title() for p in self.user_profiles(accessor)] == ['Cheap']

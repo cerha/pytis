@@ -529,7 +529,7 @@ class FormProfileParamsManager(UserSetttingsManager):
         Arguments:
           spec_name (str): Specification name identifying the form.
           form_name (str): Form name identifying the form.
-          profile_id (str): Identifier of the profile to drop.
+          profile_id (str): Identifier of the profile to delete.
           transaction: Existing DB transaction or None.
 
         """
@@ -730,8 +730,12 @@ class FormProfileManager(UserSetttingsManager):
     def _profile_params(self, profile):
         return dict([(param, getattr(profile, param)()) for param in self._PROFILE_PARAMS])
 
-    def save_profile(self, spec_name, form_name, profile, transaction=None):
-        """Save user specific configuration of a form.
+    def update_profile(self, spec_name, form_name, profile, transaction=None):
+        """Store the current state of an existing profile.
+
+        New user defined profiles are stored by `insert_profile()`.  The
+        system profiles (defined in specifications) only store user specific
+        form parameters.
 
         Arguments:
           spec_name (str): Specification name identifying the form.
@@ -749,13 +753,13 @@ class FormProfileManager(UserSetttingsManager):
                                       transaction=transaction)
         if profile.id().startswith(self.USER_PROFILE_PREFIX):
             # Save filter and form parameters for user defined profiles.
-            def save_profile(transaction):
+            def update_profile(transaction):
                 self._save(dict(title=profile.title(),
                                 filter=profile.filter() and self._pack_filter(profile.filter()),
                                 errors=self._errors(profile, lambda p: p == 'filter')),
                            spec_name=spec_name, profile_id=profile.id(), transaction=transaction)
                 save_params(transaction)
-            self._in_transaction(transaction, save_profile)
+            self._in_transaction(transaction, update_profile)
         else:
             # Only save user specific form parameters for system profiles.
             save_params(transaction)
@@ -809,7 +813,7 @@ class FormProfileManager(UserSetttingsManager):
             profile = Profile(self.USER_PROFILE_PREFIX + str(row['id'].value()), title, **kwargs)
             self._save(dict(profile_id=profile.id()), spec_name=spec_name,
                        profile_id=temporary_id, transaction=transaction)
-            self.save_profile(spec_name, form_name, profile, transaction=transaction)
+            self.update_profile(spec_name, form_name, profile, transaction=transaction)
             profiles.append(profile)
         self._in_transaction(transaction, save)
         return profiles[0]
@@ -982,13 +986,13 @@ class FormProfileManager(UserSetttingsManager):
         else:
             raise Exception("Saved profile %s for %s doesn't exist!" % (profile_id, spec_name))
 
-    def drop_profile(self, spec_name, form_name, profile_id, transaction=None):
+    def delete_profile(self, spec_name, form_name, profile_id, transaction=None):
         """Remove the previously saved form configuration.
 
         Arguments:
           spec_name (str): Specification name.
           form_name (str): Unique string form identification.
-          profile_id (str): Identifier of the profile to drop.
+          profile_id (str): Identifier of the profile to delete.
           transaction: Existing DB transaction or None.
 
         """
@@ -1060,14 +1064,14 @@ class FormProfileAccessor(object):
         return self._manager.load_profiles(self._spec_name, self._form_name, self._view_spec,
                                            self._data, default_profile)
 
-    def save_profile(self, profile):
-        return self._manager.save_profile(self._spec_name, self._form_name, profile)
+    def update_profile(self, profile):
+        return self._manager.update_profile(self._spec_name, self._form_name, profile)
 
     def insert_profile(self, title, **kwargs):
         return self._manager.insert_profile(self._spec_name, self._form_name, title, **kwargs)
 
-    def drop_profile(self, profile_id):
-        return self._manager.drop_profile(self._spec_name, self._form_name, profile_id)
+    def delete_profile(self, profile_id):
+        return self._manager.delete_profile(self._spec_name, self._form_name, profile_id)
 
     def export_profiles(self, selected_profiles):
         return self._manager.export_profiles(self._spec_name, self._form_name, selected_profiles)

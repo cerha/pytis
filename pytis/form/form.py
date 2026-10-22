@@ -1465,7 +1465,7 @@ class LookupForm(InnerForm):
                     profile = find(profile.id(), self._view.profiles().unnest(),
                                    key=lambda p: p.id())
                 self._profiles[index] = profile
-            self._saved_profiles.drop_profile(profile.id())
+            self._saved_profiles.delete_profile(profile.id())
 
     @Command.define
     def apply_profile(self, profile_id):
@@ -1510,7 +1510,7 @@ class LookupForm(InnerForm):
         index = self._profiles.index(self._current_profile)
         profile = self._create_profile(self._current_profile.id(), title)
         self._current_profile = self._profiles[index] = profile
-        self._saved_profiles.save_profile(self._current_profile)
+        self._saved_profiles.update_profile(self._current_profile)
         app.echo(_(u"Profile saved as '%s'.") % title)
         self.focus()
 
@@ -1524,7 +1524,7 @@ class LookupForm(InnerForm):
         index = self._profiles.index(current)
         profile = self._create_profile(current.id(), current.title())
         self._profiles[index] = profile
-        self._saved_profiles.save_profile(profile)
+        self._saved_profiles.update_profile(profile)
         self._current_profile = profile
 
     def _can_update_profile(self):
@@ -1534,7 +1534,7 @@ class LookupForm(InnerForm):
     @Command.define
     def delete_profile(self):
         """Delete the current saved profile (only for user profiles)."""
-        self._saved_profiles.drop_profile(self._current_profile.id())
+        self._saved_profiles.delete_profile(self._current_profile.id())
         self._profiles.remove(self._current_profile)
         self._apply_profile(self.initial_profile())
 
@@ -1564,7 +1564,7 @@ class LookupForm(InnerForm):
             profile = self._initial_profile
         else:
             profile = find(profile_id, self._view.profiles().unnest(), key=lambda p: p.id())
-        self._saved_profiles.drop_profile(profile_id)
+        self._saved_profiles.delete_profile(profile_id)
         self._profiles[index] = profile
         self._apply_profile(profile)
 
@@ -1745,7 +1745,7 @@ class LookupForm(InnerForm):
             title = _(u"Unnamed profile")
             profile = find(title, self._profiles, key=lambda p: p.title())
             if profile:
-                self._saved_profiles.drop_profile(profile.id())
+                self._saved_profiles.delete_profile(profile.id())
                 self._profiles.remove(profile)
             self.save_new_profile(title)
         log(EVENT, "%s filter application in %.3f seconds" %
