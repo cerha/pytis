@@ -733,7 +733,7 @@ class FormProfileManager(UserSetttingsManager):
     def update_profile(self, spec_name, form_name, profile, transaction=None):
         """Store the current state of an existing profile.
 
-        New user defined profiles are stored by `insert_profile()`.  The
+        New user defined profiles are stored by `insert_profile`.  The
         system profiles (defined in specifications) only store user specific
         form parameters.
 
@@ -767,25 +767,25 @@ class FormProfileManager(UserSetttingsManager):
     def insert_profile(self, spec_name, form_name, title, transaction=None, **kwargs):
         """Save a new user defined profile and return it.
 
-        Arguments:
-          spec_name (str): Specification name identifying the form.
-          form_name (str): Form name identifying the form.
-          title (str): Title of the new profile.
-          transaction: Existing DB transaction if the operation should be
-            performed as a part of it.  If None, a local transaction will be
-            created.
-          **kwargs: Other `pytis.presentation.Profile` constructor arguments,
-            such as 'filter' or 'sorting'.
-
-        Returns:
-          The saved profile as a `pytis.presentation.Profile` instance with a
-          newly assigned identifier.
-
         The identifier is derived from the database key of the stored row, so
         it is unique and never reused, even after the profile is deleted (user
         profiles are referred to by their identifiers from other profiles'
         filters and from form settings) and regardless of other application
         instances saving profiles of the same form at the same time.
+
+        Arguments:
+          spec_name (str): Specification name identifying the form.
+          form_name (str): Form name identifying the form.
+          title (str): Title of the new profile.
+          transaction: Existing DB transaction if the operation should be
+            performed as a part of it.  If `None`, a local transaction will be
+            created.
+          kwargs (dict): Other `pytis.presentation.Profile` constructor
+            arguments, such as `filter` or `sorting`.
+
+        Returns:
+          The saved profile as a `pytis.presentation.Profile` instance with a
+          newly assigned identifier.
 
         """
         # The considered alternatives were deriving the identifier from the
@@ -922,7 +922,7 @@ class FormProfileManager(UserSetttingsManager):
           A pair (error, profiles) where error is a string describing the
           problem if `json_string` cannot be deserialized or None if
           deserialization succeeds, and profiles is a sequence of dictionaries
-          of `insert_profile()` keyword arguments ('title' and the other
+          of `insert_profile` keyword arguments ('title' and the other
           profile parameters) when error is None.
 
         """
