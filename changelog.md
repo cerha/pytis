@@ -28,6 +28,8 @@ file are described in [doc/standards/changelog.md](doc/standards/changelog.md).
   Enter key confirms the title also on macOS.  Leaving the field by Escape or
   Tab cancels the editing instead of displaying the unsaved title as if it was
   the current profile.
+- Fixed selecting a profile in the profile selector, which sometimes did not
+  react to mouse clicks on macOS.
 
 ## 1.3.0 (2026-10-21)
 

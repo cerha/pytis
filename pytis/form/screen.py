@@ -1149,22 +1149,43 @@ class ProfileSelectorPopup(wx.ComboPopup):
     """
     def __init__(self):
         wx.ComboPopup.__init__(self)
-        self._selected_profile_index = None
         self._listctrl = None
 
-    def _on_motion(self, event):
+    def _profile_item(self, event):
+        """Return the list item and the profile index at the mouse position.
+
+        Arguments:
+          event (wx.MouseEvent): Mouse event determining the position.
+
+        Returns:
+          A pair (item, profile_index) where item is the index of the list
+          item and profile_index is the index of the profile in the form's
+          profiles, or (`None`, `None`) when there is no profile at the
+          position (such as at a label of a profile group).
+
+        """
         ctrl = self._listctrl
         item, flags = ctrl.HitTest(event.GetPosition())
         if item >= 0:
             profile_index = ctrl.GetItemData(item)
             if profile_index != -1:
-                ctrl.Select(item)
-                self._selected_profile_index = profile_index
+                return item, profile_index
+        return None, None
+
+    def _on_motion(self, event):
+        item, profile_index = self._profile_item(event)
+        if item is not None:
+            self._listctrl.Select(item)
 
     def _on_left_down(self, event):
+        # The profile is determined by the click position rather than by the
+        # item highlighted by '_on_motion()', because the popup doesn't always
+        # receive the mouse motion events (seen on macOS).  It must be done
+        # before dismissing the popup, which removes the list items.
+        item, profile_index = self._profile_item(event)
         self.Dismiss()
-        if self._selected_profile_index is not None:
-            profile = self._current_form.profiles()[self._selected_profile_index]
+        if profile_index is not None:
+            profile = self._current_form.profiles()[profile_index]
             self._current_form.apply_profile(profile_id=profile.id())
 
     def _append_label(self, label, toplevel=True):
@@ -1376,10 +1397,13 @@ class ProfileSelector(wx.ComboCtrl, CommandHandler):
     def _end_edit_profile_title(self):
         """Finish the profile title editing and return the command method to invoke.
 
-        Returns None when no title editing is in progress.  The control
-        displays the title of the current profile again afterwards (see
-        '_on_ui_event()'), so the edited title is not mistaken for the title
+        The control displays the title of the current profile again afterwards
+        (see `_on_ui_event`), so the edited title is not mistaken for the title
         of a profile when the editing is cancelled.
+
+        Returns:
+          The command method to be invoked with the edited title or `None`
+          when no title editing is in progress.
 
         """
         command_method = self._on_enter_invoke
