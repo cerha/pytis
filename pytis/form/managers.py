@@ -113,17 +113,25 @@ class UserSetttingsManager(object):
         # iteration.
         return list(self._data.rows(condition=self._condition(**kwargs), transaction=transaction))
 
-    def _save(self, values, transaction=None, **key):
+    def _update(self, values, transaction=None, **key):
+        # Update the existing row and return True or return False if it doesn't exist.
         row = self._row(transaction=transaction, **key)
-        if row:
-            for k, v in self._values(**values):
-                row[k] = v
-            result, success = self._data.update(row['id'], row, transaction=transaction)
-        else:
-            row = pytis.data.Row(self._values(**key) + self._values(**values))
-            result, success = self._data.insert(row, transaction=transaction)
+        if not row:
+            return False
+        for k, v in self._values(**values):
+            row[k] = v
+        result, success = self._data.update(row['id'], row, transaction=transaction)
         if not success:
             raise pytis.data.DBException(result)
+        return True
+
+    def _save(self, values, transaction=None, **key):
+        # Update the existing row or insert a new one if it doesn't exist.
+        if not self._update(values, transaction=transaction, **key):
+            row = pytis.data.Row(self._values(**key) + self._values(**values))
+            result, success = self._data.insert(row, transaction=transaction)
+            if not success:
+                raise pytis.data.DBException(result)
 
     def _drop(self, transaction=None, **key):
         row = self._row(transaction=transaction, **key)
@@ -735,15 +743,20 @@ class FormProfileManager(UserSetttingsManager):
 
         New user defined profiles are stored by `insert_profile`.  The
         system profiles (defined in specifications) only store user specific
-        form parameters.
+        form parameters.  The form parameters are stored separately for each
+        form type, so they are inserted when not stored yet.
 
         Arguments:
           spec_name (str): Specification name identifying the form.
           form_name (str): Form name identifying the form.
           profile: Form profile as a `pytis.presentation.Profile` instance.
           transaction: Existing DB transaction if the operation should be
-            performed as a part of it.  If None, a local transaction will be
+            performed as a part of it.  If `None`, a local transaction will be
             created if necessary.
+
+        Raises:
+          `pytis.data.DBException`: If the user defined profile doesn't exist
+            (it may have been deleted in another application instance).
 
         """
         def save_params(transaction):
@@ -754,10 +767,16 @@ class FormProfileManager(UserSetttingsManager):
         if profile.id().startswith(self.USER_PROFILE_PREFIX):
             # Save filter and form parameters for user defined profiles.
             def update_profile(transaction):
-                self._save(dict(title=profile.title(),
-                                filter=profile.filter() and self._pack_filter(profile.filter()),
-                                errors=self._errors(profile, lambda p: p == 'filter')),
-                           spec_name=spec_name, profile_id=profile.id(), transaction=transaction)
+                if not self._update(dict(title=profile.title(),
+                                         filter=(profile.filter() and
+                                                 self._pack_filter(profile.filter())),
+                                         errors=self._errors(profile, lambda p: p == 'filter')),
+                                    spec_name=spec_name, profile_id=profile.id(),
+                                    transaction=transaction):
+                    raise pytis.data.DBException(
+                        _("Profile \"%s\" doesn't exist.  It may have been deleted "
+                          "in another application window.", profile.title())
+                    )
                 save_params(transaction)
             self._in_transaction(transaction, update_profile)
         else:
@@ -811,8 +830,8 @@ class FormProfileManager(UserSetttingsManager):
             if not success:
                 raise pytis.data.DBException(row)
             profile = Profile(self.USER_PROFILE_PREFIX + str(row['id'].value()), title, **kwargs)
-            self._save(dict(profile_id=profile.id()), spec_name=spec_name,
-                       profile_id=temporary_id, transaction=transaction)
+            self._update(dict(profile_id=profile.id()), spec_name=spec_name,
+                         profile_id=temporary_id, transaction=transaction)
             self.update_profile(spec_name, form_name, profile, transaction=transaction)
             profiles.append(profile)
         self._in_transaction(transaction, save)

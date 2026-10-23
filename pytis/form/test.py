@@ -905,8 +905,8 @@ class TestFormProfiles:
     def accessor(self, manager):
         return self._accessor(manager)
 
-    def _accessor(self, manager):
-        return manager.accessor(self._SPEC_NAME, 'pytis.form.BrowseForm',
+    def _accessor(self, manager, form_name='pytis.form.BrowseForm'):
+        return manager.accessor(self._SPEC_NAME, form_name,
                                 pytis.config.resolver.get(self._SPEC_NAME, 'view_spec'),
                                 pytis.util.data_object(self._SPEC_NAME))
 
@@ -962,6 +962,23 @@ class TestFormProfiles:
             ('Cheap', ('product', 'price')),
         ]
         assert loaded[0].filter() == loaded[1].filter()
+
+    def test_update_of_a_deleted_profile_raises(self, accessor, request):
+        profile = accessor.insert_profile('Cheap')
+        # Deleted in another application instance.
+        other = self._accessor(pf.FormProfileManager(username=request.node.name))
+        other.delete_profile(profile.id())
+        with pytest.raises(pd.DBException):
+            accessor.update_profile(pp.Profile(profile.id(), 'Very cheap'))
+        assert self.user_profiles(accessor) == []
+
+    def test_update_in_another_form_type(self, accessor, manager):
+        profile = accessor.insert_profile('Cheap', columns=('product', 'price'))
+        # The form parameters of another form type are not stored yet.
+        main_form = self._accessor(manager, 'pytis.form.MainForm')
+        main_form.update_profile(pp.Profile(profile.id(), 'Cheap', columns=('price',)))
+        assert [p.columns() for p in self.user_profiles(main_form)] == [('price',)]
+        assert [p.columns() for p in self.user_profiles(accessor)] == [('product', 'price')]
 
     def test_failed_update_raises(self, accessor, execute):
         profile = accessor.insert_profile('Cheap')

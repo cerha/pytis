@@ -7,6 +7,10 @@ file are described in [doc/standards/changelog.md](doc/standards/changelog.md).
 ## 1.3.1.dev1 (unreleased)
 
 ### Wx application
+- A failure to update stored user settings, such as form profiles, is now
+  reported instead of being silently ignored.
+- Saving a user profile deleted in another application instance meanwhile
+  now reports an error instead of creating the profile again.
 - Fixed a traceback after a database error during initialization of a side
   form in a [`MultiSideForm`](pytis/form/dualform.py).  The error is only
   reported to the user and the side form tab remains empty.
@@ -16,8 +20,6 @@ file are described in [doc/standards/changelog.md](doc/standards/changelog.md).
 - Fixed user profiles missing in a form whose user profiles filter by another
   user profile.  New profiles saved in such a form were lost or overwrote the
   missing ones ([`FormProfileManager`](pytis/form/managers.py)).
-- A failure to update stored user settings, such as form profiles, is now
-  reported instead of being silently ignored.
 - Fixed new user profiles overwriting each other when saved in several
   application instances at the same time.  The identifiers of new profiles
   are now derived from their database key, so identifiers of deleted profiles
