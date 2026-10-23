@@ -32,7 +32,7 @@ file are described in [doc/standards/changelog.md](doc/standards/changelog.md).
   the current profile.
 - Fixed selecting a profile in the profile selector, which sometimes did not
   react to mouse clicks on macOS.
-- Fixed the height of the profile selector button not matching the profile
+- Fixed the size of the profile selector button not matching the profile
   title field.
 - Fixed the profile selector missing in the toolbar of codebook forms.  It
   is also disabled now for forms without profiles.

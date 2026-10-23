@@ -1312,8 +1312,10 @@ class ProfileSelector(wx.ComboCtrl, CommandHandler):
         # codebook form, which starts with size 10x35 and resizes to the correct
         # size only after resizing the parent Dialog manually.  The button
         # height matches the control height to keep them aligned (macOS draws
-        # the native button by its own size regardless).
-        self.SetButtonPosition(width=20, height=self.GetSize().height)
+        # the native button by its own size regardless) and the width is
+        # proportional to the height.
+        height = self.GetSize().height
+        self.SetButtonPosition(width=max(20, height * 3 // 4), height=height)
         ctrl = self.GetTextCtrl()
         ctrl.SetEditable(False)
         wx_callback(wx.EVT_UPDATE_UI, self, self._on_ui_event)
