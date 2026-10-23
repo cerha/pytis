@@ -34,6 +34,8 @@ file are described in [doc/standards/changelog.md](doc/standards/changelog.md).
   react to mouse clicks on macOS.
 - Fixed the height of the profile selector button not matching the profile
   title field.
+- Fixed the profile selector missing in the toolbar of codebook forms.  It
+  is also disabled now for forms without profiles.
 
 ## 1.3.0 (2026-10-21)
 

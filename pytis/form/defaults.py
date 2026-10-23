@@ -282,7 +282,10 @@ class UICommands(object):
         _("Sort"),
         _("Define the terms of sorting records."))
     PROFILE_MENU = UICommand(
-        Command(Application.nothing),
+        # The command is never invoked with this control (it applies the
+        # selected profile itself), but it makes the control available only
+        # in forms supporting profiles, including toolbars of individual forms.
+        Command(LookupForm.apply_profile),
         _("Profile selection"),
         _("Shows the current profile and allows selection from predefined profiles."),
         ctrl=(ProfileSelector, dict(size=(270, None))))
