@@ -1173,9 +1173,10 @@ class ProfileSelectorPopup(wx.ComboPopup):
         return None, None
 
     def _on_motion(self, event):
+        ctrl = self._listctrl
         item, profile_index = self._profile_item(event)
-        if item is not None:
-            self._listctrl.Select(item)
+        if item is not None and not ctrl.IsSelected(item):
+            ctrl.Select(item)
 
     def _on_left_down(self, event):
         # The profile is determined by the click position rather than by the
