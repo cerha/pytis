@@ -285,7 +285,7 @@ class UICommands(object):
         Command(Application.nothing),
         _("Profile selection"),
         _("Shows the current profile and allows selection from predefined profiles."),
-        ctrl=(ProfileSelector, dict(size=(270, 25))))
+        ctrl=(ProfileSelector, dict(size=(270, None))))
     FILTER = UICommand(
         Command(LookupForm.select_filter),
         _("Filter"),

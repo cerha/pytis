@@ -1293,10 +1293,16 @@ class ProfileSelectorPopup(wx.ComboPopup):
 
 
 class ProfileSelector(wx.ComboCtrl, CommandHandler):
-    """Toolbar control for form profile selection and management."""
+    """Toolbar control for form profile selection and management.
+
+    Only the width of the `size` passed to the constructor is used.  The
+    height is the natural height of the control on the current platform,
+    which differs a lot between platforms, themes and wx versions.
+
+    """
 
     def __init__(self, parent, command, size):
-        wx.ComboCtrl.__init__(self, parent, style=wx.TE_PROCESS_ENTER, size=size)
+        wx.ComboCtrl.__init__(self, parent, style=wx.TE_PROCESS_ENTER, size=(size[0], -1))
         self._popup = ProfileSelectorPopup()
         self.SetPopupControl(self._popup)
         self._on_enter_invoke = None
@@ -1304,8 +1310,10 @@ class ProfileSelector(wx.ComboCtrl, CommandHandler):
         self._cmd = Command(pytis.form.LookupForm.update_profile)
         # SetButtonPosition works around incorrect initial text control sizing in
         # codebook form, which starts with size 10x35 and resizes to the correct
-        # size only after resizing the parent Dialog manually.
-        self.SetButtonPosition(width=20, height=size[1] - 1)
+        # size only after resizing the parent Dialog manually.  The button
+        # height matches the control height to keep them aligned (macOS draws
+        # the native button by its own size regardless).
+        self.SetButtonPosition(width=20, height=self.GetSize().height)
         ctrl = self.GetTextCtrl()
         ctrl.SetEditable(False)
         wx_callback(wx.EVT_UPDATE_UI, self, self._on_ui_event)

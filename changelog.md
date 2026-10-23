@@ -32,6 +32,8 @@ file are described in [doc/standards/changelog.md](doc/standards/changelog.md).
   the current profile.
 - Fixed selecting a profile in the profile selector, which sometimes did not
   react to mouse clicks on macOS.
+- Fixed the height of the profile selector button not matching the profile
+  title field.
 
 ## 1.3.0 (2026-10-21)
 
