@@ -23,6 +23,11 @@ file are described in [doc/standards/changelog.md](doc/standards/changelog.md).
   are now derived from their database key, so identifiers of deleted profiles
   are not reused by new ones
   ([`FormProfileManager.insert_profile()`](pytis/form/managers.py)).
+- Fixed editing the title when duplicating or renaming a profile in the
+  profile selector.  The title field now receives the keyboard focus and the
+  Enter key confirms the title also on macOS.  Leaving the field by Escape or
+  Tab cancels the editing instead of displaying the unsaved title as if it was
+  the current profile.
 
 ## 1.3.0 (2026-10-21)
 

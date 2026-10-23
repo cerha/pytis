@@ -1289,7 +1289,8 @@ class ProfileSelector(wx.ComboCtrl, CommandHandler):
         wx_callback(wx.EVT_UPDATE_UI, self, self._on_ui_event)
         wx_callback(wx.EVT_RIGHT_DOWN, self, self._on_context_menu)
         wx_callback(wx.EVT_RIGHT_DOWN, ctrl, self._on_context_menu)
-        wx_callback(wx.EVT_TEXT_ENTER, ctrl, self._on_enter) # Does not work on macOS...
+        # EVT_TEXT_ENTER is not emitted on macOS, see _on_key_down().
+        wx_callback(wx.EVT_TEXT_ENTER, ctrl, self._on_enter)
         wx_callback(wx.EVT_KEY_DOWN, self, self._on_key_down)
         wx_callback(wx.EVT_KEY_DOWN, ctrl, self._on_key_down)
         # TODO: Add button for context menu invocation.
@@ -1348,10 +1349,15 @@ class ProfileSelector(wx.ComboCtrl, CommandHandler):
         pytis.form.app.popup_menu(self, menu)
 
     def _begin_edit_profile_title(self):
+        def focus():
+            ctrl.SetFocus()
+            ctrl.SelectAll()
         ctrl = self.GetTextCtrl()
         ctrl.SetEditable(True)
-        ctrl.SelectAll()
-        ctrl.SetFocus()
+        # The editing is started from the context menu, which returns the focus
+        # to the previously focused window when closed, so focus the control
+        # only after that.
+        wx.CallAfter(focus)
         app.echo(_("Enter the profile name and press ENTER when done."))
 
     @Command.define
@@ -1367,20 +1373,38 @@ class ProfileSelector(wx.ComboCtrl, CommandHandler):
     def _can_rename_profile(self):
         return Command(pytis.form.LookupForm.rename_profile, title=self.GetValue()).enabled
 
-    def _on_enter(self, event):
+    def _end_edit_profile_title(self):
+        """Finish the profile title editing and return the command method to invoke.
+
+        Returns None when no title editing is in progress.  The control
+        displays the title of the current profile again afterwards (see
+        '_on_ui_event()'), so the edited title is not mistaken for the title
+        of a profile when the editing is cancelled.
+
+        """
         command_method = self._on_enter_invoke
+        self._on_enter_invoke = None
+        self.GetTextCtrl().SetEditable(False)
+        return command_method
+
+    def _on_enter(self, event):
+        command_method = self._end_edit_profile_title()
         if command_method:
-            self._on_enter_invoke = None
-            self.GetTextCtrl().SetEditable(False)
-            command = Command(command_method, title=self.GetValue())
-            command.invoke()
+            Command(command_method, title=self.GetValue()).invoke()
         else:
             event.Skip()
 
     def _on_key_down(self, event):
-        event.Skip()
         code = event.GetKeyCode()
+        if code in (wx.WXK_RETURN, wx.WXK_NUMPAD_ENTER) and self._on_enter_invoke:
+            # EVT_TEXT_ENTER is not emitted on macOS, so the key is handled
+            # here.  Not skipping the event avoids EVT_TEXT_ENTER elsewhere.
+            self._on_enter(event)
+            return
+        event.Skip()
         if code in (wx.WXK_ESCAPE, wx.WXK_TAB, wx.WXK_RETURN, wx.WXK_NUMPAD_ENTER):
+            # Cancel the title editing (if in progress) and return to the form.
+            self._end_edit_profile_title()
             form = pytis.form.app.current_form()
             if form:
                 form.focus()
