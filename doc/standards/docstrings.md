@@ -22,6 +22,17 @@ with both Sphinx (Napoleon extension) and mkdocstrings (autorefs plugin).
   (`---`, `===`) and literal-block markers (`::`) — they break rendering in
   Markdown-based tools.
 
+**Attribute docstrings**
+
+- Module level variables and class attributes are documented by a string
+  literal placed immediately below the assignment (not by Sphinx-only `#:`
+  comments).  The same formatting rules apply as for any other docstring.
+- PEP 257 calls these "attribute docstrings" (PEP 224 proposing them for the
+  runtime was rejected, but the convention stuck).  Sphinx autodoc,
+  mkdocstrings (griffe) and common IDEs pick them up.
+- Instance attributes (assigned in `__init__`) are documented in the
+  `Attributes:` section of the class docstring.
+
 **Backticks and cross-references**
 
 - All references to code identifiers use single backticks: `` `Name` ``.
@@ -68,6 +79,9 @@ class Foo:
       baz (int | None): Description of an optional attribute.
 
     """
+
+    LIMIT = 64  # type: int
+    """Maximal number of items processed by `frob` at once."""
 
     def frob(self, value, flag=False, **kwargs):
         # type: (str, bool, dict) -> str | None
