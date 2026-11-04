@@ -10,6 +10,8 @@ file are described in [doc/standards/changelog.md](doc/standards/changelog.md).
 - The menu of actions of a list layout item is placed beside the item heading
   rather than inside it, so that screen readers don't read it as a part of the
   heading.
+- Fixed the style of text fields narrower than 80 characters in edit forms,
+  which was not consistent with wider text fields.
 
 ## 1.3.1 (2026-11-04)
 
