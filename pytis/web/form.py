@@ -2290,14 +2290,19 @@ class BrowseForm(LayoutForm):
                                  cls='paging-controls' + (' one-page' if pages == 1 else '')))
         if self._allow_search_field and not bottom:
             style = 'display:none' if not show_search_field else None
+            search_id = self._control_id('search-field') or ids.search
             content.insert(0, g.div(cls='query', style=style, content=(
-                g.label(_("Search expression") + ':', ids.search),
+                g.label(_("Search expression") + ':', search_id),
                 g.input(type='search', value=self._text_search_string,
-                        name='query', id=ids.search, cls='text-search-field'),
+                        name='query', id=search_id, cls='text-search-field'),
                 g.hidden('show-search-field', '1' if show_search_field else ''),
+                # The submitted URI keeps the focus on the search field.  This
+                # button is the first submit button of the form, so it is also
+                # used when the form is submitted by Enter in the field.
                 # Translators: Search button label.
                 g.button(g.span('', cls='icon search-icon') + g.span(_("Search"), cls='label'),
-                         type='submit', cls='search'),
+                         type='submit', cls='search',
+                         formaction=g.uri(action, self._control_fragment(search_id))),
                 g.button(g.span('', cls='icon remove-icon') + g.span(_("Cancel"), cls='label'),
                          type='submit', cls='cancel-search'),
             )))

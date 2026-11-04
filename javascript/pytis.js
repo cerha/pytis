@@ -115,13 +115,22 @@ pytis.BrowseForm = class extends pytis.Form {
             if (query.get('form_name') === form_name) {
                 parameters = Object.fromEntries(query)
             }
+            // The page was reloaded by a form control which is to be focused
+            // after loading the form content (see the synchronous variant below).
+            let focus_id = null
+            if (self.location.hash.startsWith('#focus-')) {
+                focus_id = self.location.hash.substring(7)
+                history.replaceState(history.state, '',
+                                     self.location.pathname + self.location.search)
+            }
             let page = this.element.closest('.notebook-widget > section')
             if (page.length) {
                 lcg.Notebook.on_activation(page, function () {
-                    this._load_form_data(parameters, null, submitted)
+                    this._load_form_data(parameters, focus_id, submitted)
+                    focus_id = null
                 }.bind(this))
             } else {
-                this._load_form_data(parameters, null, submitted)
+                this._load_form_data(parameters, focus_id, submitted)
             }
         } else {
             this._async_load = false

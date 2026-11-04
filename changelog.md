@@ -48,8 +48,8 @@ file are described in [doc/standards/changelog.md](doc/standards/changelog.md).
   browse forms, such as the number of found records, are now announced by
   screen readers ([`BrowseForm`](pytis/web/form.py)).
 - The focus now returns to the browse form control which reloaded the form
-  (query field and paging selections, Previous/Next buttons) instead of the
-  start of the page, also in asynchronously loaded forms
+  (search field, query field and paging selections, Previous/Next buttons)
+  instead of the start of the page, also in asynchronously loaded forms
   ([`BrowseForm`](pytis/web/form.py))
   ([#520](https://itsng.oui.technology/its/issues/520)).
 - The Tab key leaves the alphabetical index of a browse form instead of
