@@ -44,6 +44,9 @@ file are described in [doc/standards/changelog.md](doc/standards/changelog.md).
 - The summary of validation errors above web forms is now announced by
   screen readers ([`EditForm`](pytis/web/form.py))
   ([#475](https://itsng.oui.technology/its/issues/475)).
+- The messages about the results of searching, filtering and paging in
+  browse forms, such as the number of found records, are now announced by
+  screen readers ([`BrowseForm`](pytis/web/form.py)).
 - The focus now returns to the browse form control which reloaded the form
   (query field and paging selections, Previous/Next buttons) instead of the
   start of the page, also in asynchronously loaded forms

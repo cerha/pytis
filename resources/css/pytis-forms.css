@@ -514,6 +514,15 @@
 .pytis-form.browse-form .no-records {
     font-weight: bold;
 }
+.pytis-form.browse-form .live-region {
+    /* Only for assistive technologies (the messages are displayed in the form). */
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+}
 
 .pytis-form.list-view .list-item {
     margin: 1em 0;

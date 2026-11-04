@@ -96,20 +96,32 @@ pytis.BrowseForm = class extends pytis.Form {
                     return false
                 })
         }
+        // The messages about the results (such as the number of found records)
+        // are announced to screen reader users through a live region.  The
+        // region must exist before its content changes, as screen readers
+        // announce neither the live regions present on page load nor those
+        // inserted with the content of asynchronously loaded forms.
+        this._live_region = $('<div class="live-region" role="status">')
+        this.element.prepend(this._live_region)
+        // The form controls (search, filters, paging) reload the page with
+        // this parameter, so the results are only announced after the user's
+        // action, not whenever the user visits the page.
+        let query = new URLSearchParams(window.location.search)
+        let submitted = (query.get('form_name') === form_name
+                         && query.has('list-form-controls-submitted'))
         if (url && this._ajax_container.length != 0) {
             this._async_load = true
             let parameters = {};
-            let query = new URLSearchParams(window.location.search)
             if (query.get('form_name') === form_name) {
                 parameters = Object.fromEntries(query)
             }
             let page = this.element.closest('.notebook-widget > section')
             if (page.length) {
                 lcg.Notebook.on_activation(page, function () {
-                    this._load_form_data(parameters)
+                    this._load_form_data(parameters, null, submitted)
                 }.bind(this))
             } else {
-                this._load_form_data(parameters)
+                this._load_form_data(parameters, null, submitted)
             }
         } else {
             this._async_load = false
@@ -118,6 +130,11 @@ pytis.BrowseForm = class extends pytis.Form {
             this._bind_table_headings(this.element.find('table.data-table thead'))
             this._bind_table_body(this.element.find('table.data-table tbody'))
             this._init_stacked_table_layout(this.element.find('table.data-table'))
+            if (submitted) {
+                // A longer delay lets screen readers register the region
+                // on page load.
+                this._announce_results(this.element, 500)
+            }
             if (self.location.hash === '#found-record') {
                 this._focus_found_record()
             } else if (self.location.hash.startsWith('#focus-')
@@ -297,10 +314,11 @@ pytis.BrowseForm = class extends pytis.Form {
         return undefined
     }
 
-    _load_form_data(parameters, focus_id) {
+    _load_form_data(parameters, focus_id, announce = true) {
         // Load the form content asynchronously.  If 'focus_id' is given, the
         // focus is moved to the form control of given HTML id after loading
-        // (the control which invoked the reload).
+        // (the control which invoked the reload).  If 'announce' is true, the
+        // messages about the results are announced to screen reader users.
         parameters._pytis_async_load_request = 1
         this._ajax({
             url: this._url,
@@ -316,6 +334,9 @@ pytis.BrowseForm = class extends pytis.Form {
             this._init_stacked_table_layout(container.find('table.data-table'))
             for (let callback of this._on_load_callbacks) {
                 callback(this.element)
+            }
+            if (announce) {
+                this._announce_results(container, 100)
             }
             if (container.find('#found-record').length) {
                 window.location.hash = '#found-record'
@@ -339,6 +360,20 @@ pytis.BrowseForm = class extends pytis.Form {
                 this._ajax_container.append(traceback)
             }
         }).always(() => { document.body.style.cursor = "default" })
+    }
+
+    _announce_results(container, delay) {
+        // Announce the messages about the results found in given container
+        // through the live region.  The region is cleared first and filled
+        // after 'delay' milliseconds, so that the messages are announced
+        // even when they are the same as the previous ones.
+        let message = container.find('.results, .no-records')
+            .map((i, e) => $(e).text()).get().join(' ')
+        let region = this._live_region
+        region.text('')
+        if (message) {
+            setTimeout(() => region.text(message), delay)
+        }
     }
 
     _bind_controls(panel) {
