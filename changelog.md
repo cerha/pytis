@@ -42,6 +42,14 @@ file are described in [doc/standards/changelog.md](doc/standards/changelog.md).
   background tint in both the table and list layout.
 - The summary of validation errors above web forms is now announced by
   screen readers ([`EditForm`](pytis/web/form.py)).
+- The focus now returns to the browse form control which reloaded the form
+  (query field and paging selections, Previous/Next buttons) instead of the
+  start of the page, also in asynchronously loaded forms
+  ([`BrowseForm`](pytis/web/form.py))
+  ([#520](https://itsng.oui.technology/its/issues/520)).
+- The Tab key leaves the alphabetical index of a browse form instead of
+  passing through all its letters, which are traversed by the arrow keys
+  (LCG) ([#520](https://itsng.oui.technology/its/issues/520)).
 
 ## 1.3.0 (2026-10-21)
 

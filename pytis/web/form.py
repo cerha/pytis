@@ -1042,7 +1042,8 @@ class QueryFieldsForm(VirtualForm):
         Arguments:
           selection_uri: function returning the URI of the browse form for
             selecting given query field values.  Called with the export
-            context and the field values as keyword arguments.  Used when the
+            context, the 'anchor' (the HTML id of the selection control) and
+            the field values as keyword arguments.  Used when the
             fields don't require submission (see `export_controls()`).
 
         The other arguments are the same as for the parent class or as the
@@ -1129,7 +1130,7 @@ class QueryFieldsForm(VirtualForm):
             choices.insert(0, ('', field.spec.null_display() or '-'))
         return choices
 
-    def export_controls(self, context, bottom=False):
+    def export_controls(self, context, control_id, bottom=False):
         """Return the content of the browse form controls for the query fields.
 
         When some of the fields is not a selection (has no enumerator), such as
@@ -1142,6 +1143,8 @@ class QueryFieldsForm(VirtualForm):
         hidden fields.
 
         Arguments:
+          control_id: function returning the HTML id of a control for given
+            name (see `BrowseForm._control_id()`).
           bottom: True for the controls displayed below the browse form.
 
         Returns a list of exported content.
@@ -1153,14 +1156,19 @@ class QueryFieldsForm(VirtualForm):
             content = [f.hidden(context) for f in self.fields()]
             if not bottom:
                 content.append(context.generator().div([
-                    lcg.DropdownSelection(
-                        [(display, self._selection_uri(context, **{f.id: value}),
-                          value == self._row[f.id].export())
-                         for value, display in self._choices(f)],
-                        label=f.label + ':', cls='query-field',
-                    ).export(context) for f in self.fields()
+                    self._export_selection(context, f, control_id(f.id + '-selection'))
+                    for f in self.fields()
                 ], cls='query-fields-controls'))
         return content
+
+    def _export_selection(self, context, field, selection_id):
+        # The links point to the selection's id to keep the focus there.
+        return lcg.DropdownSelection(
+            [(display, self._selection_uri(context, anchor=selection_id, **{field.id: value}),
+              value == self._row[field.id].export())
+             for value, display in self._choices(field)],
+            label=field.label + ':', cls='query-field', id=selection_id,
+        ).export(context)
 
 
 class InlineEditForm(EditForm):
@@ -2118,11 +2126,39 @@ class BrowseForm(LayoutForm):
             params.update(sort=sorting_column, dir=self._SORTING_DIRECTIONS[direction])
         return params
 
-    def _control_uri(self, context, **kwargs):
+    def _control_id(self, name, bottom=False):
+        """Return the HTML id of the form control of given name.
+
+        The ids are derived from the form name, so that they remain the same
+        when the form is reloaded by the control.  The control's links (or
+        buttons) pass its id in the URI fragment to keep the focus on the
+        control after the reload (see `_control_fragment()`).  Returns None for
+        unnamed forms.
+
+        """
+        if self._name:
+            return '%s-%s%s' % (pytis.util.camel_case_to_lower(self._name, '-'), name,
+                                '-bottom' if bottom else '')
+        else:
+            return None
+
+    def _control_fragment(self, control_id):
+        """Return the URI fragment moving the focus to given control on page load.
+
+        The fragment intentionally doesn't match any element id, so that the
+        browser doesn't scroll the page to it.  The focus is moved by
+        JavaScript (see `lcg.Dropdown` and `pytis.BrowseForm`).
+
+        """
+        return 'focus-' + control_id
+
+    def _control_uri(self, context, anchor=None, **kwargs):
         """Return the form URI for given changes of the current controls state.
 
         The current text search is preserved, but not the index search, which
-        would take precedence over the offset.
+        would take precedence over the offset.  If 'anchor' is not None, it is
+        the HTML id of the control to move the focus to after loading the URI
+        (see `_control_fragment()`).
 
         """
         params = self._control_params()
@@ -2133,8 +2169,10 @@ class BrowseForm(LayoutForm):
             params['limit'] = self._limit
         params.update(kwargs)
         uri = self._uri_provider(None, UriType.RECORD, None)
-        return context.generator().uri(uri, *[(k, v if v is None else str(v))
-                                              for k, v in params.items()])
+        return context.generator().uri(uri, *(((self._control_fragment(anchor),)
+                                               if anchor else ()) +
+                                              tuple((k, v if v is None else str(v))
+                                                    for k, v in params.items())))
 
     def _export_message(self, context):
         if self._message:
@@ -2159,6 +2197,7 @@ class BrowseForm(LayoutForm):
             return None
         g = context.generator()
         ids = context.id_generator()
+        action = self._uri_provider(None, UriType.RECORD, None)
         show_search_field = self._show_search_field
         content = [g.hidden('list-form-controls-submitted', '1')]
         if self._name is not None:
@@ -2171,7 +2210,8 @@ class BrowseForm(LayoutForm):
         if self._query_fields_form:
             # TODO: Hide when there are no records and no active filtering conditions?
             #       and (count or [v for v in self._filter_ids.values() if v is not None])
-            content.extend(self._query_fields_form.export_controls(context, bottom=bottom))
+            content.extend(self._query_fields_form.export_controls(context, self._control_id,
+                                                                   bottom=bottom))
             if not bottom:
                 empty = False
         count, limit, limits = self._row_count, self._limit, self._limits
@@ -2183,19 +2223,24 @@ class BrowseForm(LayoutForm):
             offset = self._offset
             # The current values are passed on the other form submissions.
             content.extend((g.hidden('offset', str(offset)), g.hidden('limit', str(limit))))
+            limit_id = self._control_id('limit-selection', bottom)
             limit_controls = g.span(lcg.DropdownSelection(
                 # Keep the current first record on the displayed page.
-                [(str(i), self._control_uri(context, limit=i, offset=offset - offset % i),
+                [(str(i), self._control_uri(context, anchor=limit_id, limit=i,
+                                            offset=offset - offset % i),
                   i == limit) for i in limits],
                 label=_("Records per page") + ':',
                 cls='limit-selection',
+                id=limit_id,
             ).export(context), cls='limit')
             # Without JavaScript, the page numbers are displayed directly, so only the
             # first, the last, the neighbors of the current page and the round page
             # numbers are displayed in long lists (the others are secondary).
             step = 10 ** max(1, len(str(pages)) - 2)
+            offset_id = self._control_id('offset-selection', bottom)
             offset_controls = g.span(lcg.DropdownSelection(
-                [(str(i + 1), self._control_uri(context, offset=i * limit), i == page,
+                [(str(i + 1), self._control_uri(context, anchor=offset_id, offset=i * limit),
+                  i == page,
                   pages > 30 and 0 < i < pages - 1 and abs(i - page) > 3 and (i + 1) % step != 0)
                  for i in range(pages)],
                 # Translators: Paging controls allow navigation in long lists which are
@@ -2206,22 +2251,29 @@ class BrowseForm(LayoutForm):
                 # Translators: Displayed after the current page number, '%d' is replaced
                 # by the total number of pages.
                 suffix=_("of %d", pages),
+                id=offset_id,
             ).export(context), cls='offset')
             if pages > 1:
+                def paging_button(content, name, **kwargs):
+                    # The submitted URI keeps the focus on the button.
+                    button_id = self._control_id(name + '-page', bottom)
+                    return g.button(content, name=name, value='1', type='submit',
+                                    cls=name + '-page', id=button_id,
+                                    formaction=(button_id and
+                                                g.uri(action, self._control_fragment(button_id))),
+                                    **kwargs)
                 controls += (
                     offset_controls,
                     limit_controls,
                     g.span(cls="buttons", content=(
-                        g.button(g.span('', cls='icon arrow-left-icon') +
-                                 g.span(_("Previous"), cls='label'),
-                                 title=_("Go to previous page"),
-                                 name='prev', value='1', disabled=(page == 0),
-                                 type='submit', cls='prev-page'),
-                        g.button(g.span(_("Next"), cls='label') +
-                                 g.span('', cls='icon arrow-right-icon'),
-                                 title=_("Go to next page"),
-                                 name='next', value='1', disabled=(page + 1) * limit >= count,
-                                 type='submit', cls='next-page'),
+                        paging_button(g.span('', cls='icon arrow-left-icon') +
+                                      g.span(_("Previous"), cls='label'), 'prev',
+                                      title=_("Go to previous page"),
+                                      disabled=(page == 0)),
+                        paging_button(g.span(_("Next"), cls='label') +
+                                      g.span('', cls='icon arrow-right-icon'), 'next',
+                                      title=_("Go to next page"),
+                                      disabled=(page + 1) * limit >= count),
                         *index_search_controls,
                         g.button(g.span('', cls='icon search-icon') +
                                  g.span(_("Search"), cls='label'),
@@ -2254,7 +2306,7 @@ class BrowseForm(LayoutForm):
         # to submit asynchronous requests, such as row expansion etc.
         return g.form(
             content,
-            action=self._uri_provider(None, UriType.RECORD, None), method='GET',
+            action=action, method='GET',
             cls=('list-form-controls' +
                  (' bottom' if bottom else ' top') +
                  (' empty' if empty else '')),

@@ -120,8 +120,43 @@ pytis.BrowseForm = class extends pytis.Form {
             this._init_stacked_table_layout(this.element.find('table.data-table'))
             if (self.location.hash === '#found-record') {
                 this._focus_found_record()
+            } else if (self.location.hash.startsWith('#focus-')
+                       && this._focus_control(self.location.hash.substring(7), true)) {
+                // The form was reloaded by one of its controls (see
+                // BrowseForm._control_fragment() in Python).  The fragment has
+                // served its purpose, so it is removed from the URL.
+                history.replaceState(history.state, '',
+                                     self.location.pathname + self.location.search)
             }
         }
+    }
+
+    _focus_control(id, initial) {
+        // Move the focus to the form control of given HTML id (the control
+        // which reloaded the form), so that the user continues from there.
+        // The controls are the paging buttons and the selections (dropdown
+        // widgets focused by their button).  When the button is disabled
+        // (such as Next on the last page), the page selection is focused.
+        // If 'initial' is true, the focus is moved on page load (see
+        // lcg.initial_focus()).  Returns true if the control was found.
+        let element = document.getElementById(id)
+        if (!element || !this.element[0].contains(element)) {
+            return false
+        }
+        let control = $(element)
+        if (control.is('.dropdown-widget')) {
+            control = control.children('.dropdown-toggle')
+        } else if (control.is('button:disabled')) {
+            control = control.closest('.paging-controls').find('.offset .dropdown-toggle')
+        }
+        if (!control.length) {
+            return false
+        } else if (initial) {
+            lcg.initial_focus(control[0])
+        } else {
+            control.focus()
+        }
+        return true
     }
 
     _focus_found_record() {
@@ -262,7 +297,10 @@ pytis.BrowseForm = class extends pytis.Form {
         return undefined
     }
 
-    _load_form_data(parameters) {
+    _load_form_data(parameters, focus_id) {
+        // Load the form content asynchronously.  If 'focus_id' is given, the
+        // focus is moved to the form control of given HTML id after loading
+        // (the control which invoked the reload).
         parameters._pytis_async_load_request = 1
         this._ajax({
             url: this._url,
@@ -282,6 +320,8 @@ pytis.BrowseForm = class extends pytis.Form {
             if (container.find('#found-record').length) {
                 window.location.hash = '#found-record'
                 this._focus_found_record()
+            } else if (focus_id) {
+                this._focus_control(focus_id)
             }
         }, (xhr) => {
             let div = $('<div class="form-load-error">').text(
@@ -305,7 +345,7 @@ pytis.BrowseForm = class extends pytis.Form {
         let form = panel.closest('form')
         panel.find('button.prev-page, button.next-page').on('click', event => {
             let b = $(event.target).closest('button')[0]
-            this._reload_form_data(form, {[b.name]: b.value})
+            this._reload_form_data(form, {[b.name]: b.value}, b.id)
             return false
         })
         panel.find('button.apply-filters').on('click', event => {
@@ -318,9 +358,11 @@ pytis.BrowseForm = class extends pytis.Form {
             return false
         })
         panel.find('.dropdown-selection a').on('click', event => {
-            // The links contain the complete state of the controls.
-            let params = (new URL(event.target.href)).searchParams
-            this._load_form_data(Object.fromEntries(params))
+            // The links contain the complete state of the controls and
+            // the selection's id in the fragment (to keep the focus there).
+            let url = new URL(event.target.href)
+            this._load_form_data(Object.fromEntries(url.searchParams),
+                                 url.hash.replace(/^#focus-/, ''))
             return false
         })
         this._bind_search_controls(panel)
@@ -453,7 +495,7 @@ pytis.BrowseForm = class extends pytis.Form {
         return level
     }
 
-    _reload_form_data(form, parameters) {
+    _reload_form_data(form, parameters, focus_id) {
         for (let param of form.serializeArray()) {
             if (parameters.hasOwnProperty(param.name)) {
                 let value = parameters[param.name]
@@ -467,7 +509,7 @@ pytis.BrowseForm = class extends pytis.Form {
             }
         }
         this._ajax_container.find('form.list-form-controls').prop('enabled', false)
-        this._load_form_data(parameters)
+        this._load_form_data(parameters, focus_id)
     }
 
     _bind_search_controls(panel) {
