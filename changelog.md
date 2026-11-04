@@ -40,6 +40,8 @@ file are described in [doc/standards/changelog.md](doc/standards/changelog.md).
 ### Web
 - The found record in web forms is now highlighted by a translucent
   background tint in both the table and list layout.
+- The summary of validation errors above web forms is now announced by
+  screen readers ([`EditForm`](pytis/web/form.py)).
 
 ## 1.3.0 (2026-10-21)
 

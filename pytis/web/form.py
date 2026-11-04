@@ -815,7 +815,9 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
         if self._error:
             content.append(self._export_error(context, *self._error))
         if content:
-            return [g.div(content, cls='errors')]
+            # The role makes screen readers announce the errors regardless of
+            # where the focus is moved on page load.
+            return [g.div(content, cls='errors', role='alert')]
         else:
             return []
 
