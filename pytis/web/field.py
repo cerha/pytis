@@ -480,13 +480,11 @@ class TextField(Field):
     def _maxlen(self):
         return None
 
-    def html_id(self):
-        html_id = super().html_id()
-        if self.id == 'login':
-            # HACK: This makes the Safari's password suggestion work in forms, which
-            # call the login name field 'login' instead of 'username' (Wiking).
-            html_id += '-username'
-        return html_id
+    def _autofill(self):
+        autofill = self.spec.autofill()
+        if callable(autofill):
+            autofill = autofill(self._row)
+        return autofill
 
     def _editor_kwargs(self, context):
         kwargs = super()._editor_kwargs(context)
@@ -502,6 +500,7 @@ class TextField(Field):
             # non-editable fields are ignored in request processing anyway.
             disabled=None,
             readonly=kwargs['disabled'],
+            autocomplete=self._autofill(),
             value=self._exported_value(),
             size=width,
             maxlength=maxlen,
@@ -539,6 +538,10 @@ class StringField(TextField):
 
 class PasswordField(StringField):
     _JS_CLASS = 'pytis.PasswordField'
+
+    def _autofill(self):
+        return (super()._autofill() or
+                ('new-password' if self.type.verify() else 'current-password'))
 
     def _validate(self, value, locale_data, **kwargs):
         if self.type.verify():

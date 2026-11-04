@@ -3575,6 +3575,41 @@ class Field(object):
             enumerator, where validation constraints are not desirable.  The
             value may be an enumerator instance, a specification name, or a list
             or tuple converted to `FixedEnumerator`.
+          autofill (str): Hint for automatic filling of the field value by the
+            user agent, such as the web browser or a password manager.  The
+            value is a string or a function of one argument (a `PresentedRow`
+            instance) returning a string or None.  The string is one of the
+            autofill field names defined by WHATWG
+            (https://html.spec.whatwg.org/multipage/form-control-infrastructure.html#autofill),
+            the most useful being:
+
+            - 'username': The login name of the current user.  Mark the login
+              name field this way also in password change forms (even when the
+              field is not editable) so that password managers know which
+              account the password belongs to.
+            - 'current-password': The current password of the user, such as in
+              a login form or when verifying the old password.
+            - 'new-password': A new password, such as in registration or
+              password change forms.  The user agent may offer generating a
+              strong password.
+            - 'email', 'tel', 'url': The e-mail address, telephone number or
+              URI of the current user.
+            - 'name', 'given-name', 'family-name', 'nickname': The full name or
+              its parts of the current user.
+            - 'street-address', 'postal-code', 'country-name': Parts of the
+              postal address of the current user.
+            - 'off': Disable autofill.  Useful for fields which have the
+              meaning of the above values, but don't concern the current user,
+              such as the e-mail address of another user edited by an
+              administrator.
+
+            Note that the values denote personal data of the current user, so
+            use them only in forms where the user enters their own data (a
+            function may return 'off' in other cases).  If None, the default is 'new-password' for password fields with
+            verification (see `pytis.data.Password.verify()`),
+            'current-password' for other password fields and no hint for other
+            fields.  Currently implemented only for single line text fields in
+            web forms.
           selection_type: One of the `SelectionType` constants defining the user
             interface control used to present the enumeration.  Only relevant
             for fields with an enumerator (defined by `codebook` or
@@ -3678,7 +3713,7 @@ class Field(object):
               allow_codebook_insert=False, codebook_insert_spec=None,
               codebook_insert_prefill=None, codebook_update_prefill=None,
               runtime_filter=None, runtime_arguments=None, selection_type=None, completer=None,
-              orientation=None, post_process=None, filter=None, filter_list=None,
+              autofill=None, orientation=None, post_process=None, filter=None, filter_list=None,
               style=None, link=(), filename=None, inline=False, filename_extensions=(),
               text_format=TextFormat.PLAIN, attachment_storage=None, printable=False,
               slider=False, enumerator=None, value_column=None, validity_column=None,
@@ -3713,6 +3748,8 @@ class Field(object):
         assert display is None or isinstance(display, basestring) or callable(display), display
         assert (completer is None or
                 isinstance(completer, (basestring, tuple, pytis.data.Enumerator))), completer
+        assert autofill is None or isinstance(autofill, basestring) or callable(autofill), \
+            autofill
         assert prefer_display is None or isinstance(prefer_display, bool), prefer_display
         assert display_size is None or isinstance(display_size, int), display_size
         assert null_display is None or isinstance(null_display, basestring), null_display
@@ -3862,6 +3899,7 @@ class Field(object):
         if isinstance(completer, (list, tuple)):
             completer = pytis.data.FixedEnumerator(completer)
         self._completer = completer
+        self._autofill = autofill
         self._orientation = orientation or Orientation.VERTICAL
         self._post_process = post_process
         self._filter = filter
@@ -4124,6 +4162,10 @@ class Field(object):
             data_spec = pytis.config.resolver.get(completer, 'data_spec')
             completer = pytis.data.DataEnumerator(data_spec, **self._enumerator_kwargs)
         return completer
+
+    def autofill(self):
+        """Return the autofill hint as passed to the constructor."""
+        return self._autofill
 
     def type_kwargs(self):
         """Return the keyword arguments for field's data type construction.

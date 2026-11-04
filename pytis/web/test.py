@@ -169,3 +169,32 @@ def test_non_editable_checkbox_is_disabled():
     result = field_editor(pp.Field('x', type=pd.Boolean(), editable=pp.Editable.NEVER))
     assert 'disabled' in result
     assert 'readonly' not in result
+
+
+def test_autofill():
+    result = field_editor(pp.Field('x', type=pd.String(), autofill='username'))
+    assert 'autocomplete="username"' in result
+    result = field_editor(pp.Field('x', type=pd.String()))
+    assert 'autocomplete' not in result
+    # The hint is also passed for non-editable fields (used by password managers).
+    result = field_editor(pp.Field('x', type=pd.String(), autofill='username',
+                                   editable=pp.Editable.NEVER))
+    assert 'autocomplete="username"' in result
+
+
+def test_autofill_function():
+    fspec = pp.Field('x', type=pd.String(),
+                     autofill=lambda row: 'email' if row['own'].value() else 'off')
+    own = pp.Field('own', type=pd.Boolean())
+    assert 'autocomplete="email"' in field_editor(fspec, own, own=True)
+    assert 'autocomplete="off"' in field_editor(fspec, own, own=False)
+
+
+def test_password_autofill():
+    result = field_editor(pp.Field('x', type=pd.Password(verify=True)))
+    # Both the field and its verification field.
+    assert result.count('autocomplete="new-password"') == 2
+    result = field_editor(pp.Field('x', type=pd.Password(verify=False)))
+    assert 'autocomplete="current-password"' in result
+    result = field_editor(pp.Field('x', type=pd.Password(verify=True), autofill='off'))
+    assert result.count('autocomplete="off"') == 2

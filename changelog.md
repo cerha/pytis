@@ -6,10 +6,17 @@ file are described in [doc/standards/changelog.md](doc/standards/changelog.md).
 
 ## Unreleased
 
+### Common
+- New field specification argument `autofill` giving hints to web browsers
+  and password managers about the meaning of the field value
+  ([`Field`](pytis/presentation/spec.py)).
+
 ### Web
 - Non-editable text fields are read-only rather than disabled, so the user may
   focus them and read their value, and password managers may use them, such as
   the login name in a password change form.
+- Password fields indicate to password managers whether they expect a new or
+  the current password.
 - The menu of actions of a list layout item is placed beside the item heading
   rather than inside it, so that screen readers don't read it as a part of the
   heading.
