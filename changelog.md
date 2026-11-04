@@ -39,9 +39,11 @@ file are described in [doc/standards/changelog.md](doc/standards/changelog.md).
 
 ### Web
 - The found record in web forms is now highlighted by a translucent
-  background tint in both the table and list layout.
+  background tint in both the table and list layout
+  ([#521](https://itsng.oui.technology/its/issues/521)).
 - The summary of validation errors above web forms is now announced by
-  screen readers ([`EditForm`](pytis/web/form.py)).
+  screen readers ([`EditForm`](pytis/web/form.py))
+  ([#475](https://itsng.oui.technology/its/issues/475)).
 - The focus now returns to the browse form control which reloaded the form
   (query field and paging selections, Previous/Next buttons) instead of the
   start of the page, also in asynchronously loaded forms
