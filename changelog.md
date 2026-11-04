@@ -4,7 +4,7 @@ All notable user visible changes to Pytis.  The entries are brief, see the
 documentation of the linked code for details.  The rules for maintaining this
 file are described in [doc/standards/changelog.md](doc/standards/changelog.md).
 
-## 1.3.1.dev1 (unreleased)
+## 1.3.1 (2026-11-04)
 
 ### Wx application
 - A failure to update stored user settings, such as form profiles, is now
