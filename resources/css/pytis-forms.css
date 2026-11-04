@@ -682,7 +682,7 @@
     border: 1px solid #bbb;
     background-color: #fff;
 }
-.pytis-form.edit-form input.text-field:disabled,
+.pytis-form.edit-form input.text-field:read-only,
 .pytis-form.edit-form textarea:disabled,
 .pytis-form.edit-form select:disabled {
     background-color: #e8e8e8;

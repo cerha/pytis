@@ -142,3 +142,30 @@ def test_hidden(row, field, context, value, exported):
     # dates by no-break spaces is released and required.  The older versions
     # format the dates without them.
     assert result.replace('\xa0', '') == expected.replace('\xa0', '')
+
+
+def field_editor(fspec, *other_fields, **values):
+    """Return the exported editor of the field 'fspec' in a row of given fields and values."""
+    fields = (fspec,) + other_fields
+    columns = [pd.ColumnSpec(f.id(), f.type()) for f in fields]
+    row = pp.PresentedRow(fields, pd.Data(columns, columns[0]), None, new=True)
+    for key, value in values.items():
+        row[key] = pd.Value(row.type(key), value)
+    context = export_context('cs')
+    return context.localize(pw.Field.create(row, fspec, None, None).editor(context))
+
+
+def test_non_editable_text_field_is_readonly():
+    result = field_editor(pp.Field('x', type=pd.String(), editable=pp.Editable.NEVER))
+    assert 'readonly' in result
+    assert 'disabled' not in result
+    result = field_editor(pp.Field('x', type=pd.String()))
+    assert 'readonly' not in result
+    assert 'disabled' not in result
+
+
+def test_non_editable_checkbox_is_disabled():
+    # Read-only checkboxes are not supported by HTML.
+    result = field_editor(pp.Field('x', type=pd.Boolean(), editable=pp.Editable.NEVER))
+    assert 'disabled' in result
+    assert 'readonly' not in result

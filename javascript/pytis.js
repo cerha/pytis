@@ -1042,7 +1042,13 @@ pytis.Field = class extends lcg.Widget {
     }
 
     _set_editability(value) {
-        this._ctrl.prop('disabled', !value)
+        // Non-editable text fields are read-only rather than disabled (see
+        // 'TextField._editor_kwargs()' in Python).
+        if (this._ctrl.is('input:not([type="checkbox"], [type="radio"], [type="file"])')) {
+            this._ctrl.prop('readOnly', !value)
+        } else {
+            this._ctrl.prop('disabled', !value)
+        }
     }
 
     set_value(value, localized_value) {
@@ -1199,7 +1205,7 @@ pytis.DateTimeField = class extends pytis.Field {
             .text('...')
             .attr({'id': button_id, 'title': pytis._("Choose Date"),
                    'aria-label': pytis._("Choose Date"), 'aria-labelledby': labelledby})
-            .prop('disabled', this.element.prop('disabled'))
+            .prop('disabled', this.element.prop('readOnly'))
             .on('click', this._on_button.bind(this))
             .insertAfter(this.element)
         this._locale = locale

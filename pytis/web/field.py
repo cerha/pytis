@@ -494,6 +494,14 @@ class TextField(Field):
         width = self.spec.width(maxlen)
         return dict(
             kwargs,
+            # Use 'readonly' rather than 'disabled' for non-editable text fields.
+            # Read-only fields are focusable, so the user (and the screen reader)
+            # may read the value, and password managers may use them (such as the
+            # login name in a password change form).  Note that the value of a
+            # read-only field is submitted with the form, but the values of
+            # non-editable fields are ignored in request processing anyway.
+            disabled=None,
+            readonly=kwargs['disabled'],
             value=self._exported_value(),
             size=width,
             maxlength=maxlen,

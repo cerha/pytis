@@ -7,6 +7,9 @@ file are described in [doc/standards/changelog.md](doc/standards/changelog.md).
 ## Unreleased
 
 ### Web
+- Non-editable text fields are read-only rather than disabled, so the user may
+  focus them and read their value, and password managers may use them, such as
+  the login name in a password change form.
 - The menu of actions of a list layout item is placed beside the item heading
   rather than inside it, so that screen readers don't read it as a part of the
   heading.
