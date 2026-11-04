@@ -144,8 +144,11 @@ pytis.BrowseForm = class extends pytis.Form {
                 // on page load.
                 this._announce_results(this.element, 500)
             }
-            if (self.location.hash === '#found-record') {
-                this._focus_found_record()
+            if (!self.location.hash || self.location.hash === '#found-record') {
+                // The found record is focused also without the fragment, such
+                // as when the user returns to the list from the record's
+                // detail or after inserting or updating the record.
+                this._focus_found_record(true)
             } else if (self.location.hash.startsWith('#focus-')
                        && this._focus_control(self.location.hash.substring(7), true)) {
                 // The form was reloaded by one of its controls (see
@@ -185,13 +188,21 @@ pytis.BrowseForm = class extends pytis.Form {
         return true
     }
 
-    _focus_found_record() {
+    _focus_found_record(initial) {
         // Move the focus to the found record, so that screen reader users
         // continue reading from there.  Browsers only scroll to the anchor
-        // target, but don't focus it unless it is focusable.
+        // target, but don't focus it unless it is focusable.  If 'initial' is
+        // true, the focus is moved on page load (see lcg.initial_focus()).
+        // The record is highlighted anyway, so the focus indication is not
+        // needed until the user starts navigating by keyboard.
         let found = this.element.find('#found-record')
         if (found.length) {
-            found.attr('tabindex', '-1').focus()
+            found.attr('tabindex', '-1')
+            if (initial) {
+                lcg.initial_focus(found[0])
+            } else {
+                found.focus()
+            }
         }
     }
 

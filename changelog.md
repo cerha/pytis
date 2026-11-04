@@ -4,6 +4,17 @@ All notable user visible changes to Pytis.  The entries are brief, see the
 documentation of the linked code for details.  The rules for maintaining this
 file are described in [doc/standards/changelog.md](doc/standards/changelog.md).
 
+## Unreleased
+
+### Web
+- The found record in browse forms now receives the keyboard focus also when
+  the list is displayed without the anchor `#found-record`, such as after
+  returning from the record's detail by "Back to list" or after inserting or
+  updating the record ([`BrowseForm`](pytis/web/form.py)).
+- Fixed the focus indication of the found record in browse form tables
+  clipped on the left and right side.  It now appears only after the user
+  starts navigating by keyboard, as the record is highlighted anyway.
+
 ## 1.3.2 (2026-11-04)
 
 ### Common

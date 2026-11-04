@@ -510,6 +510,12 @@
 .pytis-form #found-record {
     background-color: color-mix(in srgb, #f80 15%, transparent);
 }
+.pytis-form.browse-form table.data-table tr:focus-visible {
+    /* The focus indication of a table row (such as the found record) is drawn
+     * inside the row, because the table wrapper scrolls horizontally and would
+     * clip the outline on the left and right side. */
+    outline-offset: -2px;
+}
 .pytis-form.browse-form .results,
 .pytis-form.browse-form .no-records {
     font-weight: bold;
