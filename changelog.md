@@ -4,7 +4,7 @@ All notable user visible changes to Pytis.  The entries are brief, see the
 documentation of the linked code for details.  The rules for maintaining this
 file are described in [doc/standards/changelog.md](doc/standards/changelog.md).
 
-## Unreleased
+## 1.3.2 (2026-11-04)
 
 ### Common
 - New field specification argument `autofill` giving hints to web browsers
