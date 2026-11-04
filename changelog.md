@@ -37,6 +37,10 @@ file are described in [doc/standards/changelog.md](doc/standards/changelog.md).
 - Fixed the profile selector missing in the toolbar of codebook forms.  It
   is also disabled now for forms without profiles.
 
+### Web
+- The found record in web forms is now highlighted by a translucent
+  background tint in both the table and list layout.
+
 ## 1.3.0 (2026-10-21)
 
 ### Wx application

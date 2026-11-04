@@ -507,9 +507,8 @@
 .list-form-controls.top .limit { display: none; }
 }
 
-.pytis-form.browse-form #found-record {
-    outline: #f80 solid 1px;
-    outline-offset: -1px;
+.pytis-form #found-record {
+    background-color: color-mix(in srgb, #f80 15%, transparent);
 }
 .pytis-form.browse-form .results,
 .pytis-form.browse-form .no-records {
@@ -525,10 +524,6 @@
     border-left: 2px solid #ddd;
     overflow: auto; /* collapse inner margins to get continuous left border */
 }
-.pytis-form.list-view #found-record {
-    background-color: #fff4f0;
-}
-
 .pytis-form.list-view .list-item h3 {
     margin: 0.0;
     font-size: 1.2em;
