@@ -112,7 +112,7 @@ def run():
                             rename_columns=rename_columns.get(spec_name, {}),
                     ):
                         # Update the 'errors' column in the database table.
-                        manager.save_profile(spec_name, form_name, profile)
+                        manager.update_profile(spec_name, form_name, profile)
                         for param, error in profile.errors():
                             print(':'.join((username, spec_name, form_name, profile.id(),
                                             ' %s: %s' % (param, error))))
