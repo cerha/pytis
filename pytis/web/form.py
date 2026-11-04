@@ -2537,8 +2537,11 @@ class ListView(BrowseForm):
             heading = title
         if layout.allow_index():
             self._exported_row_index.append(g.li(g.a(title, href='#' + anchor)))
+        popup_ctrl = ''
         if self._row_actions and layout.popup_actions():
-            heading += self._export_popup_ctrl(context, row, 'h3')
+            # Beside the heading, not inside it, so that it is not a part of the
+            # heading for screen readers.
+            popup_ctrl = self._export_popup_ctrl(context, row, '.list-item-heading')
         parts = []
         if self._image and row.visible(self._image.id):
             img = self._export_field(context, self._image)
@@ -2577,7 +2580,12 @@ class ListView(BrowseForm):
         # We use only css class name from row_style, because we consider the
         # other attributes to be BrowseForm specific.
         cls = 'list-item ' + self._row_attr(row, n)['cls']
-        result = g.div((g.h3(heading), g.div(parts, cls='list-item-content')), id=row_id, cls=cls)
+        if popup_ctrl:
+            exported_heading = g.div((g.h3(heading), popup_ctrl), cls='list-item-heading')
+        else:
+            exported_heading = g.h3(heading)
+        result = g.div((exported_heading, g.div(parts, cls='list-item-content')),
+                       id=row_id, cls=cls)
         for tree_level in reversed(range(self._tree_level() or 0)):
             result = g.div(result, cls='tree-indent tree-level-%d' % (tree_level + 1))
         return result

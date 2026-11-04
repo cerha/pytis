@@ -537,6 +537,11 @@
     margin: 0.0;
     font-size: 1.2em;
 }
+/* The heading and the menu of actions of the item on one line. */
+.pytis-form.list-view .list-item-heading {
+    display: flex;
+    align-items: baseline;
+}
 .pytis-form.list-view .list-item .meta {
     color: #206573;
     margin: 0.4em 0;

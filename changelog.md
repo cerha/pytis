@@ -4,6 +4,13 @@ All notable user visible changes to Pytis.  The entries are brief, see the
 documentation of the linked code for details.  The rules for maintaining this
 file are described in [doc/standards/changelog.md](doc/standards/changelog.md).
 
+## Unreleased
+
+### Web
+- The menu of actions of a list layout item is placed beside the item heading
+  rather than inside it, so that screen readers don't read it as a part of the
+  heading.
+
 ## 1.3.1 (2026-11-04)
 
 ### Wx application
