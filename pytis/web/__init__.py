@@ -36,4 +36,5 @@ from .form import (
 
 from .dialog import (
     Dialog as Dialog, SelectionDialog as SelectionDialog,
+    ConfirmationDialog as ConfirmationDialog,
 )

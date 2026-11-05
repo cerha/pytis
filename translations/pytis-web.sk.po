@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pytis 0.1\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-09-30 10:58+0200\n"
+"POT-Creation-Date: 2026-11-05 15:21+0100\n"
 "PO-Revision-Date: 2011-12-29 14:58+0100\n"
 "Last-Translator: Pavel Vohnout <vohnout@officehouse.cz>\n"
 "Language-Team: Slovak <wiking@lists.freebsoft.org>\n"
@@ -281,227 +281,232 @@ msgstr ""
 msgid "Index item cannot be empty."
 msgstr ""
 
-#: ../javascript/pytis.js:191 ../javascript/pytis.js:346
+#: ../javascript/pytis.js:263 ../javascript/pytis.js:445
 msgid "Expand Row"
 msgstr ""
 
-#: ../javascript/pytis.js:206 ../javascript/pytis.js:228
+#: ../javascript/pytis.js:278 ../javascript/pytis.js:300
 msgid "Collapse Row"
 msgstr ""
 
-#: ../javascript/pytis.js:288
+#: ../javascript/pytis.js:371
 msgid "Failed loading form:"
 msgstr ""
 
-#: ../javascript/pytis.js:296
+#: ../javascript/pytis.js:379
 msgid "show details"
 msgstr ""
 
-#: ../javascript/pytis.js:339
+#: ../javascript/pytis.js:438
 msgid "Double click the cell to edit the value."
 msgstr ""
 
-#: ../javascript/pytis.js:730
+#: ../javascript/pytis.js:841
 msgid "New row"
 msgstr ""
 
-#: ../javascript/pytis.js:873
+#: ../javascript/pytis.js:984
 msgid "The form data have changed!"
 msgstr ""
 
-#: ../javascript/pytis.js:874
+#: ../javascript/pytis.js:985
 msgid "Do you really want to close the form?"
 msgstr ""
 
-#: ../javascript/pytis.js:1109 ../javascript/pytis.js:1110
-#: ../javascript/pytis.js:1375
+#: ../javascript/pytis.js:1226 ../javascript/pytis.js:1227
+#: ../javascript/pytis.js:1492
 msgid "Choose Date"
 msgstr ""
 
-#: ../javascript/pytis.js:1400
+#: ../javascript/pytis.js:1517
 msgid "Cursor keys can navigate dates"
 msgstr ""
 
-#: ../javascript/pytis.js:1408
+#: ../javascript/pytis.js:1525
 msgid "Ok"
 msgstr ""
 
-#: ../javascript/pytis.js:1412 ../pytis/web/form.py:647
-#: ../pytis/web/form.py:2248
+#: ../javascript/pytis.js:1529 ../pytis/web/dialog.py:98
+#: ../pytis/web/form.py:643 ../pytis/web/form.py:2323
 msgid "Cancel"
 msgstr ""
 
-#: ../javascript/pytis.js:1417 ../javascript/pytis.js:1418
+#: ../javascript/pytis.js:1534 ../javascript/pytis.js:1535
 #, fuzzy
 msgid "previous month"
 msgstr "predchádzajúci"
 
-#: ../javascript/pytis.js:1423 ../javascript/pytis.js:1424
+#: ../javascript/pytis.js:1540 ../javascript/pytis.js:1541
 msgid "next month"
 msgstr ""
 
-#: ../javascript/pytis.js:1429 ../javascript/pytis.js:1430
+#: ../javascript/pytis.js:1546 ../javascript/pytis.js:1547
 #, fuzzy
 msgid "previous year"
 msgstr "predchádzajúci"
 
-#: ../javascript/pytis.js:1435 ../javascript/pytis.js:1436
+#: ../javascript/pytis.js:1552 ../javascript/pytis.js:1553
 #, fuzzy
 msgid "next year"
 msgstr "Žiadne záznamy."
 
-#: ../pytis/web/dialog.py:54 ../pytis/web/form.py:615
+#. Default edit form submit button label.
+#: ../pytis/web/dialog.py:46 ../pytis/web/form.py:608
 msgid "Submit"
 msgstr "Odoslať"
+
+#: ../pytis/web/dialog.py:97
+#, fuzzy
+msgid "Confirm"
+msgstr "Akcie"
 
 #. Accessible label of password confirmation field (for entering
 #. the password again to reveal possible typos.  Use imperative.
 #. %s is replaced by the field label.
-#: ../pytis/web/field.py:557
+#: ../pytis/web/field.py:570
 #, python-format
 msgid "Repeat %s"
 msgstr ""
 
 #. Boolean value display.  Should be Yes/No in the meaning True/False.
-#: ../pytis/web/field.py:852 ../pytis/web/field.py:953
+#: ../pytis/web/field.py:869 ../pytis/web/field.py:969
 msgid "Yes"
 msgstr "Áno"
 
-#: ../pytis/web/field.py:852 ../pytis/web/field.py:953
+#: ../pytis/web/field.py:869 ../pytis/web/field.py:969
 msgid "No"
 msgstr "Nie"
 
 #. The label "image"/"file" is used in textual representation of binary
 #. data values, usually as a link to download the actual binary file.
-#: ../pytis/web/field.py:901
+#: ../pytis/web/field.py:918
 msgid "image"
 msgstr "obrázok"
 
-#: ../pytis/web/field.py:903
+#: ../pytis/web/field.py:920
 msgid "file"
 msgstr "súbor"
 
-#: ../pytis/web/field.py:930
+#: ../pytis/web/field.py:947
 #, python-format
 msgid "Minimal size %(minlen)s not satisfied"
 msgstr "Nedodržaná minimálna veľkosť %(minlen)s"
 
-#: ../pytis/web/field.py:934
+#: ../pytis/web/field.py:951
 #, python-format
 msgid "Maximal size %(maxlen)s exceeded"
 msgstr "Maximálna veľkosť %(maxlen)s prekročená"
 
-#: ../pytis/web/form.py:293 ../pytis/web/form.py:295
-msgid "Print"
-msgstr ""
-
-#: ../pytis/web/form.py:297
+#: ../pytis/web/form.py:290
 msgid "Export the contents of this field into PDF"
 msgstr ""
 
-#: ../pytis/web/form.py:645
+#: ../pytis/web/form.py:291
+msgid "Print"
+msgstr ""
+
+#: ../pytis/web/form.py:638
 msgid "Submit the form"
 msgstr "Odoslať formulár"
 
-#: ../pytis/web/form.py:650
+#: ../pytis/web/form.py:647
 msgid "Reset"
 msgstr "Vrátiť pôvodné hodnoty"
 
-#: ../pytis/web/form.py:651
+#: ../pytis/web/form.py:648
 msgid "Undo all changes"
 msgstr "Zrušiť všetky urobené zmeny"
 
-#: ../pytis/web/form.py:664
+#: ../pytis/web/form.py:665
 msgid "Integrity check failed."
 msgstr ""
 
-#: ../pytis/web/form.py:710
+#: ../pytis/web/form.py:711
 #, fuzzy
 msgid "Invalid subform values."
 msgstr "Neplatná hodnota"
 
-#: ../pytis/web/form.py:730
+#: ../pytis/web/form.py:737
 #, fuzzy
 msgid "Confirm record deletion:"
 msgstr "Akcie"
 
-#: ../pytis/web/form.py:732
+#: ../pytis/web/form.py:739
 #, fuzzy
 msgid "Confirm Deletion"
 msgstr "Akcie"
 
-#: ../pytis/web/form.py:841
+#: ../pytis/web/form.py:855
 msgid "Fields marked by an asterisk are mandatory."
 msgstr "Políčka označené hviezdičkou sú povinné."
 
-#: ../pytis/web/form.py:1056
+#: ../pytis/web/form.py:1085
 #, fuzzy
 msgid "Profile"
 msgstr "súbor"
 
-#. Button for manual filter invocation.
-#: ../pytis/web/form.py:1104
+#: ../pytis/web/form.py:1134
 msgid "Change filters"
 msgstr ""
 
-#: ../pytis/web/form.py:1142
+#: ../pytis/web/form.py:1204
 msgid "Save"
 msgstr ""
 
-#: ../pytis/web/form.py:1156
+#: ../pytis/web/form.py:1218
 #, fuzzy
 msgid "Filter"
 msgstr "súbor"
 
-#: ../pytis/web/form.py:1158
+#: ../pytis/web/form.py:1220
 #, fuzzy
 msgid "Apply Filter"
 msgstr "súbor"
 
-#: ../pytis/web/form.py:1365
+#: ../pytis/web/form.py:1427
 #, fuzzy
 msgid "Open record detail"
 msgstr "Akcie"
 
-#: ../pytis/web/form.py:1614
+#: ../pytis/web/form.py:1677
 msgid "Popup the menu of actions for this record"
 msgstr ""
 
-#: ../pytis/web/form.py:1726
+#: ../pytis/web/form.py:1789
 #, fuzzy
 msgid "Sum"
 msgstr "Odoslať"
 
-#: ../pytis/web/form.py:1727
+#: ../pytis/web/form.py:1790
 msgid "Average"
 msgstr ""
 
-#: ../pytis/web/form.py:1728
+#: ../pytis/web/form.py:1791
 msgid "Minimum"
 msgstr ""
 
-#: ../pytis/web/form.py:1729
+#: ../pytis/web/form.py:1792
 msgid "Maximum"
 msgstr ""
 
-#: ../pytis/web/form.py:1796
+#: ../pytis/web/form.py:1860
 msgid "Loading form data..."
 msgstr ""
 
 #. Used in empty list forms.  "Records" refers to
 #. database records in the most generic senese possible.
-#: ../pytis/web/form.py:1897
+#: ../pytis/web/form.py:1961
 msgid "No records."
 msgstr "Žiadne záznamy."
 
-#: ../pytis/web/form.py:1933
+#: ../pytis/web/form.py:2005
 msgid "Total records:"
 msgstr "Počet záznamov celkom:"
 
 #. The variables '%(first)s', '%(last)s' and
 #. '%(total)s' are replaced by the numbers corresponding to the
 #. current listing range.
-#: ../pytis/web/form.py:1941
+#: ../pytis/web/form.py:2013
 #, python-format
 msgid "Displayed records %(first)s-%(last)s of total %(total)s"
 msgstr "Zobrazené záznamy %(first)s-%(last)s z celkom %(total)s"
@@ -521,13 +526,13 @@ msgstr "Zobrazené záznamy %(first)s-%(last)s z celkom %(total)s"
 #. "beginning with".  Also take care to use the correct
 #. quotation marks for the target language (written as the
 #. corresponding unicode characters).
-#: ../pytis/web/form.py:2027
+#: ../pytis/web/form.py:2100
 #, python-format
 msgid "%(label)s on \"%(prefix)s\":"
 msgstr "%(label)s na \"%(prefix)s\":"
 
 #. Index search controls link tooltip.
-#: ../pytis/web/form.py:2032
+#: ../pytis/web/form.py:2105
 #, python-format
 msgid "Skip to the first record beginning with \"%s\""
 msgstr "Preskočit na prvý riadok začínajúci na „%s“"
@@ -535,7 +540,7 @@ msgstr "Preskočit na prvý riadok začínajúci na „%s“"
 #. Label of a button displaying the index search
 #. controls (see above) in a dropdown.  The label is only
 #. presented by assistive technologies and as a tooltip.
-#: ../pytis/web/form.py:2046 ../pytis/web/form.py:2050
+#: ../pytis/web/form.py:2119 ../pytis/web/form.py:2123
 msgid "Alphabetical index"
 msgstr "Abecedný register"
 
@@ -543,57 +548,57 @@ msgstr "Abecedný register"
 #. the number and this number also denotes the plural form used.
 #. Please supply translations for all plural forms relevant for the
 #. target language.
-#: ../pytis/web/form.py:2133
+#: ../pytis/web/form.py:2202
 #, python-format
 msgid "Found %d record matching the search expression."
 msgid_plural "Found %d records matching the search expression."
 msgstr[0] ""
 msgstr[1] ""
 
-#: ../pytis/web/form.py:2195
+#: ../pytis/web/form.py:2249
 msgid "Records per page"
 msgstr "Počet záznamov na stránku"
 
 #. Paging controls allow navigation in long lists which are
 #. split into several pages.  The user can select a specific page or
 #. browse forward/backwards.
-#: ../pytis/web/form.py:2206
+#: ../pytis/web/form.py:2266
 msgid "Page"
 msgstr "Strana"
 
 #. Displayed after the current page number, '%d' is replaced
 #. by the total number of pages.
-#: ../pytis/web/form.py:2212
+#: ../pytis/web/form.py:2270
 #, python-format
 msgid "of %d"
 msgstr ""
 
-#: ../pytis/web/form.py:2219
+#: ../pytis/web/form.py:2287
 msgid "Previous"
 msgstr "predchádzajúci"
 
-#: ../pytis/web/form.py:2220
+#: ../pytis/web/form.py:2288
 msgid "Go to previous page"
 msgstr "Prejsť na predchádzajúcu stránku výpisu"
 
-#: ../pytis/web/form.py:2223
+#: ../pytis/web/form.py:2290
 msgid "Next"
 msgstr "ďalší"
 
-#: ../pytis/web/form.py:2224
+#: ../pytis/web/form.py:2292
 msgid "Go to next page"
 msgstr "Prejsť na nasledujúcu stránku výpisu"
 
 #. Search button label.
-#: ../pytis/web/form.py:2228 ../pytis/web/form.py:2246
+#: ../pytis/web/form.py:2296 ../pytis/web/form.py:2320
 msgid "Search"
 msgstr ""
 
-#: ../pytis/web/form.py:2241
+#: ../pytis/web/form.py:2312
 msgid "Search expression"
 msgstr ""
 
-#: ../pytis/web/form.py:2719 ../pytis/web/form.py:2721
+#: ../pytis/web/form.py:2802 ../pytis/web/form.py:2803
 msgid "Remove this row"
 msgstr ""
 

@@ -7,10 +7,18 @@ file are described in [doc/standards/changelog.md](doc/standards/changelog.md).
 ## Unreleased
 
 ### Web
+- New dialog [`ConfirmationDialog`](pytis/web/dialog.py) asking the user to
+  confirm an action without a data object.  The confirmation button receives
+  the initial focus and the prompt is its description, so that screen readers
+  read the prompt together with the button.
 - The found record in browse forms now receives the keyboard focus also when
   the list is displayed without the anchor `#found-record`, such as after
   returning from the record's detail by "Back to list" or after inserting or
   updating the record ([`BrowseForm`](pytis/web/form.py)).
+- The confirmation button of [`DeletionForm`](pytis/web/form.py) receives the
+  initial focus and the prompt is its description for screen readers, also
+  when the form is inserted inline into the list
+  ([#524](https://itsng.oui.technology/its/issues/524)).
 - Fixed the focus indication of the found record in browse form tables
   clipped on the left and right side.  It now appears only after the user
   starts navigating by keyboard, as the record is highlighted anyway.

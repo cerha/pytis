@@ -668,7 +668,14 @@ pytis.BrowseForm = class extends pytis.Form {
                 return false
             })
             setTimeout(() => {
-                content.find('form input:visible:enabled:first, form textarea').focus()
+                // The form may designate the control to be focused, such as
+                // the confirmation button of a deletion form.
+                let autofocus = content.find('[autofocus]:visible:enabled').first()
+                if (autofocus.length) {
+                    autofocus.focus()
+                } else {
+                    content.find('form input:visible:enabled:first, form textarea').focus()
+                }
                 let top = content.offset().top
                 let bottom = top + content.height()
                 let page_top = $(window).scrollTop()

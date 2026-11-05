@@ -33,7 +33,8 @@
     padding: 5px;
     text-align: center;
 }
-.pytis-form .submit-buttons button {
+.pytis-form .submit-buttons button,
+.confirmation-dialog .submit-buttons button {
     margin: 3px 4px;
 }
 

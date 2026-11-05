@@ -631,11 +631,13 @@ class _SubmittableForm(Form):
         if invoked_from is not None:
             hidden.append(('__invoked_from', invoked_from))
         content = [g.hidden(name, value) for name, value in hidden]
-        for item in self._submit_buttons:
+        for i, item in enumerate(self._submit_buttons):
             name, label, icon = item if len(item) == 3 else tuple(item) + ('ok-icon',)
             content.append(g.button(g.span('', cls='icon ' + icon) + g.span(label, cls='label'),
                                     name=name, value='1' if name else None,
-                                    type='submit', title=_("Submit the form"), cls='submit'))
+                                    type='submit', title=_("Submit the form"), cls='submit',
+                                    **(self._default_button_attributes(context) if i == 0
+                                       else {})))
         if self._show_cancel_button:
             content.append(g.button(g.span('', cls='icon remove-icon') +
                                     g.span(_("Cancel"), cls='label'),
@@ -645,6 +647,10 @@ class _SubmittableForm(Form):
                                     g.span(_("Reset"), cls='label'),
                                     type='reset', title=_("Undo all changes"), cls='reset'))
         return [g.div(content, cls='submit-buttons')]
+
+    def _default_button_attributes(self, context):
+        """Return additional HTML attributes of the first submit button as a dict."""
+        return {}
 
     def _field_order(self):
         """Return the order of visible fields in the form as a sequence of field ids."""
@@ -718,7 +724,13 @@ class ShowForm(_SingleRecordForm):
 
 
 class DeletionForm(_SingleRecordForm, _SubmittableForm):
-    """Special submittable form for record deletion confirmation."""
+    """Special submittable form for record deletion confirmation.
+
+    The confirmation button receives the initial focus and the prompt is its
+    description, so that screen readers read the prompt together with the
+    button (as in 'pytis.web.ConfirmationDialog').
+
+    """
     _CSS_CLS = 'deletion-form'
     _ALIGN_NUMERIC_FIELDS = True
 
@@ -728,6 +740,7 @@ class DeletionForm(_SingleRecordForm, _SubmittableForm):
         super().__init__(view, req, uri_provider, row, submit_buttons=submit_buttons,
                          show_reset_button=show_reset_button, **kwargs)
         self._prompt = prompt
+        self._prompt_id = None
 
     def _export_form(self, context):
         return (self._export_prompt(context) +
@@ -737,7 +750,11 @@ class DeletionForm(_SingleRecordForm, _SubmittableForm):
         prompt = self._prompt
         if isinstance(self._prompt, lcg.Content):
             prompt = prompt.export(context)
-        return [context.generator().div(prompt, cls='deletion-prompt')]
+        self._prompt_id = context.unique_id()
+        return [context.generator().div(prompt, id=self._prompt_id, cls='deletion-prompt')]
+
+    def _default_button_attributes(self, context):
+        return dict(autofocus=True, aria_describedby=self._prompt_id)
 
 
 class EditForm(_SingleRecordForm, _SubmittableForm):
