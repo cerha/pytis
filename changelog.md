@@ -19,6 +19,8 @@ file are described in [doc/standards/changelog.md](doc/standards/changelog.md).
   initial focus and the prompt is its description for screen readers, also
   when the form is inserted inline into the list
   ([#524](https://itsng.oui.technology/its/issues/524)).
+- Cancelling a form inserted inline into a list returns the focus to the
+  control which invoked it.
 - Fixed the focus indication of the found record in browse form tables
   clipped on the left and right side.  It now appears only after the user
   starts navigating by keyboard, as the record is highlighted anyway.

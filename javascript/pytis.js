@@ -731,19 +731,36 @@ pytis.BrowseForm = class extends pytis.Form {
         if (form && !form.cancel()) {
             return false
         }
+        // Read before the content is removed, which discards its data.
+        let invoked_by = content.data('_pytis_inline_action_invoked_by')
         content.slideUp({
             duration: 250,
             done: () => {
                 if (content.hasClass('target-global')) {
-                    content.data('_pytis_inline_action_invoked_by').enable()
+                    invoked_by.enable()
                     content.remove()
                 } else {
                     // This is form specific, so it has a separate method...
                     this._remove_canceled_inline_action_content(content)
                 }
+                this._focus_inline_action_invoker(invoked_by)
             },
         })
         return true
+    }
+
+    _focus_inline_action_invoker(element) {
+        // Return the focus to the control which invoked the inline action,
+        // as the focused control within the removed content is gone.  The
+        // action may be also invoked by double click on a table row, which is
+        // not focusable, so its popup menu control is focused in such case.
+        element = $(element)
+        if (!element.is('button, a[href], [tabindex]')) {
+            element = element.find('.invoke-menu').first()
+        }
+        if (element.is(':visible')) {
+            element.focus()
+        }
     }
 
     _remove_canceled_inline_action_content(content) {
