@@ -126,11 +126,11 @@ pytis.BrowseForm = class extends pytis.Form {
             let page = this.element.closest('.notebook-widget > section')
             if (page.length) {
                 lcg.Notebook.on_activation(page, function () {
-                    this._load_form_data(parameters, focus_id, submitted)
+                    this._load_form_data(parameters, focus_id, submitted, true)
                     focus_id = null
                 }.bind(this))
             } else {
-                this._load_form_data(parameters, focus_id, submitted)
+                this._load_form_data(parameters, focus_id, submitted, true)
             }
         } else {
             this._async_load = false
@@ -334,11 +334,13 @@ pytis.BrowseForm = class extends pytis.Form {
         return undefined
     }
 
-    _load_form_data(parameters, focus_id, announce = true) {
+    _load_form_data(parameters, focus_id, announce = true, initial = false) {
         // Load the form content asynchronously.  If 'focus_id' is given, the
         // focus is moved to the form control of given HTML id after loading
         // (the control which invoked the reload).  If 'announce' is true, the
         // messages about the results are announced to screen reader users.
+        // If 'initial' is true, the form is loaded on page load, so the focus
+        // is moved as on page load (see lcg.initial_focus()).
         parameters._pytis_async_load_request = 1
         this._ajax({
             url: this._url,
@@ -360,9 +362,9 @@ pytis.BrowseForm = class extends pytis.Form {
             }
             if (container.find('#found-record').length) {
                 window.location.hash = '#found-record'
-                this._focus_found_record()
+                this._focus_found_record(initial)
             } else if (focus_id) {
-                this._focus_control(focus_id)
+                this._focus_control(focus_id, initial)
             }
         }, (xhr) => {
             let div = $('<div class="form-load-error">').text(

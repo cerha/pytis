@@ -14,6 +14,9 @@ file are described in [doc/standards/changelog.md](doc/standards/changelog.md).
 - Fixed the focus indication of the found record in browse form tables
   clipped on the left and right side.  It now appears only after the user
   starts navigating by keyboard, as the record is highlighted anyway.
+- Fixed the focus indication of the found record and of the form control
+  which reloaded the page in asynchronously loaded forms, which appeared on
+  page load before the user started navigating by keyboard.
 
 ## 1.3.2 (2026-11-04)
 
