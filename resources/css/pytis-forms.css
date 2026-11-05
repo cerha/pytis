@@ -510,6 +510,9 @@
 
 .pytis-form #found-record {
     background-color: color-mix(in srgb, #f80 15%, transparent);
+    /* Keep the context above the record (such as the heading of its group or
+     * section) visible when the page is scrolled to it. */
+    scroll-margin-top: 25vh;
 }
 .pytis-form.browse-form table.data-table tr:focus-visible {
     /* The focus indication of a table row (such as the found record) is drawn

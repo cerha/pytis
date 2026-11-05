@@ -21,6 +21,10 @@ file are described in [doc/standards/changelog.md](doc/standards/changelog.md).
   ([#524](https://itsng.oui.technology/its/issues/524)).
 - Cancelling a form inserted inline into a list returns the focus to the
   control which invoked it.
+- The found record is displayed a quarter of the window below its top edge
+  rather than right at it, so that the context above it, such as the heading
+  of its section, remains visible
+  ([#526](https://itsng.oui.technology/its/issues/526)).
 - Fixed the focus indication of the found record in browse form tables
   clipped on the left and right side.  It now appears only after the user
   starts navigating by keyboard, as the record is highlighted anyway.
