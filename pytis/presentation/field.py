@@ -359,7 +359,9 @@ class PresentedRow(object):
             self._formatted_value_cache = {}
             if column.computer:
                 column.computer.dirty = False
-            self._resolve_dependencies(column.dependent)
+            for cval in column.dependent:
+                cval.dirty = True
+            self._run_dependency_callbacks(column.dependent)
             if run_callback:
                 self._run_callback(self.CALL_CHANGE, key)
 
@@ -418,23 +420,24 @@ class PresentedRow(object):
             row_data.extend([(k, row[k]) for k in row.keys() if k not in keys])
         self._row = pytis.data.Row(row_data)
         self._formatted_value_cache = {}
+        # The computed values are invalidated before the original row is created,
+        # as creating it may invoke the computers, but the callbacks are only run
+        # after, as they must already see the new original row.
+        for cval in computed_values:
+            cval.dirty = True
         if reset:
             self._original_row = copy.copy(row)
-            if not hasattr(self, '_initialized_original_row'):
-                # Calling row() may invoke dirty column computations.  The computers may use the
-                # original row as well, so we must create one before.
-                self._initialized_original_row = copy.copy(self._row)
+            # Calling row() may invoke dirty column computations.  The computers may use the
+            # original row as well, so we must create one for the new row before.
+            self._initialized_original_row = copy.copy(self._row)
             self._initialized_original_row = self.row()
-        self._resolve_dependencies(computed_values)
+        self._run_dependency_callbacks(computed_values)
         self._run_callback(self.CALL_CHANGE, None)
 
-    def _resolve_dependencies(self, computed_values):
-        # Handle recomputations for given list of ComputedValue instances.
-        for cval in computed_values:
-            # First mark all depending values as dirty and only then start
-            # invoking callbacks.  Otherwise the callbacks would se an
-            # inconsistent state.
-            cval.dirty = True
+    def _run_dependency_callbacks(self, computed_values):
+        # Invoke the callbacks of given ComputedValue instances.  All of them must be
+        # invalidated (marked dirty) before calling this method, otherwise the callbacks
+        # would see an inconsistent state.
         changed_enumerations = []
         for cval in computed_values:
             callback = cval.callback

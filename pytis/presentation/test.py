@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018-2019, 2024, 2025 Tomáš Cerha <t.cerha@gmail.com>
+# Copyright (C) 2018-2026 Tomáš Cerha <t.cerha@gmail.com>
 # Copyright (C) 2001-2017 OUI Technology Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -439,6 +439,71 @@ class TestPresentedRow:
             return tuple(x for x, display in row.enumerate('b'))
         row = self._mega_row(a=20, b=0, c=5)
         assert enum(row, 'b') == (0, 20, 40, 60, 80, 100)
+
+    def _filtered_codebook_row(self, **kwargs):
+        # A codebook field restricted to its current value by its runtime filter
+        # (as a codebook narrowed by a search field typically is), with computers
+        # reading the codebook through cb_value() and enumerate().
+        enumerator = self._enumerator(('id', 'title'),
+                                      data=(('1', 'First'), ('2', 'Second'), ('3', 'Third')))
+
+        def title(row, cb):
+            value = row.cb_value('cb', 'title')
+            return value.value() if value is not None else None
+        fields = (
+            pp.Field('cb', type=pd.String(enumerator=enumerator), display='title',
+                     runtime_filter=pp.computer(lambda r, cb: pd.EQ('id', pd.sval(cb)))),
+            pp.Field('title', type=pd.String(), computer=pp.computer(title)),
+            pp.Field('n', type=pd.Integer(),
+                     computer=pp.computer(lambda r, cb: len(r.enumerate('cb')))),
+        )
+        return self._row(fields, new=True, **kwargs)
+
+    def test_set_row_runtime_filter(self):
+        # Computers invoked by set_row() see the runtime filter of the new row,
+        # also when the filter was evaluated for the previous row.
+        row = self._filtered_codebook_row(prefill=dict(cb='1'))
+        assert row['title'].value() == 'First'
+        assert row.cb_value('cb', 'title').value() == 'First'
+        row.set_row(None, reset=True, prefill=dict(cb='2'))
+        assert row['title'].value() == 'Second'
+
+    def test_set_row_runtime_filter_in_batch(self):
+        # The same over a sequence of rows, as set by batch insertion, including
+        # a repeated value followed by a different one.
+        row = self._filtered_codebook_row(prefill=dict(cb='1'))
+        for value, title in (('1', 'First'), ('1', 'First'), ('2', 'Second'), ('3', 'Third')):
+            row.set_row(None, reset=True, prefill=dict(cb=value))
+            assert row['title'].value() == title
+            # Evaluate the filter as a form displaying the field does.
+            row.cb_value('cb', 'title')
+
+    def test_set_row_runtime_filter_enumerate(self):
+        # Computers calling enumerate() see the enumeration of the new row.
+        row = self._filtered_codebook_row(prefill=dict(cb='1'))
+        assert row['n'].value() == 1
+        assert row.enumerate('cb') == [('1', 'First')]
+        row.set_row(None, reset=True, prefill=dict(cb=None))
+        assert row['n'].value() == 0
+        row.set_row(None, reset=True, prefill=dict(cb='3'))
+        assert row['n'].value() == 1
+        assert row.enumerate('cb') == [('3', 'Third')]
+
+    def test_set_row_original_row(self):
+        # Computers invoked by set_row(reset=True) see the new row as the
+        # original row, not the original row of the previous row.
+        row = self._row((
+            pp.Field('a', type=pd.Integer()),
+            pp.Field('orig_a', type=pd.Integer(),
+                     computer=pp.computer(lambda r, a: r.original_row()['a'].value())),
+            pp.Field('a_changed', type=pd.Boolean(),
+                     computer=pp.computer(lambda r, a: r.field_changed('a'))),
+        ), new=True, prefill=dict(a=1))
+        for a in (1, 2, 3):
+            row.set_row(None, reset=True, prefill=dict(a=a))
+            assert row['orig_a'].value() == a
+            assert row['a_changed'].value() is False
+            assert not row.changed()
 
     def test_enumerate(self):
         row = self._mega_row()

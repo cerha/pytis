@@ -4,6 +4,17 @@ All notable user visible changes to Pytis.  The entries are brief, see the
 documentation of the linked code for details.  The rules for maintaining this
 file are described in [doc/standards/changelog.md](doc/standards/changelog.md).
 
+## Unreleased
+
+### Common
+- Fixed computed fields getting values belonging to the previously set row
+  after the row changed, such as when stepping through a batch insertion.
+  Computers reading a codebook field through `cb_value()` or `enumerate()`
+  found nothing, as the runtime filter of the previous row excluded the new
+  value, and computers using `original_row()` or `field_changed()` compared
+  with the original row of the previous row
+  ([`PresentedRow`](pytis/presentation/field.py)).
+
 ## 1.3.3 (2026-11-05)
 
 ### Web
