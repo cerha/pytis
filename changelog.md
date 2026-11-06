@@ -6,6 +6,12 @@ file are described in [doc/standards/changelog.md](doc/standards/changelog.md).
 
 ## Unreleased
 
+### Wx application
+- Fixed a crash of side forms defined by
+  [`WebContent`](pytis/presentation/spec.py) when the content is empty, such
+  as when the content column has no value in the current row.  An empty page
+  is displayed instead.
+
 ### Common
 - Fixed computed fields getting values belonging to the previously set row
   after the row changed, such as when stepping through a batch insertion.

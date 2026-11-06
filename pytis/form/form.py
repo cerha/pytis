@@ -4163,7 +4163,7 @@ class WebForm(ViewerForm):
           content: The content to be displayed -- an URI, an HTML string or an
             `lcg.Content` instance.  A string is recognized as an URI when it
             starts with a scheme, such as `https://`, so an URI must always
-            include one.
+            include one.  None displays an empty page.
           restrict_navigation: Restriction of further navigation, as described
             in `pytis.api.Application.web_view`.  `pytis.presentation.SAME_ORIGIN`
             requires `content` to be an URI -- `ProgramError` is raised
@@ -4180,6 +4180,10 @@ class WebForm(ViewerForm):
 
         """
         browser = self._browser.provider()
+        if content is None:
+            # No navigation from an empty page (and 'SAME_ORIGIN' has no origin here).
+            browser.load_html('', restrict_navigation=NO_NAVIGATION)
+            return
         if on_navigation is None:
             hook = None
         elif row is not None:

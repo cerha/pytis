@@ -2343,7 +2343,8 @@ class WebContent(ViewerContent):
 
         Arguments:
           content: URI, HTML string or 'lcg.Content' instance (or a function
-            returning it), as described in the parent class.
+            returning it), as described in the parent class.  None (such as
+            an empty column value) displays an empty page.
           base_uri (str): Base URI of the document.  Relative URIs within the
             document are relative to this URI.  Only applies to HTML strings
             ('lcg.Content' instances are exported with their own base URI).
