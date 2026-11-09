@@ -24,7 +24,7 @@ dependencies = [
     "future",
     "gnupg",
     "psycopg2-binary",
-    "sqlalchemy==1.4",
+    "sqlalchemy~=1.4.0",
     "standard-cgitb; python_version >= '3.13'",
 ]
 
