@@ -4,7 +4,7 @@ All notable user visible changes to Pytis.  The entries are brief, see the
 documentation of the linked code for details.  The rules for maintaining this
 file are described in [doc/standards/changelog.md](doc/standards/changelog.md).
 
-## Unreleased
+## 1.3.4 (2026-11-12)
 
 ### Wx application
 - Fixed a crash of side forms defined by
