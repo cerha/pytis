@@ -21,6 +21,10 @@ file are described in [doc/standards/changelog.md](doc/standards/changelog.md).
   with the original row of the previous row
   ([`PresentedRow`](pytis/presentation/field.py)).
 
+### Web
+- Fixed a crash of row expansion in browse forms with filters (profiles), as
+  the request sent the parameters of both the top and bottom form controls.
+
 ## 1.3.3 (2026-11-05)
 
 ### Web

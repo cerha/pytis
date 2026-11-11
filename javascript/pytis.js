@@ -282,7 +282,8 @@ pytis.BrowseForm = class extends pytis.Form {
 
     _send_expand_row_request(tr) {
         this._ajax({
-            form: this.element.find('form.list-form-controls'),
+            // Only the top controls, the bottom form repeats the same parameters.
+            form: this.element.find('form.list-form-controls').first(),
             data: {
                 _pytis_form_update_request: 1,
                 _pytis_expand_row: 1,
