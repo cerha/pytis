@@ -20,8 +20,10 @@ file are described in [doc/standards/changelog.md](doc/standards/changelog.md).
   value, and computers using `original_row()` or `field_changed()` compared
   with the original row of the previous row
   ([`PresentedRow`](pytis/presentation/field.py)).
+- Allows any SQLAlchemy 1.4.x release (was pinned to 1.4.0).
 
 ### Web
+- Requires LCG 0.9.3.
 - Fixed a crash of row expansion in browse forms with filters (profiles), as
   the request sent the parameters of both the top and bottom form controls.
 
