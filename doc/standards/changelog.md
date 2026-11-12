@@ -84,5 +84,12 @@ Pytis applications, namely the wx applications.
 - Raised minimal versions are recorded as "Requires LCG 0.9.0." (in
   `### Common` here).  Mark it **Incompatible** only when the applications
   need to be adjusted.
+- When only a part of the project relies on the change and another part
+  must keep working with older versions of the dependency, the minimal
+  version is not raised.  The requirement is only recorded in the subsection
+  of the part which relies on it, provided that its users get the required
+  version otherwise.  For example the web forms relying on LCG 0.9.3, which
+  the wx applications don't require, record "Requires LCG 0.9.3." in
+  `### Web`, as the web applications get it through Wiking.
 - The dependencies are released first, a released version only requires
   released versions of its dependencies.
