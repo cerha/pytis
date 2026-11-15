@@ -2099,10 +2099,11 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler, KeyHandler, pytis.api.A
           content: `lcg.ContentNode` instance representing the document to be
             loaded into the browser.  The node content will be exported into
             HTML and displayed.  Can also be `lcg.Content` which will be
-            automatically wrapped by untitled `lcg.ContentNode`.  In this case,
-            style sheets assigned to the content (through the `resources`
-            argument of `lcg.Content`) are used in addition to the default
-            styles (configuration option `stylesheets`).
+            automatically wrapped by untitled `lcg.ContentNode` (a sequence of
+            `lcg.Content` instances is wrapped by `lcg.Container` first).  In
+            this case, style sheets assigned to the content (through the
+            `resources` argument of `lcg.Content`) are used in addition to the
+            default styles (configuration option `stylesheets`).
           base_uri: Base URI of the document.  Relative URIs within the document
             are relative to this URI.  Browser policies may also restrict
             loading further resources according to this URI.
@@ -2124,6 +2125,8 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler, KeyHandler, pytis.api.A
             # content are passed to the provider so that the style sheets among them
             # are used too.  Those not bound to any data (such as
             # lcg.Stylesheet('xy.css')) are located in resource directories first.
+            if isinstance(content, (tuple, list)):
+                content = lcg.Container(content)
             dirs = pytis.util.resource_dirs()
             finder = lcg.ResourceProvider(dirs=dirs)
             resources = [r if r.src_file() or r.content() or r.uri()

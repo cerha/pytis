@@ -4,6 +4,12 @@ All notable user visible changes to Pytis.  The entries are brief, see the
 documentation of the linked code for details.  The rules for maintaining this
 file are described in [doc/standards/changelog.md](doc/standards/changelog.md).
 
+## Unreleased
+
+### Wx application
+- Fixed displaying a sequence of `lcg.Content` instances in the built-in
+  browser (such as `WebContent` side forms), broken since 1.3.0.
+
 ## 1.3.4 (2026-11-12)
 
 ### Wx application
