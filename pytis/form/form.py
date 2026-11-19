@@ -2998,8 +2998,34 @@ class EditForm(RecordForm, Refreshable):
             ),
             width=button.width() and dlg2px(parent, 4 * button.width()))
 
-    def _create_text(self, parent, text):
-        return wx.StaticText(parent, -1, text.text(), style=wx.ALIGN_LEFT)
+    def _create_text(self, parent, text, label=None):
+        # Create the widget of a layout text.  The 'label' is the empty label widget
+        # of the text within an aligned pack, which is hidden along with empty text.
+        content = text.text()
+        if isinstance(content, Computer):
+            widget = wx.StaticText(parent, -1, '', style=wx.ALIGN_LEFT)
+            widgets = [w for w in (widget, label) if w]
+            self._row.register_computed(text, content)
+            self._row.register_callback(self._row.CALL_COMPUTED_CHANGE, text,
+                                        lambda: self._update_dynamic_text(text, widgets))
+            self._update_dynamic_text(text, widgets, initial=True)
+        else:
+            widget = wx.StaticText(parent, -1, content, style=wx.ALIGN_LEFT)
+        return widget
+
+    def _update_dynamic_text(self, text, widgets, initial=False):
+        # Update the widgets of a dynamic layout text (see _create_text()).  Empty
+        # text is hidden to take no space in the layout.
+        widget = widgets[0]
+        value = self._row.computed(text) or ''
+        if initial or value != widget.GetLabel():
+            widget.SetLabel(value)
+            for w in widgets:
+                w.Show(bool(value))
+            if not initial:
+                panel = widget.Parent
+                panel.Layout()
+                panel.FitInside()
 
     def _create_lcg_content(self, parent, content):
         browser = Browser(parent)
@@ -3120,7 +3146,10 @@ class EditForm(RecordForm, Refreshable):
                 if isinstance(item, Button):
                     grid.Add(self._create_button(parent, item))
                 else:
-                    grid.Add(self._create_text(parent, item))
+                    # Small bottom margin to separate the text from the field below.
+                    # The margin of hidden (empty) text takes no space.
+                    grid.Add(self._create_text(parent, item, label=label), 0, wx.BOTTOM,
+                             dlg2px(parent, 0, 2)[1])
             else:
                 if not suppress_label:
                     label = item.label() or wx.StaticText(parent, -1, '')

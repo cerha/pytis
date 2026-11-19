@@ -39,7 +39,7 @@ import urllib.parse
 import pytis.data as pd
 
 from pytis.presentation import (
-    ActionContext, Button, Enumeration, Field, GroupSpec, HGroup,
+    ActionContext, Button, Computer, Enumeration, Field, GroupSpec, HGroup,
     Orientation, PresentedRow, Profiles, Specification, Text, TextFormat,
     ViewSpec,
 )
@@ -451,8 +451,21 @@ class LayoutForm(FieldForm):
             elif isinstance(item, lcg.Content):
                 content.append(item.export(context))
             elif isinstance(item, Text):
-                text = g.div(g.escape(item.text()).replace("\n", g.br()))
-                content.append(text, fullsize=False, needs_panel=True)
+                text = item.text()
+                if isinstance(text, Computer):
+                    # TODO: Dynamic text is only computed here on export.  To update it
+                    # during editing, give it a stable id (such as by its position in
+                    # the layout) and export it within an element present also for
+                    # empty text (just hidden), return the texts whose computed values
+                    # were invalidated (see PresentedRow.CALL_COMPUTED_CHANGE) along
+                    # with 'fields' in the AJAX response of 'EditForm.ajax_response()'
+                    # and update the elements (including the label cell in the aligned
+                    # layout) in 'pytis.js'.
+                    self._row.register_computed(item, text)
+                    text = self._row.computed(item)
+                if text:
+                    content.append(g.div(g.escape(text).replace("\n", g.br())),
+                                   fullsize=False, needs_panel=True)
             elif isinstance(item, Button):
                 pass
             elif item is not None:

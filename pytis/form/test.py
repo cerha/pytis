@@ -231,6 +231,74 @@ class TestListFormCurrentRow:
         assert not f._run_callback.called
 
 
+class TestEditFormDynamicText:
+    """Tests of dynamic texts (`pytis.presentation.Text` with a computer) in edit forms.
+
+    The methods are called unbound with a mock instance and fake widgets, so
+    that no wx application is needed.
+
+    """
+
+    class Widget(object):
+
+        def __init__(self, panel):
+            self.Parent = panel
+            self.label = ''
+            self.shown = True
+
+        def GetLabel(self):
+            return self.label
+
+        def SetLabel(self, label):
+            self.label = label
+
+        def Show(self, show):
+            self.shown = show
+
+    @pytest.fixture
+    def mock(self):
+        try:
+            import unittest.mock as mock
+        except ImportError:
+            import mock  # TODO NOPY2: remove
+        return mock
+
+    @pytest.fixture
+    def form(self, mock):
+        fields = (pp.Field('id', type=pd.Integer()), pp.Field('a', type=pd.String()))
+        data = pd.Data([pd.ColumnSpec(f.id(), f.type()) for f in fields],
+                       pd.ColumnSpec('id', pd.Integer()))
+        return mock.Mock(_row=pp.PresentedRow(fields, data, None, new=True, prefill={'a': 'x'}))
+
+    def _update(self, form, text, widgets, initial=False):
+        # TODO NOPY2: Use EditForm._update_dynamic_text directly (see TestListFormCurrentRow).
+        method = pf.EditForm._update_dynamic_text
+        getattr(method, '__func__', method)(form, text, widgets, initial=initial)
+
+    def test_update(self, form, mock):
+        text = pp.Text(lambda row, a: a and 'A: ' + a)
+        form._row.register_computed(text, text.text())
+        panel = mock.Mock()
+        widgets = [self.Widget(panel), self.Widget(panel)]
+        self._update(form, text, widgets, initial=True)
+        assert (widgets[0].label, widgets[0].shown, widgets[1].shown) == ('A: x', True, True)
+        assert not panel.Layout.called
+        form._row['a'] = pd.sval('y')
+        self._update(form, text, widgets)
+        assert widgets[0].label == 'A: y'
+        panel.Layout.assert_called_once_with()
+        panel.FitInside.assert_called_once_with()
+        # Unchanged text doesn't update the layout.
+        panel.reset_mock()
+        self._update(form, text, widgets)
+        assert not panel.Layout.called
+        # Empty text is hidden including its label in the aligned pack.
+        form._row['a'] = pd.sval(None)
+        self._update(form, text, widgets)
+        assert (widgets[0].label, widgets[0].shown, widgets[1].shown) == ('', False, False)
+        panel.Layout.assert_called_once_with()
+
+
 class TestDualFormAPI:
 
     @pytis.api.implements(pytis.api.Form, partial=('name',))

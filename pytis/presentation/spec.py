@@ -305,13 +305,30 @@ class Text(object):
     Instances of this class may be included within form layout (in `GroupSpec`
     constructor) to place arbitrary text to forms.
 
+    The text may be static (a string) or dynamic (computed from the current
+    record).  Dynamic text is recomputed when the fields it depends on change
+    (in wx forms; web forms compute it once when the form is displayed).  When
+    the computed text is empty, the item takes no space in the layout.
+
     """
 
     def __init__(self, text):
-        assert isinstance(text, basestring), text
-        self._text = text
+        """Initialize the instance.
+
+        Arguments:
+          text (str | callable): The text as a string or a computer function of
+            the current record (`PresentedRow` instance) returning the text as
+            a string (an empty string or `None` for no text).  The function is
+            automatically wrapped by `computer`, so the fields it depends on
+            may be given as its arguments or it may be a `Computer` instance
+            with explicit dependencies.
+
+        """
+        assert isinstance(text, basestring) or callable(text), text
+        self._text = text if isinstance(text, basestring) else computer(text)
 
     def text(self):
+        """Return the text as a string or a `Computer` instance for dynamic text."""
         return self._text
 
 

@@ -190,6 +190,28 @@ def test_autofill_function():
     assert 'autocomplete="off"' in field_editor(fspec, own, own=False)
 
 
+def test_dynamic_text():
+    class Spec(pp.Specification):
+        fields = (pp.Field('id', type=pd.Integer()), pp.Field('a', 'A', type=pd.String()))
+        layout = ('a', pp.Text(lambda row, a: a and 'Value: ' + a), pp.Text('Static'))
+        data_cls = pd.MemData
+
+    def export(a):
+        spec = Spec()
+        view = spec.view_spec()
+        row = pp.PresentedRow(view.fields(), spec.data_spec().create(), None, new=True,
+                              prefill={'a': a})
+        form = pw.ShowForm(view, Request(), lambda *args, **kwargs: None, row)
+        return form.export(export_context('en'))
+    result = export('xyz')
+    assert '<div>Value: xyz</div>' in result
+    assert '<div>Static</div>' in result
+    # Empty text is omitted.
+    result = export(None)
+    assert 'Value:' not in result
+    assert result.count('<div>') == 1
+
+
 def test_password_autofill():
     result = field_editor(pp.Field('x', type=pd.Password(verify=True)))
     # Both the field and its verification field.

@@ -11,6 +11,13 @@ file are described in [doc/standards/changelog.md](doc/standards/changelog.md).
   browser (such as `WebContent` side forms), broken since 1.3.0.
 
 ### Common
+- Texts in form layout may be computed from the current record by a computer
+  function ([`Text`](pytis/presentation/spec.py)).  Wx forms update the text
+  when the fields it depends on change.  Empty text takes no space in the
+  layout.
+- Values computed from a row, which don't belong to any field, may be
+  registered in the row to be recomputed on changes of their dependencies as
+  computed fields ([`PresentedRow.register_computed()`](pytis/presentation/field.py)).
 - Fixed the `fallback` of computers of `editable`, `visible`, `check`,
   `runtime_filter` and `runtime_arguments` being returned instead of the
   computed result once all validated input fields were valid.

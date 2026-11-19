@@ -48,6 +48,31 @@ class TestField:
         assert tuple(sorted(unsorted)) == fields
 
 
+class TestText:
+
+    def test_static(self):
+        assert pp.Text('Hello').text() == 'Hello'
+
+    def test_dynamic(self):
+        fields = (pp.Field('id', type=pd.Integer()), pp.Field('a', type=pd.String()),
+                  pp.Field('b', type=pd.Integer()))
+        row = pp.PresentedRow(fields, pd.Data([pd.ColumnSpec(f.id(), f.type()) for f in fields],
+                                              pd.ColumnSpec('id', pd.Integer())),
+                              None, new=True, prefill={'a': 'x', 'b': 3})
+        # A function is wrapped by `computer` with dependencies given by its arguments.
+        text = pp.Text(lambda row, a, b: '%s=%d' % (a, b)).text()
+        assert isinstance(text, pp.Computer)
+        assert text.depends() == ('a', 'b')
+        assert text(row) == 'x=3'
+        # A Computer instance is used as is.
+        computer = pp.Computer(lambda row: row['a'].value(), depends=('a',))
+        assert pp.Text(computer).text() is computer
+
+    def test_invalid(self):
+        with pytest.raises(AssertionError):
+            pp.Text(1)
+
+
 class TestPresentedRow:
 
     def setUp(self):
@@ -446,6 +471,51 @@ class TestPresentedRow:
         assert row.editable('x')
         # Regression: The fallback was returned once the value was computed.
         assert row.editable('x')
+
+    def test_register_computed(self):
+        row = self._row((
+            pp.Field('id', type=pd.Integer()),
+            pp.Field('a', type=pd.Integer()),
+            pp.Field('b', type=pd.Integer()),
+            pp.Field('total', type=pd.Integer(), virtual=True,
+                     computer=pp.computer(lambda r, a, b: (a or 0) + (b or 0))),
+        ), new=True, prefill={'a': 1, 'b': 2})
+        computed = []
+        computer = pp.computer(lambda r, total: 'Total: %d' % total)
+        row.register_computed('text', computer)
+        row.register_callback(row.CALL_COMPUTED_CHANGE, 'text',
+                              lambda: computed.append(row.computed('text')))
+        assert row.computed('text') == 'Total: 3'
+        # Indirect dependency through the computed field.
+        row['a'] = 5
+        assert computed == ['Total: 7']
+        row.set_row(None)
+        assert computed == ['Total: 7', 'Total: 0']
+        # Repeated registration of the same computer is ignored.
+        row.register_computed('text', computer)
+        with pytest.raises(pytis.util.ProgramError):
+            row.register_computed('text', pp.computer(lambda r: ''))
+        # The keys are independent of field identifiers.
+        row.register_computed('a', pp.computer(lambda r, b: b and b * 10))
+        row['b'] = 2
+        assert row.computed('a') == 20
+        assert row['a'].value() is None
+        assert not row.depends('b', ('a',))
+
+    def test_register_computed_validation(self):
+        row = self._row((
+            pp.Field('id', type=pd.Integer()),
+            pp.Field('n', type=pd.Integer(not_null=True)),
+        ), new=True)
+        computed = []
+        row.register_computed('x', pp.computer(lambda r, n: n * 2, validate=True, fallback=-1))
+        row.register_callback(row.CALL_COMPUTED_CHANGE, 'x',
+                              lambda: computed.append(row.computed('x')))
+        assert row.computed('x') == -1
+        row['n'] = 4
+        assert row.computed('x') == 8
+        row['n'] = 5
+        assert computed == [8, 10]
 
     def test_runtime_filter(self):
         def enum(row, key):

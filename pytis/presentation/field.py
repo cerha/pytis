@@ -96,6 +96,14 @@ class PresentedRow(object):
     columns on which it depends change.
 
     """
+    CALL_COMPUTED_CHANGE = 'CALL_COMPUTED_CHANGE'
+    """Callback called when a value registered by `register_computed` needs to be recomputed.
+
+    Invoked when the values of fields on which it depends change and when the
+    row data are set (by `set_row`).  The callback is registered for the key
+    passed to `register_computed`.
+
+    """
     class ProtectionError(Exception):
         """Exception raised on column protection violations."""
 
@@ -104,8 +112,10 @@ class PresentedRow(object):
 
         class ComputedValue(object):
 
-            def __init__(self, column, computer, callback):
-                self.column = column
+            def __init__(self, key, column, computer, callback):
+                self.key = key  # The key of the callback (field id for field properties).
+                self.column = column  # None for values registered by register_computed().
+                self.computer = computer
                 self.callback = callback
                 self.function = computer.function()
                 self.depends = computer.depends()
@@ -179,7 +189,7 @@ class PresentedRow(object):
                     if not isinstance(computer, Computer):
                         value = computer
                         computer = Computer(lambda r: value, depends=())
-                return self.ComputedValue(self, computer, callback)
+                return self.ComputedValue(self.id, self, computer, callback)
 
             self.computer = cval(computer, PresentedRow.CALL_CHANGE)
             self.editable = cval(fspec.editable(), PresentedRow.CALL_EDITABILITY_CHANGE)
@@ -234,18 +244,9 @@ class PresentedRow(object):
           transaction: Current transaction for data operations.
 
         """
-        def all_deps(cval):
-            if cval:
-                deps = list(cval.depends)
-                for key in cval.depends:
-                    deps.extend(all_deps(self._coldict[key].computer))
-                return remove_duplicates(deps)
-            else:
-                return []
-
         def add_secret(column):
             for cval in column.dependent:
-                if not cval.column.secret_computer:
+                if cval.column and not cval.column.secret_computer:
                     column.secret_computer = True
                     add_secret(cval.column)
 
@@ -263,11 +264,12 @@ class PresentedRow(object):
         self._transaction = transaction
         self._resolver = resolver or pytis.config.resolver
         self._callbacks = {}
+        self._computed = {}
         self._formatted_value_cache = {}
         self._completer_cache = {}
         self._protected = False
         self._columns = columns = tuple([self._Column(f, data, self._resolver) for f in fields])
-        self._coldict = coldict = dict([(c.id, c) for c in columns])
+        self._coldict = dict([(c.id, c) for c in columns])
         for column in columns:
             # Remember which computed values depend on each field (this the opposite
             # direction than what is defined in specifications).  column.dependent
@@ -275,12 +277,25 @@ class PresentedRow(object):
             # given column's value.
             for cval in (column.computer, column.editable, column.visible, column.check,
                          column.runtime_filter, column.runtime_arguments):
-                for cid in all_deps(cval):
-                    coldict[cid].dependent.append(cval)
+                self._add_dependent(cval)
         for column in columns:
             if not self.permitted(column.id, pytis.data.Permission.VIEW):
                 add_secret(column)
         self._set_row(row, reset=True, prefill=prefill)
+
+    def _add_dependent(self, cval):
+        # Add given ComputedValue to the 'dependent' lists of all columns on which it
+        # depends (also indirectly through computed fields).
+        def all_deps(cval):
+            if cval:
+                deps = list(cval.depends)
+                for key in cval.depends:
+                    deps.extend(all_deps(self._coldict[key].computer))
+                return remove_duplicates(deps)
+            else:
+                return []
+        for key in all_deps(cval):
+            self._coldict[key].dependent.append(cval)
 
     def __str__(self):
         if hasattr(self, '_row'):
@@ -411,6 +426,7 @@ class PresentedRow(object):
             column.check_constraints_cache = (None, None)
             computed_values += [c for c in (column.editable, column.visible, column.check,
                                             column.runtime_filter, column.runtime_arguments) if c]
+        computed_values += self._computed.values()
         if prefill:
             # Prefill should have been consumed above, otherwise it contained unknown keys...
             raise KeyError(list(prefill.keys())[0])
@@ -442,7 +458,7 @@ class PresentedRow(object):
         for cval in computed_values:
             callback = cval.callback
             if callback in self._callbacks:
-                key = cval.column.id
+                key = cval.key
                 if callback == self.CALL_ENUMERATION_CHANGE:
                     # Avoid calling twice (shared by runtime_filter and runtime_arguments).
                     if key in changed_enumerations:
@@ -973,6 +989,51 @@ class PresentedRow(object):
             raise ProgramError("Callback already registered:", kind, key, callbacks[key])
         callbacks[key] = function
 
+    def register_computed(self, key, computer):
+        """Register a value computed from the row, which doesn't belong to any field.
+
+        Such values are computed the same way as the values of computed fields
+        or other computed field properties (such as `editable`), including the
+        handling of `validate` and `fallback` of the `Computer`.  This makes it
+        possible to compute values needed for the presentation of the row
+        outside fields, such as dynamic texts in form layout (`Text`).  The
+        current value is returned by `computed` and the callback
+        `CALL_COMPUTED_CHANGE` may be registered for the same key to get
+        notified when it needs to be recomputed.
+
+        Registering the same computer for the same key repeatedly has no
+        effect.
+
+        Arguments:
+          key: Hashable object identifying the value, such as a string or the
+            specification object to which the value belongs.  The keys are
+            independent of field identifiers.
+          computer (Computer): The specification of the computation.
+
+        Raises:
+          `ProgramError`: If a different computer is already registered for
+            given key.
+
+        """
+        assert isinstance(computer, Computer), computer
+        cval = self._computed.get(key)
+        if cval:
+            if cval.computer is not computer:
+                raise ProgramError("Computed value already registered:", key, cval.computer)
+        else:
+            cval = self._Column.ComputedValue(key, None, computer, self.CALL_COMPUTED_CHANGE)
+            self._add_dependent(cval)
+            self._computed[key] = cval
+
+    def computed(self, key):
+        """Return the current result of the computer registered by `register_computed`.
+
+        Arguments:
+          key: The key passed to `register_computed`.
+
+        """
+        return self._computed_value(self._computed[key])
+
     def permitted(self, key, permission):
         """Return true if the user has permissions for given field.
 
@@ -1224,7 +1285,7 @@ class PresentedRow(object):
 
         """
         for cval in self._coldict[key].dependent:
-            if cval.column.id in keys:
+            if cval.column and cval.column.id in keys:
                 return True
         return False
 
