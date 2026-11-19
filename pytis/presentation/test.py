@@ -434,6 +434,19 @@ class TestPresentedRow:
         assert row['total'].value() == 5
         assert not enabled[0]
 
+    def test_editability_fallback(self):
+        row = self._row((
+            pp.Field('id', type=pd.Integer()),
+            pp.Field('n', type=pd.Integer(not_null=True)),
+            pp.Field('x', type=pd.Integer(),
+                     editable=pp.computer(lambda r, n: n > 0, validate=True, fallback=False)),
+        ), new=True)
+        assert not row.editable('x')
+        row['n'] = 1
+        assert row.editable('x')
+        # Regression: The fallback was returned once the value was computed.
+        assert row.editable('x')
+
     def test_runtime_filter(self):
         def enum(row, key):
             return tuple(x for x, display in row.enumerate('b'))

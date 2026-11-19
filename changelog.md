@@ -10,6 +10,11 @@ file are described in [doc/standards/changelog.md](doc/standards/changelog.md).
 - Fixed displaying a sequence of `lcg.Content` instances in the built-in
   browser (such as `WebContent` side forms), broken since 1.3.0.
 
+### Common
+- Fixed the `fallback` of computers of `editable`, `visible`, `check`,
+  `runtime_filter` and `runtime_arguments` being returned instead of the
+  computed result once all validated input fields were valid.
+
 ## 1.3.4 (2026-11-12)
 
 ### Wx application

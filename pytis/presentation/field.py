@@ -460,7 +460,7 @@ class PresentedRow(object):
             # Reset the dirty flag before calling the computer function to allow
             # the computer function to retrieve the original value without recursion.
             result = cval.value = cval.function(self)
-        elif cval.fallback is not UNDEFINED:
+        elif cval.dirty and cval.fallback is not UNDEFINED:
             # If inputs are not valid return the fallback value (if defined).
             result = cval.fallback
         elif old_value is not UNDEFINED:
